@@ -1,11 +1,12 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ScienceEventDTO, ScienceEventType } from 'app/foundation/science/science.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { User } from 'app/account/user/user.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ScienceService {
     private httpClient = inject(HttpClient);
     private featureToggleService = inject(FeatureToggleService);
@@ -24,7 +25,7 @@ export class ScienceService {
         });
     }
 
-    private onUserIdentityChange(user: any): void {
+    private onUserIdentityChange(user: User | undefined): void {
         if (user) {
             this.scienceSettingsService.refreshScienceSettings();
         }

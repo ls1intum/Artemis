@@ -748,4 +748,188 @@ class AtlasMLServiceTest {
         assertThat(result).isTrue();
         verify(atlasmlRestTemplate, org.mockito.Mockito.never()).exchange(any(String.class), any(HttpMethod.class), any(HttpEntity.class), eq(String.class));
     }
+
+    @Test
+    void testSaveCompetenciesWithDomainObjects_WhenServiceThrowsException_ReturnsFalse() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        Competency competency = new Competency();
+        competency.setId(1L);
+        competency.setTitle("Test Competency");
+        competency.setDescription("Test Description");
+        competency.setTaxonomy(CompetencyTaxonomy.APPLY);
+        Course course = new Course();
+        course.setId(1L);
+        competency.setCourse(course);
+
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        boolean result = atlasMLService.saveCompetencies(List.of(competency), OperationTypeDTO.DELETE);
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void testSaveCompetenciesWithDomainObjects_WhenRequestFails_ReturnsFalse() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        Course course = new Course();
+        course.setId(7L);
+        Competency competency = new Competency();
+        competency.setId(1L);
+        competency.setTitle("Title");
+        competency.setCourse(course);
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        boolean result = atlasMLService.saveCompetencies(List.of(competency), OperationTypeDTO.DELETE);
+
+        assertThat(result).isFalse();
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({ "UP,true,🟢 up", "warn,false,🟡 warn", "degraded,false,🟡 degraded", "unknown,false,🔴 unknown", "' ',false,🔴" })
+    void healthNormalizesKnownStatusesAndPreservesUnknownStatus(String status, boolean healthy, String summary) {
+        when(shortTimeoutAtlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(ResponseEntity.ok("{\"status\":\"" + status + "\"}"));
+        var result = atlasMLService.health();
+        // A blank status is absent, so a successful HTTP response remains healthy.
+        assertThat(result.isUp()).isEqualTo(status.isBlank() || healthy);
+        if (!status.isBlank()) {
+            assertThat(result.additionalInfo()).containsEntry("status", summary);
+        }
+        else {
+            assertThat(result.additionalInfo()).doesNotContainKey("status");
+        }
+    }
+
+    @Test
+    void healthHandlesMissingNonScalarAndBlankComponentFields() {
+        when(shortTimeoutAtlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class))).thenReturn(ResponseEntity.ok("""
+                {"status":null,"components":{
+                 "missing":{},"messageOnly":{"message":"warming up"},
+                 "blank":{"status":" ","message":" "},
+                 "object":{"status":{},"message":[]},
+                 "warn":{"status":"WARN","message":"slow","collections":{"empty":{},"up":{"status":"UP"}}}
+                }}
+                """));
+        var result = atlasMLService.health();
+        assertThat(result.isUp()).isTrue();
+        assertThat(result.additionalInfo()).containsEntry("missing", "🔴").containsEntry("messageOnly", "🔴 warming up").containsEntry("blank", "🔴").containsEntry("object", "🔴")
+                .containsEntry("warn", "🟡 warn: slow").containsEntry("collection empty", "🔴").containsEntry("collection up", "🟢 up");
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = { " ", "invalid json" })
+    void healthRejectsEmptyAndMalformedPayload(String payload) {
+        when(shortTimeoutAtlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class))).thenReturn(ResponseEntity.ok(payload));
+        var result = atlasMLService.health();
+        assertThat(result.isUp()).isFalse();
+        assertThat(result.additionalInfo().get("error"))
+                .isEqualTo("🔴 " + (payload != null && !payload.isBlank() ? "Incorrect format from AtlasML" : "Empty response from AtlasML"));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = { " ", "Bearer existing" })
+    void authHeaderOmitsEmptyTokenAndDoesNotDoublePrefix(String token) {
+        when(config.getAtlasmlAuthToken()).thenReturn(token);
+        when(shortTimeoutAtlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class))).thenReturn(ResponseEntity.ok("{}"));
+        assertThat(atlasMLService.health().isUp()).isTrue();
+        verify(shortTimeoutAtlasmlRestTemplate).exchange(any(String.class), eq(HttpMethod.GET), captor.capture(), eq(String.class));
+        assertThat(captor.getValue().getHeaders().getFirst("Authorization")).isEqualTo(token != null && !token.isBlank() ? token : null);
+    }
+
+    @Test
+    void quizNotificationBuildsDescriptionFromNonblankQuestions() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        var quiz = new de.tum.cit.aet.artemis.quiz.domain.QuizExercise();
+        quiz.setId(77L);
+        quiz.setTitle("Quiz");
+        var first = new de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion();
+        first.setTitle("Question title");
+        first.setText("Question text");
+        var empty = new de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion();
+        empty.setTitle(" ");
+        empty.setText(null);
+        quiz.setQuizQuestions(List.of(first, empty));
+        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(77L)).thenReturn(List.of());
+        when(atlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenReturn(ResponseEntity.ok(""));
+        assertThat(atlasMLService.saveExerciseWithCompetencies(quiz, OperationTypeDTO.UPDATE)).isTrue();
+        verify(atlasmlRestTemplate).exchange(any(String.class), eq(HttpMethod.POST), captor.capture(), eq(String.class));
+        var body = (SaveCompetencyRequestDTO) captor.getValue().getBody();
+        assertThat(body.exercise().description()).isEqualTo("Question title\nQuestion text");
+        assertThat(body.exercise().courseId()).isNull();
+        assertThat(body.exercise().competencies()).isEmpty();
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "  ", "Problem" })
+    void exerciseByIdNormalizesMissingDescriptionAndIncludesLinkedCompetencies(String description) {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        var link = getCompetencyExerciseLink(1L);
+        link.getExercise().setProblemStatement(description);
+        link.getExercise().setCourse(null);
+        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(1L)).thenReturn(List.of(link));
+        when(atlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenReturn(ResponseEntity.ok(""));
+        assertThat(atlasMLService.saveExerciseWithCompetenciesById(1L, OperationTypeDTO.UPDATE)).isTrue();
+        verify(atlasmlRestTemplate).exchange(any(String.class), eq(HttpMethod.POST), captor.capture(), eq(String.class));
+        var body = (SaveCompetencyRequestDTO) captor.getValue().getBody();
+        assertThat(body.exercise().description()).isEqualTo(description == null || description.isBlank() ? "" : description);
+        assertThat(body.exercise().courseId()).isNull();
+        assertThat(body.exercise().competencies()).containsExactly(1L);
+    }
+
+    @Test
+    void mappingAndExerciseSaveFailuresReturnFalse() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        when(atlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class))).thenThrow(new ResourceAccessException("timeout"),
+                new IllegalStateException("broken"), new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+        assertThat(atlasMLService.mapCompetencyToCompetency(1L, 2L)).isFalse();
+        assertThat(atlasMLService.mapCompetencyToCompetency(1L, 2L)).isFalse();
+        assertThat(atlasMLService.mapCompetencyToExercise(1L, 2L)).isFalse();
+        when(atlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenThrow(new IllegalStateException("broken"));
+        assertThat(atlasMLService.saveExercise(1L, "Exercise", "", List.of(), null, OperationTypeDTO.DELETE)).isFalse();
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({ "competencies,http", "competencies,connection", "competencies,unexpected", "exercise,http", "exercise,connection",
+            "exercise,unexpected" })
+    void failedBatchAndExerciseSavesKeepTheOriginalCauseAndOperationError(String kind, String failure) {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        var competency = new AtlasMLCompetencyDTO(1L, "Java", "Language", 2L);
+        var exercise = new de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLExerciseDTO(3L, "Exercise", "Description", List.of(1L), 2L);
+        var request = new SaveCompetencyRequestDTO(kind.equals("competencies") ? List.of(competency) : List.of(), kind.equals("exercise") ? exercise : null, "UPDATE");
+        RuntimeException cause = switch (failure) {
+            case "http" -> new HttpClientErrorException(HttpStatus.BAD_REQUEST);
+            case "connection" -> new ResourceAccessException("timeout");
+            default -> new IllegalStateException("failed");
+        };
+        when(atlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenThrow(cause);
+        String expected = switch (failure) {
+            case "http" -> "Failed to save competencies due to client error";
+            case "connection" -> "Failed to save competencies due to connection issue";
+            default -> "Unexpected error while saving competencies";
+        };
+        assertThatThrownBy(() -> atlasMLService.saveCompetencies(request)).isInstanceOf(AtlasMLServiceException.class).hasMessage(expected).hasCause(cause);
+    }
+
+    @Test
+    void mappingRejectsNonSuccessfulResponsesAndExerciseTransportFailures() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        when(atlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(ResponseEntity.status(HttpStatus.FOUND).build()).thenThrow(new ResourceAccessException("offline"), new IllegalStateException("unexpected"));
+        assertThat(atlasMLService.mapCompetencyToExercise(1L, 2L)).isFalse();
+        assertThat(atlasMLService.mapCompetencyToExercise(1L, 2L)).isFalse();
+        assertThat(atlasMLService.mapCompetencyToExercise(1L, 2L)).isFalse();
+    }
+
+    @Test
+    void nullAndEmptyDomainCompetenciesNeedNoRemoteSave() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        assertThat(atlasMLService.saveCompetencies((List<Competency>) null, OperationTypeDTO.UPDATE)).isTrue();
+        assertThat(atlasMLService.saveCompetencies(List.of(), OperationTypeDTO.UPDATE)).isTrue();
+        org.mockito.Mockito.verifyNoInteractions(atlasmlRestTemplate, competencyExerciseLinkRepository);
+    }
 }

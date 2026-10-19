@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
@@ -38,7 +37,7 @@ public interface IrisTutorSuggestionSessionRepository extends ArtemisJpaReposito
         List<Long> ids = findByPostIdAndUserIdOrderByCreationDateDesc(postId, userId, pageable).stream().map(DomainObject::getId).toList();
 
         if (ids.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         return findSessionsWithMessagesByIdIn(ids);

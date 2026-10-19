@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -16,7 +16,6 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { User } from 'app/account/user/user.model';
-import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -29,7 +28,7 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -46,6 +45,10 @@ import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/fil
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { ParticipationPrivacyService } from 'app/exercise/participation/participation-privacy.service';
+import { ParticipationAccessNoticeComponent } from 'app/exercise/participation/participation-access-notice.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 export enum FilterProp {
     ALL = 'All',
@@ -59,13 +62,14 @@ export enum FilterProp {
     templateUrl: './participation.component.html',
     imports: [
         TranslateDirective,
+        ParticipationAccessNoticeComponent,
         FormsModule,
         ProgrammingExerciseInstructorSubmissionStateComponent,
         RouterLink,
         FaIconComponent,
         TableViewComponent,
         CodeButtonComponent,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         DeleteButtonDirective,
         FeatureToggleDirective,
@@ -75,10 +79,12 @@ export enum FilterProp {
         TeamStudentsListComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
+    private readonly privacyService = inject(ParticipationPrivacyService);
     private readonly participationService = inject(ParticipationService);
     private readonly alertService = inject(AlertService);
     private readonly exerciseService = inject(ExerciseService);
@@ -105,6 +111,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     protected readonly RepositoryType = RepositoryType;
 
     readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly hideParticipantInformation = computed(() => this.privacyService.isParticipantInformationHidden(this.exercise()));
     readonly participations = signal<ParticipationManagementDTO[]>([]);
     readonly totalRows = signal(0);
     readonly isLoading = signal(false);
@@ -126,11 +133,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return !!(ex?.course && ex?.isAtLeastTutor && (this.gradeStepsDTO()?.presentationsNumber ?? 0) > 0 && ex?.presentationScoreEnabled === true);
     });
 
-    readonly scoresRoute = computed<any[]>(() => {
+    readonly scoresRoute = computed<(string | number | undefined)[]>(() => {
         const ex = this.exercise();
         if (!ex) return [];
         const exam = ex.exerciseGroup?.exam;
-        const base: any[] = ['/course-management'];
+        const base: (string | number | undefined)[] = ['/course-management'];
         if (exam) {
             base.push(exam.course!.id, 'exams', exam.id, 'exercise-groups', ex.exerciseGroup!.id);
         } else {
@@ -159,8 +166,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private lastLazyEvent: TableLazyLoadEvent | undefined;
     private currentLoadRequestId = 0;
     // private exerciseSubmissionState: ExerciseSubmissionState = {};
-    private paramSub: Subscription;
-    private gradeStepsDTOSub: Subscription;
+    private paramSub?: Subscription;
+    private gradeStepsDTOSub?: Subscription;
     private websocketSubscriptions: Subscription[] = [];
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -171,12 +178,15 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     // Track individual due date inline editing
     readonly editingDueDateIds = signal<ReadonlySet<number>>(new Set());
     private readonly pendingDueDates = new Map<number, dayjs.Dayjs | undefined>();
+    /** Rows whose due date text is not a date: the picker keeps its last valid date then, so it cannot be told from the pending date. */
+    private readonly invalidDueDateTextIds = signal<ReadonlySet<number>>(new Set());
 
     readonly tableOptions = computed<TableViewOptions>(() => ({
         dataKey: 'participationId',
         striped: true,
         scrollable: true,
         scrollHeight: 'flex',
+        showSearch: !this.hideParticipantInformation(),
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
     }));
 
@@ -198,7 +208,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
         const cols: ColumnDef<ParticipationManagementDTO>[] = [];
 
-        if (!ex.teamMode) {
+        if (this.hideParticipantInformation()) {
+            cols.push({ headerKey: 'artemisApp.participation.participationId', field: 'participationId', width: '150px', sort: true });
+        } else if (!ex.teamMode) {
             cols.push({
                 headerKey: 'artemisApp.participation.student',
                 field: 'participantName',
@@ -224,7 +236,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             );
         }
 
-        if (ex.type === ExerciseType.PROGRAMMING) {
+        if (ex.type === ExerciseType.PROGRAMMING && !this.hideParticipantInformation()) {
             cols.push({
                 headerKey: 'artemisApp.participation.repository',
                 width: '80px',
@@ -300,6 +312,20 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return cols;
     });
 
+    constructor() {
+        let previouslyHidden = true;
+        effect(() => {
+            const hidden = this.hideParticipantInformation();
+            if (hidden && !previouslyHidden) {
+                untracked(() => {
+                    this.participations.set([]);
+                    this.loadPage();
+                });
+            }
+            previouslyHidden = hidden;
+        });
+    }
+
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.isAdmin.set(this.accountService.isAdmin());
@@ -372,10 +398,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
-        const search: ParticipationSearch = {
-            ...base,
+        const search: ParticipationSearch = cloneWith(base, {
+            searchTerm: this.hideParticipantInformation() ? '' : base.searchTerm,
+            sortedColumn: this.hideParticipantInformation() && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
             filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
-        };
+        });
 
         this.participationService.searchParticipations(ex.id, search).subscribe({
             next: (result) => {
@@ -421,10 +448,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         p.buildPlanId = dto.buildPlanId;
         p.repositoryUri = dto.repositoryUri;
         if (dto.studentId !== undefined || dto.studentLogin !== undefined) {
-            p.student = { id: dto.studentId, login: dto.studentLogin } as User;
+            const student: Partial<User> = { id: dto.studentId, login: dto.studentLogin };
+            p.student = student as User;
         }
         if (dto.teamId !== undefined) {
-            p.team = { id: dto.teamId } as Team;
+            p.team = { id: dto.teamId };
         }
         if (dto.lastResultIsManual !== undefined) {
             const result = new Result();
@@ -502,6 +530,33 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.pendingDueDates.set(id, value);
     }
 
+    setDueDateTextValidity(id: number, isValid: boolean) {
+        this.invalidDueDateTextIds.update((ids) => {
+            if (ids.has(id) === !isValid) {
+                return ids;
+            }
+            const next = new Set(ids);
+            if (isValid) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }
+
+    /** Whether the pending individual due date lies before the due date of the exercise. The calendar greys out earlier days, but typed text is not limited by it. */
+    isBeforeExerciseDueDate(id: number): boolean {
+        const pending = this.pendingDueDates.get(id);
+        const dueDate = this.exercise()?.dueDate;
+        return !!pending && !!dueDate && pending.isBefore(dueDate);
+    }
+
+    /** Whether the row cannot be saved: the typed text is not a date, or the date lies before the due date of the exercise. */
+    isPendingDueDateInvalid(id: number): boolean {
+        return this.invalidDueDateTextIds().has(id) || this.isBeforeExerciseDueDate(id);
+    }
+
     startEditDueDate(dto: ParticipationManagementDTO) {
         this.pendingDueDates.set(dto.participationId, dto.individualDueDate);
         this.editingDueDateIds.update((s) => new Set([...s, dto.participationId]));
@@ -509,6 +564,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     cancelEditDueDate(dto: ParticipationManagementDTO) {
         this.pendingDueDates.delete(dto.participationId);
+        this.setDueDateTextValidity(dto.participationId, true);
         this.editingDueDateIds.update((s) => {
             const next = new Set(s);
             next.delete(dto.participationId);
@@ -526,13 +582,16 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             next: () => {
                 dto.individualDueDate = newDueDate;
                 this.pendingDueDates.delete(dto.participationId);
+                this.setDueDateTextValidity(dto.participationId, true);
                 this.editingDueDateIds.update((s) => {
                     const next = new Set(s);
                     next.delete(dto.participationId);
                     return next;
                 });
                 this.isSaving.set(false);
-                this.alertService.success('artemisApp.participation.updateDueDates.success', { name: dto.participantName ?? dto.participantIdentifier });
+                this.alertService.success('artemisApp.participation.updateDueDates.success', {
+                    name: dto.participantName ?? dto.participantIdentifier ?? String(dto.participationId),
+                });
                 this.loadPage();
             },
             error: () => {
@@ -553,6 +612,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             next: () => {
                 this.dialogErrorSource.next('');
                 this.pendingDueDates.delete(participationId);
+                this.setDueDateTextValidity(participationId, true);
                 this.editingDueDateIds.update((s) => {
                     const next = new Set(s);
                     next.delete(participationId);

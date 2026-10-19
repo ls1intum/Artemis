@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { DomainType, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { DomainDependentService } from 'app/programming/shared/code-editor/services/code-editor-domain-dependent.service';
@@ -13,7 +13,7 @@ export interface IConflictStateService {
  * This service manages the information about git conflicts of repositories.
  * It offers methods to both subscribe and notify on conflicts.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorConflictStateService extends DomainDependentService implements IConflictStateService {
     private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>> = new Map();
 
@@ -32,9 +32,9 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
         if (!subject) {
             const repoSubject = new BehaviorSubject(GitConflictState.OK);
             this.conflictSubjects.set(domainKey, repoSubject);
-            return repoSubject.pipe(distinctUntilChanged()) as Observable<GitConflictState>;
+            return repoSubject.pipe(distinctUntilChanged());
         } else {
-            return subject.pipe(distinctUntilChanged()) as Observable<GitConflictState>;
+            return subject.pipe(distinctUntilChanged());
         }
     };
 

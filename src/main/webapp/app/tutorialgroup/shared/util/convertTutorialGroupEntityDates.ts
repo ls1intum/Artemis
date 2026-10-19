@@ -1,4 +1,3 @@
-import { HttpResponse } from '@angular/common/http';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -38,7 +37,7 @@ export function convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup
         tutorialGroup.tutorialGroupSchedule.validToInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validToInclusive);
     }
     if (tutorialGroup.tutorialGroupSessions) {
-        tutorialGroup.tutorialGroupSessions.map((tutorialGroupSession: LegacyTutorialGroupSession) => convertTutorialGroupSessionDatesFromServer(tutorialGroupSession));
+        tutorialGroup.tutorialGroupSessions.forEach((tutorialGroupSession: LegacyTutorialGroupSession) => convertTutorialGroupSessionDatesFromServer(tutorialGroupSession));
     }
     if (tutorialGroup.nextSession) {
         tutorialGroup.nextSession = convertTutorialGroupSessionDatesFromServer(tutorialGroup.nextSession);
@@ -56,13 +55,4 @@ export function convertTutorialGroupArrayDatesFromServer(tutorialGroups: Tutoria
         });
     }
     return tutorialGroups;
-}
-
-export function convertTutorialGroupResponseArrayDatesFromServer(res: HttpResponse<TutorialGroup[]>): HttpResponse<TutorialGroup[]> {
-    if (res.body) {
-        res.body.forEach((tutorialGroup: TutorialGroup) => {
-            convertTutorialGroupDatesFromServer(tutorialGroup);
-        });
-    }
-    return res;
 }

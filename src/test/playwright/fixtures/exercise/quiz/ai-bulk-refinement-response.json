@@ -1,0 +1,34 @@
+{
+    "refinements": [
+        {
+            "type": "success",
+            "reasoning": "Added explanations to all answer options to clarify why each choice is correct or incorrect.",
+            "question": {
+                "type": "multiple-choice",
+                "title": "<Some title>",
+                "questionText": "A longer more detailed question (bulk refined)",
+                "options": [
+                    { "text": "Correct answer 1 — this is correct because it satisfies condition X", "correct": true },
+                    { "text": "Correct answer 2 — this is correct because it satisfies condition Y", "correct": true },
+                    { "text": "Wrong Answer 1 — this is wrong because it does not satisfy condition X", "correct": false },
+                    { "text": "Wrong Answer 2 — this is wrong because it contradicts condition Y", "correct": false }
+                ]
+            }
+        },
+        {
+            "type": "success",
+            "reasoning": "Added explanations to all answer options to clarify why each choice is correct or incorrect.",
+            "question": {
+                "type": "multiple-choice",
+                "title": "<Some title>",
+                "questionText": "A longer more detailed question (bulk refined)",
+                "options": [
+                    { "text": "Correct answer 1 — this is correct because it satisfies condition X", "correct": true },
+                    { "text": "Correct answer 2 — this is correct because it satisfies condition Y", "correct": true },
+                    { "text": "Wrong Answer 1 — this is wrong because it does not satisfy condition X", "correct": false },
+                    { "text": "Wrong Answer 2 — this is wrong because it contradicts condition Y", "correct": false }
+                ]
+            }
+        }
+    ]
+}

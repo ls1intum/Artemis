@@ -23,9 +23,13 @@
                 "showAllUsers": "Alle Nutzer:innen anzeigen",
                 "searchForUsers": "Nutzer:in zu dieser Organisation hinzufügen durch Suchen nach Login oder Namen",
                 "searchNoResults": "Nutzer:in nicht gefunden",
+                "addUsersButton": "Nutzer:innen hinzufügen",
                 "removeFromOrganization": {
                     "modalQuestion": "Soll der Login <strong>{{ title }}</strong> wirklich aus dieser Organisation entfernt werden?"
                 }
+            },
+            "addUserModal": {
+                "title": "Nutzer:innen zur Organisation hinzufügen"
             },
             "modalSelector": {
                 "select": "Auswählen",
@@ -39,6 +43,11 @@
             "updated": "Organisation aktualisiert!",
             "deleted": "Organisation gelöscht!",
             "created": "Organisation angelegt!"
+        },
+        "organizationRequest": {
+            "name": "Name",
+            "shortName": "Kurzname",
+            "emailPattern": "E-Mail-Muster"
         },
         "organizationUser": {
             "deleted": "Nutzer:in aus Organisation entfernt!"

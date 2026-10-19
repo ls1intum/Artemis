@@ -1,5 +1,5 @@
 <jhi-split-pane-header
-    [files]="files"
+    [files]="files()"
     [isLockFilesEnabled]="this.isLockFilesEnabled()"
     [fileSelectedSubject]="fileSelectedSubject()"
     (selectFile)="handleFileSelect($event)"
@@ -7,7 +7,7 @@
     [dropdownHoverSubject]="dropdownHoverSubject()"
     studentLogin="{{ plagiarismSubmission()?.studentLogin }}"
 />
-@if (cannotLoadFiles) {
+@if (cannotLoadFiles()) {
     <div class="text-submission-viewer text-warning">
         <div class="text-submission-viewer-warning">
             <fa-icon [icon]="faExclamationTriangle" class="icon" />
@@ -15,21 +15,31 @@
         </div>
     </div>
 }
-@if (!loading && !binaryFile!! && !cannotLoadFiles) {
-    <div class="text-submission-viewer" [innerHTML]="fileContent || ' '" [ngClass]="{ 'no-file': !fileContent, 'is-code': isProgrammingExercise }">
+@if (!loading() && !binaryFile()!! && !cannotLoadFiles()) {
+    <div class="text-submission-viewer" [innerHTML]="fileContent() || ' '" [ngClass]="{ 'no-file': !fileContent(), 'is-code': isProgrammingExercise() }">
         <span jhiTranslate="artemisApp.plagiarism.noFileSelected"></span>
     </div>
 }
-@if (loading && !cannotLoadFiles) {
+@if (loading() && !cannotLoadFiles()) {
     <div class="plagiarism-submission-loader">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden" jhiTranslate="loading"></span>
         </div>
     </div>
 }
-@if (binaryFile && !cannotLoadFiles) {
+@if (binaryFile() && !cannotLoadFiles()) {
     <div class="binaryFileDialogue">
         <span class="me-1" jhiTranslate="artemisApp.plagiarism.binaryFileNotRendered"></span>
-        <a class="text-primary" (click)="downloadCurrentFile()" jhiTranslate="entity.action.download"></a>
+        <a
+            class="text-primary"
+            (click)="downloadCurrentFile()"
+            jhiTranslate="entity.action.download"
+            #keyboardAction33
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction33.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction33.click() : undefined"
+        ></a>
     </div>
 }

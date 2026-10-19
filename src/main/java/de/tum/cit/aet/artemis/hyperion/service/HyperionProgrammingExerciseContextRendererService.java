@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -90,8 +91,11 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  *  3 | public class Stack { // Full reference implementation }
  * </pre>
  *
- * Lines are always numbered and separated per file with a fixed-width horizontal rule; trees appear only for
- * repositories (not the problem statement pseudo file).
+ * Lines are numbered by default and separated per file with a fixed-width horizontal rule; trees appear only
+ * for repositories (not the problem statement pseudo file). Numbering can be switched off per call — see
+ * {@link #renderContext(ProgrammingExercise, boolean)} — for consumers that neither report nor consume line
+ * numbers. Callers that do, such as the consistency check (whose verification stage re-opens files at the
+ * reported line numbers to discard hallucinated issues), must keep it on.
  */
 @Service
 @Lazy
@@ -127,6 +131,25 @@ public class HyperionProgrammingExerciseContextRendererService {
      * @return textual snapshot
      */
     public String renderContext(ProgrammingExercise exercise) {
+        return renderContext(exercise, true);
+    }
+
+    /**
+     * Renders the exercise snapshot, optionally without the per-line number gutters.
+     * <p>
+     * The gutters (" 12 | code") help a consumer that reports locations back, such as the consistency check.
+     * They are noise for a consumer that edits by unique text match and never cites a line number: they cost
+     * tokens on every file, and a model shown a gutter may reproduce it as content — exercise-variant
+     * generation was writing " 1 | " prefixes into every generated problem statement because of exactly this.
+     * <p>
+     * Defaults to {@code true} so existing callers, and the consistency-check benchmark's reference scores,
+     * are unaffected.
+     *
+     * @param exercise        exercise reference
+     * @param withLineNumbers whether to prefix each rendered line with its number
+     * @return textual snapshot
+     */
+    public String renderContext(ProgrammingExercise exercise, boolean withLineNumbers) {
         if (exercise == null) {
             return "";
         }
@@ -141,9 +164,9 @@ public class HyperionProgrammingExerciseContextRendererService {
         solutionRepoFiles = languageFilter.filter(solutionRepoFiles, language);
 
         List<String> parts = new ArrayList<>(3);
-        parts.add(renderRepository(Map.of("problem_statement.md", problemStatement), "Problem Statement"));
-        parts.add(renderRepository(templateRepoFiles, "Template Repository"));
-        parts.add(renderRepository(solutionRepoFiles, "Solution Repository"));
+        parts.add(renderRepository(Map.of("problem_statement.md", problemStatement), "Problem Statement", withLineNumbers));
+        parts.add(renderRepository(templateRepoFiles, "Template Repository", withLineNumbers));
+        parts.add(renderRepository(solutionRepoFiles, "Solution Repository", withLineNumbers));
         return String.join("\n\n", parts);
     }
 
@@ -160,15 +183,15 @@ public class HyperionProgrammingExerciseContextRendererService {
         }
     }
 
-    private static String renderRepository(Map<String, String> files, String repoName) {
+    private static String renderRepository(Map<String, String> files, String repoName, boolean withLineNumbers) {
         final boolean isProblemStatement = Objects.equals(repoName, "Problem Statement");
-        final String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase());
+        final String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase(Locale.ROOT));
         String treePart = "";
         if (!isProblemStatement) {
             treePart = renderFileStructure(root, files.keySet());
         }
         List<String> fileParts = new ArrayList<>(files.size());
-        files.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> fileParts.add(renderFileString(root, e.getKey(), e.getValue())));
+        files.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> fileParts.add(renderFileString(root, e.getKey(), e.getValue(), withLineNumbers)));
         String body = String.join("\n\n", fileParts);
         String headline = "\n===== " + repoName + " =====\n";
         if (!treePart.isEmpty()) {
@@ -232,18 +255,21 @@ public class HyperionProgrammingExerciseContextRendererService {
 
     private static final int HR_WIDTH = 80;
 
-    private static String renderFileString(String root, String path, String content) {
+    private static String renderFileString(String root, String path, String content, boolean withLineNumbers) {
         String horizonalLine = "-".repeat(HR_WIDTH);
         String header = (root != null && !root.isBlank() ? horizonalLine + "\n" + root + "/" + path + ":\n" + horizonalLine : horizonalLine + "\n" + path + ":\n" + horizonalLine);
         if (content == null) {
             content = "";
+        }
+        if (!withLineNumbers) {
+            return header + "\n" + content;
         }
         List<String> lines = Arrays.asList(content.split("\n", -1));
         int w = Integer.toString(lines.size()).length();
         List<String> out = new ArrayList<>(lines.size() + 1);
         out.add(header);
         IntStream.range(0, lines.size()).forEach(i -> {
-            String num = String.format("%" + w + "d", i + 1);
+            String num = ("%" + w + "d").formatted(i + 1);
             out.add(num + " | " + lines.get(i));
         });
         return String.join("\n", out);
@@ -302,7 +328,7 @@ public class HyperionProgrammingExerciseContextRendererService {
             if (buildFiles.isEmpty()) {
                 return "No build environment files found.";
             }
-            return renderRepository(buildFiles, "Build Environment Files");
+            return renderRepository(buildFiles, "Build Environment Files", true);
         }
         catch (IOException | UncheckedIOException e) {
             log.warn("Failed to render build environment context for repository {}: {}", repositoryPath, e.getMessage());
@@ -429,9 +455,16 @@ public class HyperionProgrammingExerciseContextRendererService {
             Path repositoryPath = solutionRepository.getLocalPath();
             StringBuilder solutionCode = new StringBuilder();
 
-            try {
-                Files.walk(repositoryPath).filter(path -> path.toString().endsWith(".java")).filter(path -> path.toString().contains("src/")).filter(Files::isRegularFile)
-                        .forEach(path -> {
+            // Files.walk holds an open directory handle, so it belongs in a try-with-resources like the other two
+            // walks in this class. A solution repository is scanned once per Hyperion request, so a leaked handle
+            // here accumulates for the lifetime of the node.
+            try (var paths = Files.walk(repositoryPath)) {
+                // The source root is matched on the path relative to the repository, with separators normalised: the
+                // absolute path uses a backslash on Windows, so a plain contains("src/") found nothing there and the
+                // method silently fell back to "no solution code". Relativizing also stops a repository whose own
+                // location happens to contain "src/" from matching every file.
+                paths.filter(path -> path.toString().endsWith(".java")).filter(path -> repositoryPath.relativize(path).toString().replace('\\', '/').contains("src/"))
+                        .filter(Files::isRegularFile).forEach(path -> {
                             try {
                                 String content = Files.readString(path);
                                 solutionCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n");
@@ -454,5 +487,54 @@ public class HyperionProgrammingExerciseContextRendererService {
             log.error("Error accessing solution repository for exercise {}: {}", exercise.getId(), e.getMessage(), e);
             throw new NetworkingException("Failed to access solution repository", e);
         }
+    }
+
+    /**
+     * Reads the existing test sources from the test repository so code generation can match the exact API and behaviour
+     * the tests require. Returns a "no tests" marker (never throws) when the repository is absent or empty, so generation
+     * still proceeds from the problem statement alone.
+     *
+     * @param exercise   the programming exercise
+     * @param gitService the git service for repository operations
+     * @return concatenated content of the test source files, or a marker string when none are available
+     */
+    public String getExistingTestCode(ProgrammingExercise exercise, GitService gitService) {
+        String noTests = "No tests available yet.";
+        try {
+            var testRepositoryUri = exercise.getVcsTestRepositoryUri();
+            if (testRepositoryUri == null) {
+                return noTests;
+            }
+            Repository testRepository = gitService.getOrCheckoutRepository(testRepositoryUri, true, "main", false);
+            if (testRepository == null) {
+                return noTests;
+            }
+            Path repositoryPath = testRepository.getLocalPath();
+            StringBuilder testCode = new StringBuilder();
+            try (var paths = Files.walk(repositoryPath)) {
+                // Include the structural spec (test.json for Ares exercises) and test sources (.java) so the exact expected API is visible.
+                // Emit test.json first so the definitive structural contract survives length capping in the caller.
+                // Skip symbolic links (NOFOLLOW_LINKS) so a symlinked file cannot leak server-local content into the prompt.
+                paths.filter(path -> path.toString().endsWith(".java") || path.getFileName().toString().equals("test.json"))
+                        .filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
+                        .sorted(Comparator.comparing((Path path) -> isStructuralSpec(path) ? 0 : 1).thenComparing(Path::toString)).forEach(path -> {
+                            try {
+                                testCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n").append(Files.readString(path)).append("\n\n");
+                            }
+                            catch (IOException e) {
+                                log.warn("Failed to read test file {}: {}", path, e.getMessage());
+                            }
+                        });
+            }
+            return testCode.length() > 0 ? testCode.toString() : noTests;
+        }
+        catch (Exception e) {
+            log.warn("Could not read test repository for exercise {}: {}. Generating from the problem statement only.", exercise.getId(), e.getMessage());
+            return noTests;
+        }
+    }
+
+    private static boolean isStructuralSpec(Path path) {
+        return "test.json".equals(path.getFileName().toString());
     }
 }

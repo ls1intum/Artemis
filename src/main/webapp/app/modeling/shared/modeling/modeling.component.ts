@@ -1,66 +1,15 @@
-import { Component, ElementRef, OnDestroy, input, model, viewChild } from '@angular/core';
-import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { Component, ElementRef, input, model, viewChild } from '@angular/core';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/foundation/constants/modeling.constants';
-import interact from 'interactjs';
-import { Interactable } from '@interactjs/core/Interactable';
 
 @Component({
     template: '',
 })
-export abstract class ModelingComponent implements OnDestroy {
-    protected readonly faGripLines = faGripLines;
-    protected readonly faGripLinesVertical = faGripLinesVertical;
-
+export abstract class ModelingComponent {
     readonly editorContainer = viewChild<ElementRef<HTMLElement>>('editorContainer');
-    readonly resizeContainer = viewChild<ElementRef<HTMLElement>>('resizeContainer');
-    resizeOptions = input<{
-        horizontalResize?: boolean;
-        verticalResize?: boolean;
-    }>();
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
     explanation = model<string>('');
     readOnly = input(false);
 
     apollonEditor?: ApollonEditor;
-    private interactable: Interactable | undefined;
-
-    protected setupInteract(): void {
-        const resizeOptions = this.resizeOptions();
-        const resizeContainer = this.resizeContainer()?.nativeElement;
-        if (resizeOptions && resizeContainer) {
-            this.interactable = interact(resizeContainer)
-                .resizable({
-                    edges: { left: false, right: resizeOptions.horizontalResize && '.draggable-right', bottom: resizeOptions.verticalResize && '.draggable-bottom', top: false },
-                    modifiers: [
-                        interact.modifiers!.restrictSize({
-                            min: { width: MODELING_EDITOR_MIN_WIDTH, height: MODELING_EDITOR_MIN_HEIGHT },
-                            max: { width: MODELING_EDITOR_MAX_WIDTH, height: MODELING_EDITOR_MAX_HEIGHT },
-                        }),
-                    ],
-                    inertia: true,
-                })
-                .on('resizestart', function (event: any) {
-                    event.target.classList.add('card-resizable');
-                })
-                .on('resizeend', function (event: any) {
-                    event.target.classList.remove('card-resizable');
-                })
-                .on('resizemove', (event: any) => {
-                    const target = event.target;
-                    const resizeOptionsValue = this.resizeOptions();
-                    if (resizeOptionsValue?.horizontalResize) {
-                        target.style.width = event.rect.width + 'px';
-                    }
-                    if (resizeOptionsValue?.verticalResize) {
-                        target.style.height = event.rect.height + 'px';
-                    }
-                });
-        }
-    }
-
-    ngOnDestroy(): void {
-        this.interactable?.unset();
-    }
 }

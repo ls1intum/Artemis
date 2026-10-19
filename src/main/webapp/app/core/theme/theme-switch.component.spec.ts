@@ -1,15 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective } from 'ng-mocks';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ThemeSwitchComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ThemeSwitchComponent;
     let fixture: ComponentFixture<ThemeSwitchComponent>;
     let themeService: ThemeService;
@@ -22,6 +21,7 @@ describe('ThemeSwitchComponent', () => {
             imports: [ThemeSwitchComponent, MockDirective(NgbPopover)],
             declarations: [],
             providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ThemeService,
                     useClass: MockThemeService,

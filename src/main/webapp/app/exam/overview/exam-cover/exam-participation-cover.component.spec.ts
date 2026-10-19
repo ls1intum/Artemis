@@ -30,11 +30,8 @@ import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-ex
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamParticipationCoverComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const course = { id: 456 } as Course;
     let exam: Exam;
     let studentExam: StudentExam;
@@ -120,6 +117,67 @@ describe('ExamParticipationCoverComponent', () => {
         fixture.componentRef.setInput('startView', false);
         component.updateConfirmation();
         expect(component.endEnabled()).toBe(false);
+    });
+
+    it('should enable the end of the exam as soon as the confirmation checkbox is ticked', async () => {
+        flushInputs();
+        const checkbox = fixture.nativeElement.querySelector('#confirmBox') as HTMLInputElement;
+        expect(checkbox).toBeTruthy();
+        expect(component.endEnabled()).toBe(false);
+
+        checkbox.click();
+        await fixture.whenStable();
+
+        expect(component.confirmed).toBe(true);
+        expect(component.endEnabled()).toBe(true);
+
+        checkbox.click();
+        await fixture.whenStable();
+
+        expect(component.confirmed).toBe(false);
+        expect(component.endEnabled()).toBe(false);
+    });
+
+    it('should put the title of the hand-in page in a title row of its own', () => {
+        flushInputs();
+
+        const element: HTMLElement = fixture.nativeElement;
+        expect(element.querySelector('[data-testid="exam-finished-header"] [data-testid="exam-finished-title"]')).not.toBeNull();
+        expect(element.querySelector('[data-testid="exam-start-header"]')).toBeNull();
+    });
+
+    it('should inset the hand-in page by the 12px of the exam bar, so that its title starts where the title of the bar starts', () => {
+        flushInputs();
+
+        const card: HTMLElement = fixture.nativeElement.firstElementChild;
+        expect(card.getAttribute('data-testid')).toBe('exam-cover');
+        expect(card.classList).toContain('px-3!');
+        expect(card.classList).not.toContain('px-4!');
+        expect(card.classList).not.toContain('px-6!');
+        // the same 12px between the rule and the content as on the pages of the exam
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-finished-header"]').classList).toContain('mb-3!');
+    });
+
+    it('should not reset the confirmation on a live schedule update while waiting for the exam start (issue #13071)', () => {
+        flushInputs();
+
+        // Student has confirmed and is counting down to the (pre-start) exam start.
+        component.confirmed = true;
+        component.startEnabled.set(true);
+        component.waitingForExamStart.set(true);
+
+        // A live schedule update replaces the exam object with a new start date.
+        const rescheduledExam = new Exam();
+        rescheduledExam.course = course;
+        rescheduledExam.id = 123;
+        rescheduledExam.testExam = false;
+        rescheduledExam.startDate = dayjs().add(2, 'minutes');
+        fixture.componentRef.setInput('exam', rescheduledExam);
+        flushInputs();
+
+        // The confirmation must survive so the countdown is not interrupted.
+        expect(component.confirmed).toBe(true);
+        expect(component.startEnabled()).toBe(true);
     });
 
     it('should start exam', async () => {

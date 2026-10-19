@@ -1,13 +1,13 @@
 package de.tum.cit.aet.artemis.localci.service.scaparser.strategy;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import tools.jackson.core.JacksonException;
+import tools.jackson.dataformat.xml.XmlMapper;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
@@ -46,7 +46,7 @@ public class GccParser implements ParserStrategy {
             GccRoot root = xmlMapper.readValue(reportContent, GccRoot.class);
             return root.content != null ? root.content : "";
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             throw new RuntimeException("Failed to parse GCC XML report", e);
         }
     }

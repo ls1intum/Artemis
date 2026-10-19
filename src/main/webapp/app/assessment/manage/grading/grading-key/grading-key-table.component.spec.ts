@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
 import { ActivatedRoute, Params } from '@angular/router';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -24,7 +23,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 describe('GradingKeyTableComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GradingKeyTableComponent>;
     let component: GradingKeyTableComponent;
     let gradingService: GradingService;
@@ -141,11 +139,11 @@ describe('GradingKeyTableComponent', () => {
             fixture.detectChanges();
 
             expect(gradingService.findGradeSteps).toHaveBeenCalledWith(courseId, examId);
-            expect(component.title).toBe('Test Exam');
-            expect(component.gradeSteps).toHaveLength(2);
-            expect(component.isBonus).toBe(false);
-            expect(component.plagiarismGrade).toBe('5.0');
-            expect(component.noParticipationGrade).toBe('5.0');
+            expect(component.title()).toBe('Test Exam');
+            expect(component.gradeSteps()).toHaveLength(2);
+            expect(component.isBonus()).toBe(false);
+            expect(component.plagiarismGrade()).toBe('5.0');
+            expect(component.noParticipationGrade()).toBe('5.0');
         });
 
         it('should set grade points for exam', () => {
@@ -218,7 +216,7 @@ describe('GradingKeyTableComponent', () => {
                     vi.spyOn(gradingService, 'setGradePoints').mockImplementation(() => {});
                     vi.spyOn(gradingService, 'hasPointsSet').mockReturnValue(false);
                     vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
-                        new CourseScores(200, 200, 0, { absoluteScore: 150, relativeScore: 75, currentRelativeScore: 80, presentationScore: 0 }),
+                        new CourseScores(200, 200, 0, { absoluteScore: 150, absoluteScoreTotal: 150, relativeScore: 75, currentRelativeScore: 80, presentationScore: 0 }),
                     );
 
                     fixture = TestBed.createComponent(GradingKeyTableComponent);
@@ -331,7 +329,7 @@ describe('GradingKeyTableComponent', () => {
 
             expect(bonusService.findBonusForExam).toHaveBeenCalledWith(courseId, examId, true);
             expect(component.forBonus()).toBe(true);
-            expect(component.isBonus).toBe(true);
+            expect(component.isBonus()).toBe(true);
         });
     });
 
@@ -396,8 +394,8 @@ describe('GradingKeyTableComponent', () => {
         it('should handle undefined grade steps gracefully', () => {
             fixture.detectChanges();
 
-            expect(component.gradeSteps).toHaveLength(0);
-            expect(component.title).toBeUndefined();
+            expect(component.gradeSteps()).toHaveLength(0);
+            expect(component.title()).toBeUndefined();
         });
     });
 });

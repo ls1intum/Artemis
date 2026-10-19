@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
@@ -22,6 +24,7 @@ import de.tum.cit.aet.artemis.exam.web.ExamRoomManagementResource;
 @Conditional(ExamEnabled.class)
 @EnforceAdmin
 @Lazy
+@FeatureUsage(UserFeature.EXAM_ROOMS)
 @RestController
 @RequestMapping("api/exam/rooms/admin/")
 public class AdminExamRoomManagementResource {

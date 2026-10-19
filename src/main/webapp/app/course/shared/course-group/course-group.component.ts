@@ -1,176 +1,210 @@
-import { Component, ViewEncapsulation, input, model, output, signal, viewChild } from '@angular/core';
-import { Observable, Subject, of } from 'rxjs';
+import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable, Subject, of } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { User } from 'app/account/user/user.model';
-import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
-import { iconsAsHTML } from 'app/foundation/util/icons.utils';
-import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { RouterLink } from '@angular/router';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { UsersImportButtonComponent } from 'app/shared-ui/user-import/button/users-import-button.component';
+import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared-ui/user-import/util/write-users-to-csv';
-
-const cssClasses = {
-    alreadyMember: 'already-member',
-    newlyAddedMember: 'newly-added-member',
-};
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { TableLazyLoadEvent } from 'primeng/table';
+import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
+import { Button, ButtonDirective } from 'primeng/button';
+import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
 
 @Component({
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
     styleUrls: ['./course-group.component.scss'],
-    encapsulation: ViewEncapsulation.None,
-    imports: [UsersImportButtonComponent, FaIconComponent, TranslateDirective, DataTableComponent, NgxDatatableModule, RouterLink, ProfilePictureComponent, DeleteButtonDirective],
+    imports: [
+        UsersImportDialogComponent,
+        TranslateDirective,
+        TableViewComponent,
+        RouterLink,
+        ProfilePictureComponent,
+        DeleteButtonDirective,
+        UserRegistrationModalComponent,
+        Button,
+        ButtonDirective,
+    ],
 })
 export class CourseGroupComponent {
-    private readonly dataTable = viewChild(DataTableComponent);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly alertService = inject(AlertService);
 
-    readonly allGroupUsers = model<User[]>([]);
-    readonly isLoadingAllGroupUsers = input(false);
+    private readonly tableViewRef = viewChild(TableViewComponent);
+    private lazyLoadGeneration = 0;
+    readonly profilePictureTemplate = viewChild<CellTemplateRef<CourseRoleMember>>('profilePictureTemplate');
+    readonly loginTemplate = viewChild<CellTemplateRef<CourseRoleMember>>('loginTemplate');
+    private readonly addUsersModal = viewChild(UserRegistrationModalComponent);
+    private readonly importDialog = viewChild(UsersImportDialogComponent);
+
+    constructor() {
+        // The parent route reuses this component when only the role slug (e.g. members/:courseRoleSlug) changes,
+        // so the table's own initial lazy load never re-fires on its own. Reload it whenever the role changes,
+        // skipping the very first run since the table already performs its initial load.
+        let isFirstRun = true;
+        effect(() => {
+            this.courseRoleSlug();
+            this.course();
+            if (isFirstRun) {
+                isFirstRun = false;
+                return;
+            }
+            untracked(() => this.tableViewRef()?.reset());
+        });
+    }
+
     readonly isAdmin = input(false);
     readonly course = input.required<Course>();
     readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
-    readonly courseGroup = input.required<CourseGroup>();
-    readonly exportFileName = input.required<string>();
-
-    readonly userSearch = input<(loginOrName: string) => Observable<HttpResponse<User[]>>>(() => of(new HttpResponse<User[]>({ body: [] })));
-    readonly addUserToGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
+    readonly courseRoleSlug = input.required<CourseRoleSlug>();
     readonly removeUserFromGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
-    readonly handleUsersSizeChange = input<(filteredUsersSize: number) => void>(() => {});
-
-    readonly importFinish = output<void>();
 
     protected readonly ActionType = ActionType;
 
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();
 
-    readonly isSearching = signal(false);
-    readonly searchFailed = signal(false);
-    readonly searchNoResults = signal(false);
-    readonly isTransitioning = signal(false);
-    readonly rowClass = signal('');
+    readonly rows = signal<CourseRoleMember[]>([]);
+    readonly totalRows = signal<number>(0);
+    readonly isLoading = signal<boolean>(false);
 
-    protected readonly faDownload = faDownload;
-    protected readonly faUserSlash = faUserSlash;
+    /** searchFn passed to the registration modal — searches all Artemis users, marks already-enrolled ones. */
+    readonly searchUsersFn = computed(() => {
+        const courseId = this.course().id;
+        const slug = this.courseRoleSlug();
+        return (term: string, page: number, size: number) => this.courseManagementService.searchUsersForCourseRole(courseId!, slug, term, page, size);
+    });
 
-    /**
-     * Receives the search text and filter results from DataTableComponent, modifies them and returns the result which will be used by ngbTypeahead.
-     *
-     * 1. Perform server-side search using the search text
-     * 2. Return results from server query that contain all users (instead of only the client-side users who are group members already)
-     *
-     * @param stream$ stream of searches of the format {text, entities} where entities are the results
-     * @return stream of users for the autocomplete
-     */
-    searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
-        return stream$.pipe(
-            switchMap(({ text: loginOrName }) => {
-                this.searchFailed.set(false);
-                this.searchNoResults.set(false);
-                if (loginOrName.length < 3) {
-                    return of([]);
-                }
-                this.isSearching.set(true);
-                return this.userSearch()(loginOrName)
-                    .pipe(map((usersResponse) => usersResponse.body!))
-                    .pipe(
-                        tap((users) => {
-                            if (users.length === 0) {
-                                this.searchNoResults.set(true);
-                            }
-                        }),
-                        catchError(() => {
-                            this.searchFailed.set(true);
-                            return of([]);
-                        }),
-                    );
-            }),
-            tap(() => {
-                this.isSearching.set(false);
-            }),
-            tap((users) => {
-                setTimeout(() => {
-                    const dataTable = this.dataTable();
-                    if (!dataTable) return;
-                    for (let i = 0; i < dataTable.typeaheadButtons.length; i++) {
-                        const button = dataTable.typeaheadButtons[i];
-                        const isAlreadyInGroup = this.allGroupUsers()
-                            .map((user) => user.id)
-                            .includes(users[i].id);
-                        const hasIcon = button.querySelector('fa-icon');
-                        if (!hasIcon) {
-                            button.insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInGroup ? 'users' : 'users-plus']);
-                        }
-                        if (isAlreadyInGroup) {
-                            button.classList.add(cssClasses.alreadyMember);
-                        }
+    /** registerFn passed to the registration modal — bulk-adds selected users via the existing import endpoint. */
+    readonly registerUsersFn = computed(() => {
+        const courseId = this.course().id;
+        const slug = this.courseRoleSlug();
+        return (users: UserForRegistration[]): Observable<void> => {
+            if (!courseId) return of(void 0);
+            // login is enough to resolve the user server-side; the rest are ignored.
+            const dtos: StudentDTO[] = users.map((u) => ({ login: u.login, firstName: '', lastName: '', registrationNumber: '', email: '' }));
+            return this.courseManagementService.addUsersToCourseRole(courseId, dtos, slug).pipe(
+                tap((response) => {
+                    // response.body lists the users that were NOT registered.
+                    const notFound = response.body ?? [];
+                    if (notFound.length > 0) {
+                        const logins = notFound.map((u) => u.login).join(', ');
+                        this.alertService.error('artemisApp.course.courseGroup.notFoundUsers', { logins });
                     }
-                });
-            }),
-        );
+                }),
+                map(() => void 0),
+            );
+        };
+    });
+
+    readonly tableOptions: TableViewOptions = {
+        scrollable: true,
+        scrollHeight: 'flex',
+        searchPlaceholder: 'artemisApp.course.courseGroup.searchForUsers',
+        initialSortField: 'name',
     };
 
-    /**
-     * Receives the user that was selected in the autocomplete and the callback from DataTableComponent.
-     * The callback inserts the search term of the selected entity into the search field and updates the displayed users.
-     *
-     * @param user The selected user from the autocomplete suggestions
-     * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
-     */
-    onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
-        // If the user is not part of this course group yet, perform the server call to add them
-        if (
-            !this.allGroupUsers()
-                .map((u) => u.id)
-                .includes(user.id) &&
-            user.login
-        ) {
-            this.isTransitioning.set(true);
-            this.addUserToGroup()(user.login).subscribe({
-                next: () => {
-                    this.isTransitioning.set(false);
+    readonly columns = computed<ColumnDef<CourseRoleMember>[]>(() => [
+        {
+            headerKey: 'artemisApp.course.courseGroup.profilePicture',
+            width: '5rem',
+            templateRef: this.profilePictureTemplate(),
+        },
+        {
+            field: 'login',
+            headerKey: 'artemisApp.course.courseGroup.login',
+            sort: true,
+            width: '10rem',
+            templateRef: this.loginTemplate(),
+        },
+        {
+            field: 'visibleRegistrationNumber',
+            headerKey: 'artemisApp.course.courseGroup.registrationNumber',
+            sort: true,
+            width: '10rem',
+        },
+        {
+            field: 'name',
+            headerKey: 'artemisApp.course.courseGroup.name',
+            sort: true,
+            width: '12rem',
+        },
+        {
+            field: 'email',
+            headerKey: 'artemisApp.course.courseGroup.email',
+            sort: true,
+        },
+    ]);
 
-                    // Add newly added user to the list of all users in the course group
-                    this.allGroupUsers.update((users) => [...users, user]);
-
-                    // Hand back over to the data table for updating
-                    callback(user);
-
-                    // Flash green background color to signal to the user that this record was added
-                    this.flashRowClass(cssClasses.newlyAddedMember);
-                },
-                error: () => {
-                    this.isTransitioning.set(false);
-                },
-            });
-        } else {
-            // Hand back over to the data table
-            callback(user);
+    onLazyLoad(event: TableLazyLoadEvent): void {
+        const courseId = this.course().id;
+        const slug = this.courseRoleSlug();
+        if (!courseId || !slug) {
+            return;
         }
-    };
+        const search = buildDbQueryFromLazyEvent(event);
+        const generation = ++this.lazyLoadGeneration;
+        this.isLoading.set(true);
+        this.courseManagementService.getPagedUsersInCourseRole(courseId, slug, search).subscribe({
+            next: (result) => {
+                if (generation !== this.lazyLoadGeneration) {
+                    return;
+                }
+                this.rows.set(result.content);
+                this.totalRows.set(result.totalElements);
+                this.isLoading.set(false);
+            },
+            error: () => {
+                if (generation === this.lazyLoadGeneration) {
+                    // Clear stale rows instead of leaving the previous role's members on screen.
+                    this.rows.set([]);
+                    this.totalRows.set(0);
+                    this.isLoading.set(false);
+                }
+            },
+        });
+    }
+
+    /** Called after a new member was added, whether via the registration modal or CSV import. */
+    onMembersAdded(): void {
+        this.tableViewRef()?.reload();
+    }
+
+    openAddUsersModal(): void {
+        this.addUsersModal()?.open();
+    }
+
+    openImportDialog(event: MouseEvent): void {
+        event.stopPropagation();
+        this.importDialog()?.open();
+    }
 
     /**
-     * Remove user from course group
+     * Remove user from course group.
      *
-     * @param user User that should be removed from the currently viewed course group
+     * @param member Member that should be removed from the currently viewed course group
      */
-    removeFromGroup(user: User): void {
-        if (user.login) {
-            this.removeUserFromGroup()(user.login).subscribe({
+    removeFromGroup(member: CourseRoleMember): void {
+        if (member.login) {
+            this.removeUserFromGroup()(member.login).subscribe({
                 next: () => {
-                    this.allGroupUsers.update((users) => users.filter((u) => u.login !== user.login));
                     this.dialogErrorSource.next('');
+                    this.tableViewRef()?.reloadAfterRemoval();
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });
@@ -178,61 +212,39 @@ export class CourseGroupComponent {
     }
 
     /**
-     * Formats the results in the autocomplete overlay.
-     *
-     * @param user
+     * Export all group members as CSV. Fetches all users from the server to avoid exporting only the current page.
      */
-    searchResultFormatter = (user: User) => {
-        const { name, login } = user;
-        return `${name} (${login})`;
-    };
-
-    /**
-     * Converts a user object to a string that can be searched for. This is
-     * used by the autocomplete select inside the data table.
-     *
-     * @param user User
-     */
-    searchTextFromUser = (user: User): string => {
-        return user.login || '';
-    };
-
-    /**
-     * Computes the row class that is being added to all rows of the datatable
-     */
-    dataTableRowClass = (): string => {
-        return this.rowClass();
-    };
-
-    /**
-     * Can be used to highlight rows temporarily by flashing a certain css class
-     *
-     * @param className Name of the class to be applied to all rows
-     */
-    flashRowClass = (className: string): void => {
-        this.rowClass.set(className);
-        setTimeout(() => this.rowClass.set(''));
-    };
-
-    /**
-     * Method for exporting the csv with the needed data
-     */
-    exportUserInformation = (): void => {
-        const users = this.allGroupUsers();
-        if (users.length > 0) {
-            const rows: ExportUserInformationRow[] = users.map((user: User): ExportUserInformationRow => {
-                return {
+    exportUserInformation(): void {
+        const courseId = this.course().id;
+        const slug = this.courseRoleSlug();
+        if (!courseId || !slug) {
+            return;
+        }
+        const fileName = CourseGroupComponent.buildExportFileName(slug, this.course().title);
+        this.courseManagementService.getAllUsersInCourseRole(courseId, slug).subscribe({
+            next: (res) => {
+                const users = res.body ?? [];
+                if (users.length === 0) {
+                    return;
+                }
+                const exportRows: ExportUserInformationRow[] = users.map((user: User): ExportUserInformationRow => ({
                     [NAME_KEY]: user.name?.trim() ?? '',
                     [USERNAME_KEY]: user.login?.trim() ?? '',
                     [EMAIL_KEY]: user.email?.trim() ?? '',
                     [REGISTRATION_NUMBER_KEY]: user.visibleRegistrationNumber?.trim() ?? '',
-                };
-            });
-            const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
-            const fileName = this.exportFileName();
-            exportUserInformationAsCsv(rows, keys, fileName);
-        }
-    };
+                }));
+                exportUserInformationAsCsv(exportRows, [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY], fileName);
+            },
+        });
+    }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
+    /** Derives the export filename from the role slug and course title, e.g. "Students My Course". */
+    private static buildExportFileName(slug: CourseRoleSlug, courseTitle: string | undefined): string {
+        if (!courseTitle) {
+            return '';
+        }
+        return slug.charAt(0).toUpperCase() + slug.slice(1) + ' ' + courseTitle;
+    }
 }

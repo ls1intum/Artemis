@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{email.httpsCloneTip.title}">Artemis Tip</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="shortcut icon" th:href="@{|${baseUrl}/favicon.ico|}" />
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333;">
+    <p th:text="#{email.httpsCloneTip.greeting(${user.firstName != null ? user.firstName : user.login})}">Dear User,</p>
+    
+    <p th:text="#{email.httpsCloneTip.intro}">
+        We noticed that you recently accessed your exercise code using your main Artemis account password. Doing so can pose a security risk and requires entering your credentials repeatedly. We recommend using one of the following safer options instead:
+    </p>
+
+    <ul style="padding-left: 20px;">
+        <li style="margin-bottom: 12px;">
+            <strong th:text="#{email.httpsCloneTip.tokenTitle}">Token (Recommended for beginners):</strong>
+            <span th:text="#{email.httpsCloneTip.tokenDescription}">A token is a secure, temporary password generated specifically for your exercise. To use it, open the exercise, click the &lt;/&gt; Code button, ensure Token is selected, and copy the link. It already contains your exercise token, so you don't need to enter your personal account password.</span>
+        </li>
+        <li style="margin-bottom: 12px;">
+            <strong th:text="#{email.httpsCloneTip.sshTitle}">SSH Key (For advanced users):</strong>
+            <span th:text="#{email.httpsCloneTip.sshDescription}">SSH connects your computer using a secure digital key instead of passwords. If you are familiar with SSH, you can add your public key once in Account Settings &rarr; SSH to download and upload code without entering passwords each time.</span>
+        </li>
+    </ul>
+
+    <p style="margin-top: 20px;">
+        <a th:href="@{|${baseUrl}/user-settings/ssh|}" th:text="#{email.httpsCloneTip.action}">Configure SSH Keys in Artemis</a>
+    </p>
+
+    <p style="white-space: pre-line; margin-top: 20px;" th:text="#{email.httpsCloneTip.farewell}">Regards,<br/>The Artemis Team.</p>
+</body>
+</html>

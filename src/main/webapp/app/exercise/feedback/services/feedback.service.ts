@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FeedbackService extends BaseApiHttpService {
     /**
      * Filters the feedback based on the filter input
@@ -10,7 +10,7 @@ export class FeedbackService extends BaseApiHttpService {
      * @param feedbacks The full list of feedback
      * @param filter an array of test case ids that the feedback needs to contain in its testcase.id attribute.
      */
-    public filterFeedback = (feedbacks: Feedback[], filter: number[]): Feedback[] => {
+    public filterFeedback = (feedbacks: Feedback[], filter: number[] | undefined): Feedback[] => {
         if (!filter) {
             return [...feedbacks];
         }

@@ -64,7 +64,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
         PushNotificationRegisterDTO response = request.postWithResponseBody("/api/notification/push_notification/register", body, PushNotificationRegisterDTO.class);
         assertThat(response.secretKey()).isNotEmpty();
 
-        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIdIn(Set.of(user.getId()), PushNotificationDeviceType.FIREBASE);
         assertThat(deviceConfigurations).hasSize(1);
         PushNotificationDeviceConfiguration config = deviceConfigurations.getFirst();
         assertThat(config.getDeviceType()).isEqualTo(PushNotificationDeviceType.FIREBASE);
@@ -80,7 +80,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
         PushNotificationRegisterDTO response = request.postWithResponseBody("/api/notification/push_notification/register", body, PushNotificationRegisterDTO.class);
         assertThat(response.secretKey()).isNotEmpty();
 
-        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIdIn(Set.of(user.getId()), PushNotificationDeviceType.FIREBASE);
         assertThat(deviceConfigurations).hasSize(1);
         PushNotificationDeviceConfiguration config = deviceConfigurations.getFirst();
         assertThat(config.getDeviceType()).isEqualTo(PushNotificationDeviceType.FIREBASE);
@@ -95,7 +95,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
                 "asdf");
         PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
         assertThat(response).isNull();
-        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIdIn(Set.of(user.getId()), PushNotificationDeviceType.FIREBASE);
         assertThat(deviceConfigurations).hasSize(0);
     }
 
@@ -108,7 +108,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
         params.add("token", FAKE_FIREBASE_TOKEN);
         params.add("deviceType", PushNotificationDeviceType.FIREBASE.name());
         request.delete("/api/notification/push_notification/unregister", HttpStatus.OK, params);
-        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIdIn(Set.of(user.getId()), PushNotificationDeviceType.FIREBASE);
         assertThat(deviceConfigurations).isEmpty();
     }
 
@@ -139,7 +139,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
         // Backwards compatibility: older (mobile) clients still pass the token and device type in the request body.
         PushNotificationUnregisterRequestDTO body = new PushNotificationUnregisterRequestDTO(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
         request.delete("/api/notification/push_notification/unregister", HttpStatus.OK, body);
-        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIdIn(Set.of(user.getId()), PushNotificationDeviceType.FIREBASE);
         assertThat(deviceConfigurations).isEmpty();
     }
 }

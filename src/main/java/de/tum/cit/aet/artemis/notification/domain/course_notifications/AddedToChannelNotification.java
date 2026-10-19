@@ -8,6 +8,8 @@ import java.util.Objects;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.AddedToChannelPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user they were added to a channel.
@@ -15,20 +17,15 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(19)
 public class AddedToChannelNotification extends CourseNotification {
 
-    protected String channelModerator;
-
-    protected String channelName;
-
-    protected Long channelId;
+    private final AddedToChannelPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification.
      */
     public AddedToChannelNotification(Long courseId, String courseTitle, String courseImageUrl, String channelModerator, String channelName, Long channelId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.channelModerator = channelModerator;
-        this.channelName = Objects.requireNonNullElse(channelName, "Group Chat");
-        this.channelId = channelId;
+        // A group chat has no name of its own, so the notification names it the way the client would.
+        this.payload = new AddedToChannelPayloadDTO(channelModerator, Objects.requireNonNullElse(channelName, "Group Chat"), channelId);
     }
 
     /**
@@ -36,6 +33,7 @@ public class AddedToChannelNotification extends CourseNotification {
      */
     public AddedToChannelNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, AddedToChannelPayloadDTO.class);
     }
 
     @Override
@@ -55,6 +53,11 @@ public class AddedToChannelNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/communication?conversationId=" + channelId;
+        return "/courses/" + courseId + "/communication?conversationId=" + payload.channelId();
+    }
+
+    @Override
+    public AddedToChannelPayloadDTO payload() {
+        return payload;
     }
 }

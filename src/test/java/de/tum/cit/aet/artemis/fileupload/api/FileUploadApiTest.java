@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.fileupload.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -11,12 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.util.ImportedExerciseAssertions;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -34,45 +35,54 @@ class FileUploadApiTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private CompetencyUtilService competencyUtilService;
 
-    private FileUploadExercise fileUploadExercise;
-
-    private Competency competency;
-
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-
-        fileUploadExercise = fileUploadExerciseUtilService.createFileUploadExercisesWithCourse().getFirst();
-        Course course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
-        competency = competencyUtilService.createCompetency(course);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportFileUploadExerciseViaApi() {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
-        FileUploadExercise expectedFileUploadExercise = (FileUploadExercise) course.getExercises().stream().findFirst().orElseThrow();
-        Course course2 = courseUtilService.addEmptyCourse();
-        courseUtilService.enableMessagingForCourse(course2);
-        expectedFileUploadExercise.setCourse(course2);
-        String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
-        expectedFileUploadExercise.setChannelName(uniqueChannelName);
-        fileUploadExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, fileUploadExercise, 1)));
+        Course sourceCourse = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        long sourceExerciseId = sourceCourse.getExercises().stream().findFirst().orElseThrow().getId();
+        // Re-read the source so its grading criteria are initialized for the content assertions.
+        FileUploadExercise sourceExercise = fileUploadImportApi.findWithGradingCriteriaByIdElseThrow(sourceExerciseId);
 
-        var sourceExerciseId = expectedFileUploadExercise.getId();
-        Optional<FileUploadExercise> optionalImportedFileUploadExercise = fileUploadImportApi.importFileUploadExercise(sourceExerciseId, expectedFileUploadExercise);
+        Course targetCourse = courseUtilService.addEmptyCourse();
+        courseUtilService.enableMessagingForCourse(targetCourse);
+        Competency targetCompetency = competencyUtilService.createCompetency(targetCourse);
+
+        // Mirror a real caller (CourseMaterialImportService): a fresh skeleton carrying the destination, a competency link
+        // of the target course, and the fields whose non-null defaults the import service cannot tell apart from an
+        // intentional value. The skeleton and the source must be distinct objects, otherwise the assertions below would
+        // compare the imported exercise with itself.
+        FileUploadExercise newExercise = new FileUploadExercise();
+        newExercise.setCourse(targetCourse);
+        newExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
+        newExercise.setTitle(sourceExercise.getTitle());
+        newExercise.setMaxPoints(sourceExercise.getMaxPoints());
+        newExercise.setBonusPoints(sourceExercise.getBonusPoints());
+        newExercise.setIncludedInOverallScore(sourceExercise.getIncludedInOverallScore());
+        newExercise.setGradingCriteria(null);
+        newExercise.setCompetencyLinks(new HashSet<>(Set.of(new CompetencyExerciseLink(targetCompetency, newExercise, 1))));
+
+        Optional<FileUploadExercise> optionalImportedFileUploadExercise = fileUploadImportApi.importFileUploadExercise(sourceExerciseId, newExercise);
         assertThat(optionalImportedFileUploadExercise).isPresent();
         FileUploadExercise importedFileUploadExercise = optionalImportedFileUploadExercise.get();
 
-        assertThat(importedFileUploadExercise.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
-        assertThat(importedFileUploadExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
-                "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks", "assessmentType").isEqualTo(expectedFileUploadExercise);
+        assertThat(importedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(targetCourse.getId());
+        ImportedExerciseAssertions.assertContentPreserved(sourceExercise, importedFileUploadExercise);
+        // The competency link is created for the persisted exercise, so the returned exercise must carry it with an id.
+        assertThat(importedFileUploadExercise.getCompetencyLinks()).hasSize(1);
+        CompetencyExerciseLink importedLink = importedFileUploadExercise.getCompetencyLinks().iterator().next();
+        assertThat(importedLink.getCompetency().getId()).isEqualTo(targetCompetency.getId());
+        assertThat(importedLink.getExercise().getId()).isEqualTo(importedFileUploadExercise.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFindFileUploadExerciseWithCompetencyViaApi() throws NoUniqueQueryException {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise expectedFileUploadExercise = (FileUploadExercise) course.getExercises().stream().findFirst().orElseThrow();
 
         Optional<FileUploadExercise> optionalExercise = fileUploadImportApi.findUniqueWithCompetenciesByTitleAndCourseId(expectedFileUploadExercise.getTitle(), course.getId());

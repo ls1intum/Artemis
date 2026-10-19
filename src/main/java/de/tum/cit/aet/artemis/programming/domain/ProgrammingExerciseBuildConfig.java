@@ -1,11 +1,12 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
@@ -18,10 +19,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "programming_exercise_build_config")
@@ -41,8 +41,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "build_plan_configuration", columnDefinition = "longtext")
     private String buildPlanConfiguration;
 
-    @Column(name = "build_script", columnDefinition = "longtext")
-    private String buildScript;
+    private transient String buildScript;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -66,7 +65,10 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "docker_flags", columnDefinition = "longtext")
     private String dockerFlags;
 
-    @OneToOne(mappedBy = "buildConfig")
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "exercise_id", nullable = false, unique = true)
+    @JsonIgnore
+    @Parent
     private ProgrammingExercise programmingExercise;
 
     @Nullable
@@ -146,7 +148,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     }
 
     /**
-     * We store the bash script in the database
+     * Legacy build script for imported exercises using the old LocalCI build plan format.
      *
      * @return the build script or null if the build script does not exist
      */
@@ -155,7 +157,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     }
 
     /**
-     * Update the build script
+     * Update the legacy build script.
      *
      * @param buildScript the new build script for the programming exercise
      */
@@ -228,31 +230,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public void setAllowBranching(boolean allowBranching) {
         this.allowBranching = allowBranching;
-    }
-
-    /**
-     * Tries to deserialize the buildPlanConfiguration as a {@link BuildPlanPhasesDTO} object.
-     *
-     * @return the {@link BuildPlanPhasesDTO} object, or empty if the configuration is null, empty, or invalid
-     */
-    @JsonIgnore
-    public Optional<BuildPlanPhasesDTO> getBuildPlanPhases() {
-        if (buildPlanConfiguration == null) {
-            return Optional.empty();
-        }
-        try {
-            BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration);
-            return Optional.of(phases);
-        }
-        catch (JsonProcessingException e) {
-            log.warn("Could not parse build plan phases for programming exercise {}", getId(), e);
-            return Optional.empty();
-        }
-    }
-
-    public void filterSensitiveInformation() {
-        setBuildPlanConfiguration(null);
-        setBuildScript(null);
     }
 
     public ProgrammingExercise getProgrammingExercise() {

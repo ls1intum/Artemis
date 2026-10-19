@@ -20,7 +20,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
@@ -36,14 +37,14 @@ public class UserSshPublicKeyExpiryNotificationService {
 
     private final MailSendingService mailSendingService;
 
-    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+    private final GlobalNotificationSettingService globalNotificationSettingService;
 
     public UserSshPublicKeyExpiryNotificationService(UserSshPublicKeyRepository userSshPublicKeyRepository, UserRepository userRepository, MailSendingService mailSendingService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
+            GlobalNotificationSettingService globalNotificationSettingService) {
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
-        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.globalNotificationSettingService = globalNotificationSettingService;
     }
 
     /**
@@ -83,7 +84,7 @@ public class UserSshPublicKeyExpiryNotificationService {
      * @param key       the key which was added
      */
     public void notifyUserAboutExpiredSshKey(User recipient, UserSshPublicKey key) {
-        if (globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.SSH_KEY_EXPIRED)) {
+        if (globalNotificationSettingService.isNotificationEnabled(recipient, GlobalNotificationType.SSH_KEY_EXPIRED)) {
             var contextVariables = new HashMap<String, Object>();
 
             contextVariables.put("sshKey", key);
@@ -94,7 +95,8 @@ public class UserSshPublicKeyExpiryNotificationService {
                 contextVariables.put("expiryDate", "-");
             }
 
-            mailSendingService.buildAndSendSync(recipient, "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning", "mail/notification/sshKeyHasExpiredEmail", contextVariables);
+            mailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning",
+                    "mail/notification/sshKeyHasExpiredEmail", contextVariables);
         }
     }
 }

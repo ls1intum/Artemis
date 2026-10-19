@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
@@ -8,7 +8,7 @@ import { map } from 'rxjs/operators';
 
 type EntityResponseType = SearchResult<Lecture>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LecturePagingService extends PagingService<Lecture> {
     private http = inject(HttpClient);
 
@@ -20,6 +20,8 @@ export class LecturePagingService extends PagingService<Lecture> {
 
     override search(pageable: SearchTermPageableSearch): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
-        return this.http.get(`${LecturePagingService.RESOURCE_URL}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
+        return this.http
+            .get<EntityResponseType>(`${LecturePagingService.RESOURCE_URL}`, { params, observe: 'response' })
+            .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }

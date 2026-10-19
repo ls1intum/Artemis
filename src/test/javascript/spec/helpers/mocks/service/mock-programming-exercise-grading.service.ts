@@ -20,7 +20,7 @@ export class MockProgrammingExerciseGradingService implements IProgrammingExerci
         if (this.testCaseSubject) {
             this.testCaseSubject.complete();
         }
-        this.testCaseSubject = new BehaviorSubject(initialValue);
+        this.testCaseSubject = new BehaviorSubject<ProgrammingExerciseTestCase[] | undefined>(initialValue);
     }
 
     nextTestCases(value: ProgrammingExerciseTestCase[] | undefined) {

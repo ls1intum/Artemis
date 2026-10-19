@@ -12,11 +12,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
@@ -25,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 @Conditional(IrisEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.IRIS_SETTINGS)
 @RestController
 @RequestMapping("api/iris/")
 public class IrisSettingsResource {
@@ -41,6 +46,7 @@ public class IrisSettingsResource {
         this.authorizationCheckService = authorizationCheckService;
     }
 
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -60,7 +66,7 @@ public class IrisSettingsResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettings update) {
         courseRepository.findByIdElseThrow(courseId);
-        var isAdmin = authorizationCheckService.isAdmin();
+        var isAdmin = authorizationCheckService.isCurrentUserAdminAccessEnabled();
         var saved = irisSettingsService.updateCourseSettings(courseId, update, isAdmin);
         return ResponseEntity.ok(saved);
     }

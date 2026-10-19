@@ -1,6 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, input, model, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamLiveEventType, ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { faCheckCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -21,69 +22,64 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-exam-live-announcement-create-modal',
     templateUrl: './exam-live-announcement-create-modal.component.html',
-    styleUrls: ['./exam-live-announcement-create-modal.component.scss'],
-    imports: [FormsModule, TranslateDirective, MarkdownEditorMonacoComponent, ExamLiveEventComponent, FaIconComponent],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        MarkdownEditorMonacoComponent,
+        ExamLiveEventComponent,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
+    ],
 })
-export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+export class ExamLiveAnnouncementCreateModalComponent {
     private examManagementService = inject(ExamManagementService);
 
     actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
 
-    courseId: number;
-    examId: number;
+    readonly visible = model(true);
+    readonly courseId = input.required<number>();
+    readonly examId = input.required<number>();
 
-    textContent: string;
+    readonly textContent = signal<string>(undefined!);
     html?: SafeHtml;
 
-    status: 'not_submitted' | 'submitting' | 'submitted' = 'not_submitted';
+    readonly status = signal<'not_submitted' | 'submitting' | 'submitted'>('not_submitted');
 
-    announcement?: ExamWideAnnouncementEvent;
+    readonly announcement = signal<ExamWideAnnouncementEvent | undefined>(undefined);
 
     // Icons
     faSpinner = faSpinner;
     faCheckCircle = faCheckCircle;
 
-    ngOnInit(): void {
-        const data = this.dialogConfig?.data;
-        if (data) {
-            if (data.courseId !== undefined) {
-                this.courseId = data.courseId;
-            }
-            if (data.examId !== undefined) {
-                this.examId = data.examId;
-            }
-        }
-    }
-
     submitAnnouncement() {
-        this.status = 'submitting';
-        this.examManagementService.createAnnouncement(this.courseId, this.examId, this.textContent).subscribe({
+        this.status.set('submitting');
+        this.examManagementService.createAnnouncement(this.courseId(), this.examId(), this.textContent()).subscribe({
             next: (event: ExamWideAnnouncementEvent) => {
-                this.status = 'submitted';
-                this.announcement = event;
+                this.status.set('submitted');
+                this.announcement.set(event);
             },
             error: () => {
-                this.status = 'not_submitted';
+                this.status.set('not_submitted');
             },
         });
     }
 
     textContentChanged(textContent: string) {
-        this.textContent = textContent;
-        this.announcement = {
+        this.textContent.set(textContent);
+        this.announcement.set({
             id: 0,
             createdDate: dayjs(),
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
             text: textContent,
-        };
+        });
     }
 
     /**
-     * Closes the modal by dismissing it
+     * Closes the dialog by dismissing it
      */
     clear() {
-        this.dialogRef.close('cancel');
+        this.visible.set(false);
     }
 }

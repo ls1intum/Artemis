@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTrainingQuizComponent } from './course-training-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -43,10 +42,9 @@ const question3: QuizQuestion = {
 
 const course = { id: 1, title: 'Test Course' };
 
-const answer: SubmittedAnswerAfterEvaluation = { selectedOptions: [{ scoreInPoints: 2 }] };
+const answer = { selectedOptions: [{ scoreInPoints: 2 }] } as unknown as SubmittedAnswerAfterEvaluation;
 
 describe('CourseTrainingQuizComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CourseTrainingQuizComponent;
     let fixture: ComponentFixture<CourseTrainingQuizComponent>;
     let quizService: CourseTrainingQuizService;
@@ -193,14 +191,14 @@ describe('CourseTrainingQuizComponent', () => {
 
     it('should init the current question', () => {
         component.initQuestion(question1);
-        expect(component.showingResult).toBeFalsy();
-        expect(component.dragAndDropMappings).toEqual([]);
+        expect(component.showingResult()).toBeFalsy();
+        expect(component.dragAndDropMappings()).toEqual([]);
         component.initQuestion(question2);
-        expect(component.showingResult).toBeFalsy();
-        expect(component.selectedAnswerOptions).toEqual([]);
+        expect(component.showingResult()).toBeFalsy();
+        expect(component.selectedAnswerOptions()).toEqual([]);
         component.initQuestion(question3);
-        expect(component.showingResult).toBeFalsy();
-        expect(component.shortAnswerSubmittedTexts).toEqual([]);
+        expect(component.showingResult()).toBeFalsy();
+        expect(component.shortAnswerSubmittedTexts()).toEqual([]);
     });
 
     it('should submit quiz and handle success', () => {
@@ -211,7 +209,7 @@ describe('CourseTrainingQuizComponent', () => {
         component.currentIndex.set(0);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(component.submitted).toBe(true);
+        expect(component.submitted()).toBe(true);
         expect(showResultSpy).toHaveBeenCalledWith(answer);
         vi.clearAllMocks();
         // Multiple Choice
@@ -219,7 +217,7 @@ describe('CourseTrainingQuizComponent', () => {
         component.currentIndex.set(1);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(component.submitted).toBe(true);
+        expect(component.submitted()).toBe(true);
         expect(showResultSpy).toHaveBeenCalledWith(answer);
         vi.clearAllMocks();
         // Short Answer
@@ -227,7 +225,7 @@ describe('CourseTrainingQuizComponent', () => {
         component.currentIndex.set(2);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(component.submitted).toBe(true);
+        expect(component.submitted()).toBe(true);
         expect(showResultSpy).toHaveBeenCalledWith(answer);
     });
 
@@ -265,16 +263,16 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should set showUnratedConfirmation to false when confirmUnratedPractice is called', () => {
-        component.showUnratedConfirmation = true;
+        component.showUnratedConfirmation.set(true);
         component.confirmUnratedPractice();
-        expect(component.showUnratedConfirmation).toBe(false);
+        expect(component.showUnratedConfirmation()).toBe(false);
     });
 
     it('should set showUnratedConfirmation to false and navigate to training when cancelUnratedPractice is called', () => {
         const navigateSpy = vi.spyOn(component, 'navigateToTraining');
-        component.showUnratedConfirmation = true;
+        component.showUnratedConfirmation.set(true);
         component.cancelUnratedPractice();
-        expect(component.showUnratedConfirmation).toBe(false);
+        expect(component.showUnratedConfirmation()).toBe(false);
         expect(navigateSpy).toHaveBeenCalled();
     });
 });

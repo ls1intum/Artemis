@@ -41,9 +41,11 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
             await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByText(exercise.title!)).toBeVisible();
-            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.problemStatement!)).toBeVisible();
-            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.exampleSolution!)).toBeVisible();
-            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.gradingInstructions!)).toBeVisible();
+            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.problemStatement!)).toBeVisible();
+            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.exampleSolution!)).toBeVisible();
+            await expect(
+                fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.gradingInstructions!),
+            ).toBeVisible();
             await fileUploadExerciseAssessment.downloadSubmissionFile();
             await fileUploadExerciseAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
             await fileUploadExerciseAssessment.submitFeedback();
@@ -73,7 +75,10 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
 
         test('Instructor can see complaint and reject it', async ({ login, fileUploadExerciseAssessment }) => {
             await login(instructor, `/course-management/${course.id}/complaints`);
-            const response = await fileUploadExerciseAssessment.acceptComplaint('Makes sense', false);
+            // Open this exercise's own complaint row — the exerciseAssessment seed course is shared with other
+            // assessment tests (e.g. modeling), so the first complaint in the course-wide list may belong to a
+            // different, concurrently-running test.
+            const response = await fileUploadExerciseAssessment.acceptComplaint('Makes sense', false, exercise.title!);
             expect(response.status()).toBe(200);
         });
     });

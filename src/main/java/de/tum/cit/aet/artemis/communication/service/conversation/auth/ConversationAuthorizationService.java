@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -32,10 +33,13 @@ public class ConversationAuthorizationService {
     }
 
     /**
-     * Returns a {@link User} object with authorities and groups loaded.
+     * Returns a {@link User} object with authorities loaded.
+     * Course roles are no longer needed here: all per-course authorization checks in
+     * {@link de.tum.cit.aet.artemis.core.service.AuthorizationCheckService} issue direct DB point-lookups
+     * against the user_course_role table instead of inspecting the in-memory collection.
      *
-     * @param user the {@link User} object to check for loaded authorities and groups
-     * @return the {@link User} object, potentially after loading the authorities and groups
+     * @param user the {@link User} object to ensure authorities are loaded for
+     * @return the {@link User} object, potentially after loading the authorities
      * @throws IllegalArgumentException if the user parameter is null
      */
     protected User getUserIfNecessary(User user) {
@@ -44,9 +48,8 @@ public class ConversationAuthorizationService {
         }
         var userToCheck = user;
         var persistenceUtil = Persistence.getPersistenceUtil();
-        if (!persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "groups") || userToCheck.getGroups() == null
-                || userToCheck.getAuthorities() == null) {
-            userToCheck = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
+        if (!persistenceUtil.isLoaded(userToCheck, User_.AUTHORITIES) || userToCheck.getAuthorities() == null) {
+            userToCheck = userRepository.getUserWithAuthorities(user.getLogin());
         }
         return userToCheck;
     }

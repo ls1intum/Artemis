@@ -1,9 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { PostService } from 'app/communication/service/post.service';
 import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
@@ -11,12 +10,13 @@ import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-po
 import { PostComponent } from 'app/communication/post/post.component';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { metisPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from 'test/helpers/sample/metis-sample-data';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
+import { communicationPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from 'test/helpers/sample/communication-sample-data';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,8 +25,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { DialogService } from 'primeng/dynamicdialog';
 
 interface PostGroup {
@@ -35,12 +35,10 @@ interface PostGroup {
 }
 
 describe('PostingFooterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingFooterComponent;
     let fixture: ComponentFixture<PostingFooterComponent>;
-    let metisService: MetisService;
-    let metisServiceUserAuthorityStub: ReturnType<typeof vi.spyOn>;
+    let communicationService: CommunicationService;
+    let communicationServiceUserAuthorityStub: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -49,10 +47,10 @@ describe('PostingFooterComponent', () => {
                 provideHttpClientTesting(),
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: DialogService, useValue: { open: vi.fn() } },
             ],
             imports: [
@@ -69,8 +67,8 @@ describe('PostingFooterComponent', () => {
         });
         fixture = TestBed.createComponent(PostingFooterComponent);
         component = fixture.componentInstance;
-        metisService = TestBed.inject(MetisService);
-        metisServiceUserAuthorityStub = vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
+        communicationService = TestBed.inject(CommunicationService);
+        communicationServiceUserAuthorityStub = vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse');
     });
 
     afterEach(() => {
@@ -80,10 +78,10 @@ describe('PostingFooterComponent', () => {
     it('should be initialized correctly for users that are at least tutors in course', () => {
         post.answers = unsortedAnswerArray;
         fixture.componentRef.setInput('posting', post);
-        metisServiceUserAuthorityStub.mockReturnValue(true);
+        communicationServiceUserAuthorityStub.mockReturnValue(true);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).toBe(true);
-        expect(component.createdAnswerPost.resolvesPost).toBe(true);
+        expect(component.createdAnswerPost().resolvesPost).toBe(true);
     });
 
     it('should group answer posts correctly', () => {
@@ -91,21 +89,18 @@ describe('PostingFooterComponent', () => {
         fixture.detectChanges();
 
         component.groupAnswerPosts();
-        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
-        expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0);
+        expect(component.groupedAnswerPosts().length).toBeGreaterThan(0);
+        expect(component.groupedAnswerPosts()[0].posts.length).toBeGreaterThan(0);
     });
 
     it('should group answer posts and detect changes on changes to sortedAnswerPosts input', () => {
         fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1, unApprovedAnswerPost2]);
         fixture.detectChanges();
 
-        const changeDetectorSpy = vi.spyOn(component['changeDetector'], 'detectChanges');
-
         const answerPostWithDate = { ...unApprovedAnswerPost1, id: 3, creationDate: dayjs().subtract(2, 'day') } as AnswerPost;
         fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1, unApprovedAnswerPost2, answerPostWithDate]);
         fixture.detectChanges();
-        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
-        expect(changeDetectorSpy).toHaveBeenCalled();
+        expect(component.groupedAnswerPosts().length).toBeGreaterThan(0);
     });
 
     it('should clear answerPostCreateEditModal container on destroy', () => {
@@ -125,6 +120,24 @@ describe('PostingFooterComponent', () => {
             // If no modal rendered, ngOnDestroy should not fail
             component.ngOnDestroy();
         }
+    });
+
+    it('should reopen the reply input after an answer was created so that the user can reply again', () => {
+        fixture.componentRef.setInput('posting', post);
+        fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1]);
+        fixture.componentRef.setInput('showAnswers', true);
+        fixture.detectChanges();
+
+        const modalDebugElement = fixture.debugElement.query(By.directive(AnswerPostCreateEditModalComponent));
+        const modal = modalDebugElement.componentInstance as AnswerPostCreateEditModalComponent;
+        const openSpy = vi.spyOn(modal, 'open');
+        const previousDraft = component.createdAnswerPost();
+
+        modalDebugElement.triggerEventHandler('onCreate', unApprovedAnswerPost2);
+
+        expect(openSpy).toHaveBeenCalledOnce();
+        expect(component.createdAnswerPost()).not.toBe(previousDraft);
+        expect(component.createdAnswerPost().content).toBe('');
     });
 
     it('should return the ID of the post in trackPostByFn', () => {
@@ -169,14 +182,14 @@ describe('PostingFooterComponent', () => {
     it('should be initialized correctly for users that are not at least tutors in course', () => {
         post.answers = unsortedAnswerArray;
         fixture.componentRef.setInput('posting', post);
-        metisServiceUserAuthorityStub.mockReturnValue(false);
+        communicationServiceUserAuthorityStub.mockReturnValue(false);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).toBe(false);
-        expect(component.createdAnswerPost.resolvesPost).toBe(false);
+        expect(component.createdAnswerPost().resolvesPost).toBe(false);
     });
 
     it('should open create answer post modal', () => {
-        fixture.componentRef.setInput('posting', metisPostExerciseUser1);
+        fixture.componentRef.setInput('posting', communicationPostExerciseUser1);
         component.ngOnInit();
         fixture.detectChanges();
 
@@ -187,7 +200,7 @@ describe('PostingFooterComponent', () => {
     });
 
     it('should close create answer post modal', () => {
-        fixture.componentRef.setInput('posting', metisPostExerciseUser1);
+        fixture.componentRef.setInput('posting', communicationPostExerciseUser1);
         component.ngOnInit();
         fixture.detectChanges();
 
@@ -212,20 +225,20 @@ describe('PostingFooterComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         component.groupAnswerPosts();
-        expect(component.groupedAnswerPosts).toHaveLength(3);
+        expect(component.groupedAnswerPosts()).toHaveLength(3);
 
-        const group1 = component.groupedAnswerPosts[0];
+        const group1 = component.groupedAnswerPosts()[0];
         expect(group1.author).toEqual(authorA);
         expect(group1.posts).toHaveLength(2);
         expect(group1.posts).toContainEqual(expect.objectContaining({ id: post1.id }));
         expect(group1.posts).toContainEqual(expect.objectContaining({ id: post2.id }));
 
-        const group2 = component.groupedAnswerPosts[1];
+        const group2 = component.groupedAnswerPosts()[1];
         expect(group2.author).toEqual(authorA);
         expect(group2.posts).toHaveLength(1);
         expect(group2.posts).toContainEqual(expect.objectContaining({ id: post3.id }));
 
-        const group3 = component.groupedAnswerPosts[2];
+        const group3 = component.groupedAnswerPosts()[2];
         expect(group3.author).toEqual(authorB);
         expect(group3.posts).toHaveLength(2);
         expect(group3.posts).toContainEqual(expect.objectContaining({ id: post4.id }));
@@ -235,6 +248,6 @@ describe('PostingFooterComponent', () => {
     it('should handle empty answer posts array', () => {
         fixture.componentRef.setInput('sortedAnswerPosts', []);
         component.groupAnswerPosts();
-        expect(component.groupedAnswerPosts).toHaveLength(0);
+        expect(component.groupedAnswerPosts()).toHaveLength(0);
     });
 });

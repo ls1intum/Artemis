@@ -21,7 +21,7 @@ export class InsertShortAnswerOptionAction extends TextEditorAction {
         this.translationKey = 'artemisApp.shortAnswerQuestion.editor.addOption';
     }
 
-    executeInCurrentEditor(args?: InsertShortAnswerOptionArgs) {
+    override executeInCurrentEditor(args?: InsertShortAnswerOptionArgs) {
         super.executeInCurrentEditor(args);
     }
 

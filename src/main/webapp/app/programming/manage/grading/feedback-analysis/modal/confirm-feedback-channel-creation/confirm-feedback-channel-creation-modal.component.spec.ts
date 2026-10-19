@@ -1,21 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/confirm-feedback-channel-creation/confirm-feedback-channel-creation-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 describe('ConfirmFeedbackChannelCreationModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ConfirmFeedbackChannelCreationModalComponent>;
     let component: ConfirmFeedbackChannelCreationModalComponent;
     let activeModal: NgbActiveModal;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ConfirmFeedbackChannelCreationModalComponent],
-            providers: [NgbActiveModal],
+            imports: [ConfirmFeedbackChannelCreationModalComponent],
+            providers: [NgbActiveModal, provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ConfirmFeedbackChannelCreationModalComponent);

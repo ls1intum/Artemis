@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { DisplayPriority } from 'app/communication/metis.util';
+import { DisplayPriority } from 'app/communication/communication.util';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
-import { MetisService } from 'app/communication/service/metis.service';
+import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -20,6 +20,7 @@ import { MockProvider } from 'ng-mocks';
 import { User } from 'app/account/user/user.model';
 import * as courseModel from 'app/course/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
+import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 class MockOneToOneChatService {
     createWithId = vi.fn().mockReturnValue(of({ body: { id: 1 } }));
@@ -51,7 +52,7 @@ class MockReactionsBar {
     template: `<div jhiPosting></div>`,
 })
 class TestPostingComponent extends PostingDirective<MockPosting> {
-    reactionsBar: MockReactionsBar = new MockReactionsBar();
+    reactionsBar = new MockReactionsBar() as unknown as PostingReactionsBarComponent<MockPosting>;
 
     get reactionsBarInstance() {
         return this.reactionsBar;
@@ -63,14 +64,12 @@ class TestPostingComponent extends PostingDirective<MockPosting> {
 }
 
 describe('PostingDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TestPostingComponent;
     let fixture: ComponentFixture<TestPostingComponent>;
     let mockReactionsBar: MockReactionsBar;
-    let mockMetisService: MetisService;
+    let mockCommunicationService: CommunicationService;
     let mockOneToOneChatService: OneToOneChatService;
-    let mockMetisConversationService: MetisConversationService;
+    let mockCourseConversationsService: CourseConversationsService;
     let mockRouter: Router;
 
     beforeEach(async () => {
@@ -80,8 +79,8 @@ describe('PostingDirective', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
-                MockProvider(MetisService),
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                MockProvider(CommunicationService),
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: OneToOneChatService, useClass: MockOneToOneChatService },
                 { provide: Router, useValue: { navigate: vi.fn() } },
             ],
@@ -90,7 +89,7 @@ describe('PostingDirective', () => {
         fixture = TestBed.createComponent(TestPostingComponent);
         component = fixture.componentInstance;
         mockReactionsBar = new MockReactionsBar();
-        component.reactionsBar = mockReactionsBar;
+        component.reactionsBar = mockReactionsBar as unknown as PostingReactionsBarComponent<MockPosting>;
         const user = new User();
         user.id = 123;
         component.posting.set(new MockPosting(123, 'Test content', user));
@@ -98,13 +97,13 @@ describe('PostingDirective', () => {
         fixture.componentRef.setInput('isThreadSidebar', false);
         fixture.detectChanges();
 
-        mockMetisService = TestBed.inject(MetisService);
+        mockCommunicationService = TestBed.inject(CommunicationService);
         const course = new Course();
         course.id = 1;
-        mockMetisService.setCourse(course);
-        mockMetisService.getCourse = vi.fn().mockReturnValue(course);
+        mockCommunicationService.setCourse(course);
+        mockCommunicationService.getCourse = vi.fn().mockReturnValue(course);
         mockOneToOneChatService = TestBed.inject(OneToOneChatService);
-        mockMetisConversationService = TestBed.inject(MetisConversationService);
+        mockCourseConversationsService = TestBed.inject(CourseConversationsService);
         mockRouter = TestBed.inject(Router);
     });
 
@@ -127,24 +126,24 @@ describe('PostingDirective', () => {
     });
 
     it('should call editPosting on reactionsBar and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.editPosting();
         expect(mockReactionsBar.editPosting).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should call togglePin on reactionsBar and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.togglePin();
         expect(mockReactionsBar.togglePin).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should call deletePosting on reactionsBar and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.deletePost();
         expect(mockReactionsBar.deletePosting).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should return display priority from reactionsBar', () => {
@@ -154,7 +153,7 @@ describe('PostingDirective', () => {
     });
 
     it('should call selectReaction on reactionsBar and hide reaction selector', () => {
-        const event = { reaction: 'like' };
+        const event = { reaction: 'like' } as unknown as EmojiEvent;
         component.showReactionSelector = true;
         component.selectReaction(event);
         expect(mockReactionsBar.selectReaction).toHaveBeenCalledWith(event);
@@ -169,7 +168,7 @@ describe('PostingDirective', () => {
         const preventDefaultSpy = vi.spyOn(mouseEvent, 'preventDefault');
         component.addReaction(mouseEvent);
         expect(preventDefaultSpy).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
         expect(component.clickPosition).toEqual({ x: 100, y: 200 });
         expect(component.showReactionSelector).toBe(true);
     });
@@ -183,8 +182,8 @@ describe('PostingDirective', () => {
         expect(component.showReactionSelector).toBe(false);
     });
 
-    it('should call markMessageAsUnread on metisService', () => {
-        const markMessageAsUnreadSpy = vi.spyOn(mockMetisService, 'markMessageAsUnread');
+    it('should call markMessageAsUnread on communicationService', () => {
+        const markMessageAsUnreadSpy = vi.spyOn(mockCommunicationService, 'markMessageAsUnread');
 
         component.markMessageAsUnread();
 
@@ -202,7 +201,7 @@ describe('PostingDirective', () => {
 
     it('should not proceed in onUserNameClicked if messaging is not enabled', () => {
         vi.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(false);
-        const createOneToOneChatSpy = vi.spyOn(mockMetisConversationService, 'createOneToOneChatWithId');
+        const createOneToOneChatSpy = vi.spyOn(mockCourseConversationsService, 'createOneToOneChatWithId');
         const createChatSpy = vi.spyOn(mockOneToOneChatService, 'createWithId');
         const navigateSpy = vi.spyOn(mockRouter, 'navigate');
 
@@ -215,7 +214,7 @@ describe('PostingDirective', () => {
 
     it('should not proceed in onUserReferenceClicked if messaging is not enabled', () => {
         vi.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(false);
-        const createOneToOneChatSpy = vi.spyOn(mockMetisConversationService, 'createOneToOneChat');
+        const createOneToOneChatSpy = vi.spyOn(mockCourseConversationsService, 'createOneToOneChat');
         const createChatSpy = vi.spyOn(mockOneToOneChatService, 'create');
         const navigateSpy = vi.spyOn(mockRouter, 'navigate');
 
@@ -230,7 +229,7 @@ describe('PostingDirective', () => {
         vi.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(true);
         fixture.componentRef.setInput('isCommunicationPage', true);
 
-        const createOneToOneChatIdSpy = vi.spyOn(mockMetisConversationService, 'createOneToOneChatWithId');
+        const createOneToOneChatIdSpy = vi.spyOn(mockCourseConversationsService, 'createOneToOneChatWithId');
         const createWithIdSpy = vi.spyOn(mockOneToOneChatService, 'createWithId');
 
         component.onUserNameClicked();
@@ -248,7 +247,7 @@ describe('PostingDirective', () => {
         vi.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(true);
         fixture.componentRef.setInput('isCommunicationPage', true);
 
-        const createOneToOneChatSpy = vi.spyOn(mockMetisConversationService, 'createOneToOneChat');
+        const createOneToOneChatSpy = vi.spyOn(mockCourseConversationsService, 'createOneToOneChat');
         const createSpy = vi.spyOn(mockOneToOneChatService, 'create');
 
         component.onUserReferenceClicked('test');
@@ -287,11 +286,11 @@ describe('PostingDirective', () => {
 
     it('should set delete timer to initial value when delete is true', () => {
         component.onDeleteEvent(true);
-        expect(component.deleteTimerInSeconds).toBe(component.timeToDeleteInSeconds);
+        expect(component.deleteTimerInSeconds()).toBe(component.timeToDeleteInSeconds);
     });
 
-    it('should call metisService.deletePost for regular post', () => {
-        const deletePostSpy = vi.spyOn(mockMetisService, 'deletePost');
+    it('should call communicationService.deletePost for regular post', () => {
+        const deletePostSpy = vi.spyOn(mockCommunicationService, 'deletePost');
         vi.useFakeTimers();
 
         component.isAnswerPost = false;
@@ -302,8 +301,8 @@ describe('PostingDirective', () => {
         expect(deletePostSpy).toHaveBeenCalledWith(component.posting());
     });
 
-    it('should call metisService.deleteAnswerPost for answer post', () => {
-        const deleteAnswerPostSpy = vi.spyOn(mockMetisService, 'deleteAnswerPost');
+    it('should call communicationService.deleteAnswerPost for answer post', () => {
+        const deleteAnswerPostSpy = vi.spyOn(mockCommunicationService, 'deleteAnswerPost').mockReturnValue(of(undefined));
         vi.useFakeTimers();
 
         component.isAnswerPost = true;
@@ -320,10 +319,10 @@ describe('PostingDirective', () => {
         component.onDeleteEvent(true);
 
         vi.advanceTimersByTime(1000);
-        expect(component.deleteTimerInSeconds).toBe(5);
+        expect(component.deleteTimerInSeconds()).toBe(5);
 
         vi.advanceTimersByTime(1000);
-        expect(component.deleteTimerInSeconds).toBe(4);
+        expect(component.deleteTimerInSeconds()).toBe(4);
     });
 
     it('should stop timer at 0 when decrementing', () => {
@@ -333,12 +332,12 @@ describe('PostingDirective', () => {
 
         vi.advanceTimersByTime(7000);
 
-        expect(component.deleteTimerInSeconds).toBe(0);
+        expect(component.deleteTimerInSeconds()).toBe(0);
     });
 
     it('should do nothing if delete event is false', () => {
-        const deletePostSpy = vi.spyOn(mockMetisService, 'deletePost');
-        const deleteAnswerPostSpy = vi.spyOn(mockMetisService, 'deleteAnswerPost');
+        const deletePostSpy = vi.spyOn(mockCommunicationService, 'deletePost');
+        const deleteAnswerPostSpy = vi.spyOn(mockCommunicationService, 'deleteAnswerPost');
 
         component.onDeleteEvent(false);
 

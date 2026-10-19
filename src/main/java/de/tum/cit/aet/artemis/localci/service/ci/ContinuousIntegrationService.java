@@ -5,8 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -49,7 +47,7 @@ public interface ContinuousIntegrationService {
      * @param exercise for which the build plans should be recreated
      */
     // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
-    void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException;
+    void recreateBuildPlansForExercise(ProgrammingExercise exercise);
 
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.

@@ -1,6 +1,5 @@
 import { expect, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -40,7 +39,6 @@ vi.mock('@sentry/angular', async () => {
 });
 
 describe('ResultService', () => {
-    setupTestBed({ zoneless: true });
     let resultService: ResultService;
     let translateService: TranslateService;
     let http: HttpClient;
@@ -364,6 +362,15 @@ describe('ResultService', () => {
             expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         });
 
+        it('builds the string for a result without a participation and does not report it to Sentry', () => {
+            const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
+            captureExceptionSpy.mockClear();
+
+            expect(resultService.getResultString(modelingResult, modelingExercise, undefined, true)).toBe('artemisApp.result.resultString.short');
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
+            expect(captureExceptionSpy).not.toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
+        });
+
         it('reports to Sentry if result or exercise is undefined', () => {
             // Re-mock to get reference because direct import doesn't work here
             const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
@@ -378,7 +385,7 @@ describe('ResultService', () => {
             const participation: StudentParticipation = { testRun: true, type: ParticipationType.STUDENT };
             const result: Result = {};
             expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                class: 'bg-secondary',
+                severity: 'secondary',
                 text: 'artemisApp.result.practice',
                 tooltip: 'artemisApp.result.practiceTooltip',
             });
@@ -388,7 +395,7 @@ describe('ResultService', () => {
             const participation: Participation = {};
             const result: Result = { rated: true };
             expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                class: 'bg-success',
+                severity: 'success',
                 text: 'artemisApp.result.graded',
                 tooltip: 'artemisApp.result.gradedTooltip',
             });
@@ -398,7 +405,7 @@ describe('ResultService', () => {
             const participation: Participation = {};
             const result: Result = { rated: false };
             expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                class: 'bg-info',
+                severity: 'info',
                 text: 'artemisApp.result.notGraded',
                 tooltip: 'artemisApp.result.notGradedTooltip',
             });

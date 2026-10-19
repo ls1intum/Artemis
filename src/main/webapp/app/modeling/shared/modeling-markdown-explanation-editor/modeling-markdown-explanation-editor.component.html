@@ -1,0 +1,14 @@
+<jhi-modeling-explanation-surface [labelId]="labelId" [labelKey]="labelKey()" [notchWidth]="notchWidth()" [minHeight]="MarkdownEditorHeight.INLINE + 8">
+    <div #resizableContent class="modeling-markdown-explanation-editor__editor nokey nowheel" [id]="editorId">
+        <jhi-markdown-editor-monaco
+            class="markdown-editor background-editor-color"
+            [domainActions]="domainActions()"
+            [initialEditorHeight]="MarkdownEditorHeight.INLINE"
+            [resizableMinHeight]="MarkdownEditorHeight.INLINE"
+            [externalHeight]="true"
+            [enableResize]="false"
+            [showMarkdownInfoText]="false"
+            [(markdown)]="markdown"
+        />
+    </div>
+</jhi-modeling-explanation-surface>

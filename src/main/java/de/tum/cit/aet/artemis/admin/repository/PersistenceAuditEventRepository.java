@@ -33,6 +33,30 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfterAndAuditEventType(String principle, Instant after, String type);
 
+    @EntityGraph(type = LOAD, attributePaths = { "data" })
+    List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfter(String principal, Instant after);
+
+    /**
+     * Finds a bounded page of expired event ids, oldest first, so pruning can run in batches. Batching matters because
+     * the log was never pruned before, so the first run has to clear a backlog that may span years; deleting all of it in
+     * one transaction would hold locks for a long time and bloat the undo log. Oldest first so that repeated runs make
+     * monotonic progress instead of revisiting the same rows.
+     * <p>
+     * No type filter is needed: after the audit log split this table holds only authentication events, all of which share
+     * the general retention period.
+     *
+     * @param before   only events strictly older than this are returned
+     * @param pageable bounds the batch size
+     * @return ids of expired events, oldest first
+     */
+    @Query("""
+            SELECT event.id
+            FROM PersistentAuditEvent event
+            WHERE event.auditEventDate < :before
+            ORDER BY event.auditEventDate ASC
+            """)
+    List<Long> findExpiredIds(@Param("before") Instant before, Pageable pageable);
+
     @Query("""
             SELECT p.id
             FROM PersistentAuditEvent p

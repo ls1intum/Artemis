@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
 import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -12,8 +11,6 @@ import { MockProvider } from 'ng-mocks';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 describe('FeedbackUtils', () => {
-    setupTestBed({ zoneless: true });
-
     let exerciseService: ExerciseService;
 
     beforeEach(async () => {

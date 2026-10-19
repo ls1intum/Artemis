@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LandingSpotlightComponent } from 'app/core/landing/landing-spotlight.component';
 import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,8 +16,6 @@ const TEST_STEPS: SpotlightStep[] = [
 ];
 
 describe('LandingSpotlightComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LandingSpotlightComponent;
     let fixture: ComponentFixture<LandingSpotlightComponent>;
 

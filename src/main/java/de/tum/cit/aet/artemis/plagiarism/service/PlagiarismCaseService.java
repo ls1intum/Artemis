@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,8 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionReposito
 @Lazy
 @Service
 public class PlagiarismCaseService {
+
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismCaseService.class);
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
@@ -66,7 +71,7 @@ public class PlagiarismCaseService {
             plagiarismCase.setVerdictMessage(plagiarismVerdictDTO.verdictMessage());
         }
         plagiarismCase.setVerdictDate(ZonedDateTime.now());
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         plagiarismCase.setVerdictBy(user);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         // Notify the student about the verdict
@@ -108,9 +113,9 @@ public class PlagiarismCaseService {
     public void createOrAddToPlagiarismCasesForComparison(long plagiarismComparisonId) {
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
         // handle student A
-        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), false);
+        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionAElseThrow(), false);
         // handle student B
-        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), false);
+        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionBElseThrow(), false);
     }
 
     /**
@@ -183,25 +188,61 @@ public class PlagiarismCaseService {
     public void removeSubmissionsInPlagiarismCasesForComparison(long plagiarismComparisonId) {
         // remove plagiarism case from both submissions
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
-        plagiarismComparison.getSubmissionA().setPlagiarismCase(null);
-        plagiarismComparison.getSubmissionB().setPlagiarismCase(null);
+        plagiarismComparison.getSubmissionAElseThrow().setPlagiarismCase(null);
+        plagiarismComparison.getSubmissionBElseThrow().setPlagiarismCase(null);
         // we do not save plagiarism comparison or plagiarism submission directly because due to issues with Cascade_All, it will automatically delete matches and re-add them
         // we actually use a custom modifying query to avoid all issues with Cascade ALL
-        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionA().getId(), null);
-        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionB().getId(), null);
+        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionAElseThrow().getId(), null);
+        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionBElseThrow().getId(), null);
 
         // delete plagiarism case of Student A if it doesn't contain any submissions now
-        var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionA().getStudentLogin(),
+        var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionAElseThrow().getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseA.isPresent() && plagiarismCaseA.get().getPlagiarismSubmissions().isEmpty()) {
             plagiarismCaseRepository.delete(plagiarismCaseA.get());
         }
 
         // delete plagiarism case of Student B if it doesn't contain any submissions now
-        var plagiarismCaseB = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionB().getStudentLogin(),
+        var plagiarismCaseB = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionBElseThrow().getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseB.isPresent() && plagiarismCaseB.get().getPlagiarismSubmissions().isEmpty()) {
             plagiarismCaseRepository.delete(plagiarismCaseB.get());
         }
+    }
+
+    /**
+     * Deletes all plagiarism cases of course exercises whose course ended before the given date, for the data-privacy
+     * retention cleanup. For each case the plagiarism-case reference on its submissions is cleared first (that foreign
+     * key is RESTRICT), then the case is deleted (which cascades to its notification post).
+     *
+     * @param endDateBefore only cases of courses that ended strictly before this are deleted
+     * @return the number of deleted plagiarism cases
+     */
+    public int deletePlagiarismCasesOfCoursesEndedBefore(ZonedDateTime endDateBefore) {
+        List<PlagiarismCase> plagiarismCases = plagiarismCaseRepository.findWithSubmissionsByCourseEndDateBefore(endDateBefore);
+        int deleted = 0;
+        for (PlagiarismCase plagiarismCase : plagiarismCases) {
+            // Isolate failures per case so one bad case cannot abort the whole batch (consistent with the other
+            // data-privacy cleanups). The count reflects what was actually deleted.
+            try {
+                plagiarismCase.getPlagiarismSubmissions().forEach(submission -> plagiarismSubmissionRepository.updatePlagiarismCase(submission.getId(), null));
+                plagiarismCaseRepository.delete(plagiarismCase);
+                deleted++;
+            }
+            catch (Exception e) {
+                log.error("Failed to delete plagiarism case {} during data-privacy cleanup", plagiarismCase.getId(), e);
+            }
+        }
+        return deleted;
+    }
+
+    /**
+     * Counts the plagiarism cases of course exercises whose course ended before the given date.
+     *
+     * @param endDateBefore only cases of courses that ended strictly before this are counted
+     * @return the number of matching plagiarism cases
+     */
+    public int countPlagiarismCasesOfCoursesEndedBefore(ZonedDateTime endDateBefore) {
+        return plagiarismCaseRepository.countByCourseEndDateBefore(endDateBefore);
     }
 }

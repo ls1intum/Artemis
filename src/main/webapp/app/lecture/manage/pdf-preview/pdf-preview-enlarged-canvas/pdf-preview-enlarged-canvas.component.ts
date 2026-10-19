@@ -10,6 +10,9 @@ type NavigationDirection = 'next' | 'prev';
     imports: [TranslateDirective],
 })
 export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit {
+    // Injected services
+    private readonly renderer = inject(Renderer2);
+
     enlargedContainer = viewChild.required<ElementRef<HTMLDivElement>>('enlargedContainer');
     enlargedCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
 
@@ -27,9 +30,6 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
 
     //Outputs
     isEnlargedViewOutput = output<boolean>();
-
-    // Injected services
-    private readonly renderer = inject(Renderer2);
 
     ngOnInit() {
         this.currentPage.set(this.initialPage()!);

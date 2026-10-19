@@ -1,8 +1,0 @@
-{
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "outDir": "./build/resources/main/static/app",
-        "types": ["node"]
-    },
-    "files": ["src/main/webapp/app/app.main.ts"]
-}

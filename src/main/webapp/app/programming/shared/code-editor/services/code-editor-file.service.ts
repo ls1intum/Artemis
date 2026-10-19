@@ -1,5 +1,5 @@
 import { isEmpty as _isEmpty, fromPairs, toPairs } from 'lodash-es';
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { DeleteFileChange, FileChange, RenameFileChange } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 /**
@@ -10,14 +10,14 @@ import { DeleteFileChange, FileChange, RenameFileChange } from 'app/programming/
  * - fileChange: RenameFileChange(file, file3)
  * => file refs: {file3: any, file2: any}
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorFileService {
     /**
      * Update multiple references at once.
      * @param refs
      * @param fileChange
      */
-    updateFileReferences = (refs: { [fileName: string]: any }, fileChange: FileChange) => {
+    updateFileReferences = <T>(refs: { [fileName: string]: T }, fileChange: FileChange): { [fileName: string]: T } => {
         if (fileChange instanceof RenameFileChange) {
             const testRegex = new RegExp(`^${fileChange.oldFileName}($|/.*)`);
             const replaceRegex = new RegExp(`^${fileChange.oldFileName}`);

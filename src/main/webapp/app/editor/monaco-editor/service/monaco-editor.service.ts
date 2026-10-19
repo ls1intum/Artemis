@@ -1,4 +1,4 @@
-import { Injectable, effect, inject } from '@angular/core';
+import { Service, effect, inject } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { CUSTOM_MARKDOWN_CONFIG, CUSTOM_MARKDOWN_LANGUAGE, CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/editor/monaco-editor/model/languages/monaco-custom-markdown.language';
 import { MONACO_DARK_THEME_DEFINITION } from 'app/editor/monaco-editor/model/themes/monaco-dark.theme';
@@ -11,20 +11,20 @@ import * as monaco from 'monaco-editor';
  * This service is intended to be used by components that need to create and manage Monaco editors.
  * It also ensures that the editor's theme matches the current theme of Artemis.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class MonacoEditorService {
     private readonly themeService: ThemeService = inject(ThemeService);
     private readonly currentTheme = this.themeService.currentTheme;
 
-    private lightTheme: MonacoEditorTheme;
-    private darkTheme: MonacoEditorTheme;
+    private lightTheme!: MonacoEditorTheme; // assigned in registerCustomThemes(), called from the constructor
+    private darkTheme!: MonacoEditorTheme; // assigned in registerCustomThemes(), called from the constructor
 
     constructor() {
         this.registerCustomThemes();
         this.registerCustomMarkdownLanguage();
 
         // Expose Monaco globally for testing frameworks like Playwright
-        (window as any).monaco = monaco;
+        (window as Window & { monaco?: typeof monaco }).monaco = monaco;
 
         effect(() => {
             this.applyTheme(this.currentTheme());

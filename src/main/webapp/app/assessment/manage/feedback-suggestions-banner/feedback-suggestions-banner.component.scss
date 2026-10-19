@@ -1,0 +1,53 @@
+/* Chrome appearance only: the default `banner` appearance stays unstyled so its hosts keep laying it out. */
+:host(.feedback-suggestions-banner--chrome) {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.feedback-suggestions-chrome {
+    box-sizing: border-box;
+    display: inline-flex;
+    min-width: 0;
+
+    /* Matches the other chrome islands' resting height, but may grow: the label
+       wraps on a narrow canvas rather than pushing the island off the corner. */
+    min-height: var(--apollon-chrome-island-h);
+    max-width: 22rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding-block: var(--apollon-chrome-pad);
+    padding-inline: 0.75rem;
+    color: var(--apollon-chrome-text);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.25;
+
+    /* The info button already carries its own hit padding. */
+    &:has(.feedback-suggestions-chrome__info) {
+        padding-inline-end: 0.25rem;
+    }
+
+    &__icon {
+        flex: 0 0 auto;
+        color: var(--apollon-chrome-text-muted);
+    }
+
+    &[data-notice='suggestions'] &__icon {
+        color: var(--apollon-primary);
+    }
+
+    &__label {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    &__info {
+        flex: 0 0 auto;
+        color: var(--apollon-chrome-text-muted);
+
+        &:hover:not(:disabled) {
+            color: var(--apollon-chrome-text);
+        }
+    }
+}

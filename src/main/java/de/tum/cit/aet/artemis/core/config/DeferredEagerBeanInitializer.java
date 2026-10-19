@@ -54,8 +54,7 @@ public class DeferredEagerBeanInitializer {
      */
     public void initializeDeferredEagerBeans() {
         log.info("Start deferred eager initialization of all lazy singleton beans");
-        String dataStoreConfig = env.getProperty("artemis.continuous-integration.data-store", HAZELCAST);
-        if (dataStoreConfig.equalsIgnoreCase(HAZELCAST)) {
+        if (DistributedDataProviderResolver.isProvider(env, HAZELCAST)) {
             try {
                 // Force eager initialization of HazelcastClusterManager first, so that connections are established as early as possible.
                 context.getBean(HazelcastClusterManager.class);

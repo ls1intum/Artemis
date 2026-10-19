@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -9,8 +9,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { UserSettingsDirective } from 'app/account/user/settings/directive/user-settings.directive';
 import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
-import { UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
 import { ScienceSetting } from 'app/account/user/settings/science-settings/science-settings-structure';
+import { FormsModule } from '@angular/forms';
+import { TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-science-settings',
@@ -22,6 +23,10 @@ import { ScienceSetting } from 'app/account/user/settings/science-settings/scien
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         ArtemisTranslatePipe,
+        FormsModule,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiToggleSwitchComponent,
     ],
 })
 export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {
@@ -32,13 +37,10 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
 
     private featureToggleActiveSubscription?: Subscription;
     private saveSubscription?: Subscription;
-    featureToggleActive = false;
+    readonly featureToggleActive = signal(false);
     private lastConfirmedValues = new Map<string, boolean>();
 
-    declare userSettings: UserSettingsStructure<ScienceSetting>;
-    declare settings: Array<ScienceSetting>;
-
-    ngOnInit(): void {
+    override ngOnInit(): void {
         this.userSettingsCategory = UserSettingsCategory.SCIENCE_SETTINGS;
 
         // check if settings are already loaded
@@ -48,15 +50,14 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
             super.ngOnInit();
         } else {
             // else reuse the already available/loaded ones
-            this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(newestScienceSettings, this.userSettingsCategory);
-            this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+            this.userSettings.set(this.userSettingsService.loadSettingsSuccessAsSettingsStructure(newestScienceSettings, this.userSettingsCategory));
+            this.settings.set(this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings()));
             this.storeConfirmedValues();
-            this.changeDetector.detectChanges();
         }
 
         // subscribe to feature toggle changes
         this.featureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {
-            this.featureToggleActive = active;
+            this.featureToggleActive.set(active);
         });
     }
 
@@ -66,45 +67,45 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
     }
 
     /**
-     * Catches the toggle event from a user click
-     * Toggles the respective setting and saves it immediately
+     * Applies a switch change to the respective setting and saves it immediately.
      */
-    toggleSetting(event: MouseEvent) {
-        const settingId = (event.currentTarget as HTMLElement | undefined)?.id;
-        const settingToUpdate = this.settings.find((setting) => setting.settingId === settingId);
+    toggleSetting(setting: ScienceSetting, active: boolean) {
+        const settingToUpdate = this.settings().find((candidate) => candidate.settingId === setting.settingId);
         if (!settingToUpdate) {
             return;
         }
         const confirmedValue = this.lastConfirmedValues.get(settingToUpdate.settingId) ?? settingToUpdate.active;
-        settingToUpdate.active = !settingToUpdate.active;
+        settingToUpdate.active = active;
         settingToUpdate.changed = true;
 
         // Cancel any in-flight save to prevent race conditions on rapid toggles
         this.saveSubscription?.unsubscribe();
-        this.saveSubscription = this.userSettingsService.saveSettings(this.settings, this.userSettingsCategory).subscribe({
+        this.saveSubscription = this.userSettingsService.saveSettings(this.settings(), this.userSettingsCategory).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;
                 }
-                this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body);
-                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+                this.userSettings.set(this.userSettingsService.saveSettingsSuccess(this.userSettings(), res.body));
+                this.settings.set(this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings()));
                 this.storeConfirmedValues();
                 this.finishSaving();
             },
             error: (res) => {
-                // Revert to the last server-confirmed value
+                // Revert to the last server-confirmed value. The setting is mutated in place, so re-set the
+                // structure to publish the revert: the signal notifies on an unchanged reference.
                 settingToUpdate.active = confirmedValue;
                 settingToUpdate.changed = false;
+                this.userSettings.set(this.userSettings());
                 this.onError(res);
             },
         });
     }
 
     private storeConfirmedValues(): void {
-        if (!this.settings) {
+        if (!this.settings()) {
             return;
         }
-        for (const setting of this.settings) {
+        for (const setting of this.settings()) {
             this.lastConfirmedValues.set(setting.settingId, !!setting.active);
         }
     }

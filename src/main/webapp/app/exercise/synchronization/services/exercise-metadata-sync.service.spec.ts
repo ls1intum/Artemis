@@ -1,6 +1,5 @@
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -33,7 +32,6 @@ const createMockDialogRef = (): { ref: DynamicDialogRef; onClose: Subject<Exerci
 };
 
 describe('ExerciseMetadataSyncService', () => {
-    setupTestBed({ zoneless: true });
     let service: ExerciseMetadataSyncService;
     let httpMock: HttpTestingController;
     let syncEvents$: Subject<ExerciseEditorSyncEvent>;

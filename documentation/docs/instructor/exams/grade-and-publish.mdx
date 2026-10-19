@@ -1,0 +1,90 @@
+---
+id: grade-and-publish
+title: Grade an Exam and Publish Results
+sidebar_label: Grade and Publish
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import gradeKeyEditor from './assets/grade_key_editor.png';
+import examStatistics from './assets/exam_statistics.png';
+import examExampleSolutionPublicationDate from './assets/exam_example_solution_publication_date.png';
+
+Points become grades through a grading key, and both become visible to students on the date you set. Neither step
+is mandatory: an exam without a grading key simply reports points.
+
+## Grading Key
+
+**Grading Key** at the top of the exam's detail page turns exam scores into grades automatically, and students see
+their grade from the **Release Date of Results** onwards. It also improves the statistics, since a grade
+distribution says more than a score distribution.
+
+**Set Default Grading Key** followed by **Save** gives you a working key immediately. **Add grade step** builds
+one by hand instead, and **Detailed** editing mode exposes the exact bounds of each step.
+
+Grade steps are percentages of the total obtainable score by default. Set **Maximum number of points for exam** and
+Artemis shows the point equivalent of each step alongside the percentage.
+
+<Image src={gradeKeyEditor} alt="Grading key editor with the default grade steps" size={ImageSize.large} caption="The default grading key" />
+
+Two fields decide how the key behaves at the edges. **Inclusivity** settles which grade a score exactly on a
+boundary receives. **Grade Type** chooses between the two kinds of key:
+
+- **Grade** produces a final grade with names you choose. Set **First Passing Grade** so Artemis knows which steps
+  count as a pass.
+- **Bonus** produces bonus points instead, which contribute to the grade of another course or exam rather than
+  standing on their own.
+
+The import and export buttons save a key as CSV and load it into another course or exam, which is how a
+department's standard key gets reused rather than retyped.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Read the warnings at the bottom of the editor before saving. They are what tells you the key has a gap or an
+  overlap, and a key with either produces grades nobody can defend.
+
+</Callout>
+
+## Publication of Results
+
+**Release Date of Results**, set in the
+[exam configuration](/instructor/exams/create-an-exam#exam-assessment-and-student-review), is when students can see
+their results in their summary. It is usually the end of assessment, but nothing stops you choosing another moment.
+
+## Exam Scores
+
+**Scores** aggregates the exam: the spread of achieved scores, the average per exercise, and every individual
+result. Average, median and standard deviation are given for the exam as a whole, and students' own difficulty
+ratings per exercise are collected alongside them, which is the most useful input into next year's exam.
+
+Two filters change what the figures are computed from — **only include submitted exams** and **only include
+exercises with at least one non-empty submission**. Both exist because unsubmitted exams and undrawn exercises
+distort an average badly:
+
+- An unsubmitted exam is never assessed, so it appears as no score at all. Where a grading key exists, its student
+  receives the no-participation grade described under [Grading](/instructor/assessment-grading/grading).
+- An exercise can be in no individual exam at all, if Artemis happened to draw a different exercise from its group
+  every time.
+
+<Image src={examStatistics} alt="Exam scores page with distribution and per-exercise statistics" size={ImageSize.large} caption="The scores page of an exam" />
+
+**Export** writes the scores as CSV, which is what goes into a university system such as
+[TUM Online](https://campus.tum.de). Each row carries the student's name, username, email and registration number,
+the exercises they were assigned, their score per exercise, overall exam points and score, grade before any bonus,
+presentation score, and whether they submitted and passed. The file also carries the aggregated per-exercise
+statistics — number of participations and average score.
+
+Three things appear only when they apply: bonus grades and the final grade when a bonus is configured, plagiarism
+verdicts when the exam has at least one, and plagiarism verdicts from the bonus source when that has one.
+
+## Exam Solutions
+
+**Example Solution Publication Date** publishes the example solutions of the text, modeling, file upload and
+programming exercises to the students who submitted. Unlike course exercises, which each carry their own date, an
+exam publishes all of its solutions together on this one.
+
+Leave it empty — the default — and no solutions are ever published. If set, it must fall on or after both
+**Visible from** and **End of working time**.
+
+<Image src={examExampleSolutionPublicationDate} alt="Example Solution Publication Date field" size={ImageSize.large} caption="Setting the example solution publication date" />

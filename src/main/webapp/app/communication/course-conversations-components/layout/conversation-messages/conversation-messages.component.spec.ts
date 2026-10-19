@@ -1,5 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -9,25 +8,25 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { DialogService } from 'primeng/dynamicdialog';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { Directive, NO_ERRORS_SCHEMA, input, output } from '@angular/core';
+import { Directive, NO_ERRORS_SCHEMA, type WritableSignal, input, output, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HttpResponse } from '@angular/common/http';
-import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ForwardedMessage, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
-import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -61,12 +60,10 @@ class InfiniteScrollStubDirective {
 }
 examples.forEach((activeConversation) => {
     describe('ConversationMessagesComponent with ' + (getAsChannelDTO(activeConversation)?.isAnnouncementChannel ? 'announcement ' : '') + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationMessagesComponent;
         let fixture: ComponentFixture<ConversationMessagesComponent>;
-        let metisService: MetisService;
-        let metisConversationService: MetisConversationService;
+        let communicationService: CommunicationService;
+        let courseConversationsService: CourseConversationsService;
         let examplePost: Post;
         const course = { id: 1 } as Course;
 
@@ -87,8 +84,8 @@ examples.forEach((activeConversation) => {
                     InfiniteScrollStubDirective,
                 ],
                 providers: [
-                    MockProvider(MetisConversationService),
-                    MockProvider(MetisService),
+                    MockProvider(CourseConversationsService),
+                    MockProvider(CommunicationService),
                     MockProvider(DialogService),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: AccountService, useClass: MockAccountService },
@@ -116,18 +113,18 @@ examples.forEach((activeConversation) => {
         beforeEach(() => {
             examplePost = { id: 1, content: 'loremIpsum' } as Post;
 
-            metisService = TestBed.inject(MetisService);
-            metisConversationService = TestBed.inject(MetisConversationService);
-            Object.defineProperty(metisService, 'posts', { get: () => new BehaviorSubject([examplePost]).asObservable() });
-            Object.defineProperty(metisService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(1).asObservable() });
-            Object.defineProperty(metisService, 'createEmptyPostForContext', { value: () => new Post() });
-            Object.defineProperty(metisConversationService, 'course', { get: () => course });
-            Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
-            Object.defineProperty(metisService, 'getPinnedPosts', {
+            communicationService = TestBed.inject(CommunicationService);
+            courseConversationsService = TestBed.inject(CourseConversationsService);
+            Object.defineProperty(communicationService, 'posts', { get: () => new BehaviorSubject([examplePost]).asObservable() });
+            Object.defineProperty(communicationService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(1).asObservable() });
+            Object.defineProperty(communicationService, 'createEmptyPostForContext', { value: () => new Post() });
+            Object.defineProperty(courseConversationsService, 'course', { get: () => course });
+            Object.defineProperty(courseConversationsService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
+            Object.defineProperty(communicationService, 'getPinnedPosts', {
                 value: () => of([]),
             });
 
-            Object.defineProperty(metisService, 'fetchAllPinnedPosts', {
+            Object.defineProperty(communicationService, 'fetchAllPinnedPosts', {
                 value: () => of([]),
             });
 
@@ -143,6 +140,10 @@ examples.forEach((activeConversation) => {
             });
             component.canStartSaving = true;
             fixture.detectChanges();
+            // Model the response for the newly opened conversation, not cached posts from the previous context.
+            component.allPosts.set([examplePost]);
+            component.setPosts();
+            component.isFetchingPosts.set(false);
         });
 
         afterEach(() => {
@@ -156,14 +157,14 @@ examples.forEach((activeConversation) => {
 
         it('should set initial values correctly', () => {
             fixture.componentRef.setInput('course', course);
-            component._activeConversation = activeConversation;
-            component.posts = [examplePost];
+            component._activeConversation.set(activeConversation);
+            component.posts.set([examplePost]);
         });
 
         it('should fetch posts on next page fetch', () => {
-            const getFilteredPostSpy = vi.spyOn(metisService, 'getFilteredPosts');
+            const getFilteredPostSpy = vi.spyOn(communicationService, 'getFilteredPosts');
             component.searchText = 'loremIpsum';
-            component.totalNumberOfPosts = 10;
+            component.totalNumberOfPosts.set(10);
             component.fetchNextPage();
             expect(getFilteredPostSpy).toHaveBeenCalledOnce();
         });
@@ -176,7 +177,7 @@ examples.forEach((activeConversation) => {
             component.saveScrollPosition(15);
             expect(scrollNextSpy).toHaveBeenCalledWith(15);
             // Manually trigger what the debounced subscription would do
-            const activeConversationId = component._activeConversation?.id;
+            const activeConversationId = component._activeConversation()?.id;
             expect(activeConversationId).toBeDefined();
             sessionStorageService.store<number>(component.sessionStorageKey + activeConversationId, 15);
             expect(storeSpy).toHaveBeenCalledWith(`${component.sessionStorageKey}${activeConversationId}`, 15);
@@ -205,7 +206,7 @@ examples.forEach((activeConversation) => {
 
         it('should find visible elements at the scroll position and save scroll position', () => {
             // Mock des Containers
-            component.content().nativeElement = {
+            component.content()!.nativeElement = {
                 getBoundingClientRect: vi.fn().mockReturnValue({ top: 0, bottom: 100 }),
                 scrollTop: 0,
                 scrollHeight: 200,
@@ -239,15 +240,433 @@ examples.forEach((activeConversation) => {
         });
 
         it('should scroll to the bottom when a new message is created', () => {
-            component.content().nativeElement.scrollTop = 100;
+            component.content()!.nativeElement.scrollTop = 100;
             fixture.detectChanges();
             component.handleNewMessageCreated();
             vi.advanceTimersByTime(300);
-            expect(component.content().nativeElement.scrollTop).toBe(component.content().nativeElement.scrollHeight);
+            expect(component.content()!.nativeElement.scrollTop).toBe(component.content()!.nativeElement.scrollHeight);
+        });
+
+        describe('scrolling when a message of another user arrives', () => {
+            const setScrollGeometry = (scrollTop: number) => {
+                const container = component.content()!.nativeElement;
+                // the container is 400px high (not the formerly hard-coded 700px) and holds 1000px of messages
+                Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+                Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+                container.scrollTop = scrollTop;
+                // the posts are loaded and the list is visible
+                component.isFetchingPosts.set(false);
+            };
+
+            it('should scroll to the bottom when the user is at the bottom, independent of the container height', () => {
+                setScrollGeometry(600);
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should scroll to the bottom when the user is within a few pixels of the bottom', () => {
+                setScrollGeometry(597);
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should not scroll when the user has scrolled up to read older messages', () => {
+                setScrollGeometry(100);
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).not.toHaveBeenCalled();
+            });
+
+            it('should not scroll when the user is at the top of the first page after the initial position was restored', () => {
+                setScrollGeometry(0);
+                component.canStartSaving = true;
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).not.toHaveBeenCalled();
+            });
+
+            it('should scroll to the bottom when the list is at the top of the first page while the initial position is not restored yet', () => {
+                setScrollGeometry(0);
+                component.canStartSaving = false;
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            });
+
+            describe('while posts are being fetched', () => {
+                // the list is hidden by `display: none` while fetching, so it reports no scroll dimensions
+                const hideContainer = () => {
+                    const container = component.content()!.nativeElement;
+                    Object.defineProperty(container, 'scrollHeight', { value: 0, configurable: true });
+                    Object.defineProperty(container, 'clientHeight', { value: 0, configurable: true });
+                    container.scrollTop = 0;
+                };
+
+                it('should not treat loading an older page as being at the bottom', () => {
+                    vi.spyOn(communicationService, 'getFilteredPosts').mockImplementation(() => {});
+                    component.page = 2;
+                    // the user scrolled up in a long conversation to load older messages
+                    setScrollGeometry(100);
+                    const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                    component.fetchPosts();
+                    expect(component.isFetchingPosts()).toBe(true);
+                    hideContainer();
+                    // the response arrives while the list is still hidden
+                    component.setPosts();
+                    component.handleScrollOnNewMessage();
+
+                    expect(scrollToBottomSpy).not.toHaveBeenCalled();
+                });
+
+                it('should keep following new messages when posts are reloaded for a user at the bottom', () => {
+                    vi.spyOn(communicationService, 'getFilteredPosts').mockImplementation(() => {});
+                    setScrollGeometry(600);
+                    const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                    const request = vi.spyOn(communicationService, 'getFilteredPosts');
+                    component.fetchPosts();
+                    const callbacks = request.mock.calls.at(-1)![3]!;
+                    hideContainer();
+                    callbacks.beforeApply();
+                    component.setPosts();
+                    expect(scrollToBottomSpy).not.toHaveBeenCalled();
+                    callbacks.complete(true);
+                    fixture.detectChanges();
+                    expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+                });
+            });
+
+            describe('with a stored scroll position', () => {
+                const storedPostId = 5;
+                const newPostId = 6;
+                let messagesSignal: WritableSignal<PostingThreadComponent[]>;
+                let container: HTMLElement;
+                let scrollToStoredIdSpy: MockInstance;
+
+                const createPostingThread = (id: number, offsetTop: number) =>
+                    ({
+                        post: () => ({ id }),
+                        elementRef: { nativeElement: { offsetTop, getBoundingClientRect: () => ({ top: 0, bottom: 0 }), querySelector: () => null } },
+                    }) as unknown as PostingThreadComponent;
+
+                beforeEach(() => {
+                    // The effects in the shared fixture ran already without a tracked dependency, so this test needs a component
+                    // whose `messages` signal is writable before the first change detection run.
+                    const sessionStorageService = TestBed.inject(SessionStorageService);
+                    vi.spyOn(sessionStorageService, 'retrieve').mockImplementation((key: string) => (key.includes('scrollPosition') ? storedPostId : undefined));
+
+                    fixture = TestBed.createComponent(ConversationMessagesComponent);
+                    component = fixture.componentInstance;
+                    fixture.componentRef.setInput('course', course);
+                    messagesSignal = signal([createPostingThread(1, 0), createPostingThread(storedPostId, 300)]);
+                    (component as any).messages = messagesSignal;
+                    container = document.createElement('div');
+                    vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ top: 0, bottom: 100 } as DOMRect);
+                    Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+                    Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+                    (component as any).content = vi.fn().mockReturnValue({ nativeElement: container });
+                    // the conversation is opened and its stored scroll position is restored
+                    component.canStartSaving = true;
+                    scrollToStoredIdSpy = vi.spyOn(component as any, 'scrollToStoredId');
+                    fixture.detectChanges();
+                    // the posts are loaded and the list is visible
+                    component.allPosts.set([examplePost]);
+                    component.setPosts();
+                    component.isFetchingPosts.set(false);
+                    messagesSignal.set([...messagesSignal()]);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+                    scrollToStoredIdSpy.mockClear();
+                });
+
+                it('should keep the user at the bottom when a message arrives although a scroll position is stored', () => {
+                    // the user scrolled to the very end of the conversation
+                    container.scrollTop = 600;
+
+                    // another user posts a message
+                    component.setPosts();
+                    messagesSignal.set([...messagesSignal(), createPostingThread(newPostId, 1000)]);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+
+                    expect(scrollToStoredIdSpy).not.toHaveBeenCalled();
+                    expect(container.scrollTop).toBe(container.scrollHeight);
+                });
+
+                it('should keep navigating to a post that is not loaded yet when the next page arrives for a user at the bottom', () => {
+                    const unloadedPostId = 99;
+                    // the user is at the bottom of an already restored conversation and follows the View action of a forwarded message
+                    container.scrollTop = 600;
+                    component.focusOnPostId = unloadedPostId;
+                    component.totalNumberOfPosts.set(100);
+                    const request = vi.spyOn(communicationService, 'getFilteredPosts');
+                    component.fetchNextPage();
+                    const callbacks = request.mock.calls.at(-1)![3]!;
+                    callbacks.beforeApply();
+                    component.setPosts();
+
+                    // the next page arrives and contains the post
+                    messagesSignal.set([createPostingThread(unloadedPostId, 500), ...messagesSignal()]);
+                    callbacks.complete(true);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+
+                    expect(scrollToStoredIdSpy).toHaveBeenCalledOnce();
+                    expect(container.scrollTop).toBe(490);
+                    expect(component.focusOnPostId).toBeUndefined();
+                });
+
+                it('should restore the stored scroll position when a message arrives while the user is not at the bottom', () => {
+                    container.scrollTop = 100;
+
+                    component.setPosts();
+                    messagesSignal.set([...messagesSignal(), createPostingThread(newPostId, 1000)]);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+
+                    expect(scrollToStoredIdSpy).toHaveBeenCalledOnce();
+                    expect(container.scrollTop).toBe(290);
+                });
+            });
+        });
+
+        it('should remember the bottom rather than a top-visible message when reopening a channel', () => {
+            const container = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+            Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+            container.scrollTop = 600;
+            component.canStartSaving = true;
+            const next = vi.spyOn(component.scrollSubject, 'next');
+
+            component.findElementsAtScrollPosition();
+            expect(next).toHaveBeenCalledWith(0);
+            const storage = TestBed.inject(SessionStorageService);
+            vi.spyOn(storage, 'retrieve').mockReturnValue(0);
+            container.scrollTop = 0;
+            component['scrollToStoredId']();
+            vi.runAllTimers();
+            expect(container.scrollTop).toBe(1000);
+        });
+
+        it('retries the same older page after a failed request', () => {
+            component.totalNumberOfPosts.set(100);
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
+            component.fetchNextPage();
+            expect(request.mock.calls.at(-1)![0].page).toBe(1);
+            request.mock.calls.at(-1)![3]!.complete(false);
+            expect(component.isFetchingPosts()).toBe(false);
+            expect(component.page).toBe(1);
+
+            component.fetchNextPage();
+            expect(request).toHaveBeenCalledTimes(2);
+            expect(request.mock.calls.at(-1)![0].page).toBe(1);
+            request.mock.calls.at(-1)![3]!.complete(true);
+            expect(component.page).toBe(2);
+        });
+
+        it('should preserve scrolling performed while older messages are loading', () => {
+            vi.runAllTimers();
+            const container = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+            container.scrollTop = 30;
+            component.canStartSaving = true;
+            component.totalNumberOfPosts.set(100);
+            const fetchPosts = vi.spyOn(component, 'fetchPosts');
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
+            component.fetchNextPage();
+            const callbacks = request.mock.calls.at(-1)?.[3];
+            expect(callbacks).toBeDefined();
+            component.setPosts(); // Intermediate WebSocket/cache update, not the requested page.
+            component.handleScrollOnNewMessage();
+            vi.runAllTimers();
+            expect(component.isFetchingPosts()).toBe(true);
+            component.fetchNextPage();
+            expect(fetchPosts).toHaveBeenCalledOnce();
+            expect(container.scrollTop).toBe(30);
+
+            container.scrollTop = 230; // The reader moves while the response is pending.
+            callbacks!.beforeApply();
+            component.setPosts();
+            Object.defineProperty(container, 'scrollHeight', { value: 1500, configurable: true });
+            callbacks!.complete(true);
+            fixture.detectChanges();
+            vi.runAllTimers();
+            expect(container.scrollTop).toBe(730);
+        });
+
+        it.each([false, true])('waits for delayed forwarded messages before restoring the page (delay sources: %s)', (delaySources) => {
+            vi.runAllTimers();
+            const container = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+            container.scrollTop = 230;
+            component.canStartSaving = true;
+            component.totalNumberOfPosts.set(100);
+            const forwarded = new Subject<HttpResponse<ForwardedMessagesGroupDTO[]>>();
+            const sources = new Subject<Post[]>();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(forwarded);
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(sources);
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
+            component.fetchNextPage();
+            const callbacks = request.mock.calls.at(-1)![3]!;
+            callbacks.beforeApply();
+            component.allPosts.set([{ id: 2, hasForwardedMessages: true, creationDate: dayjs() } as Post, { ...examplePost, creationDate: dayjs().subtract(1, 'minute') }]);
+            component.setPosts();
+            callbacks.complete(true);
+            fixture.detectChanges();
+            vi.runAllTimers();
+            // The page response is complete, but the list still contains the previous groups.
+            expect(container.scrollTop).toBe(230);
+            component.fetchNextPage();
+            expect(component.page).toBe(2);
+
+            container.scrollTop = 330; // Reader movement while forwarded metadata is still loading.
+            forwarded.next(new HttpResponse({ body: [{ id: 2, messages: delaySources ? [{ sourceType: PostingType.POST, sourceId: 10 }] : [] }] }));
+            forwarded.complete();
+            if (delaySources) {
+                fixture.detectChanges();
+                vi.runAllTimers();
+                expect(container.scrollTop).toBe(330);
+                container.scrollTop = 430; // Reader movement while source previews are still loading.
+                sources.next([{ id: 10, conversation: activeConversation } as Post]);
+                sources.complete();
+            }
+            fixture.detectChanges();
+            Object.defineProperty(container, 'scrollHeight', { value: 1500, configurable: true });
+            vi.runAllTimers();
+            expect(
+                component
+                    .groupedPosts()
+                    .flatMap((group) => group.posts)
+                    .map((post) => post.id),
+            ).toEqual([1, 2]);
+            expect(container.scrollTop).toBe(delaySources ? 930 : 830);
+        });
+
+        it('ignores a forwarded lookup superseded by a newer message list', () => {
+            const forwarded = new Subject<HttpResponse<ForwardedMessagesGroupDTO[]>>();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(forwarded);
+            const sources = vi.spyOn(communicationService, 'getSourcePostsByIds');
+            component.allPosts.set([{ id: 2, hasForwardedMessages: true } as Post]);
+            component.setPosts();
+            component.allPosts.set([{ id: 3 } as Post]);
+            component.setPosts();
+            const currentGroups = component.groupedPosts();
+
+            forwarded.next(new HttpResponse({ body: [{ id: 2, messages: [{ sourceType: PostingType.POST, sourceId: 10 }] }] }));
+            forwarded.complete();
+
+            expect(sources).not.toHaveBeenCalled();
+            expect(component.groupedPosts()).toBe(currentGroups);
+            expect(component.groupedPosts()[0].posts[0].id).toBe(3);
+        });
+
+        it('renders and positions the list when forwarded metadata cannot be loaded', () => {
+            vi.runAllTimers();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            component.allPosts.set([{ id: 2, hasForwardedMessages: true } as Post]);
+            component.setPosts();
+            component['wasScrolledToBottom'] = true;
+            const follow = vi.spyOn(component, 'scrollToBottomOfMessages');
+            fixture.detectChanges();
+
+            expect(component.groupedPosts()[0].posts[0].id).toBe(2);
+            expect(follow).toHaveBeenCalled();
+        });
+
+        it('should follow layout changes at the bottom but preserve the position after the reader scrolls up', () => {
+            let resize: (() => void) | undefined;
+            const observe = vi.fn();
+            const disconnect = vi.fn();
+            vi.stubGlobal(
+                'ResizeObserver',
+                class {
+                    constructor(callback: () => void) {
+                        resize = callback;
+                    }
+                    observe = observe;
+                    disconnect = disconnect;
+                },
+            );
+            try {
+                component.ngAfterViewInit();
+                const container = component.content()!.nativeElement;
+                let height = 1200;
+                let viewport = 400;
+                let top = 0;
+                Object.defineProperties(container, {
+                    scrollHeight: { get: () => height, configurable: true },
+                    clientHeight: { get: () => viewport, configurable: true },
+                    scrollTop: {
+                        get: () => top,
+                        set: (value: number) => {
+                            top = Math.max(0, Math.min(value, height - viewport));
+                        },
+                        configurable: true,
+                    },
+                });
+                void component.goToLastSelectedElement(0, false);
+                vi.runAllTimers();
+                expect(top).toBe(800);
+                expect(component.canStartSaving).toBe(true);
+
+                // The composer becomes taller after its draft is restored, then an image in a message loads.
+                viewport = 300;
+                component.findElementsAtScrollPosition();
+                resize!();
+                vi.runAllTimers();
+                expect(top).toBe(900);
+                height = 1400;
+                resize!();
+                vi.runAllTimers();
+                expect(top).toBe(1100);
+
+                container.scrollTop = 200;
+                container.dispatchEvent(new Event('scroll'));
+                height = 1500;
+                resize!();
+                vi.runAllTimers();
+                expect(top).toBe(200);
+
+                const historicalPost = {
+                    post: () => ({ id: 42 }),
+                    elementRef: { nativeElement: { offsetTop: 310 } },
+                } as PostingThreadComponent;
+                vi.spyOn(component, 'messages').mockReturnValue([historicalPost]);
+                component.scrollToBottomOfMessages(); // Initial positioning can still be queued when restoration begins.
+                void component.goToLastSelectedElement(42, false);
+                expect(top).toBe(300);
+                resize!(); // Delivered before the browser's scroll event.
+                vi.runAllTimers();
+                expect(top).toBe(300);
+                expect(component['wasScrolledToBottom']).toBe(false);
+                expect(observe).toHaveBeenCalledWith(container);
+                component.ngOnDestroy();
+                expect(disconnect).toHaveBeenCalledOnce();
+            } finally {
+                vi.unstubAllGlobals();
+            }
         });
 
         it('should create empty post with the correct conversation type', () => {
-            const createEmptyPostForContextSpy = vi.spyOn(metisService, 'createEmptyPostForContext').mockReturnValue(new Post());
+            const createEmptyPostForContextSpy = vi.spyOn(communicationService, 'createEmptyPostForContext').mockReturnValue(new Post());
             component.createEmptyPost();
             expect(createEmptyPostForContextSpy).toHaveBeenCalledOnce();
             const conversation = createEmptyPostForContextSpy.mock.calls[0][0];
@@ -256,44 +675,44 @@ examples.forEach((activeConversation) => {
         });
 
         it('should set posts and group them correctly', () => {
-            component.allPosts = [
+            component.allPosts.set([
                 { id: 1, creationDate: dayjs().subtract(2, 'hours'), author: { id: 1 } } as Post,
                 { id: 4, creationDate: dayjs().subtract(3, 'minutes'), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().subtract(1, 'minutes'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs(), author: { id: 2 } } as Post,
-            ];
+            ]);
             component.setPosts();
 
-            expect(component.posts).toHaveLength(4);
-            expect(component.groupedPosts).toHaveLength(3);
+            expect(component.posts()).toHaveLength(4);
+            expect(component.groupedPosts()).toHaveLength(3);
 
-            expect(component.groupedPosts[0].posts).toHaveLength(1);
-            expect(component.groupedPosts[0].posts[0].id).toBe(1);
-            expect(component.groupedPosts[0].posts[0].isConsecutive).toBe(false);
+            expect(component.groupedPosts()[0].posts).toHaveLength(1);
+            expect(component.groupedPosts()[0].posts[0].id).toBe(1);
+            expect(component.groupedPosts()[0].posts[0].isConsecutive).toBe(false);
 
-            expect(component.groupedPosts[1].posts).toHaveLength(2);
-            expect(component.groupedPosts[1].posts[0].id).toBe(4);
-            expect(component.groupedPosts[1].posts[0].isConsecutive).toBe(false);
-            expect(component.groupedPosts[1].posts[1].id).toBe(2);
-            expect(component.groupedPosts[1].posts[1].isConsecutive).toBe(true);
+            expect(component.groupedPosts()[1].posts).toHaveLength(2);
+            expect(component.groupedPosts()[1].posts[0].id).toBe(4);
+            expect(component.groupedPosts()[1].posts[0].isConsecutive).toBe(false);
+            expect(component.groupedPosts()[1].posts[1].id).toBe(2);
+            expect(component.groupedPosts()[1].posts[1].isConsecutive).toBe(true);
 
-            expect(component.groupedPosts[2].posts).toHaveLength(1);
-            expect(component.groupedPosts[2].posts[0].id).toBe(3);
-            expect(component.groupedPosts[2].posts[0].isConsecutive).toBe(false);
+            expect(component.groupedPosts()[2].posts).toHaveLength(1);
+            expect(component.groupedPosts()[2].posts[0].id).toBe(3);
+            expect(component.groupedPosts()[2].posts[0].isConsecutive).toBe(false);
         });
 
         it('should not group posts that are exactly 5 minutes apart', () => {
-            component.allPosts = [
+            component.allPosts.set([
                 { id: 1, creationDate: dayjs().subtract(10, 'minutes'), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs(), author: { id: 1 } } as Post,
-            ];
+            ]);
             component.setPosts();
 
-            expect(component.groupedPosts).toHaveLength(3);
-            expect(component.groupedPosts[0].posts).toHaveLength(1);
-            expect(component.groupedPosts[1].posts).toHaveLength(1);
-            expect(component.groupedPosts[2].posts).toHaveLength(1);
+            expect(component.groupedPosts()).toHaveLength(3);
+            expect(component.groupedPosts()[0].posts).toHaveLength(1);
+            expect(component.groupedPosts()[1].posts).toHaveLength(1);
+            expect(component.groupedPosts()[2].posts).toHaveLength(1);
         });
 
         it('should fetch forwarded messages correctly', () => {
@@ -306,9 +725,9 @@ examples.forEach((activeConversation) => {
                 body: [{ id: 1, messages: mockForwardedMessages }],
             });
 
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(mockResponse));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(mockResponse));
 
-            metisService.getForwardedMessagesByIds([1], PostingType.POST)?.subscribe((response) => {
+            communicationService.getForwardedMessagesByIds([1], PostingType.POST)?.subscribe((response) => {
                 expect(response.body).toEqual(mockResponse.body);
             });
         });
@@ -317,8 +736,8 @@ examples.forEach((activeConversation) => {
             it('should display the "new announcement" button when the conversation is an announcement channel', () => {
                 const announcementButton = fixture.debugElement.query(By.css('.btn.btn-md.btn-primary'));
                 expect(announcementButton).toBeTruthy(); // Check if the button is present
-                expect(component.isHiddenInputFull).toBeFalsy();
-                expect(component.isHiddenInputWithCallToAction).toBeTruthy();
+                expect(component.isHiddenInputFull()).toBeFalsy();
+                expect(component.isHiddenInputWithCallToAction()).toBeTruthy();
 
                 const modal = fixture.debugElement.query(By.directive(PostCreateEditModalComponent));
                 expect(modal).toBeTruthy(); // Check if the modal is present
@@ -340,14 +759,14 @@ examples.forEach((activeConversation) => {
         });
 
         it('should handle posts without forwarded messages gracefully', () => {
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [] })));
 
-            component.posts = [{ id: 1, hasForwardedMessages: false } as Post];
+            component.posts.set([{ id: 1, hasForwardedMessages: false } as Post]);
 
             vi.advanceTimersByTime(0);
 
-            expect(component.posts[0].forwardedPosts).toBeUndefined();
-            expect(component.posts[0].forwardedAnswerPosts).toBeUndefined();
+            expect(component.posts()[0].forwardedPosts).toBeUndefined();
+            expect(component.posts()[0].forwardedAnswerPosts).toBeUndefined();
         });
 
         it('should handle forwarded messages with missing source gracefully', () => {
@@ -356,32 +775,32 @@ examples.forEach((activeConversation) => {
                 { id: 102, sourceId: 100, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
             ];
 
-            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of([]));
-            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of([]));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
 
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
 
-            component.allPosts = [{ id: 1, hasForwardedMessages: true } as Post];
+            component.allPosts.set([{ id: 1, hasForwardedMessages: true } as Post]);
             component.setPosts();
 
             vi.advanceTimersByTime(0);
 
-            expect(component.posts[0].forwardedPosts).toEqual([undefined]);
-            expect(component.posts[0].forwardedAnswerPosts).toEqual([undefined]);
+            expect(component.posts()[0].forwardedPosts).toEqual([undefined]);
+            expect(component.posts()[0].forwardedAnswerPosts).toEqual([undefined]);
         });
 
         it('should not fetch source posts or answers for empty forwarded messages', () => {
             const mockForwardedMessages: ForwardedMessage[] = [];
 
-            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of([]));
-            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of([]));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
 
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
 
-            const getSourcePostsSpy = vi.spyOn(metisService, 'getSourcePostsByIds');
-            const getSourceAnswersSpy = vi.spyOn(metisService, 'getSourceAnswerPostsByIds');
+            const getSourcePostsSpy = vi.spyOn(communicationService, 'getSourcePostsByIds');
+            const getSourceAnswersSpy = vi.spyOn(communicationService, 'getSourceAnswerPostsByIds');
 
-            component.allPosts = [{ id: 1, hasForwardedMessages: true } as Post];
+            component.allPosts.set([{ id: 1, hasForwardedMessages: true } as Post]);
             component.setPosts();
 
             vi.advanceTimersByTime(0);
@@ -396,32 +815,32 @@ examples.forEach((activeConversation) => {
                 { id: 102, sourceId: 11, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
             ];
 
-            const mockSourcePosts: Post[] = [{ id: 10, content: 'Forwarded Post Content', conversation: component._activeConversation as Conversation } as Post];
+            const mockSourcePosts: Post[] = [{ id: 10, content: 'Forwarded Post Content', conversation: component._activeConversation() as Conversation } as Post];
             const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
 
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
-            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
-            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
-            const getSourcePostsSpy = vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
-            const getSourceAnswersSpy = vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+            const getSourcePostsSpy = vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
+            const getSourceAnswersSpy = vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
-            component.allPosts = [
+            component.allPosts.set([
                 {
                     id: 1,
                     content: 'Some content...',
                     hasForwardedMessages: true,
                 } as Post,
-            ];
+            ]);
             component.setPosts();
 
             expect(getSourcePostsSpy).toHaveBeenCalled();
             expect(getSourceAnswersSpy).toHaveBeenCalled();
 
-            const forwardedPosts = component.posts[0].forwardedPosts;
-            const forwardedAnswerPosts = component.posts[0].forwardedAnswerPosts;
+            const forwardedPosts = component.posts()[0].forwardedPosts;
+            const forwardedAnswerPosts = component.posts()[0].forwardedAnswerPosts;
 
-            expect(component.posts).toHaveLength(1);
+            expect(component.posts()).toHaveLength(1);
             expect(forwardedPosts).toBeDefined();
             expect(forwardedAnswerPosts).toBeDefined();
 
@@ -450,29 +869,50 @@ examples.forEach((activeConversation) => {
             }
         });
 
+        it('should still render messages when a forwarded-source fetch fails', () => {
+            const mockForwardedMessages: ForwardedMessage[] = [
+                { id: 101, sourceId: 10, sourceType: 'POST' } as unknown as ForwardedMessage,
+                { id: 102, sourceId: 11, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
+            ];
+            const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
+
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            // the source post is inaccessible to the viewer -> the server replies 403; it must not break the rest of the rendering
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+
+            component.allPosts.set([{ id: 1, content: 'Some content...', hasForwardedMessages: true } as Post]);
+            component.setPosts();
+
+            // the message list still renders and the accessible answer source is attached; the inaccessible post source is dropped to undefined
+            expect(component.posts()).toHaveLength(1);
+            expect(component.posts()[0].forwardedPosts).toEqual([undefined]);
+            expect(component.posts()[0].forwardedAnswerPosts?.[0]?.id).toBe(11);
+        });
+
         it('should filter posts to show only pinned posts when showOnlyPinned is true', () => {
             const pinnedPost = { id: 1, displayPriority: 'PINNED' } as Post;
             const regularPost = { id: 2, displayPriority: 'NONE' } as Post;
-            component.pinnedPosts = [pinnedPost];
-            component.allPosts = [pinnedPost, regularPost];
+            component.pinnedPosts.set([pinnedPost]);
+            component.allPosts.set([pinnedPost, regularPost]);
 
             fixture.componentRef.setInput('showOnlyPinned', true);
             fixture.detectChanges();
             component.applyPinnedMessageFilter();
 
-            expect(component.posts).toEqual([pinnedPost]);
+            expect(component.posts()).toEqual([pinnedPost]);
         });
 
         it('should show all posts when showOnlyPinned is false', () => {
             const pinnedPost = { id: 1, displayPriority: 'PINNED', creationDate: dayjs().subtract(2, 'minutes') } as Post;
             const regularPost = { id: 2, displayPriority: 'NONE', creationDate: dayjs().subtract(1, 'minute') } as Post;
-            component.pinnedPosts = [pinnedPost];
-            component.allPosts = [pinnedPost, regularPost];
+            component.pinnedPosts.set([pinnedPost]);
+            component.allPosts.set([pinnedPost, regularPost]);
             fixture.componentRef.setInput('showOnlyPinned', false);
             fixture.detectChanges();
             component.applyPinnedMessageFilter();
 
-            expect(component.posts).toEqual([pinnedPost, regularPost]);
+            expect(component.posts()).toEqual([pinnedPost, regularPost]);
         });
 
         it('should call setPosts when showOnlyPinned input changes after initialization', () => {
@@ -489,88 +929,88 @@ examples.forEach((activeConversation) => {
             const pinnedPostsSubject = new BehaviorSubject<Post[]>([]);
 
             const pinnedCountSpy = vi.spyOn(component.pinnedCount, 'emit');
-            vi.spyOn(metisService, 'getPinnedPosts').mockReturnValue(pinnedPostsSubject.asObservable());
+            vi.spyOn(communicationService, 'getPinnedPosts').mockReturnValue(pinnedPostsSubject.asObservable());
 
             component.ngOnInit();
 
             pinnedPostsSubject.next(pinnedPostsStub);
             vi.advanceTimersByTime(0);
 
-            expect(component.pinnedPosts).toEqual(pinnedPostsStub);
+            expect(component.pinnedPosts()).toEqual(pinnedPostsStub);
             expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
         });
 
         it('should fetch pinned posts in onActiveConversationChange and emit pinnedCount', () => {
             const pinnedPostsStub = [{ id: 77, displayPriority: 'PINNED' }] as Post[];
             const pinnedCountSpy = vi.spyOn(component.pinnedCount, 'emit');
-            vi.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of(pinnedPostsStub));
+            vi.spyOn(communicationService, 'fetchAllPinnedPosts').mockReturnValue(of(pinnedPostsStub));
 
-            component._activeConversation = { id: 123, type: ConversationType.CHANNEL };
+            component._activeConversation.set({ id: 123, type: ConversationType.CHANNEL });
             fixture.componentRef.setInput('course', { id: 1 } as Course);
 
             component['onActiveConversationChange']();
             vi.advanceTimersByTime(0);
 
-            expect(component.pinnedPosts).toEqual(pinnedPostsStub);
+            expect(component.pinnedPosts()).toEqual(pinnedPostsStub);
             expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
         });
 
         it('should group posts correctly with consecutive messages from same author', () => {
-            component.posts = [
+            component.posts.set([
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 1 } } as Post,
-            ];
+            ]);
             (component as any).groupPosts();
 
-            expect(component.groupedPosts).toHaveLength(1);
-            expect(component.groupedPosts[0].posts).toHaveLength(3);
-            expect(component.groupedPosts[0].posts[0].isConsecutive).toBe(false);
-            expect(component.groupedPosts[0].posts[1].isConsecutive).toBe(true);
-            expect(component.groupedPosts[0].posts[2].isConsecutive).toBe(true);
+            expect(component.groupedPosts()).toHaveLength(1);
+            expect(component.groupedPosts()[0].posts).toHaveLength(3);
+            expect(component.groupedPosts()[0].posts[0].isConsecutive).toBe(false);
+            expect(component.groupedPosts()[0].posts[1].isConsecutive).toBe(true);
+            expect(component.groupedPosts()[0].posts[2].isConsecutive).toBe(true);
         });
 
         it('should group posts correctly with different authors', () => {
-            component.posts = [
+            component.posts.set([
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 2 } } as Post,
                 { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 1 } } as Post,
-            ];
+            ]);
             (component as any).groupPosts();
 
-            expect(component.groupedPosts).toHaveLength(3);
-            expect(component.groupedPosts[0].posts).toHaveLength(1);
-            expect(component.groupedPosts[1].posts).toHaveLength(1);
-            expect(component.groupedPosts[2].posts).toHaveLength(1);
+            expect(component.groupedPosts()).toHaveLength(3);
+            expect(component.groupedPosts()[0].posts).toHaveLength(1);
+            expect(component.groupedPosts()[1].posts).toHaveLength(1);
+            expect(component.groupedPosts()[2].posts).toHaveLength(1);
         });
 
         it('should handle multiple message deletions correctly', () => {
             // Initial posts
 
-            component.posts = [
+            component.posts.set([
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 2 } } as Post,
                 { id: 4, creationDate: dayjs().add(3, 'minutes'), author: { id: 2 } } as Post,
-            ];
+            ]);
             (component as any).groupPosts();
 
             // Delete posts 2 and 3
-            component.posts = [
+            component.posts.set([
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 {
                     id: 4,
                     creationDate: dayjs().add(3, 'minutes'),
                     author: { id: 2 },
                 } as Post,
-            ];
+            ]);
             (component as any).groupPosts();
 
-            expect(component.groupedPosts).toHaveLength(2);
-            expect(component.groupedPosts[0].posts).toHaveLength(1);
-            expect(component.groupedPosts[1].posts).toHaveLength(1);
-            expect(component.groupedPosts[0].author?.id).toBe(1);
-            expect(component.groupedPosts[1].author?.id).toBe(2);
+            expect(component.groupedPosts()).toHaveLength(2);
+            expect(component.groupedPosts()[0].posts).toHaveLength(1);
+            expect(component.groupedPosts()[1].posts).toHaveLength(1);
+            expect(component.groupedPosts()[0].author?.id).toBe(1);
+            expect(component.groupedPosts()[1].author?.id).toBe(2);
         });
 
         it('should return only unread posts by the current user and sort them descending by creationDate', () => {
@@ -578,19 +1018,19 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
+            component._activeConversation.set({
+                ...component._activeConversation(),
                 lastReadDate,
-            };
+            });
 
             component.currentUser = currentUser;
 
-            component.allPosts = [
+            component.allPosts.set([
                 { id: 1, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
                 { id: 2, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // read
                 { id: 3, creationDate: dayjs().subtract(20, 'minutes'), author: otherUser } as Post, // read
                 { id: 4, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post, // unread
-            ];
+            ]);
             const unreadPosts = (component as any).getUnreadPosts();
             expect(unreadPosts).toHaveLength(2);
             expect(unreadPosts.map((p: Post) => p.id)).toEqual([1, 4]);
@@ -600,25 +1040,25 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
+            component._activeConversation.set({
+                ...component._activeConversation(),
                 lastReadDate,
-            };
+            });
 
             component.currentUser = currentUser;
 
-            component.allPosts = [
+            component.allPosts.set([
                 { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post, // read
                 { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread (first)
                 { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // excluded (own post)
                 { id: 4, creationDate: dayjs(), author: otherUser } as Post, // unread
-            ];
+            ]);
 
             (component as any).computeLastReadState();
 
             expect(component.unreadPosts).toHaveLength(2);
-            expect(component.unreadPostsCount).toBe(2);
-            expect(component.firstUnreadPostId).toBe(2);
+            expect(component.unreadPostsCount()).toBe(2);
+            expect(component.firstUnreadPostId()).toBe(2);
         });
 
         it('should call setFirstUnreadPostId inside computeLastReadState', () => {
@@ -626,34 +1066,34 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = { ...component._activeConversation, lastReadDate };
+            component._activeConversation.set({ ...component._activeConversation(), lastReadDate });
             component.currentUser = currentUser;
-            component.allPosts = [{ id: 5, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post];
+            component.allPosts.set([{ id: 5, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post]);
 
             const setFirstUnreadPostIdSpy = vi.spyOn(component as any, 'setFirstUnreadPostId');
 
             (component as any).computeLastReadState();
 
             expect(setFirstUnreadPostIdSpy).toHaveBeenCalledOnce();
-            expect(component.firstUnreadPostId).toBe(5);
+            expect(component.firstUnreadPostId()).toBe(5);
         });
 
         it('should clear firstUnreadPostId when there are no unread posts', () => {
-            component._activeConversation = { ...component._activeConversation, lastReadDate: dayjs() };
+            component._activeConversation.set({ ...component._activeConversation(), lastReadDate: dayjs() });
             component.currentUser = { id: 99, internal: false };
-            component.allPosts = [];
-            component.firstUnreadPostId = 42;
+            component.allPosts.set([]);
+            component.firstUnreadPostId.set(42);
 
             (component as any).computeLastReadState();
 
-            expect(component.firstUnreadPostId).toBeUndefined();
+            expect(component.firstUnreadPostId()).toBeUndefined();
         });
 
         it('should return true if at least one unread post is visible', () => {
-            const mockPostId = 1;
+            const mockPostId: number = 1;
             component.unreadPosts = [{ id: mockPostId } as any];
 
-            vi.spyOn(component as any, 'isPostVisible').mockImplementation((id: number) => id === mockPostId);
+            vi.spyOn(component as any, 'isPostVisible').mockImplementation((...args: unknown[]) => args[0] === mockPostId);
 
             const result = (component as any).isAnyUnreadPostVisible();
             expect(result).toBe(true);
@@ -743,7 +1183,7 @@ examples.forEach((activeConversation) => {
                 postRect: { top: 400, bottom: 800 },
                 containerRect: { top: 0, bottom: 300 },
             };
-            component.firstUnreadPostId = mockPostId;
+            component.firstUnreadPostId.set(mockPostId);
             component.unreadPosts = [mockPost];
             (component as any).messages = vi.fn().mockReturnValue([
                 {
@@ -816,5 +1256,85 @@ examples.forEach((activeConversation) => {
             const result = (component as any).isPostVisible(postId);
             expect(result).toBe(false);
         });
+    });
+});
+
+// Regression test for NG0951 ("Child query result is required but no value is available").
+// The whole component template is wrapped in `@if (course())`, so the `#container` template ref
+// does not exist until a course is set. `setPosts()` runs from the posts subscription, which
+// can fire before that. Reading a `viewChild.required` signal in that state throws.
+// NOTE: deliberately does NOT stub `content` and does NOT set the `course` input — the rest of this
+// spec file stubs `content` with a fake container, which is exactly why this bug went unnoticed.
+describe('ConversationMessagesComponent before the container is rendered', () => {
+    let component: ConversationMessagesComponent;
+    let fixture: ComponentFixture<ConversationMessagesComponent>;
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                ReactiveFormsModule,
+                FaIconComponent,
+                ConversationMessagesComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(ButtonComponent),
+                MockComponent(PostingThreadComponent),
+                MockComponent(MessageInlineInputComponent),
+                MockComponent(PostCreateEditModalComponent),
+                MockDirective(TranslateDirective),
+                InfiniteScrollStubDirective,
+            ],
+            providers: [
+                MockProvider(CourseConversationsService),
+                MockProvider(CommunicationService),
+                MockProvider(DialogService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        });
+
+        TestBed.overrideComponent(ConversationMessagesComponent, {
+            remove: {
+                imports: [PostingThreadComponent, MessageInlineInputComponent, PostCreateEditModalComponent, InfiniteScrollDirective, ButtonComponent, TranslateDirective],
+            },
+            add: {
+                imports: [
+                    MockComponent(PostingThreadComponent),
+                    MockComponent(MessageInlineInputComponent),
+                    MockComponent(PostCreateEditModalComponent),
+                    InfiniteScrollStubDirective,
+                    MockComponent(ButtonComponent),
+                    MockDirective(TranslateDirective),
+                ],
+                schemas: [NO_ERRORS_SCHEMA],
+            },
+        });
+
+        const communicationService = TestBed.inject(CommunicationService);
+        const courseConversationsService = TestBed.inject(CourseConversationsService);
+        // A non-emitting posts stream, so nothing calls setPosts() during construction and the test
+        // can exercise it explicitly.
+        Object.defineProperty(communicationService, 'posts', { get: () => new Subject<Post[]>().asObservable() });
+        Object.defineProperty(communicationService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(0).asObservable() });
+        Object.defineProperty(communicationService, 'createEmptyPostForContext', { value: () => new Post() });
+        Object.defineProperty(communicationService, 'getPinnedPosts', { value: () => of([]) });
+        Object.defineProperty(communicationService, 'fetchAllPinnedPosts', { value: () => of([]) });
+        // An active conversation IS required (ngOnInit dereferences it); the point of this test is that
+        // the `course` input is still unset, so the template's `@if (course())` keeps `#container` out of the DOM.
+        Object.defineProperty(courseConversationsService, 'activeConversation$', {
+            get: () => new BehaviorSubject(generateExampleChannelDTO({} as ChannelDTO)).asObservable(),
+        });
+
+        fixture = TestBed.createComponent(ConversationMessagesComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should not throw when posts are prepared before the container exists', () => {
+        expect(() => component.setPosts()).not.toThrow();
     });
 });

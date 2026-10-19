@@ -1,18 +1,18 @@
-import { Component, OnInit, effect, inject, input, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, afterRenderEffect, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { ProgrammingSubmissionPolicyStatusComponent } from 'app/programming/shared/entities/programming-submission-policy-status';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
@@ -27,10 +27,13 @@ import { CodeEditorConflictStateService } from 'app/programming/shared/code-edit
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { CommitState, DomainType, EditorState } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
     templateUrl: './programming-exam-submission.component.html',
+    styleUrl: './programming-exam-submission.component.scss',
     providers: [
         { provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent },
         CodeEditorConflictStateService,
@@ -39,10 +42,8 @@ import { CommitState, DomainType, EditorState } from 'app/programming/shared/cod
         CodeEditorRepositoryFileService,
         CodeEditorRepositoryService,
     ],
-    styleUrls: ['./programming-exam-submission.component.scss'],
     imports: [
-        TranslateDirective,
-        IncludedInScoreBadgeComponent,
+        ExamExerciseHeaderComponent,
         CodeEditorContainerComponent,
         ProgrammingSubmissionPolicyStatusComponent,
         ExerciseDetailsStudentActionsComponent,
@@ -50,15 +51,22 @@ import { CommitState, DomainType, EditorState } from 'app/programming/shared/cod
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseInstructionComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private domainService = inject(DomainService);
+    private examParticipationService = inject(ExamParticipationService);
 
     exerciseType = ExerciseType.PROGRAMMING;
 
     codeEditorContainer = viewChild.required(CodeEditorContainerComponent);
     instructions = viewChild.required(ProgrammingExerciseInstructionComponent);
+    // The title row takes the toolbar of the page over where there is room. The online editor holds its toolbar itself; without the online editor it is the row of the Code button and the result.
+    // The query for the editor is the optional twin of codeEditorContainer, which cannot be read on a page without the online editor.
+    private readonly header = viewChild.required(ExamExerciseHeaderComponent);
+    private readonly onlineEditor = viewChild(CodeEditorContainerComponent);
+    private readonly offlineToolbar = viewChild<ElementRef<HTMLElement>>('offlineToolbar');
 
     // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
     studentParticipation = input.required<ProgrammingExerciseStudentParticipation>();
@@ -67,11 +75,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     showEditorInstructions = true;
     hasSubmittedOnce = false;
-    submissionCount?: number;
+    readonly submissionCount = signal<number | undefined>(undefined);
     repositoryIsLocked = false;
 
     readonly SubmissionPolicyType = SubmissionPolicyType;
-    readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly getCourseFromExercise = getCourseFromExercise;
 
     getSubmission(): Submission | undefined {
@@ -91,7 +98,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.exercise();
     }
 
-    isSaving: boolean;
+    isSaving = false;
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
@@ -101,6 +108,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
             // react when the studentParticipation input changes (replaces ngOnChanges)
             this.studentParticipation();
             this.setSubmissionCountAndLockIfNeeded();
+        });
+        // After the render, because the toolbar is moved in the DOM and has to exist there
+        afterRenderEffect(() => {
+            const toolbar = this.onlineEditor()?.navbar()?.nativeElement ?? this.offlineToolbar()?.nativeElement;
+            untracked(() => this.header().offerActions(toolbar));
         });
     }
 
@@ -113,9 +125,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.setSubmissionCountAndLockIfNeeded();
     }
 
-    onActivate() {
+    override onActivate() {
         super.onActivate();
-        this.instructions().updateMarkdown();
+        // Force a re-render (not just updateMarkdown, which skips unchanged problem statements): while this exercise was
+        // hidden its change detection was detached, so a render that happened in the meantime may have injected the
+        // PlantUML diagrams into stale DOM. Re-rendering now that the exercise is visible restores them reliably.
+        this.instructions().forceReRenderProblemStatement();
         this.updateDomain();
     }
 
@@ -123,7 +138,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Updates the domain to set the active student participation
      */
     updateDomain() {
-        const participation = { ...this.studentParticipation(), exercise: this.exercise() } as StudentParticipation;
+        const participation = cloneWith(this.studentParticipation(), { exercise: this.exercise() }) satisfies StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
@@ -131,7 +146,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Sets the submission count and lock based on the student participation.
      */
     setSubmissionCountAndLockIfNeeded() {
-        this.submissionCount = this.studentParticipation().submissionCount ?? this.submissionCount;
+        this.submissionCount.set(this.studentParticipation().submissionCount ?? this.submissionCount());
         // TODO: update repositoryIsLocked with the actual value from the server
     }
 
@@ -148,6 +163,9 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
             if (commitState === CommitState.CLEAN && this.hasSubmittedOnce) {
                 firstSubmission.submitted = true;
                 firstSubmission.isSynced = true;
+                // isSynced is mutated in place; notify sync-state-dependent UI so it re-evaluates under zoneless
+                // change detection (exam navigation sidebar, exercise overview, save button).
+                this.examParticipationService.notifySubmissionSyncStateChanged();
             } else if (commitState !== CommitState.UNDEFINED && !this.hasSubmittedOnce) {
                 this.hasSubmittedOnce = true;
             }
@@ -158,6 +176,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         const studentParticipation = this.studentParticipation();
         if (studentParticipation?.submissions && studentParticipation.submissions.length > 0) {
             studentParticipation.submissions[0].isSynced = false;
+            // Same reason as in onCommitStateChange: the in-place mutation schedules no change detection.
+            this.examParticipationService.notifySubmissionSyncStateChanged();
         }
     }
 

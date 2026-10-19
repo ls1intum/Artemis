@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { concatMap, filter, take, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -8,6 +8,7 @@ import { Comment } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewThreadSyncAction } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Synchronization targets used to scope editor sync events.
@@ -211,7 +212,7 @@ export function repositoryTypeToSyncTarget(repoType: RepositoryType): ExerciseEd
  * that messages sent during a cold page load (before the STOMP handshake completes) are
  * never silently dropped. Messages are flushed in FIFO order once connected.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseEditorSyncService {
     private websocketService = inject(WebsocketService);
     private browserFingerprintService = inject(BrowserFingerprintService);
@@ -220,7 +221,7 @@ export class ExerciseEditorSyncService {
     private subject: Subject<ExerciseEditorSyncEvent> | undefined;
     private subscription: Subscription | undefined;
 
-    private outgoing$?: Subject<{ topic: string; payload: Record<string, unknown> }>;
+    private outgoing$?: Subject<{ topic: string; payload: ExerciseEditorSyncEvent }>;
     private outgoingSubscription?: Subscription;
 
     /**
@@ -231,6 +232,16 @@ export class ExerciseEditorSyncService {
      */
     private getTopic(exerciseId: number): string {
         return `/topic/exercises/${exerciseId}/synchronization`;
+    }
+
+    /**
+     * Constructs the STOMP destination the client sends its synchronization events to. The server relays them to the topic of {@link getTopic}.
+     *
+     * @param exerciseId - the ID of the exercise
+     * @returns the destination (e.g. `/app/exercises/42/synchronization`)
+     */
+    private getSendDestination(exerciseId: number): string {
+        return `/app/exercises/${exerciseId}/synchronization`;
     }
 
     /**
@@ -267,7 +278,7 @@ export class ExerciseEditorSyncService {
             const topic = this.getTopic(exerciseId);
             this.exerciseId = exerciseId;
             this.subject = new Subject<ExerciseEditorSyncEvent>();
-            this.outgoing$ = new Subject<{ topic: string; payload: Record<string, unknown> }>();
+            this.outgoing$ = new Subject<{ topic: string; payload: ExerciseEditorSyncEvent }>();
             this.outgoingSubscription = this.outgoing$
                 .pipe(
                     concatMap((msg) =>
@@ -316,8 +327,8 @@ export class ExerciseEditorSyncService {
         if (!this.outgoing$) {
             throw new Error('Cannot send synchronization message: outgoing message buffer not initialized');
         }
-        const topic = this.getTopic(exerciseId);
-        this.outgoing$.next({ topic, payload: { ...message, timestamp: message.timestamp ?? Date.now(), sessionId: this.sessionId } });
+        const topic = this.getSendDestination(exerciseId);
+        this.outgoing$.next({ topic, payload: cloneWith(message, { timestamp: message.timestamp ?? Date.now(), sessionId: this.sessionId }) });
     }
 
     /**

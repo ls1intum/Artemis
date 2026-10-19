@@ -2,9 +2,8 @@ import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constant
 import { SettingId, UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { Setting, UserSettingsStructure } from '../user-settings.model';
 
-export interface ScienceSetting extends Setting {
-    active?: boolean;
-}
+// Science settings are plain user settings; the on/off state (`active`) lives on the base `Setting`.
+export type ScienceSetting = Setting;
 
 export const scienceSettingsStructure: UserSettingsStructure<ScienceSetting> = {
     category: UserSettingsCategory.SCIENCE_SETTINGS,

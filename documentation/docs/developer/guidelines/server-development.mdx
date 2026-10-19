@@ -1,20 +1,26 @@
+---
+id: server-development
+title: Server Development
+sidebar_label: Server Development
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-
-# Server Development
 
 ## General Best Practices
 
 * Always use the least possible access level; prefer `private` over `public` (package-private or protected can be used as well).
-* Avoid using `@Transactional` randomly. Transactions can hurt performance, introduce locking/concurrency issues, and add complexity. See: https://codete.com/blog/5-common-spring-transactional-pitfalls/
+* Do not declare transaction boundaries in services or controllers. `@Transactional`, `TransactionTemplate` and `PlatformTransactionManager` belong inside repositories, in practice only on a `@Modifying` query that needs one. Two ArchUnit rules enforce this over production code with no exception list: one requires every `@Transactional` method and class to be a repository, the other forbids production code from touching `org.springframework.transaction` outside the annotation package, which is what covers `TransactionTemplate` and `PlatformTransactionManager`. A boundary declared in a service stays open for the whole call, so it holds its locks across every repository call, remote request and file write inside it, blocks anyone who needs those rows for that entire span, and gives two concurrent calls enough overlapping rows to deadlock under load. The rollback scenario such a boundary is usually added for is generally one that does not occur in practice, while the locking cost is paid on every request. Note also that a self-invoked `@Transactional` method is silently inert, because Spring applies the annotation through a proxy. See [Avoid Transactions](/developer/guidelines/performance#avoid-transactions) for the reasoning, the self-invocation trap and the alternatives, and https://codete.com/blog/5-common-spring-transactional-pitfalls/ for further background.
 * Do not add Hibernate `@Cache` annotations on entities or associations. Hibernate second-level cache is disabled cluster-wide; an ArchUnit rule enforces this. For DTO caching, use Spring `@Cacheable` with explicit eviction. See [Caching Guidelines](/developer/guidelines/caching) for the full rationale and the canonical eviction pattern.
 * Do not inject `EntityManager` or `EntityManagerFactory` directly into services, controllers, or other Spring beans. All database operations must go through Spring Data repositories. Direct `EntityManager` usage bypasses the repository abstraction, makes code harder to test and maintain, and can introduce subtle persistence context bugs (e.g. stale proxies after JPQL bulk operations). The only acceptable location for `EntityManager` usage is inside custom repository implementations (e.g. `RepositoryImpl`).
+* Do not inject `JdbcClient`, `JdbcTemplate` or a `DataSource`. Raw JDBC skips JPA as well as the repository layer, and it addresses tables and columns by string: nothing checks those strings, so a renamed table or column compiles, passes review and only fails when the statement runs. Write the query as a `@Query` on a repository instead, naming entities and fields; where there is no entity to name, such as a join table, use `nativeQuery = true` on a repository method so the statement still has one owner and is covered by a test. An ArchUnit rule enforces this, and only the infrastructure that has to exist before any repository does - Liquibase, the schema migration and the data source metrics, all of it in `core.config` - is exempt.
 * Define a constant if the same value is used more than once. This makes future changes easier.
 * Facilitate code reuse. Move duplicated code to reusable methods. Use Generics where appropriate. IntelliJ can help find and extract duplicates.
 * Always qualify a static class member reference with its class name, not with a reference or expression of that class's type.
 * Prefer primitive types to classes (e.g. `long` instead of `Long`).
 * Use `./gradlew spotlessCheck` and `./gradlew spotlessApply` to check and fix Java code style.
 * Don't use `.collect(Collectors.toList())`. Use `.toList()` for an unmodifiable list or `.collect(Collectors.toCollection(ArrayList::new))` for a new ArrayList.
+* Never call `String.toLowerCase()` or `String.toUpperCase()` without a locale. Both fold case with the JVM default locale, so the same input gives a different answer depending on where the server runs: under a Turkish locale the ASCII letter `I` lowercases to the dotless `ı`, which is enough to make a check on `os.name`, a file extension, a MIME type, a header value or a login stop matching without any error. Pass `Locale.ROOT` for machine-facing values, which is almost all of them, and `Locale.ENGLISH` only where the surrounding code already does for the same kind of value, as `User.setLogin` does for logins. Where only the comparison matters, `equalsIgnoreCase`, `String.CASE_INSENSITIVE_ORDER` and `Pattern.CASE_INSENSITIVE` need no locale at all. An ArchUnit rule (`ArchitectureTest.testNoLocaleLessCaseConversion`) enforces this for production and test code.
 
 
 ## Project structure & Naming
@@ -37,7 +43,7 @@ The main application is stored under `/src/main` and separated into modules:
     * **repository** - used to access or change objects in the database. There are several techniques to query a database: named queries, queries with SpEL expressions and Entity Graphs.
     * security - contains different POJOs (simple classes that don't implement/extend any interface/class and don't have annotations) and component classes related to security.
     * **service** - represents the controller of the server application. Add the application logic here. Retrieve and change objects using repositories.
-    * **web** - contains REST and websocket controllers that act as the view of the server application. Validate input and security here but do not include complex application logic. For websockets, use the `MessagingTemplate` to push small data to the client or to notify the client about events.
+    * **web** - contains REST and websocket controllers that act as the view of the server application. Validate input and security here but do not include complex application logic. For websockets, declare every topic together with who may subscribe and send through `WebsocketMessagingService` to push small data to the client or to notify the client about events; see the [WebSocket Topics](/developer/guidelines/websocket) guideline.
 
 ### Naming convention
 
@@ -252,6 +258,61 @@ Key points:
 * Use appropriate authorization annotations (`@EnforceAtLeastInstructor`, `@EnforceRoleInResource`, etc.)
 * Follow route naming conventions (kebab-case, proper structure)
 
+### Assigning endpoints to a feature for the usage analysis
+
+Every endpoint is already counted by the built-in [feature usage analysis](/admin/feature-usage) without anyone doing
+anything: the inventory is built at startup from Spring's own mapping table, so coverage never drifts. What an endpoint
+needs from you is meaning: which feature, as users know it, it serves, and whether its calls say that someone used that
+feature.
+
+**Which feature.** Every controller carries `@FeatureUsage` with an entry of the `UserFeature` catalogue:
+
+```java
+@FeatureUsage(UserFeature.PROGRAMMING_GRADING_CONFIGURATION)
+@RestController
+@RequestMapping("api/programming/")
+public class StaticCodeAnalysisResource {
+```
+
+* **Required on every controller**, enforced by `FeatureUsageAnnotationTest`. On a controller it assigns every endpoint
+  in it; on a method it assigns that endpoint and wins over the class. Split a controller per method as soon as it serves
+  more than one thing a user would name, such as the student view and the instructor view of the same data.
+* Pick the feature a user would recognise, not the one that matches the code. Endpoints of several modules can serve the
+  same feature, and the page shows the modules one level below it.
+* A feature that does not exist yet goes into `UserFeature`, under its `ProductArea`, with a name and a one-line
+  description in `src/main/webapp/i18n/{en,de}/featureUsage.json`. The test fails for a constant without translations
+  and for one that nothing records.
+* The whole mapping is rendered into [Feature Usage Catalogue](/developer/feature-usage-catalogue); regenerate it with
+  `./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true` and read the diff.
+
+**How its calls count.** A `GET` or `HEAD` is a view and everything else an action, unless the endpoint is `@Internal`,
+which makes it a system call. Add `@UsageInteraction` where that is wrong:
+
+```java
+@UsageInteraction(FeatureInteraction.AUTOMATIC)
+@GetMapping("variant-jobs")
+public ResponseEntity<List<VariantJobDTO>> getJobsOfCurrentUser() {
+```
+
+* `AUTOMATIC` for an endpoint the client calls on its own: a status probe, a poll, a badge, a title lookup. This is the
+  one to think about for every new `GET` that a page calls when it loads. Without it, a feature nobody uses looks busy.
+* `VIEW` for a `POST` that only reads, such as a search or a preview.
+* `ACTION` for a `GET` whose purpose is a side effect, such as starting an exam or locking a submission.
+* `SYSTEM` for an endpoint another system calls, such as a build agent or an AI service reporting back.
+
+The interaction belongs to the endpoint, not to a call. An endpoint that both acts and reports status, for example
+through a `checkOnly` flag, cannot be counted correctly; give the status its own endpoint.
+
+Do not confuse either annotation with `@FeatureToggle`, which decides whether an endpoint may be called at all.
+`@FeatureUsage` and `@UsageInteraction` never affect behaviour, and changing them is safe at any time: the stored data
+stays per endpoint, and historic counts regroup at the next startup.
+
+Server-initiated work has no endpoint to annotate. Count it by calling `FeatureUsageCollector.recordUsage` with
+`FeatureKind.BACKGROUND`, the feature and the interaction, and keep the identifier bounded: a value derived from a user
+name or an entity id would turn every user into its own entry.
+
+See [Feature Usage Analysis](/developer/feature-usage) for how the tracking works and which invariants must hold when
+changing it.
 
 ## Service & Dependency Best Practices
 

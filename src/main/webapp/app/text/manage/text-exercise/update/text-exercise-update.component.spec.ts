@@ -30,16 +30,16 @@ vi.mock('monaco-editor', () => ({
 }));
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Component, input, output, signal } from '@angular/core';
+import { Component, forwardRef, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -51,6 +51,8 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -64,18 +66,22 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
+import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.
@@ -87,20 +93,20 @@ class MockMarkdownEditorMonacoComponent {
     domainActions = input<unknown[]>([]);
 }
 
-// Mock component for ExerciseFeedbackSuggestionOptionsComponent
-@Component({ selector: 'jhi-exercise-feedback-suggestion-options', template: '', standalone: true })
-class MockExerciseFeedbackSuggestionOptionsComponent {
-    exercise = input<TextExercise>();
-    dueDate = input<dayjs.Dayjs>();
-}
-
-// Mock for TitleChannelNameComponent interface
 class MockTitleChannelNameComponent {
     isValid = signal(true);
+    isChannelFieldDisplayed = signal(true);
+    isTitleDisallowed = signal(false);
 }
 
-// Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild properly
-@Component({ selector: 'jhi-exercise-title-channel-name', template: '', standalone: true })
+// Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild properly.
+// Provided under the real class, so that the host's viewChild(ExerciseTitleChannelNameComponent) finds it.
+@Component({
+    selector: 'jhi-exercise-title-channel-name',
+    template: '',
+    standalone: true,
+    providers: [{ provide: ExerciseTitleChannelNameComponent, useExisting: forwardRef(() => StubExerciseTitleChannelNameComponent) }],
+})
 class StubExerciseTitleChannelNameComponent {
     exercise = input<TextExercise | undefined>();
     titlePattern = input<string>('');
@@ -113,30 +119,47 @@ class StubExerciseTitleChannelNameComponent {
     courseId = input<number>();
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();
+    exerciseChange = output<TextExercise>();
     // Use a method that returns a mock instance instead of viewChild
     private readonly _titleChannelNameComponent = new MockTitleChannelNameComponent();
     titleChannelNameComponent = () => this._titleChannelNameComponent;
 }
 
-// Stub for ExerciseUpdatePlagiarismComponent
-@Component({ selector: 'jhi-exercise-update-plagiarism', template: '', standalone: true })
+// Stub for ExerciseUpdatePlagiarismComponent, provided under the real class for the host's viewChild
+@Component({
+    selector: 'jhi-exercise-update-plagiarism',
+    template: '',
+    standalone: true,
+    providers: [{ provide: ExerciseUpdatePlagiarismComponent, useExisting: forwardRef(() => StubExerciseUpdatePlagiarismComponent) }],
+})
 class StubExerciseUpdatePlagiarismComponent {
     exercise = input<TextExercise | undefined>();
     isFormValid = signal(true);
+    invalidControlNames = signal<string[]>([]);
 }
 
 // Stub for TeamConfigFormGroupComponent
 @Component({ selector: 'jhi-team-config-form-group', template: '', standalone: true })
 class StubTeamConfigFormGroupComponent {
-    exercise = input<TextExercise | undefined>();
+    exercise = input.required<TextExercise>();
     isImport = input<boolean>(false);
-    formValid = true;
-    formValidChanges = new Subject<boolean>();
+    exerciseChange = output<TextExercise>();
+
+    /** Changes the team config the way the real component does: it writes onto the exercise, then emits it. */
+    changeTeamConfig(mode: ExerciseMode, minTeamSize?: number) {
+        const exercise = this.exercise();
+        exercise.mode = mode;
+        exercise.teamAssignmentConfig = undefined;
+        if (mode === ExerciseMode.TEAM) {
+            exercise.teamAssignmentConfig = new TeamAssignmentConfig();
+            exercise.teamAssignmentConfig.minTeamSize = minTeamSize;
+            exercise.teamAssignmentConfig.maxTeamSize = 5;
+        }
+        this.exerciseChange.emit(exercise);
+    }
 }
 
 describe('TextExercise Management Update Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TextExerciseUpdateComponent;
     let fixture: ComponentFixture<TextExerciseUpdateComponent>;
     let textExerciseService: TextExerciseService;
@@ -167,12 +190,12 @@ describe('TextExercise Management Update Component', () => {
     };
 
     beforeEach(async () => {
-        routeData$ = new BehaviorSubject({ textExercise: createExercise(createCourse()) });
+        routeData$ = new BehaviorSubject<Data>({ textExercise: createExercise(createCourse()) });
         routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
-        routeParams$ = new BehaviorSubject({ courseId: 1 });
+        routeParams$ = new BehaviorSubject<Params>({ courseId: 1 });
 
         await TestBed.configureTestingModule({
-            imports: [TextExerciseUpdateComponent, TranslateModule.forRoot()],
+            imports: [TextExerciseUpdateComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -234,6 +257,7 @@ describe('TextExercise Management Update Component', () => {
                     },
                 },
                 { provide: ProfileService, useClass: MockProfileService },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(TextExerciseUpdateComponent, {
@@ -244,7 +268,6 @@ describe('TextExercise Management Update Component', () => {
                         FaIconComponent,
                         NgbTooltip,
                         ArtemisTranslatePipe,
-                        MockComponent(FormDateTimePickerComponent),
                         StubExerciseTitleChannelNameComponent,
                         StubTeamConfigFormGroupComponent,
                         MockComponent(IncludedInOverallScorePickerComponent),
@@ -253,14 +276,16 @@ describe('TextExercise Management Update Component', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorComponent),
+                        MockComponent(CategorySelectorPrimengComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
                         MockMarkdownEditorMonacoComponent,
-                        MockExerciseFeedbackSuggestionOptionsComponent,
                         StubExerciseUpdatePlagiarismComponent,
                         MockComponent(FeatureOverlayComponent),
+                        ExerciseGroupTimelineLockStubComponent,
+                        ExerciseTimelineComponent,
+                        MockComponent(ExerciseGroupDateNoticeComponent),
                     ],
                 },
             })
@@ -296,8 +321,54 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.update).toHaveBeenCalledWith(exercise, {});
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should flush grading instructions before setting isSaving', async () => {
+                const exercise = createExistingExercise();
+                routeData$.next({ textExercise: exercise });
+                routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
+
+                fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                let savingDuringFlush = false;
+                const prepareForSave = vi.fn(() => {
+                    savingDuringFlush = component.isSaving();
+                });
+                Object.defineProperty(component, 'gradingInstructionsDetails', { value: () => ({ prepareForSave }) });
+                vi.spyOn(textExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+                component.save();
+                await fixture.whenStable();
+
+                expect(prepareForSave).toHaveBeenCalledOnce();
+                expect(savingDuringFlush).toBe(false);
+            });
+
+            it('should abort the save when the grading instructions could not be parsed', async () => {
+                const exercise = createExistingExercise();
+                routeData$.next({ textExercise: exercise });
+                routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
+
+                fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                Object.defineProperty(component, 'gradingInstructionsDetails', { value: () => ({ prepareForSave: () => false }) });
+                const update = vi.spyOn(textExerciseService, 'update');
+
+                component.save();
+                await fixture.whenStable();
+
+                // The exercise still holds the previous grading criteria, so sending it would persist
+                // criteria the user no longer sees and discard the text they typed.
+                expect(update).not.toHaveBeenCalled();
+                expect(component.isSaving()).toBe(false);
             });
 
             it('should error during save', async () => {
@@ -338,7 +409,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.create).toHaveBeenCalledWith(exercise);
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
             });
         });
@@ -360,7 +431,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.import).toHaveBeenCalledWith(exercise);
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
             });
         });
     });
@@ -377,27 +448,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isExamMode).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise).toEqual(exercise);
-        });
-
-        it('should not set dateErrors', async () => {
-            const exerciseGroup = new ExerciseGroup();
-            const exercise = createExercise(undefined, exerciseGroup);
-            routeData$.next({ textExercise: exercise });
-            routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
-
-            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
-            component = fixture.componentInstance;
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const dateErrorNames = ['dueDateError', 'startDateError', 'assessmentDueDateError', 'exampleSolutionPublicationDateError'];
-            component.validateDate();
-
-            for (const errorName of dateErrorNames) {
-                expect(component.textExercise[errorName as keyof TextExercise]).toBeFalsy();
-            }
         });
     });
 
@@ -412,7 +464,7 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isExamMode).toBe(false);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise).toEqual(exercise);
         });
 
@@ -429,7 +481,62 @@ describe('TextExercise Management Update Component', () => {
             // Verify component is properly initialized
             expect(component.textExercise).toBeDefined();
             expect(component.backupExercise).toBeDefined();
-            expect(component.isSaving).toBe(false);
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it('should render one timeline containing all exercise dates', async () => {
+            const exercise = createExercise(createCourse());
+            exercise.releaseDate = dayjs().add(1, 'hour');
+            exercise.startDate = dayjs().add(2, 'hours');
+            exercise.dueDate = dayjs().add(1, 'day');
+            exercise.assessmentDueDate = dayjs().add(2, 'days');
+            exercise.exampleSolutionPublicationDate = dayjs().add(3, 'days');
+            routeData$.next({ textExercise: exercise });
+
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const timelines = fixture.debugElement.queryAll(By.directive(ExerciseTimelineComponent));
+            const timeline = timelines[0].componentInstance as ExerciseTimelineComponent;
+
+            expect(timelines).toHaveLength(1);
+            expect(timeline.releaseDate()).toBe(exercise.releaseDate);
+            expect(timeline.startDate()).toBe(exercise.startDate);
+            expect(timeline.dueDate()).toBe(exercise.dueDate);
+            expect(timeline.assessmentDueDate()).toBe(exercise.assessmentDueDate);
+            expect(timeline.exampleSolutionPublicationDate()).toBe(exercise.exampleSolutionPublicationDate);
+            expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBe('artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution');
+
+            exercise.exampleSolution = 'Example solution';
+            fixture.detectChanges();
+            expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBeUndefined();
+        });
+
+        it('should render the group date notice first in the grading controls', async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ textExercise: exercise });
+
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const variantLock = fixture.debugElement.query(By.directive(ExerciseGroupTimelineLockStubComponent)).componentInstance as ExerciseGroupTimelineLockStubComponent;
+            variantLock.locked = () => true;
+            const openModalSpy = vi.spyOn(variantLock, 'openModal');
+            fixture.detectChanges();
+
+            const gradingOptions = fixture.debugElement.query(By.css('.grading-options'));
+            const notice = gradingOptions.query(By.directive(ExerciseGroupDateNoticeComponent));
+
+            expect(gradingOptions.nativeElement.firstElementChild).toBe(notice.nativeElement);
+            expect((notice.nativeElement as HTMLElement).classList).toContain('mb-3');
+
+            (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
+
+            expect(openModalSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -438,8 +545,10 @@ describe('TextExercise Management Update Component', () => {
             const exercise = createExercise(createCourse());
             exercise.id = 1;
             exercise.releaseDate = dayjs();
+            exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
+            exercise.exampleSolutionPublicationDate = dayjs();
             routeData$.next({ textExercise: exercise });
             routeUrl$.next([{ path: 'import' }] as UrlSegment[]);
             routeParams$.next({ courseId: 1 });
@@ -449,11 +558,20 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(false);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
+            expect(component.textExercise.startDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
+            expect(component.textExercise.exampleSolutionPublicationDate).toBeUndefined();
+
+            const timeline = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance as ExerciseTimelineComponent;
+            const exampleSolutionPublicationDateItem = timeline.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.exampleSolutionPublicationDate');
+            const otherTimelineItems = timeline.timelineItems().filter((item) => item.labelStringKey !== 'artemisApp.exercise.exampleSolutionPublicationDate');
+
+            expect(exampleSolutionPublicationDateItem?.disabled).toBe(true);
+            expect(otherTimelineItems.every((item) => !item.disabled)).toBe(true);
         });
 
         it('should load exercise categories', async () => {
@@ -484,6 +602,7 @@ describe('TextExercise Management Update Component', () => {
             exercise.exerciseGroup.exam.course = createCourse();
             exercise.id = 1;
             exercise.releaseDate = dayjs();
+            exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
             exercise.channelName = 'testChannel';
@@ -496,10 +615,11 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(false);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
+            expect(component.textExercise.startDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
         });
     });
@@ -509,6 +629,7 @@ describe('TextExercise Management Update Component', () => {
             const exercise = createExercise(createCourse());
             exercise.id = 1;
             exercise.releaseDate = dayjs();
+            exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
             routeData$.next({ textExercise: exercise });
@@ -520,11 +641,12 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(true);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise.course).toBeUndefined();
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
+            expect(component.textExercise.startDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
         });
     });
@@ -535,6 +657,7 @@ describe('TextExercise Management Update Component', () => {
             exercise.exerciseGroup = new ExerciseGroup();
             exercise.id = 1;
             exercise.releaseDate = dayjs();
+            exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
             exercise.channelName = 'testChannel';
@@ -547,10 +670,11 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(true);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
+            expect(component.textExercise.startDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
         });
     });
@@ -565,12 +689,289 @@ describe('TextExercise Management Update Component', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        component.exerciseCategories = [];
+        component.exerciseCategories.set([]);
         const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
         component.updateCategories(newCategories);
 
         expect(component.textExercise.categories).toEqual(newCategories);
-        expect(component.exerciseCategories).toEqual(newCategories);
+        expect(component.exerciseCategories()).toEqual(newCategories);
+    });
+
+    describe('invalidReasons', () => {
+        let course: Course;
+        let titleChannelNameMock: MockTitleChannelNameComponent;
+
+        const filledInExercise = () => {
+            const exercise = new TextExercise(course, undefined);
+            exercise.title = 'Valid title';
+            exercise.channelName = 'valid-title';
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            return exercise;
+        };
+        const reasonKeys = () => component.invalidReasons().map((reason) => reason.translateKey);
+        const sectionOf = (title: string) => component.formSectionStatus().find((section) => section.title === `artemisApp.exercise.sections.${title}`);
+
+        async function render(exercise: TextExercise) {
+            routeData$.next({ textExercise: exercise });
+            routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            titleChannelNameMock = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance.titleChannelNameComponent();
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            // Read once, so that every later read has to be invalidated by the change under test rather than computed fresh.
+            fixture.detectChanges();
+            component.invalidReasons();
+            component.formSectionStatus();
+        }
+
+        async function typeInto(selector: string, value: string) {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css(selector)).nativeElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+
+        beforeEach(() => {
+            course = createCourse();
+        });
+
+        it('should report the mandatory fields of an untouched creation form', async () => {
+            await render(new TextExercise(course, undefined));
+
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.undefined');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.points.undefined');
+        });
+
+        it('should report no reason for a completely filled in exercise', async () => {
+            await render(filledInExercise());
+
+            expect(component.invalidReasons()).toEqual([]);
+        });
+
+        it('should forward the timeline reasons', async () => {
+            await render(filledInExercise());
+            component.timelineStatus.set({
+                valid: false,
+                empty: true,
+                invalidItems: [{ labelStringKey: 'artemisApp.exercise.dueDate', reasonKey: 'artemisApp.exercise.form.timeline.order', dateName: 'Due Date' }],
+            });
+
+            expect(component.invalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.order', translateValues: { dateName: 'Due Date' } }]);
+        });
+
+        it('should report a title shorter than the minimum length', async () => {
+            const exercise = filledInExercise();
+            exercise.title = 'ab';
+            await render(exercise);
+
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.minlength');
+        });
+
+        it('should follow the title field when it reports a title as already used', async () => {
+            await render(filledInExercise());
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.title.disallowedValue');
+
+            titleChannelNameMock.isTitleDisallowed.set(true);
+
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.disallowedValue');
+        });
+
+        it('should require a channel name only while the channel field is displayed', async () => {
+            const exercise = filledInExercise();
+            exercise.channelName = undefined;
+            await render(exercise);
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.channelName.empty');
+
+            titleChannelNameMock.isChannelFieldDisplayed.set(false);
+
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.channelName.empty');
+        });
+
+        // The bug class a computed() can introduce: a reason that stays after the user fixed the field, or does not come back.
+        it('should drop the points reason once points are typed and bring it back when they are cleared', async () => {
+            const exercise = filledInExercise();
+            exercise.maxPoints = undefined;
+            await render(exercise);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+
+            await typeInto('#field_points', '10');
+            expect(component.invalidReasons()).toEqual([]);
+            expect(sectionOf('grading')?.valid).toBe(true);
+            expect(component.textExercise.maxPoints).toBe(10);
+
+            await typeInto('#field_points', '');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+        });
+
+        it('should follow the bonus points as they are typed', async () => {
+            await render(filledInExercise());
+
+            await typeInto('#field_bonusPoints', '-1');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.bonusPoints.customMin']);
+
+            await typeInto('#field_bonusPoints', '3');
+            expect(component.invalidReasons()).toEqual([]);
+        });
+
+        it('should follow the team config component when it changes the mode and the team size', async () => {
+            await render(filledInExercise());
+            const teamConfig: StubTeamConfigFormGroupComponent = fixture.debugElement.query(By.directive(StubTeamConfigFormGroupComponent)).componentInstance;
+
+            teamConfig.changeTeamConfig(ExerciseMode.TEAM, undefined);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.minTeamSize.required']);
+            expect(sectionOf('mode')?.valid).toBe(false);
+
+            teamConfig.changeTeamConfig(ExerciseMode.TEAM, 2);
+            expect(component.invalidReasons()).toEqual([]);
+            expect(sectionOf('mode')?.valid).toBe(true);
+        });
+
+        it('should follow the title component when it writes a new title', async () => {
+            await render(filledInExercise());
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
+
+            component.textExercise.title = 'ab';
+            titleComponent.exerciseChange.emit(component.textExercise);
+
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.title.minlength']);
+            expect(sectionOf('general')?.valid).toBe(false);
+        });
+
+        it('should report an example solution publication date before the due date, and stop once it is moved', async () => {
+            await render(filledInExercise());
+            const timeline: ExerciseTimelineComponent = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance;
+            const dueDate = dayjs().add(2, 'days');
+
+            timeline.dueDate.set(dueDate);
+            timeline.exampleSolutionPublicationDate.set(dueDate.subtract(1, 'day'));
+            expect(reasonKeys()).toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+
+            timeline.exampleSolutionPublicationDate.set(dueDate.add(1, 'day'));
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+        });
+
+        it('should name the plagiarism control that is invalid, also when another one takes its place', async () => {
+            await render(filledInExercise());
+            const plagiarism: StubExerciseUpdatePlagiarismComponent = fixture.debugElement.query(By.directive(StubExerciseUpdatePlagiarismComponent)).componentInstance;
+
+            plagiarism.isFormValid.set(false);
+            plagiarism.invalidControlNames.set(['similarityThreshold']);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.continuousPlagiarismControl.similarityThreshold.pattern']);
+
+            plagiarism.invalidControlNames.set(['minimumScore']);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.continuousPlagiarismControl.minimumScore.customMin']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+        });
+
+        it('should mark the problem and solution sections empty until they are written', async () => {
+            await render(filledInExercise());
+            expect(sectionOf('problem')?.empty).toBe(true);
+
+            const editors = fixture.debugElement.queryAll(By.directive(MockMarkdownEditorMonacoComponent));
+            editors[0].triggerEventHandler('markdownChange', 'A problem');
+            editors[1].triggerEventHandler('markdownChange', 'A solution');
+
+            expect(sectionOf('problem')?.empty).toBe(false);
+            expect(sectionOf('solution')?.empty).toBe(false);
+            expect(component.textExercise.problemStatement).toBe('A problem');
+        });
+        it('should trim the title through the state when saving, so that the reasons follow a failed save', async () => {
+            const exercise = filledInExercise();
+            exercise.title = 'ab ';
+            await render(exercise);
+            expect(component.invalidReasons()).toEqual([]);
+            vi.spyOn(TestBed.inject(TextExerciseService), 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+            component.save();
+
+            expect(exercise.title).toBe('ab');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.title.minlength']);
+        });
+
+        it('should edit the exercise in place, so that the child components keep the object they were given', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
+            const teamConfig: StubTeamConfigFormGroupComponent = fixture.debugElement.query(By.directive(StubTeamConfigFormGroupComponent)).componentInstance;
+
+            await typeInto('#field_points', '7');
+            await typeInto('#field_bonusPoints', '2');
+
+            expect(component.textExercise).toBe(exercise);
+            expect(titleComponent.exercise()).toBe(exercise);
+            expect(teamConfig.exercise()).toBe(exercise);
+            expect(exercise.maxPoints).toBe(7);
+            expect(exercise.bonusPoints).toBe(2);
+        });
+    });
+
+    describe('bonus points as the score mode changes', () => {
+        const bonusInput = () => fixture.debugElement.query(By.css('#field_bonusPoints'));
+        const gradingSectionIsValid = () => component.formSectionStatus().find((section) => section.title === 'artemisApp.exercise.sections.grading')?.valid;
+
+        /** Switches the score mode the way the picker does: it emits the new mode. */
+        async function switchScoreMode(mode: IncludedInOverallScore): Promise<void> {
+            const picker = fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent));
+            picker.componentInstance.includedInOverallScoreChange.emit(mode);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        beforeEach(async () => {
+            const exercise = createExercise(createCourse());
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            routeData$.next({ textExercise: exercise });
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            // Exam mode short-circuits the plagiarism and timeline half of the grading verdict, leaving the points
+            // and the bonus points - which is the part these tests are about.
+            component.isExamMode.set(true);
+            fixture.detectChanges();
+        });
+
+        it('should not call the grading section invalid just because the field is absent', async () => {
+            // Started from invalid on purpose. Asserting "valid" against a baseline that is already valid passes
+            // whether or not anything recomputed, which is exactly how this test first proved nothing.
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(gradingSectionIsValid()).toBe(false);
+
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+
+            expect(bonusInput()).toBeNull();
+            expect(gradingSectionIsValid()).toBe(true);
+        });
+
+        it('should keep following the field after it is rebuilt, not the one it first saw', async () => {
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+            await switchScoreMode(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            expect(bonusInput()).not.toBeNull();
+            expect(gradingSectionIsValid()).toBe(true);
+
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(gradingSectionIsValid()).toBe(false);
+        });
     });
 });

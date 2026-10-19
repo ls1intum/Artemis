@@ -30,11 +30,9 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
     @Query("""
             SELECT DISTINCT comparison
             FROM PlagiarismComparison comparison
-                LEFT JOIN FETCH comparison.submissionA submissionA
-                LEFT JOIN FETCH comparison.submissionB submissionB
+                LEFT JOIN FETCH comparison.submissions
                 LEFT JOIN FETCH comparison.plagiarismResult result
                 LEFT JOIN FETCH result.exercise exercise
-                LEFT JOIN FETCH exercise.course
             WHERE comparison.id = :comparisonId
             """)
     Optional<PlagiarismComparison> findByIdWithSubmissions(@Param("comparisonId") long comparisonId);
@@ -44,36 +42,24 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
     }
 
     @Query("""
-            SELECT DISTINCT comparison
+            SELECT COALESCE(course.id, examCourse.id)
             FROM PlagiarismComparison comparison
-                LEFT JOIN FETCH comparison.submissionA submissionA
-                LEFT JOIN FETCH submissionA.elements elementsA
-                LEFT JOIN FETCH comparison.plagiarismResult result
-                LEFT JOIN FETCH result.exercise exercise
-                LEFT JOIN FETCH exercise.course
+                JOIN comparison.plagiarismResult result
+                JOIN result.exercise exercise
+                LEFT JOIN exercise.course course
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+                LEFT JOIN exam.course examCourse
             WHERE comparison.id = :comparisonId
             """)
-    Optional<PlagiarismComparison> findByIdWithSubmissionsAndElementsA(@Param("comparisonId") long comparisonId);
+    Optional<Long> findCourseIdById(@Param("comparisonId") long comparisonId);
 
-    default PlagiarismComparison findByIdWithSubmissionsStudentsAndElementsAElseThrow(long comparisonId) {
-        return getValueElseThrow(findByIdWithSubmissionsAndElementsA(comparisonId), comparisonId);
+    default Long findCourseIdByIdElseThrow(long comparisonId) {
+        return getArbitraryValueElseThrow(findCourseIdById(comparisonId), String.valueOf(comparisonId));
     }
 
-    @Query("""
-            SELECT DISTINCT comparison
-            FROM PlagiarismComparison comparison
-                LEFT JOIN FETCH comparison.submissionB submissionB
-                LEFT JOIN FETCH submissionB.elements elementsB
-            WHERE comparison.id = :comparisonId
-            """)
-    Optional<PlagiarismComparison> findByIdWithSubmissionsAndElementsB(@Param("comparisonId") long comparisonId);
-
-    default PlagiarismComparison findByIdWithSubmissionsStudentsAndElementsBElseThrow(long comparisonId) {
-        return getValueElseThrow(findByIdWithSubmissionsAndElementsB(comparisonId), comparisonId);
-    }
-
-    @EntityGraph(type = LOAD, attributePaths = { "submissionA", "submissionA.plagiarismCase", "submissionB", "submissionB.plagiarismCase" })
-    Optional<Set<PlagiarismComparison>> findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(long submissionA_submissionId, long submissionB_submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.plagiarismCase" })
+    Optional<Set<PlagiarismComparison>> findBySubmissions_SubmissionId(long submissions_submissionId);
 
     @Modifying
     @Transactional // ok because of delete
@@ -91,6 +77,7 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
             """)
     void updatePlagiarismComparisonStatus(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("status") PlagiarismStatus status);
 
+    @EntityGraph(type = LOAD, attributePaths = "submissions")
     Set<PlagiarismComparison> findAllByPlagiarismResultExerciseId(long exerciseId);
 
 }

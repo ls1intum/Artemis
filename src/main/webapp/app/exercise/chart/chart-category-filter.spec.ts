@@ -1,6 +1,5 @@
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -319,12 +318,22 @@ let results: Exercise[];
 const courseExercises = [...modelingExercises, programmingExercise, quizExercise, fileUploadExercise];
 
 describe('ChartCategoryFilter', () => {
-    setupTestBed({ zoneless: true });
     let categoryFilter: ChartCategoryFilter;
 
     beforeEach(() => {
         categoryFilter = TestBed.inject(ChartCategoryFilter);
         categoryFilter.setupCategoryFilter(courseExercises);
+    });
+
+    it('should treat empty category arrays as exercises without categories', () => {
+        const uncategorizedExercise = { ...quizExercise, categories: [] };
+        categoryFilter.setupCategoryFilter([uncategorizedExercise]);
+
+        expect(categoryFilter.exercisesWithoutCategoriesPresent).toBe(true);
+        expect(categoryFilter.numberOfActiveFilters).toBe(1);
+        expect(categoryFilter.applyCurrentFilter([uncategorizedExercise])).toEqual([uncategorizedExercise]);
+        expect(categoryFilter.toggleExercisesWithNoCategory([uncategorizedExercise])).toEqual([]);
+        expect(categoryFilter.toggleExercisesWithNoCategory([uncategorizedExercise])).toEqual([uncategorizedExercise]);
     });
 
     it('should deselect and select all categories', () => {

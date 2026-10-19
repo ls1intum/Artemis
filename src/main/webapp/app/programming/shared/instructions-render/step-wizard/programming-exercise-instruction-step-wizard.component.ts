@@ -5,16 +5,20 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { safeUnescape } from 'app/foundation/util/security.util';
 
 interface StepWizardStep {
     done: TestCaseState;
+    /** The task name as plain text, for the tooltip. */
     title: string;
+    /** The task name as HTML, because it is taken from the rendered markdown. */
+    taskName: string;
     testIds: number[];
 }
 
@@ -45,7 +49,8 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
         }
         return tasks.map(({ taskName, testIds }) => ({
             done: this.instructionService.testStatusForTask(testIds, latestResult).testCaseState,
-            title: taskName,
+            title: safeUnescape(taskName) ?? taskName,
+            taskName,
             testIds,
         }));
     });
@@ -54,6 +59,10 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
     faCheck = faCheck;
     faCircle = faCircle;
 
+    /**
+     * @param tests the ids of the tests of the task
+     * @param taskName the name of the task as HTML, as it is taken from the rendered markdown
+     */
     showDetailsForTests(tests: number[], taskName: string) {
         const latestResult = this.latestResult();
         if (!latestResult || !tests.length) {
@@ -63,7 +72,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
             detailed: { notExecutedTests },
         } = this.instructionService.testStatusForTask(tests, latestResult);
         this.dialogService.open(FeedbackComponent, {
-            header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName }),
+            header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName: safeUnescape(taskName) ?? taskName }),
             width: '50rem',
             breakpoints: {
                 '850px': '95vw',
@@ -72,12 +81,11 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            data: {
+            inputValues: {
                 exercise: this.exercise(),
                 result: latestResult,
                 participation: this.participation(),
                 feedbackFilter: tests,
-                exerciseType: ExerciseType.PROGRAMMING,
                 taskName,
                 numberOfNotExecutedTests: notExecutedTests.length,
             },

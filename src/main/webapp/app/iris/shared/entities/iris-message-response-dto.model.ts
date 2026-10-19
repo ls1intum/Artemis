@@ -1,4 +1,5 @@
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
+import { IrisActivityItem } from 'app/iris/shared/entities/iris-activity.model';
 
 /**
  * Mirrors the server-side IrisMessageContentResponseDTO record.
@@ -8,7 +9,11 @@ export interface IrisMessageContentResponseDTO {
     id?: number;
     type: string;
     textContent?: string;
-    attributes?: string;
+    /**
+     * JSON content payload. The server annotates this field with @JsonRawValue, so it is written to the
+     * wire as an inline JSON object rather than as a string, matching IrisJsonMessageContent.attributes.
+     */
+    attributes?: Record<string, unknown>;
 }
 
 /**
@@ -24,5 +29,7 @@ export interface IrisMessageResponseDTO {
     content: IrisMessageContentResponseDTO[];
     accessedMemories?: MemirisMemory[];
     createdMemories?: MemirisMemory[];
+    activities?: IrisActivityItem[];
     messageDifferentiator?: number;
+    final?: boolean;
 }

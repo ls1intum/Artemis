@@ -1,15 +1,14 @@
 package de.tum.cit.aet.artemis.iris.dto;
 
-import java.io.IOException;
-
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonRawValue;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
@@ -39,10 +38,10 @@ public record IrisMessageContentResponseDTO(@Nullable Long id, String type, @Nul
      * Deserializer that reads any JSON value as a raw string, complementing {@link JsonRawValue}
      * which only handles serialization.
      */
-    static class RawJsonDeserializer extends JsonDeserializer<String> {
+    static class RawJsonDeserializer extends ValueDeserializer<String> {
 
         @Override
-        public String deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        public String deserialize(JsonParser p, DeserializationContext ctxt) {
             return p.readValueAsTree().toString();
         }
     }

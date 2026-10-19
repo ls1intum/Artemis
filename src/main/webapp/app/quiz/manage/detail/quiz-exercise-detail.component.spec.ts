@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -20,10 +19,10 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('QuizExercise Details Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizExerciseDetailComponent;
     let fixture: ComponentFixture<QuizExerciseDetailComponent>;
     let quizExerciseService: QuizExerciseService;
@@ -48,6 +47,7 @@ describe('QuizExercise Details Component', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -69,7 +69,7 @@ describe('QuizExercise Details Component', () => {
         vi.spyOn(comp, 'load').mockReturnValue();
         comp.ngOnInit();
 
-        expect(comp.isExamMode).toBe(true);
+        expect(comp.isExamMode()).toBe(true);
     });
 
     it('should initialize detail component', async () => {
@@ -79,14 +79,14 @@ describe('QuizExercise Details Component', () => {
 
         comp.ngOnInit();
 
-        expect(comp.quizExercise).toBeDefined();
-        expect(comp.quizExercise.isEditable).toBeTruthy();
-        expect(comp.quizExercise.status).toBe(QuizStatus.VISIBLE);
-        expect(comp.quizExercise.startDate).toBeDefined();
+        expect(comp.quizExercise()).toBeDefined();
+        expect(comp.quizExercise().isEditable).toBeTruthy();
+        expect(comp.quizExercise().status).toBe(QuizStatus.VISIBLE);
+        expect(comp.quizExercise().startDate).toBeDefined();
 
         await Promise.resolve();
 
-        expect(comp.detailOverviewSections).toBeDefined();
+        expect(comp.detailOverviewSections()).toBeDefined();
     });
 
     it('should display competency links when exercise has competencies', async () => {
@@ -102,8 +102,8 @@ describe('QuizExercise Details Component', () => {
         comp.ngOnInit();
         await Promise.resolve();
 
-        expect(comp.detailOverviewSections).toBeDefined();
-        const modeSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.mode');
+        expect(comp.detailOverviewSections()).toBeDefined();
+        const modeSection = comp.detailOverviewSections().find((section) => section.headline === 'artemisApp.exercise.sections.mode');
         expect(modeSection).toBeDefined();
         const competencyDetail = modeSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
         expect(competencyDetail).toBeDefined();
@@ -119,8 +119,8 @@ describe('QuizExercise Details Component', () => {
         comp.ngOnInit();
         await Promise.resolve();
 
-        expect(comp.detailOverviewSections).toBeDefined();
-        const modeSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.mode');
+        expect(comp.detailOverviewSections()).toBeDefined();
+        const modeSection = comp.detailOverviewSections().find((section) => section.headline === 'artemisApp.exercise.sections.mode');
         expect(modeSection).toBeDefined();
         const competencyDetail = modeSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
         expect(competencyDetail).toBeUndefined();

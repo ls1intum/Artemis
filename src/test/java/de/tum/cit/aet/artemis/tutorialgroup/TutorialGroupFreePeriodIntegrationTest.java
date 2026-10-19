@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -32,15 +31,15 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @Override
     void setupTestScenario() {
         super.setupTestScenario();
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), testPrefix + "student1");
-        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), testPrefix + "tutor1");
-        userUtilService.addEditor(exampleCourse.getEditorGroupName(), testPrefix + "editor1");
-        userUtilService.addInstructor(exampleCourse.getInstructorGroupName(), testPrefix + "instructor1");
+        userUtilService.addStudentToCourse(testPrefix + "student1", exampleCourse);
+        userUtilService.addTeachingAssistantToCourse(testPrefix + "tutor1", exampleCourse);
+        userUtilService.addEditorToCourse(testPrefix + "editor1", exampleCourse);
+        userUtilService.addInstructorToCourse(testPrefix + "instructor1", exampleCourse);
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
         this.exampleTutorialGroupId = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1",
-                Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Collections.emptySet()).getId();
+                Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Set.of()).getId();
     }
 
     private static final String TEST_PREFIX = "tutorialgroupfreeperiod";
@@ -53,28 +52,35 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void request_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
+        this.testEndpointsAreForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void request_asTutor_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
+        this.testEndpointsAreForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void request_asStudent_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
+        this.testEndpointsAreForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void request_asEditor_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
+    void request_asEditor_shouldManageFreePeriods() throws Exception {
+        var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
+        var freePeriodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED).id();
+        request.get(getTutorialGroupFreePeriodsPath(freePeriodId), HttpStatus.OK, TutorialGroupFreePeriodDTO.class);
+        var updated = request.putWithResponseBody(getTutorialGroupFreePeriodsPath(freePeriodId),
+                createTutorialGroupFreePeriodDTO(SECOND_AUGUST_MONDAY_00_00, SECOND_AUGUST_MONDAY_23_59, "Another Holiday"), TutorialGroupFreePeriodDTO.class, HttpStatus.OK);
+        assertThat(updated.reason()).isEqualTo("Another Holiday");
+        request.delete(getTutorialGroupFreePeriodsPath(freePeriodId), HttpStatus.NO_CONTENT);
+        assertThat(tutorialGroupFreePeriodRepository.findById(freePeriodId)).isEmpty();
     }
 
-    void testJustForInstructorEndpoints() throws Exception {
+    void testEndpointsAreForbidden() throws Exception {
         var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
         request.get(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.FORBIDDEN, TutorialGroupFreePeriodDTO.class);
         request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday"),

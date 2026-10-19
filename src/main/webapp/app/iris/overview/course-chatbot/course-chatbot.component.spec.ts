@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
@@ -18,16 +17,16 @@ class MockIrisBaseChatbotComponent {
     readonly isChatHistoryAvailable = input<boolean>();
 }
 
-describe('CourseChatbotComponent', () => {
-    setupTestBed({ zoneless: true });
+type CourseChatbotInternals = { irisBaseChatbot: () => { isChatHistoryOpen: () => boolean } | undefined };
 
+describe('CourseChatbotComponent', () => {
     let component: CourseChatbotComponent;
     let fixture: ComponentFixture<CourseChatbotComponent>;
     let chatService: ReturnType<typeof createChatServiceMock>;
 
     const createChatServiceMock = () => ({
         setCourseId: vi.fn<(courseId: number | undefined) => void>(),
-        switchTo: vi.fn<(mode: ChatServiceMode, courseId: number) => void>(),
+        openChat: vi.fn<(mode: ChatServiceMode, entityId: number, sessionId?: number) => void>(),
     });
 
     beforeEach(async () => {
@@ -57,18 +56,28 @@ describe('CourseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should call switchTo when courseId changes', async () => {
+    it('should call openChat with course mode when courseId changes', async () => {
         fixture.componentRef.setInput('courseId', 2);
         await fixture.whenStable();
 
-        expect(chatService.switchTo).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2);
+        expect(chatService.openChat).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2, undefined);
     });
 
-    it('should not call switchTo when courseId is undefined', async () => {
+    it('should open the requested session of the course', async () => {
+        fixture.componentRef.setInput('courseId', 2);
+        fixture.componentRef.setInput('sessionId', 77);
+        await fixture.whenStable();
+
+        // Both inputs are read in one effect run, so the chat opens the requested session in a single call instead of loading the current one first.
+        expect(chatService.openChat).toHaveBeenCalledOnce();
+        expect(chatService.openChat).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2, 77);
+    });
+
+    it('should not call openChat when courseId is undefined', async () => {
         fixture.componentRef.setInput('courseId', undefined);
         await fixture.whenStable();
 
-        expect(chatService.switchTo).not.toHaveBeenCalled();
+        expect(chatService.openChat).not.toHaveBeenCalled();
     });
 
     it('should return early in toggleChatHistory when baseChatbot is not available', () => {
@@ -97,5 +106,18 @@ describe('CourseChatbotComponent', () => {
         component.toggleChatHistory();
 
         expect(mockBaseChatbot.setChatHistoryVisibility).toHaveBeenCalledWith(false);
+    });
+
+    it('should expose isChatHistoryOpen from the base chatbot', () => {
+        const isChatHistoryOpen = vi.fn().mockReturnValue(false);
+        vi.spyOn(component as unknown as CourseChatbotInternals, 'irisBaseChatbot').mockReturnValue({ isChatHistoryOpen });
+
+        expect(component.isChatHistoryOpen()).toBe(false);
+    });
+
+    it('should default isChatHistoryOpen to true when the base chatbot is not available', () => {
+        vi.spyOn(component as unknown as CourseChatbotInternals, 'irisBaseChatbot').mockReturnValue(undefined);
+
+        expect(component.isChatHistoryOpen()).toBe(true);
     });
 });

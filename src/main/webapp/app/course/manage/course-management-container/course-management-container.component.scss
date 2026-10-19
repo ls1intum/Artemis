@@ -4,6 +4,23 @@
 @import '../../shared/course-base-container/course-variables';
 @import '../../shared/course-base-container/course-base-container.component';
 
+// Flex column so the scroll body fills the height the sticky title bar leaves
+.layout-content {
+    display: flex;
+    flex-direction: column;
+
+    > .scrollable-content {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+}
+
+.sidebar-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 /* Component-specific styles only */
 .controls {
     display: flex;

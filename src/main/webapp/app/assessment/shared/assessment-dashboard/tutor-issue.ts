@@ -68,7 +68,7 @@ export class TutorIssueRatingChecker extends TutorValueChecker {
     static readonly MIN_RATING = 3;
     static readonly MAX_RATING = 5;
 
-    get allowedRange(): Range {
+    override get allowedRange(): Range {
         return new Range(TutorIssueRatingChecker.MIN_RATING, TutorIssueRatingChecker.MAX_RATING);
     }
 
@@ -90,7 +90,7 @@ export class TutorIssueScoreChecker extends TutorValueChecker {
  * `TutorValueChecker` for complaints.
  */
 export class TutorIssueComplaintsChecker extends TutorValueChecker {
-    get allowedRange(): Range {
+    override get allowedRange(): Range {
         // Tutor complaint ratio should be less than average course complaint ratio + 20%
         const twentyPercent = this.averageCourseValue / 5;
         return new Range(0, round(this.averageCourseValue + twentyPercent, 1));

@@ -5,12 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,37 +28,40 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.DomainObjectDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
-import de.tum.cit.aet.artemis.course.dto.CourseGroupsDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseOperationProgressDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.course.service.CourseAdminService;
 import de.tum.cit.aet.artemis.course.service.CourseDeletionService;
 import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.course.service.CourseResetService;
+import de.tum.cit.aet.artemis.course.service.CourseValidator;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
-import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
 /**
  * REST controller for administrative course management operations.
@@ -67,6 +72,7 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
  * <li>Deleting courses and all associated data</li>
  * <li>Resetting courses to remove student data while preserving structure</li>
  * <li>Retrieving summaries of what will be affected by delete/reset operations</li>
+ * <li>Searching all courses to choose one in which a course role is assigned to a user</li>
  * </ul>
  * <p>
  * All endpoints in this controller require admin privileges (enforced by {@link EnforceAdmin}).
@@ -79,16 +85,16 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage(UserFeature.COURSE_RESET_DELETE)
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminCourseResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
 
     private static final int MAX_TITLE_LENGTH = 255;
 
-    private final CourseAccessService courseAccessService;
+    private static final int MAX_SEARCH_TERM_LENGTH = 100;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -105,8 +111,6 @@ public class AdminCourseResource {
 
     private final FileService fileService;
 
-    private final Optional<LtiApi> ltiApi;
-
     private final CourseDeletionService courseDeletionService;
 
     private final CourseResetService courseResetService;
@@ -116,40 +120,18 @@ public class AdminCourseResource {
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
-            CourseResetService courseResetService, CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            FileService fileService, ChannelService channelService, CourseDeletionService courseDeletionService, CourseResetService courseResetService,
+            CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
-        this.ltiApi = ltiApi;
         this.channelService = channelService;
         this.courseDeletionService = courseDeletionService;
-        this.courseAccessService = courseAccessService;
         this.courseResetService = courseResetService;
         this.progressService = progressService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
-    }
-
-    /**
-     * GET /courses/groups : get all groups for all courses for administration purposes.
-     *
-     * @return the list of groups (the user has access to)
-     */
-    @GetMapping("courses/groups")
-    public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
-        log.debug("REST request to get all Groups for all Courses");
-        Set<CourseGroupsDTO> courseGroups = courseRepository.findAllCourseGroups();
-        Set<String> groups = new HashSet<>();
-        courseGroups.forEach(courseGroup -> {
-            groups.add(courseGroup.instructorGroupName());
-            groups.add(courseGroup.editorGroupName());
-            groups.add(courseGroup.teachingAssistantGroupName());
-            groups.add(courseGroup.studentGroupName());
-        });
-        groups.remove(null); // remove a potential null group
-        return ResponseEntity.ok().body(groups);
     }
 
     /**
@@ -164,18 +146,18 @@ public class AdminCourseResource {
      * <li>Date range validation (start date before end date)</li>
      * </ul>
      * <p>
-     * If no group names are provided, default groups are created using the ARTEMIS_GROUP_DEFAULT_PREFIX.
-     * For online courses with LTI enabled, an online course configuration is automatically created.
+     * Permanent default configurations are created for every course, including offline courses.
      * Default channels (announcements, general, etc.) are created for the course.
      *
      * @param courseDTO the DTO containing the course data to create (multipart form part "course")
      * @param file      the optional course icon file (PNG/JPG image)
-     * @return the ResponseEntity with status 201 (Created) and the new course in the body,
+     * @return the ResponseEntity with status 201 (Created) and the id of the new course in the body; the client loads the course itself,
      *         or status 400 (Bad Request) if validation fails
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    @FeatureUsage(UserFeature.COURSE_CREATION)
     @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Course> createCourse(@RequestPart("course") @Valid CourseCreateDTO courseDTO, @RequestPart(required = false) MultipartFile file)
+    public ResponseEntity<DomainObjectDTO> createCourse(@RequestPart("course") @Valid CourseCreateDTO courseDTO, @RequestPart(required = false) MultipartFile file)
             throws URISyntaxException {
         log.debug("REST request to save Course : {}", courseDTO.title());
 
@@ -186,7 +168,7 @@ public class AdminCourseResource {
         // Convert DTO to entity - this ensures a clean, server-controlled entity state
         Course course = courseDTO.toCourse();
 
-        course.validateShortName();
+        CourseValidator.validateShortName(course);
 
         List<Course> coursesWithSameShortName = courseRepository.findAllByShortName(course.getShortName());
         if (!coursesWithSameShortName.isEmpty()) {
@@ -195,24 +177,21 @@ public class AdminCourseResource {
                     .body(null);
         }
 
-        course.validateEnrollmentConfirmationMessage();
-        course.validateComplaintsAndRequestMoreFeedbackConfig();
-        course.validateOnlineCourseAndEnrollmentEnabled();
-        course.validateAccuracyOfScores();
-        course.validateStartAndEndDate();
+        CourseValidator.validateEnrollmentConfirmationMessage(course);
+        CourseValidator.validateComplaintsAndRequestMoreFeedbackConfig(course);
+        CourseValidator.validateOnlineCourseAndEnrollmentEnabled(course);
+        CourseValidator.validateAccuracyOfScores(course);
+        CourseValidator.validatePointBounds(course);
+        CourseValidator.validateStartAndEndDate(course);
+        CourseValidator.validateSemester(course);
+        CourseValidator.validateTimeZone(course.getTimeZone());
 
-        if (course.isOnlineCourse() && ltiApi.isPresent()) {
-            ltiApi.get().createOnlineCourseConfiguration(course);
-        }
-
-        courseAccessService.setDefaultGroupsIfNotSet(course);
-
-        Course createdCourse = courseRepository.save(course);
+        Course createdCourse = courseRepository.saveWithDefaultConfigurations(course);
 
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
-            createdCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
+            createdCourse.setCourseIcon(savePath.getFileName().toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 
@@ -221,7 +200,24 @@ public class AdminCourseResource {
         final Course finalCourse = createdCourse;
         searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(finalCourse)));
 
-        return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(createdCourse);
+        return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(DomainObjectDTO.of(createdCourse));
+    }
+
+    /**
+     * GET courses/for-role-assignment : search the courses in which an administrator can assign a course role to a user.
+     * Matches the title and the short name of all courses, ignoring case. A blank search term finds nothing.
+     * A course whose short name equals the term comes first, then those whose short name starts with it, then the others, the most recently started first.
+     *
+     * @param searchTerm the text to look for in the title and the short name of the courses, at most 100 characters
+     * @param size       the maximum number of courses to return
+     * @return the ResponseEntity with status 200 (OK) and the matching courses in that order
+     */
+    @FeatureUsage(UserFeature.USER_MANAGEMENT)
+    @GetMapping("courses/for-role-assignment")
+    public ResponseEntity<List<CourseForRoleAssignmentDTO>> getCoursesForRoleAssignment(@RequestParam(defaultValue = "") @Size(max = MAX_SEARCH_TERM_LENGTH) String searchTerm,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
+        log.debug("REST request to search courses for the assignment of a course role: {}", searchTerm);
+        return ResponseEntity.ok(courseRepository.searchForRoleAssignment(searchTerm, PageRequest.of(0, size)));
     }
 
     /**
@@ -257,7 +253,7 @@ public class AdminCourseResource {
         }
         String courseIcon = courseRepository.getCourseIconById(courseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + courseTitle);
         auditEventRepository.add(auditEvent);
         log.info("User {} has requested to delete the course {}", user.getLogin(), courseTitle);
@@ -265,7 +261,7 @@ public class AdminCourseResource {
         courseDeletionService.delete(courseId);
 
         if (courseIcon != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(courseIcon), FilePathType.COURSE_ICON), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(courseIcon).path(), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, courseTitle)).build();
     }
@@ -303,8 +299,8 @@ public class AdminCourseResource {
      * <li>Course configuration and settings</li>
      * <li>Exercise, exam, and lecture definitions</li>
      * <li>Competency definitions</li>
-     * <li>Conversation/channel structure</li>
-     * <li>Tutor, editor, and instructor group memberships</li>
+     * <li>Conversation/channel structure (but not per-user membership)</li>
+     * <li>Instructor course memberships (students, tutors, and editors are unenrolled)</li>
      * </ul>
      * <p>
      * <b>Deleted data:</b>
@@ -336,7 +332,7 @@ public class AdminCourseResource {
             throw new EntityNotFoundException("Course", courseId);
         }
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_COURSE, "course=" + courseTitle);
         auditEventRepository.add(auditEvent);
         log.info("User {} has requested to reset the course {}", user.getLogin(), courseTitle);

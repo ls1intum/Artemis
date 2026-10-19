@@ -5,13 +5,13 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { UMLDiagramType } from '@tumaet/apollon';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
     private modelingExerciseService = inject(ModelingExerciseService);
     private courseService = inject(CourseManagementService);

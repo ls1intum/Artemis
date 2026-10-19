@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -13,9 +12,8 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 
+import dayjs from 'dayjs/esm';
 describe('CourseNotificationWebsocketService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseNotificationWebsocketService;
     let websocketServiceMock: { subscribe: ReturnType<typeof vi.fn> };
     let courseNotificationServiceMock: { addNotification: ReturnType<typeof vi.fn> };
@@ -62,8 +60,83 @@ describe('CourseNotificationWebsocketService', () => {
         service = TestBed.inject(CourseNotificationWebsocketService);
     });
 
-    it('should be created', () => {
-        expect(service).toBeTruthy();
+    describe('Course and session isolation', () => {
+        let streams: Map<string, Subject<CourseNotification>>;
+        let received: CourseNotification[];
+
+        beforeEach(() => {
+            streams = new Map();
+            received = [];
+            websocketServiceMock.subscribe.mockImplementation((destination: string) => {
+                const stream = new Subject<CourseNotification>();
+                streams.set(destination, stream);
+                return stream;
+            });
+            service.websocketNotification$.subscribe((notification) => received.push(notification));
+            userSubject.next({ id: 7 } as User);
+            coursesSubject.next([{ id: 42 }, { id: 43 }]);
+        });
+
+        function notification(courseId: number): CourseNotification {
+            return new CourseNotification(
+                courseId,
+                courseId,
+                'newPostNotification',
+                CourseNotificationCategory.COMMUNICATION,
+                CourseNotificationViewingStatus.UNSEEN,
+                dayjs(),
+                'Course',
+                undefined,
+                { postId: 7 },
+                '/',
+            );
+        }
+
+        it('rejects a payload belonging to a different topic before history or live delivery', () => {
+            streams.get('/user/topic/notification/42')!.next(notification(43));
+            expect(received).toEqual([]);
+            expect(courseNotificationServiceMock.addNotification).not.toHaveBeenCalled();
+            streams.get('/user/topic/notification/42')!.next(notification(42));
+            streams.get('/user/topic/notification/43')!.next(notification(43));
+            expect(received.map((item) => item.courseId)).toEqual([42, 43]);
+            expect(courseNotificationServiceMock.addNotification.mock.calls.map(([courseId, item]) => [courseId, item.courseId])).toEqual([
+                [42, 42],
+                [43, 43],
+            ]);
+        });
+
+        it('silences removed courses but preserves loaded subscriptions until a concrete list arrives', () => {
+            const a = streams.get('/user/topic/notification/42')!;
+            const b = streams.get('/user/topic/notification/43')!;
+            coursesSubject.next([{ id: 43 }]);
+            a.next(notification(42));
+            b.next(notification(43));
+            coursesSubject.next(undefined);
+            b.next(notification(43));
+            coursesSubject.next([]);
+            b.next(notification(43));
+            expect(received.map((item) => item.courseId)).toEqual([43, 43]);
+        });
+
+        it('silences logged-out streams and resubscribes when the same user returns', () => {
+            const oldA = streams.get('/user/topic/notification/42')!;
+            userSubject.next(null);
+            oldA.next(notification(42));
+            expect(received).toEqual([]);
+            userSubject.next({ id: 7 } as User);
+            oldA.next(notification(42));
+            streams.get('/user/topic/notification/42')!.next(notification(42));
+            expect(received.map((item) => item.courseId)).toEqual([42]);
+        });
+
+        it('silences notifications after destruction', () => {
+            service.ngOnDestroy();
+            streams.get('/user/topic/notification/42')!.next(notification(42));
+            userSubject.next({ id: 8 } as User);
+            coursesSubject.next([{ id: 43 }]);
+            streams.get('/user/topic/notification/43')!.next(notification(43));
+            expect(received).toEqual([]);
+        });
     });
 
     describe('Course subscriptions', () => {
@@ -112,7 +185,7 @@ describe('CourseNotificationWebsocketService', () => {
                 status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
                 // @ts-ignore
                 creationDate: new Date('2024-01-15T10:00:00'),
-                parameters: { key: 'value' },
+                payload: { postId: 42 },
             };
 
             websocketReceiveSubject.next(incomingNotification);
@@ -126,7 +199,31 @@ describe('CourseNotificationWebsocketService', () => {
             expect(processedNotification.courseId).toBe(1);
             expect(processedNotification.notificationType).toBe('newPostNotification');
             expect(processedNotification.creationDate).toBeDefined();
-            expect(processedNotification.parameters).toEqual({ key: 'value' });
+            expect(processedNotification.payload).toEqual({ postId: 42 });
+        });
+
+        it('should drop notifications whose category or status does not map to a known enum', () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
+
+            const courses = [{ id: 1, title: 'Course 1' }] as Course[];
+            coursesSubject.next(courses);
+
+            const malformedNotification: CourseNotification = {
+                notificationId: 999,
+                courseId: 1,
+                notificationType: 'newPostNotification',
+                category: 'NOT_A_REAL_CATEGORY' as unknown as CourseNotificationCategory,
+                status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
+                // @ts-ignore
+                creationDate: new Date('2024-01-15T10:00:00'),
+                payload: {},
+            };
+
+            websocketReceiveSubject.next(malformedNotification);
+
+            // The category cannot be mapped to a CourseNotificationCategory, so the payload is skipped entirely.
+            expect(courseNotificationServiceMock.addNotification).not.toHaveBeenCalled();
         });
 
         it('should emit received notifications via websocketNotification$ observable', async () => {
@@ -144,7 +241,7 @@ describe('CourseNotificationWebsocketService', () => {
                 status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
                 // @ts-ignore
                 creationDate: new Date('2024-01-15T10:00:00'),
-                parameters: { key: 'value' },
+                payload: { postId: 42 },
             };
 
             websocketReceiveSubject.next(incomingNotification);
@@ -223,36 +320,6 @@ describe('CourseNotificationWebsocketService', () => {
 
             expect(courseManagementServiceMock.getCoursesForNotifications).not.toHaveBeenCalled();
             expect(websocketServiceMock.subscribe).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('Cleanup', () => {
-        it('should properly clean up subscriptions on ngOnDestroy', () => {
-            const cleanupSpy = vi.spyOn(service as any, 'cleanupSubscriptions');
-
-            const user = { id: 'user1' } as unknown as User;
-            userSubject.next(user);
-
-            const courses = [{ id: 1, title: 'Course 1' }] as Course[];
-            coursesSubject.next(courses);
-
-            service.ngOnDestroy();
-
-            expect(cleanupSpy).toHaveBeenCalled();
-        });
-
-        it('should unsubscribe from existing course subscription on cleanup', () => {
-            const user = { id: 'user1' } as unknown as User;
-            userSubject.next(user);
-
-            const unsubscribeSpy = vi.fn();
-
-            (service as any).coursesSubscription = { unsubscribe: unsubscribeSpy };
-
-            (service as any).cleanupSubscriptions();
-
-            expect(unsubscribeSpy).toHaveBeenCalled();
-            expect((service as any).coursesSubscription).toBeUndefined();
         });
     });
 });

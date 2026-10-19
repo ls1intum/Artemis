@@ -23,17 +23,22 @@ export class SidebarCardLargeComponent {
     /** Key used for grouping or categorizing sidebar items */
     readonly groupKey = input<string>();
 
-    emitStoreAndRefresh(itemId: number | string) {
+    emitStoreAndRefresh(itemId: number | string, event?: MouseEvent) {
+        // Leave modified clicks to the native link (for example, opening a card in a new tab).
+        if (event && (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) {
+            return;
+        }
+
         this.sidebarEventService.emitSidebarCardEvent(itemId);
         this.refreshChildComponent();
     }
 
     refreshChildComponent(): void {
-        this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
+        void this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
             if (this.itemSelected()) {
-                this.router.navigate(['./' + this.sidebarItem()?.id], { relativeTo: this.route });
+                void this.router.navigate(['./' + this.sidebarItem()?.id], { relativeTo: this.route });
             } else {
-                this.router.navigate([this.location.path(), this.sidebarItem()?.id], { replaceUrl: true });
+                void this.router.navigate([this.location.path(), this.sidebarItem()?.id], { replaceUrl: true });
             }
         });
     }

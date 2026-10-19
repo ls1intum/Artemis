@@ -6,6 +6,7 @@ import static java.time.ZonedDateTime.now;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.jspecify.annotations.NonNull;
 
@@ -420,7 +421,7 @@ public class ParticipationFactory {
      */
     public static ProgrammingExerciseStudentParticipation generateIndividualProgrammingExerciseStudentParticipation(ProgrammingExercise exercise, User user) {
         var participation = new ProgrammingExerciseStudentParticipation();
-        final var buildPlanId = exercise.getProjectKey() + "-" + user.getLogin().toUpperCase();
+        final var buildPlanId = exercise.getProjectKey() + "-" + user.getLogin().toUpperCase(Locale.ROOT);
         participation.setInitializationDate(ZonedDateTime.now());
         participation.setParticipant(user);
         participation.setBuildPlanId(buildPlanId);
@@ -440,7 +441,7 @@ public class ParticipationFactory {
      */
     public static ProgrammingExerciseStudentParticipation generateTeamProgrammingExerciseStudentParticipation(ProgrammingExercise exercise, Team team) {
         var participation = new ProgrammingExerciseStudentParticipation();
-        final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + team.getShortName().toUpperCase();
+        final var buildPlanId = exercise.getProjectKey().toUpperCase(Locale.ROOT) + "-" + team.getShortName().toUpperCase(Locale.ROOT);
         participation.setInitializationDate(ZonedDateTime.now());
         participation.setParticipant(team);
         participation.setBuildPlanId(buildPlanId);

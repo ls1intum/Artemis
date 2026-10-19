@@ -1,12 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BuildAgentSummaryComponent } from 'app/localci/build-agent-summary/build-agent-summary.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import { BuildJob } from 'app/localci/shared/entities/build-job.model';
 import dayjs from 'dayjs/esm';
-import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
 import { MockProvider } from 'ng-mocks';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/entities/build-agent-information.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
@@ -15,16 +13,16 @@ import { BuildConfig } from 'app/localci/shared/entities/build-config.model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Router } from '@angular/router';
 import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
+import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
 
 describe('BuildAgentSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: BuildAgentSummaryComponent;
     let fixture: ComponentFixture<BuildAgentSummaryComponent>;
 
@@ -116,7 +114,6 @@ describe('BuildAgentSummaryComponent', () => {
     let websocketSubject: Subject<BuildAgentInformation[]>;
     let alertService: AlertService;
     let alertServiceAddAlertStub: ReturnType<typeof vi.spyOn>;
-    let dialogService: DialogService;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -124,8 +121,6 @@ describe('BuildAgentSummaryComponent', () => {
             providers: [
                 { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
-                { provide: DataTableComponent, useClass: DataTableComponent },
-                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 provideHttpClient(),
@@ -139,7 +134,6 @@ describe('BuildAgentSummaryComponent', () => {
         fixture = TestBed.createComponent(BuildAgentSummaryComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
-        dialogService = TestBed.inject(DialogService);
         alertServiceAddAlertStub = vi.spyOn(alertService, 'addAlert');
 
         websocketSubject = new Subject<BuildAgentInformation[]>();
@@ -255,14 +249,11 @@ describe('BuildAgentSummaryComponent', () => {
     });
 
     it('should correctly open modals', () => {
-        const dialogRef = { onClose: new Subject<boolean>() } as unknown as DynamicDialogRef;
-        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(dialogRef);
-
         component.displayPauseBuildAgentModal();
-        expect(openSpy).toHaveBeenCalledOnce();
+        expect(component.pauseAllModalVisible()).toBeTruthy();
 
         component.displayClearDistributedDataModal();
-        expect(openSpy).toHaveBeenCalledTimes(2);
+        expect(component.clearDataModalVisible()).toBeTruthy();
     });
 
     it('should not cancel all build jobs when buildAgent is undefined', () => {
@@ -298,13 +289,10 @@ describe('BuildAgentSummaryComponent', () => {
     it('should call pauseAllBuildAgents when modal is confirmed', () => {
         mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
         mockBuildAgentsService.pauseAllBuildAgents.mockReturnValue(of({}));
+        fixture.detectChanges();
 
-        const onClose = new Subject<boolean>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
-
-        component.ngOnInit();
-        component.displayPauseBuildAgentModal();
-        onClose.next(true);
+        const modal = fixture.debugElement.query(By.directive(BuildAgentPauseAllModalComponent)).componentInstance as BuildAgentPauseAllModalComponent;
+        modal.confirmed.emit();
 
         expect(mockBuildAgentsService.pauseAllBuildAgents).toHaveBeenCalled();
     });
@@ -312,37 +300,26 @@ describe('BuildAgentSummaryComponent', () => {
     it('should call clearDistributedData when modal is confirmed', () => {
         mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
         mockBuildAgentsService.clearDistributedData.mockReturnValue(of({}));
+        fixture.detectChanges();
 
-        const onClose = new Subject<boolean>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
-
-        component.ngOnInit();
-        component.displayClearDistributedDataModal();
-        onClose.next(true);
+        const modal = fixture.debugElement.query(By.directive(BuildAgentClearDistributedDataComponent)).componentInstance as BuildAgentClearDistributedDataComponent;
+        modal.confirmed.emit();
 
         expect(mockBuildAgentsService.clearDistributedData).toHaveBeenCalled();
     });
 
-    it('should not call pauseAllBuildAgents when modal is cancelled', () => {
+    it('should not call pauseAllBuildAgents when modal is only opened', () => {
         mockBuildAgentsService.pauseAllBuildAgents.mockClear();
 
-        const onClose = new Subject<boolean | undefined>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
-
         component.displayPauseBuildAgentModal();
-        onClose.next(undefined);
 
         expect(mockBuildAgentsService.pauseAllBuildAgents).not.toHaveBeenCalled();
     });
 
-    it('should not call clearDistributedData when modal is cancelled', () => {
+    it('should not call clearDistributedData when modal is only opened', () => {
         mockBuildAgentsService.clearDistributedData.mockClear();
 
-        const onClose = new Subject<boolean | undefined>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
-
         component.displayClearDistributedDataModal();
-        onClose.next(undefined);
 
         expect(mockBuildAgentsService.clearDistributedData).not.toHaveBeenCalled();
     });

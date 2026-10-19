@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
@@ -12,13 +11,9 @@ import { of, throwError } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('StudentsExportDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: StudentsExportDialogComponent;
     let fixture: ComponentFixture<StudentsExportDialogComponent>;
     let examManagementService: ExamManagementService;
@@ -49,7 +44,7 @@ describe('StudentsExportDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FaIconComponent, DialogModule, ButtonModule, StudentsExportDialogComponent, MockDirective(TranslateDirective)],
+            imports: [FormsModule, FaIconComponent, StudentsExportDialogComponent, MockDirective(TranslateDirective)],
             providers: [MockProvider(ExamManagementService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

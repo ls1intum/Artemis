@@ -1,4 +1,12 @@
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+
+// Submissions are typed as TextSubmission so their `text` field is valid; assigning these typed values to
+// Result.submission (of type Submission) is sound because TextSubmission extends Submission.
+const briefSubmission: TextSubmission = { text: 'brief' };
+const detailedSubmission: TextSubmission = { text: 'detailed' };
+const formalSubmission: TextSubmission = { text: '- developers find a better solution' };
+const friendlySubmission: TextSubmission = { text: '- developers find a better solution' };
 
 export const FEEDBACK_EXAMPLES: { [step: number]: [Result, Result] } = {
     0: [
@@ -11,8 +19,8 @@ export const FEEDBACK_EXAMPLES: { [step: number]: [Result, Result] } = {
                     reference: 'brief',
                 },
             ],
-            submission: { text: 'brief' },
-        } as Result,
+            submission: briefSubmission,
+        },
         // Detailed Feedback
         {
             feedbacks: [
@@ -23,8 +31,8 @@ export const FEEDBACK_EXAMPLES: { [step: number]: [Result, Result] } = {
                     reference: 'detailed',
                 },
             ],
-            submission: { text: 'detailed' },
-        } as Result,
+            submission: detailedSubmission,
+        },
     ],
     1: [
         // Formal-toned Feedback
@@ -37,8 +45,8 @@ export const FEEDBACK_EXAMPLES: { [step: number]: [Result, Result] } = {
                     reference: 'a better solution',
                 },
             ],
-            submission: { text: '- developers find a better solution' },
-        } as Result,
+            submission: formalSubmission,
+        },
         // Friendly-toned Feedback
         {
             feedbacks: [
@@ -48,7 +56,7 @@ export const FEEDBACK_EXAMPLES: { [step: number]: [Result, Result] } = {
                     reference: 'a better solution',
                 },
             ],
-            submission: { text: '- developers find a better solution' },
-        } as Result,
+            submission: friendlySubmission,
+        },
     ],
 };

@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -17,30 +17,29 @@ export class LectureDetailComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
-    lecture: Lecture;
+    readonly lecture = signal<Lecture>(undefined!);
 
     // Icons
     faPencilAlt = faPencilAlt;
-    faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;
 
-    detailSections: DetailOverviewSection[];
+    readonly detailSections = signal<DetailOverviewSection[]>([]);
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ lecture }) => {
-            this.lecture = lecture;
+            this.lecture.set(lecture);
             this.getLectureDetailSections();
         });
     }
 
     getLectureDetailSections() {
-        const lecture = this.lecture;
+        const lecture = this.lecture();
         const descriptionMarkdown = this.artemisMarkdown.safeHtmlForMarkdown(lecture.description);
         if (lecture.course) {
-            this.detailSections = [
+            this.detailSections.set([
                 {
                     headline: 'artemisApp.lecture.detail.sections.general',
                     details: [
@@ -59,7 +58,7 @@ export class LectureDetailComponent implements OnInit {
                         { type: DetailType.Date, title: 'artemisApp.lecture.endDate', data: { date: lecture.endDate } },
                     ],
                 },
-            ];
+            ]);
         }
     }
 }

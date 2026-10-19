@@ -2,6 +2,8 @@
     "artemisApp": {
         "notification": {
             "notifications": "Mitteilungen",
+            "expandPopup": "Mitteilungen aufklappen",
+            "collapsePopup": "Mitteilungen einklappen",
             "noNotifications": "Keine Mitteilungen verfügbar",
             "title": "Titel",
             "text": "Text",
@@ -198,6 +200,16 @@
                 "content": "{{replyMarkdownContent}}",
                 "settingsTitle": "Neue Thread Antwort"
             },
+            "irisResponseNeedsReviewNotification": {
+                "title": "Iris-Antwort prüfen",
+                "content": "{{replyMarkdownContent}}",
+                "settingsTitle": "Iris-Antwort prüfen"
+            },
+            "atlasCompetencyUpdateNotification": {
+                "title": "Automatische Kompetenzaktualisierung",
+                "content": "Automatische Kompetenzaktualisierung nach Änderungen an {{exerciseCount}} Lernobjekt(en): {{appliedCount}} Änderung(en) übernommen. Die Details wurden per E-Mail verschickt.",
+                "settingsTitle": "Automatische Kompetenzaktualisierungen (Lehrende)"
+            },
             "newMentionNotification": {
                 "title": "Du wurdest markiert",
                 "content": "{{postMarkdownContent}}",
@@ -226,6 +238,7 @@
             "exerciseUpdatedNotification": {
                 "title": "Aufgabe editiert",
                 "content": "{{exerciseTitle}} wurde editiert.",
+                "contentWithNotificationText": "{{exerciseTitle}}: {{notificationText}}",
                 "settingsTitle": "Aufgabe editiert"
             },
             "quizExerciseStartedNotification": {
@@ -236,6 +249,7 @@
             "attachmentChangedNotification": {
                 "title": "Anhang verändert",
                 "content": "Ein Anhang wurde in {{unitName}} verändert.",
+                "contentWithNotificationText": "{{unitName}}: {{notificationText}}",
                 "settingsTitle": "Anhang verändert"
             },
             "newManualFeedbackRequestNotification": {
@@ -313,6 +327,11 @@
                 "content": "Die Übungsgruppe {{groupTitle}} wurde gelöscht.",
                 "settingsTitle": "Übungsgruppe gelöscht"
             },
+            "irisResponseNotification": {
+                "title": "Iris hat geantwortet - {{chatTitle}}",
+                "content": "{{messagePreview}}",
+                "settingsTitle": "Iris-Antwort"
+            },
             "temporal": {
                 "now": "Jetzt",
                 "oneHourAgo": "Vor 1 Stunde.",
@@ -332,18 +351,20 @@
                 "sunday": "Sonntag"
             },
             "overview": {
-                "title": "Benachrichtigungen",
+                "title": "Kursbenachrichtigungen",
                 "emptyTitle": "Alles erledigt!",
                 "settingsTooltip": "Zu den Einstellungen",
                 "archiveAllTooltip": "Alle entfernen",
+                "markAllAsRead": "Als gelesen markieren",
                 "emptyMessage": "Momentan gibt es keine Benachrichtigungen in dieser Kategorie."
             },
             "category": {
                 "general": "Allgemein",
-                "communication": "Kommunikation"
+                "communication": "Kommunikation",
+                "iris_review": "Iris-Prüfung"
             },
             "setting": {
-                "headline": "Benachrichtigungen"
+                "headline": "Kursbenachrichtigungen"
             },
             "channel": {
                 "email": "E-Mail",
@@ -354,18 +375,18 @@
                 "collapseToggle": "Einklappen"
             },
             "preset": {
-                "dropdown": "Aktiv",
+                "dropdown": "Präferenz",
                 "defaultUserCourseNotificationSettingPreset": {
                     "title": "Standard",
-                    "description": "Erhalte die essenziellen Benachrichtigungen für diesen Kurs."
+                    "description": "Erhalte die essenziellen Benachrichtigungen."
                 },
                 "ignoreUserCourseNotificationSettingPreset": {
                     "title": "Ignorieren",
-                    "description": "Erhalte keine Benachrichtigungen für diesen Kurs."
+                    "description": "Erhalte keine Benachrichtigungen."
                 },
                 "allActivityUserCourseNotificationSettingPreset": {
                     "title": "Jede Aktivität",
-                    "description": "Erhalte den Großteil der Benachrichtigungen für diesen Kurs um immer auf dem neuesten Stand zu bleiben."
+                    "description": "Erhalte den Großteil der Benachrichtigungen."
                 },
                 "customUserCourseNotificationSettingPreset": {
                     "title": "Angepasst",

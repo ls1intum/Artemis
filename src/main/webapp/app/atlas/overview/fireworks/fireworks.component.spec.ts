@@ -2,10 +2,8 @@ import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Fireworks', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<FireworksComponent>;
     let component: FireworksComponent;
 

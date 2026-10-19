@@ -1,13 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TutorialRegistrationsImportModalTableComponent, TutorialRegistrationsImportModalTableRow } from './tutorial-registrations-import-modal-table.component';
 
 describe('TutorialRegistrationsImportModalTableComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialRegistrationsImportModalTableComponent;
     let fixture: ComponentFixture<TutorialRegistrationsImportModalTableComponent>;
 
@@ -19,6 +16,16 @@ describe('TutorialRegistrationsImportModalTableComponent', () => {
 
         fixture = TestBed.createComponent(TutorialRegistrationsImportModalTableComponent);
         component = fixture.componentInstance;
+    });
+
+    it('should associate column headers and data rows in the same table', () => {
+        fixture.componentRef.setInput('rows', [{ login: 'ada', registrationNumber: 'R001', markFilledCells: false }]);
+        fixture.detectChanges();
+
+        const tables = fixture.nativeElement.querySelectorAll('table');
+        expect(tables).toHaveLength(1);
+        expect(tables[0].querySelectorAll('thead th[scope="col"]')).toHaveLength(2);
+        expect(tables[0].querySelectorAll('tbody tr')).toHaveLength(1);
     });
 
     it('should render one body row per input row with login and registration number values', () => {

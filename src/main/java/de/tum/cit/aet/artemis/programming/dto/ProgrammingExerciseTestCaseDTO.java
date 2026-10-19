@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -11,6 +12,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
  * endpoint, the other attributes are generated automatically.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record ProgrammingExerciseTestCaseDTO(Long id, Double weight, Double bonusMultiplier, Double bonusPoints, Visibility visibility) {
 
     public static ProgrammingExerciseTestCaseDTO of(ProgrammingExerciseTestCase testCase) {

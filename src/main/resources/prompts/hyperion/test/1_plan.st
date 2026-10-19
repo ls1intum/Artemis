@@ -30,6 +30,7 @@ If the selected feedback payload contains threads, treat those threads as reques
 3. If repeated test data is needed and no reusable helper exists in the provided context, construct that data inline inside the tests.
 4. Match the actual production API exactly, including constructor parameters, method signatures, return types, checked exceptions, package names, and visibility constraints.
 5. Prefer minimal, compile-safe tests over clever abstractions.
+6. For Java, distinguish repository paths from Java packages: a file path under `/test/` does not imply `package test;`. Only plan a `package ...;` declaration if the production classes use that same named package or the existing test files explicitly declare it. If production classes are in the default package, generated tests must also omit a package declaration.
 
 If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:

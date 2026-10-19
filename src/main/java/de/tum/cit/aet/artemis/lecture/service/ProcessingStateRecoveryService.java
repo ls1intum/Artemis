@@ -1,0 +1,160 @@
+package de.tum.cit.aet.artemis.lecture.service;
+
+import static de.tum.cit.aet.artemis.lecture.web.LectureWebsocketTopics.UNIT_PROCESSING_STATE;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+
+/**
+ * Handles lightweight recovery of lecture processing states after infrastructure-level Iris restarts.
+ * <p>
+ * This service intentionally does not depend on the dispatch pipeline or Iris APIs. It is used by the
+ * Pyris restart watch during health checks and must stay lightweight.
+ */
+@Conditional(LectureWithIrisEnabled.class)
+@Service
+@Lazy
+public class ProcessingStateRecoveryService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProcessingStateRecoveryService.class);
+
+    private final LectureUnitProcessingStateRepository processingStateRepository;
+
+    private final LectureUnitProcessingStateRecoveryRepository recoveryRepository;
+
+    private final LectureTranscriptionRepository transcriptionRepository;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    public ProcessingStateRecoveryService(LectureUnitProcessingStateRepository processingStateRepository, LectureUnitProcessingStateRecoveryRepository recoveryRepository,
+            LectureTranscriptionRepository transcriptionRepository, WebsocketMessagingService websocketMessagingService) {
+        this.processingStateRepository = processingStateRepository;
+        this.recoveryRepository = recoveryRepository;
+        this.transcriptionRepository = transcriptionRepository;
+        this.websocketMessagingService = websocketMessagingService;
+    }
+
+    /**
+     * Handle an Iris restart notification.
+     * <p>
+     * The restarted process lost its in-flight jobs, so every run whose lease the departed process held is reset to IDLE for the next claim,
+     * as is a run without an owner that an Artemis version that still pushed jobs started before an upgrade. Runs a worker of the new process
+     * already claimed are not touched.
+     *
+     * @param departedBootId the boot id of the process that restarted
+     * @return the number of jobs that were reset
+     */
+    public int handleIrisReset(String departedBootId) {
+        List<LectureUnitProcessingState> activeStates = processingStateRepository.findByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
+
+        if (activeStates.isEmpty()) {
+            log.info("Iris reset: no active processing jobs to recover");
+            return 0;
+        }
+
+        log.warn("Iris reset: recovering {} in-flight jobs", activeStates.size());
+
+        // Do NOT treat an Iris restart as content-processing failure. The job was lost by infrastructure, so retry budget must be preserved across rollouts/restarts.
+        int resetCount = 0;
+        RuntimeException firstFailure = null;
+        for (LectureUnitProcessingState state : activeStates) {
+            try {
+                if (resetToIdleForRecovery(state, departedBootId)) {
+                    resetCount++;
+                }
+            }
+            catch (RuntimeException e) {
+                log.error("Failed to recover processing state {} after Iris restart", state.getId(), e);
+                if (firstFailure == null) {
+                    firstFailure = e;
+                }
+            }
+        }
+        if (firstFailure != null) {
+            throw new IllegalStateException("Failed to recover all in-flight jobs after Iris restart", firstFailure);
+        }
+        return resetCount;
+    }
+
+    /**
+     * Reclaim one lapsed-lease run, atomically: see {@link LectureUnitProcessingStateRepository#reclaimLapsedLease}
+     * for why this cannot be a re-fetch-then-save like {@link #resetToIdleForRecovery}. Re-fetches only on
+     * success, purely to notify with the row the write actually produced.
+     *
+     * @param id     the processing state to reclaim
+     * @param token  the job token observed at batch-read time
+     * @param phases the in-flight phases eligible for reclaim
+     * @param cutoff the lease cutoff: a heartbeat at or after this time cancels the reclaim
+     * @return true when reclaimed, false when the run is no longer lapsed under this token
+     */
+    public boolean reclaimLapsedLease(long id, String token, List<ProcessingPhase> phases, ZonedDateTime cutoff) {
+        if (processingStateRepository.reclaimLapsedLease(id, token, phases, cutoff, ZonedDateTime.now()) == 0) {
+            return false;
+        }
+        processingStateRepository.findById(id).ifPresent(state -> {
+            LectureUnit lectureUnit = state.getLectureUnit();
+            if (lectureUnit == null) {
+                return;
+            }
+            TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).map(LectureTranscription::getTranscriptionStatus)
+                    .orElse(null);
+            notifyProcessingStateChange(state, transcriptionStatus);
+        });
+        return true;
+    }
+
+    boolean resetToIdleForRecovery(LectureUnitProcessingState state, String departedBootId) {
+        LectureUnit lectureUnit = state.getLectureUnit();
+        if (lectureUnit == null) {
+            log.warn("Skipping recovery for processing state {} because its lecture unit is missing", state.getId());
+            return false;
+        }
+        TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
+        log.info("Recovering interrupted unit {} (was {}) - resetting to IDLE, retry budget preserved", lectureUnit.getId(), state.getPhase());
+        // Bound to the run that was read: a terminal callback landing between the batch read and this write would
+        // otherwise be reverted here and the completed work re-ingested.
+        if (recoveryRepository.resetToIdleIfStillLiveAndOwnedBy(state.getId(), state.getPhase(), state.getIngestionJobToken(), departedBootId, ZonedDateTime.now()) == 0) {
+            log.info("Not recovering unit {}: its run completed, moved on since the batch read, or belongs to a worker of another Iris process", lectureUnit.getId());
+            return false;
+        }
+        state.setPhase(ProcessingPhase.IDLE);
+        state.setIngestionJobToken(null);
+        state.setStartedAt(null);
+        state.setRetryEligibleAt(null);
+        state.setLastUpdated(ZonedDateTime.now());
+        state.clearStageProgress();
+
+        notifyProcessingStateChange(state, transcriptionStatus);
+        return true;
+    }
+
+    private void notifyProcessingStateChange(LectureUnitProcessingState state, TranscriptionStatus transcriptionStatus) {
+        LectureUnit unit = state.getLectureUnit();
+        if (unit == null || unit.getLecture() == null) {
+            return;
+        }
+        long lectureId = unit.getLecture().getId();
+        var dto = LectureUnitCombinedStatusDTO.of(unit.getId(), state, transcriptionStatus);
+        var topic = UNIT_PROCESSING_STATE.at(lectureId);
+        websocketMessagingService.sendMessage(topic, dto);
+        log.debug("Sent processing state WebSocket update for unit {} on topic {}", unit.getId(), topic);
+    }
+}

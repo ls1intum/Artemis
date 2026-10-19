@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpRequest } from '@angular/common/http';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { of } from 'rxjs';
@@ -7,8 +6,6 @@ import { TestBed } from '@angular/core/testing';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 
 describe(`BrowserFingerprintInterceptor`, () => {
-    setupTestBed({ zoneless: true });
-
     let fingerprintInterceptor: BrowserFingerprintInterceptor;
 
     const fingerprint = '123456789012345';

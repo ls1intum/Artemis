@@ -187,7 +187,7 @@ public class GroupNotificationScheduleService {
     @Async
     public void checkNotificationsForNewExerciseAsync(Exercise exercise) {
 
-        SecurityUtils.setAuthorizationObject(); // required for async
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
         // TODO: in a course with 2000 participants, this can take really long, we should optimize this
         checkNotificationForExerciseRelease(exercise);
         checkNotificationForAssessmentDueDate(exercise);

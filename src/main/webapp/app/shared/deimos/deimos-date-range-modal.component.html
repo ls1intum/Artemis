@@ -1,0 +1,44 @@
+<tumaet-ui-dialog [header]="titleTranslationKey() | artemisTranslate" [(visible)]="visible" [dismissableMask]="true" size="small">
+    <div class="flex flex-col gap-4">
+        <tumaet-ui-message severity="warn">
+            <span jhiTranslate="artemisApp.deimos.modal.costWarning"></span>
+        </tumaet-ui-message>
+
+        <tumaet-ui-date-picker
+            inputId="deimos-from"
+            labelName="artemisApp.deimos.modal.from"
+            [shouldDisplayTimeZoneWarning]="false"
+            [ariaRequired]="true"
+            [(value)]="fromDate"
+            [invalid]="isOrderInvalid() || isWindowTooLarge()"
+            [ariaDescribedBy]="describedBy()"
+            (inputValidityChange)="fromTextValid.set($event)"
+        />
+
+        <tumaet-ui-date-picker
+            inputId="deimos-to"
+            labelName="artemisApp.deimos.modal.to"
+            [shouldDisplayTimeZoneWarning]="false"
+            [ariaRequired]="true"
+            [(value)]="toDate"
+            [invalid]="isOrderInvalid() || isWindowTooLarge()"
+            [ariaDescribedBy]="describedBy()"
+            (inputValidityChange)="toTextValid.set($event)"
+        />
+
+        @if (!hasRequiredDates()) {
+            <small id="deimos-required-error" class="text-state-danger" jhiTranslate="artemisApp.deimos.modal.validation.required"></small>
+        }
+        @if (isOrderInvalid()) {
+            <small id="deimos-order-error" class="text-state-danger" role="alert" jhiTranslate="artemisApp.deimos.modal.validation.order"></small>
+        }
+        @if (isWindowTooLarge()) {
+            <small id="deimos-window-error" class="text-state-danger" role="alert" jhiTranslate="artemisApp.deimos.modal.validation.window"></small>
+        }
+    </div>
+
+    <ng-template #footer>
+        <button type="button" tumAetUiButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+        <button type="button" tumAetUiButton size="small" [disabled]="isSubmitDisabled()" (click)="submit()" jhiTranslate="entity.action.submit"></button>
+    </ng-template>
+</tumaet-ui-dialog>

@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -52,6 +53,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup_;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupExportDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupImportDataDTO;
@@ -110,7 +112,7 @@ public class TutorialGroupService {
      */
     public void setTransientPropertiesForUser(User user, TutorialGroup tutorialGroup) {
 
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "registrations") && tutorialGroup.getRegistrations() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.REGISTRATIONS) && tutorialGroup.getRegistrations() != null) {
             tutorialGroup.setIsUserRegistered(tutorialGroup.getRegistrations().stream().anyMatch(registration -> registration.getStudent().equals(user)));
             tutorialGroup.setNumberOfRegisteredUsers(tutorialGroup.getRegistrations().size());
         }
@@ -119,14 +121,14 @@ public class TutorialGroupService {
             tutorialGroup.setNumberOfRegisteredUsers(null);
         }
 
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "course") && tutorialGroup.getCourse() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.COURSE) && tutorialGroup.getCourse() != null) {
             tutorialGroup.setCourseTitle(tutorialGroup.getCourse().getTitle());
         }
         else {
             tutorialGroup.setCourseTitle(null);
         }
 
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "teachingAssistant") && tutorialGroup.getTeachingAssistant() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TEACHING_ASSISTANT) && tutorialGroup.getTeachingAssistant() != null) {
             tutorialGroup.setTeachingAssistantName(tutorialGroup.getTeachingAssistant().getName());
             tutorialGroup.setTeachingAssistantId(tutorialGroup.getTeachingAssistant().getId());
             tutorialGroup.setTeachingAssistantImageUrl(tutorialGroup.getTeachingAssistant().getImageUrl());
@@ -163,7 +165,7 @@ public class TutorialGroupService {
     private void setAverageAttendance(TutorialGroup tutorialGroup) {
         Collection<TutorialGroupSession> sessions;
 
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TUTORIAL_GROUP_SESSIONS) && tutorialGroup.getTutorialGroupSessions() != null) {
             sessions = tutorialGroup.getTutorialGroupSessions();
         }
         else {
@@ -193,7 +195,7 @@ public class TutorialGroupService {
      */
     private void setNextSession(TutorialGroup tutorialGroup) {
         Optional<TutorialGroupSession> nextSessionOptional = Optional.empty();
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TUTORIAL_GROUP_SESSIONS) && tutorialGroup.getTutorialGroupSessions() != null) {
             // determine the next session - we show currently running sessions and up to 30 minutes after the end of the session so that students can still
             // join and tutors can easily update the attendance of the session
             nextSessionOptional = tutorialGroup.getTutorialGroupSessions().stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
@@ -294,7 +296,7 @@ public class TutorialGroupService {
         Set<User> foundStudents = new HashSet<>();
         List<TutorialGroupStudentImportDataDTO> notFoundStudentDTOs = new LinkedList<>();
         for (var studentDto : studentDTOs) {
-            findStudent(studentDto.login(), tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
+            findStudent(studentDto.login(), tutorialGroup.getCourse().getId()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType, responsibleUser, true);
         return notFoundStudentDTOs;
@@ -311,7 +313,7 @@ public class TutorialGroupService {
     public void registerMultipleStudentsViaLogin(TutorialGroup tutorialGroup, List<String> logins, TutorialGroupRegistrationType registrationType, User responsibleUser) {
         Set<User> students = new HashSet<>();
         for (var login : logins) {
-            var student = findStudent(login, tutorialGroup.getCourse().getStudentGroupName()).orElseThrow(() -> new BadRequestException("Some students do not exist!"));
+            var student = findStudent(login, tutorialGroup.getCourse().getId()).orElseThrow(() -> new BadRequestException("Some students do not exist!"));
             students.add(student);
         }
         registerMultipleStudentsToTutorialGroup(students, tutorialGroup, registrationType, responsibleUser, true);
@@ -376,7 +378,7 @@ public class TutorialGroupService {
         // === Step 3: Register all found users to their respective tutorial groups ===
         Map<TutorialGroup, Set<User>> tutorialGroupToRegisteredUsers = new HashMap<>();
         for (var registrationUserPair : uniqueRegistrationsWithMatchingUsers.entrySet()) {
-            String title = Objects.requireNonNull(registrationUserPair.getKey().title());
+            String title = registrationUserPair.getKey().title();
             var tutorialGroup = tutorialGroupTitleToTutorialGroup.get(title.trim());
             var user = registrationUserPair.getValue();
             tutorialGroupToRegisteredUsers.computeIfAbsent(tutorialGroup, key -> new HashSet<>()).add(user);
@@ -429,7 +431,7 @@ public class TutorialGroupService {
 
     private Set<TutorialGroup> findOrCreateTutorialGroups(Course course, Set<TutorialGroupImportDataDTO> registrations) {
         var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupImportDataDTO::title).filter(Objects::nonNull).map(String::trim).collect(Collectors.toSet());
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
 
         var foundTutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId()).stream()
                 .filter(tutorialGroup -> titlesMentionedInRegistrations.contains(tutorialGroup.getTitle())).collect(Collectors.toSet());
@@ -549,9 +551,8 @@ public class TutorialGroupService {
         }
 
         // ToDo: Discuss if we should allow to register course members who are not students
-        var result = new HashSet<>(
-                userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(course.getStudentGroupName(), registrationNumbersToSearchFor));
-        result.addAll(new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(course.getStudentGroupName(), loginsToSearchFor)));
+        var result = new HashSet<>(userRepository.findAllByCourseIdAndRoleAndRegistrationNumberIn(course.getId(), CourseRole.STUDENT, registrationNumbersToSearchFor));
+        result.addAll(new HashSet<>(userRepository.findAllByCourseIdAndRoleAndLoginIn(course.getId(), CourseRole.STUDENT, loginsToSearchFor)));
         return result;
     }
 
@@ -629,16 +630,15 @@ public class TutorialGroupService {
         }
         var persistenceUtil = getPersistenceUtil();
         var tutorialGroupToCheck = tutorialGroup;
-        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, "teachingAssistant");
+        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, TutorialGroup_.TEACHING_ASSISTANT);
         if (!teachingAssistantInitialized || tutorialGroupToCheck.getTeachingAssistant() == null) {
             tutorialGroupToCheck = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroupToCheck.getId());
         }
         return (tutorialGroupToCheck.getTeachingAssistant() != null && tutorialGroupToCheck.getTeachingAssistant().equals(user));
     }
 
-    private Optional<User> findStudent(String login, String studentCourseGroupName) {
-        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
-        return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
+    private Optional<User> findStudent(String login, long courseId) {
+        return userRepository.findStudentByLoginAndCourseId(login, courseId);
     }
 
     /**

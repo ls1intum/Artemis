@@ -5,7 +5,7 @@
     [showEditorSidebarRight]="showEditorInstructions()"
     [showEditorBottomArea]="showEditorBottomArea()"
 >
-    <div editorNavbar class="d-flex flex-wrap align-items-center">
+    <div #navbar editorNavbar class="d-flex flex-wrap align-items-center" data-testid="programming-toolbar">
         <span>
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
         </span>
@@ -41,11 +41,12 @@
         [showEditorInstructions]="showEditorInstructions()"
         [isProblemStatementVisible]="isProblemStatementVisible()"
         [unsavedFiles]="unsavedFiles | keys"
-        [errorFiles]="errorFiles"
+        [errorFiles]="errorFiles()"
         [editorState]="editorState"
         [isTutorAssessment]="isTutorAssessment()"
+        [commitId]="commitId()"
         [highlightFileChanges]="highlightFileChanges()"
-        [fileBadges]="fileBadges"
+        [fileBadges]="fileBadges()"
         [allowHiddenFiles]="allowHiddenFiles()"
         [fileSyncService]="fileSyncService()"
         [showHeader]="showNavbar()"
@@ -60,7 +61,6 @@
         <jhi-code-editor-instructions
             [hidden]="!shouldShowProblemStatement()"
             (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
-            (onError)="onError($event)"
             [isAssessmentMode]="isTutorAssessment()"
             [disableCollapse]="true"
             [isEditor]="true"
@@ -75,23 +75,21 @@
             [editorState]="editorState"
             [course]="course()"
             [feedbacks]="feedbackForSubmission()"
-            [feedbackSuggestions]="feedbackSuggestions()"
             [readOnlyManualFeedback]="readOnlyManualFeedback()"
             [disableActions]="!editable()"
             [isTutorAssessment]="isTutorAssessment()"
+            [commitId]="commitId()"
             [highlightDifferences]="highlightDifferences()"
             [selectedFile]="selectedFile === problemStatementIdentifier ? undefined : selectedFile"
             [selectedRepository]="selectedRepository()"
             [selectedAuxiliaryRepositoryId]="selectedAuxiliaryRepositoryId()"
             [fileSyncService]="fileSyncService()"
-            [buildAnnotations]="annotations"
+            [buildAnnotations]="annotations()"
             [sessionId]="participation()?.id ?? 'test'"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
             (onFileContentChange)="onFileContentChange($event)"
             (onSavedFiles)="onSavedFiles($event)"
             (onUpdateFeedback)="onUpdateFeedback.emit($event)"
-            (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
-            (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
             (onAddReviewComment)="onAddReviewComment.emit($event)"
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation.emit($event)"
             (onError)="onError($event)"
@@ -104,7 +102,6 @@
         <jhi-code-editor-instructions
             [class.d-none]="!showEditorInstructions()"
             (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
-            (onError)="onError($event)"
             [isAssessmentMode]="isTutorAssessment()"
         >
             <ng-content select="[editorSidebar]" />
@@ -115,6 +112,7 @@
             <jhi-code-editor-build-output
                 [participation]="participation()"
                 [secondaryHeader]="!showNavbar()"
+                [collapsed]="grid.buildOutputIsCollapsed()"
                 (onAnnotations)="onAnnotations($event)"
                 (onError)="onError($event)"
                 (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
@@ -129,14 +127,3 @@
         }
     </ng-container>
 </jhi-code-editor-grid>
-
-@if (!showEditorBottomArea() && buildable()) {
-    <jhi-code-editor-build-output
-        class="d-none"
-        aria-hidden="true"
-        [participation]="participation()"
-        [secondaryHeader]="!showNavbar()"
-        (onAnnotations)="onAnnotations($event)"
-        (onError)="onError($event)"
-    />
-}

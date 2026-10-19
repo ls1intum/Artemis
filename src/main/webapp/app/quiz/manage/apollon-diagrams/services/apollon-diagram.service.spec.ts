@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
@@ -12,8 +11,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 const resourceUrl = 'api/modeling';
 
 describe('ApollonDiagramService', () => {
-    setupTestBed({ zoneless: true });
-
     let courseId: number;
     let apollonDiagram: ApollonDiagram;
     let apollonDiagramService: ApollonDiagramService;

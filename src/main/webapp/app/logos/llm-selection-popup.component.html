@@ -1,9 +1,12 @@
-@if (isVisible) {
+@if (isVisible()) {
     <div
         class="modal-backdrop"
+        data-testid="llm-selection-modal"
         [class.dark-theme]="themeService.currentTheme() === Theme.DARK"
         (click)="onBackdropClick($event)"
+        (keydown.escape)="close()"
         role="dialog"
+        tabindex="-1"
         aria-modal="true"
         aria-labelledby="ai-modal-title"
     >
@@ -16,7 +19,15 @@
 
             <div class="options-container">
                 <!-- Cloud AI Card -->
-                <div class="option-card cloud-card" tabindex="0" role="button" (click)="selectCloud()" (keydown.enter)="selectCloud()" (keydown.space)="selectCloud()">
+                <div
+                    class="option-card cloud-card"
+                    data-testid="llm-selection-cloud-option"
+                    tabindex="0"
+                    role="button"
+                    (click)="selectCloud()"
+                    (keydown.enter)="selectCloud()"
+                    (keydown.space)="selectCloud()"
+                >
                     <div class="icons-wrapper">
                         <div class="icon-container">
                             <div class="icon-circle azure">
@@ -89,7 +100,7 @@
 
                     <div class="card-header">
                         <h2 jhiTranslate="artemisApp.llmSelectionPopup.cloud"></h2>
-                        @if (currentSelection === LLMSelectionDecision.CLOUD_AI) {
+                        @if (currentSelection() === LLMSelectionDecision.CLOUD_AI) {
                             <span class="badge-current" jhiTranslate="artemisApp.llmSelectionPopup.currentSelection"></span>
                         }
                         <span class="badge-recommended" jhiTranslate="artemisApp.llmSelectionPopup.recommended"></span>
@@ -135,7 +146,7 @@
                         </li>
                     </ul>
                 </div>
-                @if (isOnPremiseEnabled) {
+                @if (isOnPremiseEnabled()) {
                     <!-- Local AI Card -->
                     <div class="option-card local-card" tabindex="0" role="button" (click)="selectLocal()" (keydown.enter)="selectLocal()" (keydown.space)="selectLocal()">
                         <div class="icons-wrapper">
@@ -193,7 +204,7 @@
 
                         <div class="card-header">
                             <h2 jhiTranslate="artemisApp.llmSelectionPopup.onPremise"></h2>
-                            @if (currentSelection === LLMSelectionDecision.LOCAL_AI) {
+                            @if (currentSelection() === LLMSelectionDecision.LOCAL_AI) {
                                 <span class="badge-current" jhiTranslate="artemisApp.llmSelectionPopup.currentSelection"></span>
                             }
                             <span class="badge-experimental" jhiTranslate="artemisApp.llmSelectionPopup.experimental"></span>
@@ -253,7 +264,7 @@
 
                     <div class="card-header">
                         <h2 jhiTranslate="artemisApp.llmSelectionPopup.noAI"></h2>
-                        @if (currentSelection === LLMSelectionDecision.NO_AI) {
+                        @if (currentSelection() === LLMSelectionDecision.NO_AI) {
                             <span class="badge-current" jhiTranslate="artemisApp.llmSelectionPopup.currentSelection"></span>
                         }
                     </div>
@@ -289,13 +300,23 @@
                         <span class="memiris-toggle-title" jhiTranslate="artemisApp.llmSelectionPopup.memirisTitle"></span>
                         <span class="memiris-toggle-description" jhiTranslate="artemisApp.llmSelectionPopup.memirisDescription"></span>
                     </div>
-                    <p-toggleswitch [(ngModel)]="memirisEnabled" (onChange)="onMemirisToggle()" inputId="memiris-toggle" />
+                    <p-toggleswitch [ngModel]="memirisEnabled()" (ngModelChange)="memirisEnabled.set($event)" (onChange)="onMemirisToggle()" inputId="memiris-toggle" />
                 </div>
             </div>
 
             <div class="footer-note">
                 <p jhiTranslate="artemisApp.llmSelectionPopup.disclaimer"></p>
-                <a class="learn-more-link" (click)="onLearnMoreClick($event)" jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"></a>
+                <a
+                    class="learn-more-link"
+                    (click)="onLearnMoreClick($event)"
+                    jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"
+                    #keyboardAction307
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction307.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction307.click() : undefined"
+                ></a>
             </div>
         </div>
     </div>

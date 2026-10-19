@@ -3,11 +3,9 @@
  * Tests word counting and character counting functionality.
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 
 describe('WordCountService', () => {
-    setupTestBed({ zoneless: true });
     let service: StringCountService;
 
     const TEXT_WITH_63_WORDS =

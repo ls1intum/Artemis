@@ -26,7 +26,7 @@ export class UrlAction extends TextStyleTextEditorAction {
      * Executes the action in the current editor with the given arguments (url and text).
      * @param args The text and url of the URL to insert. If one or both are not provided, checks for selected text to wrap.
      */
-    executeInCurrentEditor(args?: UrlArguments): void {
+    override executeInCurrentEditor(args?: UrlArguments): void {
         super.executeInCurrentEditor(args);
     }
 

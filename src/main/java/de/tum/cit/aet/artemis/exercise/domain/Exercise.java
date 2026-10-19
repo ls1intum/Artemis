@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
-
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -10,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
@@ -29,7 +26,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -53,6 +50,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -61,7 +59,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -78,7 +75,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "E")
 @ConcreteProxy
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 // @formatter:off
 @JsonSubTypes({
@@ -94,10 +91,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
-
-    // TODO: rename in a follow up
-    @Column(name = "allow_manual_feedback_requests")
-    private boolean allowFeedbackRequests;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "included_in_overall_score")
@@ -118,7 +111,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "categories")
     private Set<String> categories = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // Not mapped: the team assignment configuration holds the key to its exercise and nothing ever fills this slot by
+    // itself, so reading an exercise never reads the configuration. Attach it with TeamAssignmentConfigRepository.attachTo
+    // where a flow needs it; an empty slot reads as "no team assignment configuration".
+    @Transient
     @JsonIgnoreProperties("exercise")
     private TeamAssignmentConfig teamAssignmentConfig;
 
@@ -134,22 +130,23 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
 
-    @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
-    private String feedbackSuggestionModule;
-
     @ManyToOne
+    @Parent(enforcedBy = "CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP")
     private Course course;
 
     @ManyToOne
+    @Parent(enforcedBy = "CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP")
     private ExerciseGroup exerciseGroup;
 
-    // No @Cache: instructors edit grading criteria while assessors read them during assessment; NONSTRICT produced
-    // stale cross-node reads, same class of bug as #12574 / #12584.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exercise_variant_group_id")
+    @JsonIgnoreProperties("exercises")
+    private ExerciseVariantGroup exerciseVariantGroup;
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
-    // No @Cache: grows every time a student starts / submits the exercise; NONSTRICT caused stale reads for instructors and scoring paths, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<StudentParticipation> studentParticipations = new HashSet<>();
@@ -162,18 +159,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
 
-    // No @Cache: instructors edit attachments while students are viewing the exercise page; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("exercise")
-    private Set<Attachment> attachments = new HashSet<>();
-
-    // No @Cache: plagiarism cases are appended by detection runs while instructors read the list, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "plagiarism_detection_config_id")
+    // Not mapped: the plagiarism detection configuration holds the key to its exercise and nothing ever fills this slot by
+    // itself, so reading an exercise never reads the configuration. Attach it with PlagiarismDetectionConfigRepository.attachTo
+    // where a flow needs it; an empty slot reads as "no plagiarism detection configuration".
+    @Transient
     @JsonIgnoreProperties("exercise")
     private PlagiarismDetectionConfig plagiarismDetectionConfig;
 
@@ -226,17 +219,24 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Transient
     private String channelNameTransient;
 
+    /**
+     * Only set for exam exercises on the assessment dashboard: the moment the exam is over for every student, i.e. the
+     * latest individual exam end date plus the grace period. Lets the client explain why assessment is not possible yet.
+     */
+    @Transient
+    private ZonedDateTime latestExamEndDateTransient;
+
+    /**
+     * Only set for exam exercises on the assessment dashboard: the moment from which on tutors can start assessing.
+     * Equals {@link #latestExamEndDateTransient}, except for programming exercises, which additionally wait for the
+     * tests to run once more on the final submissions.
+     */
+    @Transient
+    private ZonedDateTime assessmentPossibleFromTransient;
+
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
         return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
-    }
-
-    public boolean getAllowFeedbackRequests() {
-        return allowFeedbackRequests;
-    }
-
-    public void setAllowFeedbackRequests(boolean allowFeedbackRequests) {
-        this.allowFeedbackRequests = allowFeedbackRequests;
     }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {
@@ -264,6 +264,16 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public TeamAssignmentConfig getTeamAssignmentConfig() {
+        return isTeamMode() ? teamAssignmentConfig : null;
+    }
+
+    /**
+     * The stored team settings whatever the mode: an individual exercise keeps them for the day it is switched to team mode.
+     *
+     * @return the stored team settings
+     */
+    @JsonIgnore
+    public TeamAssignmentConfig getStoredTeamAssignmentConfig() {
         return teamAssignmentConfig;
     }
 
@@ -291,20 +301,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return studentParticipations;
     }
 
-    public Exercise participations(Set<StudentParticipation> participations) {
-        this.studentParticipations = participations;
-        return this;
-    }
-
     public Exercise addParticipation(StudentParticipation participation) {
         this.studentParticipations.add(participation);
         participation.setExercise(this);
         return this;
-    }
-
-    public void removeParticipation(StudentParticipation participation) {
-        this.studentParticipations.remove(participation);
-        participation.setExercise(null);
     }
 
     public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
@@ -352,6 +352,30 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.exerciseGroup = exerciseGroup;
     }
 
+    public @Nullable ExerciseVariantGroup getExerciseVariantGroup() {
+        return exerciseVariantGroup;
+    }
+
+    /**
+     * Sets the variant group. On an exercise that is not stored yet this has no effect on the database, see {@link #dropVariantGroupOfNewExercise()}.
+     *
+     * @param exerciseVariantGroup the group, or {@code null} for none
+     */
+    public void setExerciseVariantGroup(@Nullable ExerciseVariantGroup exerciseVariantGroup) {
+        this.exerciseVariantGroup = exerciseVariantGroup;
+    }
+
+    /**
+     * A new exercise is always stored outside any variant group. An existing exercise joins a group through
+     * {@link de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService#assignToGroup}, which stamps the group's timeline onto it; its callers
+     * first reject exam exercises, exercises of another course and quizzes that are not in individual mode. A copy built from a loaded source exercise
+     * carries the source's group, so it is dropped here, in the step every insert of an exercise goes through.
+     */
+    @PrePersist
+    private void dropVariantGroupOfNewExercise() {
+        exerciseVariantGroup = null;
+    }
+
     @JsonIgnore
     @Override
     public boolean isExamExercise() {
@@ -367,12 +391,18 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Utility method to get the course. Get the course over the exerciseGroup, if one was set, otherwise return
      * the course class member
      *
-     * @return Course of the exercise
+     * @return Course of the exercise, or null when it cannot be resolved from a masked exam graph
      */
+    @Nullable
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
         if (isExamExercise()) {
-            return this.getExerciseGroup().getExam().getCourse();
+            // Student-facing exam payloads mask the exam out (exerciseGroup.setExam(null)) before serialization, so the
+            // exam (and therefore its course) can be null here. Guard against the resulting NullPointerException by
+            // returning null instead of dereferencing a masked graph; callers that derive a course from an exam exercise
+            // on a masked graph must tolerate a null course (they cannot resolve one anyway).
+            var exam = this.getExerciseGroup().getExam();
+            return exam != null ? exam.getCourse() : null;
         }
         else {
             return this.getCourse();
@@ -380,16 +410,46 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
+     * Like {@link #getCourseViaExerciseGroupOrCourseMember()}, for fully loaded exercises that require a course.
+     *
+     * @return Course of the exercise, never null
+     */
+    @JsonIgnore
+    public Course getCourseViaExerciseGroupOrCourseMemberElseThrow() {
+        Course course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("The course of exercise " + getId() + " cannot be resolved");
+        }
+        return course;
+    }
+
+    /**
      * Utility method to get the exam. Get the exam over the exerciseGroup, if one was set, otherwise return null.
      *
      * @return exam, to which the exercise belongs
      */
+    @Nullable
     @JsonIgnore
     public Exam getExam() {
         if (isExamExercise()) {
             return this.getExerciseGroup().getExam();
         }
         return null;
+    }
+
+    /**
+     * Resolves the exam for operations that require an unmasked exam exercise.
+     *
+     * @return the exam of the exercise
+     * @throws IllegalStateException if the exercise has no accessible exam
+     */
+    @JsonIgnore
+    public Exam getExamElseThrow() {
+        Exam exam = getExam();
+        if (exam == null) {
+            throw new IllegalStateException("The exam of exercise " + getId() + " cannot be resolved");
+        }
+        return exam;
     }
 
     public Set<ExampleSubmission> getExampleSubmissions() {
@@ -409,14 +469,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
         this.exampleSubmissions = exampleSubmissions;
-    }
-
-    public Set<Attachment> getAttachments() {
-        return attachments;
-    }
-
-    public void setAttachments(Set<Attachment> attachments) {
-        this.attachments = attachments;
     }
 
     public Set<PlagiarismCase> getPlagiarismCases() {
@@ -505,7 +557,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
 
         participation.getSubmissions().forEach(submission -> {
-            List<Result> results = submission.getResults();
+            Set<Result> results = submission.getResults();
             if (results != null && !results.isEmpty()) {
                 if (!isAssessmentOver) {
                     // For assessment that's not over yet
@@ -652,6 +704,24 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     @Nullable
+    public ZonedDateTime getLatestExamEndDate() {
+        return latestExamEndDateTransient;
+    }
+
+    public void setLatestExamEndDate(@Nullable ZonedDateTime latestExamEndDateTransient) {
+        this.latestExamEndDateTransient = latestExamEndDateTransient;
+    }
+
+    @Nullable
+    public ZonedDateTime getAssessmentPossibleFrom() {
+        return assessmentPossibleFromTransient;
+    }
+
+    public void setAssessmentPossibleFrom(@Nullable ZonedDateTime assessmentPossibleFromTransient) {
+        this.assessmentPossibleFromTransient = assessmentPossibleFromTransient;
+    }
+
+    @Nullable
     public Boolean getPresentationScoreEnabled() {
         return presentationScoreEnabled;
     }
@@ -668,25 +738,42 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
-    public String getFeedbackSuggestionModule() {
-        return feedbackSuggestionModule;
+    /**
+     * Checks whether Athena formative feedback requests are enabled for this exercise's course.
+     *
+     * @return true if the course has Athena formative feedback enabled, false otherwise
+     */
+    @JsonIgnore
+    public boolean getAllowFeedbackRequests() {
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = course == null ? null : course.getAthenaConfig();
+        // The course carries no mapped association to its Athena configuration, so the slot is empty - and this reads as
+        // switched off - unless the flow attached it (CourseAthenaConfigRepository.attachToCourseOf).
+        return athenaConfig != null && athenaConfig.isFormativeFeedbackEnabled();
     }
 
-    public void setFeedbackSuggestionModule(String feedbackSuggestionModule) {
-        this.feedbackSuggestionModule = feedbackSuggestionModule;
-    }
-
+    /**
+     * Checks whether Athena feedback suggestions are enabled for this exercise.
+     *
+     * @return true if this exercise type is Athena-supported and the course has grading feedback enabled, false otherwise
+     */
     public boolean areFeedbackSuggestionsEnabled() {
-        return feedbackSuggestionModule != null;
+        if (!(this instanceof TextExercise || this instanceof ProgrammingExercise || this instanceof ModelingExercise)) {
+            // Athena only supports text, programming, and modeling exercises
+            return false;
+        }
+        if (this instanceof ProgrammingExercise && getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            // Automatically assessed programming exercises rely on unit-test feedback; Athena grading feedback is only
+            // relevant for manually assessed submissions
+            return false;
+        }
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = course == null ? null : course.getAthenaConfig();
+        return athenaConfig != null && athenaConfig.isGradingFeedbackEnabled();
     }
 
     public Set<GradingCriterion> getGradingCriteria() {
         return gradingCriteria;
-    }
-
-    public void addGradingCriteria(GradingCriterion gradingCriterion) {
-        this.gradingCriteria.add(gradingCriterion);
-        gradingCriterion.setExercise(this);
     }
 
     public void setGradingCriteria(Set<GradingCriterion> gradingCriteria) {
@@ -746,7 +833,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnore
     public Integer getNumberOfCorrectionRounds() {
         if (isExamExercise()) {
-            return getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            return getExamElseThrow().getNumberOfCorrectionRoundsInExam();
         }
         else {
             return 1;
@@ -814,55 +901,43 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
     }
 
-    /**
-     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
-     *
-     * @throws BadRequestAlertException if the dates are not valid
-     */
+    /** Validates the dates of this exercise. Subclasses extend it with type-specific checks. */
     public void validateDates() {
-        // All fields are optional, so there is no error if none of them is set
-        if (getReleaseDate() == null && getStartDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
-            return;
-        }
-        if (isExamExercise()) {
-            throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
-        }
+        validateBaseDates();
+    }
 
-        // at least one is set, so we have to check the three possible errors
-        //@formatter:off
-        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate())
-                && isNotAfterAndNotNull(getReleaseDate(), getStartDate())
-                && isNotAfterAndNotNull(getStartDate(), getDueDate())
-                && isValidAssessmentDueDate(getStartDate(), getDueDate(), getAssessmentDueDate())
-                && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
-                && isValidExampleSolutionPublicationDate(getStartDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore())
-                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
-        //@formatter:on
-
-        if (!areDatesValid) {
-            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
-        }
+    /** Validates the date ordering shared by every exercise type. {@code final} so it stays callable on a QuizExercise whose lazy {@code quizBatches} are uninitialized. */
+    public final void validateBaseDates() {
+        ExerciseDateValidator.validate(this);
     }
 
     /**
      * Validates score settings
-     * 1. The maxScore needs to be greater than 0
+     * 1. The maxScore needs to be greater than 0, except for not included programming exercises
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
      */
     public void validateScoreSettings() {
-        // Check if max score is set
-        if (getMaxPoints() == null || getMaxPoints() <= 0) {
+        // Check IncludedInOverallScore
+        if (getIncludedInOverallScore() == null) {
+            throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
+        }
+
+        if (this instanceof ProgrammingExercise && getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
+            if (getMaxPoints() == null) {
+                setMaxPoints(0.0);
+            }
+            else if (getMaxPoints() < 0) {
+                throw new BadRequestAlertException("The max points must not be negative", "Exercise", "maxScoreInvalid");
+            }
+        }
+        // Check if max score is set for exercises that contribute to the score calculation.
+        else if (getMaxPoints() == null || getMaxPoints() <= 0) {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
         if (getBonusPoints() == null || getBonusPoints() < 0) {
             // Correct invalid bonusPoints to default value (prevents invalid state)
             setBonusPoints(0.0);
-        }
-
-        // Check IncludedInOverallScore
-        if (getIncludedInOverallScore() == null) {
-            throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
         }
 
         if (!getIncludedInOverallScore().validateBonusPoints(getBonusPoints())) {
@@ -882,23 +957,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
     }
 
-    /**
-     * Validate the exercise title.
-     * 1. Check presence and length of exercise title
-     * 2. Find forbidden patterns in exercise title
-     */
-    public void validateTitle() {
-        // Check if exercise title is set
-        if (getTitle() == null || getTitle().isBlank() || getTitle().length() < 3) {
-            throw new BadRequestAlertException("The title is not set or is too short.", "Exercise", "titleLengthInvalid");
-        }
-        // Check if the exercise title matches regex
-        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(getTitle());
-        if (!titleMatcher.matches()) {
-            throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
-        }
-    }
-
     public abstract ExerciseType getExerciseType();
 
     public abstract String getType();
@@ -909,8 +967,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
      */
     public void disconnectRelatedEntities() {
-        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, plagiarismCases).filter(Objects::nonNull)
-                .forEach(Collection::clear);
+        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, plagiarismCases).filter(Objects::nonNull).forEach(Collection::clear);
     }
 
     /**
@@ -926,20 +983,5 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             setGradingCriteria(managedCriteria);
         }
         return managedCriteria;
-    }
-
-    /**
-     * Ensures that the exercise has a mutable set for competency links.
-     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
-     *
-     * @return the non-null mutable set of competency links
-     */
-    public Set<CompetencyExerciseLink> ensureCompetencyLinksSet() {
-        Set<CompetencyExerciseLink> managedLinks = getCompetencyLinks();
-        if (managedLinks == null) {
-            managedLinks = new HashSet<>();
-            setCompetencyLinks(managedLinks);
-        }
-        return managedLinks;
     }
 }

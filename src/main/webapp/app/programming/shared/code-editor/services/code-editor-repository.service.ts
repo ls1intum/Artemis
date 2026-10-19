@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { Observable, Subject, UnaryFunction, of, pipe, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import {
@@ -24,7 +24,7 @@ export interface ICodeEditorRepositoryFileService {
     getFileAsBlob: (fileName: string) => Observable<Blob>;
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
-    updateFileContent: (fileName: string, fileContent: string) => Observable<any>;
+    updateFileContent: (fileName: string, fileContent: string) => Observable<unknown>;
     updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<FileSubmission | FileSubmissionError>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;
@@ -77,7 +77,7 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
         }),
     );
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorRepositoryService extends DomainDependentEndpointService implements ICodeEditorRepositoryService {
     private conflictService = inject(CodeEditorConflictStateService);
 
@@ -87,7 +87,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
     }
 
     getStatus = () => {
-        return this.http.get<any>(this.restResourceUrl!).pipe(
+        return this.http.get<{ repositoryStatus: string }>(this.restResourceUrl!).pipe(
             handleErrorResponse<{ repositoryStatus: string }>(this.conflictService),
             tap(({ repositoryStatus }) => {
                 if (repositoryStatus !== CommitState.CONFLICT) {
@@ -102,7 +102,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
     };
 
     pull = () => {
-        return this.http.get<void>(`${this.restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
+        return this.http.post<void>(`${this.restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
     /**
@@ -114,7 +114,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
     };
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorBuildLogService extends DomainDependentEndpointService {
     private buildLogService = inject(BuildLogService);
 
@@ -132,7 +132,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
     };
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
     private conflictService = inject(CodeEditorConflictStateService);
 
@@ -146,7 +146,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     /**
      * Calls ngOnDestroy of super to unsubscribe from domain/participation changes.
      */
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
     }
 
@@ -168,16 +168,28 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      * Calls setDomain of super and updates fileUpdateUrl. If this service is used at the time complete usage and unsubscribe.
      * @param domain - defines new domain of super.
      */
-    setDomain(domain: DomainChange) {
+    override setDomain(domain: DomainChange) {
         super.setDomain(domain);
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
     }
 
-    getRepositoryContent = (domain?: DomainChange) => {
+    /**
+     * The endpoint prefix for reading a repository. Without a commit this is the server-side working copy, which the online editor shares with the student and which can hold
+     * edits that were never submitted. With a commit, the files are read from exactly that commit and the working copy has no influence.
+     * @param domain the domain of the repository, defaults to the current one
+     * @param commitId the full hash of the commit to read
+     */
+    private readUrl(domain?: DomainChange, commitId?: string): string {
         const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
-        return this.http.get<{ [fileName: string]: FileType }>(`${restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
+        return commitId ? `${restResourceUrl}/commits/${commitId}` : `${restResourceUrl}`;
+    }
+
+    getRepositoryContent = (domain?: DomainChange, commitId?: string) => {
+        return this.http
+            .get<{ [fileName: string]: FileType }>(`${this.readUrl(domain, commitId)}/files`)
+            .pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
     };
 
     /**
@@ -194,23 +206,22 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     /**
      * Gets the files of the repository and checks whether they were changed during a student participation.
      */
-    getFilesWithInformationAboutChange = (domain?: DomainChange) => {
-        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
-        return this.http.get<{ [fileName: string]: boolean }>(`${restResourceUrl}/files-change`).pipe(handleErrorResponse<{ [fileName: string]: boolean }>(this.conflictService));
+    getFilesWithInformationAboutChange = (domain?: DomainChange, commitId?: string) => {
+        return this.http
+            .get<{ [fileName: string]: boolean }>(`${this.readUrl(domain, commitId)}/files-change`)
+            .pipe(handleErrorResponse<{ [fileName: string]: boolean }>(this.conflictService));
     };
 
-    getFile = (fileName: string, domain?: DomainChange) => {
-        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
-        return this.http.get(`${restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
+    getFile = (fileName: string, domain?: DomainChange, commitId?: string) => {
+        return this.http.get(`${this.readUrl(domain, commitId)}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
             map((data) => ({ fileContent: data })),
             handleErrorResponse<{ fileContent: string }>(this.conflictService),
         );
     };
 
-    getFileAsBlob = (fileName: string, domain?: DomainChange): Observable<Blob> => {
-        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
+    getFileAsBlob = (fileName: string, domain?: DomainChange, commitId?: string): Observable<Blob> => {
         return this.http
-            .get(`${restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'blob' })
+            .get(`${this.readUrl(domain, commitId)}/file`, { params: new HttpParams().set('file', fileName), responseType: 'blob' })
             .pipe(handleErrorResponse<Blob>(this.conflictService));
     };
 
@@ -229,7 +240,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     getFilesWithContent = (domain?: DomainChange) => {
         const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
-        return this.http.get(`${restResourceUrl}/files-content`).pipe(handleErrorResponse<{ [fileName: string]: string }>(this.conflictService));
+        return this.http.get<{ [fileName: string]: string }>(`${restResourceUrl}/files-content`).pipe(handleErrorResponse<{ [fileName: string]: string }>(this.conflictService));
     };
 
     createFile = (fileName: string) => {

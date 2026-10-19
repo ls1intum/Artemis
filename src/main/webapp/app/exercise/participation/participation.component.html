@@ -20,6 +20,7 @@
     </ng-template>
 
     <div class="d-flex flex-column h-100">
+        <jhi-participation-access-notice [exercise]="exercise()!" />
         <div style="flex: 1; min-height: 0">
             <jhi-table-view
                 [cols]="columns()"
@@ -56,6 +57,7 @@
         }
         @if (exercise()!.type === ExerciseType.PROGRAMMING && !isLocalCIEnabled() && dto.buildPlanId && exercise()!.isAtLeastInstructor) {
             <button
+                type="button"
                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                 jhiDeleteButton
                 [actionType]="ActionType.Cleanup"
@@ -68,13 +70,18 @@
             </button>
         }
         @if (basicPresentationEnabled() && !dto.testRun && dto.presentationScore !== 1) {
-            <button (click)="addBasicPresentation(dto)" class="btn btn-info btn-sm">
+            <button type="button" (click)="addBasicPresentation(dto)" class="btn btn-info btn-sm">
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="d-none d-xl-inline ms-1" jhiTranslate="artemisApp.participation.addPresentation.label"></span>
             </button>
         }
         @if (gradedPresentationEnabled() && !dto.testRun && hasGradedPresentationChanged(dto) && dto.presentationScore !== undefined) {
-            <button [disabled]="(dto.presentationScore ?? 0) < 0 || (dto.presentationScore ?? 0) > 100" (click)="addGradedPresentation(dto)" class="btn btn-info btn-sm">
+            <button
+                type="button"
+                [disabled]="(dto.presentationScore ?? 0) < 0 || (dto.presentationScore ?? 0) > 100"
+                (click)="addGradedPresentation(dto)"
+                class="btn btn-info btn-sm"
+            >
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="d-none d-xl-inline ms-1" jhiTranslate="artemisApp.participation.savePresentation.label"></span>
             </button>
@@ -83,13 +90,14 @@
             (basicPresentationEnabled() && (dto.presentationScore ?? 0) > 0) ||
             (gradedPresentationEnabled() && (!hasGradedPresentationChanged(dto) || dto.presentationScore === undefined))
         ) {
-            <button (click)="removePresentation(dto)" class="btn btn-danger btn-sm">
+            <button type="button" (click)="removePresentation(dto)" class="btn btn-danger btn-sm">
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="d-none d-xl-inline ms-1" jhiTranslate="artemisApp.participation.removePresentation.label"></span>
             </button>
         }
         @if (exercise()!.isAtLeastInstructor) {
             <button
+                type="button"
                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                 [skipFeatureToggle]="exercise()!.type !== ExerciseType.PROGRAMMING"
                 jhiDeleteButton
@@ -110,6 +118,8 @@
     @if (cell.data.repositoryUri) {
         <jhi-code-button
             [smallButtons]="true"
+            [exerciseId]="exercise()?.id"
+            [participationId]="cell.data.participationId"
             [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
             [repositoryUri]="cell.data.repositoryUri"
         />
@@ -132,8 +142,9 @@
     }
 </ng-template>
 
+<!-- A team exercise lists the participations of teams and the practice participations of single students, which have a student and no team. -->
 <ng-template #participantNameCellTemplate let-cell>
-    @if (exercise()!.teamMode) {
+    @if (exercise()!.teamMode && cell.data.teamId !== undefined) {
         <a [routerLink]="['/course-management', exercise()!.course?.id, 'exercises', exercise()!.id, 'teams', cell.data.teamId]">
             {{ cell.data.participantName }}
         </a>
@@ -143,13 +154,22 @@
         } @else {
             {{ cell.data.participantName }}
         }
+        @if (exercise()!.teamMode && cell.data.testRun) {
+            <tumaet-ui-tag class="ms-2" severity="info" data-testid="participation-practice-tag">
+                <span jhiTranslate="artemisApp.participation.practice"></span>
+            </tumaet-ui-tag>
+        }
     }
 </ng-template>
 
 <ng-template #teamStudentsCellTemplate let-cell>
-    <div style="max-width: 20vw; overflow-x: auto">
-        <jhi-team-students-list [students]="cell.data.teamStudents ?? []" />
-    </div>
+    @if (cell.data.teamId !== undefined) {
+        <div style="max-width: 20vw; overflow-x: auto">
+            <jhi-team-students-list [students]="cell.data.teamStudents ?? []" />
+        </div>
+    } @else if (cell.data.studentLogin) {
+        <span data-testid="participation-practice-student">{{ cell.data.participantName }} ({{ cell.data.studentLogin }})</span>
+    }
 </ng-template>
 
 <ng-template #practiceCellTemplate let-cell>
@@ -162,6 +182,7 @@
 
 <ng-template #gradedPresentationCellTemplate let-cell>
     <input
+        [attr.aria-label]="'accessibility.presentationScore' | artemisTranslate"
         name="presentationGrade"
         type="number"
         min="0"
@@ -176,23 +197,40 @@
 
 <ng-template #individualDueDateCellTemplate let-cell>
     @if (isEditingDueDate(cell.data.participationId)) {
-        <div class="btn-group" style="min-width: 250px">
-            <jhi-date-time-picker
-                [ngModel]="getPendingDueDate(cell.data.participationId)"
-                (ngModelChange)="setPendingDueDate(cell.data.participationId, $event)"
-                [shouldDisplayTimeZoneWarning]="false"
-                [min]="exercise()!.dueDate!"
-                [startAt]="getPendingDueDate(cell.data.participationId) ?? exercise()!.dueDate"
-                [disabled]="isSaving()"
-                [labelName]="'artemisApp.participation.individualDueDate' | artemisTranslate"
-                [hideLabelName]="true"
-            />
-            <button class="btn btn-outline-success btn-sm" [disabled]="isSaving()" (click)="saveIndividualDueDate(cell.data)" title="Save">
-                <fa-icon [icon]="faCheck" />
-            </button>
-            <button class="btn btn-outline-danger btn-sm" [disabled]="isSaving()" (click)="cancelEditDueDate(cell.data)" title="Discard">
-                <fa-icon [icon]="faTimes" />
-            </button>
+        <div style="min-width: 250px">
+            <div class="btn-group w-100">
+                <tumaet-ui-date-picker
+                    [inputId]="'individual-due-date-' + cell.data.participationId"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [value]="getPendingDueDate(cell.data.participationId)"
+                    [startAt]="getPendingDueDate(cell.data.participationId) ?? exercise()!.dueDate"
+                    [min]="exercise()!.dueDate"
+                    [disabled]="isSaving()"
+                    [invalid]="isBeforeExerciseDueDate(cell.data.participationId)"
+                    [ariaDescribedBy]="isBeforeExerciseDueDate(cell.data.participationId) ? 'individual-due-date-error-' + cell.data.participationId : undefined"
+                    [hideLabelName]="true"
+                    [ariaLabel]="'artemisApp.participation.individualDueDate' | artemisTranslate"
+                    (valueChange)="setPendingDueDate(cell.data.participationId, $event)"
+                    (inputValidityChange)="setDueDateTextValidity(cell.data.participationId, $event)"
+                />
+                <button
+                    type="button"
+                    class="btn btn-outline-success btn-sm"
+                    [disabled]="isSaving() || isPendingDueDateInvalid(cell.data.participationId)"
+                    (click)="saveIndividualDueDate(cell.data)"
+                    title="Save"
+                >
+                    <fa-icon [icon]="faCheck" />
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="isSaving()" (click)="cancelEditDueDate(cell.data)" title="Discard">
+                    <fa-icon [icon]="faTimes" />
+                </button>
+            </div>
+            @if (isBeforeExerciseDueDate(cell.data.participationId)) {
+                <div [id]="'individual-due-date-error-' + cell.data.participationId" class="text-state-danger text-sm mt-1 block" data-testid="individual-due-date-error">
+                    {{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: 'artemisApp.participation.individualDueDate' | artemisTranslate } }}
+                </div>
+            }
         </div>
     } @else {
         <span class="d-flex align-items-center gap-2">
@@ -202,7 +240,12 @@
                 <span class="text-secondary fst-italic" jhiTranslate="artemisApp.participation.noIndividualDueDate"></span>
             }
             @if (exercise()!.isAtLeastInstructor) {
-                <button class="btn btn-link btn-sm p-0" (click)="startEditDueDate(cell.data)" [title]="'artemisApp.participation.editIndividualDueDate' | artemisTranslate">
+                <button
+                    type="button"
+                    class="btn btn-link btn-sm p-0"
+                    (click)="startEditDueDate(cell.data)"
+                    [title]="'artemisApp.participation.editIndividualDueDate' | artemisTranslate"
+                >
                     <fa-icon [icon]="faPencil" />
                 </button>
             }

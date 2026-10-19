@@ -7,9 +7,10 @@ import static de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingE
 import static de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository.TemplateParticipationFetchOptions;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -63,11 +64,13 @@ public class ProgrammingExerciseService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ResultRepository resultRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ExerciseSpecificationService exerciseSpecificationService) {
+            ExerciseSpecificationService exerciseSpecificationService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -75,14 +78,15 @@ public class ProgrammingExerciseService {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.exerciseSpecificationService = exerciseSpecificationService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     public static Path getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
-        return getProgrammingLanguageTemplatePath(programmingLanguage).resolve(projectType.name().toLowerCase());
+        return getProgrammingLanguageTemplatePath(programmingLanguage).resolve(projectType.name().toLowerCase(Locale.ROOT));
     }
 
     public static Path getProgrammingLanguageTemplatePath(ProgrammingLanguage programmingLanguage) {
-        return Path.of("templates", programmingLanguage.name().toLowerCase());
+        return Path.of("templates", programmingLanguage.name().toLowerCase(Locale.ROOT));
     }
 
     /**
@@ -111,7 +115,7 @@ public class ProgrammingExerciseService {
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
         if (!isCourseFilter && !isExamFilter) {
-            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
+            return new SearchResultPageDTO<>(List.of(), 0);
         }
         String searchTerm = search.getSearchTerm();
         PageRequest pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXERCISE);
@@ -132,7 +136,7 @@ public class ProgrammingExerciseService {
     public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(SearchTermPageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
             ProgrammingLanguage programmingLanguage, User user) {
         if (!isCourseFilter && !isExamFilter) {
-            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
+            return new SearchResultPageDTO<>(List.of(), 0);
         }
         String searchTerm = search.getSearchTerm();
         PageRequest pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXERCISE);
@@ -209,8 +213,12 @@ public class ProgrammingExerciseService {
         // if there are no submissions we can neither access a submission nor does it make sense to load a result
         if (!programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().isEmpty()) {
             Optional<Result> latestResultForLatestSubmissionOfTemplate = resultRepository
-                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().getId());
-            List<Result> resultsForLatestSubmissionTemplate = new ArrayList<>();
+                    .findLatestResultWithFeedbacksForSubmission(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().getId());
+            // the automatic test-case and SCA feedback lives in typed tables - attach the synthesized legacy
+            // views so the method keeps its feedback promise (explicit exercise context, the result graph is detached)
+            latestResultForLatestSubmissionOfTemplate
+                    .ifPresent(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExerciseWithTemplate, false));
+            Set<Result> resultsForLatestSubmissionTemplate = new HashSet<>();
             latestResultForLatestSubmissionOfTemplate.ifPresent(resultsForLatestSubmissionTemplate::add);
             programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().setResults(resultsForLatestSubmissionTemplate);
         }
@@ -219,15 +227,17 @@ public class ProgrammingExerciseService {
 
         if (!solutionParticipationWithLatestSubmission.getSubmissions().isEmpty()) {
             Optional<Result> latestResultForLatestSubmissionOfSolution = resultRepository
-                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().getId());
-            List<Result> resultsForLatestSubmissionSolution = new ArrayList<>();
+                    .findLatestResultWithFeedbacksForSubmission(solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().getId());
+            latestResultForLatestSubmissionOfSolution
+                    .ifPresent(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExerciseWithTemplate, true));
+            Set<Result> resultsForLatestSubmissionSolution = new HashSet<>();
             latestResultForLatestSubmissionOfSolution.ifPresent(resultsForLatestSubmissionSolution::add);
             solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().setResults(resultsForLatestSubmissionSolution);
         }
         List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByProgrammingExerciseId(programmingExerciseId);
 
         programmingExerciseWithTemplate.setSolutionParticipation(solutionParticipationWithLatestSubmission);
-        programmingExerciseWithTemplate.setAuxiliaryRepositories(auxiliaryRepositories);
+        programmingExerciseWithTemplate.setAuxiliaryRepositories(new LinkedHashSet<>(auxiliaryRepositories));
 
         return programmingExerciseWithTemplate;
     }
@@ -242,7 +252,7 @@ public class ProgrammingExerciseService {
     public List<ProgrammingExercise> findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(long courseId) {
         List<ProgrammingExercise> programmingExercisesWithCategories = programmingExerciseRepository.findAllWithCategoriesByCourseId(courseId);
         if (programmingExercisesWithCategories.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         Set<Long> exerciseIds = programmingExercisesWithCategories.stream().map(ProgrammingExercise::getId).collect(Collectors.toSet());
@@ -289,7 +299,7 @@ public class ProgrammingExerciseService {
             Submission submission = submissions.iterator().next();
             Result res = latestResultsForSolutionSubmissions.get(submission.getId());
             if (res != null) {
-                submission.setResults(Collections.singletonList(res));
+                submission.setResults(Set.of(res));
             }
         }
     }

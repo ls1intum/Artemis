@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -20,13 +22,18 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -66,9 +73,9 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
         submission2.setSubmissionDate(ZonedDateTime.now().plusDays(1));
         submission3.setSubmissionDate(ZonedDateTime.now().plusDays(2));
 
-        submission1.setResults(List.of(ratedResult));
-        submission2.setResults(List.of(ratedResult));
-        submission3.setResults(List.of(ratedResult));
+        submission1.setResults(Set.of(ratedResult));
+        submission2.setResults(Set.of(ratedResult));
+        submission3.setResults(Set.of(ratedResult));
 
         submission1.setCommitHash("aaaaa");
         submission2.setCommitHash("bbbbb");
@@ -123,9 +130,9 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @Test
     void filterForCourseDashboard_submissionWithoutResultsOrder() {
-        submission1.setResults(List.of());
-        submission2.setResults(List.of());
-        submission3.setResults(List.of());
+        submission1.setResults(Set.of());
+        submission2.setResults(Set.of());
+        submission3.setResults(Set.of());
 
         exerciseService.filterExerciseForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
@@ -181,5 +188,137 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
         Exercise exercise = new ProgrammingExercise();
         exercise.setTitle("Test?+#*                Exercise123%$§");
         assertThat(exercise.getSanitizedExerciseTitle()).isEqualTo("Test_Exercise123");
+    }
+
+    @Test
+    void validateScoreSettings_notIncludedWithoutMaxPoints_doesNotThrow() {
+        Exercise exercise = new ProgrammingExercise();
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        exercise.setMaxPoints(null);
+        exercise.setBonusPoints(0.0);
+
+        assertThatNoException().isThrownBy(exercise::validateScoreSettings);
+        assertThat(exercise.getMaxPoints()).isZero();
+    }
+
+    @Test
+    void validateScoreSettings_notIncludedTextExerciseWithZeroMaxPoints_throws() {
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        exercise.setMaxPoints(0.0);
+        exercise.setBonusPoints(0.0);
+
+        assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The max points needs to be greater than 0");
+    }
+
+    @Test
+    void validateScoreSettings_includedWithoutMaxPoints_throws() {
+        Exercise exercise = new ProgrammingExercise();
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(null);
+        exercise.setBonusPoints(0.0);
+
+        assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The max points needs to be greater than 0");
+    }
+
+    @Test
+    void validateBaseDates_strictlyOrderedDates_doesNotThrow() {
+        setStrictlyOrderedDates(ZonedDateTime.now());
+
+        assertThatNoException().isThrownBy(exercise::validateBaseDates);
+    }
+
+    @Test
+    void validateBaseDates_equalDates_throws() {
+        ZonedDateTime releaseDate = ZonedDateTime.now();
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setStartDate(releaseDate);
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setDueDate(releaseDate.plusHours(1));
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setStartDate(null);
+        exercise.setDueDate(releaseDate);
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setAssessmentDueDate(releaseDate.plusHours(2));
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setExampleSolutionPublicationDate(releaseDate.plusHours(2));
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setExampleSolutionPublicationDate(exercise.getAssessmentDueDate());
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+    }
+
+    @Test
+    void validateBaseDates_equalExampleSolutionPublicationDate_throwsForEveryExerciseType() {
+        ZonedDateTime releaseDate = ZonedDateTime.now();
+
+        for (Exercise exercise : List.of(new TextExercise(), new ModelingExercise(), new FileUploadExercise(), new ProgrammingExercise(), new QuizExercise())) {
+            exercise.setReleaseDate(releaseDate);
+            exercise.setDueDate(releaseDate.plusHours(1));
+            exercise.setExampleSolutionPublicationDate(exercise.getDueDate());
+
+            assertThatThrownBy(exercise::validateBaseDates).as(exercise.getClass().getSimpleName()).hasMessageContaining("The exercise dates are not valid");
+        }
+    }
+
+    @Test
+    void validateBaseDates_exampleSolutionPublicationDateBeforeAssessmentDueDate_throwsForEveryExerciseType() {
+        ZonedDateTime releaseDate = ZonedDateTime.now();
+
+        for (Exercise exercise : List.of(new TextExercise(), new ModelingExercise(), new FileUploadExercise(), new ProgrammingExercise(), new QuizExercise())) {
+            exercise.setReleaseDate(releaseDate);
+            exercise.setDueDate(releaseDate.plusHours(1));
+            exercise.setAssessmentDueDate(releaseDate.plusHours(3));
+            exercise.setExampleSolutionPublicationDate(releaseDate.plusHours(2));
+
+            assertThatThrownBy(exercise::validateBaseDates).as(exercise.getClass().getSimpleName()).hasMessageContaining("The exercise dates are not valid");
+        }
+    }
+
+    @Test
+    void validateDates_strictlyOrderedProgrammingExerciseDates_doesNotThrow() {
+        ZonedDateTime releaseDate = ZonedDateTime.now();
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setReleaseDate(releaseDate);
+        programmingExercise.setStartDate(releaseDate.plusHours(1));
+        programmingExercise.setDueDate(releaseDate.plusHours(2));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(releaseDate.plusHours(3));
+        programmingExercise.setAssessmentDueDate(releaseDate.plusHours(4));
+        programmingExercise.setExampleSolutionPublicationDate(releaseDate.plusHours(5));
+
+        assertThatNoException().isThrownBy(programmingExercise::validateDates);
+    }
+
+    @Test
+    void validateDates_invalidProgrammingExerciseBuildAndTestDate_throws() {
+        ZonedDateTime releaseDate = ZonedDateTime.now();
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setReleaseDate(releaseDate);
+        programmingExercise.setDueDate(releaseDate.plusHours(2));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(programmingExercise.getDueDate());
+
+        assertThatThrownBy(programmingExercise::validateDates).hasMessageContaining("The exercise dates are not valid");
+
+        programmingExercise.setDueDate(null);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(releaseDate.plusHours(2));
+
+        assertThatThrownBy(programmingExercise::validateDates).hasMessageContaining("The exercise dates are not valid");
+    }
+
+    private void setStrictlyOrderedDates(ZonedDateTime releaseDate) {
+        exercise.setReleaseDate(releaseDate);
+        exercise.setStartDate(releaseDate.plusHours(1));
+        exercise.setDueDate(releaseDate.plusHours(2));
+        exercise.setAssessmentDueDate(releaseDate.plusHours(3));
+        exercise.setExampleSolutionPublicationDate(releaseDate.plusHours(4));
     }
 }

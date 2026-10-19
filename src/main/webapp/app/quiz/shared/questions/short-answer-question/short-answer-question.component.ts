@@ -42,7 +42,7 @@ export class ShortAnswerQuestionComponent {
     questionIndex = input<number>(0);
     score = input<number>(0);
     forceSampleSolution = input<boolean>(false);
-    fnOnSubmittedTextUpdate = input<any>();
+    fnOnSubmittedTextUpdate = input<() => void>();
 
     submittedTextsChange = output<ShortAnswerSubmittedText[]>();
 
@@ -72,22 +72,23 @@ export class ShortAnswerQuestionComponent {
 
     showingSampleSolution = signal(false);
 
-    renderedQuestion: RenderedQuizQuestionMarkDownElement;
+    readonly renderedQuestion = signal<RenderedQuizQuestionMarkDownElement>(undefined!);
     sampleSolutions: ShortAnswerSolution[] = [];
-    textParts: string[][];
+    readonly textParts = signal<string[][]>(undefined!);
 
     /**
      * Update html for text, hint and explanation for the question and every answer option
      */
     watchCollection() {
-        this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
+        const renderedQuestion = new RenderedQuizQuestionMarkDownElement();
 
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion().text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
+        this.textParts.set(this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts));
 
-        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().text);
-        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().hint);
-        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().explanation);
+        renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().text);
+        renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().hint);
+        renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().explanation);
+        this.renderedQuestion.set(renderedQuestion);
     }
 
     /**
@@ -97,13 +98,13 @@ export class ShortAnswerQuestionComponent {
     setSubmittedText() {
         const updated: ShortAnswerSubmittedText[] = [];
         let i = 0;
-        for (const textpart of this.textParts) {
+        for (const textpart of this.textParts()) {
             let j = 0;
             for (const element of textpart) {
-                if (this.shortAnswerQuestionUtil.isInputField(element!)) {
+                if (this.shortAnswerQuestionUtil.isInputField(element)) {
                     const submittedText = new ShortAnswerSubmittedText();
-                    submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion().id)).value;
-                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.shortAnswerQuestion());
+                    submittedText.text = (document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion().id) as HTMLInputElement).value;
+                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element), this.shortAnswerQuestion());
                     updated.push(submittedText);
                 }
                 j++;

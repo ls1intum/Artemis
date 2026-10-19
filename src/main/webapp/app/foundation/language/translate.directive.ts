@@ -2,6 +2,7 @@ import { DestroyRef, Directive, ElementRef, OnInit, effect, inject, input } from
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
+import DOMPurify from 'dompurify';
 
 /**
  * A wrapper directive on top of the translate pipe as the inbuilt translate directive from ngx-translate is too verbose and buggy
@@ -47,7 +48,11 @@ export class TranslateDirective implements OnInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (value) => {
-                    this.el.nativeElement.innerHTML = value;
+                    // Sanitize before assigning to innerHTML. Translations may legitimately contain benign markup
+                    // (e.g. <a>, <strong>), but ngx-translate does NOT HTML-escape interpolated `translateValues`,
+                    // so a user-controlled value (course/exercise/exam title, user name, ...) could otherwise inject
+                    // markup here. DOMPurify keeps the benign translation markup while stripping scripts/handlers.
+                    this.el.nativeElement.innerHTML = DOMPurify.sanitize(value);
                 },
                 // Render the not-found fallback on a genuine stream error (the common missing-key case already
                 // flows through `next` via ngx-translate's MissingTranslationHandler). textContent avoids markup injection.

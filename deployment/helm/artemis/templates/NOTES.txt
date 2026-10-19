@@ -1,0 +1,28 @@
+Artemis has been deployed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Topology:
+  - Artemis core nodes: {{ .Values.artemis.replicaCount }} ({{ if gt (int .Values.artemis.replicaCount) 1 }}1 leader + {{ sub (int .Values.artemis.replicaCount) 1 }} member(s){{ else }}leader only{{ end }})
+  - PostgreSQL:        {{ if .Values.postgresql.deploy }}bundled{{ else }}external ({{ .Values.postgresql.external.host }}){{ end }}
+  - JHipster Registry: bundled (Eureka discovery)
+  - ActiveMQ broker:   {{ if .Values.broker.deploy }}bundled (STOMP relay){{ else }}external{{ end }}
+  - LocalCI agents:    {{ if .Values.buildAgents.enabled }}{{ .Values.buildAgents.replicaCount }} Kubernetes controller(s), {{ .Values.buildAgents.concurrentBuildsPerAgent }} concurrent build(s) each{{ else }}disabled{{ end }}
+
+URL:
+  {{ include "artemis.serverUrl" . }}
+
+Git-over-SSH ({{ .Values.gateway.ssh.mode }}):
+{{- if eq .Values.gateway.ssh.mode "tcproute" }}
+  ssh://git@{{ .Values.gateway.hostname }}:{{ .Values.gateway.ssh.port }}/   (requires a Gateway controller with TCPRoute support)
+{{- else if eq .Values.gateway.ssh.mode "none" }}
+  disabled - HTTPS clone only
+{{- else }}
+  exposed via a dedicated {{ .Values.gateway.ssh.mode }} Service on port {{ .Values.gateway.ssh.port }}
+{{- end }}
+
+First startup takes several minutes. Watch progress with:
+  kubectl -n {{ .Release.Namespace }} get pods -w
+
+REMINDERS:
+  * Build agents create Jobs in namespace {{ .Values.buildAgents.namespace }}.
+  * The helper image is {{ .Values.buildAgents.helperImage.repository }}:{{ .Values.buildAgents.helperImage.tag }}.
+  * Core nodes must share /opt/artemis/data, including build logs.

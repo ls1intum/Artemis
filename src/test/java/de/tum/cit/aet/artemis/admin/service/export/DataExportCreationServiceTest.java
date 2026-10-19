@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -52,7 +51,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.science.util.ScienceUtilService;
-import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.connector.apollon.ApollonRequestMockProvider;
@@ -71,6 +69,8 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -144,9 +144,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
     private PostTestRepository postRepository;
 
     @Autowired
-    private AnswerPostRepository answerPostRepository;
-
-    @Autowired
     private StudentParticipationTestRepository studentParticipationTestRepository;
 
     @PersistenceContext
@@ -155,7 +152,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
     @BeforeEach
     void initTestCase() throws IOException {
         userUtilService.addUsers(TEST_PREFIX, 2, 5, 0, 1);
-        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 5, 0, 1);
 
         apollonRequestMockProvider.enableMockingOfRequests();
 
@@ -261,10 +257,11 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
         Course course1;
         if (assessmentDueDateInTheFuture) {
-            course1 = courseUtilService.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(courseShortName, TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
+            course1 = courseUtilService.addEnrolledCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(courseShortName, TEST_PREFIX, "", 4, 2, 1, 1, true, 1,
+                    validModel);
         }
         else {
-            course1 = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
+            course1 = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
         }
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
@@ -298,8 +295,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         feedback2.setDetailText("detailed feedback 2");
         feedback2.setText("feedback 2");
         feedback2.setType(FeedbackType.MANUAL);
-        var submissionResult = Objects.requireNonNull(submission.getFirstResult(), "Submission result should not be null");
-        var submission2Result = Objects.requireNonNull(submission2.getFirstResult(), "Submission2 result should not be null");
+        var submissionResult = submission.getFirstResult();
+        var submission2Result = submission2.getFirstResult();
+        assertThat(submissionResult).isNotNull();
+        assertThat(submission2Result).isNotNull();
         submissionResult.setTestCaseCount(2);
         submissionResult.setPassedTestCaseCount(1);
         participationUtilService.addFeedbackToResult(feedback, submissionResult);
@@ -344,8 +343,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             Files.createDirectories(repoDownloadClonePath);
         }
         var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(userForExport, TEST_PREFIX + "student",
-                courseShortName, true, true);
+        var course = courseUtilService.createCourseWithExamAndExerciseGroupsAndGradingScale(userForExport, courseShortName, true, true);
         programmingExerciseTestService.setup(this, versionControlService);
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
@@ -370,6 +368,16 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
     private Exam prepareExamDataWithResultPublicationDateInTheFuture() throws Exception {
         var exam = prepareExamDataForDataExportCreation("examNoResults");
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        return examRepository.save(exam);
+    }
+
+    private Exam prepareExamDataWithSummaryPublicationDateInTheFuture() throws Exception {
+        var exam = prepareExamDataForDataExportCreation("examNoSummary");
+        // both dates in the future (summary strictly before results, preserving the invariant) so neither the summary-publication gate nor the results-published safeguard
+        // releases the exercise content
+        var baseTime = ZonedDateTime.now();
+        exam.setExamSummaryPublicationDate(baseTime.plusDays(1));
+        exam.setPublishResultsDate(baseTime.plusDays(2));
         return examRepository.save(exam);
     }
 
@@ -563,7 +571,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(dataExportFromDb.getCreationFinishedDate()).isNotNull();
         // extract zip file and check content
         Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "exam");
+        // match on the generated short name, not the "exam" fragment: the other exam tests in this class create courses whose short names also start with "exam", and the
+        // export of a previous test's course is still present because the database is not reset between tests
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, exam.getCourse().getShortName());
         assertCommunicationDataCsvFile(courseDirPath);
         var examsDirPath = courseDirPath.resolve("exams");
         assertThat(courseDirPath).isDirectoryContaining(examsDirPath::equals);
@@ -578,9 +588,11 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
     private void addOnlyAnswerPostReactionInCourse(Course course) {
         var loginUser2 = TEST_PREFIX + "student2";
-        conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
-        var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userUtilService.getUserByLogin(loginUser2).getId());
-        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.iterator().next());
+        // react to exactly the reply just created in this course. Looking the reply up by author alone is not enough: other tests in this class also create answer posts for
+        // student2 and the database is not reset between tests, so an unscoped lookup would attach the reaction to a different course and leave this course without any
+        // communication data to export.
+        var reply = conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
+        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", reply);
     }
 
     @Test
@@ -592,11 +604,30 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "examNoResults");
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, exam.getCourse().getShortName());
         assertCommunicationDataCsvFile(courseDirPath);
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
+
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void summaryPublicationDateInTheFuture_noExamContentLeaked() throws Exception {
+        var exam = prepareExamDataWithSummaryPublicationDateInTheFuture();
+        addOnlyReactionToPostInCourse(exam.getCourse());
+        var dataExport = initDataExport();
+        dataExportCreationService.createDataExport(dataExport);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, exam.getCourse().getShortName());
+        var examsDirPath = courseDirPath.resolve("exams");
+        var examDirPath = getCourseOrExamDirectoryPath(examsDirPath, "exam");
+        // the exam exercise content (problem statements, questions, submissions) must be withheld from the data export until the submission overview is published
+        assertThat(getExerciseDirectoryPaths(examDirPath)).isEmpty();
 
         RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
@@ -644,17 +675,17 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);
 
         // Verify email is sent with correct parameters
-        ArgumentCaptor<User> adminRecipientCaptor = ArgumentCaptor.forClass(User.class);
-        ArgumentCaptor<DataExport> dataExportCaptor = ArgumentCaptor.forClass(DataExport.class);
+        ArgumentCaptor<MailRecipientDTO> adminRecipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        ArgumentCaptor<DataExportEmailDTO> dataExportCaptor = ArgumentCaptor.forClass(DataExportEmailDTO.class);
         verify(mailService).sendDataExportFailedEmailToAdmin(adminRecipientCaptor.capture(), dataExportCaptor.capture(), eq(exception));
 
         // Verify the email is sent to the configured admin email (info.contact=test@localhost)
-        User adminRecipient = adminRecipientCaptor.getValue();
-        assertThat(adminRecipient.getEmail()).isEqualTo("test@localhost");
+        MailRecipientDTO adminRecipient = adminRecipientCaptor.getValue();
+        assertThat(adminRecipient.email()).isEqualTo("test@localhost");
 
-        // Verify the data export contains the affected user (student1), not the admin
-        DataExport capturedDataExport = dataExportCaptor.getValue();
-        assertThat(capturedDataExport.getUser().getLogin()).isEqualTo(TEST_PREFIX + "student1");
+        // Verify the data export references the affected user (student1), not the admin
+        DataExportEmailDTO capturedDataExport = dataExportCaptor.getValue();
+        assertThat(capturedDataExport.userLogin()).isEqualTo(TEST_PREFIX + "student1");
     }
 
     @Test
@@ -672,18 +703,17 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
 
         // Verify email is sent to the user with correct parameters
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        ArgumentCaptor<DataExport> dataExportCaptor = ArgumentCaptor.forClass(DataExport.class);
+        ArgumentCaptor<MailRecipientDTO> userCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        ArgumentCaptor<DataExportEmailDTO> dataExportCaptor = ArgumentCaptor.forClass(DataExportEmailDTO.class);
         verify(mailService).sendDataExportCreatedEmail(userCaptor.capture(), dataExportCaptor.capture());
 
         // Verify the email is sent to the correct user (student1)
-        User recipient = userCaptor.getValue();
-        assertThat(recipient.getLogin()).isEqualTo(TEST_PREFIX + "student1");
+        MailRecipientDTO recipient = userCaptor.getValue();
+        assertThat(recipient.login()).isEqualTo(TEST_PREFIX + "student1");
 
         // Verify the data export is the one we created
-        DataExport capturedDataExport = dataExportCaptor.getValue();
-        assertThat(capturedDataExport.getId()).isEqualTo(dataExport.getId());
-        assertThat(capturedDataExport.getFilePath()).isNotNull();
+        DataExportEmailDTO capturedDataExport = dataExportCaptor.getValue();
+        assertThat(capturedDataExport.id()).isEqualTo(dataExport.getId());
 
         // Clean up
         Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
@@ -711,26 +741,22 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
 
         // Capture and verify email parameters
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        ArgumentCaptor<DataExport> dataExportCaptor = ArgumentCaptor.forClass(DataExport.class);
+        ArgumentCaptor<MailRecipientDTO> userCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        ArgumentCaptor<DataExportEmailDTO> dataExportCaptor = ArgumentCaptor.forClass(DataExportEmailDTO.class);
         verify(mailService).sendDataExportCreatedEmail(userCaptor.capture(), dataExportCaptor.capture());
 
         // Verify user details in the email
-        User emailRecipient = userCaptor.getValue();
-        assertThat(emailRecipient.getId()).isEqualTo(expectedUser.getId());
-        assertThat(emailRecipient.getLogin()).isEqualTo(expectedUser.getLogin());
-        assertThat(emailRecipient.getEmail()).isEqualTo(expectedUser.getEmail());
-        assertThat(emailRecipient.getFirstName()).isEqualTo(expectedUser.getFirstName());
-        assertThat(emailRecipient.getLastName()).isEqualTo(expectedUser.getLastName());
-        assertThat(emailRecipient.getLangKey()).isEqualTo(expectedUser.getLangKey());
+        MailRecipientDTO emailRecipient = userCaptor.getValue();
+        assertThat(emailRecipient.login()).isEqualTo(expectedUser.getLogin());
+        assertThat(emailRecipient.email()).isEqualTo(expectedUser.getEmail());
+        assertThat(emailRecipient.firstName()).isEqualTo(expectedUser.getFirstName());
+        assertThat(emailRecipient.lastName()).isEqualTo(expectedUser.getLastName());
+        assertThat(emailRecipient.langKey()).isEqualTo(expectedUser.getLangKey());
 
         // Verify data export details
-        DataExport emailDataExport = dataExportCaptor.getValue();
-        assertThat(emailDataExport.getId()).isEqualTo(dataExport.getId());
-        assertThat(emailDataExport.getUser().getId()).isEqualTo(expectedUser.getId());
-        assertThat(emailDataExport.getFilePath()).isNotNull();
-        assertThat(emailDataExport.getFilePath()).isNotEmpty();
-        assertThat(emailDataExport.getCreationFinishedDate()).isNotNull();
+        DataExportEmailDTO emailDataExport = dataExportCaptor.getValue();
+        assertThat(emailDataExport.id()).isEqualTo(dataExport.getId());
+        assertThat(emailDataExport.userLogin()).isEqualTo(expectedUser.getLogin());
 
         // Clean up
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
@@ -755,10 +781,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);
 
         // Verify that sendDataExportCreatedEmail was NEVER called
-        verify(mailService, never()).sendDataExportCreatedEmail(any(User.class), any(DataExport.class));
+        verify(mailService, never()).sendDataExportCreatedEmail(any(MailRecipientDTO.class), any(DataExportEmailDTO.class));
 
         // Verify that the admin was notified about the failure
-        verify(mailService, times(1)).sendDataExportFailedEmailToAdmin(any(User.class), any(DataExport.class), eq(exception));
+        verify(mailService, times(1)).sendDataExportFailedEmailToAdmin(any(MailRecipientDTO.class), any(DataExportEmailDTO.class), eq(exception));
     }
 
     @Test
@@ -803,7 +829,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(Files.size(Path.of(dataExportFromDb.getFilePath()))).isGreaterThan(0);
 
         // Verify email was sent
-        verify(mailService, times(1)).sendDataExportCreatedEmail(any(User.class), any(DataExport.class));
+        verify(mailService, times(1)).sendDataExportCreatedEmail(any(MailRecipientDTO.class), any(DataExportEmailDTO.class));
 
         // Clean up
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
@@ -853,11 +879,11 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(Files.size(readmePath)).isGreaterThan(0);
 
         // Verify email was sent with the export
-        ArgumentCaptor<DataExport> dataExportCaptor = ArgumentCaptor.forClass(DataExport.class);
-        verify(mailService).sendDataExportCreatedEmail(any(User.class), dataExportCaptor.capture());
+        ArgumentCaptor<DataExportEmailDTO> dataExportCaptor = ArgumentCaptor.forClass(DataExportEmailDTO.class);
+        verify(mailService).sendDataExportCreatedEmail(any(MailRecipientDTO.class), dataExportCaptor.capture());
 
-        DataExport capturedExport = dataExportCaptor.getValue();
-        assertThat(capturedExport.getFilePath()).isEqualTo(dataExportFromDb.getFilePath());
+        DataExportEmailDTO capturedExport = dataExportCaptor.getValue();
+        assertThat(capturedExport.id()).isEqualTo(dataExportFromDb.getId());
 
         // Clean up
         RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
@@ -872,9 +898,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
         conversationUtilService.addOneMessageForUserInCourse(TEST_PREFIX + "student1", course, "only one post");
         var dataExport = initDataExport();
-        // by setting the course groups to a different value, we simulate unenrollment
-        // because the user is no longer part of the user group and hence, the course.
-        courseUtilService.updateCourseGroups("abc", course, "");
+        // Unenroll student1 to simulate losing course access
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.unenrollUserFromCourse(student1, course);
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());

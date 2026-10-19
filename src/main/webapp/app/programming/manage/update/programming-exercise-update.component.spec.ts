@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
-import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -16,7 +16,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import '@angular/localize/init';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -30,10 +29,16 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
-import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
+import {
+    APP_NAME_PATTERN_FOR_SWIFT,
+    MAX_PACKAGE_NAME_LENGTH,
+    MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
+    PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PROGRAMMING_EXERCISE_NAME_MAX_LENGTH,
+} from 'app/foundation/constants/input.constants';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
@@ -78,8 +83,6 @@ type ProgrammingExerciseUpdateInternals = ProgrammingExerciseUpdateComponent & {
 const internals = (c: ProgrammingExerciseUpdateComponent): ProgrammingExerciseUpdateInternals => c as ProgrammingExerciseUpdateInternals;
 
 describe('ProgrammingExerciseUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const courseId = 1;
     const course = { id: courseId } as Course;
     const route = {
@@ -102,7 +105,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent, OwlNativeDateTimeModule],
+            imports: [FaIconComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -173,10 +176,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('initializeEditMode', () => {
+        function recreateComponent() {
+            fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+        }
+
         it('should set isSimpleMode to true if localStorage has value "true"', () => {
             localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
-
-            fixture.detectChanges();
+            recreateComponent();
 
             expect(comp.isSimpleMode()).toBeTruthy();
             expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(true);
@@ -184,8 +191,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should set isSimpleMode to false if localStorage has value "false"', () => {
             localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, false);
-
-            fixture.detectChanges();
+            recreateComponent();
 
             expect(comp.isSimpleMode()).toBe(false);
             expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(false);
@@ -193,8 +199,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should set isSimpleMode to true if not present in local storage', () => {
             localStorageService.remove(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-
-            fixture.detectChanges();
+            recreateComponent();
 
             expect(comp.isSimpleMode()).toBe(true);
         });
@@ -202,8 +207,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     it('switchEditMode should toggle isSimpleMode and update local storage', () => {
         localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
+        fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
         fixture.detectChanges();
-        expect(comp.isSimpleMode()).toBeTruthy(); // ensure the assumed initial state isSimpleMode = true holds
+        expect(comp.isSimpleMode()).toBeTruthy();
 
         comp.switchEditMode();
 
@@ -228,7 +235,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
             expect(refreshSpy).toHaveBeenCalledOnce();
         });
 
@@ -256,7 +263,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
             expect(refreshSpy).toHaveBeenCalledOnce();
         });
 
@@ -330,7 +337,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.save();
 
             // THEN
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
             expect(alertSpy).toHaveBeenCalledWith({
                 type: AlertType.DANGER,
                 message: 'error-message',
@@ -484,7 +491,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             response$.error(new HttpErrorResponse({ headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }) }));
 
             expect(comp.isGeneratingWithAi()).toBe(false);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
         });
 
         it('should treat null id as a new exercise and use empty repositories setup', () => {
@@ -565,9 +572,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
             expect(comp.programmingExercise).toStrictEqual(expectedExamProgrammingExercise);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
         });
     });
 
@@ -592,9 +599,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
             expect(comp.programmingExercise).toStrictEqual(expectedProgrammingExercise);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isExamMode()).toBe(false);
         });
     });
 
@@ -726,6 +733,95 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
     });
 
+    describe('form footer', () => {
+        const footer = () => fixture.debugElement.query(By.directive(FormFooterComponent));
+        const saveButton = () => footer().nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+            // the shared course keeps the default language that an earlier test chose, the package name pattern below belongs to Java
+            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.JAVA } as Course })));
+            vi.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
+            comp.ngOnInit();
+            fixture.detectChanges();
+        });
+
+        it('hands the footer the function that reads the invalid reasons again', () => {
+            const footerComponent = footer().componentInstance as FormFooterComponent;
+
+            expect(footerComponent.revalidate()).toBe(comp.revalidate);
+            expect(footerComponent.invalidReasons()).toEqual(comp.getInvalidReasons());
+        });
+
+        // what a user has to fill in to get a valid exercise, written into the exercise the page edits
+        const fillInRequiredFields = () => {
+            comp.programmingExercise.title = 'Valid title';
+            comp.programmingExercise.shortName = 'validshort';
+            comp.programmingExercise.packageName = 'de.tum.in';
+            comp.programmingExercise.maxPoints = 10;
+            // the grading section follows the points that were typed in
+            internals(comp).exerciseGradingComponent = signal({
+                formValid: true,
+                timelineStatus: signal({ valid: true, empty: false, invalidItems: [] }),
+            } as unknown as ProgrammingExerciseGradingComponent).asReadonly();
+        };
+
+        it('shows the reasons of the exercise that is still incomplete and blocks the click', () => {
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => undefined);
+            const footerComponent = footer().componentInstance as FormFooterComponent;
+            expect(footerComponent.invalidReasons().map((reason) => reason.translateKey)).toEqual([
+                'artemisApp.exercise.form.title.undefined',
+                'artemisApp.exercise.form.shortName.undefined',
+                'artemisApp.exercise.form.packageName.undefined',
+                'artemisApp.exercise.form.points.undefined',
+            ]);
+            expect(saveButton().getAttribute('aria-disabled')).toBe('true');
+
+            saveButton().click();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('lets a click save when the reasons on display are outdated but the exercise is valid', () => {
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => undefined);
+            // the footer still shows the reasons of the last change detection, the exercise was completed after it
+            fillInRequiredFields();
+            expect((footer().componentInstance as FormFooterComponent).invalidReasons()).toHaveLength(4);
+            expect(saveButton().getAttribute('aria-disabled')).toBe('true');
+            expect(comp.getInvalidReasons()).toEqual([]);
+
+            saveButton().click();
+
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('keeps blocking a click on save while a field is still missing after the other fields were completed', () => {
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => undefined);
+            fillInRequiredFields();
+            comp.programmingExercise.shortName = undefined;
+
+            saveButton().click();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('lets a click generate with AI when the reasons on display are outdated but the exercise is valid', () => {
+            const saveWithAiSpy = vi.spyOn(comp, 'saveWithAi').mockImplementation(() => undefined);
+            vi.spyOn(comp, 'showGenerateWithAi').mockReturnValue(true);
+            fixture.detectChanges();
+            fillInRequiredFields();
+            const generateButton = footer().nativeElement.querySelector('#generate-with-ai') as HTMLButtonElement;
+            expect(generateButton).not.toBeNull();
+
+            generateButton.click();
+
+            expect(saveWithAiSpy).toHaveBeenCalledOnce();
+        });
+    });
+
     describe('import with static code analysis', () => {
         let route: ActivatedRoute;
 
@@ -754,7 +850,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.exerciseGroup).toBe(exerciseGroup);
             expect(comp.programmingExercise.course).toBeUndefined();
             expect(comp.isImportFromExistingExercise).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(true);
         });
 
@@ -796,20 +892,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
 
-                // Only available for Maven
-                if (projectType === ProjectType.PLAIN_MAVEN) {
-                    // Needed to trigger setting of update template since we can't use UI components.
-                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
-                    comp.onStaticCodeAnalysisChanged();
-                    fixture.changeDetectorRef.detectChanges();
-
-                    expect(comp.importOptions.updateTemplate).toBe(true);
-
-                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
-                    comp.onStaticCodeAnalysisChanged();
-                    fixture.changeDetectorRef.detectChanges();
-                }
-
                 comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                 comp.onStaticCodeAnalysisChanged();
                 fixture.changeDetectorRef.detectChanges();
@@ -818,14 +900,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     comp.programmingExercise.maxStaticCodeAnalysisPenalty = newMaxPenalty;
                 }
 
-                // Recreate build plan and template update should be automatically selected
+                // Recreating the build plans should be automatically selected
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
                 expect(comp.importOptions.recreateBuildPlans).toBe(true);
-                expect(comp.importOptions.updateTemplate).toBe(true);
 
                 comp.importOptions.recreateBuildPlans = !comp.importOptions.recreateBuildPlans;
-                comp.onRecreateBuildPlanOrUpdateTemplateChange();
+                comp.onRecreateBuildPlanChange();
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);
@@ -859,7 +940,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(findSpy).toHaveBeenCalledWith(course.id);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.exerciseCategories).toBe(categories);
             expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(false);
         });
@@ -890,7 +971,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(findSpy).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(true);
 
             expect(comp.exerciseCategories).toEqual([]);
@@ -940,14 +1021,43 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
-            comp.courseId = course.id!;
+            comp.courseId.set(course.id!);
             // WHEN
             comp.save();
 
             // THEN
             expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity, 1);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
         });
+
+        const importFromFileWith = (customize: (exercise: ProgrammingExercise) => void) => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            customize(programmingExercise);
+            history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
+            route.data = of({ programmingExercise });
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
+                getProgrammingLanguageFeature(language),
+            );
+            comp.ngOnInit();
+        };
+
+        it('should keep the imported sequential test runs setting', () => {
+            importFromFileWith((exercise) => (exercise.buildConfig!.sequentialTestRuns = true));
+            expect(comp.programmingExercise.buildConfig?.sequentialTestRuns).toBe(true);
+        });
+
+        it('should keep the imported static code analysis setting', () => {
+            importFromFileWith((exercise) => (exercise.staticCodeAnalysisEnabled = true));
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
+        });
+
+        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])(
+            'should keep the imported project type %s',
+            (projectType) => {
+                importFromFileWith((exercise) => (exercise.projectType = projectType));
+                expect(comp.programmingExercise.projectType).toBe(projectType);
+            },
+        );
     });
 
     describe('import from sharing', () => {
@@ -984,6 +1094,43 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             verifyImport(programmingExercise);
         });
+
+        it('should keep the imported language and build options when the course has another default language', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            programmingExercise.buildConfig!.sequentialTestRuns = true;
+            programmingExercise.staticCodeAnalysisEnabled = true;
+
+            route.data = of({ programmingExercise });
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
+                getProgrammingLanguageFeature(language),
+            );
+            vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
+            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } as Course })));
+            comp.ngOnInit();
+
+            expect(comp.isImportFromSharing).toBe(true);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
+            expect(comp.programmingExercise.buildConfig?.sequentialTestRuns).toBe(true);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
+        });
+
+        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])(
+            'should keep the imported project type %s',
+            (projectType) => {
+                const programmingExercise = getProgrammingExerciseForImport();
+                programmingExercise.projectType = projectType;
+
+                route.data = of({ programmingExercise });
+                vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
+                    getProgrammingLanguageFeature(language),
+                );
+                vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
+                comp.ngOnInit();
+
+                expect(comp.isImportFromSharing).toBe(true);
+                expect(comp.programmingExercise.projectType).toBe(projectType);
+            },
+        );
 
         it('should also handle exam mode import', () => {
             const examId = 1;
@@ -1032,7 +1179,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
-            comp.courseId = course.id!;
+            comp.courseId.set(course.id!);
             // WHEN
             comp.save();
 
@@ -1053,7 +1200,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
-            comp.courseId = course.id!;
+            comp.courseId.set(course.id!);
             // WHEN
             comp.save();
 
@@ -1143,6 +1290,142 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
+        const bonusPointReasonKeys = () =>
+            comp
+                .getInvalidReasons()
+                .map((reason) => reason.translateKey)
+                .filter((key) => key.startsWith('artemisApp.exercise.form.bonusPoints.'));
+
+        // the bonus points input is hidden for these exercises and the value is reset on save, so a missing or stale value cannot be fixed by the user
+        it.each([
+            { name: 'not included', includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED },
+            { name: 'included as bonus', includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS },
+            { name: 'not configured yet', includedInOverallScore: undefined },
+        ])('does not validate the bonus points of an exercise that is $name in the course score', ({ includedInOverallScore }) => {
+            comp.programmingExercise.includedInOverallScore = includedInOverallScore;
+            // other reasons are still reported
+            comp.programmingExercise.title = undefined;
+
+            for (const staleBonusPoints of [undefined, -1, 10_000, 'abc' as unknown as number]) {
+                comp.programmingExercise.bonusPoints = staleBonusPoints;
+
+                expect(bonusPointReasonKeys()).toEqual([]);
+                expect(comp.getInvalidReasons().map((reason) => reason.translateKey)).toContain('artemisApp.exercise.form.title.undefined');
+            }
+        });
+
+        it.each([
+            { name: 'missing', bonusPoints: undefined, expectedKey: 'artemisApp.exercise.form.bonusPoints.undefined' },
+            { name: 'not a number', bonusPoints: 'abc' as unknown as number, expectedKey: 'artemisApp.exercise.form.bonusPoints.undefined' },
+            { name: 'negative', bonusPoints: -1, expectedKey: 'artemisApp.exercise.form.bonusPoints.customMin' },
+            { name: 'above the maximum', bonusPoints: 10_000, expectedKey: 'artemisApp.exercise.form.bonusPoints.customMax' },
+        ])('validates the bonus points of an exercise that is included completely in the course score when they are $name', ({ bonusPoints, expectedKey }) => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            comp.programmingExercise.bonusPoints = bonusPoints;
+
+            expect(bonusPointReasonKeys()).toEqual([expectedKey]);
+        });
+
+        it.each([0, 5, 9999])('accepts the bonus points %s of an exercise that is included completely in the course score', (bonusPoints) => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            comp.programmingExercise.bonusPoints = bonusPoints;
+
+            expect(bonusPointReasonKeys()).toEqual([]);
+        });
+
+        it('asks for the bonus points again as soon as the exercise is switched back to being included completely', () => {
+            comp.programmingExercise.bonusPoints = undefined;
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            expect(bonusPointReasonKeys()).toEqual([]);
+
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+
+            expect(bonusPointReasonKeys()).toEqual(['artemisApp.exercise.form.bonusPoints.undefined']);
+        });
+
+        describe('revalidate', () => {
+            it('reads the invalid reasons of the current state of the exercise on every call', () => {
+                comp.programmingExercise.title = undefined;
+                const reasonsWithoutTitle = comp.revalidate();
+                expect(reasonsWithoutTitle).toEqual(comp.getInvalidReasons());
+                expect(reasonsWithoutTitle.map((reason) => reason.translateKey)).toContain('artemisApp.exercise.form.title.undefined');
+
+                comp.programmingExercise.title = 'Valid title';
+                const reasonsWithTitle = comp.revalidate();
+
+                expect(reasonsWithTitle).toEqual(comp.getInvalidReasons());
+                expect(reasonsWithTitle.map((reason) => reason.translateKey)).not.toContain('artemisApp.exercise.form.title.undefined');
+                expect(reasonsWithTitle.length).toBe(reasonsWithoutTitle.length - 1);
+            });
+        });
+
+        describe('reasons that the footer reads again on a click', () => {
+            const reasonKeys = () => comp.getInvalidReasons().map((reason) => reason.translateKey);
+
+            it('reports a title and a short name that the server already knows as taken', () => {
+                comp.programmingExercise.title = 'Taken title';
+                comp.programmingExercise.shortName = 'taken';
+                internals(comp).exerciseInfoComponent = signal({
+                    exerciseTitleChannelComponent: () => ({ titleChannelNameComponent: () => ({ field_title: { control: { errors: { disallowedValue: true } } } }) }),
+                    shortNameField: () => ({ control: { errors: { disallowedValue: true } } }),
+                } as unknown as ProgrammingExerciseInformationComponent).asReadonly();
+
+                expect(reasonKeys().filter((key) => key === 'artemisApp.exercise.form.title.disallowedValue')).toHaveLength(2);
+            });
+
+            it('does not report a title or short name that nothing disallows', () => {
+                comp.programmingExercise.title = 'Free title';
+                comp.programmingExercise.shortName = 'free';
+                internals(comp).exerciseInfoComponent = signal({
+                    exerciseTitleChannelComponent: () => ({ titleChannelNameComponent: () => ({ field_title: { control: { errors: null } } }) }),
+                    shortNameField: () => ({ control: { errors: null } }),
+                } as unknown as ProgrammingExerciseInformationComponent).asReadonly();
+
+                expect(reasonKeys()).not.toContain('artemisApp.exercise.form.title.disallowedValue');
+            });
+
+            it.each([
+                { name: 'a negative value', maxPoints: -1, expected: ['artemisApp.exercise.form.points.customMin'] },
+                { name: 'a value above the maximum', maxPoints: 10_000, expected: ['artemisApp.exercise.form.points.customMax'] },
+                { name: 'no value', maxPoints: undefined, expected: [] },
+                { name: 'zero', maxPoints: 0, expected: [] },
+            ])('validates $name as the points of an exercise that is not included in the course score', ({ maxPoints, expected }) => {
+                comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+                comp.programmingExercise.maxPoints = maxPoints;
+
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.points.'))).toEqual(expected);
+            });
+
+            it.each([
+                { language: ProgrammingLanguage.GO, projectType: undefined, packageName: 'Not Valid!', expected: 'artemisApp.exercise.form.packageName.pattern.GO' },
+                { language: ProgrammingLanguage.DART, projectType: undefined, packageName: 'Not Valid!', expected: 'artemisApp.exercise.form.packageName.pattern.DART' },
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'de/', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
+                {
+                    language: ProgrammingLanguage.JAVA,
+                    projectType: ProjectType.MAVEN_BLACKBOX,
+                    packageName: 'de/',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.JAVA_BLACKBOX',
+                },
+            ])('reports a package name that does not fit $language $projectType', ({ language, projectType, packageName, expected }) => {
+                comp.programmingExercise.programmingLanguage = language;
+                comp.programmingExercise.projectType = projectType;
+                comp.programmingExercise.packageName = packageName;
+
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual([expected]);
+            });
+
+            it('reports a package name that is too long before it checks the pattern', () => {
+                comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                comp.programmingExercise.packageName = 'a'.repeat(MAX_PACKAGE_NAME_LENGTH + 1);
+
+                expect(comp.getInvalidReasons()).toContainEqual({
+                    translateKey: 'artemisApp.exercise.form.packageName.maxlength',
+                    translateValues: { max: MAX_PACKAGE_NAME_LENGTH },
+                });
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual(['artemisApp.exercise.form.packageName.maxlength']);
+            });
+        });
+
         it('find validation errors for input values not matching the pattern', () => {
             comp.programmingExercise.title = '%§"$"§';
             comp.programmingExercise.shortName = '123';
@@ -1212,10 +1495,88 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
+        it('enables saving in the form footer when there are no invalid reasons', () => {
+            const footer = TestBed.createComponent(FormFooterComponent);
+            footer.componentRef.setInput('isCreation', true);
+            footer.componentRef.setInput('invalidReasons', []);
+            footer.detectChanges();
+
+            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+            expect(saveButton.getAttribute('aria-disabled')).toBe('false');
+            expect(saveButton.getAttribute('aria-describedby')).toBeNull();
+        });
+
         it('validateExercisePoints', () => {
             comp.programmingExercise.maxPoints = 10_000;
             expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.exercise.form.points.customMax',
+                translateValues: {},
+            });
+        });
+
+        const gradingReason = { translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason', translateValues: {} };
+        const withInvalidGradingForm = (isTimelineValid = true) => {
+            internals(comp).exerciseGradingComponent = signal({
+                formValid: false,
+                // The grading component carries the timeline's status itself now, rather than a child lifecycle component.
+                timelineStatus: signal({ valid: isTimelineValid, empty: false, invalidItems: [] }),
+            } as unknown as ProgrammingExerciseGradingComponent).asReadonly();
+        };
+
+        // The timeline lives in the grading form and has no validator of its own, so the generic message
+        // is the only thing that can report it.
+        it('should report the generic grading reason when no grading field explains it', () => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = 100;
+            comp.programmingExercise.bonusPoints = 0;
+
+            expect(comp.getInvalidReasons()).toContainEqual(gradingReason);
+        });
+
+        it('should not add the generic grading reason on top of a grading field reason', () => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = 0;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).not.toContainEqual(gradingReason);
+        });
+
+        // An invalid timeline is a separate cause that only the generic message names, so deduplicating it against
+        // a field error would hide it until that field is fixed.
+        it('should keep the generic grading reason alongside a field reason when the timeline is also invalid', () => {
+            withInvalidGradingForm(false);
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = 0;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual(gradingReason);
+        });
+
+        it('should not require points when exercise is not included in the course score', () => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            comp.programmingExercise.maxPoints = undefined;
+
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('should reject negative points when exercise is not included in the course score', () => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            comp.programmingExercise.maxPoints = -1;
+
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMin',
                 translateValues: {},
             });
         });
@@ -1464,6 +1825,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
+        it('should add validation error when title exceeds max length', () => {
+            comp.programmingExercise.title = 'a'.repeat(PROGRAMMING_EXERCISE_NAME_MAX_LENGTH + 1);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.maxlength',
+                translateValues: { max: PROGRAMMING_EXERCISE_NAME_MAX_LENGTH },
+            });
+        });
+
+        it('should not add validation error when title is within max length', () => {
+            comp.programmingExercise.title = 'a'.repeat(PROGRAMMING_EXERCISE_NAME_MAX_LENGTH);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.maxlength',
+                translateValues: { max: PROGRAMMING_EXERCISE_NAME_MAX_LENGTH },
+            });
+        });
+
         it('should add validation error when problem statement exceeds max length', () => {
             comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
 
@@ -1565,6 +1948,38 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(problemStepInputs).not.toBeNull();
     });
 
+    // The getter runs on every change-detection pass, so every value it hands out has to keep its identity between
+    // passes. A fallback such as `?? []` allocates a new array each time, which re-seeds the category selector's local
+    // working copy, re-dirties this component and loops. A production build has no dev-mode guard to break that loop,
+    // so the creation page stopped responding altogether until this was fixed.
+    it('hands out the same identities on repeated calls, so change detection cannot loop', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+
+        const first = comp.getProgrammingExerciseCreationConfig();
+        // Read out before the second call: the config object is cached, so comparing its fields afterwards would
+        // compare each field with itself and pass even if the second call had replaced them.
+        const firstExerciseCategories = first.exerciseCategories;
+        const firstModePickerOptions = first.modePickerOptions;
+        const firstRerenderSubject = first.rerenderSubject;
+        const second = comp.getProgrammingExerciseCreationConfig();
+
+        // the config object itself is cached deliberately
+        expect(second).toBe(first);
+        // and so are the values a child could track by identity, even on a creation page with no categories yet
+        expect(second.exerciseCategories).toBe(firstExerciseCategories);
+        expect(second.exerciseCategories).toBeDefined();
+        expect(second.modePickerOptions).toBe(firstModePickerOptions);
+        expect(second.rerenderSubject).toBe(firstRerenderSubject);
+    });
+
     it('stores with dependencies when changed', () => {
         const route = TestBed.inject(ActivatedRoute);
         route.params = of({ courseId });
@@ -1593,7 +2008,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         fixture.detectChanges();
 
         const categories = [new ExerciseCategory(undefined, undefined)];
-        expect(comp.exerciseCategories).toBeUndefined();
+        // Starts as an empty array rather than undefined, on purpose: the creation config getter must hand out a stable
+        // array identity on every change-detection pass, which an undefined field cannot do.
+        expect(comp.exerciseCategories).toEqual([]);
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
     });
@@ -1710,8 +2127,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.programmingExercise.allowOnlineEditor).toBe(true);
         expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
         expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
-        // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
-        expect(comp.programmingExercise.allowFeedbackRequests).toBe(false);
+        // complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBe(false);
         // name and short name should also be imported
         expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
@@ -1735,7 +2151,6 @@ const getProgrammingExerciseForImport = () => {
     programmingExercise.allowOfflineIde = true;
     programmingExercise.allowOnlineEditor = true;
     programmingExercise.allowComplaintsForAutomaticAssessments = true;
-    programmingExercise.allowFeedbackRequests = true;
 
     history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
 

@@ -6,10 +6,8 @@ import {
     ElementRef,
     Injector,
     OnDestroy,
-    Signal,
     ViewContainerRef,
     afterNextRender,
-    computed,
     effect,
     inject,
     input,
@@ -27,6 +25,7 @@ import { Tab, TabList, Tabs } from 'primeng/tabs';
 import { Popover } from 'primeng/popover';
 import { TieredMenu } from 'primeng/tieredmenu';
 import { Tooltip } from 'primeng/tooltip';
+import { ButtonDirective } from 'primeng/button';
 import { MenuItem } from 'primeng/api';
 import { TextEditorAction, TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
@@ -46,19 +45,18 @@ import { TextEditorActionGroup } from 'app/editor/monaco-editor/model/actions/te
 import { HeadingAction } from 'app/editor/monaco-editor/model/actions/heading.action';
 import { FullscreenAction } from 'app/editor/monaco-editor/model/actions/fullscreen.action';
 import { ColorAction } from 'app/editor/monaco-editor/model/actions/color.action';
-import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { LectureAttachmentReferenceAction, LectureWithDetails } from 'app/editor/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { PostingEditType, ReferenceType } from 'app/communication/metis.util';
+import { PostingEditType, ReferenceType } from 'app/communication/communication.util';
 import { MonacoEditorOptionPreset } from 'app/editor/monaco-editor/model/monaco-editor-option-preset.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/editor/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/editor/monaco-editor/monaco-editor-option.helper';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { EmojiAction } from 'app/editor/monaco-editor/model/actions/emoji.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -78,6 +76,7 @@ import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from '
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 /** Cached selection with Monaco-compatible data used by scroll re-positioning. */
 type CachedSelectionWithText = InstructionSelectionPosition & { selectedText: string };
@@ -142,8 +141,8 @@ const TAB_VISUAL_ID = 'editor_visual';
         Tooltip,
         NgTemplateOutlet,
         Popover,
+        ButtonDirective,
         TieredMenu,
-        ColorSelectorComponent,
         PostingButtonComponent,
         CdkDrag,
         ArtemisTranslatePipe,
@@ -154,8 +153,8 @@ const TAB_VISUAL_ID = 'editor_visual';
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
-    // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
-    private readonly metisService = inject(MetisService, { optional: true });
+    // We inject the CommunicationService here to avoid a NullInjectorError in the FileUploaderService.
+    private readonly communicationService = inject(CommunicationService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
@@ -171,7 +170,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly resizePlaceholder = viewChild<ElementRef<HTMLDivElement>>('resizePlaceholder');
     readonly actionPalette = viewChild<ElementRef<HTMLElement>>('actionPalette');
     readonly diffHeader = viewChild<ElementRef<HTMLDivElement>>('diffHeader');
-    readonly colorSelector = viewChild(ColorSelectorComponent);
 
     /**
      * The incoming markdown content. Supports one-way `[markdown]` and two-way `[(markdown)]` bindings (the latter
@@ -181,6 +179,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly markdown = input<string>();
     /** Emitted whenever the user edits the content in the editor (not for programmatic/binding updates). */
     readonly markdownChange = output<string>();
+    // A parent can acknowledge a debounced edit after Monaco has already accepted more keystrokes.
+    // That acknowledgement must not replace the live model with the older emitted snapshot.
+    private pendingMarkdownEcho: string | undefined;
+
     /**
      * The live markdown content. Updated by the {@link markdown} input binding, by user edits ({@link onTextChanged}),
      * and by imperative {@link setMarkdown} calls. Replaces the former private `_markdown` field.
@@ -291,10 +293,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly inPreviewMode = signal<boolean>(false);
     readonly inVisualMode = signal<boolean>(false);
     readonly inEditMode = signal<boolean>(true);
-    /** Tracks whether the visual/preview content has been activated at least once, mirroring ngbNav's lazy `destroyOnHide=false` behavior. */
+    /** Tracks whether the visual content has been activated at least once. It is rendered on first activation and kept in the DOM afterwards. */
     protected readonly visualTabActivated = signal<boolean>(false);
-    protected readonly previewTabActivated = signal<boolean>(false);
-    readonly uniqueMarkdownEditorId: string;
+    readonly uniqueMarkdownEditorId = signal<string>(undefined!);
     resizeObserver?: ResizeObserver;
     /** Disposable for the selection change listener */
     private selectionChangeDisposable?: { dispose: () => void };
@@ -355,14 +356,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         ['#d86b1f', 'orange'],
     ]);
 
-    colorSignal: Signal<string[]> = computed(() => [...this.colorToClassMap.keys()]);
+    readonly colors: string[] = [...this.colorToClassMap.keys()];
     allowedFileExtensions = signal<string>(UPLOAD_MARKDOWN_FILE_EXTENSIONS.map((ext) => `.${ext}`).join(', ')).asReadonly();
 
     static readonly TAB_EDIT = TAB_EDIT_ID;
     static readonly TAB_PREVIEW = TAB_PREVIEW_ID;
     static readonly TAB_VISUAL = TAB_VISUAL_ID;
-    readonly colorPickerMarginTop = 35;
-    readonly colorPickerHeight = 110;
     // Icons
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSpinner = faSpinner;
@@ -383,7 +382,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
     constructor() {
-        this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
+        this.uniqueMarkdownEditorId.set('markdown-editor-' + generateUuid());
 
         // Keep the live content and the Monaco editor in sync with the markdown input. This mirrors the previous
         // `set markdown(...)` side effect: an incoming binding value updates the editor (where `setText` guards
@@ -392,6 +391,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // is set in {@link ngAfterViewInit}).
         effect(() => {
             const value = this.markdown();
+            if (value !== undefined && value === this.pendingMarkdownEcho) {
+                this.pendingMarkdownEcho = undefined;
+                return;
+            }
+            this.pendingMarkdownEcho = undefined;
             this.currentMarkdown.set(value);
             untracked(() => this.applyMarkdownToEditor(value));
         });
@@ -473,15 +477,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private buildDisplayedActions(): MarkdownActionsByGroup {
         const domainActions = this.domainActions();
         return {
-            style: this.filterDisplayedActions(this.defaultActions()).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
+            style: this.filterDisplayedActions(this.defaultActions()).filter((action) => action instanceof TextStyleTextEditorAction),
             standard: this.filterDisplayedActions(this.defaultActions()).filter((action) => !(action instanceof TextStyleTextEditorAction)),
             header: this.filterDisplayedActions(this.headerActions()?.actions ?? []),
             color: this.filterDisplayedAction(this.colorAction()),
             domain: {
                 withoutOptions: this.filterDisplayedActions(domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
-                withOptions: this.filterDisplayedActions(
-                    domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions),
-                ) as TextEditorDomainActionWithOptions[],
+                withOptions: this.filterDisplayedActions(domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions)),
             },
             lecture: this.filterDisplayedAction(this.lectureReferenceAction()),
             artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions() ?? []),
@@ -515,7 +517,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     /**
      * Builds the PrimeNG menu item for a lecture. Lectures without referencable attachments insert a lecture
-     * reference directly; otherwise the lecture exposes a submenu with its units, slides, and attachments.
+     * reference directly; otherwise the lecture exposes a submenu with its units and their slides.
      */
     private buildLectureMenuItem(lectureAction: LectureAttachmentReferenceAction, lecture: LectureWithDetails): MenuItem {
         if (!this.hasReferencableAttachments(lecture)) {
@@ -532,13 +534,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             if (unit.attachment && unit.attachment.link) {
                 items.push(this.buildAttachmentVideoUnitMenuItem(lectureAction, lecture, unit));
             }
-        }
-
-        for (const attachment of lecture.attachments ?? []) {
-            items.push({
-                label: attachment.name,
-                command: () => lectureAction.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture, attachment }),
-            });
         }
 
         return { label: lecture.title, items };
@@ -748,7 +743,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // emit, preserving the legacy distinction between binding updates and user edits.
         this.currentMarkdown.set(event.text);
         this.applyMarkdownToEditor(event.text);
+        this.pendingMarkdownEcho = event.text;
         this.markdownChange.emit(event.text);
+    }
+
+    /**
+     * Emits a user edit that is still inside the textChanged debounce window as {@link markdownChange} right away.
+     * Call this before reading the bound value for an immediate action such as submitting a message.
+     */
+    flushPendingTextChange(): void {
+        this.monacoEditor()?.flushPendingTextChange();
     }
 
     /**
@@ -779,7 +783,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     updateEditorActionsVisibility(selection: EditorRange | undefined): void {
         const isEmpty = !selection || (selection.startLineNumber == selection.endLineNumber && selection.startColumn == selection.endColumn);
-        if (!isEmpty === this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
+        if (isEmpty !== this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
             return;
         }
         this.showTextStyleActions.set(!isEmpty);
@@ -880,9 +884,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (newId === this.TAB_VISUAL) {
             this.visualTabActivated.set(true);
         }
-        if (newId === this.TAB_PREVIEW) {
-            this.previewTabActivated.set(true);
-        }
 
         if (this.inEditMode()) {
             this.onEditSelect.emit();
@@ -898,7 +899,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.
         if (previousId === this.TAB_EDIT || (previousId === this.TAB_VISUAL && this.inPreviewMode())) {
-            this.parseMarkdown();
+            // Preview must read Monaco synchronously because textChanged is debounced.
+            this.flushLiveMarkdownAndParse();
         }
 
         // Mirror ngbNav's `(shown)` event: re-layout and focus the editor once the edit tab content is visible.
@@ -915,6 +917,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.diffOriginalPaneWidth.set(originalWidth);
     }
 
+    /**
+     * Reads Monaco's live buffer into {@link currentMarkdown} (user edits may still be inside the
+     * textChanged debounce window), then runs {@link parseMarkdown}.
+     */
+    flushLiveMarkdownAndParse(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions()): void {
+        const liveMarkdown = this.monacoEditor()?.getText();
+        if (liveMarkdown !== undefined) {
+            this.currentMarkdown.set(liveMarkdown);
+        }
+        this.parseMarkdown(domainActionsToCheck);
+    }
+
     parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions()): void {
         const markdown = this.currentMarkdown();
         if (this.showDefaultPreview()) {
@@ -928,11 +942,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     /**
      * Called when the user selects a file to upload.
-     * @param event The event that contains the files to upload (typed as any to avoid compilation errors).
+     * @param event The change event of the file input that contains the files to upload.
      */
-    onFileUpload(event: any): void {
-        if (event.target.files.length >= 1) {
-            this.embedFiles(Array.from(event.target.files), event.target);
+    onFileUpload(event: Event): void {
+        const inputElement = event.target as HTMLInputElement;
+        if (inputElement.files && inputElement.files.length >= 1) {
+            this.embedFiles(Array.from(inputElement.files), inputElement);
         }
     }
 
@@ -965,13 +980,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             return;
         }
         files.forEach((file) => {
-            (this.useCommunicationForFileUpload()
-                ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(
-                      file,
-                      this.metisService?.getCourse()?.id,
-                      this.metisService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
-                  )
-                : this.fileUploaderService.uploadMarkdownFile(file)
+            void (
+                this.useCommunicationForFileUpload()
+                    ? this.fileUploaderService.uploadMarkdownFileInCurrentConversation(
+                          file,
+                          this.communicationService?.getCourse()?.id,
+                          this.communicationService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
+                      )
+                    : this.fileUploaderService.uploadMarkdownFile(file)
             )
                 .then(
                     (response) => this.processFileUploadResponse(response, file),
@@ -990,7 +1006,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private processFileUploadResponse(response: FileUploadResponse, file: File): void {
         const extension = file.name.split('.').last()?.toLocaleLowerCase();
 
-        const attachmentAction: AttachmentAction | undefined = this.defaultActions().find((action) => action instanceof AttachmentAction) as AttachmentAction;
+        const attachmentAction: AttachmentAction | undefined = this.defaultActions().find((action) => action instanceof AttachmentAction);
         const urlAction: UrlAction | undefined = this.defaultActions().find((action) => action instanceof UrlAction);
         if (!attachmentAction || !urlAction || !response.path) {
             throw new Error('Cannot process file upload.');
@@ -1009,16 +1025,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (inputElement) {
             inputElement.value = '';
         }
-    }
-
-    /**
-     * Open the color selector at the current cursor position.
-     * @param event The mouse event that triggered the color selector.
-     */
-    openColorSelector(event: MouseEvent): void {
-        const marginTop = this.colorPickerMarginTop;
-        const height = this.colorPickerHeight;
-        this.colorSelector()!.openColorSelector(event, marginTop, height);
     }
 
     /**
@@ -1158,11 +1164,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param lecture The lecture to check
      */
     hasReferencableAttachments(lecture: LectureWithDetails): boolean {
-        const hasAttachments = !!lecture.attachments?.length;
-        const hasReferencableAttachmentVideoUnits =
+        return (
             lecture.attachmentVideoUnits?.some((unit) => {
                 return unit.attachment && unit.attachment.link;
-            }) === true;
-        return hasAttachments || hasReferencableAttachmentVideoUnits;
+            }) === true
+        );
     }
 }

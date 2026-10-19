@@ -6,9 +6,10 @@
     }
 
     &__field {
-        display: flex;
-        align-items: center;
-        overflow-wrap: anywhere;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     &__row {
@@ -16,6 +17,7 @@
         gap: 0.5rem;
         padding: 1rem;
         width: 100%;
+        min-width: 0;
 
         &__index {
             display: flex;
@@ -25,6 +27,7 @@
 
         &__cell {
             flex: 1 1 0;
+            min-width: 0;
             display: flex;
             align-items: center;
 

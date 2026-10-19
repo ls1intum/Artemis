@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -62,9 +64,10 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
         "artemis.continuous-integration.pause-grace-period-seconds=2", "artemis.continuous-integration.pause-after-consecutive-failed-jobs=5",
         // Use Local data store for tests to ensure isConnectedToCluster() always returns true
         "artemis.continuous-integration.data-store=Local",
-        // Build agents should not have Spring AI enabled - override 'local' profile which enables hyperion
-        "artemis.hyperion.enabled=false", "artemis.atlas.enabled=false", "artemis.athena.enabled=false", "artemis.apollon.enabled=false",
-        "artemis.user-management.ldap.enabled=false", "artemis.user-management.saml2.enabled=false",
+        // A standalone build agent commonly inherits the core node's configuration. Both Hyperion flags stay on so every build-agent test proves they are inert without
+        // the core profile: no Hyperion server services, no generation transport and no Spring AI auto-configuration may load.
+        "artemis.hyperion.enabled=true", "artemis.hyperion.exercise-generation.enabled=true", "artemis.atlas.enabled=false", "artemis.athena.enabled=false",
+        "artemis.apollon.enabled=false", "artemis.user-management.ldap.enabled=false", "artemis.user-management.saml2.enabled=false",
         // Disable JPA repository auto-configuration for build agent tests. Without the core profile,
         // DatabaseConfiguration (which specifies repositoryBaseClass=RepositoryImpl) is not loaded.
         // Spring Boot's DataJpaRepositoriesAutoConfiguration would then scan all repositories without
@@ -99,6 +102,15 @@ public abstract class AbstractArtemisBuildAgentTest {
     @BeforeAll
     protected static void mockDockerClient() throws InterruptedException {
         dockerClientMock = DockerClientTestService.mockDockerClient();
+    }
+
+    /**
+     * Clears the stubbing on the spies above after every test, so that what one test stubs cannot decide how a later
+     * one behaves. {@link #mockServices()} re-establishes what each test needs.
+     */
+    @AfterEach
+    protected void resetSpyBeans() {
+        Mockito.reset(buildAgentConfiguration, buildJobGitService);
     }
 
     @BeforeEach

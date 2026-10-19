@@ -5,7 +5,7 @@
 </ng-template>
 <div
     class="connection-warning"
-    [ngClass]="{ disconnected: disconnected }"
+    [ngClass]="{ disconnected: disconnected() }"
     [ngbPopover]="popContent"
     popoverClass="connection-warning-popover"
     #popover="ngbPopover"
@@ -13,9 +13,17 @@
     [placement]="'auto'"
     [autoClose]="false"
     (click)="popover?.toggle()"
+    #keyboardAction6
+    role="button"
+    tabindex="0"
+    [attr.aria-expanded]="popover.isOpen()"
+    [attr.aria-label]="(disconnected() ? 'connectionStatus.disconnected' : 'connectionStatus.connected') | artemisTranslate"
+    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction6.click() : undefined"
+    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction6.click() : undefined"
 >
     <fa-icon [icon]="faWifi" />
-    @if (disconnected && !isOnExamParticipationPage) {
+    @if (disconnected() && !isOnExamParticipationPage()) {
         <fa-icon id="pulse-icon" [icon]="faWifi" />
     }
 </div>

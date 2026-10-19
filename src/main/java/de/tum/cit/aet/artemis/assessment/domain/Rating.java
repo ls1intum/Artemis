@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A Rating.
@@ -22,7 +23,8 @@ public class Rating extends DomainObject {
     private Integer rating;
 
     @OneToOne
-    @JoinColumn(name = "result_id")
+    @JoinColumn(name = "result_id", nullable = false)
+    @Parent
     private Result result;
 
     public Integer getRating() {

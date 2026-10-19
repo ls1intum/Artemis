@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -16,6 +16,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import dayjs from 'dayjs/esm';
+import { StudentParticipationDTO, fromStudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -38,7 +39,15 @@ export interface ParticipationDueDateUpdateDTO {
     individualDueDate?: string;
 }
 
-@Injectable({ providedIn: 'root' })
+/**
+ * Request options that are appended as query parameters when deleting a participation.
+ */
+export interface ParticipationDeleteOptions {
+    deleteBuildPlan?: boolean;
+    deleteRepository?: boolean;
+}
+
+@Service()
 export class ParticipationService {
     private http = inject(HttpClient);
     private submissionService = inject(SubmissionService);
@@ -54,15 +63,15 @@ export class ParticipationService {
             presentationScore: participation.presentationScore,
         };
         return this.http
-            .put<StudentParticipation>(`api/exercise/exercises/${exercise.id}/participations`, dto, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
+            .put<StudentParticipationDTO>(`api/exercise/exercises/${exercise.id}/participations`, dto, { observe: 'response' })
+            .pipe(map((res) => this.processParticipationDTOResponseType(res)));
     }
 
     updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
         const dtos = participations.map((participation) => this.toDueDateUpdateDTO(participation, exercise.id!));
         return this.http
-            .put<StudentParticipation[]>(`api/exercise/exercises/${exercise.id}/participations/update-individual-due-date`, dtos, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
+            .put<StudentParticipationDTO[]>(`api/exercise/exercises/${exercise.id}/participations/update-individual-due-date`, dtos, { observe: 'response' })
+            .pipe(map((res) => this.processParticipationDTOArrayResponseType(res)));
     }
 
     private toDueDateUpdateDTO(participation: StudentParticipation, exerciseId: number): ParticipationDueDateUpdateDTO {
@@ -75,8 +84,8 @@ export class ParticipationService {
 
     find(participationId: number): Observable<EntityResponseType> {
         return this.http
-            .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
+            .get<StudentParticipationDTO>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
+            .pipe(map((res) => this.processParticipationDTOResponseType(res)));
     }
 
     /**
@@ -162,16 +171,15 @@ export class ParticipationService {
         return this.http.get<ParticipationNameExportDTO[]>(`api/exercise/exercises/${exerciseId}/participations/names`);
     }
 
-    delete(participationId: number, req?: any): Observable<HttpResponse<void>> {
+    delete(participationId: number, req?: ParticipationDeleteOptions): Observable<HttpResponse<void>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });
     }
 
     cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
-        const copy = this.convertParticipationDatesFromClient(participation);
         return this.http
-            .put<StudentParticipation>(`${this.resourceUrl}/${participation.id}/cleanup-build-plan`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertParticipationResponseDatesFromServer(res)));
+            .put<StudentParticipationDTO>(`${this.resourceUrl}/${participation.id}/cleanup-build-plan`, null, { observe: 'response' })
+            .pipe(map((res) => this.processParticipationDTOResponseType(res)));
     }
 
     shouldPreferPractice(exercise?: Exercise): boolean {
@@ -180,14 +188,6 @@ export class ParticipationService {
 
     getBuildJobIdsForResultsOfParticipation(participationId: number): Observable<{ [key: string]: string }> {
         return this.http.get<{ [key: string]: string }>(`api/assessment/participations/${participationId}/results/build-job-ids`);
-    }
-
-    protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {
-        // return a copy of the object
-        return Object.assign({}, participation, {
-            initializationDate: convertDateFromClient(participation.initializationDate),
-            individualDueDate: convertDateFromClient(participation.individualDueDate),
-        });
     }
 
     protected convertParticipationResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
@@ -255,11 +255,11 @@ export class ParticipationService {
                 }
             } else if (participations[0].type === ParticipationType.PROGRAMMING) {
                 if (nonTestRunParticipations.length) {
-                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations);
                     mergedParticipations.push(combinedParticipation);
                 }
                 if (testRunParticipations.length) {
-                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations);
                     mergedParticipations.push(combinedParticipationTestRun);
                 }
             }
@@ -325,10 +325,10 @@ export class ParticipationService {
      * This method bundles recurring conversion steps for Participation EntityArrayResponses.
      * @param participationRes
      */
-    private processParticipationEntityArrayResponseType(participationRes: EntityArrayResponseType): EntityArrayResponseType {
-        this.convertParticipationResponseArrayDatesFromServer(participationRes);
-        this.setAccessRightsParticipationEntityArrayResponseType(participationRes);
-        return participationRes;
+    private processParticipationDTOArrayResponseType(participationRes: HttpResponse<StudentParticipationDTO[]>): EntityArrayResponseType {
+        const convertedResponse = participationRes.clone({ body: participationRes.body?.map(fromStudentParticipationDTO) ?? null });
+        this.setAccessRightsParticipationEntityArrayResponseType(convertedResponse);
+        return convertedResponse;
     }
 
     /**
@@ -339,6 +339,12 @@ export class ParticipationService {
         this.convertParticipationResponseDatesFromServer(participationRes);
         this.setAccessRightsParticipationEntityResponseType(participationRes);
         return participationRes;
+    }
+
+    private processParticipationDTOResponseType(participationRes: HttpResponse<StudentParticipationDTO>): EntityResponseType {
+        const convertedResponse = participationRes.clone({ body: participationRes.body ? fromStudentParticipationDTO(participationRes.body) : null });
+        this.setAccessRightsParticipationEntityResponseType(convertedResponse);
+        return convertedResponse;
     }
 
     private setAccessRightsParticipationEntityResponseType(res: EntityResponseType): EntityResponseType {

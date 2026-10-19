@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
@@ -23,8 +22,6 @@ import {
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 
 describe('CourseSidebarItemService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseSidebarItemService;
     const courseId = 123;
 
@@ -104,8 +101,8 @@ describe('CourseSidebarItemService', () => {
     });
 
     describe('getStudentDefaultItems', () => {
-        it('should return items without dashboard when hasDashboard is false and questionsAvailableForTraining is false', () => {
-            const items = service.getStudentDefaultItems(false, false);
+        it('should return default items without training when questionsAvailableForTraining is false', () => {
+            const items = service.getStudentDefaultItems(false);
 
             expect(items).toHaveLength(3);
             expect(items[0].title).toBe('Exercises');
@@ -113,15 +110,14 @@ describe('CourseSidebarItemService', () => {
             expect(items[2].title).toBe('Calendar');
         });
 
-        it('should include dashboard item when hasDashboard is true and questionsAvailableForTraining is true', () => {
-            const items = service.getStudentDefaultItems(true, true);
+        it('should include the training item when questionsAvailableForTraining is true', () => {
+            const items = service.getStudentDefaultItems(true);
 
-            expect(items).toHaveLength(5);
-            expect(items[0].title).toBe('Dashboard');
-            expect(items[1].title).toBe('Exercises');
-            expect(items[2].title).toBe('Training');
-            expect(items[3].title).toBe('Statistics');
-            expect(items[4].title).toBe('Calendar');
+            expect(items).toHaveLength(4);
+            expect(items[0].title).toBe('Exercises');
+            expect(items[1].title).toBe('Training');
+            expect(items[2].title).toBe('Statistics');
+            expect(items[3].title).toBe('Calendar');
         });
     });
 
@@ -242,12 +238,6 @@ describe('CourseSidebarItemService', () => {
             const item = service.getLearningPathManagementItem(courseId);
 
             expect(item.featureToggle).toBe(FeatureToggle.LearningPaths);
-        });
-
-        it('getDashboardItem should include feature toggle', () => {
-            const item = service.getDashboardItem();
-
-            expect(item.featureToggle).toBe(FeatureToggle.StudentCourseAnalyticsDashboard);
         });
 
         it('getIrisItem should return correct item', () => {

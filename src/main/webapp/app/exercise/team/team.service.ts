@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -11,7 +11,6 @@ import { downloadFile } from 'app/foundation/util/download.util';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Observable, Subscription } from 'rxjs';
 import { filter, map, shareReplay } from 'rxjs/operators';
-import { EntityResponseType } from 'app/exercise/services/exercise.service';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 /**
@@ -132,7 +131,7 @@ export interface ITeamService {
     exportTeams(teams: Team[]): void;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TeamService implements ITeamService, OnDestroy {
     private http = inject(HttpClient);
     private websocketService = inject(WebsocketService);
@@ -140,8 +139,8 @@ export class TeamService implements ITeamService, OnDestroy {
 
     // Team Assignment Update Stream
     private teamAssignmentUpdates$?: Observable<TeamAssignmentPayload>;
-    private teamAssignmentUpdatesResolver: () => void;
-    private authenticationStateSubscriber: Subscription;
+    private teamAssignmentUpdatesResolver!: () => void; // assigned in teamAssignmentUpdates getter before the websocket callback invokes it
+    private authenticationStateSubscriber!: Subscription; // assigned in teamAssignmentUpdates getter before the auth-state callback unsubscribes it
     private websocketStatusSubscription?: Subscription;
 
     ngOnDestroy(): void {
@@ -266,7 +265,7 @@ export class TeamService implements ITeamService, OnDestroy {
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return this.http
             .get<Course>(`api/exercise/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)));
+            .pipe(map((res: HttpResponse<Course>) => this.setAccessRightsCourseEntityResponseType(res)));
     }
 
     /**
@@ -276,13 +275,13 @@ export class TeamService implements ITeamService, OnDestroy {
     exportTeams(teams: Team[]) {
         // Make list of teams which we need to export,
         const exportedTeams: StudentWithTeam[] = [];
-        teams!.forEach((team) => {
+        teams.forEach((team) => {
             if (team.students) {
                 team.students.forEach((student) => {
-                    const exportStudent = {
+                    const exportStudent: StudentWithTeam = {
                         teamName: team.name ?? '',
                         username: student.login ?? '',
-                    } as StudentWithTeam;
+                    };
                     if (student.firstName) {
                         exportStudent.firstName = student.firstName;
                     }
@@ -345,7 +344,7 @@ export class TeamService implements ITeamService, OnDestroy {
      */
     private static convertTeamArrayResponseDatesFromServer(res: TeamArrayResponse): TeamArrayResponse {
         if (res.body) {
-            res.body.map((team: Team) => this.convertTeamDatesFromServer(team));
+            res.body.forEach((team: Team) => this.convertTeamDatesFromServer(team));
         }
         return res;
     }
@@ -364,7 +363,7 @@ export class TeamService implements ITeamService, OnDestroy {
         return team;
     }
 
-    private setAccessRightsCourseEntityResponseType(res: EntityResponseType): EntityResponseType {
+    private setAccessRightsCourseEntityResponseType(res: HttpResponse<Course>): HttpResponse<Course> {
         if (res.body) {
             this.accountService.setAccessRightsForCourse(res.body);
         }

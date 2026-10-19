@@ -1,5 +1,4 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -25,6 +24,8 @@ import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/ser
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import type { Mock } from 'vitest';
+import { By } from '@angular/platform-browser';
+import { NgModel } from '@angular/forms';
 
 /**
  * Helper function to set up canvas and Image mocks for image processing tests.
@@ -86,8 +87,6 @@ function setupCanvasAndImageMocks(toDataURLValue: string) {
 }
 
 describe('DragAndDropQuestionEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
     let component: DragAndDropQuestionEditComponent;
     let createObjectURLStub: Mock;
@@ -146,9 +145,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
         questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
-        vi.spyOn(component['changeDetector'], 'detectChanges').mockImplementation(() => {});
-        createObjectURLStub = vi.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
-            return 'some/client/dependent/path/' + file.name;
+        createObjectURLStub = vi.spyOn(window.URL, 'createObjectURL').mockImplementation((obj: Blob | MediaSource) => {
+            const fileName = obj instanceof File ? obj.name : '';
+            return 'some/client/dependent/path/' + fileName;
         });
         addFileSpy = vi.spyOn(component.addNewFile, 'emit');
         removeFileSpy = vi.spyOn(component.removeFile, 'emit');
@@ -165,7 +164,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should initialize', () => {
         expect(component.backupQuestion).toEqual(question1);
-        expect(component.filePreviewPaths).toEqual(new Map<string, string>());
+        expect(component.filePreviewPaths()).toEqual(new Map<string, string>());
         expect(component.mouse).toStrictEqual(new DragAndDropMouseEvent());
     });
 
@@ -191,10 +190,79 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(eventDeleteSpy).toHaveBeenCalledOnce();
     });
 
+    it('should only remove its own files from the shared file pool when the question is deleted', () => {
+        // The pool is shared by all drag and drop questions of the quiz and already holds the files of another question.
+        const otherQuestionFiles = new Map<string, { path?: string; file: File }>([
+            ['other-background.png', { file: new File(['bg'], 'other-background.png') }],
+            ['other-item.png', { file: new File(['item'], 'other-item.png') }],
+        ]);
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        const newQuestion = new DragAndDropQuestion();
+        newQuestion.dragItems = [];
+        fixture.componentRef.setInput('question', newQuestion);
+        fixture.componentRef.setInput('questionIndex', 2);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        fixture.componentRef.setInput('filePool', otherQuestionFiles);
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+
+        component.deleteQuestion();
+
+        expect(removeFileSpy).not.toHaveBeenCalled();
+    });
+
+    it('should remove the background and drag item files of the deleted question', () => {
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        const filePool = new Map<string, { path?: string; file: File }>([['other-background.png', { file: new File(['bg'], 'other-background.png') }]]);
+        fixture.componentRef.setInput('question', clone(question3));
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        fixture.componentRef.setInput('filePool', filePool);
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+
+        component.deleteQuestion();
+
+        expect(removeFileSpy).toHaveBeenCalledTimes(4);
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/1/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/2/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/3/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/4/image.jpg');
+        expect(removeFileSpy).not.toHaveBeenCalledWith('other-background.png');
+    });
+
+    it('should realign the click layer of every drag and drop question when the window is resized', () => {
+        const secondFixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        const secondComponent = secondFixture.componentInstance;
+        secondFixture.componentRef.setInput('question', clone(question2));
+        secondFixture.componentRef.setInput('questionIndex', 2);
+        secondFixture.componentRef.setInput('reEvaluationInProgress', false);
+        secondFixture.detectChanges();
+        const firstAdjustSpy = vi.spyOn(component, 'adjustClickLayerWidth');
+        const secondAdjustSpy = vi.spyOn(secondComponent, 'adjustClickLayerWidth');
+
+        window.dispatchEvent(new Event('resize'));
+
+        // The drop locations are percentages of the click layer, so a layer that keeps its old width makes them drift away from the background image.
+        expect(firstAdjustSpy).toHaveBeenCalledOnce();
+        expect(secondAdjustSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stop reacting to window resizes once the question is destroyed', () => {
+        const adjustSpy = vi.spyOn(component, 'adjustClickLayerWidth');
+
+        fixture.destroy();
+        window.dispatchEvent(new Event('resize'));
+
+        expect(adjustSpy).not.toHaveBeenCalled();
+    });
+
     it('should set background file', () => {
         const file1 = { name: 'newFile1.jpg' } as File;
         const file2 = { name: 'newFile2.png' } as File;
-        const event = { target: { files: [file1, file2] } };
+        const event = { target: { files: [file1, file2] } } as unknown as Event;
 
         component.setBackgroundFile(event);
 
@@ -319,9 +387,9 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should drag, drop', () => {
         component.drag();
-        expect(component.dropAllowed).toBe(true);
+        expect(component.dropAllowed()).toBe(true);
         component.drop();
-        expect(component.dropAllowed).toBe(false);
+        expect(component.dropAllowed()).toBe(false);
     });
 
     it('should duplicate drop location', () => {
@@ -378,9 +446,68 @@ describe('DragAndDropQuestionEditComponent', () => {
         const newDragItemOfQuestion = component.question().dragItems![0];
         expect(newDragItemOfQuestion.text).toBe('Text');
         expect(newDragItemOfQuestion.pictureFilePath).toBeUndefined();
-        expect(component.filePreviewPaths.size).toBe(0);
+        expect(component.filePreviewPaths().size).toBe(0);
         expect(addFileSpy).not.toHaveBeenCalled();
         expect(removeFileSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([false, true])('should show and clear text overflow errors during re-evaluation: %s', async (reEvaluationInProgress) => {
+        const question = new DragAndDropQuestion();
+        question.dragItems = [{ text: 'a'.repeat(255), invalid: false }];
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('reEvaluationInProgress', reEvaluationInProgress);
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        const textareaElement = fixture.debugElement.query(By.css('#drag-item-0-text'));
+        const textarea: HTMLTextAreaElement = textareaElement.nativeElement;
+        const model = textareaElement.injector.get(NgModel);
+        const counter: HTMLElement = fixture.nativeElement.querySelector('[data-testid="drag-item-character-count"]');
+        expect(counter.textContent?.trim()).toBe('255/255');
+        expect(model.valid).toBe(true);
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+
+        textarea.value += 'b';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(counter.textContent?.trim()).toBe('256/255');
+        expect(counter.classList.contains('text-state-danger')).toBe(true);
+        expect(model.hasError('customMaxLength')).toBe(true);
+        expect(question.dragItems![0].text).toBe('a'.repeat(255) + 'b');
+        expect(textarea.getAttribute('aria-invalid')).toBe('true');
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).not.toBeNull();
+        expect(textarea.getAttribute('aria-describedby')).toBe('drag-item-text-limit-1-0');
+
+        textarea.value = 'a'.repeat(255);
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(model.valid).toBe(true);
+        expect(question.dragItems![0].text).toBe('a'.repeat(255));
+        expect(textarea.getAttribute('aria-invalid')).toBe('false');
+        expect(textarea.hasAttribute('aria-describedby')).toBe(false);
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+        expect(counter.textContent?.trim()).toBe('255/255');
+        expect(counter.classList.contains('text-state-danger')).toBe(false);
+
+        textarea.value = 'Short item';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(question.dragItems![0].text).toBe('Short item');
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+        expect(counter.textContent?.trim()).toBe('10/255');
+
+        textarea.value = '';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(counter.textContent?.trim()).toBe('0/255');
     });
 
     it('should create image item', () => {
@@ -388,8 +515,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         const fileName = 'testFile.' + extension;
         const expectedPath = 'some/client/dependent/path/' + fileName;
         const file = new File([], fileName);
+        const input = { files: [file], value: fileName };
 
-        component.createImageDragItem({ target: { files: [file] } });
+        component.createImageDragItem({ target: input } as unknown as Event);
 
         expect(component.question().dragItems).toHaveLength(1);
         const newDragItemOfQuestion = component.question().dragItems![0];
@@ -397,11 +525,12 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(newDragItemOfQuestion.pictureFilePath).toBeDefined();
         expect(newDragItemOfQuestion.pictureFilePath).toMatch(/\.png$/);
         const filePath = newDragItemOfQuestion.pictureFilePath!;
-        expect(component.filePreviewPaths.size).toBe(1);
-        expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
+        expect(component.filePreviewPaths().size).toBe(1);
+        expect(component.filePreviewPaths().get(filePath)).toBe(expectedPath);
         expect(addFileSpy).toHaveBeenCalledOnce();
         expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
+        expect(input.value).toBe('');
     });
 
     it('should delete drag item', () => {
@@ -509,7 +638,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.changeToTextDragItem(component.question().dragItems![1]);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.filePreviewPaths.size).toBe(3);
+        expect(component.filePreviewPaths().size).toBe(3);
         expect(addFileSpy).not.toHaveBeenCalled();
         expect(removeFileSpy).toHaveBeenCalledOnce();
         expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/3/image.jpg');
@@ -546,7 +675,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const expectedPath = 'some/client/dependent/path/' + fileName;
         const file = new File([], fileName);
 
-        component.changeToPictureDragItem(component.question().dragItems![1], { target: { files: [file] } });
+        component.changeToPictureDragItem(component.question().dragItems![1], { target: { files: [file] } } as unknown as Event);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.question().dragItems![0]).toMatchObject({
@@ -563,7 +692,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.question().dragItems![1].pictureFilePath).toBeDefined();
         expect(component.question().dragItems![1].pictureFilePath).toMatch(/\.png$/);
         const filePath = component.question().dragItems![1].pictureFilePath!;
-        expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
+        expect(component.filePreviewPaths().get(filePath)).toBe(expectedPath);
         expect(addFileSpy).toHaveBeenCalledOnce();
         expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
@@ -608,10 +737,30 @@ describe('DragAndDropQuestionEditComponent', () => {
             scoringType: ScoringType.ALL_OR_NOTHING,
         } as DragAndDropQuestion;
         component.backupQuestion = backupQuestion;
+        fixture.detectChanges();
+        questionUpdatedSpy.mockClear();
 
         component.resetQuestion();
 
         expect(component.question()).toEqual(backupQuestion);
+        // without this the parent keeps the pre-reset validity and calls a restored question invalid
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the parent after resetting the question text', () => {
+        const currentQuestion = new DragAndDropQuestion();
+        currentQuestion.text = 'edited text';
+        fixture.componentRef.setInput('question', currentQuestion);
+        fixture.changeDetectorRef.detectChanges();
+        component.backupQuestion = new DragAndDropQuestion();
+        component.backupQuestion.text = 'backupText';
+        fixture.detectChanges();
+        questionUpdatedSpy.mockClear();
+
+        component.resetQuestionText();
+
+        expect(component.question().text).toBe('backupText');
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
     });
 
     it('should reset drag item', () => {
@@ -653,7 +802,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should toggle preview', () => {
-        component.showPreview = true;
+        component.showPreview.set(true);
         const q = new DragAndDropQuestion();
         q.text = 'should be removed';
         fixture.componentRef.setInput('question', q);
@@ -661,7 +810,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.togglePreview();
 
-        expect(component.showPreview).toBe(false);
+        expect(component.showPreview()).toBe(false);
         expect(component.question().text).toBeUndefined();
     });
 
@@ -677,7 +826,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(questionUpdatedSpy).toHaveBeenCalledTimes(initialCalls + 1);
         expect(component.question().text).toBeUndefined();
-        expect(component.questionEditorText).toBe(newValue);
+        expect(component.questionEditorText()).toBe(newValue);
     });
 
     it('should detect domain actions', () => {
@@ -719,7 +868,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     it('should get images from drop locations', async () => {
         const dragAndDropQuestion = component.question();
         dragAndDropQuestion.backgroundFilePath = 'bg.png';
-        component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
+        component.filePreviewPaths.update((map) => new Map(map).set('bg.png', 'data:image/png;base64,test'));
         dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
         dragAndDropQuestion.correctMappings = [];
         dragAndDropQuestion.dragItems = [];
@@ -754,7 +903,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     it('should blank out background image', async () => {
         const dragAndDropQuestion = component.question();
         dragAndDropQuestion.backgroundFilePath = 'bg.png';
-        component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
+        component.filePreviewPaths.update((map) => new Map(map).set('bg.png', 'data:image/png;base64,test'));
         dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
 
         const { mockContext, mockCanvas, getImageCallCount, cleanup } = setupCanvasAndImageMocks('data:image/png;base64,blanked');

@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
+import { MAX_GRADING_POINTS } from 'app/foundation/constants/input.constants';
 import { CourseManagementService } from '../services/course-management.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -42,6 +43,10 @@ export class CourseOnboardingComponent implements OnInit {
     readonly activeStep = signal(0);
     readonly isSaving = signal(false);
     readonly course = signal<Course>(new Course());
+    /** False while a date picker of the general settings holds text that is not a date; the course keeps the last valid date then. */
+    readonly generalSettingsDateTextValid = signal(true);
+    /** False while a date picker of the enrollment step holds text that is not a date; the course keeps the last valid date then. */
+    readonly enrollmentDateTextValid = signal(true);
 
     readonly stepKeys = ['generalSettings', 'enrollment', 'communication', 'assessment', 'explore'];
     readonly totalSteps = this.stepKeys.length;
@@ -60,7 +65,7 @@ export class CourseOnboardingComponent implements OnInit {
         this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const step = parseInt(params['step'], 10);
             if (!isNaN(step) && step >= 0 && step < this.totalSteps) {
-                this.activeStep.set(step);
+                this.showStep(step);
             }
         });
         this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => {
@@ -111,7 +116,7 @@ export class CourseOnboardingComponent implements OnInit {
                     this.course.set(response.body);
                 }
                 const lastStep = this.totalSteps - 1;
-                this.activeStep.set(lastStep);
+                this.showStep(lastStep);
                 this.updateStepUrl(lastStep);
             },
             error: (error: HttpErrorResponse) => {
@@ -130,14 +135,14 @@ export class CourseOnboardingComponent implements OnInit {
         if (!current.onboardingDone) {
             current.onboardingDone = true;
             this.courseManagementService.update(current.id, current).subscribe({
-                next: () => this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } }),
+                next: () => void this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } }),
                 error: (error: HttpErrorResponse) => {
                     current.onboardingDone = false;
                     onError(this.alertService, error);
                 },
             });
         } else {
-            this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } });
+            void this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } });
         }
     }
 
@@ -151,14 +156,40 @@ export class CourseOnboardingComponent implements OnInit {
 
         switch (step) {
             case 0: {
-                // General Settings: startDate < endDate
-                if (current.startDate && current.endDate && dayjs(current.startDate).isAfter(dayjs(current.endDate))) {
+                // General Settings: startDate, endDate and semester are mandatory, and startDate must be before endDate.
+                // The course arrives here already validated by the create endpoint, but the date pickers and the
+                // semester select stay editable in the wizard, so a value set on create can still be cleared here.
+                // A picker whose text is not a date still reports its last valid date, which would be saved silently.
+                if (!this.isDateTextValid()) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.dateTextInvalid');
+                    return false;
+                }
+                if (!current.startDate) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.startDateRequired');
+                    return false;
+                }
+                if (!current.endDate) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.endDateRequired');
+                    return false;
+                }
+                // Strictly before, matching Course.validateStartAndEndDate() on the server: equal dates are rejected
+                // there, so accepting them here would only move the failure to the save request.
+                if (!dayjs(current.startDate).isBefore(dayjs(current.endDate))) {
                     this.alertService.error('artemisApp.course.onboarding.validation.startDateBeforeEndDate');
+                    return false;
+                }
+                if (!current.semester?.trim()) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.semesterRequired');
                     return false;
                 }
                 break;
             }
             case 1: {
+                // The same applies to the enrollment pickers, which are only counted while they are shown.
+                if (!this.isDateTextValid()) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.dateTextInvalid');
+                    return false;
+                }
                 if (!current.enrollmentEnabled) {
                     break;
                 }
@@ -202,17 +233,46 @@ export class CourseOnboardingComponent implements OnInit {
                     this.alertService.error('artemisApp.course.onboarding.validation.maxPointsPositive');
                     return false;
                 }
+                if (current.maxPoints !== undefined && !Number.isInteger(current.maxPoints)) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsWholeNumber');
+                    return false;
+                }
+                if (current.maxPoints !== undefined && current.maxPoints > MAX_GRADING_POINTS) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsTooHigh', { max: MAX_GRADING_POINTS });
+                    return false;
+                }
                 break;
             }
         }
         return true;
     }
 
+    /** Whether the date pickers of the current step hold only dates, as far as the step reports it. */
+    private isDateTextValid(): boolean {
+        switch (this.activeStep()) {
+            case 0:
+                return this.generalSettingsDateTextValid();
+            case 1:
+                return this.enrollmentDateTextValid();
+            default:
+                return true;
+        }
+    }
+
+    /** Shows a step. Its pickers are created anew then, so what the previous step reported about its text does not apply. */
+    private showStep(step: number) {
+        if (step !== this.activeStep()) {
+            this.generalSettingsDateTextValid.set(true);
+            this.enrollmentDateTextValid.set(true);
+        }
+        this.activeStep.set(step);
+    }
+
     private saveAndAdvance() {
         const current = this.course();
         if (!current.id) {
             const newStep = this.activeStep() + 1;
-            this.activeStep.set(newStep);
+            this.showStep(newStep);
             this.updateStepUrl(newStep);
             return;
         }
@@ -224,7 +284,7 @@ export class CourseOnboardingComponent implements OnInit {
                     this.course.set(response.body);
                 }
                 const newStep = this.activeStep() + 1;
-                this.activeStep.set(newStep);
+                this.showStep(newStep);
                 this.updateStepUrl(newStep);
             },
             error: (error: HttpErrorResponse) => {
@@ -235,10 +295,16 @@ export class CourseOnboardingComponent implements OnInit {
     }
 
     private saveAndNavigate(targetStep: number) {
+        // The pickers of the current step keep their last valid date while their text is not a date, and that date is what
+        // would be saved here. A step that is left without saving has nothing to protect.
         const current = this.course();
         if (!current.id) {
-            this.activeStep.set(targetStep);
+            this.showStep(targetStep);
             this.updateStepUrl(targetStep);
+            return;
+        }
+        if (!this.isDateTextValid()) {
+            this.alertService.error('artemisApp.course.onboarding.validation.dateTextInvalid');
             return;
         }
         this.isSaving.set(true);
@@ -248,7 +314,7 @@ export class CourseOnboardingComponent implements OnInit {
                 if (response.body) {
                     this.course.set(response.body);
                 }
-                this.activeStep.set(targetStep);
+                this.showStep(targetStep);
                 this.updateStepUrl(targetStep);
             },
             error: (error: HttpErrorResponse) => {
@@ -259,6 +325,6 @@ export class CourseOnboardingComponent implements OnInit {
     }
 
     private updateStepUrl(step: number) {
-        this.router.navigate([], { queryParams: { step }, queryParamsHandling: 'merge', replaceUrl: true });
+        void this.router.navigate([], { queryParams: { step }, queryParamsHandling: 'merge', replaceUrl: true });
     }
 }

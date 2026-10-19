@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Lti13DynamicRegistrationComponent } from 'app/lti/overview/lti13-dynamic-registration/lti13-dynamic-registration.component';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router, convertToParamMap } from '@angular/router';
@@ -10,8 +9,10 @@ import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
+const PLATFORM_CONFIGURATION_URL = 'https://platform.example.com/.well-known/openid-configuration';
+const PLATFORM_ORIGIN = 'https://platform.example.com';
+
 describe('Lti13DynamicRegistrationComponentTest', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<Lti13DynamicRegistrationComponent>;
     let comp: Lti13DynamicRegistrationComponent;
     let route: ActivatedRoute;
@@ -20,7 +21,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
     beforeEach(async () => {
         route = {
             params: of({ courseId: 1 }) as Params,
-            snapshot: { queryParamMap: convertToParamMap({ openid_configuration: 'config', registration_token: 'token' }) },
+            snapshot: { queryParamMap: convertToParamMap({ openid_configuration: PLATFORM_CONFIGURATION_URL, registration_token: 'token' }) },
         } as ActivatedRoute;
 
         await TestBed.configureTestingModule({
@@ -49,22 +50,22 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
 
         comp.ngOnInit();
 
-        expect(comp.isRegistering).toBe(false);
-        expect(comp.registeredSuccessfully).toBe(false);
+        expect(comp.isRegistering()).toBe(false);
+        expect(comp.registeredSuccessfully()).toBe(false);
     });
 
     it('onInit success to call dynamic registration endpoint', () => {
         const httpStub = vi.spyOn(http, 'post').mockReturnValue(of({ body: {} }));
 
-        expect(comp.isRegistering).toBe(true);
+        expect(comp.isRegistering()).toBe(true);
 
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/lti/admin/lti13/dynamic-registration', null, expect.anything());
 
-        expect(comp.isRegistering).toBe(false);
-        expect(comp.registeredSuccessfully).toBe(true);
+        expect(comp.isRegistering()).toBe(false);
+        expect(comp.registeredSuccessfully()).toBe(true);
     });
 
     it('onInit dynamic registration fails on error', () => {
@@ -80,8 +81,8 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/lti/admin/lti13/dynamic-registration', null, expect.anything());
 
-        expect(comp.isRegistering).toBe(false);
-        expect(comp.registeredSuccessfully).toBe(false);
+        expect(comp.isRegistering()).toBe(false);
+        expect(comp.registeredSuccessfully()).toBe(false);
     });
 
     it('should extract courseId from params', () => {
@@ -99,7 +100,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(comp.registeredSuccessfully).toBe(true);
+        expect(comp.registeredSuccessfully()).toBe(true);
     });
 
     it('should post message to parent window after registration completes', () => {
@@ -111,7 +112,26 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
 
         comp.ngOnInit();
 
-        expect(mockPostMessage).toHaveBeenCalledWith({ subject: 'org.imsglobal.lti.close' }, '*');
+        expect(mockPostMessage).toHaveBeenCalledWith({ subject: 'org.imsglobal.lti.close' }, PLATFORM_ORIGIN);
+
+        window.opener = originalOpener;
+    });
+
+    it.each([
+        ['is not a URL at all', 'not a url'],
+        ['parses but has an opaque origin', 'data:text/html,x'],
+    ])('should not post a message when the platform configuration %s', (_description, openIdConfiguration) => {
+        const mockPostMessage = vi.fn();
+        const originalOpener = window.opener;
+        window.opener = { postMessage: mockPostMessage };
+        route.snapshot = { queryParamMap: convertToParamMap({ openid_configuration: openIdConfiguration, registration_token: 'token' }) } as ActivatedRouteSnapshot;
+
+        vi.spyOn(http, 'post').mockReturnValue(of({ body: {} }));
+
+        comp.ngOnInit();
+
+        // There is no origin to address the close signal to, and postMessage would reject 'null' outright.
+        expect(mockPostMessage).not.toHaveBeenCalled();
 
         window.opener = originalOpener;
     });
@@ -131,7 +151,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
 
         comp.ngOnInit();
 
-        expect(mockPostMessage).toHaveBeenCalledWith({ subject: 'org.imsglobal.lti.close' }, '*');
+        expect(mockPostMessage).toHaveBeenCalledWith({ subject: 'org.imsglobal.lti.close' }, PLATFORM_ORIGIN);
 
         Object.defineProperty(window, 'parent', { value: originalParent, writable: true });
     });

@@ -115,7 +115,17 @@ public class UserSshPublicKeyService {
      * @return a list of {@link UserSshPublicKey} objects for the user.
      */
     public List<UserSshPublicKeyDTO> getAllSshKeysForUser(User user) {
-        return userSshPublicKeyRepository.findAllByUserId(user.getId()).stream().map(UserSshPublicKeyDTO::of).toList();
+        return getAllSshKeysForUser(user.getId());
+    }
+
+    /**
+     * Retrieves all SSH public keys of a user.
+     *
+     * @param userId the id of the user
+     * @return the user's SSH public keys
+     */
+    public List<UserSshPublicKeyDTO> getAllSshKeysForUser(long userId) {
+        return userSshPublicKeyRepository.findAllByUserId(userId).stream().map(UserSshPublicKeyDTO::of).toList();
     }
 
     /**

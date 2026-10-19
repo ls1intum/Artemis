@@ -2,12 +2,17 @@ import { Component, input } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { KeyValuePipe } from '@angular/common';
+import { SelectModule } from 'primeng/select';
+
+interface TaxonomyOption {
+    value: CompetencyTaxonomy;
+    indent: string;
+}
 
 @Component({
     selector: 'jhi-taxonomy-select',
     templateUrl: './taxonomy-select.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, KeyValuePipe],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, SelectModule],
 })
 export class TaxonomySelectComponent {
     /**
@@ -21,17 +26,11 @@ export class TaxonomySelectComponent {
     form = input.required<FormControl>();
 
     /**
-     * increasing indentation for the select options
+     * Options for the select, with increasing indentation per taxonomy entry.
      * @protected
      */
-    protected readonly indent = Object.keys(CompetencyTaxonomy).map((_, i) => '\xA0'.repeat(i));
-
-    protected readonly competencyTaxonomy = CompetencyTaxonomy;
-
-    /**
-     * Keeps order of elements as-is in the keyvalue pipe
-     */
-    keepOrder = () => {
-        return 0;
-    };
+    protected readonly taxonomyOptions: TaxonomyOption[] = Object.values(CompetencyTaxonomy).map((value, i) => ({
+        value,
+        indent: '\xA0'.repeat(i),
+    }));
 }

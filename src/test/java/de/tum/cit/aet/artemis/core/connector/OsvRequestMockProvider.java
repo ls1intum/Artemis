@@ -18,8 +18,8 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.admin.dto.osv.OsvBatchResponseDTO;
 import de.tum.cit.aet.artemis.admin.dto.osv.OsvVulnerabilityDTO;
@@ -41,7 +41,7 @@ public class OsvRequestMockProvider {
     private final RestTemplate restTemplate;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private MockRestServiceServer mockServer;
 
@@ -69,7 +69,7 @@ public class OsvRequestMockProvider {
     /**
      * Mocks the OSV batch query API to return empty results (no vulnerabilities found).
      */
-    public void mockBatchQueryWithNoVulnerabilities(int componentCount) throws JsonProcessingException {
+    public void mockBatchQueryWithNoVulnerabilities(int componentCount) throws JacksonException {
         List<OsvVulnerabilityResultDTO> emptyResults = java.util.stream.IntStream.range(0, componentCount).mapToObj(i -> new OsvVulnerabilityResultDTO(null)).toList();
         OsvBatchResponseDTO response = new OsvBatchResponseDTO(emptyResults);
 
@@ -82,7 +82,7 @@ public class OsvRequestMockProvider {
      *
      * @param vulnId the vulnerability ID to return in the batch response
      */
-    public void mockBatchQueryWithVulnerability(String vulnId) throws JsonProcessingException {
+    public void mockBatchQueryWithVulnerability(String vulnId) throws JacksonException {
         OsvVulnerabilityDTO minimalVuln = new OsvVulnerabilityDTO(vulnId, null, null, null, null, null, null, null);
         OsvVulnerabilityResultDTO resultWithVuln = new OsvVulnerabilityResultDTO(List.of(minimalVuln));
         OsvBatchResponseDTO response = new OsvBatchResponseDTO(List.of(resultWithVuln));
@@ -96,7 +96,7 @@ public class OsvRequestMockProvider {
      *
      * @param vulnerability the full vulnerability details to return
      */
-    public void mockVulnerabilityDetails(OsvVulnerabilityDTO vulnerability) throws JsonProcessingException {
+    public void mockVulnerabilityDetails(OsvVulnerabilityDTO vulnerability) throws JacksonException {
         mockServer.expect(ExpectedCount.once(), requestToUriTemplate(OSV_VULN_API_URL + "{vulnId}", vulnerability.id())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(vulnerability), MediaType.APPLICATION_JSON));
     }

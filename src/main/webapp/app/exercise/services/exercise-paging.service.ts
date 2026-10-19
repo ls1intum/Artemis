@@ -30,6 +30,6 @@ export abstract class ExercisePagingService<T extends Exercise> extends PagingSe
         if (options.programmingLanguage) {
             params = params.set('programmingLanguage', options.programmingLanguage);
         }
-        return this.http.get(`${this.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<SearchResult<T>>) => resp && resp.body!));
+        return this.http.get<SearchResult<T>>(`${this.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<SearchResult<T>>) => resp && resp.body!));
     }
 }

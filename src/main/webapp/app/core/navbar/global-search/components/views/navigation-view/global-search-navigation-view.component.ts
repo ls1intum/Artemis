@@ -1,61 +1,44 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChild, viewChildren } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     faBook,
     faCalendarCheck,
     faCheckDouble,
     faComment,
-    faComments,
-    faCube,
-    faFileLines,
+    faCompass,
     faFileUpload,
     faFont,
     faGraduationCap,
     faHashtag,
     faKeyboard,
+    faPhotoFilm,
     faProjectDiagram,
     faQuestion,
     faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
-import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
+import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
+import { COURSE_PAGE_TYPE } from 'app/core/navbar/global-search/models/course-page-results.util';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
-import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
-import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
+import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
-// Number of fixed action buttons rendered above the search results.
-// Arrow-key indices 0..NAV_ACTION_COUNT-1 map to these buttons in template order.
-// Increment this constant when adding a new action button.
-export const NAV_ACTION_COUNT = 1;
-
-/** Keyboard-navigation index of the lecture-search action button. */
-export const LECTURE_SEARCH_ACTION_INDEX = 0;
-
+import { SEARCH_RESULTS_LISTBOX_ID, searchResultOptionDomId } from 'app/core/navbar/global-search/models/search-menu.model';
 @Component({
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        GlobalSearchActionItemComponent,
-        GlobalSearchIrisAnswerComponent,
-        FaIconComponent,
-        SearchableEntityItemComponent,
-        SearchResultItemComponent,
-        SkeletonModule,
-        ArtemisTranslatePipe,
-    ],
+    imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe, FaIconComponent],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
@@ -63,6 +46,8 @@ export const LECTURE_SEARCH_ACTION_INDEX = 0;
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
+    private readonly router = inject(Router);
+    private readonly overlay = inject(SearchOverlayService);
 
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
@@ -71,7 +56,33 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly showResults = input<boolean>(false);
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
-    readonly activeFilters = input<string[]>([]);
+    /** Active course include/exclude filters, forwarded to the Iris answer so it scopes its retrieval
+     * the same way the visible results are already scoped. */
+    readonly courseIds = input<number[]>([]);
+    readonly excludeCourseIds = input<number[]>([]);
+    /** True while the slides and videos filter is the active one, which searches content instead of metadata. */
+    readonly contentSearchActive = input<boolean>(false);
+    /** Slide and video hits for the query, offered as one row above the results. */
+    readonly contentPreview = input<GlobalSearchResult[]>([]);
+    readonly showContentHits = output<void>();
+
+    protected readonly faPhotoFilm = faPhotoFilm;
+    protected readonly hasContentRow = computed(() => !this.contentSearchActive() && this.contentPreview().length > 0);
+    /** The row is the first selectable item, so the results start one position later while it is shown. */
+    protected readonly contentRowOffset = computed(() => (this.hasContentRow() ? 1 : 0));
+
+    protected readonly resultsListboxId = SEARCH_RESULTS_LISTBOX_ID;
+    /** Whether the result rows are on screen; while loading, skeletons take their place. */
+    protected readonly resultRowsShown = computed(() => this.showResults() && !this.isLoading() && !this.searchError() && this.results().length > 0);
+    protected readonly optionDomId = searchResultOptionDomId;
+    /** The distinct lectures of the hits, the first two by name, in hit order. */
+    protected readonly contentLectureNames = computed(() => {
+        const names = [...new Set(this.contentPreview().map((hit) => hit.metadata?.['lectureName'] as string | undefined))].filter((name): name is string => !!name);
+        return names.length > 2 ? `${names.slice(0, 2).join(', ')}, …` : names.join(', ');
+    });
+    /** Whether the list was cut at the result limit and more results can be loaded. */
+    readonly canShowMore = input<boolean>(false);
+    readonly showMore = output<void>();
 
     /**
      * True when the query is too short to send to the server (1-2 chars).
@@ -94,16 +105,6 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
 
-    // Emits when an action button is activated (click or Enter); the modal navigates to that view.
-    readonly viewSelected = output<SearchView>();
-    readonly entityClick = output<SearchableEntity>();
-
-    private readonly router = inject(Router);
-    private readonly overlay = inject(SearchOverlayService);
-
-    protected readonly NAV_ACTION_COUNT = NAV_ACTION_COUNT;
-    protected readonly LECTURE_SEARCH_ACTION_INDEX = LECTURE_SEARCH_ACTION_INDEX;
-
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
 
@@ -115,13 +116,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const usage = this.accountService.userIdentity()?.selectedLLMUsage;
         return usage === LLMSelectionDecision.LOCAL_AI || usage === LLMSelectionDecision.CLOUD_AI;
     });
-    // Lecture search button is only visible when no filter is active
-    protected readonly showLectureButton = computed(() => this.activeFilters().length === 0);
-    // Number of action buttons currently visible (only the lecture search button now)
-    protected readonly actionButtonCount = computed(() => {
-        if (!this.irisEnabled()) return 0;
-        return this.showLectureButton() ? 1 : 0;
-    });
+    private readonly irisAnswerComponent = viewChild(GlobalSearchIrisAnswerComponent);
+    /**
+     * Whether the results list needs its own top margin. `irisEnabled` alone says the feature exists,
+     * not whether the card is currently showing anything — conditioning the margin on that instead
+     * would leave it reserved even after a dismissed "nothing relevant" card has collapsed to nothing,
+     * defeating the point of collapsing it.
+     */
+    protected readonly irisOccupiesSpace = computed(() => this.irisAnswerComponent()?.occupiesSpace() ?? false);
+    /** True when the slides and videos filter is active without a search term, which content search cannot run without. */
+    protected readonly isContentSearchPrompt = computed(() => this.contentSearchActive() && this.searchQuery().trim().length === 0);
 
     constructor() {
         super();
@@ -150,91 +154,24 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faQuestion = faQuestion;
     protected readonly faCalendarCheck = faCalendarCheck;
 
-    // Searchable entities for initial view
-    protected searchableEntities: SearchableEntity[] = [
-        {
-            id: 'courses',
-            title: 'global.search.entities.coursesTitle',
-            description: 'global.search.entities.coursesDescription',
-            icon: faGraduationCap,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['course'],
-        },
-        {
-            id: 'exercises',
-            title: 'global.search.entities.exercisesTitle',
-            description: 'global.search.entities.exercisesDescription',
-            icon: faCube,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['exercise'],
-        },
-        {
-            id: 'lectures',
-            title: 'global.search.entities.lecturesTitle',
-            description: 'global.search.entities.lecturesDescription',
-            icon: faBook,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['lecture'],
-        },
-        {
-            id: 'communication',
-            title: 'global.search.entities.communicationTitle',
-            description: 'global.search.entities.communicationDescription',
-            icon: faComments,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['channel', 'post', 'answer_post'],
-        },
-        {
-            id: 'faqs',
-            title: 'global.search.entities.faqsTitle',
-            description: 'global.search.entities.faqsDescription',
-            icon: faQuestionCircle,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['faq'],
-        },
-        {
-            id: 'exams',
-            title: 'global.search.entities.examsTitle',
-            description: 'global.search.entities.examsDescription',
-            icon: faCalendarCheck,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['exam'],
-        },
-    ];
-
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => {
-        const buttonCount = this.actionButtonCount();
-        if (this.showResults()) {
-            // When showing results, action buttons may be visible + results
-            return buttonCount + this.results().length;
-        } else {
-            // When showing entities, count action buttons + entities
-            return buttonCount + this.searchableEntities.length;
-        }
-    });
+    readonly itemCount = computed(() => this.results().length + this.contentRowOffset());
 
-    protected readonly SearchView = SearchView;
-    protected readonly faFileLines = faFileLines;
     protected readonly faHashtag = faHashtag;
 
-    protected onEntityItemClick(entity: SearchableEntity) {
-        this.entityClick.emit(entity);
-    }
-
     protected getIconForType(type?: string, badge?: string): IconDefinition {
+        if (type === COURSE_PAGE_TYPE) {
+            return faCompass;
+        }
+        if (type === LECTURE_CONTENT_TYPE) {
+            return faPhotoFilm;
+        }
         if (type === 'exercise') {
             const normalizedBadge = badge?.toLowerCase();
             if (normalizedBadge === 'programming') return this.faKeyboard;
             if (normalizedBadge === 'modeling') return this.faProjectDiagram;
             if (normalizedBadge === 'text') return this.faFont;
-            if (normalizedBadge === 'file upload') return this.faFileUpload;
+            if (normalizedBadge === 'file-upload') return this.faFileUpload;
             if (normalizedBadge === 'quiz') return this.faCheckDouble;
             return this.faQuestion;
         }
@@ -260,6 +197,26 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     protected navigateToResult(result: GlobalSearchResult) {
+        // A course page carries its route, since the palette offers it itself and no entity stands behind it.
+        if (result.type === COURSE_PAGE_TYPE) {
+            const link = result.metadata?.['link'];
+            if (link) {
+                void this.router.navigate([link]);
+            }
+            this.overlay.close();
+            return;
+        }
+        // A content hit points at a slide or a video timestamp, so it carries its own deep link instead of an entity id.
+        if (result.type === LECTURE_CONTENT_TYPE) {
+            const link = result.metadata?.['link'];
+            const queryParams = result.metadata?.['queryParams'];
+            if (link) {
+                void this.router.navigate([link], { queryParams, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            }
+            this.overlay.close();
+            return;
+        }
+
         const courseId = result.metadata?.['courseId'];
         if (!courseId) {
             this.overlay.close();
@@ -268,7 +225,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
         switch (result.type) {
             case 'course':
-                this.router.navigate(['/courses', courseId]);
+                void this.router.navigate(['/courses', courseId]);
                 break;
             case 'exercise':
                 if (result.id) this.navigateToExercise(result, courseId);
@@ -283,7 +240,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 if (result.id) this.navigateToExam(result, courseId);
                 break;
             case 'faq':
-                this.router.navigate(['/courses', courseId, 'faq']);
+                // The FAQ page scrolls to the FAQ named by faqId.
+                void this.router.navigate(['/courses', courseId, 'faq'], result.id ? { queryParams: { faqId: result.id } } : undefined);
                 break;
             case 'channel':
                 if (result.id) this.navigateToChannel(courseId, result.id);
@@ -310,33 +268,42 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             this.navigateToExamExerciseDetailsPage(courseId, examId, exerciseGroupId, result);
         } else if (examId && isAtLeastTutor) {
             // Tutors: exam exercise assessment dashboard
-            this.router.navigate(['/course-management', courseId, 'exams', examId, 'assessment-dashboard', result.id]);
+            void this.router.navigate(['/course-management', courseId, 'exams', examId, 'assessment-dashboard', result.id]);
         } else if (examId) {
             // Students: student exam view
-            this.router.navigate(['/courses', courseId, 'exams', examId]);
+            void this.router.navigate(['/courses', courseId, 'exams', examId]);
         } else {
             // Students: student exercise view
-            this.router.navigate(['/courses', courseId, 'exercises', result.id]);
+            void this.router.navigate(['/courses', courseId, 'exercises', result.id]);
         }
     }
 
     private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
-        const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
-        this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
+        // The badge key is the canonical exercise-type key (e.g. "programming", "file-upload"), which is exactly the
+        // exam exercise-group route segment prefix. A row without a recognisable type (the generic "exercise" fallback)
+        // carries no segment to build, and guessing one would open another type's detail page for this exercise id.
+        // The exam's exercise-group list is the closest page that is always right, and the exercise is one click away.
+        const validExerciseSegments = new Set(['programming', 'modeling', 'text', 'file-upload', 'quiz']);
+        if (!result.badgeKey || !validExerciseSegments.has(result.badgeKey)) {
+            void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups']);
+            return;
+        }
+        void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, result.badgeKey + '-exercises', result.id]);
     }
 
     private navigateToStudentExamView(courseId: string, examId: string) {
-        this.router.navigate(['/courses', courseId, 'exams', examId]);
+        void this.router.navigate(['/courses', courseId, 'exams', examId]);
     }
 
     private navigateToLecture(courseId: string, lectureId: string) {
-        this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
+        void this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
     }
 
     private navigateToLectureUnit(result: GlobalSearchResult, courseId: string) {
         const lectureId = result.metadata?.['lectureId'];
         if (lectureId) {
-            this.navigateToLecture(courseId, lectureId);
+            // The same deep link the slide and video hits use, so the lecture page opens at the unit.
+            void this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams: { unit: result.id }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
         }
     }
 
@@ -344,22 +311,22 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const isAtLeastEditor = !!result.metadata?.['isAtLeastEditor'];
         const isAtLeastTutor = !!result.metadata?.['isAtLeastTutor'];
         if (isAtLeastEditor) {
-            this.router.navigate(['/course-management', courseId, 'exams', result.id]);
+            void this.router.navigate(['/course-management', courseId, 'exams', result.id]);
         } else if (isAtLeastTutor) {
-            this.router.navigate(['/course-management', courseId, 'exams', result.id, 'assessment-dashboard']);
+            void this.router.navigate(['/course-management', courseId, 'exams', result.id, 'assessment-dashboard']);
         } else {
             this.navigateToStudentExamView(courseId, result.id!);
         }
     }
 
     private navigateToChannel(courseId: string, channelId: string) {
-        this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
+        void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
     }
 
     private navigateToPost(result: GlobalSearchResult, courseId: string) {
         const channelId = result.metadata?.['channelId'];
         if (channelId) {
-            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, focusPostId: result.id } });
+            void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, focusPostId: result.id } });
         }
     }
 
@@ -367,41 +334,34 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const channelId = result.metadata?.['channelId'];
         const postId = result.metadata?.['postId'];
         if (channelId && postId) {
-            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId, focusReplyId: result.id } });
+            void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId, focusReplyId: result.id } });
         }
     }
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Enter') return;
-        const idx = this.selectedIndex();
-        if (idx < 0) return;
-        const buttonCount = this.actionButtonCount();
-
-        // Lecture search button at index 0 when iris is enabled and no filter active
-        if (this.showLectureButton() && this.irisEnabled() && idx === LECTURE_SEARCH_ACTION_INDEX) {
-            event.preventDefault();
-            this.viewSelected.emit(SearchView.Lecture);
+        // A modified Enter (Cmd/Ctrl+Enter) continues the Iris answer in the chat; it never opens a result. Enter on a
+        // focused control (the Iris card, or "Show more results" reached with Tab) belongs to that control.
+        if (
+            event.key !== 'Enter' ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.defaultPrevented ||
+            (event.target instanceof Element && (event.target.closest('jhi-global-search-iris-answer') || event.target.closest('button')))
+        ) {
             return;
         }
+        const idx = this.selectedIndex();
+        if (idx < 0) return;
 
-        // Handle items after action buttons
-        const itemIndex = idx - buttonCount;
-
-        if (this.showResults()) {
-            // When showing results
-            event.preventDefault();
-            const result = this.results()[itemIndex];
-            if (result) {
-                this.navigateToResult(result);
-            }
-        } else {
-            // When showing entities
-            event.preventDefault();
-            const entity = this.searchableEntities[itemIndex];
-            if (entity && entity.enabled) {
-                this.entityClick.emit(entity);
-            }
+        event.preventDefault();
+        if (this.hasContentRow() && idx === 0) {
+            this.showContentHits.emit();
+            return;
+        }
+        const result = this.results()[idx - this.contentRowOffset()];
+        if (result) {
+            this.navigateToResult(result);
         }
     }
 }

@@ -1,5 +1,6 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { users } from '../../users';
+import { RELOAD_RENDER_TIMEOUT } from '../../timeouts';
 
 export class ExamStartEndPage {
     private readonly page: Page;
@@ -17,44 +18,14 @@ export class ExamStartEndPage {
         await this.page.locator('#confirmBox').check({ timeout: timeout });
     }
 
-    /**
-     * True when the page is showing the in-progress conduction view rather than the
-     * welcome screen. Detected via the per-conduction-page `Hand In Early` action which
-     * never appears on the welcome screen. Used by `startExam` to short-circuit the
-     * welcome flow on test exams under heavy load, where occasional navigation races
-     * have been observed to land the student directly in conduction without ever
-     * rendering the welcome confirmation form.
-     *
-     * Races the conduction indicator against the welcome screen's `#confirmBox` and
-     * returns as soon as either appears, so the common case (welcome screen renders
-     * normally) resolves the moment `#confirmBox` is visible instead of always paying
-     * the full conduction-probe timeout.
-     */
-    private async isInConduction(): Promise<boolean> {
-        const timeout = 5_000;
-        const conduction = this.page
-            .locator('button', { hasText: /Hand in Early/i })
-            .first()
-            .waitFor({ state: 'visible', timeout })
-            .then(() => 'conduction' as const)
-            .catch(() => undefined);
-        const welcome = this.page
-            .locator('#confirmBox')
-            .waitFor({ state: 'visible', timeout })
-            .then(() => 'welcome' as const)
-            .catch(() => undefined);
-        const firstVisible = await Promise.race([conduction, welcome]);
-        return firstVisible === 'conduction';
-    }
-
     async pressStartWithWait() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/student-exams/*/conduction`);
-        await this.page.locator('#start-exam').click();
+        await this.page.locator('[data-testid="start-exam"]').click();
         await responsePromise;
     }
 
     async pressStart() {
-        await this.page.locator('#start-exam').click();
+        await this.page.locator('[data-testid="start-exam"]').click();
     }
 
     async clickContinue() {
@@ -63,17 +34,17 @@ export class ExamStartEndPage {
 
     async pressFinish() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/student-exams/submit`);
-        await this.page.locator('#end-exam').click();
+        await this.page.locator('[data-testid="end-exam"]').click();
         return await responsePromise;
     }
 
+    /**
+     * Starts the exam from its welcome screen. The screen has to be there: a student who lands somewhere else (already inside
+     * the exam, or on another route) means the test is not in the state it thinks it is, and skipping the welcome steps would
+     * hide that.
+     */
     async startExam(withWait = false) {
-        // Under heavy multi-node load test-exam navigation occasionally lands the student
-        // directly in conduction (the welcome screen never renders). If we detect that,
-        // skip the welcome-only actions — the test is effectively already past startExam.
-        if (await this.isInConduction()) {
-            return;
-        }
+        await expect(this.page.locator('#confirmBox')).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
         await this.setConfirmCheckmark();
         await this.enterFirstnameLastname();
         if (withWait) {

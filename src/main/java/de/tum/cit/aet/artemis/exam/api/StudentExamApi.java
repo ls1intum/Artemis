@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -69,8 +70,41 @@ public class StudentExamApi extends AbstractExamApi {
         return studentExamRepository.findAllWithExercisesByUserId(userId).stream().collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
     }
 
-    public Optional<StudentExam> findByExamIdAndUserId(Long examId, Long userId) {
-        return studentExamRepository.findByExamIdAndUserId(examId, userId);
+    /**
+     * Reads only the working time and started date of a student exam, for callers that need nothing but the individual
+     * end date.
+     *
+     * @param examId the id of the exam
+     * @param userId the id of the student
+     * @return the working time projection, if a student exam exists
+     */
+    public Optional<StudentExamWorkingTimeDTO> findWorkingTimeByExamIdAndUserId(Long examId, Long userId) {
+        return studentExamRepository.findWorkingTimeByExamIdAndUserId(examId, userId);
+    }
+
+    /**
+     * Checks whether a working period can be determined for the student in the exam. That is the case when the student has a student exam
+     * of their own (the newest one for test exams), instructor test runs are ignored.
+     *
+     * @param examId the id of the exam
+     * @param userId the id of the student
+     * @return true if the student has a student exam to read the working period from
+     */
+    public boolean hasWorkingPeriod(long examId, long userId) {
+        return studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(examId, userId).isPresent();
+    }
+
+    /**
+     * Checks whether an exercise is part of the newest student exam of the student in the exam, instructor test runs are ignored. A result for an exercise that the student
+     * exam does not contain would not be found by the exam result calculation.
+     *
+     * @param examId     the id of the exam
+     * @param userId     the id of the student
+     * @param exerciseId the id of the exercise
+     * @return true if the newest student exam of the student contains the exercise
+     */
+    public boolean isExerciseOfNewestStudentExam(long examId, long userId, long exerciseId) {
+        return studentExamRepository.isExerciseOfNewestStudentExam(examId, userId, exerciseId);
     }
 
     public Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(long userId, Collection<Long> courseIds) {

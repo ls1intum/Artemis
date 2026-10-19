@@ -11,5 +11,5 @@ export interface Health {
 
 export interface HealthDetails {
     status: HealthStatus;
-    details?: { [key: string]: unknown };
+    details?: { url?: string; [key: string]: unknown };
 }

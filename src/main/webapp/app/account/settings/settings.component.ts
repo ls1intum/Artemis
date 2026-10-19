@@ -8,8 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
+import { TumAetUiButtonComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
-import { MessageModule } from 'primeng/message';
 
 /**
  * Type definition for the user settings form controls.
@@ -28,7 +28,17 @@ interface SettingsForm {
 @Component({
     selector: 'jhi-settings',
     templateUrl: './settings.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe, FindLanguageFromKeyPipe, MessageModule],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ReactiveFormsModule,
+        ArtemisTranslatePipe,
+        TumAetUiButtonComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent implements OnInit {
@@ -44,25 +54,27 @@ export class SettingsComponent implements OnInit {
     readonly currentUser = signal<User | undefined>(undefined);
     /** List of available languages for the language selector */
     readonly languages = LANGUAGES;
+    /** Language options for the selector, labelled with each language's own name. Constant: LANGUAGES is static. */
+    protected readonly languageOptions = LANGUAGES.map((language) => ({ label: new FindLanguageFromKeyPipe().transform(language), value: language }));
     /** Whether self-registration is enabled (affects UI display) */
-    readonly isRegistrationEnabled: boolean;
+    readonly isRegistrationEnabled = signal(false);
     /** Whether the current user is an internal user (can edit their name and email) */
     readonly isInternalUser = signal(false);
     /** Whether the SAML2 profile is active (names/email are synced from IdP and cannot be changed) */
-    readonly isSaml2Active: boolean;
+    readonly isSaml2Active = signal(false);
     /** Optional regex pattern restricting allowed email domains (e.g., university emails only) */
     readonly allowedEmailPattern?: string;
     /** Human-readable description of allowed email pattern for display in UI */
-    readonly allowedEmailPatternReadable?: string;
+    readonly allowedEmailPatternReadable = signal<string | undefined>(undefined);
 
     readonly settingsForm: FormGroup<SettingsForm>;
 
     constructor() {
         const profileInfo = this.profileService.getProfileInfo();
-        this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-        this.isSaml2Active = this.profileService.isModuleFeatureActive(MODULE_FEATURE_SAML2);
+        this.isRegistrationEnabled.set(profileInfo.registrationEnabled || false);
+        this.isSaml2Active.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SAML2));
         this.allowedEmailPattern = profileInfo.allowedEmailPattern;
-        this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;
+        this.allowedEmailPatternReadable.set(profileInfo.allowedEmailPatternReadable);
 
         this.settingsForm = new FormGroup<SettingsForm>({
             firstName: new FormControl<string>('', {
@@ -88,7 +100,7 @@ export class SettingsComponent implements OnInit {
      * Loads the current user's account data and populates the form.
      */
     ngOnInit() {
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             if (user) {
                 this.settingsForm.patchValue({
                     firstName: user.firstName,
@@ -109,7 +121,7 @@ export class SettingsComponent implements OnInit {
      * Disabled controls are excluded from validation, preventing spurious errors.
      */
     private updateNameAndEmailControlState(isInternal: boolean): void {
-        const shouldDisable = !isInternal || this.isSaml2Active;
+        const shouldDisable = !isInternal || this.isSaml2Active();
         const action = shouldDisable ? 'disable' : 'enable';
         this.settingsForm.controls.firstName[action]();
         this.settingsForm.controls.lastName[action]();
@@ -137,7 +149,7 @@ export class SettingsComponent implements OnInit {
         const langKey = this.settingsForm.controls.langKey.value;
 
         // When SAML2 is active, name and email are managed by the IdP — only langKey can be changed
-        if (!this.isSaml2Active) {
+        if (!this.isSaml2Active()) {
             userToUpdate.firstName = firstName || undefined;
             userToUpdate.lastName = lastName || undefined;
             userToUpdate.email = email || undefined;

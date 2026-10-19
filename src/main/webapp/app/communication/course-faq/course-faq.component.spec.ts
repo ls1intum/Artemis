@@ -1,12 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -31,8 +30,6 @@ function createFaq(id: number, category: string, color: string): Faq {
 }
 
 describe('CourseFaqs', () => {
-    setupTestBed({ zoneless: true });
-
     let courseFaqComponentFixture: ComponentFixture<CourseFaqComponent>;
     let courseFaqComponent: CourseFaqComponent;
 
@@ -43,6 +40,7 @@ describe('CourseFaqs', () => {
     let faq1: Faq;
     let faq2: Faq;
     let faq3: Faq;
+    let queryParams: BehaviorSubject<ParamMap>;
 
     afterEach(() => {
         vi.restoreAllMocks();
@@ -53,6 +51,7 @@ describe('CourseFaqs', () => {
         faq1 = createFaq(1, 'category1', '#94a11c');
         faq2 = createFaq(2, 'category2', '#0ab84f');
         faq3 = createFaq(3, 'category3', '#0ab84f');
+        queryParams = new BehaviorSubject(convertToParamMap({ faqId: '1' }));
 
         TestBed.configureTestingModule({
             imports: [
@@ -79,6 +78,7 @@ describe('CourseFaqs', () => {
                         snapshot: {
                             queryParamMap: convertToParamMap({ faqId: '1' }),
                         },
+                        queryParamMap: queryParams,
                     },
                 },
                 MockProvider(FaqService, {
@@ -138,7 +138,7 @@ describe('CourseFaqs', () => {
 
         courseFaqComponentFixture.detectChanges();
         expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1, FaqState.ACCEPTED);
-        expect(courseFaqComponent.faqs).toHaveLength(3);
+        expect(courseFaqComponent.faqs()).toHaveLength(3);
     });
 
     it('should toggle filter correctly', () => {
@@ -146,9 +146,9 @@ describe('CourseFaqs', () => {
         courseFaqComponentFixture.detectChanges();
         courseFaqComponent.toggleFilters('category2');
         expect(toggleFilterSpy).toHaveBeenCalledOnce();
-        expect(courseFaqComponent.filteredFaqs).toHaveLength(2);
-        expect(courseFaqComponent.filteredFaqs).not.toContain(faq1);
-        expect(courseFaqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(courseFaqComponent.filteredFaqs()).toHaveLength(2);
+        expect(courseFaqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(courseFaqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 
     it('should search through already filtered array', () => {
@@ -160,9 +160,9 @@ describe('CourseFaqs', () => {
         expect(searchSpy).toHaveBeenCalledTimes(2);
         expect(searchSpy).toHaveBeenCalledWith(faq2, 'questionTitle');
         expect(searchSpy).toHaveBeenCalledWith(faq3, 'questionTitle');
-        expect(courseFaqComponent.filteredFaqs).toHaveLength(2);
-        expect(courseFaqComponent.filteredFaqs).not.toContain(faq1);
-        expect(courseFaqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(courseFaqComponent.filteredFaqs()).toHaveLength(2);
+        expect(courseFaqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(courseFaqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 
     it('should catch error if no categories are found', () => {
@@ -191,10 +191,10 @@ describe('CourseFaqs', () => {
         courseFaqComponentFixture.detectChanges();
 
         // Verify component displays FAQs in the exact order received from server
-        expect(courseFaqComponent.faqs).toHaveLength(3);
-        expect(courseFaqComponent.faqs[0].id).toBe(3); // Newest
-        expect(courseFaqComponent.faqs[1].id).toBe(2);
-        expect(courseFaqComponent.faqs[2].id).toBe(1); // Oldest
+        expect(courseFaqComponent.faqs()).toHaveLength(3);
+        expect(courseFaqComponent.faqs()[0].id).toBe(3); // Newest
+        expect(courseFaqComponent.faqs()[1].id).toBe(2);
+        expect(courseFaqComponent.faqs()[2].id).toBe(1); // Oldest
     });
 
     it('should scroll and focus on the faq element with given id', () => {
@@ -209,5 +209,45 @@ describe('CourseFaqs', () => {
         courseFaqComponent.scrollToFaq(1);
 
         expect(nativeElement1.scrollIntoView).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'start' });
+    });
+
+    it('follows a faqId that changes while the page stays open', () => {
+        courseFaqComponentFixture.detectChanges();
+        expect(courseFaqComponent.referencedFaqId()).toBe(1);
+
+        queryParams.next(convertToParamMap({ faqId: '3' }));
+
+        expect(courseFaqComponent.referencedFaqId()).toBe(3);
+    });
+
+    // The mocked FaqService.applyFilters always returns FAQ 2 and 3, so FAQ 1 counts as hidden by the filters.
+    it('clears the filters that would hide a referenced faq', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.activeFilters.set(new Set(['category2']));
+
+        queryParams.next(convertToParamMap({ faqId: '1' }));
+
+        expect(courseFaqComponent.activeFilters().size).toBe(0);
+        expect(courseFaqComponent.referencedFaqId()).toBe(1);
+    });
+
+    it('reveals the referenced faq again when it is opened once more after a filter hid it', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.activeFilters.set(new Set(['category2']));
+
+        // The same faqId again: the query does not change, only another navigation to the same URL is reported.
+        (TestBed.inject(Router) as unknown as MockRouter).eventSubject.next(new NavigationEnd(2, '/courses/1/faq?faqId=1', '/courses/1/faq?faqId=1'));
+
+        expect(courseFaqComponent.activeFilters().size).toBe(0);
+    });
+
+    it('keeps the filters when the referenced faq is visible', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.activeFilters.set(new Set(['category2']));
+
+        queryParams.next(convertToParamMap({ faqId: '3' }));
+
+        expect(courseFaqComponent.activeFilters().size).toBe(1);
+        expect(courseFaqComponent.referencedFaqId()).toBe(3);
     });
 });

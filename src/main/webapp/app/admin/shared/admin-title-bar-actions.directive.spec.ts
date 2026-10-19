@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AdminTitleBarActionsDirective } from './admin-title-bar-actions.directive';
 import { AdminTitleBarService } from './admin-title-bar.service';
 
@@ -12,8 +11,6 @@ import { AdminTitleBarService } from './admin-title-bar.service';
 class TestHostComponent {}
 
 describe('AdminTitleBarActionsDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let service: AdminTitleBarService;
 
     beforeEach(() => {

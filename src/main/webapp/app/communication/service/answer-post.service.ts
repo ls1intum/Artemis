@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<AnswerPost>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AnswerPostService extends PostingService<AnswerPost> {
     protected http = inject(HttpClient);
 
@@ -73,6 +73,16 @@ export class AnswerPostService extends PostingService<AnswerPost> {
         return this.http
             .get<AnswerPost[]>(`api/communication/courses/${courseId}/answer-messages-source-posts`, { params, observe: 'response' })
             .pipe(map((response) => response.body!));
+    }
+
+    /**
+     * Approves an Iris-generated answer post (optionally with edited content). Tutor role required server-side.
+     */
+    verify(courseId: number, answerPostId: number, content?: string): Observable<EntityResponseType> {
+        const body = content && content.trim().length > 0 ? { content } : {};
+        return this.http
+            .patch<AnswerPost>(`api/communication/courses/${courseId}/answer-messages/${answerPostId}/verify`, body, { observe: 'response' })
+            .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     private getResourceEndpoint(courseId: number, param: AnswerPost): string {

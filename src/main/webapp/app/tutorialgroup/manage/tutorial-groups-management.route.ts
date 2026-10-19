@@ -35,12 +35,9 @@ export const tutorialGroupManagementRoutes: Routes = [
                     },
                     {
                         path: 'tutorial-free-days',
-                        loadComponent: () =>
-                            import('app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component').then(
-                                (m) => m.TutorialGroupFreePeriodsManagementComponent,
-                            ),
+                        loadComponent: () => import('app/tutorialgroup/manage/holidays/tutorial-group-holidays.component').then((m) => m.TutorialGroupHolidaysComponent),
                         data: {
-                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            authorities: IS_AT_LEAST_EDITOR,
                             pageTitle: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
                         },
                         canActivate: [UserRouteAccessService],

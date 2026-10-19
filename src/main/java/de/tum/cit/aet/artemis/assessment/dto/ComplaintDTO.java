@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -29,7 +30,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithParticipationDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submittedTime, ComplaintType complaintType, Boolean complaintIsAccepted,
-        ComplaintResponseDTO complaintResponse, ResultSimpleDTO result, ParticipantDTO participant) {
+        ComplaintResponseDTO complaintResponse, ResultSimpleDTO result, ParticipantDTO participant, String assessorKey, String assessorLabel) {
 
     /**
      * DTO containing the minimal information of the participant needed in the complaint.
@@ -42,8 +43,8 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
      * DTO containing the minimal information of {@link Result} needed in complaint.
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ResultSimpleDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, AssessmentType assessmentType, SubmissionWithParticipationDTO submission,
-            UserPublicInfoDTO assessor, List<FeedbackDTO> feedbacks, String exerciseTitle) {
+    public record ResultSimpleDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, Boolean successful, AssessmentType assessmentType,
+            SubmissionWithParticipationDTO submission, UserPublicInfoDTO assessor, List<FeedbackDTO> feedbacks, String exerciseTitle) {
 
         /**
          * DTO containing the {@link Feedback} information needed in the result.
@@ -58,8 +59,7 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
              * @param feedback the feedback entity to convert
              * @return the corresponding DTO
              */
-            public static FeedbackDTO of(Feedback feedback) {
-                Objects.requireNonNull(feedback, "The feedback must be set");
+            public static FeedbackDTO of(@NonNull Feedback feedback) {
                 String testCaseName = null;
                 if (feedback.getTestCase() != null && Hibernate.isInitialized(feedback.getTestCase())) {
                     testCaseName = feedback.getTestCase().getTestName();
@@ -79,8 +79,7 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
          * @param result the result entity to convert
          * @return the corresponding DTO
          */
-        public static ResultSimpleDTO of(Result result) {
-            Objects.requireNonNull(result, "The result must be set");
+        public static ResultSimpleDTO of(@NonNull Result result) {
             UserPublicInfoDTO assessor = null;
             if (result.getAssessor() != null && Hibernate.isInitialized(result.getAssessor())) {
                 assessor = new UserPublicInfoDTO(result.getAssessor());
@@ -96,20 +95,37 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
 
                 exerciseTitle = result.getSubmission().getParticipation().getExercise().getTitle();
             }
-            return new ResultSimpleDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.getAssessmentType(),
+            // successful is what the client turns into the icon and the result string of an Athena result; it is not
+            // recoverable from the listed submission, which has its Athena results stripped
+            return new ResultSimpleDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.isSuccessful(), result.getAssessmentType(),
                     result.getSubmission() != null ? SubmissionWithParticipationDTO.of(result.getSubmission()) : null, assessor, feedbackDTOs, exerciseTitle);
+        }
+
+        /**
+         * Returns a copy of this result DTO without the assessor public-info payload.
+         * Used when tutors may see colleague assessments but not their full identity fields.
+         *
+         * @return a copy with {@code assessor} set to {@code null}
+         */
+        public ResultSimpleDTO withoutAssessor() {
+            return new ResultSimpleDTO(id, completionDate, score, rated, successful, assessmentType, submission, null, feedbacks, exerciseTitle);
         }
     }
 
     /**
      * Creates a {@link ComplaintDTO} from a {@link Complaint} entity.
      *
+     * <p>
+     * Always copies a privacy-safe {@code assessorKey}/{@code assessorLabel} from the result assessor when present,
+     * so tutor overview responses can still group and filter by colleague after redacting {@link ResultSimpleDTO#assessor()}.
+     * The label uses first/last name only (no login fallback).
+     * </p>
+     *
      * @param complaint the complaint entity to convert
      * @return the corresponding DTO
      * @throws NullPointerException if required fields are missing
      */
-    public static ComplaintDTO of(Complaint complaint) {
-        Objects.requireNonNull(complaint, "The complaint must be set");
+    public static ComplaintDTO of(@NonNull Complaint complaint) {
 
         ResultSimpleDTO resultDTO = ResultSimpleDTO.of(complaint.getResult());
         ComplaintResponseDTO complaintResponseDTO = complaint.getComplaintResponse() != null ? ComplaintResponseDTO.of(complaint.getComplaintResponse()) : null;
@@ -121,7 +137,27 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
                     isStudent);
         }
 
+        String assessorKey = null;
+        String assessorLabel = null;
+        User assessor = complaint.getResult().getAssessor();
+        if (assessor != null && Hibernate.isInitialized(assessor)) {
+            assessorKey = String.valueOf(assessor.getId());
+            // First/last name only — no login fallback, so the All overview cannot leak colleague logins.
+            assessorLabel = User.displayName(assessor.getFirstName(), assessor.getLastName(), null);
+        }
+
         return new ComplaintDTO(complaint.getId(), complaint.getComplaintText(), complaint.getSubmittedTime(), complaint.getComplaintType(), complaint.isAccepted(),
-                complaintResponseDTO, resultDTO, participantDTO);
+                complaintResponseDTO, resultDTO, participantDTO, assessorKey, assessorLabel);
+    }
+
+    /**
+     * Returns a copy of this complaint DTO with the result assessor public-info cleared, while keeping
+     * {@link #assessorKey()} and {@link #assessorLabel()} for filtering and display.
+     *
+     * @return a copy without {@code result.assessor}
+     */
+    public ComplaintDTO withoutResultAssessor() {
+        return new ComplaintDTO(id, complaintText, submittedTime, complaintType, complaintIsAccepted, complaintResponse, result != null ? result.withoutAssessor() : null,
+                participant, assessorKey, assessorLabel);
     }
 }

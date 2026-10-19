@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { CanMatchFn, Route, Routes, UrlSegment } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
@@ -7,26 +7,32 @@ import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard'
 
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
 import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
+import { CourseOverviewRoutePath } from 'app/course/overview/course-overview-route-path';
 
-export enum CourseOverviewRoutePath {
-    DASHBOARD = 'dashboard',
-    IRIS = 'iris',
-    EXERCISES = 'exercises',
-    EXAMS = 'exams',
-    COMPETENCIES = 'competencies',
-    TUTORIAL_GROUPS = 'tutorial-groups',
-    FAQ = 'faq',
-    LEARNING_PATH = 'learning-path',
-    LECTURES = 'lectures',
-    ENROLL = 'enroll',
-    ARCHIVE = 'archive',
-    STATISTICS = 'statistics',
-    COMMUNICATION = 'communication',
-    SETTINGS = 'settings',
-    TRAINING = 'training',
-    TRAINING_QUIZ = 'training/quiz',
-    CALENDAR = 'calendar',
-}
+/**
+ * The child route paths of /courses/:courseId that carry the {@link CourseOverviewGuard} in their
+ * canActivate below — keep in sync with the route definitions. Note that the guard's decideAccess
+ * contains rules for additional paths (e.g. communication) that are intentionally NOT guarded here.
+ * Child routes outside this set (e.g. statistics, settings, calendar) have no access rule and must
+ * never be subjected to the guard's access check.
+ */
+export const COURSE_OVERVIEW_GUARDED_ROUTE_PATHS: ReadonlySet<string> = new Set([
+    CourseOverviewRoutePath.IRIS,
+    CourseOverviewRoutePath.EXAMS,
+    CourseOverviewRoutePath.COMPETENCIES,
+    CourseOverviewRoutePath.TUTORIAL_GROUPS,
+    CourseOverviewRoutePath.FAQ,
+    CourseOverviewRoutePath.LEARNING_PATH,
+    CourseOverviewRoutePath.LECTURES,
+    CourseOverviewRoutePath.TRAINING,
+    CourseOverviewRoutePath.TRAINING_QUIZ,
+]);
+
+/**
+ * Matches the URLs of the text unit full screen page, `lectures/:lectureId/text-units/:unitId`. It receives all
+ * segments from the `lectures` one on, so these are exactly four.
+ */
+export const isTextUnitFullscreenUrl: CanMatchFn = (_route: Route, segments: UrlSegment[]) => segments.length === 4 && segments[2].path === 'text-units';
 
 export const courseRoutes: Routes = [
     {
@@ -83,24 +89,42 @@ export const courseRoutes: Routes = [
         canActivate: [UserRouteAccessService],
         children: [
             {
+                path: 'exercises/:exerciseId/teams/:teamId',
+                loadComponent: () => import('app/exercise/team/team.component').then((m) => m.TeamComponent),
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                    pageTitle: 'artemisApp.team.detail.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
                 path: CourseOverviewRoutePath.EXERCISES,
                 loadComponent: () => import('app/course/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.exercises',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService],
-
                 children: [
+                    {
+                        // Exercise-group detail page. Declared before :exerciseId so 'group' is not parsed as an id.
+                        path: 'group/:groupId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () =>
+                            import('app/course/overview/course-exercises/group-detail/course-exercise-group-detail.component').then((m) => m.CourseExerciseGroupDetailComponent),
+                    },
                     {
                         path: ':exerciseId',
                         data: {
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -112,7 +136,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -124,7 +147,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -136,7 +158,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -148,7 +169,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -160,7 +180,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -177,13 +196,42 @@ export const courseRoutes: Routes = [
             },
 
             {
+                // A text unit shown on its own page. It shares the `lectures` path, and therefore its guards, but not
+                // the lecture list around the regular lecture routes. `isolatedView` makes the course shell drop its
+                // sidebar and title bar.
+                //
+                // `canMatch` is what keeps every other lecture URL on the route below: a route without a component
+                // whose children do not match is still taken when no URL segments are left over, which is the case
+                // for the bare `lectures` URL that the sidebar links to.
+                path: CourseOverviewRoutePath.LECTURES,
+                canMatch: [isTextUnitFullscreenUrl],
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                    pageTitle: 'overview.lectures',
+                    isolatedView: true,
+                },
+                canActivate: [UserRouteAccessService, CourseOverviewGuard, LectureGuard],
+                children: [
+                    {
+                        path: ':lectureId/text-units/:unitId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.lectures',
+                            isolatedView: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () =>
+                            import('app/lecture/overview/course-lectures/text-unit-fullscreen/text-unit-fullscreen.component').then((m) => m.TextUnitFullscreenComponent),
+                    },
+                ],
+            },
+            {
                 path: CourseOverviewRoutePath.LECTURES,
                 loadComponent: () => import('app/lecture/shared/course-lectures/course-lectures.component').then((m) => m.CourseLecturesComponent),
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.lectures',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard, LectureGuard],
                 children: [
@@ -193,7 +241,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.lectures',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
@@ -206,7 +253,6 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.statistics',
-                    showRefreshButton: true,
                 },
             },
 
@@ -215,7 +261,6 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.competencies',
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
                 children: [
@@ -242,17 +287,6 @@ export const courseRoutes: Routes = [
                 ],
             },
             {
-                path: CourseOverviewRoutePath.DASHBOARD,
-                pathMatch: 'full',
-                loadComponent: () => import('app/course/overview/course-dashboard/course-dashboard.component').then((m) => m.CourseDashboardComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'overview.dashboard',
-                    hasSidebar: true,
-                },
-                canActivate: [UserRouteAccessService, CourseOverviewGuard],
-            },
-            {
                 path: CourseOverviewRoutePath.IRIS,
                 pathMatch: 'full',
                 loadComponent: () => import('app/iris/overview/course-iris/course-iris.component').then((m) => m.CourseIrisComponent),
@@ -269,7 +303,6 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.learningPath',
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
             },
@@ -281,7 +314,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.communication',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
             },
             {
@@ -292,7 +324,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.settings',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
             },
             {
@@ -302,7 +333,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.tutorialGroups',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
@@ -312,7 +342,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.lectures',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
@@ -327,7 +356,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.tutorialGroups',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -340,7 +368,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.exams',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
@@ -351,7 +378,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exams',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         canDeactivate: [PendingChangesGuard],
@@ -376,7 +402,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.faq',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
             },
@@ -387,7 +412,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.training',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
             },
@@ -402,7 +426,7 @@ export const courseRoutes: Routes = [
             },
             {
                 path: '',
-                redirectTo: CourseOverviewRoutePath.DASHBOARD, // dashboard will redirect to exercises if not enabled
+                redirectTo: CourseOverviewRoutePath.EXERCISES,
                 pathMatch: 'full',
             },
             {
@@ -412,7 +436,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.calendar',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
             },
         ],

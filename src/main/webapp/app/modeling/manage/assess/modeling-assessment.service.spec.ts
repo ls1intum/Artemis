@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -99,8 +98,6 @@ const assessmentNames: AssessmentNamesForModelId = {
 };
 
 describe('ModelingAssessmentService', () => {
-    setupTestBed({ zoneless: true });
-
     let httpMock: HttpTestingController;
     let service: ModelingAssessmentService;
     let expectedResult: any;

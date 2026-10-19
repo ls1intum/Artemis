@@ -270,7 +270,7 @@ export class LandingSpotlightComponent implements OnInit {
             clearTimeout(this.fadeTimeoutId);
             clearTimeout(this.videoHydrationTimeoutId);
             if (this.videoHydrationIdleCallbackId !== undefined) {
-                const cancel = (globalThis as { cancelIdleCallback?: (handle: number) => void }).cancelIdleCallback;
+                const cancel = (window as { cancelIdleCallback?: (handle: number) => void }).cancelIdleCallback;
                 cancel?.(this.videoHydrationIdleCallbackId);
                 this.videoHydrationIdleCallbackId = undefined;
             }
@@ -347,7 +347,7 @@ export class LandingSpotlightComponent implements OnInit {
 
     private hydrateVideosWhenIdle(): void {
         const enable = () => this.videosEnabled.set(true);
-        const ric = (globalThis as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
+        const ric = (window as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
         if (typeof ric === 'function') {
             this.videoHydrationIdleCallbackId = ric(
                 () => {

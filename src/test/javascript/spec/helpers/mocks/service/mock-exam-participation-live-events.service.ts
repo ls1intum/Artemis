@@ -15,4 +15,6 @@ export class MockExamParticipationLiveEventsService {
     }
 
     public acknowledgeEvent(event: ExamLiveEvent, byUser: boolean) {}
+
+    public reset() {}
 }

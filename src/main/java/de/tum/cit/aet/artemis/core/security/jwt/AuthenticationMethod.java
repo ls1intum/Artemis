@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 
 public enum AuthenticationMethod {
 
-    PASSKEY("passkey"), PASSWORD("password"), SAML2("saml2");
+    PASSKEY("passkey"), PASSWORD("password"), SAML2("saml2"), OIDC("oidc");
 
     private final String method;
 
@@ -63,6 +63,7 @@ public enum AuthenticationMethod {
             case PASSKEY -> language == Language.GERMAN ? "Passkey" : "passkey";
             case PASSWORD -> language == Language.GERMAN ? "Passwort" : "password";
             case SAML2 -> "SAML2";
+            case OIDC -> "OIDC";
         };
     }
 }

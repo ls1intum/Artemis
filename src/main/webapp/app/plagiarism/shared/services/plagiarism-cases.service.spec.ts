@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
@@ -14,8 +13,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 
 describe('Plagiarism Cases Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: PlagiarismCasesService;
     let httpMock: HttpTestingController;
 

@@ -30,7 +30,7 @@ export class LtiInitializerComponent implements OnInit {
                     const password = res.body?.password;
                     if (!password) {
                         this.alertService.info('artemisApp.lti.initializationError');
-                        this.router.navigate([], {
+                        void this.router.navigate([], {
                             relativeTo: this.activatedRoute,
                             queryParams: { initialize: null },
                             queryParamsHandling: 'merge',

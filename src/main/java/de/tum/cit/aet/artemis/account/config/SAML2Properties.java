@@ -58,12 +58,12 @@ public class SAML2Properties {
             final String key = pattern.getKey();
 
             if (!pattern.isValidPattern()) {
-                String message = String.format("The extraction pattern for key '%s' does not contain a capture group with name '%s'!", key, ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME);
+                String message = "The extraction pattern for key '%s' does not contain a capture group with name '%s'!".formatted(key, ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME);
                 throw new BeanInitializationException(message);
             }
 
             if (extractionKeys.contains(key)) {
-                throw new BeanInitializationException(String.format("The attribute key '%s' cannot have more than one extraction pattern!", key));
+                throw new BeanInitializationException("The attribute key '%s' cannot have more than one extraction pattern!".formatted(key));
             }
 
             extractionKeys.add(key);
@@ -335,7 +335,7 @@ public class SAML2Properties {
          * @return true, if the pattern can be used to extract parts from attribute values.
          */
         protected boolean isValidPattern() {
-            return this.valuePattern.contains(String.format("(?<%s>", ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME));
+            return this.valuePattern.contains("(?<%s>".formatted(ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME));
         }
 
         /**

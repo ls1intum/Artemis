@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Size;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -198,6 +199,23 @@ public class Channel extends Conversation {
 
     public void setExam(Exam exam) {
         this.exam = exam;
+    }
+
+    /**
+     * Whether students may see this channel. The channel of an exercise or exam stays hidden from students until the exercise or exam is visible, while staff can already
+     * discuss it.
+     *
+     * @return false while the exercise or exam of this channel is not visible to students
+     */
+    @JsonIgnore
+    public boolean isVisibleToStudents() {
+        if (exercise != null) {
+            return exercise.isVisibleToStudents();
+        }
+        else if (exam != null) {
+            return exam.isVisibleToStudents();
+        }
+        return true;
     }
 
     @Override

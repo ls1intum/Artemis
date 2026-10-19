@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseOperationProgressComponent } from './course-operation-progress.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,8 +12,6 @@ import { DialogModule } from 'primeng/dialog';
 import { ProgressBarModule } from 'primeng/progressbar';
 
 describe('CourseOperationProgressComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseOperationProgressComponent;
     let fixture: ComponentFixture<CourseOperationProgressComponent>;
 

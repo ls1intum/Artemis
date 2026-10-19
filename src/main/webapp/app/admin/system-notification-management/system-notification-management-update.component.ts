@@ -1,21 +1,23 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { CheckboxModule } from 'primeng/checkbox';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
-
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiSelectComponent,
+} from '@tumaet/ui-angular';
 /**
  * Form structure for system notification editing.
  * Note: FormControl values can be null when initialized with undefined.
@@ -40,16 +42,17 @@ interface SystemNotificationForm {
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
+        DatePickerControlDirective,
         FaIconComponent,
-        ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
-        CheckboxModule,
-        InputTextModule,
-        SelectModule,
-        ButtonModule,
-        MessageModule,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
     private readonly systemNotificationService = inject(AdminSystemNotificationService);
@@ -135,7 +138,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
             // Valid: clear the custom error from both controls
             [notificationDateControl, expireDateControl].forEach((control) => {
                 if (control?.errors?.['expireMustBeAfterNotification']) {
-                    const errors = { ...control.errors };
+                    const errors = deepClone(control.errors);
                     delete errors['expireMustBeAfterNotification'];
                     const isEmpty = Object.keys(errors).length === 0;
                     control.setErrors(isEmpty ? null : errors);
@@ -144,7 +147,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
         } else {
             // Invalid: set custom error on both controls
             [notificationDateControl, expireDateControl].forEach((control) => {
-                const errors = { ...(control?.errors ?? {}), expireMustBeAfterNotification: true };
+                const errors = cloneWith(control?.errors ?? {}, { expireMustBeAfterNotification: true });
                 control?.setErrors(errors);
             });
         }
@@ -162,7 +165,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
      * Navigates back to the system notifications overview.
      */
     goToOverview(): void {
-        this.router.navigate(['admin', 'system-notification-management']);
+        void this.router.navigate(['admin', 'system-notification-management']);
     }
 
     /**
@@ -172,15 +175,14 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     save(): void {
         this.isSaving.set(true);
         const formValues = this.form.getRawValue();
-        const toSave: SystemNotification = {
-            ...this.notification,
+        const toSave: SystemNotification = cloneWith(this.notification, {
             id: formValues.id ?? undefined,
             title: formValues.title ?? undefined,
             text: formValues.text ?? undefined,
             type: formValues.type ?? undefined,
             notificationDate: formValues.notificationDate ?? undefined,
             expireDate: formValues.expireDate ?? undefined,
-        };
+        });
 
         const saveOperation = this.notification.id ? this.systemNotificationService.update(toSave) : this.systemNotificationService.create(toSave, this.sendMaintenanceEmail());
 

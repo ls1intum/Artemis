@@ -1,7 +1,7 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { setMonacoEditorContentByLocator } from '../../utils';
+import { readResponseJson, setMonacoEditorContentByLocator } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the course communication page.
@@ -25,7 +25,7 @@ export class CourseCommunicationPage {
      * @returns The locator for the context selector.
      */
     getContextSelectorInModal() {
-        return this.page.locator('.p-dialog-content #context');
+        return this.page.getByRole('dialog').locator('#context');
     }
 
     /**
@@ -33,8 +33,9 @@ export class CourseCommunicationPage {
      * @param title - The title to be set.
      */
     async setTitleInModal(title: string) {
-        await this.page.locator('.p-dialog-content').locator('#title').fill('');
-        await this.page.locator('.p-dialog-content').locator('#title').fill(title);
+        const titleInput = this.page.getByRole('dialog').locator('#title');
+        await titleInput.fill('');
+        await titleInput.fill(title);
     }
 
     /**
@@ -42,7 +43,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInModal(content: string) {
-        const contentField = this.page.locator('.p-dialog-content .markdown-editor .monaco-editor');
+        const contentField = this.page.getByRole('dialog').getByTestId('markdown-editor');
         await setMonacoEditorContentByLocator(this.page, contentField, content);
     }
 
@@ -51,7 +52,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInline(content: string) {
-        const contentField = this.page.locator('.markdown-editor-wrapper .markdown-editor .monaco-editor');
+        const contentField = this.page.getByTestId('markdown-editor').first();
         await setMonacoEditorContentByLocator(this.page, contentField, content);
     }
 
@@ -154,10 +155,10 @@ export class CourseCommunicationPage {
      */
     async reply(postID: number, content: string) {
         const postElement = this.getSinglePost(postID);
-        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .monaco-editor');
+        const postReplyField = postElement.getByTestId('inline-reply-input').getByTestId('markdown-editor');
         await setMonacoEditorContentByLocator(this.page, postReplyField, content);
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/answer-posts`);
-        await postElement.locator('.new-reply-inline-input #save').click();
+        await postElement.getByTestId('inline-reply-input').locator('#save').click();
         await responsePromise;
     }
 
@@ -169,12 +170,12 @@ export class CourseCommunicationPage {
      */
     async replyWithMessage(postID: number, content: string): Promise<Post> {
         const postElement = this.getSinglePost(postID);
-        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .monaco-editor');
+        const postReplyField = postElement.getByTestId('inline-reply-input').getByTestId('markdown-editor');
         await setMonacoEditorContentByLocator(this.page, postReplyField, content);
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/answer-messages`);
-        await this.getSinglePost(postID).locator('.new-reply-inline-input #save').click();
+        await this.getSinglePost(postID).getByTestId('inline-reply-input').locator('#save').click();
         const response = await responsePromise;
-        return response.json();
+        return readResponseJson(response);
     }
 
     /**
@@ -196,30 +197,6 @@ export class CourseCommunicationPage {
      */
     async pinPost(postID: number) {
         await this.getSinglePost(postID).locator('.pin').click();
-    }
-
-    /**
-     * Deletes the specified post.
-     * @param postID - The ID of the post to delete.
-     */
-    async deletePost(postID: number) {
-        const deleteIcon = this.getSinglePost(postID).locator('.deleteIcon');
-        await deleteIcon.click();
-        await deleteIcon.click();
-    }
-
-    /**
-     * Edits the content of a message in a specified post.
-     * @param postID - The ID of the post containing the message to edit.
-     * @param content - The new content for the message.
-     */
-    async editMessage(postID: number, content: string) {
-        const post = this.getSinglePost(postID);
-        await post.locator('.editIcon').click();
-        await this.setContentInline(content);
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
-        await this.page.locator('#save').click();
-        await responsePromise;
     }
 
     /**
@@ -309,5 +286,48 @@ export class CourseCommunicationPage {
      */
     async checkSingleExercisePost(postID: number, content: string) {
         await expect(this.getSinglePostContent(postID, content)).toBeVisible();
+    }
+
+    /**
+     * Returns the scrollable container of the discussion section that hosts the infinite-scroll directive.
+     */
+    getDiscussionScrollContainer() {
+        return this.page.locator('jhi-discussion-section [infinite-scroll]');
+    }
+
+    /**
+     * Scrolls the discussion section to the very top, bringing the infinite-scroll directive's top sentinel
+     * into view and triggering the load of the next (older) page of posts.
+     */
+    async scrollDiscussionToTop() {
+        const container = this.getDiscussionScrollContainer();
+        await container.waitFor({ state: 'visible', timeout: 30000 });
+        await container.evaluate((element) => element.scrollTo({ top: 0 }));
+    }
+
+    /**
+     * Returns the number of posts currently rendered in the discussion section.
+     */
+    async getRenderedDiscussionPostCount(): Promise<number> {
+        return this.page.locator('jhi-discussion-section [id^="item-"]').count();
+    }
+
+    /**
+     * Returns the locator for a single post in the discussion section by its ID.
+     * @param postID - The ID of the post.
+     */
+    getDiscussionPost(postID: number) {
+        return this.page.locator(`jhi-discussion-section #item-${postID}`);
+    }
+
+    /**
+     * Verifies that a post with the given ID and content is visible in the discussion section.
+     * @param postID - The ID of the post.
+     * @param content - The content expected to be visible in the post.
+     */
+    async checkDiscussionPost(postID: number, content: string) {
+        const post = this.getDiscussionPost(postID);
+        await expect(post).toBeVisible({ timeout: 30000 });
+        await expect(post.locator('.markdown-preview', { hasText: content })).toBeVisible({ timeout: 30000 });
     }
 }

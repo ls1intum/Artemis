@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -29,16 +29,28 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
  * keyboard events, grading instruction links, and assessment event tracking.
  */
 describe('TextBlockFeedbackEditorComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: TextBlockFeedbackEditorComponent;
     let fixture: ComponentFixture<TextBlockFeedbackEditorComponent>;
     let compiled: any;
 
     const textBlock = { id: '1' } as TextBlock;
 
+    /**
+     * Re-applies the current (mutated) feedback to the signal input under a fresh object identity and runs
+     * change detection. Mutating the object held by a signal input in place does not notify the signal in
+     * Angular's zoneless reactivity model, so dependent template branches (e.g. the dismiss/confirm @if) would
+     * otherwise not re-render. Cloning preserves the mutated state while changing the reference.
+     */
+    function reapplyFeedback(): void {
+        const feedback = component.feedback();
+        const clone: Feedback = Object.assign(Object.create(Object.getPrototypeOf(feedback)), feedback);
+        fixture.componentRef.setInput('feedback', clone);
+        fixture.changeDetectorRef.detectChanges();
+    }
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
+            imports: [MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
             providers: [
                 MockProvider(ChangeDetectorRef),
                 SessionStorageService,
@@ -48,6 +60,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
+                provideTranslateService(),
             ],
         }).compileComponents();
     });
@@ -56,8 +69,6 @@ describe('TextBlockFeedbackEditorComponent', () => {
         fixture = TestBed.createComponent(TextBlockFeedbackEditorComponent);
         component = fixture.componentInstance;
         const feedback = Feedback.forText(textBlock);
-        feedback.gradingInstruction = new GradingInstruction();
-        feedback.gradingInstruction.usageCount = 0;
         fixture.componentRef.setInput('textBlock', textBlock);
         fixture.componentRef.setInput('feedback', feedback);
         compiled = fixture.debugElement.nativeElement;
@@ -81,28 +92,28 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(confirm).toBeFalsy();
 
         component.feedback().credits = 1;
-        fixture.changeDetectorRef.detectChanges();
+        reapplyFeedback();
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback().detailText = 'Lorem Ipsum';
-        fixture.changeDetectorRef.detectChanges();
+        reapplyFeedback();
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback().credits = 0;
-        fixture.changeDetectorRef.detectChanges();
+        reapplyFeedback();
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback().detailText = '';
-        fixture.changeDetectorRef.detectChanges();
+        reapplyFeedback();
 
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
@@ -116,6 +127,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         vi.spyOn(component, 'escKeyup');
         const event = new KeyboardEvent('keydown', {
             key: 'Esc',
+            bubbles: true,
         });
         const textarea = fixture.nativeElement.querySelector('textarea');
         textarea.dispatchEvent(event);
@@ -136,14 +148,14 @@ describe('TextBlockFeedbackEditorComponent', () => {
     it('should show link icon when feedback is associated with grading instruction', () => {
         component.feedback().gradingInstruction = new GradingInstruction();
         fixture.changeDetectorRef.detectChanges();
-        const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
+        const linkIcon = compiled.querySelector('jhi-grading-instruction-link-icon');
         expect(linkIcon).toBeTruthy();
     });
 
     it('should not show link icon when feedback is not associated with grading instruction', () => {
         component.feedback().gradingInstruction = undefined;
         fixture.changeDetectorRef.detectChanges();
-        const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
+        const linkIcon = compiled.querySelector('jhi-grading-instruction-link-icon');
         expect(linkIcon).toBeFalsy();
     });
 
@@ -157,12 +169,12 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.MANUAL);
     });
 
-    it('should set correctionStatus of the feedback to undefined on score click', () => {
+    it('should set correctionStatus of the feedback to undefined when the score changes', () => {
         // given
         component.feedback().correctionStatus = FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK;
 
         // when
-        component.onScoreClick(new MouseEvent(''));
+        component.onScoreChange();
 
         // then
         expect(component.feedback().correctionStatus).toBeUndefined();
@@ -182,11 +194,64 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(component.feedback().correctionStatus).toBeUndefined();
     });
 
-    it('should send assessment event if feedback type changed', () => {
-        component.feedback().text = 'FeedbackSuggestion:accepted:Test';
+    it('should send assessment event and rewrite the prefix on the first edit of an accepted suggestion', () => {
+        const feedback = Feedback.forText(textBlock);
+        feedback.text = 'FeedbackSuggestion:accepted:Test';
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.changeDetectorRef.detectChanges();
+        //@ts-ignore
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+
+        component.didChange();
+
+        expect(typeSpy).toHaveBeenCalledOnce();
+        expect(component.feedback().text).toBe('FeedbackSuggestion:adapted:Test');
+    });
+
+    it('should not send another assessment event on later edits of an already-adapted suggestion', () => {
+        const feedback = Feedback.forText(textBlock);
+        feedback.text = 'FeedbackSuggestion:accepted:Test';
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.changeDetectorRef.detectChanges();
+        //@ts-ignore
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+
+        component.didChange();
+        component.didChange();
+
+        expect(typeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should transition an accepted suggestion via connectFeedbackWithInstruction and send the assessment event once', () => {
+        const feedback = Feedback.forText(textBlock);
+        feedback.text = 'FeedbackSuggestion:accepted:Test';
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.changeDetectorRef.detectChanges();
+        //@ts-ignore
+        vi.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
+        //@ts-ignore
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{}') } } as unknown as Event;
+
+        component.connectFeedbackWithInstruction(mockEvent);
+
+        expect(typeSpy).toHaveBeenCalledOnce();
+        expect(component.feedback().text).toBe('FeedbackSuggestion:adapted:Test');
+    });
+
+    it('should not send assessment event if feedback text is unchanged', () => {
+        component.feedback().text = 'Unchanged text';
         //@ts-ignore
         const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.didChange();
-        expect(typeSpy).toHaveBeenCalledOnce();
+        expect(typeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should render the grading instruction dropdown next to the feedback detail when criteria exist', () => {
+        const criterion = { id: 1, title: 'Correctness', structuredGradingInstructions: [{ id: 2, credits: 1 } as GradingInstruction] } as GradingCriterion;
+        fixture.componentRef.setInput('criteria', [criterion]);
+        fixture.detectChanges();
+
+        expect(compiled.querySelector('.unified-feedback-detail-row [ngbDropdown]')).toBeTruthy();
     });
 });

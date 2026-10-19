@@ -1,0 +1,62 @@
+<ng-template #instructionsSection>
+    <section class="assessment-workspace__section">
+        <header class="assessment-workspace__section-header">
+            <fa-icon [icon]="faInstructions" aria-hidden="true" />
+            <h2 jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></h2>
+        </header>
+        <div class="assessment-workspace__section-content" cdkScrollable>
+            <ng-content select="[assessmentWorkspaceInstructions]" />
+        </div>
+    </section>
+</ng-template>
+
+<p-splitter
+    class="assessment-workspace assessment-workspace__primary-split"
+    [class.assessment-workspace__split--vertical]="primaryVertical()"
+    [layout]="primaryLayout()"
+    [panelSizes]="primarySizes()"
+    [minSizes]="[36, 24]"
+    [gutterSize]="12"
+    [pt]="primaryPassThrough()"
+    [stateKey]="storageKey()"
+    stateStorage="local"
+>
+    <ng-template #panel>
+        <div class="assessment-workspace__canvas">
+            <ng-content select="[assessmentWorkspaceCanvas]" />
+        </div>
+    </ng-template>
+
+    <ng-template #panel>
+        @if (showDetails()) {
+            <p-splitter
+                class="assessment-workspace__support-split"
+                [class.assessment-workspace__split--horizontal]="supportHorizontal()"
+                [layout]="supportLayout()"
+                [panelSizes]="[52, 48]"
+                [minSizes]="[24, 24]"
+                [gutterSize]="12"
+                [pt]="supportPassThrough()"
+                [stateKey]="sidebarStorageKey()"
+                stateStorage="local"
+            >
+                <ng-template #panel>
+                    <ng-container [ngTemplateOutlet]="instructionsSection" />
+                </ng-template>
+                <ng-template #panel>
+                    <section class="assessment-workspace__section">
+                        <header class="assessment-workspace__section-header">
+                            <fa-icon [icon]="faDetails" aria-hidden="true" />
+                            <h2 [jhiTranslate]="detailsLabelKey()"></h2>
+                        </header>
+                        <div class="assessment-workspace__section-content" cdkScrollable>
+                            <ng-content select="[assessmentWorkspaceDetails]" />
+                        </div>
+                    </section>
+                </ng-template>
+            </p-splitter>
+        } @else {
+            <ng-container [ngTemplateOutlet]="instructionsSection" />
+        }
+    </ng-template>
+</p-splitter>

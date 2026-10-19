@@ -34,6 +34,13 @@ export class LoginPage {
     }
 
     /**
+     * Clicks the continue button to proceed to Stage 2.
+     */
+    async clickContinueButton() {
+        await this.page.click('#continue-button');
+    }
+
+    /**
      * Enters the specified password into the password input field, then blurs the input field.
      * @param password - The password to be entered.
      */
@@ -54,6 +61,11 @@ export class LoginPage {
      */
     async login(credentials: UserCredentials) {
         await this.enterUsername(credentials.username);
+        await this.clickContinueButton();
+
+        // wait till client side renders the password form
+        await this.page.locator('#password').waitFor({ state: 'visible' });
+
         await this.enterPassword(credentials.password);
         await this.clickLoginButton();
     }
@@ -75,12 +87,12 @@ export class LoginPage {
     }
 
     async shouldShowReleaseNotesInFooter() {
-        await expect(this.page.locator('#releases')).toBeVisible();
+        await expect(this.page.locator('[data-testid="releases"]')).toBeVisible();
     }
 
     async shouldShowPrivacyStatementInFooter() {
-        await expect(this.page.locator('#privacy')).toBeVisible();
-        await expect(this.page.locator('#privacy')).toHaveAttribute('href', '/privacy');
+        await expect(this.page.locator('[data-testid="privacy"]')).toBeVisible();
+        await expect(this.page.locator('[data-testid="privacy"]')).toHaveAttribute('href', '/privacy');
     }
 
     async shouldShowImprintInFooter() {

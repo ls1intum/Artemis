@@ -1,20 +1,20 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/account/user/settings/learner-profile/learner-profile-api.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgClass } from '@angular/common';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { LearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/learner-profile-dto.model';
-import { SegmentedToggleComponent } from 'app/shared-ui/segmented-toggle/segmented-toggle.component';
+import { TumAetUiButtonComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { FeedbackOnboardingModalComponent } from 'app/account/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-onboarding-modal.component';
 
 @Component({
     selector: 'jhi-feedback-learner-profile',
     templateUrl: './feedback-learner-profile.component.html',
     styleUrls: ['../learner-profile.component.scss'],
-    imports: [TranslateDirective, NgClass, SegmentedToggleComponent, FeedbackOnboardingModalComponent],
+    imports: [TranslateDirective, FormsModule, TumAetUiButtonComponent, TumAetUiSelectButtonComponent, FeedbackOnboardingModalComponent],
 })
 export class FeedbackLearnerProfileComponent implements OnInit {
     private alertService = inject(AlertService);
@@ -31,7 +31,7 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     });
 
     /** Flag indicating whether the profile editing is disabled */
-    disabled = true;
+    readonly disabled = signal<boolean>(true);
 
     /** Whether the onboarding modal is visible */
     showOnboardingModal = signal<boolean>(false);
@@ -41,7 +41,7 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     }
 
     onOnboardingCompleted() {
-        this.loadProfile();
+        void this.loadProfile();
     }
 
     /**
@@ -65,7 +65,11 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /** Icon for save button */
     protected readonly faSave = faSave;
 
-    async ngOnInit(): Promise<void> {
+    ngOnInit(): void {
+        void this.initializeFeedbackLearnerProfileComponent();
+    }
+
+    private async initializeFeedbackLearnerProfileComponent(): Promise<void> {
         await this.loadProfile();
     }
 
@@ -77,11 +81,11 @@ export class FeedbackLearnerProfileComponent implements OnInit {
         try {
             const profile = await this.learnerProfileAPIService.getLearnerProfileForCurrentUser();
             this.learnerProfile.set(profile);
-            this.disabled = false;
+            this.disabled.set(false);
             this.updateProfileValues(profile);
         } catch (error) {
             if (error instanceof HttpErrorResponse && error.status === 404) {
-                this.disabled = true;
+                this.disabled.set(true);
                 this.learnerProfile.set(undefined);
             } else {
                 this.handleError(error);
@@ -96,6 +100,18 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     private updateProfileValues(learnerProfile: LearnerProfileDTO): void {
         this.feedbackDetail.set(learnerProfile.feedbackDetail ?? undefined);
         this.feedbackFormality.set(learnerProfile.feedbackFormality ?? undefined);
+    }
+
+    /**
+     * Applies a segmented-control selection and saves the profile. Empty selection is disabled on these
+     * controls, so a non-numeric value is ignored rather than written to the profile.
+     */
+    protected onSelectionChange(target: WritableSignal<number | undefined>, value: unknown): void {
+        if (typeof value !== 'number') {
+            return;
+        }
+        target.set(value);
+        void this.onToggleChange();
     }
 
     /**

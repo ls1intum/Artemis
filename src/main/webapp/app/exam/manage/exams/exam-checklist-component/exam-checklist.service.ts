@@ -1,12 +1,12 @@
 import { HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamChecklistService {
     private examService = inject(ExamManagementService);
 
@@ -45,11 +45,11 @@ export class ExamChecklistService {
         // calculate mandatory points and optional points
         if (pointsExercisesEqual) {
             exam.exerciseGroups!.forEach((exerciseGroup) => {
-                if (exerciseGroup!.exercises && exerciseGroup.exercises.length !== 0) {
+                if (exerciseGroup.exercises && exerciseGroup.exercises.length !== 0) {
                     if (exerciseGroup.isMandatory) {
-                        sumPointsExerciseGroupsMandatory += exerciseGroup!.exercises![0]!.maxPoints!;
+                        sumPointsExerciseGroupsMandatory += exerciseGroup.exercises[0].maxPoints!;
                     } else {
-                        sumPointsExerciseGroupsOptional += exerciseGroup!.exercises![0]!.maxPoints!;
+                        sumPointsExerciseGroupsOptional += exerciseGroup.exercises[0].maxPoints!;
                     }
                 }
             });
@@ -75,7 +75,7 @@ export class ExamChecklistService {
         }
         exam.exerciseGroups?.forEach((exerciseGroup) => {
             let maxPoints = 0;
-            if (exerciseGroup.exercises && exerciseGroup.exercises!.length !== 0) {
+            if (exerciseGroup.exercises && exerciseGroup.exercises.length !== 0) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                 maxPoints = exerciseGroup.exercises?.[0].maxPoints!;
             }
@@ -99,8 +99,8 @@ export class ExamChecklistService {
         let sumPointsExerciseGroups = 0;
         if (pointsExercisesEqual) {
             exam.exerciseGroups!.forEach((exerciseGroup) => {
-                if (exerciseGroup!.exercises && exerciseGroup.exercises.length !== 0) {
-                    sumPointsExerciseGroups += exerciseGroup!.exercises![0]!.maxPoints!;
+                if (exerciseGroup.exercises && exerciseGroup.exercises.length !== 0) {
+                    sumPointsExerciseGroups += exerciseGroup.exercises[0].maxPoints!;
                 }
             });
         }
@@ -116,7 +116,7 @@ export class ExamChecklistService {
             return false;
         }
         let allGroupsContainExercise = true;
-        exam.exerciseGroups!.some((exerciseGroup) => {
+        exam.exerciseGroups.some((exerciseGroup) => {
             if (!exerciseGroup.exercises || exerciseGroup.exercises.length === 0) {
                 allGroupsContainExercise = false;
                 return true;

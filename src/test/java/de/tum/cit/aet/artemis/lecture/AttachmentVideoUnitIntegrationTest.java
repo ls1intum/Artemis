@@ -3,23 +3,31 @@ package de.tum.cit.aet.artemis.lecture;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -31,29 +39,44 @@ import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
@@ -61,17 +84,32 @@ import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
+@RecordApplicationEvents
 class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
-    private static final String TEST_PREFIX = "attachmentunitintegrationtest"; // only lower case is supported
+    private static final String TEST_PREFIX = "attachmentunit"; // only lower case is supported
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     private static final int SLIDE_COUNT = 3;
+
+    /** The attachment changed notifications in a page of course notifications, as a JSON path filter. */
+    private static final String ATTACHMENT_CHANGED_NOTIFICATIONS = "$.content[?(@.notificationType == 'attachmentChangedNotification')]";
+
+    @Autowired
+    private ApplicationEvents applicationEvents;
 
     @Autowired
     private AttachmentRepository attachmentRepository;
 
     @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
+
+    @Autowired
+    private IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
 
     @Autowired
     private LectureTestRepository lectureRepository;
@@ -97,31 +135,60 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     private Competency competency;
 
     @Autowired
-    private ObjectMapper mapper;
+    private JsonMapper mapper;
 
     @BeforeEach
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-        }, ExpectedCount.manyTimes());
         irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
+        irisRequestMockProvider.mockLectureUnitMetadataWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
+        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
         }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("temp/example.txt");
-        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
+        this.lecture1 = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         this.attachmentVideoUnit = new AttachmentVideoUnit();
         this.attachmentVideoUnit.setDescription("Lorem Ipsum");
         this.attachmentVideoUnit.setVideoSource("google.com");
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         competency = competencyUtilService.createCompetency(lecture1.getCourse());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void retryClaimAllowsOnlyOneConcurrentOwner() throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        IrisLectureUnitSyncState state = new IrisLectureUnitSyncState();
+        state.setLectureUnitId(unit.getId());
+        state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
+        ZonedDateTime claimTime = ZonedDateTime.now();
+        state.setNextRetryAt(claimTime.minusMinutes(1));
+        irisLectureUnitSyncStateRepository.saveAndFlush(state);
+
+        CountDownLatch start = new CountDownLatch(1);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var first = executor.submit(() -> {
+                start.await();
+                return irisLectureUnitSyncStateRepository.claimRetry(unit.getId(), claimTime, claimTime.plusMinutes(10));
+            });
+            var second = executor.submit(() -> {
+                start.await();
+                return irisLectureUnitSyncStateRepository.claimRetry(unit.getId(), claimTime, claimTime.plusMinutes(10));
+            });
+            start.countDown();
+
+            assertThat(List.of(first.get(), second.get())).filteredOn(Optional::isPresent).hasSize(1);
+        }
     }
 
     @AfterEach
@@ -132,17 +199,27 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     private void testAllPreAuthorize() throws Exception {
         request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/42", HttpStatus.FORBIDDEN, AttachmentVideoUnit.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/42", HttpStatus.FORBIDDEN, AttachmentVideoUnitDTO.class);
     }
 
     private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment)
             throws Exception {
-        return buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null, true);
+        return buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null, true, AttachmentUpdateIntent.NO_FILE_CHANGE);
     }
 
     private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment,
             String fileContent, boolean contentType) throws Exception {
-        MockMultipartHttpServletRequestBuilder builder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, fileContent);
+        AttachmentUpdateIntent intent = fileContent == null ? AttachmentUpdateIntent.NO_FILE_CHANGE : AttachmentUpdateIntent.FILE_UPLOAD;
+        MockMultipartHttpServletRequestBuilder builder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, fileContent, intent);
+        if (contentType) {
+            builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        }
+        return builder;
+    }
+
+    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment,
+            String fileContent, boolean contentType, AttachmentUpdateIntent intent) throws Exception {
+        MockMultipartHttpServletRequestBuilder builder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, fileContent, intent);
         if (contentType) {
             builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         }
@@ -151,16 +228,35 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment,
             String fileContent) throws Exception {
-        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
+        AttachmentUpdateIntent intent = fileContent == null ? AttachmentUpdateIntent.NO_FILE_CHANGE : AttachmentUpdateIntent.FILE_UPLOAD;
+        return buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, fileContent, intent);
+    }
+
+    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment,
+            String fileContent, AttachmentUpdateIntent intent) throws Exception {
+        var attachmentVideoUnitPart = createAttachmentVideoUnitPart(attachmentVideoUnit, intent);
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
 
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + attachmentVideoUnit.getId());
         if (fileContent != null) {
-            var filePart = createAttachmentVideoUnitPdf();
+            // Render the provided text into the PDF so that distinct fileContent values produce PDFs with genuinely different content (and identical values produce identical
+            // content)
+            var filePart = createAttachmentVideoUnitPdf(fileContent);
             builder.file(filePart);
         }
 
         return builder.file(attachmentVideoUnitPart).file(attachmentPart);
+    }
+
+    private MockMultipartFile createAttachmentVideoUnitPart(AttachmentVideoUnit attachmentVideoUnit, AttachmentUpdateIntent intent) throws IOException {
+        AttachmentVideoUnitDTO attachmentVideoUnitDTO = AttachmentVideoUnitDTO.from(attachmentVideoUnit, intent);
+        return new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnitDTO).getBytes());
+    }
+
+    private MockMultipartFile createAttachmentVideoUnitPart(AttachmentVideoUnitDTO attachmentVideoUnitDTO, AttachmentUpdateIntent intent) throws IOException {
+        ObjectNode requestBody = mapper.valueToTree(attachmentVideoUnitDTO);
+        requestBody.put("attachmentUpdateIntent", intent.name());
+        return new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(requestBody));
     }
 
     private MockMultipartHttpServletRequestBuilder buildCreateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment)
@@ -179,6 +275,16 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
      * @return MockMultipartFile attachment video unit pdf file
      */
     private MockMultipartFile createAttachmentVideoUnitPdf() throws IOException {
+        return createAttachmentVideoUnitPdf("This is the sample document");
+    }
+
+    /**
+     * Generates an attachment video unit pdf file using the given body text on its content pages.
+     *
+     * @param bodyText the text rendered on the content pages
+     * @return MockMultipartFile attachment video unit pdf file
+     */
+    private MockMultipartFile createAttachmentVideoUnitPdf(String bodyText) throws IOException {
 
         var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
 
@@ -203,8 +309,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
                 contentStream.beginText();
                 contentStream.setFont(font, 12);
                 contentStream.newLineAtOffset(25, 500);
-                String text = "This is the sample document";
-                contentStream.showText(text);
+                contentStream.showText(bodyText);
                 contentStream.endText();
                 contentStream.close();
             }
@@ -212,6 +317,18 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
             document.close();
             return new MockMultipartFile("file", "lectureFile.pdf", "application/json", outputStream.toByteArray());
         }
+    }
+
+    private AttachmentVideoUnit updateAttachmentVideoUnitWithFile(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MockMultipartFile file) throws Exception {
+        var builder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null, AttachmentUpdateIntent.FILE_UPLOAD);
+        builder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+        var result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
+        return mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+    }
+
+    private MockMultipartFile createAttachmentVideoUnitPdfFromStoredAttachment(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment) throws IOException {
+        Path storedFilePath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), attachment.getLink()).path();
+        return new MockMultipartFile("file", storedFilePath.getFileName().toString(), "application/pdf", Files.readAllBytes(storedFilePath));
     }
 
     @Test
@@ -235,13 +352,18 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(attachmentVideoUnit));
 
         String fileName = Path.of(attachmentVideoUnit.getAttachment().getLink()).getFileName().toString();
-        MockMultipartHttpServletRequestBuilder attachmentVideoUnitBuilder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachmentVideoUnit.getAttachment(), null);
+        MockMultipartHttpServletRequestBuilder attachmentVideoUnitBuilder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachmentVideoUnit.getAttachment(), null,
+                AttachmentUpdateIntent.FILE_UPLOAD);
         MockMultipartFile file = new MockMultipartFile("file", fileName, "application/json", "test".getBytes());
         attachmentVideoUnitBuilder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
-        AttachmentVideoUnit updatedAttachmentVideoUnit = request.getObjectMapper().readValue(
-                request.performMvcRequest(attachmentVideoUnitBuilder).andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), AttachmentVideoUnit.class);
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, updatedAttachmentVideoUnit.getAttachment().getLink());
-        request.getFile(requestUrl, HttpStatus.OK);
+        var updateResult = request.performMvcRequest(attachmentVideoUnitBuilder).andExpect(status().isOk()).andReturn();
+        request.restoreSecurityContext();
+        AttachmentVideoUnitDTO updatedAttachmentVideoUnit = request.getObjectMapper().readValue(updateResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        Path updatedAttachmentPath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), updatedAttachmentVideoUnit.attachment().link()).path();
+        assertThat(Files.exists(updatedAttachmentPath)).as("updated attachment file should exist at %s", updatedAttachmentPath).isTrue();
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, updatedAttachmentVideoUnit.attachment().link());
+        request.performMvcRequest(MockMvcRequestBuilders.get(new URI(requestUrl)).with(user(TEST_PREFIX + "instructor1").roles("INSTRUCTOR"))).andExpect(status().isOk());
+        request.restoreSecurityContext();
     }
 
     @Test
@@ -249,23 +371,116 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void createAttachmentVideoUnit_asInstructor_shouldCreateAttachmentVideoUnit() throws Exception {
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var result = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persistedAttachmentVideoUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnit.class);
-        assertThat(persistedAttachmentVideoUnit.getId()).isNotNull();
-        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
-        assertThat(persistedAttachment.getId()).isNotNull();
-        var updatedAttachmentVideoUnit = attachmentVideoUnitRepository.findOneWithCompetencyLinksById(persistedAttachmentVideoUnit.getId());
+        var persistedAttachmentVideoUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        assertThat(persistedAttachmentVideoUnit.id()).isNotNull();
+        var persistedAttachment = persistedAttachmentVideoUnit.attachment();
+        assertThat(persistedAttachment.id()).isNotNull();
+        var updatedAttachmentVideoUnit = attachmentVideoUnitRepository.findOneWithCompetencyLinksById(persistedAttachmentVideoUnit.id());
         // Wait for async operation to complete (after attachment video unit is saved, the file gets split into slides)
-        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
-        assertThat(updatedAttachmentVideoUnit.getAttachment()).isEqualTo(persistedAttachment);
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.id())).hasSize(SLIDE_COUNT));
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getId()).isEqualTo(persistedAttachment.id());
+        assertThat(attachmentRepository.findById(persistedAttachment.id()).orElseThrow().getSha256Hash()).hasSize(64);
         assertThat(updatedAttachmentVideoUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
         assertThat(updatedAttachmentVideoUnit.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(updatedAttachmentVideoUnit));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitCreatedViaEndpoint_withNotification_shouldNotNpe() throws Exception {
+        // Create through the REST endpoint, so the attachment is persisted the same way a user creates it (without a lecture back-reference on the attachment).
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persisted = request.getObjectMapper().readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+
+        // Update that unit and request a student notification. The attachment-change notification resolves the course via the attachment's lecture, which a unit attachment
+        // does not carry, so this must not throw a NullPointerException.
+        attachmentVideoUnit.setId(persisted.id());
+        attachment.setId(persisted.attachment().id());
+        MockMultipartHttpServletRequestBuilder updateBuilder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null);
+        updateBuilder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("notificationText", "The attachment was updated");
+        request.performMvcRequest(updateBuilder).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withNotificationText_deliversTheTextToStudents() throws Exception {
+        updateAttachmentVideoUnitWithNotificationText("  Please re-download, slide 4 was corrected  ");
+
+        // What a student's client reads: the stored notification, rebuilt from its parameter rows. The editor's text is
+        // trimmed, and it is in the flat parameters too, which is what the released iOS app reads.
+        performGetAttachmentChangedNotificationsAsStudent().andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS, hasSize(1)))
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".payload.notificationText", contains("Please re-download, slide 4 was corrected")))
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".parameters.notificationText", contains("Please re-download, slide 4 was corrected"))).andExpect(
+                        jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".relativeWebAppUrl", contains("/courses/" + lecture1.getCourse().getId() + "/lectures/" + lecture1.getId())));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withEmptyNotificationText_notifiesStudentsWithoutText() throws Exception {
+        // The in-place lecture editor asks for a notification without a text by sending an empty one: students are
+        // notified, and the notification carries no text, so the client shows its generic message.
+        updateAttachmentVideoUnitWithNotificationText("");
+
+        performGetAttachmentChangedNotificationsAsStudent().andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS, hasSize(1)))
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".payload.notificationText").doesNotExist())
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".parameters.notificationText").doesNotExist());
+    }
+
+    /**
+     * Updates the attachment of a released attachment video unit with the given notification text.
+     * <p>
+     * The unit is stored directly rather than created through the REST endpoint: creating one splits its file into slides
+     * in the background, and that work would outlive the test and reach the Iris mock of the next one.
+     */
+    private void updateAttachmentVideoUnitWithNotificationText(String notificationText) throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        MockMultipartHttpServletRequestBuilder updateBuilder = buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null);
+        updateBuilder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("notificationText", notificationText);
+        request.performMvcRequest(updateBuilder).andExpect(status().isOk());
+    }
+
+    private ResultActions performGetAttachmentChangedNotificationsAsStudent() throws Exception {
+        var result = request.performMvcRequest(
+                MockMvcRequestBuilders.get("/api/notification/courses/" + lecture1.getCourse().getId() + "?page=0&size=20").with(user(TEST_PREFIX + "student1").roles("USER")))
+                .andExpect(status().isOk());
+        request.restoreSecurityContext();
+        return result;
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createAttachmentVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_withDescription_publishesContentChangedEvent() throws Exception {
+        // The unit carries a non-blank description ("Lorem Ipsum" from setUp), so a content-changed event must fire.
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_changedDescription_publishesContentChangedEvent() throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        unit.setDescription("Genuinely changed description");
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null)).andExpect(status().isOk());
+        // The resource snapshots the pre-update description before the service applies the DTO, so a real edit publishes exactly once.
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_unchangedDescription_doesNotPublishEvent() throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        // PUT the unit back with its description unchanged — no content-bearing field changed, so no event fires.
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null)).andExpect(status().isOk());
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).isEmpty();
     }
 
     @Test
@@ -282,31 +497,59 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "This is plain text, not a PDF document", "" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_withCorruptedOrEmptyPdf_shouldReturnBadRequestAndCreateNoUnit(String content) throws Exception {
+        long unitCountBefore = attachmentVideoUnitRepository.count();
+        var corruptedPdf = new MockMultipartFile("file", "slides.pdf", MediaType.APPLICATION_PDF_VALUE, content.getBytes());
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units").file(attachmentVideoUnitPart)
+                .file(attachmentPart).file(corruptedPdf).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("invalidPdf"));
+
+        assertThat(attachmentVideoUnitRepository.count()).isEqualTo(unitCountBefore);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnit_asInstructor_shouldUpdateAttachmentVideoUnit() throws Exception {
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var attachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
-        var attachment = attachmentVideoUnit.getAttachment();
+        var createdAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        var createdAttachment = createdAttachmentVideoUnit.attachment();
+
+        // Build fresh transient entities for the update request parts (DTOs are immutable)
+        var attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setId(createdAttachmentVideoUnit.id());
         attachmentVideoUnit.setDescription("Changed");
+        attachmentVideoUnit.setVideoSource(createdAttachmentVideoUnit.videoSource());
+        var attachment = new Attachment();
+        attachment.setId(createdAttachment.id());
+        attachment.setLink(createdAttachment.link());
+        attachment.setName(createdAttachment.name());
+        attachment.setVersion(createdAttachment.version());
+        int originalAttachmentVersion = createdAttachment.version();
 
         // Wait for async operation to complete (after attachment video unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
 
         // Store the original attachment filename to check it changes
-        String originalAttachmentLink = attachment.getLink();
+        String originalAttachmentLink = createdAttachment.link();
 
         // Update the attachment video unit
         var updateResult = request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, "new File", true)).andExpect(status().isOk()).andReturn();
-        AttachmentVideoUnit attachmentVideoUnit1 = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        AttachmentVideoUnitDTO attachmentVideoUnit1 = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
         // Verify description was updated
-        assertThat(attachmentVideoUnit1.getDescription()).isEqualTo("Changed");
+        assertThat(attachmentVideoUnit1.description()).isEqualTo("Changed");
         // Verify attachment file was updated (this should pass)
-        assertThat(attachmentVideoUnit1.getAttachment().getLink()).isNotEqualTo(originalAttachmentLink);
+        assertThat(attachmentVideoUnit1.attachment().link()).isNotEqualTo(originalAttachmentLink);
+        assertThat(attachmentVideoUnit1.attachment().version()).isEqualTo(originalAttachmentVersion + 1);
         // Create a query to find the latest slides for this attachment video unit
         // Since we know there will be duplicate slide numbers, we need to check for the latest ones (with highest ID)
-        var groupedSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit1.getId()).stream().collect(Collectors.groupingBy(Slide::getSlideNumber));
+        var groupedSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit1.id()).stream().collect(Collectors.groupingBy(Slide::getSlideNumber));
         List<Slide> latestSlides = new ArrayList<>();
         for (var slidesWithSameNumber : groupedSlides.values()) {
             slidesWithSameNumber.stream().max(Comparator.comparing(Slide::getId)).ifPresent(latestSlides::add);
@@ -317,16 +560,287 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // and that they exist - the implementation doesn't seem to update slide paths when the
         // attachment is updated
         for (Slide slide : latestSlides) {
-            assertThat(slide.getSlideImagePath()).isNotNull();
-            assertThat(slide.getSlideImagePath()).containsPattern("attachments/attachment-unit/\\d+/slide/\\d+/.*_Slide_\\d+\\.png");
+            // A slide image is a pure storage key: only the filename is stored, and the directory it lives in follows from the unit and the slide number. The absence of a
+            // separator is the assertion that says so; the pattern alone would still hold for the URL-shaped value the previous release stored.
+            assertThat(slide.getSlideImagePath()).isNotNull().doesNotContain("/").containsPattern("^.*_Slide_\\d+\\.png$");
         }
         // testing if bidirectional relationship is kept
-        AttachmentVideoUnit attachmentVideoUnit2 = attachmentVideoUnitRepository.findById(attachmentVideoUnit1.getId()).orElseThrow();
-        attachment = attachmentRepository.findById(attachment.getId()).orElseThrow();
-        assertThat(attachmentVideoUnit2.getAttachment()).isEqualTo(attachment);
-        assertThat(attachment.getAttachmentVideoUnit()).isEqualTo(attachmentVideoUnit2);
-        assertThat(attachmentVideoUnit1.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
+        AttachmentVideoUnit attachmentVideoUnit2 = attachmentVideoUnitRepository.findById(attachmentVideoUnit1.id()).orElseThrow();
+        Attachment persistedAttachment = attachmentRepository.findById(attachment.getId()).orElseThrow();
+        assertThat(attachmentVideoUnit2.getAttachment()).isEqualTo(persistedAttachment);
+        assertThat(persistedAttachment.getAttachmentVideoUnit()).isEqualTo(attachmentVideoUnit2);
+        assertThat(attachmentVideoUnit1.competencyLinks()).anyMatch(link -> Objects.equals(link.competency().id(), competency.getId()));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of(competency.getId())), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitWithoutAttachmentPart_shouldKeepTheAttachmentInStepWithTheUnit() throws Exception {
+        ZonedDateTime nextWeek = ZonedDateTime.now().plusWeeks(1);
+        attachmentVideoUnit.setReleaseDate(nextWeek);
+        attachment.setReleaseDate(nextWeek);
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var created = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        // The student version leaves out the hidden slides, so a change of the details must keep it.
+        Attachment storedAttachment = attachmentRepository.findById(created.attachment().id()).orElseThrow();
+        storedAttachment.setStudentVersion("student-version.pdf");
+        attachmentRepository.save(storedAttachment);
+        String studentVersion = attachmentRepository.findById(created.attachment().id()).orElseThrow().getStudentVersion();
+        assertThat(studentVersion).endsWith("student-version.pdf");
+
+        // The automatic save of an item edited in place sends the details of the unit only: renamed, and visible at once.
+        var details = new AttachmentVideoUnit();
+        details.setId(created.id());
+        details.setName("Renamed slides");
+        details.setDescription(created.description());
+        details.setVideoSource(created.videoSource());
+        details.setReleaseDate(null);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + created.id())
+                .file(createAttachmentVideoUnitPart(details, AttachmentUpdateIntent.NO_FILE_CHANGE)).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        request.performMvcRequest(builder).andExpect(status().isOk());
+
+        Attachment updatedAttachment = attachmentRepository.findById(created.attachment().id()).orElseThrow();
+        assertThat(updatedAttachment.getName()).isEqualTo("Renamed slides");
+        assertThat(updatedAttachment.getReleaseDate()).isNull();
+        assertThat(updatedAttachment.isVisibleToStudents()).isTrue();
+        assertThat(updatedAttachment.getStudentVersion()).isEqualTo(studentVersion);
+        assertThat(updatedAttachment.getLink()).isEqualTo(created.attachment().link());
+        assertThat(updatedAttachment.getVersion()).isEqualTo(created.attachment().version());
+        assertThat(attachmentVideoUnitRepository.findById(created.id()).orElseThrow().resolveReleaseDate()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitWithoutIntentReturnsBadRequest() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsString(persistedAttachmentVideoUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId())
+                .file(attachmentVideoUnitPart).file(attachmentPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("attachmentUpdateIntentRequired"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitNoFileChangeWithFileReturnsBadRequest() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+
+        ObjectNode attachmentVideoUnitJson = mapper.valueToTree(persistedAttachmentVideoUnit);
+        attachmentVideoUnitJson.put("attachmentUpdateIntent", "NO_FILE_CHANGE");
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsString(attachmentVideoUnitJson).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId())
+                .file(attachmentVideoUnitPart).file(attachmentPart).file(createAttachmentVideoUnitPdf()).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("fileNotAllowedForNoFileChange"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitNoFileChangeWithEmptyFileReturnsBadRequest() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+
+        var attachmentVideoUnitPart = createAttachmentVideoUnitPart(persistedAttachmentVideoUnit, AttachmentUpdateIntent.NO_FILE_CHANGE);
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(persistedAttachment));
+        var emptyFilePart = new MockMultipartFile("file", "empty.pdf", MediaType.APPLICATION_PDF_VALUE, new byte[0]);
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId())
+                .file(attachmentVideoUnitPart).file(attachmentPart).file(emptyFilePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("fileNotAllowedForNoFileChange"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = AttachmentUpdateIntent.class, names = { "FILE_UPLOAD", "EDITOR_PDF_CONTENT_CHANGED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitFileChangeWithoutFileReturnsBadRequest(AttachmentUpdateIntent intent) throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+
+        var builder = buildUpdateAttachmentVideoUnit(persistedAttachmentVideoUnit, persistedAttachment, null, true, intent);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("fileRequiredForFileChange"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = AttachmentUpdateIntent.class, names = { "FILE_UPLOAD", "EDITOR_PDF_CONTENT_CHANGED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitFileChangeWithoutAttachmentReturnsBadRequest(AttachmentUpdateIntent intent) throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var attachmentVideoUnitPart = createAttachmentVideoUnitPart(persistedAttachmentVideoUnit, intent);
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId())
+                .file(attachmentVideoUnitPart).file(createAttachmentVideoUnitPdf()).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("attachmentRequiredForFileChange"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitWithIdenticalUploadDoesNotBumpVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+        String originalLink = persistedAttachment.getLink();
+
+        // Wait for the initial slide splitting to finish before re-uploading
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachmentVideoUnit, persistedAttachment);
+        var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, identicalStoredFile);
+
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion);
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getLink()).isEqualTo(originalLink);
+        assertThat(attachmentRepository.findById(persistedAttachment.getId()).orElseThrow().getSha256Hash()).hasSize(64);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnitWithExternalAttachmentLinkPersistsAttachment() throws Exception {
+        attachment.setLink("https://example.org/lecture-notes.pdf");
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsBytes(AttachmentVideoUnitDTO.of(attachmentVideoUnit)));
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(AttachmentDTO.of(attachment)));
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units").file(attachmentVideoUnitPart)
+                .file(attachmentPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        var result = request.performMvcRequest(builder).andExpect(status().isCreated()).andReturn();
+        var persistedUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+
+        assertThat(persistedUnit.attachment()).isNotNull();
+        assertThat(persistedUnit.attachment().link()).isEqualTo("https://example.org/lecture-notes.pdf");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnitWithFilelessEmptyAttachmentReturnsBadRequest() throws Exception {
+        attachment.setLink(" ");
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsBytes(AttachmentVideoUnitDTO.of(attachmentVideoUnit)));
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(AttachmentDTO.of(attachment)));
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units").file(attachmentVideoUnitPart)
+                .file(attachmentPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("attachmentLinkRequired"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitWithIdenticalUploadBackfillsMissingHashWithoutBumpingVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+        String originalLink = persistedAttachment.getLink();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        jdbcTemplate.update("UPDATE attachment SET sha256_hash = NULL WHERE id = ?", persistedAttachment.getId());
+        persistedAttachment.setSha256Hash(null);
+
+        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachmentVideoUnit, persistedAttachment);
+        var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, identicalStoredFile);
+
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion);
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getLink()).isEqualTo(originalLink);
+        assertThat(attachmentRepository.findById(persistedAttachment.getId()).orElseThrow().getSha256Hash()).hasSize(64);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitWithDifferentUploadBumpsVersionAndStoresHash() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+        String originalHash = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow().getSha256Hash();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        var changedFile = createAttachmentVideoUnitPdf("a completely different lecture body");
+        var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, changedFile);
+
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion + 1);
+        String updatedHash = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow().getSha256Hash();
+        assertThat(updatedHash).hasSize(64);
+        assertThat(updatedHash).isNotEqualTo(originalHash);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitWithVisuallyIdenticalButByteDifferentUploadBumpsVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        var byteDifferentFileWithSameVisualContent = createAttachmentVideoUnitPdf();
+        var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, byteDifferentFileWithSameVisualContent);
+
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion + 1);
+        assertThat(attachmentRepository.findById(persistedAttachment.getId()).orElseThrow().getSha256Hash()).hasSize(64);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withByteDifferentFileAndChangedHiddenPages_shouldApplyHiddenAndBumpVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Initially no slide is hidden
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId()).stream().sorted(Comparator.comparing(Slide::getSlideNumber))
+                .toList();
+        assertThat(slides).allMatch(slide -> slide.getHidden() == null);
+        Long hiddenSlideId = slides.getFirst().getId();
+
+        // SHA-256 file identity treats a re-serialized PDF with different bytes as a content change. Task 4 will add a metadata-only path; Task 3 still bumps the version.
+        var reSerializedFile = createAttachmentVideoUnitPdf();
+        String futureDate = ZonedDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        String hiddenPagesJson = "[{\"slideId\": \"" + hiddenSlideId + "\", \"date\": \"" + futureDate + "\"}]";
+        String pageOrderJson = slides.stream().map(slide -> "{\"slideId\": \"" + slide.getId() + "\", \"order\": " + slide.getSlideNumber() + "}")
+                .collect(Collectors.joining(",", "[", "]"));
+
+        var attachmentUnitPart = createAttachmentVideoUnitPart(persistedAttachmentVideoUnit, AttachmentUpdateIntent.FILE_UPLOAD);
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
+        var pageOrderPart = new MockMultipartFile("pageOrder", "", MediaType.APPLICATION_JSON_VALUE, pageOrderJson.getBytes());
+
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
+                .file(attachmentPart).file(reSerializedFile).file(hiddenPagesPart).file(pageOrderPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                .param("keepFilename", "true");
+        request.performMvcRequest(builder).andExpect(status().isOk());
+
+        // The hidden-slide metadata must still be applied while the byte-different upload bumps the attachment version.
+        await().untilAsserted(() -> assertThat(slideRepository.findById(hiddenSlideId).orElseThrow().getHidden()).isNotNull());
+
+        // The version changes because Task 3 compares file bytes, not rendered PDF content.
+        Attachment reloadedAttachment = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow();
+        assertThat(reloadedAttachment.getVersion()).isEqualTo(originalVersion + 1);
+        assertThat(reloadedAttachment.getSha256Hash()).hasSize(64);
     }
 
     @Test
@@ -335,30 +849,33 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         persistAttachmentVideoUnitWithLecture();
 
         // Add a second lecture unit
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         lecture1.addLectureUnit(attachmentVideoUnit);
         lecture1 = lectureRepository.save(lecture1);
 
         List<LectureUnit> orderedUnits = lecture1.getLectureUnits();
+        int originalAttachmentVersion = attachmentVideoUnit.getAttachment().getVersion();
 
         // Updating the lecture unit should not influence order
-        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isOk());
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachmentVideoUnit.getAttachment())).andExpect(status().isOk());
 
         SecurityUtils.setAuthorizationObject();
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
+        AttachmentVideoUnit updatedAttachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentVideoUnit.getId());
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalAttachmentVersion);
     }
 
     private void persistAttachmentVideoUnitWithLecture() {
-        lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
+        lecture1 = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
         lecture1.addLectureUnit(this.attachmentVideoUnit);
         lecture1 = lectureRepository.saveAndFlush(lecture1);
-        this.attachmentVideoUnit = (AttachmentVideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream()
-                .findFirst().orElseThrow();
+        this.attachmentVideoUnit = (AttachmentVideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst()
+                .orElseThrow();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         persistAttachmentVideoUnitWithLecture();
         request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());
@@ -369,6 +886,15 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void updateAttachmentVideoUnit_withoutAttachment_shouldUpdateAttachmentVideoUnit() throws Exception {
         persistAttachmentVideoUnitWithLecture();
         request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, null)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitWithoutExistingAttachmentRequiresFileWhenAttachmentPartIsProvided() throws Exception {
+        persistAttachmentVideoUnitWithLecture();
+
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("fileRequiredForNewAttachment"));
     }
 
     @Test
@@ -387,10 +913,13 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(this.attachmentVideoUnit.getAttachment()).isEqualTo(this.attachment);
 
         // 2. check the REST call
-        this.attachmentVideoUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + this.attachmentVideoUnit.getId(), HttpStatus.OK,
-                AttachmentVideoUnit.class);
-        assertThat(this.attachmentVideoUnit.getAttachment()).isEqualTo(this.attachment);
-        assertThat(this.attachmentVideoUnit.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
+        var attachmentVideoUnitDTO = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + this.attachmentVideoUnit.getId(), HttpStatus.OK,
+                AttachmentVideoUnitDTO.class);
+        assertThat(attachmentVideoUnitDTO.attachment().id()).isEqualTo(this.attachment.getId());
+        assertThat(attachmentVideoUnitDTO.competencyLinks()).anyMatch(link -> Objects.equals(link.competency().id(), competency.getId()));
+        // The PDF preview relies on the lightweight lecture reference when saving; the response must keep it
+        assertThat(attachmentVideoUnitDTO.lecture()).isNotNull();
+        assertThat(attachmentVideoUnitDTO.lecture().id()).isEqualTo(lecture1.getId());
     }
 
     @Test
@@ -398,13 +927,14 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void deleteAttachmentVideoUnit_withAttachment_shouldDeleteAttachment() throws Exception {
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var result = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persistedAttachmentVideoUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnit.class);
-        assertThat(persistedAttachmentVideoUnit.getId()).isNotNull();
-        assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(0);
-        request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentVideoUnit.getId(), HttpStatus.OK);
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId(), HttpStatus.FORBIDDEN,
-                AttachmentVideoUnit.class);
-        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(persistedAttachmentVideoUnit), eq(Optional.empty()));
+        var persistedAttachmentVideoUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        assertThat(persistedAttachmentVideoUnit.id()).isNotNull();
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.id())).hasSize(0);
+        var persistedEntity = attachmentVideoUnitRepository.findByIdElseThrow(persistedAttachmentVideoUnit.id());
+        request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentVideoUnit.id(), HttpStatus.OK);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.id(), HttpStatus.FORBIDDEN,
+                AttachmentVideoUnitDTO.class);
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(persistedEntity), eq(Optional.empty()));
     }
 
     @Test
@@ -413,53 +943,53 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // Create an attachment video unit first
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var result = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persistedAttachmentVideoUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnit.class);
-        assertThat(persistedAttachmentVideoUnit.getId()).isNotNull();
-        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
-        assertThat(persistedAttachment.getId()).isNotNull();
+        var persistedAttachmentVideoUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        assertThat(persistedAttachmentVideoUnit.id()).isNotNull();
+        var persistedAttachment = persistedAttachmentVideoUnit.attachment();
+        assertThat(persistedAttachment.id()).isNotNull();
 
         // Initial state - no student version
-        assertThat(persistedAttachment.getStudentVersion()).isNull();
+        assertThat(persistedAttachment.studentVersion()).isNull();
 
         // Create a student version file
         MockMultipartFile studentVersionFile = new MockMultipartFile("studentVersion", "student_version.pdf", "application/pdf", "student content".getBytes());
 
         // Build request for adding student version
         MockMultipartHttpServletRequestBuilder builder = MockMvcRequestBuilders
-                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId() + "/student-version")
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.id() + "/student-version")
                 .file(studentVersionFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
         // Perform request
         request.performMvcRequest(builder).andExpect(status().isOk());
 
         // Verify the student version was added
-        var updatedAttachmentVideoUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId(), HttpStatus.OK,
-                AttachmentVideoUnit.class);
-        assertThat(updatedAttachmentVideoUnit.getAttachment().getStudentVersion()).isNotNull();
-        assertThat(updatedAttachmentVideoUnit.getAttachment().getStudentVersion()).contains("attachments/attachment-unit/" + persistedAttachmentVideoUnit.getId() + "/student");
+        var updatedAttachmentVideoUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.id(), HttpStatus.OK,
+                AttachmentVideoUnitDTO.class);
+        assertThat(updatedAttachmentVideoUnit.attachment().studentVersion()).isNotNull();
+        assertThat(updatedAttachmentVideoUnit.attachment().studentVersion()).startsWith("attachments/attachment-video-units/" + persistedAttachmentVideoUnit.id() + "/student/");
 
         // Now update with a new student version to test replacement
         MockMultipartFile newStudentVersionFile = new MockMultipartFile("studentVersion", "updated_student_version.pdf", "application/pdf", "updated student content".getBytes());
 
         // Build a new request to update the student version
         MockMultipartHttpServletRequestBuilder updateBuilder = MockMvcRequestBuilders
-                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId() + "/student-version")
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.id() + "/student-version")
                 .file(newStudentVersionFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
         // Perform request again
         request.performMvcRequest(updateBuilder).andExpect(status().isOk());
 
         // Get the latest version
-        var finalAttachmentVideoUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId(), HttpStatus.OK,
-                AttachmentVideoUnit.class);
+        var finalAttachmentVideoUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.id(), HttpStatus.OK,
+                AttachmentVideoUnitDTO.class);
 
         // Verify the student version was updated
-        assertThat(finalAttachmentVideoUnit.getAttachment().getStudentVersion()).isNotNull();
-        // The path should still contain the same base structure
-        assertThat(finalAttachmentVideoUnit.getAttachment().getStudentVersion()).contains("attachments/attachment-unit/" + persistedAttachmentVideoUnit.getId() + "/student");
+        assertThat(finalAttachmentVideoUnit.attachment().studentVersion()).isNotNull();
+        // The path should still have the same base structure
+        assertThat(finalAttachmentVideoUnit.attachment().studentVersion()).startsWith("attachments/attachment-video-units/" + persistedAttachmentVideoUnit.id() + "/student/");
 
         // Verify the file can be accessed
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, finalAttachmentVideoUnit.getAttachment().getStudentVersion());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, finalAttachmentVideoUnit.attachment().studentVersion());
         request.getFile(requestUrl, HttpStatus.OK);
     }
 
@@ -469,11 +999,11 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // First create an attachment video unit
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persistedAttachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
-        var persistedAttachment = persistedAttachmentUnit.getAttachment();
+        var persistedAttachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        var persistedAttachment = persistedAttachmentUnit.attachment();
 
         // Wait for async operation to complete
-        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentUnit.id())).hasSize(SLIDE_COUNT));
 
         // Create a hiddenPages JSON with past dates
         // @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
@@ -485,12 +1015,12 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         String hiddenPagesJson = "[{\"slideId\": \"1\", \"date\": \"" + pastDate + "\"}]";
 
         // Create multipart request parts
-        var attachmentUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachmentUnit).getBytes());
+        var attachmentUnitPart = createAttachmentVideoUnitPart(persistedAttachmentUnit, AttachmentUpdateIntent.NO_FILE_CHANGE);
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
         var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
 
         // Build request with multipart
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentUnit.getId())
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentUnit.id())
                 .file(attachmentUnitPart).file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
         // Should get a bad request due to invalid dates
@@ -506,9 +1036,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var validHiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, validHiddenPagesJson.getBytes());
 
         // Build valid request
-        var validBuilder = MockMvcRequestBuilders
-                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentUnit.getId()).file(attachmentUnitPart)
-                .file(attachmentPart).file(validHiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        var validBuilder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentUnit.id())
+                .file(attachmentUnitPart).file(attachmentPart).file(validHiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
         // Should succeed with valid dates
         request.performMvcRequest(validBuilder).andExpect(status().isOk());
@@ -520,11 +1049,11 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // First create an attachment video unit
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persistedAttachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
-        var persistedAttachment = persistedAttachmentUnit.getAttachment();
+        var persistedAttachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        var persistedAttachment = persistedAttachmentUnit.attachment();
 
         // Wait for async operation to complete
-        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentUnit.id())).hasSize(SLIDE_COUNT));
 
         String foreverDate = "9999-12-31T23:59:59.999+02:00";
 
@@ -532,12 +1061,12 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         String hiddenPagesJson = "[{\"slideId\": \"1\", \"date\": \"" + foreverDate + "\"}]";
 
         // Create multipart request parts
-        var attachmentUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachmentUnit).getBytes());
+        var attachmentUnitPart = createAttachmentVideoUnitPart(persistedAttachmentUnit, AttachmentUpdateIntent.NO_FILE_CHANGE);
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
         var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
 
         // Build request with multipart
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentUnit.getId())
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentUnit.id())
                 .file(attachmentUnitPart).file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
         // Should succeed with "forever" dates
@@ -550,11 +1079,11 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // First create an attachment video unit
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
-        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.attachment();
 
         // Wait for async operation to complete
-        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.id())).hasSize(SLIDE_COUNT));
 
         // Create a hiddenPages JSON with past dates using the correct format
         // The format should be exactly "yyyy-MM-dd'T'HH:mm:ss.SSSXXX" (without the timezone ID in brackets)
@@ -566,15 +1095,13 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         String hiddenPagesJson = "[{\"slideId\": \"1\", \"date\": \"" + pastDate + "\"}]";
 
         // Create multipart request parts
-        var attachmentUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
-                mapper.writeValueAsString(persistedAttachmentVideoUnit).getBytes());
+        var attachmentUnitPart = createAttachmentVideoUnitPart(persistedAttachmentVideoUnit, AttachmentUpdateIntent.NO_FILE_CHANGE);
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
         var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
 
         // Build request with multipart
-        var builder = MockMvcRequestBuilders
-                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
-                .file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.id())
+                .file(attachmentUnitPart).file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
         // Should get a bad request due to invalid dates (dates in the past)
         request.performMvcRequest(builder).andExpect(status().isBadRequest());
@@ -589,7 +1116,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
         // Build valid request
         var validBuilder = MockMvcRequestBuilders
-                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.id()).file(attachmentUnitPart)
                 .file(attachmentPart).file(validHiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
         // Should succeed with valid dates
@@ -632,7 +1159,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void updateAttachmentVideoUnit_wellFormedYouTubeUrl_shouldUpdate() throws Exception {
         persistAttachmentVideoUnitWithLecture();
         attachmentVideoUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isOk());
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, null)).andExpect(status().isOk());
     }
 
     @Test
@@ -640,6 +1167,58 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void updateAttachmentVideoUnit_nonYouTubeUrl_shouldUpdate() throws Exception {
         persistAttachmentVideoUnitWithLecture();
         attachmentVideoUnit.setVideoSource("https://vimeo.com/123456789");
-        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isOk());
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, null)).andExpect(status().isOk());
+    }
+
+    // The videoSource is rendered into an <iframe src> for every viewer of the lecture, so a scheme that would execute
+    // there is refused on the way in. Without this the client would be the only thing standing between an editor and
+    // stored script execution in a student's session.
+    @ParameterizedTest
+    @ValueSource(strings = { "javascript:alert(1)", "JavaScript:alert(1)", "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==", "vbscript:msgbox(1)",
+            "file:///etc/passwd" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_nonEmbeddableScheme_shouldReturnBadRequest(String videoSource) throws Exception {
+        attachmentVideoUnit.setVideoSource(videoSource);
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidVideoSourceScheme"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "javascript:alert(1)", "data:text/html,<script>alert(1)</script>" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_nonEmbeddableScheme_shouldReturnBadRequest(String videoSource) throws Exception {
+        persistAttachmentVideoUnitWithLecture();
+        attachmentVideoUnit.setVideoSource(videoSource);
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, null)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidVideoSourceScheme"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_httpUrl_shouldCreate() throws Exception {
+        attachmentVideoUnit.setVideoSource("http://live.rbg.tum.de/w/course/1");
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
+    }
+
+    // A browser strips tabs and line breaks out of a URL before parsing it, so a scheme split across one of them
+    // reaches the page whole. The scheme check has to see what the browser will see.
+    @ParameterizedTest
+    @ValueSource(strings = { "java\nscript:alert(1)", "java\tscript:alert(1)", "java\rscript:alert(1)", " javascript:alert(1)" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_schemeHiddenByControlCharacters_shouldReturnBadRequest(String videoSource) throws Exception {
+        attachmentVideoUnit.setVideoSource(videoSource);
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidVideoSourceScheme"));
+    }
+
+    // Validating the scheme must not turn into validating the whole URL. A recording link with a space or an umlaut in
+    // its path is ordinary, was always accepted, and has nothing to do with the scheme.
+    @ParameterizedTest
+    @ValueSource(strings = { "https://live.rbg.tum.de/w/Einführung in die Informatik/1", "https://live.rbg.tum.de/w/Übung/1", "https://example.org/a b c.mp4",
+            "https://example.org/video.mp4 " })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_urlNeedingEncoding_shouldCreate(String videoSource) throws Exception {
+        attachmentVideoUnit.setVideoSource(videoSource);
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
     }
 }

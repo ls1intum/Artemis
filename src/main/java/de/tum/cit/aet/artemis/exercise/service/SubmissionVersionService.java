@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -31,9 +31,13 @@ public class SubmissionVersionService {
 
     protected final UserRepository userRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, ObjectMapper objectMapper) {
+    private final AsyncSubmissionVersionService asyncSubmissionVersionService;
+
+    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, JsonMapper objectMapper,
+            AsyncSubmissionVersionService asyncSubmissionVersionService) {
+        this.asyncSubmissionVersionService = asyncSubmissionVersionService;
         this.submissionVersionRepository = submissionVersionRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
@@ -47,17 +51,20 @@ public class SubmissionVersionService {
      *
      * @param submission Submission for which to save a version
      * @param user       Author of the submission update
-     * @return created/updated submission version
      */
-    public SubmissionVersion saveVersionForTeam(Submission submission, User user) {
-        return submissionVersionRepository.findLatestVersion(submission.getId()).map(latestVersion -> {
-            if (latestVersion.getAuthor().equals(user)) {
-                return updateExistingVersion(latestVersion, submission);
+    public void saveVersionForTeam(Submission submission, User user) {
+        var latestVersion = submissionVersionRepository.findLatestVersion(submission.getId());
+        if (latestVersion.isEmpty()) {
+            saveVersionForIndividual(submission, user);
+        }
+        else {
+            if (latestVersion.get().getAuthor().equals(user)) {
+                updateExistingVersion(latestVersion.get(), submission);
             }
             else {
-                return saveVersionForIndividual(submission, user);
+                saveVersionForIndividual(submission, user);
             }
-        }).orElseGet(() -> saveVersionForIndividual(submission, user));
+        }
     }
 
     /**
@@ -65,19 +72,39 @@ public class SubmissionVersionService {
      *
      * @param submission Submission for which to save a version
      * @param user       Author of the submission update
-     * @return created/updated submission version
      */
-    public SubmissionVersion saveVersionForIndividual(Submission submission, User user) {
+    public void saveVersionForIndividual(Submission submission, User user) {
         SubmissionVersion version = new SubmissionVersion();
         version.setAuthor(user);
         version.setSubmission(submission);
         version.setContent(getSubmissionContent(submission));
-        return submissionVersionRepository.save(version);
+        submissionVersionRepository.save(version);
     }
 
-    private SubmissionVersion updateExistingVersion(SubmissionVersion version, Submission submission) {
+    /**
+     * Saves a version for the given individual submission without making the caller wait for the write.
+     * <p>
+     * The content is serialized here, on the calling thread, so only identifiers and a finished {@code String} cross
+     * the thread boundary. Handing the entities themselves to another thread would mean touching them outside the
+     * session that loaded them, which is what usually makes this kind of change go wrong.
+     * <p>
+     * Nothing in the request reads the version back, so the student does not need to wait for it. If the executor is
+     * saturated the write happens on the calling thread instead, which is no worse than the previous behaviour: this is
+     * the student's own work and must not be dropped.
+     *
+     * @param submission Submission for which to save a version
+     * @param user       Author of the submission update
+     */
+    public void saveVersionForIndividualAsync(Submission submission, User user) {
+        long submissionId = submission.getId();
+        long userId = user.getId();
+        String content = getSubmissionContent(submission);
+        asyncSubmissionVersionService.write(submissionId, userId, content);
+    }
+
+    private void updateExistingVersion(SubmissionVersion version, Submission submission) {
         version.setContent(getSubmissionContent(submission));
-        return submissionVersionRepository.save(version);
+        submissionVersionRepository.save(version);
     }
 
     private String getSubmissionContent(Submission submission) {
@@ -94,7 +121,7 @@ public class SubmissionVersionService {
                     // however directly manipulating the object is dangerous because it will be returned to the client.
                     return objectMapper.writeValueAsString(quizSubmission.getSubmittedAnswers());
                 }
-                catch (JsonProcessingException e) {
+                catch (JacksonException e) {
                     log.error("Error when writing quiz submission {} to json value. Will fall back to string representation", submission, e);
                     return submission.toString();
                 }

@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
-import { NgxGraphModule, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { Subject } from 'rxjs';
 import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { CompetencyNodeComponent, SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
+import { DagGraphComponent } from 'app/atlas/shared/dag-graph/dag-graph.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-competency-graph',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CompetencyNodeComponent, NgxGraphModule, TranslateDirective],
+    imports: [CompetencyNodeComponent, DagGraphComponent, TranslateDirective],
     templateUrl: './competency-graph.component.html',
     styleUrl: './competency-graph.component.scss',
 })
@@ -21,17 +21,8 @@ export class CompetencyGraphComponent {
     });
     readonly nodes = computed(() => this.internalCompetencyGraph().nodes || []);
     readonly edges = computed(() => {
-        return (
-            this.internalCompetencyGraph().edges?.map((edge) => ({
-                ...edge,
-                id: `edge-${edge.id}`,
-            })) || []
-        );
+        return this.internalCompetencyGraph().edges?.map((edge) => cloneWith(edge, { id: `edge-${edge.id}` })) || [];
     });
-
-    readonly update$ = new Subject<boolean>();
-    readonly center$ = new Subject<boolean>();
-    readonly zoomToFit$ = new Subject<NgxGraphZoomOptions>();
 
     constructor() {
         effect(() => this.internalCompetencyGraph.set(this.competencyGraph()));

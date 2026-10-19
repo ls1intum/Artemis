@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -150,7 +151,7 @@ class ProgrammingLanguageConfigurationTest {
         for (ProgrammingLanguage language : ProgrammingLanguage.getEnabledLanguages()) {
             final Map<String, String> languageImages = new HashMap<>();
             languageImages.put("default", language.name());
-            images.put(language.toString().toLowerCase(), languageImages);
+            images.put(language.toString().toLowerCase(Locale.ROOT), languageImages);
         }
 
         return images;

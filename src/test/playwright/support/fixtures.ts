@@ -5,6 +5,7 @@ import { NavigationBar } from './pageobjects/NavigationBar';
 import { CourseManagementAPIRequests } from './requests/CourseManagementAPIRequests';
 import { CourseManagementPage } from './pageobjects/course/CourseManagementPage';
 import { CompetencyManagementPage } from './pageobjects/course/CompetencyManagementPage';
+import { PresentationAssessmentManagementPage } from './pageobjects/assessment/PresentationAssessmentManagementPage';
 import { CourseCreationPage } from './pageobjects/course/CourseCreationPage';
 import { UserManagementAPIRequests } from './requests/UserManagementAPIRequests';
 import { Commands } from './commands';
@@ -71,12 +72,14 @@ import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
 import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/programming/ProgrammingExercisesSubmissionsPage';
+import { ProgrammingExerciseExportDialog } from './pageobjects/exercises/programming/ProgrammingExerciseExportDialog';
+import type { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 
 // Define custom types for fixtures
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number, minResults?: number) => Promise<void>;
-    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number, initialResultId?: number | null) => Promise<StudentParticipation>;
+    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number, initialResultId?: number | null) => Promise<StudentParticipationDTO>;
     toggleSidebar: () => Promise<void>;
     createCompetency: (
         courseId: number,
@@ -101,6 +104,7 @@ export type ArtemisPageObjects = {
     textExerciseAssessment: TextExerciseAssessmentPage;
     courseManagement: CourseManagementPage;
     competencyManagement: CompetencyManagementPage;
+    presentationAssessmentManagement: PresentationAssessmentManagementPage;
     courseManagementExercises: CourseManagementExercisesPage;
     courseCreation: CourseCreationPage;
     courseList: CoursesPage;
@@ -140,6 +144,7 @@ export type ArtemisPageObjects = {
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
     programmingExerciseSubmissions: ProgrammingExerciseSubmissionsPage;
+    programmingExerciseExportDialog: ProgrammingExerciseExportDialog;
     quizExerciseCreation: QuizExerciseCreationPage;
     quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
@@ -198,15 +203,21 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
                 if (Commands.isNoNavbarRoute(currentUrl) || isUnauthenticatedRoute(currentUrl)) {
                     return response;
                 }
-                const attached = await page
+                let attached = await page
                     .locator('#account-menu')
                     .waitFor({ state: 'attached', timeout: 1_000 })
                     .then(() => true)
                     .catch(() => false);
-                if (!attached) {
+                // Recover from a failed lazy-chunk bootstrap by re-fetching the shell. A single reload
+                // is usually enough, but under sustained multi-node load the chunk fetch behind the HTTPS
+                // LB occasionally stalls again on the first retry (observed as a blank page: only the
+                // footer renders, the navbar never attaches). Retry a few times before giving up. Each
+                // attempt is bounded by the 10s attach wait, so a genuinely dead page still fails fast
+                // enough for the test's own assertion to surface the real problem.
+                for (let attempt = 0; attempt < 3 && !attached; attempt++) {
                     // Before reloading, re-check the URL — Angular's auth guard may have
                     // redirected to /sign-in (or another unauthenticated route) during the
-                    // 1s wait, in which case reloading would disrupt that redirect and pin
+                    // wait, in which case reloading would disrupt that redirect and pin
                     // the page back to a route the user cannot access. The reload-recovery
                     // is for "Angular lazy chunk failed to bootstrap", not "user is
                     // unauthenticated and Angular redirected them out".
@@ -214,12 +225,19 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
                     if (Commands.isNoNavbarRoute(urlAfterWait) || isUnauthenticatedRoute(urlAfterWait)) {
                         return response;
                     }
-                    await page.reload();
-                    await page.waitForLoadState('load');
-                    await page
+                    // Wait only for `domcontentloaded`, NOT the full `load` event: when a lazy chunk
+                    // stalls (an intermittent TLS/module-fetch failure behind the multi-node HTTPS LB)
+                    // the `load` event may never fire, and waiting on it would hang the navigation until
+                    // the per-test timeout. The `#account-menu` wait below is the real recovery signal.
+                    // Catch a throwing reload (a transient navigation abort / "frame was detached" can
+                    // make reload() itself reject) so it counts as a failed attempt and the loop keeps
+                    // retrying, instead of escaping to the outer catch and skipping the remaining tries.
+                    await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => undefined);
+                    attached = await page
                         .locator('#account-menu')
                         .waitFor({ state: 'attached', timeout: 10_000 })
-                        .catch(() => undefined);
+                        .then(() => true)
+                        .catch(() => false);
                 }
                 // Detect & recover from `/courses` lazy-chunk fall-back drift. The navbar
                 // attaches fine on /courses too, so the attached-check above does not catch
@@ -292,6 +310,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     competencyManagement: async ({ page }, use) => {
         await use(new CompetencyManagementPage(page));
+    },
+    presentationAssessmentManagement: async ({ page }, use) => {
+        await use(new PresentationAssessmentManagementPage(page));
     },
     courseManagementExercises: async ({ page }, use) => {
         await use(new CourseManagementExercisesPage(page));
@@ -410,6 +431,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     programmingExerciseSubmissions: async ({ page }, use) => {
         await use(new ProgrammingExerciseSubmissionsPage(page));
+    },
+    programmingExerciseExportDialog: async ({ page }, use) => {
+        await use(new ProgrammingExerciseExportDialog(page));
     },
     quizExerciseCreation: async ({ page }, use) => {
         await use(new QuizExerciseCreationPage(page));

@@ -1,3 +1,5 @@
+@use '../artemis-variables' as artemis;
+
 // === BOOTSTRAP ===
 // Mostly default values, including them here for completeness and comparison
 
@@ -25,6 +27,7 @@ $teal: #20c997;
 $cyan: #17a2b8;
 
 $primary: $blue;
+
 // Darker primary tone used for on-brand buttons/tags that sit on white/light backgrounds and
 // need WCAG AA (≥ 4.5:1) contrast. 1f5c9a vs #fff ≈ 6.14:1.
 $primary-dark: #1f5c9a;
@@ -44,7 +47,7 @@ $navbar-dark-color: rgba($white, 0.6);
 $navbar-dark-hover-color: $white;
 
 // Global colors
-$artemis-dark: #353d47; // (not bootstrap)
+$artemis-dark: #353d47;
 $link-color: $primary;
 
 // Border
@@ -56,7 +59,7 @@ $header-footer-combined-height: 2rem;
 
 // Sidebar
 $sidebar-header-footer-combined-height: 88px;
-$sidebar-width: 255px;
+$sidebar-width: 235px;
 $spacing-modules: 1rem;
 
 // Module and Navigationbar
@@ -113,7 +116,7 @@ $tab-bar-color-active: $primary;
 $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 20);
-$hover-slightly-darker-body-bg: #f3f3f3;
+$hover-slightly-darker-body-bg: #f1f5f9;
 
 // Borders
 $theme-switch-box-border-color: $border-color;
@@ -128,11 +131,17 @@ $border-lightgrey: rgba(0, 0, 0, 0.125);
 $text-lightgrey: rgba(0, 0, 0, 0.125);
 $form-control-focus-background: white;
 $form-control-color: #303030;
+$artemis-control-background: #fff;
+$artemis-control-border: #cbd5e1;
+$artemis-control-border-hover: #94a3b8;
+$artemis-control-color: #334155;
+$artemis-control-muted: #64748b;
+$artemis-control-disabled-background: #e2e8f0;
+$artemis-control-disabled-color: #64748b;
 $browserupgrade-color: black;
 $browserupgrade-color-background: #ccc;
 $ng-valid-border: green;
 $ng-invalid-border: red;
-$gutter-background: #f1f1f1;
 $error-color: white;
 $error-background: red;
 $readonly-background: #eee;
@@ -193,9 +202,6 @@ $fo-container-box-icon-background: $gray-200;
 $fo-blue-font-color: #3070b3;
 $fo-box-overlay-background: $gray-100;
 
-// Header Participation
-$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
-
 // Markdown Editor
 $md-wrapper-body-bg: white;
 $md-wrapper-color: $artemis-dark;
@@ -204,31 +210,31 @@ $md-editor-background: white;
 $md-file-input-border-color: $border-color;
 $md-resize-icon-color: rgba(0, 0, 0, 0.125);
 
-// Metis
-$metis-conversation-sidebar: $gray-600;
-$metis-conversation-sidebar-active: $gray-900;
-$metis-conversation-sidebar-muted: $gray-500;
-$metis-conversation-sidebar-button-background-hover: $gray-400;
+// Communication
+$communication-conversation-sidebar: $gray-600;
+$communication-conversation-sidebar-active: $gray-900;
+$communication-conversation-sidebar-muted: $gray-500;
+$communication-conversation-sidebar-button-background-hover: $gray-400;
 
-$metis-light-gray: #979797;
-$metis-gray: #6a737d;
-$metis-blue: $link-color;
-$metis-light-blue: #e3ecf3;
-$metis-green: #33cd32;
-$metis-course-discussion-select-bg: white;
+$communication-light-gray: #979797;
+$communication-gray: #6a737d;
+$communication-blue: $link-color;
+$communication-light-blue: #e3ecf3;
+$communication-green: #33cd32;
+$communication-course-discussion-select-bg: white;
 
-$metis-pinned-post-highlight-color: lighten($metis-blue, 46%);
+$communication-pinned-post-highlight-color: lighten($communication-blue, 46%);
 
-$metis-answer-post-background-color: rgba(0, 0, 0, 0.02);
+$communication-answer-post-background-color: rgba(0, 0, 0, 0.02);
 
 $reaction-button-default-color: rgba(242, 242, 242);
 $reaction-button-hover-color: rgba(255, 255, 255);
-$reaction-button-reacted-color: $metis-light-blue;
-$reaction-button-reacted-accent-color: $metis-blue;
+$reaction-button-reacted-color: $communication-light-blue;
+$reaction-button-reacted-accent-color: $communication-blue;
 $reaction-button-emoji-count-color: black;
 
-$metis-selection-option-background: white;
-$metis-selection-option-hover-background: $gray-200;
+$communication-selection-option-background: white;
+$communication-selection-option-hover-background: $gray-200;
 
 // Component: plagiarism-case-instructor-detail-view.component.scss
 $plagiarism-verdict-disabled-overlay-color: rgba($gray-300, 0.9);
@@ -281,7 +287,7 @@ $edit-quiz-q-dnd-drop-location-hover-bg: rgba(255, 255, 255, 0.8);
 
 // Quiz Exercises
 $quiz-drag-items-background: white;
-$quiz-drag-item-background: #fafafa;
+$quiz-drag-item-background: #f8fafc;
 $quiz-drag-item-border: #696969;
 $quiz-drag-item-color: black;
 
@@ -312,7 +318,7 @@ $quiz-participation-question-score-incorrect-result: $warning;
 $quiz-scoring-info-student-modal-question-correct: $success;
 $quiz-scoring-info-student-modal-question-wrong: $warning;
 
-$quiz-question-background: #fefefe;
+$quiz-question-background: #fff;
 $quiz-question-border-color: lightgrey;
 
 $quiz-visual-question-border-color: $quiz-question-border-color;
@@ -333,7 +339,7 @@ $dnd-question-drop-location-results-sample-background: white;
 $dnd-question-drop-location-result-symbol-color: $warning;
 $dnd-question-drop-location-result-invalid-color: $danger;
 $dnd-question-drop-location-drag-item-background: white;
-$dnd-question-dnd-items-drag-items-background: #eee;
+$dnd-question-dnd-items-drag-items-background: #e2e8f0;
 $dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
 $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 
@@ -358,14 +364,17 @@ $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 
 // SGI
 $edit-sqi-grading-instructions-update-border: lightgray;
-$edit-sqi-criterion-title-row-background: rgb(242 242 242);
+$edit-sqi-criterion-title-row-background: #f1f5f9;
 
 $sgi-assessment-layout-zero-background: #fff2cc;
 $sgi-assessment-layout-positive-background: #e3f0da;
 $sgi-assessment-layout-negative-background: #fbe5d6;
 
 // Code Editor
-$code-editor-file-browser-header-background: #f5f5f5;
+$code-editor-panel-header-background: $white;
+$code-editor-panel-header-color: $body-color;
+$code-editor-panel-header-border: $border-color;
+$code-editor-file-browser-header-background: #f1f5f9;
 $code-editor-file-browser-header-border: #ddd;
 $code-editor-file-browser-tree-hover: #f5f5f5;
 $code-editor-file-browser-input-background: white;
@@ -374,7 +383,6 @@ $code-editor-file-browser-selected-file-background: #428bca;
 $code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover;
 $code-editor-diff-newline-background: rgba(63, 185, 80, 0.4);
 $code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
-$code-editor-grid-grip-lines-color: $gray-500;
 
 // Monaco editor
 $monaco-suggest-widget-background: $white;
@@ -413,10 +421,6 @@ $lecture-unit-card-body-background: white;
 $lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
-$lecture-unit-create-row-hover-background: $gray-400;
-
-// Lecture Attachments
-$lecture-attachment-edit-overlay-color: rgba($gray-300, 0.9);
 
 // Notification sidebar
 $notification-sb-background: $brighter-body-bg;
@@ -427,16 +431,15 @@ $notification-sb-hover-child-bg: rgba(62, 138, 204, 0.2);
 $notification-sb-icon-color: var(--bs-body-color);
 
 // Text Editor
-$text-editor-background: #f9f9f9;
-$text-editor-focus-background: #fbfbfb;
+$text-editor-background: #f8fafc;
+$text-editor-focus-background: #f8fafc;
 $text-editor-color: black;
-$text-editor-border-color: #d5d5d5;
+$text-editor-border-color: #cbd5e1;
 
 // Exam (Manage)
-$exam-checklist-exercise-group-table-background: white;
 
 $exercise-group-border-color: #ccc;
-$exercise-group-header-background: #e1e1e1;
+$exercise-group-header-background: #e2e8f0;
 $exercise-group-header-badge-color: $warning;
 
 // Grading system
@@ -467,18 +470,14 @@ $team-short-name-background: rgba(0, 0, 180, 0.05);
 $team-short-name-color: #053d97;
 
 // Exam
-$exam-navigation-bar-background-color: #ecebe7;
+$exam-navigation-bar-background-color: #e2e8f0;
 $exam-navigation-bar-synced-color: white;
 $exam-navigation-bar-synced-background-color: #3e8acc;
-$exam-navigation-bar-not-synced-color: #1a1a1a;
-$exam-navigation-bar-not-synced-background-color: #e8bf48;
-$exam-navigation-bar-inactive-background: gray;
 $exam-navigation-bar-active-background: #276091;
 $exam-navigation-bar-exercise-index-color: black;
 $exam-timer-label-color: #212529;
 $exam-timer-remaining-time-background: white;
 $exam-timer-critical-background: $warning;
-$exam-exercise-overview-table-background: white;
 $exam-participation-footer-background: white;
 $exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $exam-participation-footer-connected-background: #d1ecf1;
@@ -528,21 +527,75 @@ $close-circle-opacity: 0.7;
 
 // Apollon
 $apollon-primary: $primary;
-$apollon-primary-contrast: $gray-900;
-$apollon-secondary: $gray-600;
-$apollon-warning-yellow: $warning;
-$apollon-background: white;
+$apollon-primary-foreground: $white;
+$apollon-foreground: $body-color;
+$apollon-secondary: $secondary;
+$apollon-background: $module-bg;
 $apollon-background-variant: $gray-100;
 $apollon-gray: $gray-200;
 $apollon-gray-variant: $gray-700;
 $apollon-grid: rgba(36, 39, 36, 0.1);
+$apollon-guide-vertical: $danger;
+$apollon-guide-horizontal: $primary;
+$apollon-danger: $danger;
+$apollon-surface: $card-bg;
+$apollon-surface-sunken: $gray-100;
+$apollon-border: $border-color;
+$apollon-border-subtle: $gray-200;
+
+// Apollon paints its embedded @tumaet/ui primitives (the popover's buttons and
+// inputs, selects, menus) from this scale, so it has to be the SAME ramp the rest
+// of Artemis uses — not the legacy Bootstrap $border-radius-* values, which are
+// roughly half the size and made the editor's buttons read as visibly squarer
+// than every other TUM AET UI button on the page.
+$apollon-radius: var(--tumaet-ui-radius-md);
+$apollon-radius-sm: var(--tumaet-ui-radius-sm);
+$apollon-radius-md: var(--tumaet-ui-radius-md);
+$apollon-radius-lg: var(--tumaet-ui-radius-md);
+$apollon-shadow: 0 0.25rem 0.75rem rgba($black, 0.18);
+$apollon-hover-neutral: rgba($body-color, 0.075);
+$apollon-interactive-selection: $warning;
+$apollon-dropzone-accent: $primary;
+$apollon-dropzone-accent-fill: rgba($primary, 0.4);
+$apollon-on-collaboration-cursor: $white;
+$apollon-assessment-positive-text: $artemis-alert-success-color;
+$apollon-assessment-positive-bg: $artemis-alert-success-background;
+$apollon-assessment-negative-text: $artemis-alert-danger-color;
+$apollon-assessment-negative-bg: $artemis-alert-danger-background;
+$apollon-assessment-zero-text: $artemis-alert-info-color;
+$apollon-assessment-zero-bg: $artemis-alert-info-background;
+$apollon-assessment-ungraded-text: $artemis-alert-neutral-color;
+$apollon-assessment-ungraded-bg: $artemis-alert-neutral-background;
+$apollon-collaboration-color-1: $yellow;
+$apollon-collaboration-color-2: $green;
+$apollon-collaboration-color-3: $blue;
+$apollon-collaboration-color-4: $red;
+$apollon-collaboration-color-5: $purple;
+$apollon-collaboration-color-6: $teal;
+$apollon-collaboration-color-7: $orange;
+$apollon-collaboration-color-8: $cyan;
+$apollon-swatch-slate: $gray-700;
+$apollon-swatch-red: $red;
+$apollon-swatch-orange: $orange;
+$apollon-swatch-amber: $yellow;
+$apollon-swatch-green: $green;
+$apollon-swatch-teal: $teal;
+$apollon-swatch-blue: $blue;
+$apollon-swatch-violet: $purple;
+$apollon-swatch-pink: $pink;
+$apollon-chrome-accent: $apollon-primary;
+$apollon-chrome-radius-sm: artemis.$border-radius;
+$apollon-chrome-radius-md: artemis.$border-radius-lg;
+$apollon-chrome-radius-lg: artemis.$border-radius-xl;
+$apollon-chrome-edge: 10px;
+$apollon-chrome-gap: 12px;
 
 // Feedback Suggestions (Athena)
 $feedback-suggestions-primary: rgb(181, 78, 254, 1);
 $feedback-suggestions-background: lighten($feedback-suggestions-primary, 24%);
 $feedback-suggestions-input-background: darken($feedback-suggestions-background, 2%);
 
-// NGX Graph Colors
+// Graph Colors
 $graph-light-grey: rgba(153, 153, 153, 1);
 $graph-grey: rgba(127, 127, 127, 255);
 $graph-dark-blue: rgba(53, 61, 71, 1);
@@ -576,6 +629,7 @@ $iris-label-color: $gray-600;
 $iris-accent-border-color: $gray-500;
 $iris-table-header-background: var(--gray-300);
 $iris-onboarding-backdrop: rgba($black, 0.4);
+$iris-blue-background: color-mix(in srgb, var(--primary) 10%, var(--white));
 
 // Iris Communication
 $tutor-suggestion-background: $gray-400;
@@ -606,8 +660,8 @@ $calendar-day-badge-selected: $gray-400;
 $league-badge-bronze-color: #cd7f32;
 $league-badge-silver-color: #c0c0c0;
 $league-badge-gold-color: #ffd700;
-$league-badge-diamond-color: hsl(195, 60%, 50%);
-$league-badge-master-color: hsl(270, 60%, 50%);
+$league-badge-diamond-color: hsl(195deg, 60%, 50%);
+$league-badge-master-color: hsl(270deg, 60%, 50%);
 $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-300;
 
@@ -628,6 +682,11 @@ $ai-modal-description-color: $gray-600;
 $ai-modal-bg: rgba(0, 0, 0, 0.85);
 $ai-modal-subtitle: $black;
 $ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);
+
+// Exercise variant AI wizard
+// Colour only — each call site keeps its own offsets and blur, so one token covers both the
+// option-card hover lift and the smaller icon-tile depth.
+$variant-wizard-elevation-shadow: rgba(0, 0, 0, 0.1);
 
 // Global search navbar (same in both themes since navbar bg is always artemis-dark)
 $global-search-navbar-kbd-bg: #6c757d;

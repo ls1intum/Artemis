@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,8 +25,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.function.ThrowingBiFunction;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
@@ -43,6 +42,7 @@ import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.api.LectureImportApi;
@@ -55,7 +55,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
 import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
@@ -80,6 +79,8 @@ public class LearningObjectImportService {
     private final ExerciseRepository exerciseRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ExerciseConfigurationService exerciseConfigurationService;
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
@@ -117,8 +118,10 @@ public class LearningObjectImportService {
             QuizExerciseImportService quizExerciseImportService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<LectureImportApi> lectureImportApi, CourseCompetencyRepository courseCompetencyRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, GradingCriterionRepository gradingCriterionRepository,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository,
+            ExerciseConfigurationService exerciseConfigurationService) {
         this.exerciseRepository = exerciseRepository;
+        this.exerciseConfigurationService = exerciseConfigurationService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.fileUploadImportApi = fileUploadImportApi;
@@ -181,6 +184,7 @@ public class LearningObjectImportService {
 
                     CourseCompetency importedCompetency = idToImportedCompetency.get(sourceCourseCompetency.getId()).competency();
                     CompetencyExerciseLink link = new CompetencyExerciseLink(importedCompetency, importedExercise, sourceExerciseLink.getWeight());
+                    link.setGeneratedByAi(sourceExerciseLink.isGeneratedByAi());
                     link = competencyExerciseLinkRepository.save(link);
                     importedExercise.getCompetencyLinks().add(link);
                     importedCompetency.getExerciseLinks().add(link);
@@ -193,28 +197,28 @@ public class LearningObjectImportService {
         }
     }
 
-    private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) throws JsonProcessingException {
+    private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
             case FileUploadExercise fileUploadExercise -> {
                 FileUploadImportApi api = fileUploadImportApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadImportApi.class, PROFILE_CORE));
                 yield importOrLoadExercise(fileUploadExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findWithGradingCriteriaByIdElseThrow,
-                        api::importFileUploadExercise);
+                        FileUploadExercise::new, api::importFileUploadExercise);
             }
             case ModelingExercise modelingExercise -> {
                 var api = modelingExerciseImportApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingExerciseImportApi.class));
                 yield importOrLoadExercise(modelingExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findByIdWithExampleSubmissionsAndResultsElseThrow,
-                        api::importModelingExercise);
+                        ModelingExercise::new, api::importModelingExercise);
             }
             case TextExercise textExercise -> {
                 var api = textExerciseImportApi.orElseThrow(() -> new TextApiNotPresentException(TextExerciseImportApi.class));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
-                        api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
+                        api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, TextExercise::new, api::importTextExercise);
             }
             case QuizExercise quizExercise -> importOrLoadExercise(quizExercise, course, quizExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
-                    quizExerciseRepository::findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, (exercise, templateExercise) -> {
+                    quizExerciseRepository::findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, QuizExercise::new, (newQuizExercise, source) -> {
                         try {
-                            return quizExerciseImportService.importQuizExercise(exercise, templateExercise, null);
+                            return quizExerciseImportService.importQuizExercise(newQuizExercise, source, null);
                         }
                         catch (IOException e) {
                             throw new RuntimeException(e);
@@ -224,7 +228,7 @@ public class LearningObjectImportService {
         };
     }
 
-    private Exercise importOrLoadProgrammingExercise(ProgrammingExercise programmingExercise, Course course) throws JsonProcessingException {
+    private Exercise importOrLoadProgrammingExercise(ProgrammingExercise programmingExercise, Course course) {
         Optional<ProgrammingExercise> foundByTitle = programmingExerciseRepository.findWithCompetenciesByTitleAndCourseId(programmingExercise.getTitle(), course.getId());
         Optional<ProgrammingExercise> foundByShortName = programmingExerciseRepository.findByShortNameAndCourseIdWithCompetencies(programmingExercise.getShortName(),
                 course.getId());
@@ -248,15 +252,17 @@ public class LearningObjectImportService {
             programmingExercise.setGradingCriteria(gradingCriteria);
 
             ProgrammingExercise newExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(
-                            programmingExercise.getId());
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(newExercise, programmingExerciseRepository);
+                    .findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(programmingExercise.getId());
+            // The team assignment and plagiarism detection settings are not part of the exercise, so they are read here for the
+            // import to copy; without them the copy would silently get the defaults.
+            exerciseConfigurationService.attachTeamAssignmentConfig(newExercise);
+            exerciseConfigurationService.attachPlagiarismDetectionConfig(newExercise);
             newExercise.setCourse(course);
             newExercise.forceNewProjectKey();
 
             clearProgrammingExerciseAttributes(newExercise);
 
-            return programmingExerciseImportService.importProgrammingExercise(programmingExercise, newExercise, false, false, false);
+            return programmingExerciseImportService.importProgrammingExercise(programmingExercise, newExercise, false, false);
         }
     }
 
@@ -269,7 +275,6 @@ public class LearningObjectImportService {
         programmingExercise.setStudentParticipations(new HashSet<>());
         programmingExercise.setTutorParticipations(new HashSet<>());
         programmingExercise.setExampleSubmissions(new HashSet<>());
-        programmingExercise.setAttachments(new HashSet<>());
         programmingExercise.setPlagiarismCases(new HashSet<>());
         programmingExercise.setCompetencyLinks(new HashSet<>());
     }
@@ -277,28 +282,49 @@ public class LearningObjectImportService {
     /**
      * Imports or loads an exercise.
      *
-     * @param exercise       The source exercise for the import
-     * @param course         The course to import the exercise into
-     * @param findFunction   The function to find an existing exercise by title
-     * @param loadForImport  The function to load an exercise for import
-     * @param importFunction The function to import the exercise
+     * @param exercise            The source exercise for the import
+     * @param course              The course to import the exercise into
+     * @param findFunction        The function to find an existing exercise by title
+     * @param loadForImport       The function to load the source exercise (with its content) for import
+     * @param newExerciseSupplier Supplier for a fresh target exercise of the concrete type
+     * @param importFunction      The function to import the exercise: {@code (newExercise, sourceExercise)}
      * @return The imported or loaded exercise
      * @param <E> The type of the exercise
      */
     private <E extends Exercise> Exercise importOrLoadExercise(E exercise, Course course, ThrowingBiFunction<String, Long, Optional<E>> findFunction,
-            Function<Long, E> loadForImport, BiFunction<E, E, E> importFunction) {
+            Function<Long, E> loadForImport, Supplier<E> newExerciseSupplier, BiFunction<E, E, E> importFunction) {
         Optional<E> foundByTitle = findFunction.apply(exercise.getTitle(), course.getId());
         if (foundByTitle.isPresent()) {
             return foundByTitle.get();
         }
-        else {
-            exercise = loadForImport.apply(exercise.getId());
-            exercise.setCourse(course);
-            exercise.setId(null);
-            exercise.setCompetencyLinks(new HashSet<>());
-
-            return importFunction.apply(exercise, exercise);
-        }
+        E sourceExercise = loadForImport.apply(exercise.getId());
+        // Build a fresh target carrying the destination and the fields the import service's backfill cannot recover from
+        // a fresh entity (non-null defaults on a new exercise); all remaining content is copied from the source by the
+        // import service. newExercise and sourceExercise must be distinct instances so copying children does not mutate
+        // the source's collections in place.
+        E newExercise = newExerciseSupplier.get();
+        newExercise.setCourse(course);
+        // The fresh target has no grading criteria of its own; null asks the import service to deep-copy the source's (an
+        // initialized empty collection would count as "the caller wants none", see ExerciseImportService#copyExerciseBasis).
+        newExercise.setGradingCriteria(null);
+        newExercise.setTitle(sourceExercise.getTitle());
+        newExercise.setMaxPoints(sourceExercise.getMaxPoints());
+        newExercise.setBonusPoints(sourceExercise.getBonusPoints());
+        newExercise.setIncludedInOverallScore(sourceExercise.getIncludedInOverallScore());
+        // presentationScoreEnabled has a non-null default (false) on a fresh exercise, so the import service's backfill
+        // cannot recover it; copy it explicitly so a source with presentation scoring enabled is not silently disabled.
+        newExercise.setPresentationScoreEnabled(sourceExercise.getPresentationScoreEnabled());
+        // mode also has a non-null default, so the import service's backfill cannot recover it; copy it explicitly so a
+        // TEAM source is not silently imported as INDIVIDUAL (the import service then copies the team config).
+        newExercise.setMode(sourceExercise.getMode());
+        // Competency import replicates the source dates (they are optionally shifted afterwards, relative to the new
+        // reference date), unlike the other import paths that intentionally reset dates. The import service keeps the
+        // dates already present on newExercise, so copy them from the source here.
+        newExercise.setReleaseDate(sourceExercise.getReleaseDate());
+        newExercise.setStartDate(sourceExercise.getStartDate());
+        newExercise.setDueDate(sourceExercise.getDueDate());
+        newExercise.setAssessmentDueDate(sourceExercise.getAssessmentDueDate());
+        return importFunction.apply(newExercise, sourceExercise);
     }
 
     /**
@@ -355,6 +381,7 @@ public class LearningObjectImportService {
 
         CourseCompetency importedCompetency = idToImportedCompetency.get(sourceCourseCompetency.getId()).competency();
         CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(importedCompetency, importedLectureUnit, sourceLectureUnitLink.getWeight());
+        link.setGeneratedByAi(sourceLectureUnitLink.isGeneratedByAi());
         link = competencyLectureUnitLinkRepository.save(link);
         importedLectureUnit.getCompetencyLinks().add(link);
         importedCompetency.getLectureUnitLinks().add(link);

@@ -3,13 +3,10 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { MetricsSystemComponent } from 'app/admin/metrics/blocks/metrics-system/metrics-system.component';
 
 describe('MetricsSystemComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: MetricsSystemComponent;
     let fixture: ComponentFixture<MetricsSystemComponent>;
 

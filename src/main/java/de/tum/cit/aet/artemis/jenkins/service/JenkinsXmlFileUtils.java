@@ -10,6 +10,7 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -100,10 +101,28 @@ public class JenkinsXmlFileUtils {
      * @throws TransformerException in case of errors
      */
     public static String writeToString(Document document) throws TransformerException {
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
+        Transformer transformer = getTransformerFactory().newTransformer();
         StringWriter stringWriter = new StringWriter();
         transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
         return stringWriter.toString();
+    }
+
+    /**
+     * Create a transformer factory that will not reach outside the document it is given.
+     * <p>
+     * The counterpart to {@link #getDocumentBuilderFactory()}: hardening the parser alone leaves the transform step
+     * able to resolve an external DTD or stylesheet, so both halves of an XML round trip need the same treatment.
+     * Every transform in Artemis writes a document that is already in memory and never needs an external reference.
+     *
+     * @return a transformer factory with external DTD and stylesheet access disabled
+     * @throws TransformerConfigurationException if the factory rejects the secure-processing feature
+     */
+    @NonNull
+    public static TransformerFactory getTransformerFactory() throws TransformerConfigurationException {
+        final var transformerFactory = TransformerFactory.newInstance();
+        transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        return transformerFactory;
     }
 }

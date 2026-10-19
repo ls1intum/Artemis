@@ -1,4 +1,5 @@
 ---
+id: courses
 title: Courses
 sidebar_label: Courses
 ---
@@ -9,52 +10,67 @@ import courseSettingsImg from "./assets/courses/course_settings.png";
 import courseOverviewImg from "./assets/courses/course_overview.png";
 import courseHeaderImg from "./assets/courses/course_header.png";
 import courseManagementImg from "./assets/courses/course_management.png";
-import btnCourseOverview from "./assets/courses/course_overview_button.png";
-import btnCourseCreate from "./assets/courses/course_create.png";
-import btnCourseDelete from "./assets/courses/course_delete.png";
-import btnCourseEdit from "./assets/courses/course_edit.png";
-import btnCourseManagement from "./assets/courses/course_management_button.png";
-
-# Customizing Courses
 
 Courses contain [exercises](/instructor/exercises/intro), [exams](/instructor/exams/intro) and lectures.
 Different roles can be attached to different sets of course participants: Instructors, Editors, Tutors and Users.
 You can find a detailed listing of the different roles and their corresponding permissions [here](/admin/access-rights).
 
----
-
 ## Creating courses
 
-Administrators can create new courses by clicking on <Image src={btnCourseManagement} alt={"Course Management"} size={ImageSize.small} inline /> in the header
-and then clicking on <Image src={btnCourseCreate} alt={"Create new course"} size={ImageSize.small} inline />
+Administrators can create new courses by clicking **Course Management** in the header
+and then **Create new course**.
 
-Administrators can then specify options in the creation form, Instructors can later change these values:
+Administrators can then specify options in the creation form, Instructors can later change these values. Fields
+marked with a red asterisk are required. The bar at the bottom of the page keeps **Cancel** and **Save** in view and
+lists every field that still needs attention; select a field name there to jump to it. Pressing **Save** before
+everything is filled in highlights each missing or invalid field.
 
-- **Title** – Name of the course (shown in <Image src={btnCourseOverview} alt={"Course Overview"} size={ImageSize.small} inline />)
-- **Short Name** – Unique identifier (cannot be changed later)
-- **Color** – Used throughout UI including overview
-- **Course Description** – Shown during registration & course header
-- **Course Organizations** – Restricts course visibility based on user organization
-- **Start/End** – Active registration window
-- **Test Course** – Exercises/exams hidden from regular users
-- **Semester** – Used for grouping in dashboard
-- **Maximum number of points** – Used for grading key calculations
-- **Decimal precision for scoring**
+**General Information**
+
+- **Course Icon** and **Color** – Shown in the course list and the course header
+- **Title** (required) – Name of the course, shown in **Course Overview**
+- **Short Name** (required) – Unique identifier of 3 to 24 letters or digits, starting with a letter. It appears in
+  URLs and group names and cannot be changed later.
+- **Course Description** – Shown during enrollment and in the course header
+- **Semester** (required) – Groups courses in the dashboard and in the archive. Selecting a semester fills the start and
+  end dates with that semester's period, as long as you have not set them yourself, so choose it first.
+- **Start/End** (required) – The period the course runs for. The end date drives archival and the automatic data
+  cleanup, so it cannot be left empty.
+- **Tutorial Group Time Zone** – Used to interpret the times of tutorial group sessions. The field suggests every time
+  zone Artemis supports, including names such as `UTC` and `Europe/Kyiv`, and only accepts those. Once a course has a
+  time zone, it can be changed but not removed.
+- **Test Course** – Exercises and exams are hidden from regular users. Test courses are never part of the automatic
+  deletion of student data, so the two settings below are only shown for other courses.
+- **Grade-relevant course** – Checked by default. Student data of grade-relevant courses is kept for the legally required
+  retention period (by default 5 years); uncheck it for courses whose results do not count towards official grades, so
+  their student data is deleted earlier (by default after 1 year).
+- **Data-retention hold** – Check it while an objection or legal proceeding concerning the course is pending. A course on
+  hold is left out of the automatic deletion of student data until the hold is lifted.
+
+**Exercises & Grading**
+
+- **Max. Points for Course** – Used for grading key calculations
+- **Decimal Places for Score Calculations** (required)
 - **Default Programming Language**
-- **Customize group names** (Admin-only)
-- **Enable complaints**
-- **Enable more feedback requests**
-- **Enable postings by students**
-- **Online Course** (LTI integration, exclusive with registration)
-- **Student Course Registration Enabled**
+- **Enable Complaints** and **Enable More Feedback Requests**, each with the limits that apply while it is checked
 
-<Image src={courseSettingsImg} alt={"Course Settings"} size={ImageSize.large} />
+**Additional Course Features**
 
----
+- **Learning Paths Enabled**
+- **Communication Enabled**, with direct messages and the course's code of conduct
+
+**Student Course Enrollment**
+
+- **Online Course** – LTI integration, cannot be combined with self-enrollment
+- **Student Course Enrollment Enabled** – Lets students enroll themselves within an enrollment period
+- **Assign the course to organizations** (Admin-only) – Once checked, add organizations to the course. Only members of
+  those organizations can then enroll themselves; without organizations, every user can enroll.
+
+<Image src={courseSettingsImg} alt={"Create new course page"} size={ImageSize.large} caption="The General Information section of the course creation page" />
 
 ## Managing courses
 
-After a course is created, access it via <Image src={btnCourseManagement} alt={"Course Management"} size={ImageSize.small} inline />.
+After a course is created, access it via **Course Management**.
 
 Courses are grouped by semester, test courses listed separately.
 
@@ -62,7 +78,7 @@ Courses are grouped by semester, test courses listed separately.
 
 <Image src={courseHeaderImg} alt={"Course Header"} size={ImageSize.large} />
 
-Clicking the course header opens management view allowing to <Image src={btnCourseEdit} alt={"Edit course"} size={ImageSize.small} inline /> or <Image src={btnCourseDelete} alt={"Delete course"} size={ImageSize.small} inline /> a course, view statistics & administration options.
+Clicking the course header opens the management view, where **Edit** and **Delete** act on the course and the statistics and administration options are reachable.
 
 Students, Tutors, Editors and Instructors can be added via **Course Details**.
 

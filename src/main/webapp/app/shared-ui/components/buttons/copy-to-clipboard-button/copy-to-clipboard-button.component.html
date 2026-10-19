@@ -2,12 +2,15 @@
     <button
         id="copyButton"
         type="button"
-        class="btn btn-sm ms-1"
-        [class.btn-success]="wasCopied()"
-        [class]="class()"
+        tumAetUiButton
+        variant="text"
+        size="small"
+        [severity]="wasCopied() ? 'success' : 'secondary'"
+        [class]="'ms-1! ' + class()"
         [cdkCopyToClipboard]="copyText()"
         (cdkCopyToClipboardCopied)="onCopyFinished()"
-        ngbTooltip="{{ 'global.generic.copy' | artemisTranslate }}"
+        [tumAetUiTooltip]="'global.generic.copy' | artemisTranslate"
+        [attr.aria-label]="'global.generic.copy' | artemisTranslate"
     >
         <fa-icon [icon]="wasCopied() ? faCheck : faCopy" />
     </button>

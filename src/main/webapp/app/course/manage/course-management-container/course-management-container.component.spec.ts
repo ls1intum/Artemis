@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
@@ -8,7 +7,6 @@ import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
@@ -20,27 +18,28 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 
 import { AlertService } from 'app/foundation/service/alert.service';
 
 import { MockModule, MockProvider } from 'ng-mocks';
-import { AfterViewInit, Component, EventEmitter, TemplateRef, viewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, TemplateRef, signal, viewChild } from '@angular/core';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -59,14 +58,6 @@ const exercise1: Exercise = {
     numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
     studentAssignedTeamIdComputed: false,
     dueDate: dayjs().add(2, 'days'),
-    secondCorrectionEnabled: true,
-};
-
-const exercise2: Exercise = {
-    id: 6,
-    numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
-    studentAssignedTeamIdComputed: false,
-    dueDate: dayjs().add(1, 'days'),
     secondCorrectionEnabled: true,
 };
 
@@ -92,19 +83,6 @@ const course1: Course = {
     onlineCourse: true,
 };
 
-const course2: Course = {
-    id: 2,
-    title: 'Course2',
-    exercises: [exercise2],
-    isAtLeastInstructor: true,
-    exams: [exam2],
-    description: 'Short description of course 2',
-    shortName: 'shortName2',
-    isAtLeastEditor: true,
-    tutorialGroupsConfiguration: {},
-};
-
-const coursesDropdown: Course[] = [course1, course2];
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
 })
@@ -122,8 +100,6 @@ class ControlsTestingComponent implements BarControlConfigurationProvider, After
 }
 
 describe('CourseManagementContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseManagementContainerComponent;
     let fixture: ComponentFixture<CourseManagementContainerComponent>;
     let courseService: CourseManagementService;
@@ -132,14 +108,14 @@ describe('CourseManagementContainerComponent', () => {
     let courseAccessStorageService: CourseAccessStorageService;
     let eventManager: EventManager;
     let featureToggleService: FeatureToggleService;
-    let metisConversationService: MetisConversationService;
+    let courseConversationsService: CourseConversationsService;
     let profileService: ProfileService;
     let localStorageService: LocalStorageService;
     let router: Router;
     let route: ActivatedRoute;
 
     let findSpy: ReturnType<typeof vi.spyOn>;
-    let findOneForDashboardSpy: ReturnType<typeof vi.spyOn>;
+    let findCourseSpy: ReturnType<typeof vi.spyOn>;
     let getCourseSummarySpy: ReturnType<typeof vi.spyOn>;
     let deleteSpy: ReturnType<typeof vi.spyOn>;
     let courseSidebarService: CourseSidebarService;
@@ -159,7 +135,7 @@ describe('CourseManagementContainerComponent', () => {
         } as unknown as ActivatedRoute;
 
         await TestBed.configureTestingModule({
-            imports: [CourseManagementContainerComponent, MockModule(MatSidenavModule), MockModule(NgbTooltipModule)],
+            imports: [CourseManagementContainerComponent, MockModule(NgbTooltipModule)],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(CourseStorageService),
@@ -175,7 +151,7 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: HasAnyAuthorityDirective, useClass: MockHasAnyAuthorityDirective },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -209,21 +185,12 @@ describe('CourseManagementContainerComponent', () => {
                 }),
             ),
         );
-        metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
+        courseConversationsService = fixture.debugElement.injector.get(CourseConversationsService);
 
-        findOneForDashboardSpy = vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
+        findCourseSpy = vi.spyOn(courseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
                     body: course1,
-                    headers: new HttpHeaders(),
-                }),
-            ),
-        );
-
-        vi.spyOn(courseService, 'findAllForDropdown').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: coursesDropdown,
                     headers: new HttpHeaders(),
                 }),
             ),
@@ -272,7 +239,7 @@ describe('CourseManagementContainerComponent', () => {
             activeProfiles: [PROFILE_PROD],
         } as unknown as ProfileInfo);
 
-        vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
+        vi.spyOn(courseConversationsService, 'course', 'get').mockReturnValue(course);
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
     });
@@ -289,25 +256,63 @@ describe('CourseManagementContainerComponent', () => {
         const getSidebarItems = vi.spyOn(component, 'getSidebarItems');
         const subscribeToCourseUpdates = vi.spyOn(component as any, 'subscribeToCourseUpdates');
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(getCourseStub).toHaveBeenCalledWith(1);
-        expect(getSidebarItems).toHaveBeenCalledOnce();
+        expect(getSidebarItems).toHaveBeenCalledTimes(2);
         expect(subscribeToCourseUpdates).toHaveBeenCalledWith(1);
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
             1,
             CourseAccessStorageService.STORAGE_KEY,
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
         );
-        expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
-            1,
-            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+    });
+
+    it('should keep presentations hidden until a delayed feature toggle response enables them', async () => {
+        const presentationToggle = new Subject<boolean>();
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature) =>
+            feature === FeatureToggle.PresentationAssessments ? presentationToggle : of(true),
         );
+        vi.spyOn(courseService, 'find').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: { ...course1, presentationAssessmentsEnabled: true },
+                }),
+            ),
+        );
+
+        await component.ngOnInit();
+
+        expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeUndefined();
+
+        presentationToggle.next(true);
+        expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeTruthy();
+
+        presentationToggle.next(false);
+        expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeUndefined();
+    });
+
+    it.each([
+        { role: 'tutor', isAtLeastTutor: true, shown: true },
+        { role: 'student', isAtLeastTutor: false, shown: false },
+    ])('should show presentations in the sidebar of a $role: $shown', ({ isAtLeastTutor, shown }) => {
+        component.course.set({ ...course1, isAtLeastTutor, isAtLeastEditor: false, isAtLeastInstructor: false, presentationAssessmentsEnabled: true });
+        component['presentationAssessmentsActive'].set(true);
+
+        const sidebarItems = component.getSidebarItems();
+
+        expect(sidebarItems.some((item) => item.title === 'Presentations')).toBe(shown);
+    });
+
+    it('should keep the transparent presentation layout for a selected exercise-linked presentation', () => {
+        route.snapshot.firstChild!.data = { transparentCourseBody: true };
+        (router as unknown as MockRouter).setUrl('/course-management/1/presentations/17/exercises/7');
+
+        expect(component.hasTransparentCourseBody()).toBe(true);
     });
 
     it('should subscribe to profileService and set values correctly', async () => {
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(component.isProduction).toBe(true);
         expect(component.isTestServer).toBe(false);
@@ -332,7 +337,7 @@ describe('CourseManagementContainerComponent', () => {
             expect(component.course()).toEqual(course1);
         });
 
-        expect(findOneForDashboardSpy).toHaveBeenCalledWith(1);
+        expect(findCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should create sidebar items based on course properties', () => {
@@ -403,7 +408,7 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should toggle sidebar for CourseConversationsComponent', () => {
         const mockConversationsComponent = {
-            isCollapsed: false,
+            isCollapsed: signal(false),
             toggleSidebar: vi.fn(),
         } as unknown as CourseConversationsComponent;
         // we have to set this to trick the component into believing it is a CourseConversationsComponent
@@ -413,15 +418,26 @@ describe('CourseManagementContainerComponent', () => {
 
         component.handleToggleSidebar();
         expect(mockConversationsComponent.toggleSidebar).toHaveBeenCalled();
-        expect(component.isSidebarCollapsed()).toBe(false);
     });
 
     it('should not toggle sidebar for non-CourseConversationsComponent', () => {
         component.activatedComponentReference.set(undefined);
-        component.handleToggleSidebar();
 
-        // No error should occur, and isCollapsed remains unchanged
-        expect(component.isSidebarCollapsed()).toBe(false);
+        expect(() => component.handleToggleSidebar()).not.toThrow();
+    });
+
+    it('should set the page title on the conversations sidebar when activated', () => {
+        route.snapshot.firstChild!.data = { pageTitle: 'overview.communication' };
+        const mockConversationsComponent = {
+            isCollapsed: signal(false),
+            setPageTitle: vi.fn(),
+        } as unknown as CourseConversationsComponent;
+        // we have to set this to trick the component into believing it is a CourseConversationsComponent
+        Object.setPrototypeOf(mockConversationsComponent, CourseConversationsComponent.prototype);
+
+        component.onSubRouteActivate(mockConversationsComponent);
+
+        expect(mockConversationsComponent.setPageTitle).toHaveBeenCalledWith('overview.communication');
     });
 
     it('should fetch course deletion summary correctly', () => {
@@ -514,7 +530,7 @@ describe('CourseManagementContainerComponent', () => {
         component.closeProgress();
 
         expect(component.operationProgress()).toBeUndefined();
-        expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/course-management']);
+        expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/courses']);
     });
 
     it('should not navigate when closing non-delete progress', () => {
@@ -547,7 +563,7 @@ describe('CourseManagementContainerComponent', () => {
         expect(expectedButton).toBeNull();
     });
 
-    it('should set hasSidebar when onSubRouteActivate is called', () => {
+    it('should set hasSidebar when onSubRouteActivate is called on communication route', () => {
         vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
 
         component.onSubRouteActivate({});
@@ -556,8 +572,59 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.hasSidebar()).toBe(true);
     });
 
+    it('should set hasSidebar to true when an intermediate route has hasSidebar: true', () => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exams/3/students');
+        route.snapshot = {
+            firstChild: {
+                data: { hasSidebar: true },
+                firstChild: {
+                    data: {},
+                },
+            },
+        } as any;
+
+        component.onSubRouteActivate({});
+
+        expect(component.communicationRouteLoaded()).toBe(false);
+        expect(component.hasSidebar()).toBe(true);
+    });
+
+    it('should set hasSidebar to true when a leaf route has hasSidebar: true', () => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exams');
+        route.snapshot = {
+            firstChild: {
+                data: {},
+                firstChild: {
+                    data: { hasSidebar: true },
+                },
+            },
+        } as any;
+
+        component.onSubRouteActivate({});
+
+        expect(component.communicationRouteLoaded()).toBe(false);
+        expect(component.hasSidebar()).toBe(true);
+    });
+
+    it('should set hasSidebar to false when no route in hierarchy has hasSidebar and not communication', () => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exercises');
+        route.snapshot = {
+            firstChild: {
+                data: {},
+                firstChild: {
+                    data: {},
+                },
+            },
+        } as any;
+
+        component.onSubRouteActivate({});
+
+        expect(component.communicationRouteLoaded()).toBe(false);
+        expect(component.hasSidebar()).toBe(false);
+    });
+
     it('should set up conversation service if course has communication enabled', () => {
-        const setUpConversationServiceSpy = vi.spyOn(metisConversationService, 'setUpConversationService').mockImplementation(() => {
+        const setUpConversationServiceSpy = vi.spyOn(courseConversationsService, 'setUpConversationService').mockImplementation(() => {
             return new Observable((subscriber) => subscriber.complete());
         });
 
@@ -587,7 +654,7 @@ describe('CourseManagementContainerComponent', () => {
     it('should get collapse state from localStorage on init', async () => {
         localStorageService.store<boolean>('navbar.collapseState', true);
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(component.isNavbarCollapsed()).toBe(true);
 
@@ -601,7 +668,7 @@ describe('CourseManagementContainerComponent', () => {
     it('should set isNavbarCollapsed to false by default if not in localStorageService', async () => {
         localStorageService.remove('navbar.collapseState');
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(component.isNavbarCollapsed()).toBe(false);
     });
@@ -630,7 +697,7 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should subscribe to course modifications', async () => {
         const eventSubscription = vi.spyOn(eventManager, 'subscribe');
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(eventSubscription).toHaveBeenCalledWith('courseModification', expect.any(Function));
     });
@@ -688,29 +755,6 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.pageTitle()).toBe('');
     });
 
-    it('should initialize courses attribute for dropdown', async () => {
-        component.courseId.set(course1.id!);
-        await component.updateRecentlyAccessedCourses();
-
-        expect(component.courses()).toEqual([course2]);
-    });
-
-    it('should filter out current course from dropdown courses', async () => {
-        component.courseId.set(course2.id!);
-
-        await component.updateRecentlyAccessedCourses();
-
-        expect(component.courses()).not.toContain(course2);
-    });
-
-    it('should switch course and navigate to the correct URL', async () => {
-        const navigateSpy = vi.spyOn(router, 'navigate');
-        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
-
-        component.switchCourse(course2);
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', course2.id]);
-    });
-
     it('should handle component activation with controls', () => {
         const getPageTitleSpy = vi.spyOn(component, 'getPageTitle');
         const tryRenderControlsSpy = vi.spyOn(component as any, 'tryRenderControls').mockImplementation(() => {});
@@ -747,7 +791,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should check for unread messages if messaging is enabled', () => {
-        const checkForUnreadMessagesSpy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
+        const checkForUnreadMessagesSpy = vi.spyOn(courseConversationsService, 'checkForUnreadMessages');
         const subscribeToHasUnreadMessagesSpy = vi.spyOn(component as any, 'subscribeToHasUnreadMessages');
         const courseWithMessaging = {
             ...course1,
@@ -763,7 +807,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should not check for unread messages if communication is disabled', () => {
-        const checkForUnreadMessagesSpy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
+        const checkForUnreadMessagesSpy = vi.spyOn(courseConversationsService, 'checkForUnreadMessages');
 
         component.course.set({
             ...course1,
@@ -787,83 +831,35 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should set isSettingsPage to false when not on settings page', async () => {
         vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exercises');
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
         expect(component.isSettingsPage()).toBe(false);
     });
     it('should set isSettingsPage to true when on settings page', async () => {
         vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/settings');
         vi.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1/settings', '')));
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
         expect(component.isSettingsPage()).toBe(true);
     });
-    describe('determineStudentViewLink', () => {
-        beforeEach(() => {
-            component.courseId.set(123);
-        });
-        it('should set exams link when URL includes "exams"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exams']);
-        });
 
-        it('should set exercises link when URL includes "exercises"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises']);
-        });
+    it('should not subscribe to auto orchestration notifications when AtlasLLM is inactive', async () => {
+        // Atlas is active in the default profile of this spec, AtlasLLM is not, and the runtime toggle returns true.
+        // Nothing publishes to the orchestrator topic on such a server, so the subscription must not be opened.
+        const subscribeSpy = vi.spyOn(TestBed.inject(AutoOrchestrationNotificationService), 'subscribeToCourse');
 
-        it('should set lectures link when URL includes "lectures"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'lectures']);
-        });
+        await component['initializeCourseManagementContainerComponent']();
 
-        it('should set communication link when URL includes "communication"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'communication']);
-        });
+        expect(subscribeSpy).not.toHaveBeenCalled();
+    });
 
-        it('should set learning-path link when URL includes "learning-path-management"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path-management');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'learning-path']);
-        });
+    it('should subscribe to auto orchestration notifications when AtlasLLM is active', async () => {
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM],
+            activeProfiles: [PROFILE_PROD],
+        } as unknown as ProfileInfo);
+        const subscribeSpy = vi.spyOn(TestBed.inject(AutoOrchestrationNotificationService), 'subscribeToCourse');
 
-        it('should set competencies link when URL includes "competency-management"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competency-management');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'competencies']);
-        });
+        await component['initializeCourseManagementContainerComponent']();
 
-        it('should set faq link when URL includes "faqs"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faqs/new');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'faq']);
-        });
-
-        it('should set tutorial-groups link when URL includes "tutorial-groups"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups/configuration/new');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
-        });
-
-        it('should set tutorial-groups link when URL includes "tutorial-groups-checklist"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups-checklist');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
-        });
-
-        it('should set statistics link when URL includes course-statistics', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/course-statistics');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'statistics']);
-        });
-
-        it('should default to dashboard link when URL does not match any condition', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('courses/123/iris-settings');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'dashboard']);
-        });
+        expect(subscribeSpy).toHaveBeenCalled();
     });
 });

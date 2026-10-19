@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
+import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewEncapsulation, inject, input, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -42,14 +42,13 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
 })
 export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit, OnDestroy {
     private courseManagementService = inject(CourseManagementService);
-    private cdr = inject(ChangeDetectorRef);
 
     @HostBinding('class.course-users-selector') hostClass = true;
 
     private ngUnsubscribe = new Subject<void>();
 
     readonly typeAheadInstance = viewChild.required<NgbTypeahead>('instance');
-    disabled = false;
+    readonly disabled = signal(false);
     readonly searchInput = viewChild.required<ElementRef>('searchInput');
     readonly courseId = input.required<number>();
 
@@ -62,27 +61,27 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
 
     readonly showUserList = input(true);
 
-    searchStudents = true;
-    searchTutors = true;
-    searchInstructors = true;
+    readonly searchStudents = signal(true);
+    readonly searchTutors = signal(true);
+    readonly searchInstructors = signal(true);
 
     // icons
     faX = faX;
 
-    selectedUsers: UserPublicInfoDTO[] = [];
-    isSearching = false;
-    searchFailed = false;
+    readonly selectedUsers = signal<UserPublicInfoDTO[]>([]);
+    readonly isSearching = signal(false);
+    readonly searchFailed = signal(false);
 
     ngOnInit(): void {
         const rolesToAllowSearchingIn = this.rolesToAllowSearchingIn();
         if (rolesToAllowSearchingIn.includes('students')) {
-            this.searchStudents = true;
+            this.searchStudents.set(true);
         }
         if (rolesToAllowSearchingIn.includes('tutors')) {
-            this.searchTutors = true;
+            this.searchTutors.set(true);
         }
         if (rolesToAllowSearchingIn.includes('instructors')) {
-            this.searchInstructors = true;
+            this.searchInstructors.set(true);
         }
     }
 
@@ -118,8 +117,8 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     }
 
     onDelete(index: number) {
-        this.selectedUsers.splice(index, 1);
-        this.onChange(this.selectedUsers);
+        this.selectedUsers().splice(index, 1);
+        this.onChange(this.selectedUsers());
     }
 
     onInputChange(event: Event): void {
@@ -141,33 +140,33 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
             distinctUntilChanged(),
             map((term) => (term ? term.trim().toLowerCase() : '')),
             // the three letter minimum is enforced by the server only for searching for students as they are so many
-            filter((term) => term.length >= 3 || !this.searchStudents),
+            filter((term) => term.length >= 3 || !this.searchStudents()),
             switchMap((term) => {
                 const rolesToSearchIn: SearchRoleGroup[] = [];
-                if (this.searchStudents) {
+                if (this.searchStudents()) {
                     rolesToSearchIn.push('students');
                 }
-                if (this.searchTutors) {
+                if (this.searchTutors()) {
                     rolesToSearchIn.push('tutors');
                 }
-                if (this.searchInstructors) {
+                if (this.searchInstructors()) {
                     rolesToSearchIn.push('instructors');
                 }
                 if (rolesToSearchIn.length === 0) {
-                    this.searchFailed = false;
+                    this.searchFailed.set(false);
                     return of([]);
                 } else {
-                    this.isSearching = true;
+                    this.isSearching.set(true);
                     return this.courseManagementService.searchUsers(this.courseId(), term, rolesToSearchIn).pipe(
                         map((users) => users.body!),
-                        map((users) => users.filter((user) => !this.selectedUsers.find((selectedUser) => selectedUser.id === user.id))),
+                        map((users) => users.filter((user) => !this.selectedUsers().find((selectedUser) => selectedUser.id === user.id))),
                         tap(() => {
-                            this.isSearching = false;
-                            this.searchFailed = false;
+                            this.isSearching.set(false);
+                            this.searchFailed.set(false);
                         }),
                         catchError(() => {
-                            this.searchFailed = true;
-                            this.isSearching = false;
+                            this.searchFailed.set(true);
+                            this.isSearching.set(false);
                             return of([]);
                         }),
                         takeUntil(this.ngUnsubscribe),
@@ -180,6 +179,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     // === START CONTROL VALUE ACCESSOR ===
     onChange = (_selectedUsers: UserPublicInfoDTO[]) => {};
 
+    // eslint-disable-next-line localRules/prefer-signal-template-state -- ControlValueAccessor callback reassigned by registerOnTouched; storing a callback does not affect rendered state, so a signal is unnecessary
     onTouched = () => {};
 
     registerOnChange(fn: (selectedUsers: UserPublicInfoDTO[]) => void): void {
@@ -191,34 +191,32 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     }
 
     setDisabledState(isDisabled: boolean): void {
-        this.disabled = isDisabled;
+        this.disabled.set(isDisabled);
     }
 
     writeValue(selectedUsers: UserPublicInfoDTO[]): void {
         if (!selectedUsers) {
-            this.selectedUsers = [];
-            this.cdr.detectChanges();
+            this.selectedUsers.set([]);
             return;
         }
 
         if (this.multiSelect()) {
-            this.selectedUsers = selectedUsers ?? [];
+            this.selectedUsers.set(selectedUsers);
         } else {
-            this.selectedUsers = selectedUsers?.length ? [selectedUsers[0]] : [];
+            this.selectedUsers.set(selectedUsers.length ? [selectedUsers[0]] : []);
         }
-        this.cdr.detectChanges();
     }
     // === END CONTROL VALUE ACCESSOR ===
 
     private onUserSelected(selectedUser: UserPublicInfoDTO) {
         if (selectedUser) {
-            if (!this.selectedUsers.find((user) => user.id === selectedUser.id)) {
+            if (!this.selectedUsers().find((user) => user.id === selectedUser.id)) {
                 if (this.multiSelect()) {
-                    this.selectedUsers = [...this.selectedUsers, selectedUser];
+                    this.selectedUsers.set([...this.selectedUsers(), selectedUser]);
                 } else {
-                    this.selectedUsers = [selectedUser];
+                    this.selectedUsers.set([selectedUser]);
                 }
-                this.onChange(this.selectedUsers);
+                this.onChange(this.selectedUsers());
             }
         }
     }

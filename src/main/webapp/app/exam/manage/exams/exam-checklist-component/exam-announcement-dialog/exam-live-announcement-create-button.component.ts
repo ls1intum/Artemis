@@ -1,9 +1,7 @@
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
-import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Subscription } from 'rxjs';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,21 +12,18 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-exam-live-announcement-create-button',
     templateUrl: './exam-live-announcement-create-button.component.html',
-    imports: [FaIconComponent, TranslateDirective],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective, ExamLiveAnnouncementCreateModalComponent],
 })
 export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDestroy {
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
     alertService = inject(AlertService);
 
     exam = input.required<Exam>();
 
     faBullhorn = faBullhorn;
-    announcementCreationAllowed = false;
+    readonly announcementCreationAllowed = signal(false);
 
-    private dialogRef: DynamicDialogRef | null | undefined;
-    private timeoutRef: any;
-    private subscription: Subscription | undefined;
+    readonly dialogVisible = signal(false);
+    private timeoutRef: ReturnType<typeof setTimeout> | undefined;
 
     ngOnInit() {
         this.checkAnnouncementCreationAllowed();
@@ -38,16 +33,15 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
         if (this.timeoutRef) {
             clearTimeout(this.timeoutRef);
         }
-        this.subscription?.unsubscribe();
     }
 
     private checkAnnouncementCreationAllowed() {
         const now = dayjs();
 
-        this.announcementCreationAllowed = !!this.exam().visibleDate?.isBefore(now);
+        this.announcementCreationAllowed.set(!!this.exam().visibleDate?.isBefore(now));
 
         // Run the check again at the visible date
-        if (!this.announcementCreationAllowed) {
+        if (!this.announcementCreationAllowed()) {
             const nextCheckTimeout = this.exam().visibleDate?.diff(now);
             if (nextCheckTimeout) {
                 this.timeoutRef = setTimeout(this.checkAnnouncementCreationAllowed.bind(this), nextCheckTimeout);
@@ -58,19 +52,6 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
     openDialog(event: MouseEvent) {
         event.preventDefault();
         this.alertService.closeAll();
-        this.dialogRef = this.dialogService.open(ExamLiveAnnouncementCreateModalComponent, {
-            header: this.translateService.instant('artemisApp.examManagement.announcementCreate.title'),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            data: {
-                examId: this.exam().id,
-                courseId: this.exam().course!.id!,
-            },
-        });
-
-        this.subscription = this.dialogRef?.onClose.subscribe(() => (this.dialogRef = undefined));
+        this.dialogVisible.set(true);
     }
 }

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -13,7 +12,6 @@ import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { OnlineUnitFormComponent } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -23,14 +21,12 @@ import { ProfileService } from '../../../../core/layouts/profiles/shared/profile
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('EditOnlineUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let editOnlineUnitComponentFixture: ComponentFixture<EditOnlineUnitComponent>;
     let editOnlineUnitComponent: EditOnlineUnitComponent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [],
             providers: [
                 MockProvider(OnlineUnitService),
                 MockProvider(AlertService),
@@ -47,6 +43,7 @@ describe('EditOnlineUnitComponent', () => {
                                     case 'onlineUnitId':
                                         return 1;
                                 }
+                                return null;
                             },
                         }),
                         parent: {
@@ -57,6 +54,7 @@ describe('EditOnlineUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
+                                        return null;
                                     },
                                 }),
                             },
@@ -105,11 +103,11 @@ describe('EditOnlineUnitComponent', () => {
         editOnlineUnitComponentFixture.detectChanges(); // onInit
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitOfResponse);
         expect(findByIdStub).toHaveBeenCalledTimes(1);
-        expect(editOnlineUnitComponent.formData.name).toEqual(onlineUnitOfResponse.name);
-        expect(editOnlineUnitComponent.formData.releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
-        expect(editOnlineUnitComponent.formData.description).toEqual(onlineUnitOfResponse.description);
-        expect(editOnlineUnitComponent.formData.source).toEqual(onlineUnitOfResponse.source);
-        expect(onlineUnitFormComponent.formData()).toEqual(editOnlineUnitComponent.formData);
+        expect(editOnlineUnitComponent.formData().name).toEqual(onlineUnitOfResponse.name);
+        expect(editOnlineUnitComponent.formData().releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
+        expect(editOnlineUnitComponent.formData().description).toEqual(onlineUnitOfResponse.description);
+        expect(editOnlineUnitComponent.formData().source).toEqual(onlineUnitOfResponse.source);
+        expect(onlineUnitFormComponent.formData()).toEqual(editOnlineUnitComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {

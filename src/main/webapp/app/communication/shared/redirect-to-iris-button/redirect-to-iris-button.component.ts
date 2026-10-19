@@ -2,14 +2,14 @@ import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/co
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { Subscription, catchError, distinctUntilKeyChanged, filter, of } from 'rxjs';
+import { Observable, Subscription, catchError, distinctUntilKeyChanged, filter, of } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
@@ -20,19 +20,19 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
     imports: [IrisLogoComponent, NgClass, FaIconComponent],
 })
 export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
-    buttonLoading = input<boolean>(false);
-    disabled = input<boolean>(false);
-    question = input<string>();
-    course = input<Course>();
-    extraClass = input<any>();
-
-    metisConversationService = inject(MetisConversationService);
-    protected metisService = inject(MetisService);
+    courseConversationsService = inject(CourseConversationsService);
+    protected communicationService = inject(CommunicationService);
     irisSettingsService = inject(IrisSettingsService);
     profileService = inject(ProfileService);
     router = inject(Router);
 
-    private conversationServiceSubscription: Subscription;
+    buttonLoading = input<boolean>(false);
+    disabled = input<boolean>(false);
+    question = input<string>();
+    course = input<Course>();
+    extraClass = input<string | string[] | Set<string> | { [klass: string]: boolean }>();
+
+    private conversationServiceSubscription?: Subscription;
     private settingsSubscription: Subscription | undefined;
     private irisCourseSettings: IrisCourseSettingsWithRateLimitDTO | undefined;
     channelSubTypeReferenceRouterLink = '';
@@ -48,7 +48,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
         if (!isIrisActive) {
             return;
         }
-        this.conversationServiceSubscription = this.metisConversationService.activeConversation$
+        this.conversationServiceSubscription = this.courseConversationsService.activeConversation$
             .pipe(
                 filter((conversation) => !!conversation),
                 distinctUntilKeyChanged('id'),
@@ -74,7 +74,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
      */
     private updateIrisStatus<T>(
         cachedSettings: T | undefined,
-        fetchSettings: () => any,
+        fetchSettings: () => Observable<T | undefined>,
         extractEnabled: (settings: T) => boolean | undefined,
         channelDTO: ChannelDTO,
         cacheSetter: (settings: T) => void,
@@ -89,7 +89,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
                         return of(undefined);
                     }),
                 )
-                .subscribe((newSettings: T) => {
+                .subscribe((newSettings: T | undefined) => {
                     if (newSettings) {
                         cacheSetter(newSettings);
                         this.setIrisStatus(extractEnabled(newSettings), channelDTO);
@@ -139,7 +139,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
      */
     private setIrisStatus(enabled: boolean = false, channelDTO?: ChannelDTO): void {
         this.irisEnabled.set(enabled);
-        this.channelSubTypeReferenceRouterLink = enabled ? (this.metisService.getLinkForChannelSubType(channelDTO) ?? '') : '';
+        this.channelSubTypeReferenceRouterLink = enabled ? (this.communicationService.getLinkForChannelSubType(channelDTO) ?? '') : '';
     }
 
     /**
@@ -147,6 +147,6 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
      */
     redirectToIris(): void {
         const content = this.question();
-        this.router.navigate([this.channelSubTypeReferenceRouterLink], { queryParams: { irisQuestion: content } });
+        void this.router.navigate([this.channelSubTypeReferenceRouterLink], { queryParams: { irisQuestion: content } });
     }
 }

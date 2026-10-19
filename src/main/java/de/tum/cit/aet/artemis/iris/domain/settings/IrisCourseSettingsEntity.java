@@ -10,6 +10,8 @@ import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
+
 /**
  * Persistence entity that stores the Iris course level settings payload.
  * The payload is mapped as JSON to allow evolving the structure without schema changes.
@@ -21,6 +23,7 @@ public class IrisCourseSettingsEntity {
 
     @Id
     @Column(name = "course_id", nullable = false)
+    @Parent
     private Long courseId;
 
     @JdbcTypeCode(SqlTypes.JSON)

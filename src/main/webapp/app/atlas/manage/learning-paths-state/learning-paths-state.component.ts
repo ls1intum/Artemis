@@ -18,6 +18,11 @@ import { NgClass } from '@angular/common';
     styleUrls: ['./learning-paths-state.component.scss', '../learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsStateComponent {
+    private readonly learningPathApiService = inject(LearningPathApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly router = inject(Router);
+    private readonly activatedRoute = inject(ActivatedRoute);
+
     protected readonly faSpinner = faSpinner;
 
     private readonly baseTranslationKey = 'artemisApp.learningPathManagement.learningPathsState.type';
@@ -33,11 +38,6 @@ export class LearningPathsStateComponent {
         [HealthStatus.NO_RELATIONS]: 'warning-state',
     };
 
-    private readonly learningPathApiService = inject(LearningPathApiService);
-    private readonly alertService = inject(AlertService);
-    private readonly router = inject(Router);
-    private readonly activatedRoute = inject(ActivatedRoute);
-
     readonly courseId = input.required<number>();
 
     readonly isLoading = signal<boolean>(false);
@@ -47,7 +47,7 @@ export class LearningPathsStateComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(() => this.loadLearningPathHealthState(courseId));
+            untracked(() => void this.loadLearningPathHealthState(courseId));
         });
     }
 

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { faBan, faCheck, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -19,7 +19,7 @@ export class ExerciseUpdateWarningComponent {
 
     instructionDeleted = false;
     creditChanged = false;
-    deleteFeedback = false;
+    readonly deleteFeedback = signal(false);
     usageCountChanged = false;
     immediateReleaseWarning = '';
 
@@ -60,7 +60,7 @@ export class ExerciseUpdateWarningComponent {
      * Toggle the option to deleteFeedback
      */
     toggleDeleteFeedback() {
-        this.deleteFeedback = !this.deleteFeedback;
+        this.deleteFeedback.update((value) => !value);
     }
 
     private closeDialog(): void {

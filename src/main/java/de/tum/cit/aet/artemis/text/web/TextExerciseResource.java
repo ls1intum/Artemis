@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.text.web;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -31,7 +32,6 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -44,22 +44,27 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseListItemDTO;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
+import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseService;
 
@@ -68,6 +73,7 @@ import de.tum.cit.aet.artemis.text.service.TextExerciseService;
  */
 @Conditional(TextEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.TEXT_AUTHORING)
 @RestController
 @RequestMapping("api/text/")
 public class TextExerciseResource {
@@ -95,6 +101,10 @@ public class TextExerciseResource {
 
     private final TextExerciseRepository textExerciseRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final UserRepository userRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -113,7 +123,10 @@ public class TextExerciseResource {
             ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, CourseRepository courseRepository, ChannelRepository channelRepository,
-            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi) {
+            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.textBlockRepository = textBlockRepository;
@@ -139,28 +152,26 @@ public class TextExerciseResource {
      */
     @GetMapping("courses/{courseId}/text-exercises")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<TextExercise>> getTextExercisesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<TextExerciseListItemDTO>> getTextExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<TextExercise> exercises = textExerciseRepository.findByCourseIdWithCategories(courseId);
-        for (Exercise exercise : exercises) {
-            // not required in the returned json body
-            exercise.setStudentParticipations(null);
-            exercise.setCourse(null);
+        for (TextExercise exercise : exercises) {
             Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             exercise.setGradingCriteria(gradingCriteria);
         }
-        return ResponseEntity.ok().body(exercises);
+        List<TextExerciseListItemDTO> dtos = exercises.stream().map(TextExerciseListItemDTO::of).toList();
+        return ResponseEntity.ok().body(dtos);
     }
 
     private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+        var textExercise = textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId);
         if (includePlagiarismDetectionConfig) {
-            var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId);
-            textExercise.ifPresent(it -> PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(it, textExerciseRepository));
-            return textExercise;
+            // The plagiarism detection configuration is not part of the exercise, so it is read here.
+            textExercise.ifPresent(plagiarismDetectionConfigRepository::attachTo);
         }
-        return textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId);
+        return textExercise;
     }
 
     /**
@@ -173,7 +184,7 @@ public class TextExerciseResource {
      */
     @GetMapping("text-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+    public ResponseEntity<TextExerciseResponseDTO> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
         var textExercise = findTextExercise(exerciseId, withPlagiarismDetectionConfig).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
 
@@ -186,11 +197,14 @@ public class TextExerciseResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
         }
         if (textExercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(textExercise.getId());
-            if (channel != null) {
-                textExercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(textExercise.getId());
+            if (channelName != null) {
+                textExercise.setChannelName(channelName);
             }
         }
+
+        // The response reports the team assignment configuration, which an exercise does not carry by itself.
+        teamAssignmentConfigRepository.attachTo(textExercise);
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
@@ -198,7 +212,7 @@ public class TextExerciseResource {
         textExercise.setExampleSubmissions(exampleSubmissions);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, textExercise);
-        return ResponseEntity.ok().body(textExercise);
+        return ResponseEntity.ok().body(TextExerciseResponseDTO.of(textExercise));
     }
 
     /**
@@ -212,14 +226,14 @@ public class TextExerciseResource {
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete TextExercise : {}", exerciseId);
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
 
         // Notify AtlasML about the exercise deletion before actual deletion
         notifyAtlasML(textExercise, OperationTypeDTO.DELETE, "text exercise deletion");
 
         // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
         exerciseDeletionService.delete(exerciseId, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }
@@ -233,10 +247,11 @@ public class TextExerciseResource {
      * @return the ResponseEntity with the participation as body
      */
     // TODO: fix the URL scheme
+    @FeatureUsage(UserFeature.TEXT_EXERCISES)
     @GetMapping({ "participations/{participationId}/text-editor", "text-editor/{participationId}" })
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId, @RequestParam(value = "resultId", required = false) Long resultId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+    public ResponseEntity<TextParticipationDTO> getDataForTextEditor(@PathVariable Long participationId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        User user = userRepository.getUserWithAuthorities();
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         if (!(participation.getExercise() instanceof TextExercise textExercise)) {
             throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
@@ -267,7 +282,7 @@ public class TextExerciseResource {
                 if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
                     // We want to have the preliminary feedback before the assessment due date too
                     List<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
-                    textSubmission.setResults(athenaResults);
+                    textSubmission.setResults(new LinkedHashSet<>(athenaResults));
                 }
 
                 // Use specific result if resultId is provided, otherwise use latest
@@ -289,7 +304,7 @@ public class TextExerciseResource {
                     }
 
                     // Only send the relevant result to the client
-                    textSubmission.setResults(List.of(result));
+                    textSubmission.setResults(Set.of(result));
                 }
                 participation.addSubmission(textSubmission);
             }
@@ -307,7 +322,8 @@ public class TextExerciseResource {
             participation.addSubmission(textSubmission);
         }
 
-        if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user);
+        if (!includeStudent) {
             participation.filterSensitiveInformation();
         }
 
@@ -316,7 +332,9 @@ public class TextExerciseResource {
             textExercise.getExam().setCourse(null);
         }
 
-        return ResponseEntity.ok(participation);
+        // wire the (already filtered) exercise graph onto the participation DTO
+        TextParticipationDTO dto = TextParticipationDTO.of(participation, includeStudent).withExercise(TextExerciseResponseDTO.of(textExercise));
+        return ResponseEntity.ok(dto);
     }
 
     /**
@@ -330,10 +348,12 @@ public class TextExerciseResource {
      */
     @GetMapping("text-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
+    public ResponseEntity<SearchResultPageDTO<TextExerciseListItemDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
+        final var user = userRepository.getUserWithAuthorities();
+        SearchResultPageDTO<TextExercise> page = textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user);
+        List<TextExerciseListItemDTO> content = page.getResultsOnPage().stream().map(TextExerciseListItemDTO::of).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(content, page.getNumberOfPages()));
     }
 
     /**

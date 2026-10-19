@@ -27,18 +27,20 @@ public record ProgrammingFeedbackDTO(@Nullable Long id, long exerciseId, long su
         // Referenced feedback has a reference looking like this: "file:src/main/java/SomeFile.java_line:42"
         String filePath = null;
         Integer lineStart = null;
+        Integer lineEnd = null;
         final String referenceStart = "file:";
         if (feedback.hasReference() && feedback.getReference().startsWith(referenceStart)) {
             String[] referenceParts = feedback.getReference().split("_line:");
             filePath = referenceParts[0].substring(referenceStart.length());
-            lineStart = Integer.parseInt(referenceParts[1]);
+            String[] lineRange = referenceParts[1].split("-", 2);
+            lineStart = Integer.parseInt(lineRange[0]);
+            lineEnd = Integer.parseInt(lineRange[lineRange.length - 1]);
         }
         Long gradingInstructionId = null;
         if (feedback.getGradingInstruction() != null) {
             gradingInstructionId = feedback.getGradingInstruction().getId();
         }
-        // There is only one line and Athena supports multiple lines, so we just take the line for both start and end
         return new ProgrammingFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(), gradingInstructionId,
-                filePath, lineStart, lineStart);
+                filePath, lineStart, lineEnd);
     }
 }

@@ -1,0 +1,8 @@
+# OSV-Scanner suppressions for the documentation/ subproject, also honoured by the
+# OpenSSF Scorecard "Vulnerabilities" check (it runs osv-scanner without an explicit
+# config path, so osv-scanner discovers this file next to the lockfile it is scanning).
+#
+# Only add an entry for an advisory that is genuinely handled but that a scanner cannot
+# see, because it matches on the version string recorded in the lockfile. Say what was
+# actually done, and always keep an ignoreUntil date so the entry is re-examined instead
+# of quietly living forever.

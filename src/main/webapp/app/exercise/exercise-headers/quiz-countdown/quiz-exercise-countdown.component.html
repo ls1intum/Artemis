@@ -1,0 +1,18 @@
+@if (display(); as display) {
+    <!--
+        role="timer" and no live region. The text changes once a second below three and a half minutes
+        (see formatQuizRelativeTime), so announcing every change would talk over the questions for the whole
+        closing stretch of a quiz. role="timer" already implies aria-live="off"; a screen reader reads the value
+        on demand instead.
+    -->
+    <span data-testid="quiz-countdown" class="quiz-countdown" [attr.data-severity]="display.severity ?? null" role="timer">
+        <span class="quiz-countdown__label" [jhiTranslate]="display.labelKey"></span>
+        <span
+            data-testid="quiz-countdown-value"
+            class="quiz-countdown__value"
+            [class.text-state-danger]="display.severity === 'danger'"
+            [class.text-state-warning]="display.severity === 'warning'"
+            >{{ display.value }}</span
+        >
+    </span>
+}

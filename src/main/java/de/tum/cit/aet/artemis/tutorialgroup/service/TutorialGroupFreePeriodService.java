@@ -1,7 +1,13 @@
 package de.tum.cit.aet.artemis.tutorialgroup.service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
@@ -13,6 +19,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodSessionCountDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionCountDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 
@@ -28,6 +36,54 @@ public class TutorialGroupFreePeriodService {
     public TutorialGroupFreePeriodService(TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository) {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupFreePeriodRepository = tutorialGroupFreePeriodRepository;
+    }
+
+    /**
+     * Counts the tutorial group sessions of a course per calendar day within a span.
+     * <p>
+     * The day a session belongs to is resolved in {@code timeZone}, the zone of the tutorial groups configuration, because
+     * that is the zone a holiday is expressed in - a session just before midnight UTC belongs to the following day in
+     * Munich, and cancelling "that day" has to mean the same day to the instructor and to the server. Days without a
+     * session are left out rather than returned as zero, so an instructor with no tutorial groups costs an empty list.
+     *
+     * @param course   the course whose sessions are counted
+     * @param from     the inclusive first day of the span, in {@code timeZone}
+     * @param to       the inclusive last day of the span, in {@code timeZone}
+     * @param timeZone the zone the days are resolved in
+     * @return one entry per day that holds at least one session, ascending by day
+     */
+    public List<TutorialGroupSessionCountDTO> countSessionsPerDay(Course course, LocalDate from, LocalDate to, ZoneId timeZone) {
+        ZonedDateTime spanStart = from.atStartOfDay(timeZone);
+        // Exclusive, so the last day is included in full without depending on how precise the stored instants are.
+        ZonedDateTime spanEnd = to.plusDays(1).atStartOfDay(timeZone);
+
+        Map<LocalDate, Long> countsPerDay = tutorialGroupSessionRepository.findSessionStartsBetween(course, spanStart, spanEnd).stream()
+                .collect(Collectors.groupingBy(start -> start.withZoneSameInstant(timeZone).toLocalDate(), TreeMap::new, Collectors.counting()));
+
+        return countsPerDay.entrySet().stream().map(entry -> new TutorialGroupSessionCountDTO(entry.getKey(), entry.getValue())).toList();
+    }
+
+    /**
+     * Counts the sessions saving a holiday over this span would cancel.
+     *
+     * @param course             the course whose sessions are counted
+     * @param start              the start of the span, already an instant in the course's zone
+     * @param end                the end of the span
+     * @param editedFreePeriodId the holiday being edited, or null when creating one
+     * @return how many sessions saving would cancel
+     */
+    public long countSessionsOverlapping(Course course, ZonedDateTime start, ZonedDateTime end, Long editedFreePeriodId) {
+        return tutorialGroupSessionRepository.countCancellableSessions(course, start, end, editedFreePeriodId);
+    }
+
+    /**
+     * Counts, for every free period of a course, how many sessions it has cancelled.
+     *
+     * @param course the course whose free periods are counted
+     * @return one entry per free period, including the ones holding nothing
+     */
+    public List<TutorialGroupFreePeriodSessionCountDTO> countSessionsPerFreePeriod(Course course) {
+        return tutorialGroupSessionRepository.countCancelledSessionsPerFreePeriod(course);
     }
 
     /**

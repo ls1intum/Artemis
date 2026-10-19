@@ -1,12 +1,13 @@
-span {
-    line-height: 1.25;
-}
-
+/*
+ * Plain SCSS (not Tailwind utilities): these rules target descendant `span`s that carry no static
+ * class of their own, and rely on the `:not(:last-child)` structural pseudo, which has no Tailwind
+ * utility equivalent.
+ */
 .clickable-result span {
     text-decoration: underline;
     cursor: pointer;
-}
 
-.clickable-result span:not(:last-child) {
-    margin-right: 0.25em;
+    &:not(:last-child) {
+        margin-right: 0.25em;
+    }
 }

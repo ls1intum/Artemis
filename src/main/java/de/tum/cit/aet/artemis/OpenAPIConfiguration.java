@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -40,6 +41,9 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
 public class OpenAPIConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(OpenAPIConfiguration.class);
+
+    /** A trailing underscore and digits, which springdoc appends to an operation id it had to make unique. */
+    private static final Pattern TRAILING_UNDERSCORE_DIGITS = Pattern.compile("_\\d+$");
 
     private static final String OK_STATUS_CODE = "200";
 
@@ -108,7 +112,7 @@ public class OpenAPIConfiguration {
 
     private static void stripTrailingUnderscoreDigitCharacter(Operation operation) {
         String id = operation.getOperationId();
-        operation.setOperationId(id.replaceAll("_\\d+$", ""));
+        operation.setOperationId(TRAILING_UNDERSCORE_DIGITS.matcher(id).replaceAll(""));
     }
 
     private void removeDtoSuffixFromResponseSchemas(Operation operation) {

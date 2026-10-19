@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatus;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
-import de.tum.cit.aet.artemis.notification.service.CourseNotificationCacheService;
 
 /**
  * Repository for the {@link UserCourseNotificationStatus} entity.
@@ -86,7 +84,6 @@ public interface UserCourseNotificationStatusRepository extends ArtemisJpaReposi
             AND ucns.courseNotification.course.id = :courseId
             AND ucns.status = 0
             """)
-    @Cacheable(cacheNames = CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE, key = "'user_course_notification_count_' + #userId + '_' + #courseId")
     Long countUnseenCourseNotificationsForUserInCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**

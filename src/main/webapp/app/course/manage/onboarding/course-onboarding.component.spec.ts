@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { CourseOnboardingComponent } from './course-onboarding.component';
 import { CourseManagementService } from '../services/course-management.service';
@@ -27,8 +27,6 @@ import { OnboardingAssessmentAiComponent } from './pages/onboarding-assessment-a
 import { OnboardingExploreComponent } from './pages/onboarding-explore.component';
 
 describe('CourseOnboardingComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseOnboardingComponent;
     let fixture: ComponentFixture<CourseOnboardingComponent>;
     let courseManagementService: CourseManagementService;
@@ -40,6 +38,11 @@ describe('CourseOnboardingComponent', () => {
         course.id = 1;
         course.title = 'Test Course';
         course.shortName = 'TC';
+        // Mirrors a course arriving from the validated create endpoint: startDate, endDate and semester are
+        // already set. Individual tests below clear one of these to exercise the wizard's own required checks.
+        course.startDate = dayjs().subtract(1, 'month');
+        course.endDate = dayjs().add(1, 'month');
+        course.semester = 'SS24';
 
         const route = {
             data: of({ course }),
@@ -104,6 +107,43 @@ describe('CourseOnboardingComponent', () => {
         }
     }
 
+    it('temporarily disables step activation while saving without suppressing scrolling', () => {
+        fixture.detectChanges();
+        comp.isSaving.set(true);
+        fixture.detectChanges();
+        const step = fixture.nativeElement.querySelector('[data-testid="onboarding-step"]') as HTMLElement;
+        const navigate = vi.spyOn(comp, 'goToStep');
+        expect(step.getAttribute('aria-disabled')).toBe('true');
+        expect(step.tabIndex).toBe(-1);
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            step.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(navigate).not.toHaveBeenCalled();
+        comp.isSaving.set(false);
+        fixture.detectChanges();
+        expect(step.getAttribute('aria-disabled')).toBe('false');
+        expect(step.tabIndex).toBe(0);
+    });
+
+    it('announces the current step after keyboard navigation', () => {
+        vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+        fixture.detectChanges();
+        const steps = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="onboarding-step"]')) as HTMLElement[];
+        expect(steps[0].getAttribute('aria-current')).toBe('step');
+        expect(steps[1].getAttribute('aria-current')).toBeNull();
+        steps[1].dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        fixture.detectChanges();
+        expect(comp.activeStep()).toBe(1);
+        expect(steps[0].getAttribute('aria-current')).toBeNull();
+        expect(steps[1].getAttribute('aria-current')).toBe('step');
+    });
+
     describe('ngOnInit', () => {
         it('should load course from route data', () => {
             comp.ngOnInit();
@@ -165,6 +205,9 @@ describe('CourseOnboardingComponent', () => {
 
             const courseWithoutId = new Course();
             courseWithoutId.title = 'No ID';
+            courseWithoutId.startDate = dayjs().subtract(1, 'month');
+            courseWithoutId.endDate = dayjs().add(1, 'month');
+            courseWithoutId.semester = 'SS24';
             comp.course.set(courseWithoutId);
 
             const updateSpy = vi.spyOn(courseManagementService, 'update');
@@ -172,6 +215,112 @@ describe('CourseOnboardingComponent', () => {
 
             expect(updateSpy).not.toHaveBeenCalled();
             expect(comp.activeStep()).toBe(1);
+        });
+
+        it('should neither save nor advance while a date picker of the general settings holds text that is not a date', () => {
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const generalSettings = () => fixture.debugElement.query(By.css('jhi-onboarding-general-settings'));
+            generalSettings().triggerEventHandler('dateTextValidityChange', false);
+            expect(comp.generalSettingsDateTextValid()).toBe(false);
+            comp.nextStep();
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.dateTextInvalid');
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.activeStep()).toBe(0);
+
+            generalSettings().triggerEventHandler('dateTextValidityChange', true);
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            comp.nextStep();
+
+            expect(comp.activeStep()).toBe(1);
+        });
+    });
+
+    describe('enrollment date text validation', () => {
+        const enrollment = () => fixture.debugElement.query(By.css('jhi-onboarding-enrollment'));
+
+        beforeEach(() => {
+            course.enrollmentEnabled = true;
+            course.enrollmentStartDate = dayjs().subtract(1, 'week');
+            course.enrollmentEndDate = dayjs().add(1, 'week');
+            comp.ngOnInit();
+            comp.activeStep.set(1);
+            fixture.detectChanges();
+        });
+
+        it('should neither save nor advance while an enrollment date picker holds text that is not a date', () => {
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            enrollment().triggerEventHandler('dateTextValidityChange', false);
+            comp.nextStep();
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.dateTextInvalid');
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.activeStep()).toBe(1);
+        });
+
+        it('should advance and save once the text of the enrollment pickers is a date again', () => {
+            enrollment().triggerEventHandler('dateTextValidityChange', false);
+            enrollment().triggerEventHandler('dateTextValidityChange', true);
+            const updateSpy = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+
+            comp.nextStep();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(comp.activeStep()).toBe(2);
+        });
+
+        it('should not save the retained dates when leaving the step backwards or through the step indicator', () => {
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            enrollment().triggerEventHandler('dateTextValidityChange', false);
+
+            comp.previousStep();
+            comp.goToStep(0);
+            comp.goToStep(2);
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.dateTextInvalid');
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.activeStep()).toBe(1);
+        });
+
+        it('should not carry invalid text over when the step changes through the URL', () => {
+            const queryParams = new Subject<Record<string, string>>();
+            (TestBed.inject(ActivatedRoute) as any).queryParams = queryParams;
+            comp.ngOnInit();
+            enrollment().triggerEventHandler('dateTextValidityChange', false);
+
+            // The browser back button leaves the step without a save.
+            queryParams.next({ step: '0' });
+            queryParams.next({ step: '1' });
+
+            expect(comp.validateCurrentStep()).toBe(true);
+        });
+    });
+
+    describe('assessment step max points validation', () => {
+        it('should reject max points above the limit and not save', () => {
+            comp.ngOnInit();
+            comp.course.set({ ...course, maxPoints: 10000 } as Course);
+            comp.activeStep.set(3);
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            comp.nextStep();
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should accept max points at the limit', () => {
+            comp.ngOnInit();
+            comp.course.set({ ...course, maxPoints: 9999 } as Course);
+            comp.activeStep.set(3);
+
+            expect(comp.validateCurrentStep()).toBe(true);
         });
     });
 
@@ -318,6 +467,9 @@ describe('CourseOnboardingComponent', () => {
 
             const courseWithoutId = new Course();
             courseWithoutId.title = 'No ID';
+            courseWithoutId.startDate = dayjs().subtract(1, 'month');
+            courseWithoutId.endDate = dayjs().add(1, 'month');
+            courseWithoutId.semester = 'SS24';
             comp.course.set(courseWithoutId);
 
             const updateSpy = vi.spyOn(courseManagementService, 'update');
@@ -371,6 +523,46 @@ describe('CourseOnboardingComponent', () => {
             expect(comp.validateCurrentStep()).toBe(true);
         });
 
+        it('should reject a missing startDate on step 0', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const c = comp.course();
+            c.startDate = undefined;
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.startDateRequired');
+        });
+
+        it('should reject a missing endDate on step 0', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const c = comp.course();
+            c.endDate = undefined;
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.endDateRequired');
+        });
+
+        it('should reject a missing semester on step 0', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const c = comp.course();
+            c.semester = undefined;
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.semesterRequired');
+        });
+
+        it('should reject a blank semester on step 0', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const c = comp.course();
+            c.semester = '   ';
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.semesterRequired');
+        });
+
         it('should reject enrollment startDate after endDate on step 1', () => {
             const errorSpy = vi.spyOn(alertService, 'error');
             advanceToStep(1);
@@ -407,6 +599,18 @@ describe('CourseOnboardingComponent', () => {
 
             expect(comp.validateCurrentStep()).toBe(false);
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.maxPointsPositive');
+        });
+
+        it('should reject a non-integer maxPoints on step 3', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            advanceToStep(3);
+
+            const c = comp.course();
+            c.maxPoints = 10.5;
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.maxPointsWholeNumber');
         });
 
         it('should not advance on nextStep if validation fails', () => {

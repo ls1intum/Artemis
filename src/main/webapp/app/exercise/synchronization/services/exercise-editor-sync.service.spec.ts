@@ -1,6 +1,5 @@
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BehaviorSubject, Subject } from 'rxjs';
 
 import {
@@ -16,7 +15,6 @@ import { BrowserFingerprintService } from 'app/account/fingerprint/browser-finge
 import { ReviewThreadSyncAction } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 
 describe('ExerciseEditorSyncService', () => {
-    setupTestBed({ zoneless: true });
     let service: ExerciseEditorSyncService;
     let websocketService: Mocked<WebsocketService>;
     let receiveSubject: Subject<ExerciseEditorSyncEvent>;
@@ -207,7 +205,7 @@ describe('ExerciseEditorSyncService', () => {
         service.sendSynchronizationUpdate(5, message);
 
         expect(websocketService.send).toHaveBeenCalledWith(
-            '/topic/exercises/5/synchronization',
+            '/app/exercises/5/synchronization',
             expect.objectContaining({
                 eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
                 target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
@@ -230,7 +228,7 @@ describe('ExerciseEditorSyncService', () => {
         service.sendSynchronizationUpdate(5, message);
 
         expect(websocketService.send).toHaveBeenCalledWith(
-            '/topic/exercises/5/synchronization',
+            '/app/exercises/5/synchronization',
             expect.objectContaining({
                 eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT,
                 target: ExerciseEditorSyncTarget.EXERCISE_METADATA,
@@ -390,7 +388,7 @@ describe('ExerciseEditorSyncService', () => {
             connectionState$.next(new ConnectionState(true, true));
 
             expect(websocketService.send).toHaveBeenCalledWith(
-                '/topic/exercises/5/synchronization',
+                '/app/exercises/5/synchronization',
                 expect.objectContaining({
                     eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
                     requestId: 'req-1',

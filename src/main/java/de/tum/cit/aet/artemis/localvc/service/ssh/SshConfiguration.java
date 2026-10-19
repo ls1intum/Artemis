@@ -50,11 +50,14 @@ public class SshConfiguration {
 
     private final SshGitLocationResolverService sshGitLocationResolverService;
 
+    private final ProxyProtocolAcceptor proxyProtocolAcceptor;
+
     public SshConfiguration(GitPublickeyAuthenticatorService gitPublickeyAuthenticatorService, SshGitCommandFactoryService sshGitCommandFactoryService,
-            SshGitLocationResolverService sshGitLocationResolverService) {
+            SshGitLocationResolverService sshGitLocationResolverService, ProxyProtocolAcceptor proxyProtocolAcceptor) {
         this.gitPublickeyAuthenticatorService = gitPublickeyAuthenticatorService;
         this.sshGitCommandFactoryService = sshGitCommandFactoryService;
         this.sshGitLocationResolverService = sshGitLocationResolverService;
+        this.proxyProtocolAcceptor = proxyProtocolAcceptor;
     }
 
     /**
@@ -80,6 +83,10 @@ public class SshConfiguration {
         sshd.setCommandFactory(
                 sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> ThreadUtils.newFixedThreadPool("git-ssh", 8)));
         sshd.setPublickeyAuthenticator(gitPublickeyAuthenticatorService);
+        // Recovers the real client address when a load balancer forwards this port at the TCP level. Installed
+        // unconditionally: without configured proxy protocol sources it only removes headers, so that a proxy with
+        // proxy_protocol on does not break ssh for a node that does not list it.
+        sshd.setServerProxyAcceptor(proxyProtocolAcceptor);
         // Add command factory or shell here to handle Git commands or any other commands
 
         try {

@@ -12,7 +12,6 @@ export type FeedbackComponentPreparedParams = {
     exercise: Exercise | undefined;
     result: Result;
     participation: Participation;
-    exerciseType?: ExerciseType;
     showScoreChart?: boolean;
     messageKey?: string;
     latestDueDate?: dayjs.Dayjs;
@@ -37,7 +36,6 @@ export function prepareFeedbackComponentParameters(
     };
 
     if (exercise) {
-        preparedParameters.exerciseType = exercise.type!;
         preparedParameters.showScoreChart = true;
     }
 
@@ -64,7 +62,7 @@ function determineShowMissingAutomaticFeedbackInformation(
     if (latestDueDate) {
         setShowMissingAutomaticFeedbackInformation(latestDueDate, preparedParameters);
     } else {
-        exerciseService.getLatestDueDate(exercise!.id!).subscribe((latestDueDate) => {
+        exerciseService.getLatestDueDate(exercise.id!).subscribe((latestDueDate) => {
             if (latestDueDate) {
                 setShowMissingAutomaticFeedbackInformation(latestDueDate, preparedParameters);
             }

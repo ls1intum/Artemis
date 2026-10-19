@@ -10,24 +10,25 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ImportCompetenciesTableComponent } from 'app/atlas/manage/import/import-competencies-table.component';
 import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-search.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-import-competencies',
     templateUrl: './import-course-competencies.component.html',
-    imports: [ButtonComponent, CommonModule, FormsModule, TranslateDirective, ImportCompetenciesTableComponent, CompetencySearchComponent],
+    imports: [ButtonComponent, CommonModule, FormsModule, TranslateDirective, ImportCompetenciesTableComponent, CompetencySearchComponent, ArtemisTranslatePipe],
 })
 export class ImportCompetenciesComponent extends ImportCourseCompetenciesComponent {
-    entityType = CourseCompetencyType.COMPETENCY;
-    allowRelationImport = true;
-
     private readonly competencyService = inject(CompetencyService);
+
+    entityType = CourseCompetencyType.COMPETENCY;
+    override allowRelationImport = true;
 
     onSubmit() {
         this.competencyService.importBulk(this.selectedCourseCompetencies.resultsOnPage, this.courseId, this.importRelations).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.competency.import.success', { numCompetencies: res.body?.length ?? 0 });
                 this.isSubmitted = true;
-                this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });

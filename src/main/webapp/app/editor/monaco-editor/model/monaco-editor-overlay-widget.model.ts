@@ -25,7 +25,7 @@ export class MonacoEditorOverlayWidget extends MonacoCodeEditorElement implement
         this.position = position;
     }
 
-    setVisible(visible: boolean) {
+    override setVisible(visible: boolean) {
         super.setVisible(visible);
         // Ensure that the displayed content is visible if and only if this element is visble.
         this.setHtmlElementsVisible(visible, this.domNode);

@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormsModule } from '@angular/forms';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -19,8 +17,6 @@ import { Subject, of } from 'rxjs';
 import { LecturePagingService } from 'app/lecture/manage/services/lecture-paging.service';
 
 describe('LectureImportComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<LectureImportComponent>;
     let comp: LectureImportComponent;
     let dialogRef: DynamicDialogRef;
@@ -44,7 +40,6 @@ describe('LectureImportComponent', () => {
         await TestBed.configureTestingModule({
             imports: [
                 FormsModule,
-                MockComponent(NgbPagination),
                 LectureImportComponent,
                 MockComponent(ButtonComponent),
                 MockDirective(SortByDirective),

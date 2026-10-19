@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -12,7 +12,7 @@ export interface ISubmissionPolicyService {
     updateSubmissionPolicyToProgrammingExercise: (submissionPolicy: SubmissionPolicy, exerciseId: number) => Observable<SubmissionPolicy>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SubmissionPolicyService implements ISubmissionPolicyService {
     private http = inject(HttpClient);
 
@@ -26,8 +26,8 @@ export class SubmissionPolicyService implements ISubmissionPolicyService {
      */
     getSubmissionPolicyOfProgrammingExercise(exerciseId: number): Observable<SubmissionPolicy | undefined> {
         return this.http.get<SubmissionPolicy | undefined>(this.requestUrl(exerciseId)).pipe(
-            // using any as it can be null
-            map((response: any) => {
+            // the response can be null on the wire even though the generic type is undefined
+            map((response: SubmissionPolicy | null | undefined) => {
                 // Ensure that null is replaced by undefined
                 return response === null ? undefined : response;
             }),

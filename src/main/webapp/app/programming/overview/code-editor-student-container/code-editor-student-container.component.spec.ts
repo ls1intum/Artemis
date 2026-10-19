@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -17,8 +16,6 @@ import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submis
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorStudentContainerComponent;
     let fixture: ComponentFixture<CodeEditorStudentContainerComponent>;
 
@@ -62,12 +59,12 @@ describe('CodeEditorStudentContainerComponent', () => {
         comp.ngOnInit();
 
         expect(getParticipationSubmissionCountSpy).toHaveBeenCalledOnce();
-        expect(comp.numberOfSubmissionsForSubmissionPolicy).toBe(5);
+        expect(comp.numberOfSubmissionsForSubmissionPolicy()).toBe(5);
     });
 
     it.each([undefined, { active: false } as SubmissionPolicy])(
         'should not calculate the number of submissions for no or inactive submission policy',
-        (submissionPolicy: SubmissionPolicy) => {
+        (submissionPolicy: SubmissionPolicy | undefined) => {
             vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
             vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
             const getParticipationSubmissionCountSpy = vi.spyOn(submissionPolicyService, 'getParticipationSubmissionCount');
@@ -82,9 +79,12 @@ describe('CodeEditorStudentContainerComponent', () => {
         { allowOnlineEditor: true, onlineEditorEnabled: true, readOnlyCodeEditor: false },
         { allowOnlineEditor: false, onlineEditorEnabled: false, readOnlyCodeEditor: true },
     ])('should derive read-only code editor state from the online editor setting', ({ allowOnlineEditor, onlineEditorEnabled, readOnlyCodeEditor }) => {
-        comp.exercise = { ...studentParticipation.exercise, allowOnlineEditor } as ProgrammingExercise;
+        comp.exercise.set({ ...studentParticipation.exercise, allowOnlineEditor } as ProgrammingExercise);
 
-        expect(comp.onlineEditorEnabled).toBe(onlineEditorEnabled);
-        expect(comp.readOnlyCodeEditor).toBe(readOnlyCodeEditor);
+        expect(comp.canSubmitExercise()).toBe(onlineEditorEnabled);
+        comp.repositoryIsLocked.set(true);
+        expect(comp.canSubmitExercise()).toBe(false);
+        expect(comp.onlineEditorEnabled()).toBe(onlineEditorEnabled);
+        expect(comp.readOnlyCodeEditor()).toBe(readOnlyCodeEditor);
     });
 });

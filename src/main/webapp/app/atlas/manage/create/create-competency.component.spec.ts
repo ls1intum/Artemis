@@ -18,10 +18,8 @@ import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competen
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CreateCompetency', () => {
-    setupTestBed({ zoneless: true });
     let createCompetencyComponentFixture: ComponentFixture<CreateCompetencyComponent>;
     let createCompetencyComponent: CreateCompetencyComponent;
 

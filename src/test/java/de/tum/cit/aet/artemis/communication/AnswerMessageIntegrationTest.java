@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.communication;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topicMatching;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
@@ -9,9 +11,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -26,17 +33,31 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
+import de.tum.cit.aet.artemis.communication.domain.SavedPost;
+import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -45,7 +66,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
+import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -62,6 +85,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     private ConversationMessageRepository conversationMessageRepository;
 
     @Autowired
+    private SavedPostTestRepository savedPostRepository;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
@@ -69,6 +95,18 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
+
+    @Autowired
+    private CourseNotificationParameterTestRepository courseNotificationParameterRepository;
+
+    @Autowired
+    private UserCourseNotificationStatusTestRepository userCourseNotificationStatusRepository;
+
+    @Autowired
+    private ConversationParticipantTestRepository conversationParticipantRepository;
+
+    @Autowired
+    private ConversationTestRepository conversationRepository;
 
     private List<Post> existingConversationPostsWithAnswers;
 
@@ -90,7 +128,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithAnswerPostsWithinCourse(courseUtilService.createCourse(), TEST_PREFIX);
+        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithAnswerPostsWithinCourse(courseUtilService.createEnrolledCourse(TEST_PREFIX),
+                TEST_PREFIX);
 
         List<Post> existingPostsAndConversationPostsWithAnswers = existingPostsAndConversationPosts.stream()
                 .filter(coursePost -> coursePost.getAnswers() != null && !coursePost.getAnswers().isEmpty()).toList();
@@ -142,7 +181,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")), (Object) argThat(
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(), (Object) argThat(
                 argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(existingConversationPostsWithAnswers.get(2)))));
     }
 
@@ -218,7 +257,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
 
         // conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(wantedNumberOfWSMessages)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+        verify(websocketMessagingService, timeout(2000).times(wantedNumberOfWSMessages)).sendMessage(aCanonicalPostBroadcastTopic(),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(savedMessage))));
 
     }
@@ -235,8 +274,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         if (!isUserMentionValid) {
             request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", toCreateAnswerPostDTO(answerPostToSave), AnswerPostResponseDTO.class,
                     HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
-                    any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
             return;
         }
 
@@ -249,7 +287,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")), (Object) argThat(
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(), (Object) argThat(
                 argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(existingConversationPostsWithAnswers.get(2)))));
     }
 
@@ -292,8 +330,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
-                any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -317,8 +354,40 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
-                any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateConversationAnswerPost_contentTooLong_badRequest() throws Exception {
+        // content exceeding the 5000 character limit must be rejected by the DTO validation before persisting
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(2));
+        answerPostToSave.setContent("a".repeat(5001));
+
+        var countBefore = answerPostRepository.count();
+
+        AnswerPostResponseDTO notCreatedAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                toCreateAnswerPostDTO(answerPostToSave), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(notCreatedAnswerPost).isNull();
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore);
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateConversationAnswerPost_contentAtMaxLength_created() throws Exception {
+        // content of exactly 5000 characters is the boundary and must still be accepted
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(2));
+        answerPostToSave.setContent("a".repeat(5000));
+
+        var countBefore = answerPostRepository.count();
+
+        AnswerPostResponseDTO createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                toCreateAnswerPostDTO(answerPostToSave), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
     }
 
     // UPDATE
@@ -337,8 +406,41 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(updatedAnswerPost.id()).isEqualTo(conversationAnswerPostToUpdate.getId());
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")), (Object) argThat(
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(), (Object) argThat(
                 argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(conversationAnswerPostToUpdate.getPost()))));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testEditConversationAnswerPost_contentTooLong_badRequest() throws Exception {
+        // editing an existing answer to exceed the 5000 character limit must be rejected and must not modify the stored content
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(2).getAnswers().iterator().next();
+        Long answerPostId = conversationAnswerPostToUpdate.getId();
+        String tooLongContent = "a".repeat(5001);
+        conversationAnswerPostToUpdate.setContent(tooLongContent);
+
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + answerPostId, toUpdatePostingDTO(conversationAnswerPostToUpdate),
+                AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(answerPostRepository.findById(answerPostId).orElseThrow().getContent()).isNotEqualTo(tooLongContent);
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testEditConversationAnswerPost_contentAtMaxLength_ok() throws Exception {
+        // content of exactly 5000 characters is the boundary and must still be accepted and persisted
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(2).getAnswers().iterator().next();
+        Long answerPostId = conversationAnswerPostToUpdate.getId();
+        String maxContent = "a".repeat(5000);
+        conversationAnswerPostToUpdate.setContent(maxContent);
+
+        AnswerPostResponseDTO updatedAnswerPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + answerPostId,
+                toUpdatePostingDTO(conversationAnswerPostToUpdate), AnswerPostResponseDTO.class, HttpStatus.OK);
+
+        assertThat(updatedAnswerPost.id()).isEqualTo(answerPostId);
+        assertThat(updatedAnswerPost.content()).isEqualTo(maxContent);
+        assertThat(answerPostRepository.findById(answerPostId).orElseThrow().getContent()).isEqualTo(maxContent);
     }
 
     @ParameterizedTest
@@ -352,8 +454,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         if (!isUserMentionValid) {
             request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(),
                     toUpdatePostingDTO(conversationAnswerPostToUpdate), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
-                    any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
             return;
         }
 
@@ -364,7 +465,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(updatedAnswerPost.id()).isEqualTo(conversationAnswerPostToUpdate.getId());
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")), (Object) argThat(
+        verify(websocketMessagingService, timeout(2000)).sendMessage(aCanonicalPostBroadcastTopic(), (Object) argThat(
                 argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(existingConversationPostsWithAnswers.getFirst()))));
     }
 
@@ -384,6 +485,45 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         // resolvingAnswerPost is the original entity (kept above), updatedAnswerPost is the response DTO. The parent post id
         // is the same on both sides; use the entity-side reference since the DTO drops the post back-reference.
         assertThat(conversationMessageRepository.findMessagePostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsResolved_asAuthorOfOriginalMessage_keepsContentOfOtherUsersAnswer() throws Exception {
+        AnswerPost otherUsersAnswer = answerOfStudent1sMessageWrittenByTutor1();
+
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + otherUsersAnswer.getId(),
+                new UpdatePostingDTO(otherUsersAnswer.getId(), otherUsersAnswer.getContent(), null, true), AnswerPostResponseDTO.class, HttpStatus.OK);
+
+        AnswerPost stored = answerPostRepository.findByIdElseThrow(otherUsersAnswer.getId());
+        assertThat(stored.doesResolvePost()).isTrue();
+        assertThat(stored.getContent()).isEqualTo(otherUsersAnswer.getContent());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsResolved_asAuthorOfOriginalMessage_cannotChangeContentOfOtherUsersAnswer() throws Exception {
+        AnswerPost otherUsersAnswer = answerOfStudent1sMessageWrittenByTutor1();
+
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + otherUsersAnswer.getId(),
+                new UpdatePostingDTO(otherUsersAnswer.getId(), "Content the author of the question wants the answer to say", null, true), AnswerPostResponseDTO.class,
+                HttpStatus.FORBIDDEN);
+
+        AnswerPost stored = answerPostRepository.findByIdElseThrow(otherUsersAnswer.getId());
+        assertThat(stored.getContent()).isEqualTo(otherUsersAnswer.getContent());
+        assertThat(stored.doesResolvePost()).isFalse();
+        assertThat(stored.getUpdatedDate()).isNull();
+    }
+
+    /**
+     * An answer by tutor1 to a message of student1, so that student1 may mark it as resolving but may not edit it.
+     */
+    private AnswerPost answerOfStudent1sMessageWrittenByTutor1() {
+        AnswerPost answer = existingConversationPostsWithAnswers.get(3).getAnswers().iterator().next();
+        assertThat(answer.getPost().getAuthor().getLogin()).isEqualTo(TEST_PREFIX + "student1");
+        answer.setAuthor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        answer.setResolvesPost(false);
+        return answerPostRepository.save(answer);
     }
 
     @Test
@@ -566,8 +706,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(notUpdatedAnswerPost).isNull();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
-                any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -586,8 +725,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
-                any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -601,25 +739,23 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(updatedAnswerPostServer).isNull();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
-                any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.getFirst());
-        Course dummyCourse = courseUtilService.createCourse();
+        // persist the answer post and pass a matching body/path id so the 400 genuinely originates from the course-mismatch validation, not from id parsing
+        AnswerPost answerPostToUpdate = saveAnswerPost(TEST_PREFIX + "student1", existingPostsWithAnswersCourseWide.getFirst());
+        Course dummyCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
 
         AnswerPostResponseDTO updatedAnswerPostServer = request.putWithResponseBody(
                 "/api/communication/courses/" + dummyCourse.getId() + "/answer-messages/" + answerPostToUpdate.getId(),
-                // answerPostToUpdate is unsaved (id == null); the 400 stems from the course/answer mismatch, so the body id is irrelevant.
-                new UpdatePostingDTO(0L, answerPostToUpdate.getContent(), null, false), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+                new UpdatePostingDTO(answerPostToUpdate.getId(), answerPostToUpdate.getContent(), null, false), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
-                any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     // DELETE
@@ -632,8 +768,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
-                any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -646,7 +781,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.findById(conversationAnswerPostToDelete.getId())).isEmpty();
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")), (Object) argThat(
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(), (Object) argThat(
                 argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(existingConversationPostsWithAnswers.get(2)))));
     }
 
@@ -660,8 +795,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.findById(conversationAnswerPostToDelete.getId())).isPresent();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
-                any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -715,7 +849,640 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         });
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotifyEveryUnmutedGroupChatMemberExceptTheAuthorForAtAllInThreadReply() throws Exception {
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User mutedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, member, mutedMember, tutor);
+        ConversationParticipant mutedParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(groupChat.getId(), mutedMember.getId())
+                .orElseThrow();
+        mutedParticipant.setIsMuted(true);
+        conversationParticipantRepository.save(mutedParticipant);
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all Check this out!", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        assertThat(createdAnswer.content()).isEqualTo("@all Check this out!");
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, createdAnswer.id())).containsExactlyInAnyOrder(member.getId(), tutor.getId());
+            // the author of the parent message takes part in the thread, but gets the mention instead of the answer notification
+            assertThat(notificationRecipientIds(2, createdAnswer.id())).isEmpty();
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotTreatAtAllAsAMentionInThreadReplyOutsideOfGroupChats(boolean oneToOneChat) throws Exception {
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Conversation conversation = oneToOneChat ? conversationUtilService.createOneToOneChat(course, student1, member) : createChannelWithTwoStudents();
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", conversation);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all Check this out!", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // the reply is accepted and the author of the message gets the regular answer notification, but the token is plain text, so nobody is mentioned
+        assertThat(createdAnswer.content()).isEqualTo("@all Check this out!");
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(2, createdAnswer.id())).containsExactly(member.getId()));
+        await().atMost(5, TimeUnit.SECONDS).during(500, TimeUnit.MILLISECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotNotifyAHiddenParentAuthorNorMutedMembersButTheOtherMembersForAtAllInThreadReply() throws Exception {
+        User hiddenParentAuthor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User mutedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, hiddenParentAuthor, mutedMember, tutor);
+        updateParticipant(groupChat, hiddenParentAuthor, participant -> participant.setIsHidden(true));
+        updateParticipant(groupChat, mutedMember, participant -> participant.setIsMuted(true));
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all Check this out!", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // the member who hid the group chat does not get the answer notification either, although they wrote the message
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, createdAnswer.id())).containsExactly(tutor.getId());
+            assertThat(notificationRecipientIds(2, createdAnswer.id())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotifyAMutedMemberWhoIsMentionedByNameOnceWhenTheThreadReplyAlsoPingsAtAll() throws Exception {
+        User mutedMentionedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        User outsider = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, mutedMentionedMember, member);
+        updateParticipant(groupChat, mutedMentionedMember, participant -> participant.setIsMuted(true));
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student3", groupChat);
+
+        var createdAnswer = request.postWithResponseBody(
+                "/api/communication/courses/" + courseId + "/answer-messages", new CreateAnswerPostDTO("@all [user]" + mutedMentionedMember.getName() + "("
+                        + mutedMentionedMember.getLogin() + ")[/user] [user]" + outsider.getName() + "(" + outsider.getLogin() + ")[/user]", new ParentPostDTO(parentPost.getId())),
+                AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // the mention by name reaches the member who muted the group chat, the course member outside of the group chat is not reached, and the author of the message is
+        // pinged instead of getting the answer notification
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, createdAnswer.id())).containsExactlyInAnyOrder(mutedMentionedMember.getId(), member.getId());
+            assertThat(notificationRecipientIds(2, createdAnswer.id())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotNotifyAnyoneForAtAllInThreadReplyIfNobodyElseWantsToBeNotified() throws Exception {
+        User hiddenMember = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User mutedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, hiddenMember, mutedMember);
+        updateParticipant(groupChat, hiddenMember, participant -> participant.setIsHidden(true));
+        updateParticipant(groupChat, mutedMember, participant -> participant.setIsMuted(true));
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var replyWithoutRecipients = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all is anybody there?", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // the reply is created, nobody is left to ping. The member who unmutes the group chat is pinged by the next reply, which shows that the notifications work
+        assertThat(replyWithoutRecipients.content()).isEqualTo("@all is anybody there?");
+        updateParticipant(groupChat, mutedMember, participant -> participant.setIsMuted(false));
+        var replyWithRecipient = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all is anybody there now?", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, replyWithRecipient.id())).containsExactly(mutedMember.getId()));
+        assertThat(notificationRecipientIds(3, replyWithoutRecipients.id())).isEmpty();
+        assertThat(notificationRecipientIds(2, replyWithoutRecipients.id())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDescribeTheThreadReplyInTheMentionNotificationOfAtAll() throws Exception {
+        User parentAuthor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var groupChat = nameGroupChat(conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, parentAuthor, tutor), "Exercise sheet team");
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all Check this out!", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).hasSize(2));
+        // one notification is shared by all recipients, it points to the reply in its thread
+        Set<Long> notificationIds = courseNotificationParameterRepository.findAll().stream()
+                .filter(parameter -> "replyId".equals(parameter.getKey()) && String.valueOf(createdAnswer.id()).equals(parameter.getValue()))
+                .map(parameter -> parameter.getCourseNotification().getId()).collect(Collectors.toSet());
+        Set<Long> mentionNotificationIds = courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == 3)
+                .map(CourseNotification::getId).collect(Collectors.toSet());
+        assertThat(mentionNotificationIds).hasSize(1);
+        Map<String, String> parameters = courseNotificationParameterRepository.findAll().stream()
+                .filter(parameter -> mentionNotificationIds.contains(parameter.getCourseNotification().getId()))
+                .collect(Collectors.toMap(parameter -> parameter.getKey(), parameter -> parameter.getValue()));
+        assertThat(parameters).containsEntry("replyMarkdownContent", "@all Check this out!").containsEntry("replyId", String.valueOf(createdAnswer.id()))
+                .containsEntry("replyAuthorName", student1.getName()).containsEntry("replyAuthorId", String.valueOf(student1.getId()))
+                .containsEntry("postId", String.valueOf(parentPost.getId())).containsEntry("postAuthorName", parentAuthor.getName())
+                .containsEntry("channelId", String.valueOf(groupChat.getId())).containsEntry("channelName", "Exercise sheet team");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotNotifyAnyoneWhenEditingAThreadReplyToIncludeAtAll() throws Exception {
+        User parentAuthor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, parentAuthor);
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("Hello everybody", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(2, createdAnswer.id())).containsExactly(parentAuthor.getId()));
+
+        var updatedAnswer = request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + createdAnswer.id(),
+                new UpdatePostingDTO(createdAnswer.id(), "@all Hello everybody", null, false), AnswerPostResponseDTO.class, HttpStatus.OK);
+
+        // the edit is applied, but unlike the creation of a reply it notifies nobody
+        assertThat(updatedAnswer.content()).isEqualTo("@all Hello everybody");
+        await().atMost(5, TimeUnit.SECONDS).during(500, TimeUnit.MILLISECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldOnlyNotifyTheUsersMentionedByNameWhenVerifyingAnIrisAnswerThatContainsAtAll() throws Exception {
+        User mentionedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User otherMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        // the group chat is named, as the notification of the verified reply reads the name and a generated one would need the members of the chat
+        var groupChat = nameGroupChat(conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), mentionedMember, otherMember, tutor), "Iris group");
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+        AnswerPost answerPostToVerify = createAnswerPost(parentPost);
+        answerPostToVerify.setAuthor(irisBot);
+        answerPostToVerify.setVerified(false);
+        AnswerPost savedAnswerPost = answerPostRepository.save(answerPostToVerify);
+
+        String editedContent = "@all [user]" + mentionedMember.getName() + "(" + mentionedMember.getLogin() + ")[/user] Check this Iris reply!";
+        request.patchWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + savedAnswerPost.getId() + "/verify",
+                new VerifyAnswerMessageDTO(editedContent), AnswerMessageDTO.class, HttpStatus.OK);
+
+        // Verifying a reply is not the creation of a reply: the token is not expanded to the members of the group chat, only the explicit mention is notified.
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, savedAnswerPost.getId())).containsExactly(mentionedMember.getId()));
+    }
+
+    private Conversation nameGroupChat(Conversation groupChat, String name) {
+        ((GroupChat) groupChat).setName(name);
+        return conversationRepository.save(groupChat);
+    }
+
+    private void updateParticipant(Conversation conversation, User user, Consumer<ConversationParticipant> update) {
+        ConversationParticipant participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversation.getId(), user.getId())
+                .orElseThrow();
+        update.accept(participant);
+        conversationParticipantRepository.save(participant);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "> @all meeting at 5\n\nI will be there", "Use `@all` to ping everybody", "```\n@all\n```\nThe syntax", "https://example.org/@all",
+            "<code>@all</code>", "<blockquote>@all</blockquote>", "<pre>@all</pre>", "> quoted text\n@all please read", "- ~~~\n  @all\n  ~~~", "www.example.org/?q=(@all)",
+            "[details](https://host/?q=(@all))" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotTreatAtAllInQuotesCodeOrUrlsAsAMentionInThreadReply(String content) throws Exception {
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, member);
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO(content, new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // the author of the parent message gets the regular answer notification, the quoted token does not ping the group
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(2, createdAnswer.id())).containsExactly(member.getId()));
+        await().atMost(5, TimeUnit.SECONDS).during(500, TimeUnit.MILLISECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "<p>@all please read</p>", "<div>\n<p>@all please read</p>\n</div>", "see www.example.org @all" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldTreatAtAllAsAMentionInThreadReplyWhenItIsDisplayedAsNormalTextInHtmlOrNextToAnUrl(String content) throws Exception {
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, member);
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO(content, new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, createdAnswer.id())).containsExactly(member.getId());
+            assertThat(notificationRecipientIds(2, createdAnswer.id())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSendOnlyOneMentionNotificationWhenAtAllAndAUserMentionOverlapInThreadReply() throws Exception {
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User otherMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, member, otherMember);
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all [user]" + member.getName() + "(" + member.getLogin() + ")[/user]", new ParentPostDTO(parentPost.getId())),
+                AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).containsExactlyInAnyOrder(member.getId(), otherMember.getId()));
+    }
+
+    /**
+     * Collects the ids of the users that received a course notification of the given type for the given reply.
+     * An id appears once per received notification, so a duplicate notification for one user shows up as a repeated id.
+     */
+    private List<Long> notificationRecipientIds(int type, Long replyId) {
+        Set<Long> notificationIds = courseNotificationParameterRepository.findAll().stream()
+                .filter(parameter -> "replyId".equals(parameter.getKey()) && String.valueOf(replyId).equals(parameter.getValue()))
+                .map(parameter -> parameter.getCourseNotification().getId()).collect(Collectors.toSet());
+        return courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == type)
+                .flatMap(notification -> userCourseNotificationStatusRepository.findAllByCourseNotificationId(notification.getId()).stream())
+                .map(status -> status.getUser().getId()).toList();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldSendMentionNotificationWhenVerifyingEditedIrisAnswerWithMention() throws Exception {
+
+        User mentionedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+
+        var channel = createChannelWithTwoStudents();
+        // The reviewing tutor must be a member of the (restricted) channel to verify an Iris reply in it.
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "tutor1");
+        var post = existingConversationPostsWithAnswers.getFirst();
+        post.setConversation(channel);
+        Post savedMessage = conversationMessageRepository.save(post);
+
+        AnswerPost answerPostToVerify = createAnswerPost(savedMessage);
+        answerPostToVerify.setAuthor(irisBot);
+        answerPostToVerify.setVerified(false);
+        AnswerPost savedAnswerPost = answerPostRepository.save(answerPostToVerify);
+
+        long mentionNotificationsBefore = courseNotificationRepository.findAll().stream()
+                .filter(notification -> notification.getCourse().getId().equals(courseId) && notification.getType() == 3).count();
+
+        String editedContent = "[user]" + mentionedUser.getName() + "(" + mentionedUser.getLogin() + ")[/user] Check this Iris reply!";
+        request.patchWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + savedAnswerPost.getId() + "/verify",
+                new VerifyAnswerMessageDTO(editedContent), AnswerMessageDTO.class, HttpStatus.OK);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            long mentionNotificationsAfter = courseNotificationRepository.findAll().stream()
+                    .filter(notification -> notification.getCourse().getId().equals(courseId) && notification.getType() == 3).count();
+
+            assertThat(mentionNotificationsAfter).isEqualTo(mentionNotificationsBefore + 1);
+        });
+
+        // The answer is now persisted as verified, with the reviewing tutor and a verification timestamp recorded.
+        User tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        AnswerPost verifiedAnswer = answerPostRepository.findById(savedAnswerPost.getId()).orElseThrow();
+        assertThat(verifiedAnswer.isVerified()).isTrue();
+        assertThat(verifiedAnswer.getVerifiedBy()).isNotNull();
+        // verifiedBy is a lazy association; the test session is closed here, so compare by id (a proxy id access does not trigger loading).
+        assertThat(verifiedAnswer.getVerifiedBy().getId()).isEqualTo(tutor1.getId());
+        assertThat(verifiedAnswer.getVerifiedAt()).isNotNull();
+
+        // The verified (now student-visible) post is broadcast to participants.
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(aCanonicalPostBroadcastTopic(),
+                (Object) argThat(payload -> payload instanceof PostBroadcastDTO dto
+                        && dto.post().answers().stream().anyMatch(answer -> answer.id().equals(savedAnswerPost.getId()) && Boolean.TRUE.equals(answer.verified()))));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testVerifyAnswerMessage_contentTooLong_badRequest() throws Exception {
+        // approving an Iris answer with edited content beyond the 5000 character limit must be rejected and must not verify or change the answer
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+
+        var channel = createChannelWithTwoStudents();
+        // The reviewing tutor must be a member of the (restricted) channel to verify an Iris reply in it.
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "tutor1");
+        var post = existingConversationPostsWithAnswers.getFirst();
+        post.setConversation(channel);
+        Post savedMessage = conversationMessageRepository.save(post);
+
+        AnswerPost answerPostToVerify = createAnswerPost(savedMessage);
+        answerPostToVerify.setAuthor(irisBot);
+        answerPostToVerify.setVerified(false);
+        AnswerPost savedAnswerPost = answerPostRepository.save(answerPostToVerify);
+
+        String tooLongContent = "a".repeat(5001);
+        request.patchWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + savedAnswerPost.getId() + "/verify",
+                new VerifyAnswerMessageDTO(tooLongContent), AnswerMessageDTO.class, HttpStatus.BAD_REQUEST);
+
+        AnswerPost unchanged = answerPostRepository.findById(savedAnswerPost.getId()).orElseThrow();
+        assertThat(unchanged.isVerified()).isFalse();
+        assertThat(unchanged.getContent()).isNotEqualTo(tooLongContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testVerifyAnswerMessage_contentAtMaxLength_ok() throws Exception {
+        // approving an Iris answer with edited content at exactly the 5000 character limit is accepted and verifies the answer with that content
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+
+        var channel = createChannelWithTwoStudents();
+        // The reviewing tutor must be a member of the (restricted) channel to verify an Iris reply in it.
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "tutor1");
+        var post = existingConversationPostsWithAnswers.getFirst();
+        post.setConversation(channel);
+        Post savedMessage = conversationMessageRepository.save(post);
+
+        AnswerPost answerPostToVerify = createAnswerPost(savedMessage);
+        answerPostToVerify.setAuthor(irisBot);
+        answerPostToVerify.setVerified(false);
+        AnswerPost savedAnswerPost = answerPostRepository.save(answerPostToVerify);
+
+        String maxContent = "a".repeat(5000);
+        AnswerMessageDTO response = request.patchWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + savedAnswerPost.getId() + "/verify",
+                new VerifyAnswerMessageDTO(maxContent), AnswerMessageDTO.class, HttpStatus.OK);
+
+        // the response reflects the verified answer carrying exactly the 5000 character content
+        assertThat(response.verified()).isTrue();
+        assertThat(response.content()).isEqualTo(maxContent);
+
+        // the persisted answer is verified and stores exactly the submitted 5000 characters
+        AnswerPost verifiedAnswer = answerPostRepository.findById(savedAnswerPost.getId()).orElseThrow();
+        assertThat(verifiedAnswer.isVerified()).isTrue();
+        assertThat(verifiedAnswer.getContent()).isEqualTo(maxContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotBroadcastUnverifiedIrisReplyToStudents() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-leak");
+
+        Post parent = new Post();
+        parent.setAuthor(student1);
+        parent.setContent("What is a bridge pattern?");
+        parent.setConversation(channel);
+        parent.setVisibleForStudents(true);
+        Post savedParent = conversationMessageRepository.save(parent);
+
+        AnswerPost pendingIris = createAnswerPost(savedParent);
+        pendingIris.setContent("A pending Iris answer that students must not see.");
+        pendingIris.setAuthor(irisBot);
+        pendingIris.setVerified(false);
+        AnswerPost savedPendingIris = answerPostRepository.save(pendingIris);
+
+        // A student adds a normal reply, which re-broadcasts the parent post — and the parent still carries the pending Iris reply.
+        CreateAnswerPostDTO newReply = new CreateAnswerPostDTO("A normal student reply", new ParentPostDTO(savedParent.getId()));
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", newReply, AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // The student receives the update without the pending Iris reply ...
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(topic("/topic/user/" + student1.getId() + "/notifications/conversations"), (Object) argThat(
+                payload -> payload instanceof PostBroadcastDTO dto && dto.post().answers().stream().noneMatch(answer -> answer.id().equals(savedPendingIris.getId()))));
+
+        // ... while a tutor still receives it so the review controls stay live.
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(topic("/topic/user/" + tutor.getId() + "/notifications/conversations"), (Object) argThat(
+                payload -> payload instanceof PostBroadcastDTO dto && dto.post().answers().stream().anyMatch(answer -> answer.id().equals(savedPendingIris.getId()))));
+
+        // Because a pending Iris reply is attached, the post is delivered per-user, never on the shared course-wide topic that students subscribe to.
+        // Asserted after the per-user deliveries above so the broadcast has actually been dispatched by the time we check the course-wide topic was never used.
+        verify(websocketMessagingService, never()).sendMessage(topicMatching(".*/courses/.*"), any(Object.class));
+    }
+
+    // Regression: a pending (unverified) Iris reply must not leak to students through any alternate lookup path.
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotExposeUnverifiedIrisReplyThroughSourcePostsToStudent() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-source-student");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+
+        AnswerPost normalAnswer = saveAnswerPost(TEST_PREFIX + "student2", parent);
+        AnswerPost pendingIris = createUnverifiedIrisReply(parent, irisBot);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("postIds", parent.getId().toString());
+
+        List<PostResponseDTO> posts = request.getList("/api/communication/courses/" + courseId + "/messages-source-posts", HttpStatus.OK, PostResponseDTO.class, params);
+
+        assertThat(posts).hasSize(1);
+        var answerIds = posts.getFirst().answers().stream().map(AnswerPostResponseDTO::id).toList();
+        // the student sees the normal answer but never the pending Iris reply
+        assertThat(answerIds).contains(normalAnswer.getId()).doesNotContain(pendingIris.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldExposeUnverifiedIrisReplyThroughSourcePostsToTutor() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-source-tutor");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        AnswerPost pendingIris = createUnverifiedIrisReply(parent, irisBot);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("postIds", parent.getId().toString());
+
+        List<PostResponseDTO> posts = request.getList("/api/communication/courses/" + courseId + "/messages-source-posts", HttpStatus.OK, PostResponseDTO.class, params);
+
+        assertThat(posts).hasSize(1);
+        // the reviewing tutor must still receive the pending reply so the review controls stay live
+        assertThat(posts.getFirst().answers().stream().map(AnswerPostResponseDTO::id)).contains(pendingIris.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotExposeUnverifiedIrisReplyThroughSavedPostsToStudent() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-saved-student");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        AnswerPost pendingIris = createUnverifiedIrisReply(parent, irisBot);
+
+        // the student bookmarks the pending Iris reply by its (guessed) id and re-reads it via saved-posts
+        savedPostRepository.save(new SavedPost(student1, pendingIris.getId(), PostingType.ANSWER, SavedPostStatus.IN_PROGRESS, null));
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("courseId", courseId.toString());
+        params.add("status", SavedPostStatus.IN_PROGRESS.toString().toLowerCase(Locale.ROOT));
+
+        List<PostingDTO> saved = request.getList("/api/communication/saved-posts", HttpStatus.OK, PostingDTO.class, params);
+
+        assertThat(saved.stream().map(PostingDTO::id)).doesNotContain(pendingIris.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldExposeUnverifiedIrisReplyThroughSavedPostsToTutor() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        User tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-saved-tutor");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        AnswerPost pendingIris = createUnverifiedIrisReply(parent, irisBot);
+
+        savedPostRepository.save(new SavedPost(tutor1, pendingIris.getId(), PostingType.ANSWER, SavedPostStatus.IN_PROGRESS, null));
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("courseId", courseId.toString());
+        params.add("status", SavedPostStatus.IN_PROGRESS.toString().toLowerCase(Locale.ROOT));
+
+        List<PostingDTO> saved = request.getList("/api/communication/saved-posts", HttpStatus.OK, PostingDTO.class, params);
+
+        assertThat(saved.stream().map(PostingDTO::id)).contains(pendingIris.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentOwningParentCannotMutateUnverifiedIrisReply() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-update-guard");
+        // student1 authors the parent post, which would otherwise let them pass mayMarkAnswerMessageAsResolvingElseThrow
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        AnswerPost pendingIris = createUnverifiedIrisReply(parent, irisBot);
+
+        UpdatePostingDTO tamper = new UpdatePostingDTO(pendingIris.getId(), "student tampered content", null, true);
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + pendingIris.getId(), tamper, AnswerPostResponseDTO.class,
+                HttpStatus.FORBIDDEN);
+
+        // the pending reply is left untouched: neither its content nor its verification state changed
+        AnswerPost reloaded = answerPostRepository.findById(pendingIris.getId()).orElseThrow();
+        assertThat(reloaded.getContent()).isEqualTo(pendingIris.getContent());
+        assertThat(reloaded.isVerified()).isFalse();
+        assertThat(reloaded.doesResolvePost()).isFalse();
+    }
+
+    // GET answer-messages-source-posts (forwarded-message source previews must not leak answer posts the caller cannot access)
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourceAnswerPostsByIds_courseWideChannel_returnsAnswerPost() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(course, "answer-source-cw");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", courseWideChannel);
+        AnswerPost accessibleAnswer = saveAnswerPost(TEST_PREFIX + "student2", parent);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("answerPostIds", accessibleAnswer.getId().toString());
+
+        List<AnswerPostResponseDTO> answers = request.getList("/api/communication/courses/" + courseId + "/answer-messages-source-posts", HttpStatus.OK,
+                AnswerPostResponseDTO.class, params);
+        assertThat(answers).hasSize(1);
+        assertThat(answers.getFirst().id()).isEqualTo(accessibleAnswer.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourceAnswerPostsByIds_notParticipantOfNonCourseWideChannel_isForbidden() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel nonCourseWideChannel = conversationUtilService.createPublicChannel(course, "answer-source-non-cw");
+        conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student2");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", nonCourseWideChannel);
+        AnswerPost hiddenAnswer = saveAnswerPost(TEST_PREFIX + "student2", parent);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("answerPostIds", hiddenAnswer.getId().toString());
+
+        // student1 is not a participant of the non-course-wide channel, so they must not be able to read the answer post by its id
+        request.getList("/api/communication/courses/" + courseId + "/answer-messages-source-posts", HttpStatus.FORBIDDEN, AnswerPostResponseDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourceAnswerPostsByIds_mixedAccessibleAndInaccessible_isForbidden() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(course, "answer-source-cw-mixed");
+        Post accessibleParent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", courseWideChannel);
+        AnswerPost accessibleAnswer = saveAnswerPost(TEST_PREFIX + "student2", accessibleParent);
+        Channel nonCourseWideChannel = conversationUtilService.createPublicChannel(course, "answer-source-non-cw-mixed");
+        conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student2");
+        Post hiddenParent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", nonCourseWideChannel);
+        AnswerPost hiddenAnswer = saveAnswerPost(TEST_PREFIX + "student2", hiddenParent);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("answerPostIds", accessibleAnswer.getId() + "," + hiddenAnswer.getId());
+
+        // one inaccessible id must reject the whole request
+        request.getList("/api/communication/courses/" + courseId + "/answer-messages-source-posts", HttpStatus.FORBIDDEN, AnswerPostResponseDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourceAnswerPostsByIds_duplicateAccessibleIds_returnsAnswerPost() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(course, "answer-source-cw-dup");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", courseWideChannel);
+        AnswerPost accessibleAnswer = saveAnswerPost(TEST_PREFIX + "student2", parent);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        // duplicate ids must not trigger a false forbidden via the COUNT(DISTINCT) access check
+        params.add("answerPostIds", accessibleAnswer.getId() + "," + accessibleAnswer.getId());
+
+        List<AnswerPostResponseDTO> answers = request.getList("/api/communication/courses/" + courseId + "/answer-messages-source-posts", HttpStatus.OK,
+                AnswerPostResponseDTO.class, params);
+        assertThat(answers).hasSize(1);
+    }
+
+    // F-003: the path courseId is authoritative; an answer targeting a conversation of another course must be rejected
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
+        Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-answer-create");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
+
+        CreateAnswerPostDTO answerDTO = new CreateAnswerPostDTO("cross-course answer", new ParentPostDTO(parent.getId()));
+
+        AnswerPostResponseDTO notCreated = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerDTO, AnswerPostResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(notCreated).isNull();
+
+        // sanity check: the same answer via the conversation's actual course path succeeds
+        AnswerPostResponseDTO created = request.postWithResponseBody("/api/communication/courses/" + otherCourse.getId() + "/answer-messages", answerDTO,
+                AnswerPostResponseDTO.class, HttpStatus.CREATED);
+        assertThat(created).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateAnswerMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
+        Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-answer-update");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
+        AnswerPost answer = saveAnswerPost(TEST_PREFIX + "student1", parent);
+
+        UpdatePostingDTO updateDTO = new UpdatePostingDTO(answer.getId(), "updated answer", null, false);
+        AnswerPostResponseDTO notUpdated = request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + answer.getId(), updateDTO,
+                AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+        assertThat(notUpdated).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteAnswerMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
+        Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-answer-delete");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
+        AnswerPost answer = saveAnswerPost(TEST_PREFIX + "student1", parent);
+
+        request.delete("/api/communication/courses/" + courseId + "/answer-messages/" + answer.getId(), HttpStatus.BAD_REQUEST);
+        assertThat(answerPostRepository.findById(answer.getId())).isPresent();
+    }
+
     // HELPER METHODS
+
+    private AnswerPost saveAnswerPost(String login, Post parent) {
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setAuthor(userUtilService.getUserByLogin(login));
+        answerPost.setContent("answer post");
+        answerPost.setCreationDate(ZonedDateTime.now());
+        answerPost.setPost(parent);
+        return answerPostRepository.save(answerPost);
+    }
 
     private AnswerPost createAnswerPost(Post post) {
         AnswerPost answerPost = new AnswerPost();
@@ -723,6 +1490,20 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         answerPost.setPost(post);
         post.addAnswerPost(answerPost);
         return answerPost;
+    }
+
+    /**
+     * Persists an unverified Iris-generated reply (author is the Iris bot, verified = false) on the given parent post.
+     * Such a reply must stay invisible to and immutable for students until a tutor verifies it.
+     */
+    private AnswerPost createUnverifiedIrisReply(Post parent, User irisBot) {
+        AnswerPost pendingIris = new AnswerPost();
+        pendingIris.setContent("A pending Iris answer that students must not see.");
+        pendingIris.setAuthor(irisBot);
+        pendingIris.setVerified(false);
+        pendingIris.setCreationDate(ZonedDateTime.now());
+        pendingIris.setPost(parent);
+        return answerPostRepository.save(pendingIris);
     }
 
     private void checkCreatedAnswerPost(AnswerPost expectedAnswerPost, AnswerPostResponseDTO createdAnswerPost) {
@@ -774,6 +1555,19 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     private UpdatePostingDTO toUpdatePostingDTO(AnswerPost answerPost) {
         return new UpdatePostingDTO(answerPost.getId(), answerPost.getContent(), null, Boolean.TRUE.equals(answerPost.doesResolvePost()));
+    }
+
+    /**
+     * Matches the two destinations a post broadcast legitimately uses: the per-user conversation topic for a private
+     * conversation, and the course-wide communication topic for a course-wide channel. Which of the two applies depends
+     * on the conversation under test, and some helpers here cover both, so this matcher accepts either shape but
+     * nothing else - in particular neither the retired legacy mirror topic nor an unrelated destination, both
+     * of which a bare {@code anyString()} would have accepted.
+     *
+     * @return a Mockito matcher for a canonical post broadcast destination
+     */
+    private static WebsocketDestination aCanonicalPostBroadcastTopic() {
+        return topicMatching("/topic/user/\\d+/notifications/conversations|/topic/communication/courses/\\d+");
     }
 
 }

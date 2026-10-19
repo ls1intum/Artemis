@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -14,8 +13,8 @@ import { ProgrammingAssessmentRepoExportService } from 'app/programming/manage/a
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -27,7 +26,6 @@ const createBlobHttpResponse = () => {
 };
 
 describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: ProgrammingAssessmentRepoExportDialogComponent;
     let fixture: ComponentFixture<ProgrammingAssessmentRepoExportDialogComponent>;
     let exerciseService: ExerciseService;
@@ -56,7 +54,6 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         };
 
         return TestBed.configureTestingModule({
-            imports: [FormDateTimePickerComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
@@ -106,7 +103,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         await fixture.whenStable();
         expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
         expect(comp.repositoryExportOptions.anonymizeRepository).toBe(true);
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledOnce();
         expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
@@ -121,8 +118,159 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         comp.exportRepos();
         await fixture.whenStable();
         expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledOnce();
+    });
+
+    // Reached from the exercise scores page, where the dialog opens with no preselected participations: exporting
+    // then sent an empty participant list and the server answered 404. Nothing is selected, so there is nothing to
+    // request in the first place.
+    it('should not send a request when neither participations nor participants are selected', async () => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = '';
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+        const byParticipations = vi.spyOn(repoExportService, 'exportReposByParticipations');
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers');
+
+        comp.exportRepos();
+        await fixture.whenStable();
+
+        expect(byParticipations).not.toHaveBeenCalled();
+        expect(byIdentifiers).not.toHaveBeenCalled();
+        expect(comp.exportInProgress()).toBe(false);
+    });
+
+    // A list of only separators and blanks is the same as an empty selection and must not reach the server either.
+    it('should not send a request when the participant list holds only separators', async () => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = ' , ,, ';
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers');
+
+        comp.exportRepos();
+        await fixture.whenStable();
+
+        expect(byIdentifiers).not.toHaveBeenCalled();
+    });
+
+    // Blank entries around a real login must be dropped rather than sent as empty path segments.
+    it('should drop blank entries from the participant list', async () => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = ' ab12cde, ,cd34efg ';
+        const httpResponse = createBlobHttpResponse();
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+
+        comp.exportRepos();
+        await fixture.whenStable();
+
+        expect(byIdentifiers).toHaveBeenCalledWith(exerciseId, ['ab12cde', 'cd34efg'], comp.repositoryExportOptions);
+    });
+
+    // Same `[]` is truthy trap as the disable guard: the textarea was hidden behind `!participationIdList`, so the
+    // dialog opened from the exercise scores page - which preselects nothing - offered no way to name anyone at all.
+    it('should offer the participant field when no participation is preselected', async () => {
+        comp.participationIdList = [];
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('textarea')).not.toBeNull();
+    });
+
+    // With participations preselected the identifiers are irrelevant, so the field stays away.
+    it('should hide the participant field when participations are preselected', async () => {
+        comp.participationIdList = [1];
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
+    });
+
+    // The previous guard read `!this.participationIdList`, which is never true because the list starts as an empty
+    // array, so the button was never disabled and the tail `&& !this.exportInProgress` even inverted the intent.
+    // Nothing being selected deliberately leaves the button enabled - exportRepos() explains that - but a request in
+    // flight has to lock it, and only reading a signal makes that reach the zoneless template.
+    it('should disable the export button only while an export is running', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const exportButton = fixture.nativeElement.querySelector('button[type="submit"]');
+
+        expect(exportButton.getAttribute('disabled')).toBeNull();
+
+        comp.exportInProgress.set(true);
+        fixture.detectChanges();
+
+        expect(exportButton.getAttribute('disabled')).toBe('');
+    });
+
+    describe('late submissions date picker', () => {
+        let picker: TumAetUiDatePickerComponent;
+        let exportButton: HTMLButtonElement;
+
+        beforeEach(async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            picker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance;
+            exportButton = fixture.nativeElement.querySelector('button[type="submit"]');
+        });
+
+        it('should only be editable while late submissions are filtered', () => {
+            expect(picker.disabled()).toBe(true);
+
+            comp.repositoryExportOptions.filterLateSubmissions = true;
+            fixture.detectChanges();
+
+            expect(picker.disabled()).toBe(false);
+        });
+
+        it('should write the picked date to the export options', () => {
+            const date = dayjs('2030-06-01T12:00:00');
+
+            picker.value.set(date);
+            fixture.detectChanges();
+
+            expect(comp.repositoryExportOptions.filterLateSubmissionsDate).toBe(date);
+
+            picker.value.set(undefined);
+
+            expect(comp.repositoryExportOptions.filterLateSubmissionsDate).toBeUndefined();
+        });
+
+        it('should block the export while the typed date is not a date', async () => {
+            comp.repositoryExportOptions.filterLateSubmissions = true;
+            fixture.detectChanges();
+            const input: HTMLInputElement = fixture.nativeElement.querySelector('#filterLateSubmissionsDate');
+
+            input.value = 'not a date';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(comp.hasInvalidFilterDate()).toBe(true);
+            expect(exportButton.disabled).toBe(true);
+
+            input.value = '01.06.2030 12:00';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(comp.hasInvalidFilterDate()).toBe(false);
+            expect(exportButton.disabled).toBe(false);
+            expect(comp.repositoryExportOptions.filterLateSubmissionsDate!.isSame(dayjs('2030-06-01T12:00:00'))).toBe(true);
+        });
+
+        it('should ignore a text that is not a date while late submissions are not filtered', () => {
+            comp.isFilterDateTextValid.set(false);
+            fixture.detectChanges();
+
+            expect(comp.hasInvalidFilterDate()).toBe(false);
+            expect(exportButton.disabled).toBe(false);
+        });
     });
 
     it('Should not change the ExportOptions during export', async () => {
@@ -153,7 +301,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         comp.exportRepos();
         await fixture.whenStable();
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledTimes(2);
     });
 

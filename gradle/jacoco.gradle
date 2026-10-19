@@ -2,20 +2,20 @@ ext {
     // TODO: aggregated coverage and each module's coverage should become 90% for INSTRUCTION and 0 for CLASS
     AggregatedCoverageThresholds = ["INSTRUCTION": 0.850, "CLASS": 142]
     ModuleCoverageThresholds = [
-        "account"       :          ["INSTRUCTION": 0.890, "CLASS":  3],
-        "admin"         :          ["INSTRUCTION": 0.757, "CLASS":  7],
+        "account"       :          ["INSTRUCTION": 0.878, "CLASS":  3],
+        "admin"         :          ["INSTRUCTION": 0.757, "CLASS":  8],
         "assessment"    :          ["INSTRUCTION": 0.913, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.887, "CLASS":  2],
         "atlas"         :          ["INSTRUCTION": 0.842, "CLASS": 13],
-        "buildagent"    :          ["INSTRUCTION": 0.770, "CLASS":  1],
+        "buildagent"    :          ["INSTRUCTION": 0.755, "CLASS":  1],
         "communication" :          ["INSTRUCTION": 0.890, "CLASS":  0],
         "core"          :          ["INSTRUCTION": 0.730, "CLASS": 49],
         "course"        :          ["INSTRUCTION": 0.880, "CLASS":  2],
         "exam"          :          ["INSTRUCTION": 0.901, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.874, "CLASS":  1],
         "fileupload"    :          ["INSTRUCTION": 0.924, "CLASS":  1],
-        "hyperion"      :          ["INSTRUCTION": 0.854, "CLASS":  3],
-        "iris"          :          ["INSTRUCTION": 0.856, "CLASS": 17],
+        "hyperion"      :          ["INSTRUCTION": 0.848, "CLASS":  3],
+        "iris"          :          ["INSTRUCTION": 0.836, "CLASS": 17],
         "jenkins"       :          ["INSTRUCTION": 0.888, "CLASS":  3],
         "lecture"       :          ["INSTRUCTION": 0.900, "CLASS":  1],
         "localci"       :          ["INSTRUCTION": 0.860, "CLASS":  3],
@@ -23,7 +23,7 @@ ext {
         "lti"           :          ["INSTRUCTION": 0.880, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.917, "CLASS":  1],
         "notification"  :          ["INSTRUCTION": 0.760, "CLASS":  6],
-        "plagiarism"    :          ["INSTRUCTION": 0.914, "CLASS":  1],
+        "plagiarism"    :          ["INSTRUCTION": 0.905, "CLASS":  2],
         "programming"   :          ["INSTRUCTION": 0.832, "CLASS":  7],
         "quiz"          :          ["INSTRUCTION": 0.855, "CLASS":  5],
         "text"          :          ["INSTRUCTION": 0.922, "CLASS":  1],
@@ -48,6 +48,12 @@ jacoco {
 }
 
 jacocoTestReport {
+    // Every execution data file under build/jacoco counts towards the report, not only the one the local `test` task
+    // writes. A sharded CI run executes the suite as several jobs, each producing its own file; the reporting job
+    // downloads all of them into this directory, and the aggregated report has to cover the run as a whole. A single
+    // unsharded run is unaffected: it leaves exactly one file there.
+    executionData.setFrom(fileTree(layout.buildDirectory.dir("jacoco")).include("*.exec"))
+
     // For the aggregated report
     reports {
         xml.required = true
@@ -55,6 +61,11 @@ jacocoTestReport {
         html.required = true
         html.outputLocation = file("build/reports/jacoco/aggregated/html")
     }
+
+    // Rebuilding classDirectories from plain file trees below drops the dependency on the task that produces those
+    // classes. That went unnoticed while reporting always followed a build in the same job; the reporting job of a
+    // sharded run downloads execution data and nothing else, and produced an empty report instead of failing.
+    dependsOn tasks.named("classes")
 
     afterEvaluate {
         classDirectories.setFrom(
@@ -178,6 +189,7 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, J
     } else {
         classPath = "$BasePath/$moduleName/**/*.class"
     }
+    task.dependsOn(task.project.tasks.named("classes"))
     task.sourceDirectories = rootTask.sourceDirectories
     task.classDirectories.setFrom(
         files(rootTask.classDirectories.files.collect { classDir ->

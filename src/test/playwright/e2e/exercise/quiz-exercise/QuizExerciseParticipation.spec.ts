@@ -1,4 +1,7 @@
+import fs from 'fs';
+import path from 'path';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import { admin, instructor, studentOne } from '../../../support/users';
@@ -7,8 +10,18 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { QuizMode } from '../../../support/constants';
 import { SEED_COURSES } from '../../../support/seedData';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.quizParticipation.id } as any;
+const dragAndDropBackground = fs.readFileSync(path.resolve(__dirname, '../../../fixtures/exercise/quiz/drag_and_drop/background.jpg'));
+
+/**
+ * The answer options of a multiple choice question. `QuizExercise.quizQuestions` is typed as the abstract question,
+ * so the options only become visible once the concrete type is named - which the multiple choice fixtures always are.
+ */
+function answerOptionsOf(quiz: QuizExercise, questionIndex = 0) {
+    return (quiz.quizQuestions![questionIndex] as MultipleChoiceQuestion).answerOptions!;
+}
 
 test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
     test.describe('Quiz exercise participation', () => {
@@ -44,8 +57,8 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // Pin the submit contract end-to-end: the live endpoint must accept the DTO-shaped payload, mark the submission
             // as submitted, and return exactly the answer the student ticked (one MC entry with the right selected ids).
             expect(submitResponse.status()).toBe(200);
-            const submittedExpectedIds = tickedOptionIndices.map((index) => quizExercise.quizQuestions![0].answerOptions![index].id);
-            const responseBody = await submitResponse.json();
+            const submittedExpectedIds = tickedOptionIndices.map((index) => answerOptionsOf(quizExercise)[index].id!);
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted, 'server must flip the submitted flag after final submit').toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the MC question').toHaveLength(1);
             const mcAnswer = responseBody.submittedAnswers[0];
@@ -93,7 +106,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await quizExerciseMultipleChoice.submit();
 
             const mcQuestionId = shortQuiz.quizQuestions![0].id!;
-            const expectedTickedOptionIds = tickedOptionIndices.map((index) => shortQuiz.quizQuestions![0].answerOptions![index].id);
+            const expectedTickedOptionIds = tickedOptionIndices.map((index) => answerOptionsOf(shortQuiz)[index].id!);
             expect(expectedTickedOptionIds).toHaveLength(tickedOptionIndices.length);
 
             /**
@@ -104,7 +117,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 // Bound the response wait to 45s so a single hung request (the multi-node
                 // observation under load) does not consume the entire test budget. On
                 // timeout we re-issue the navigation up to two more times before giving up
-                // — a hung start-participation POST is a backend race that consistently
+                // — a hung start-participation POST is a server-side race that consistently
                 // recovers on subsequent retries within 1-2 attempts.
                 for (let attempt = 0; attempt < 3; attempt++) {
                     const responsePromise = page.waitForResponse(
@@ -115,7 +128,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                     await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
                     let body: any;
                     try {
-                        body = await (await responsePromise).json();
+                        body = await readResponseJson(await responsePromise);
                     } catch {
                         if (attempt === 2) {
                             throw new Error(`reloadAndReadSelectedOptionIds: start-participation never returned after 3 attempts`);
@@ -174,7 +187,9 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             });
 
             // Capture the IDs that the client will send back on submit.
-            const initialOptionIds = (createdQuiz.quizQuestions![0] as any).answerOptions!.map((opt: any) => opt.id).sort((a: number, b: number) => a - b);
+            const initialOptionIds = answerOptionsOf(createdQuiz)
+                .map((option) => option.id!)
+                .sort((a: number, b: number) => a - b);
             expect(initialOptionIds.length).toBeGreaterThan(0);
 
             const readOptionIdsFromServer = async (): Promise<number[]> => {
@@ -206,7 +221,10 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
     test.describe('Quiz exercise scheduled participation', () => {
         let quizExercise: QuizExercise;
-        const timeUntilQuizStartInSeconds = 15;
+        // 15s was too tight: beforeEach API call + login + navigation can consume 10–15s,
+        // leaving zero margin before startOfWorkingTime arrives and the overlay disappears.
+        // 45s gives ~30s of headroom for the "cannot participate" assertion.
+        const timeUntilQuizStartInSeconds = 45;
 
         test.beforeEach('Create quiz exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
@@ -216,24 +234,31 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         });
 
         test('Student cannot participate in scheduled quiz before start of working time', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
-            // Wait for the page's initial GET /courses/.../for-dashboard to settle before
-            // looking for the overlay — the overlay is gated on that fetch returning the
-            // quiz's startOfWorkingTime. Without the explicit wait the default 10s expect
-            // timeout can fire under multi-node CI load while the request is still in flight,
-            // even though the overlay would render seconds later.
-            const dashboardResponse = page
-                .waitForResponse((resp) => resp.url().includes(`api/course/courses/${course.id}/for-dashboard`) && resp.ok(), { timeout: 30_000 })
-                .catch(() => undefined);
+            // The overlay is gated on the quiz load: initLiveMode POSTs start-participation on page load regardless of
+            // whether the quiz has started, and the batch it returns is what flips waitingForQuizStart. Wait for that
+            // response before looking for the overlay, because under multi-node CI load the default 10s expect timeout
+            // can otherwise fire while the request is still in flight. Registered before the navigation so the response
+            // cannot be missed, and deliberately not swallowed: if the page stops issuing it, this must fail pointing
+            // at the cause rather than wait out the budget.
+            const startParticipation = page.waitForResponse(
+                (response) => response.url().includes(`api/quiz/quiz-exercises/${quizExercise.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
+                { timeout: 30_000 },
+            );
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await dashboardResponse;
+            await startParticipation;
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
         });
 
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
+            // timeUntilQuizStartInSeconds is 45s — lift the per-test budget so the fixed
+            // wait below doesn't hit the 60s @fast default.
+            test.slow();
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
+            // The quiz page does not push a live update when startOfWorkingTime arrives;
+            // wait for the time to pass, then assert the overlay is gone and the question shows.
             await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000 + 3000);
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible({ timeout: 10000 });
-            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
+            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible({ timeout: 10000 });
         });
     });
 
@@ -299,8 +324,76 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.endQuiz(quizExercise);
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await courseOverview.practiceExercise();
+            // Started through the dedicated action button, as the other practice tests in this file do. The generic
+            // "click a button containing Practice" helper this used to call does not start a practice attempt: the page
+            // offers several controls whose label contains the word, and the failure snapshot showed the exercise page
+            // still displaying an untouched "Start practice" button while the test waited for a question to appear.
+            await courseOverview.startQuizPractice(quizExercise.id!);
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
+        });
+    });
+
+    test.describe('Quiz exercise practice mode', () => {
+        let practiceQuiz: QuizExercise;
+
+        test.beforeEach('Create an ended course quiz that is open for practice', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            // A quiz whose due date is in the past has ended and is therefore open for practice.
+            practiceQuiz = await exerciseAPIRequests.createQuizExercise({
+                body: { course },
+                quizQuestions: [multipleChoiceQuizTemplate],
+                releaseDate: dayjs().subtract(2, 'days'),
+                dueDate: dayjs().subtract(1, 'days'),
+                duration: 60,
+                quizMode: QuizMode.SYNCHRONIZED,
+            });
+        });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/12955 (PR #12972). Two practice-mode bugs:
+         *  - Bug 1: after submitting a new practice attempt, every prior attempt must stay in the result-history
+         *    dropdown WITHOUT a page refresh (the participation merge must not drop earlier submissions).
+         *  - Bug 2: viewing a practice attempt must render per-question correctness. Practice results are unrated, and
+         *    the result endpoint used to filter unrated results out, so showResult never fired and no correctness showed.
+         */
+        test('keeps all practice attempts in the result history without refresh and shows per-question correctness', async ({
+            login,
+            courseOverview,
+            quizExerciseMultipleChoice,
+            quizExerciseParticipation,
+            page,
+        }) => {
+            test.setTimeout(180_000);
+            await login(studentOne, `/courses/${course.id}/exercises/${practiceQuiz.id}`);
+
+            // --- First practice attempt ---
+            await courseOverview.startQuizPractice(practiceQuiz.id!);
+            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
+            await quizExerciseMultipleChoice.tickAnswerOption(practiceQuiz.id!, 0);
+            const firstSubmit = await quizExerciseParticipation.submitPractice();
+            expect(firstSubmit.status(), 'practice submit must return 200 OK').toBe(200);
+            // The just-submitted attempt renders its per-question correctness table immediately.
+            await expect(quizExerciseParticipation.getMultipleChoiceResultTable()).toBeVisible();
+
+            // --- Second practice attempt, in the same session (no page reload) ---
+            await courseOverview.startQuizPractice(practiceQuiz.id!);
+            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
+            await quizExerciseMultipleChoice.tickAnswerOption(practiceQuiz.id!, 1);
+            const secondSubmit = await quizExerciseParticipation.submitPractice();
+            expect(secondSubmit.status(), 'second practice submit must return 200 OK').toBe(200);
+
+            // Bug 1: the result-history dropdown must list BOTH attempts without a refresh.
+            await quizExerciseParticipation.openResultHistory();
+            await expect(quizExerciseParticipation.getResultHistoryRows()).toHaveCount(2);
+
+            // Bug 2: opening an earlier attempt loads its (unrated) result via getParticipationResult and renders the
+            // per-question correctness table. The newest attempt is listed first, so the last row is the oldest one.
+            const resultResponse = page.waitForResponse(
+                (response) => /\/api\/quiz\/quiz-exercises\/\d+\/participations\/\d+\/result/.test(response.url()) && response.status() === 200,
+            );
+            await quizExerciseParticipation.getResultHistoryRows().last().click();
+            await resultResponse;
+            await expect(quizExerciseParticipation.getMultipleChoiceResultTable()).toBeVisible();
         });
     });
 
@@ -349,7 +442,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // End-to-end submit contract for short-answer: the new DTO-bound endpoint must accept the rich entity-shaped JSON the
             // client sends, persist one submitted-text per filled spot (lifting the text verbatim), and not silently drop any of them.
             expect(submitResponse.status()).toBe(200);
-            const responseBody = await submitResponse.json();
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted).toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the SA question').toHaveLength(1);
             const saAnswer = responseBody.submittedAnswers[0];
@@ -368,10 +461,16 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         test.beforeEach('Create DND quiz', async ({ login, courseManagementExercises, exerciseAPIRequests, quizExerciseCreation }) => {
             await login(admin, '/course-management/' + course.id + '/exercises');
             await courseManagementExercises.createQuizExercise();
-            await quizExerciseCreation.setTitle('Cypress Quiz');
+            // Unique per test: three tests in this block each create a quiz and nothing deletes them, so a
+            // fixed title would make the by-title recovery lookup below ambiguous.
+            const quizTitle = 'Cypress Quiz ' + generateUUID();
+            await quizExerciseCreation.setTitle(quizTitle);
             await quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
             const response = await quizExerciseCreation.saveQuiz();
-            quizExercise = await response.json();
+            // The drag-and-drop background image is a disk-backed file, so this create response cannot be held
+            // in Node and Chrome discards it when the editor navigates away on save. Fall back to an idempotent
+            // lookup instead of failing the whole describe block on a body that no longer exists.
+            quizExercise = await readResponseJson<QuizExercise>(response, () => exerciseAPIRequests.getQuizExerciseByTitle(course.id!, quizTitle));
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
         });
@@ -387,7 +486,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // (with full nested DragItem / DropLocation objects) the client sends and persist one mapping per drop the
             // student performed — server-resolved by id, not the client-supplied object.
             expect(submitResponse.status()).toBe(200);
-            const responseBody = await submitResponse.json();
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted).toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the DnD question').toHaveLength(1);
             const dndAnswer = responseBody.submittedAnswers[0];
@@ -396,6 +495,247 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             const mapping = dndAnswer.mappings[0];
             expect(mapping.dragItem?.id, 'persisted mapping must reference a real dragItem id').toEqual(expect.any(Number));
             expect(mapping.dropLocation?.id, 'persisted mapping must reference a real dropLocation id').toEqual(expect.any(Number));
+        });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/13187: on small screens the drag items are
+         * rendered below the exercise, so students must be able to scroll upwards while dragging an item. Holding a
+         * dragged item near the top edge of the scroll container must auto-scroll it (CDK auto-scroll requires the
+         * container to be registered as cdkScrollable).
+         */
+        test('View auto-scrolls when student drags an item to the top of the scroll container', async ({ login, page }) => {
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
+            await page.setViewportSize({ width: 800, height: 600 });
+            const dragItem = page.locator('#drag-item-0');
+            await dragItem.waitFor({ state: 'visible' });
+
+            // Wait until the quiz overflows a container that the CDK will actually auto-scroll, then mark that container.
+            //
+            // Two reasons for the wait. The drag items render as soon as the question arrives, but the question's
+            // background image is fetched as a separate blob request and contributes its height only once decoded, so the
+            // overflow appears late. Waiting for the overflow rather than for the image keeps this independent of how the
+            // image is delivered and covers a question that has none.
+            //
+            // The container must also carry cdkScrollable, because that registration is what #13190 added and what this
+            // test exists to protect: the CDK only auto-scrolls containers it knows about. Requiring it here means a
+            // regression that leaves the scrolling element unregistered fails on this wait, naming the cause, instead of
+            // timing out later while watching an element that was never going to move.
+            await page.waitForFunction(
+                () => {
+                    let element = document.getElementById('drag-item-0')?.parentElement;
+                    while (element) {
+                        const style = getComputedStyle(element);
+                        const scrollable = element.scrollHeight > element.clientHeight && ['auto', 'scroll'].includes(style.overflowY);
+                        if (scrollable && element.hasAttribute('cdkscrollable')) {
+                            element.setAttribute('data-e2e-scroll-container', 'true');
+                            return true;
+                        }
+                        element = element.parentElement;
+                    }
+                    return false;
+                },
+                // The second parameter is the argument handed to the browser callback, so the options belong third.
+                undefined,
+                { timeout: 30_000 },
+            );
+
+            // Scroll the container to the bottom explicitly instead of relying on scrollIntoViewIfNeeded.
+            //
+            // This is what CI was failing on: the container was scrollable, but the drag item happened to be visible
+            // already, so scrollIntoViewIfNeeded had nothing to do and the offset stayed at 0. Whether it has anything to
+            // do depends on how tall the rest of the question renders, which depends on the background image, so the test
+            // was asserting a precondition it had only incidentally arranged. Setting the offset makes the starting state
+            // the test's own decision.
+            const before = await page.evaluate(() => {
+                const element = document.querySelector('[data-e2e-scroll-container]')!;
+                element.scrollTop = element.scrollHeight;
+                const rect = element.getBoundingClientRect();
+                return { scrollTop: element.scrollTop, top: rect.top, left: rect.left, width: rect.width };
+            });
+            expect(before.scrollTop, 'precondition: the container must be scrolled down so it can scroll up during the drag').toBeGreaterThan(0);
+
+            const box = await dragItem.boundingBox();
+            if (!box) {
+                throw new Error('the drag item must be visible and have a bounding box');
+            }
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.down();
+            // Drag the item to the top edge of the scroll container and hold it there, jiggling the pointer
+            // so drag-move events keep firing until the auto-scroll has moved the container upwards.
+            const holdX = before.left + before.width / 2;
+            const holdY = before.top + 5;
+            await page.mouse.move(holdX, holdY, { steps: 10 });
+            // Counted here rather than taken from the callback: expect.poll invokes its callback without arguments, so a
+            // parameter would stay at its default and the pointer would never actually move.
+            let jiggle = 0;
+            try {
+                // Waited for as a condition rather than a fixed number of iterations: the CDK moves the container on
+                // animation frames, which a busy machine delivers late, and a fixed ceiling turns that delay into a
+                // failure of behaviour that is in fact correct.
+                await expect
+                    .poll(
+                        async () => {
+                            // Alternate the pointer position so every poll dispatches a move the drag can react to.
+                            await page.mouse.move(holdX + (jiggle++ % 2), holdY);
+                            return page.evaluate(() => document.querySelector('[data-e2e-scroll-container]')!.scrollTop);
+                        },
+                        {
+                            message: 'holding a dragged item at the top edge must scroll the container upwards',
+                            timeout: 15_000,
+                            intervals: [100],
+                        },
+                    )
+                    .toBeLessThan(before.scrollTop);
+            } finally {
+                // Always release the pointer, so a failure here cannot leave a held drag behind for the next assertion.
+                await page.mouse.up();
+            }
+        });
+    });
+
+    test.describe('DnD Quiz with several drag items', () => {
+        const dragItemTexts = ['+ attribute: Type', '+ method()', 'Case 1', 'Case 2', 'Case 3', 'Enumeration', 'Class', 'Interface'];
+        let quizExercise: QuizExercise;
+
+        test.beforeEach('Create DnD quiz', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            quizExercise = await exerciseAPIRequests.createQuizExercise({
+                body: { course },
+                quizQuestions: [
+                    {
+                        type: 'drag-and-drop',
+                        title: 'Where do the items belong?',
+                        text: 'Put each item where it belongs.',
+                        points: 1,
+                        scoringType: 'ALL_OR_NOTHING',
+                        randomizeOrder: false,
+                        backgroundFilePath: 'background.jpg',
+                        dropLocations: [{ tempID: 1, posX: 10, posY: 10, width: 60, height: 60 }],
+                        dragItems: dragItemTexts.map((text, index) => ({ tempID: 11 + index, text })),
+                        correctMappings: [{ dragItem: { tempID: 11 }, dropLocation: { tempID: 1 } }],
+                    },
+                ],
+                backgroundFile: { name: 'background.jpg', mimeType: 'image/jpeg', buffer: dragAndDropBackground },
+            });
+            await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
+            await exerciseAPIRequests.startQuizNow(quizExercise.id!);
+        });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/13205: while a student holds a dragged item and the view
+         * scrolls (by the auto-scroll at the edge, the wheel or the scroll bar), the drag items that are still in the list must stay
+         * where they are. The order of that list carries no meaning, but when the list let the CDK sort it, the CDK moved the other
+         * items out of the way on every scroll step. It assumes a single vertical column, so in the wrapped rows of a small screen
+         * the items jumped up and down by the height of a row.
+         */
+        test('Drag items keep their place when the view scrolls during a drag', async ({ login, page }) => {
+            // Below 1200px the drag items wrap into rows of several items each. The size is set before the page opens: the text of a drag
+            // item is fitted to its box again after every window resize, which would move the items while they are measured.
+            await page.setViewportSize({ width: 800, height: 600 });
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
+            const list = page.getByTestId('drag-items');
+            const draggables = list.getByTestId('drag-item-draggable');
+            await expect(draggables).toHaveCount(dragItemTexts.length);
+            await expect(draggables.first()).toBeVisible();
+
+            // The question overflows its scroll container only once the background image has loaded, so wait for that and mark the container.
+            // It must be registered with the CDK as cdkScrollable, because the CDK only reacts to scrolling of the containers it knows about.
+            await page.waitForFunction(
+                () => {
+                    let element = document.querySelector('[data-testid="drag-items"]')?.parentElement;
+                    while (element) {
+                        const style = getComputedStyle(element);
+                        const scrollable = element.scrollHeight > element.clientHeight && ['auto', 'scroll'].includes(style.overflowY);
+                        if (scrollable && element.hasAttribute('cdkscrollable')) {
+                            element.setAttribute('data-e2e-scroll-container', 'true');
+                            return true;
+                        }
+                        element = element.parentElement;
+                    }
+                    return false;
+                },
+                undefined,
+                { timeout: 30_000 },
+            );
+
+            // Bring the top of the list into view, with room to scroll the container further down while the pointer stays over the list.
+            const scrollRange = 60;
+            const geometry = await page.evaluate((range) => {
+                const scroller = document.querySelector('[data-e2e-scroll-container]')!;
+                const listElement = document.querySelector('[data-testid="drag-items"]')!;
+                const maxScrollTop = scroller.scrollHeight - scroller.clientHeight;
+                const listTopInContent = listElement.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+                scroller.scrollTop = Math.max(0, Math.min(listTopInContent - scroller.clientHeight / 4, maxScrollTop - range));
+                const listRect = listElement.getBoundingClientRect();
+                const scrollerRect = scroller.getBoundingClientRect();
+                return {
+                    room: maxScrollTop - scroller.scrollTop,
+                    list: { left: listRect.left, top: listRect.top, width: listRect.width, height: listRect.height },
+                    scrollerTop: scrollerRect.top,
+                    scrollerBottom: scrollerRect.bottom,
+                };
+            }, scrollRange);
+            expect(geometry.room, 'precondition: the container must be able to scroll while the item is held').toBeGreaterThanOrEqual(scrollRange);
+            expect(geometry.list.height, 'precondition: the pointer must stay over the list while the container scrolls').toBeGreaterThan(scrollRange + 20);
+            const holdX = geometry.list.left + geometry.list.width / 2;
+            const holdY = geometry.list.top + 10;
+            // Near the edges of the container the CDK would start scrolling on its own.
+            expect(holdY, 'precondition: the pointer must stay clear of the top edge of the container').toBeGreaterThan(geometry.scrollerTop + scrollRange);
+            expect(holdY, 'precondition: the pointer must stay clear of the bottom edge of the container').toBeLessThan(geometry.scrollerBottom - scrollRange);
+
+            const box = await draggables.first().boundingBox();
+            if (!box) {
+                throw new Error('the first drag item must be visible and have a bounding box');
+            }
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.down();
+            try {
+                await page.mouse.move(box.x + box.width / 2 + 10, box.y + box.height / 2 + 10, { steps: 5 });
+                await page.mouse.move(holdX, holdY, { steps: 10 });
+                // The CDK takes the picked item out of the list while it is dragged, which proves that the drag is in progress, and marks
+                // the list as the container the item is held over. The CDK exposes that state only through this class.
+                await expect(draggables).toHaveCount(dragItemTexts.length - 1);
+                await expect(list).toHaveClass(/cdk-drop-list-dragging/);
+
+                // Scroll the container in small steps while the pointer stays where it is, as the auto-scroll does, and record how far each
+                // remaining item moves relative to the list. Positions are relative to the list, so the scrolling itself does not count.
+                const maxDisplacements = await page.evaluate(
+                    async ({ range, step }) => {
+                        const scroller = document.querySelector('[data-e2e-scroll-container]')!;
+                        const listElement = document.querySelector('[data-testid="drag-items"]')!;
+                        const positions = () => {
+                            const listRect = listElement.getBoundingClientRect();
+                            return [...listElement.querySelectorAll('[data-testid="drag-item-draggable"]')].map((element) => {
+                                const rect = element.getBoundingClientRect();
+                                return { text: element.textContent!.trim(), x: rect.left - listRect.left, y: rect.top - listRect.top };
+                            });
+                        };
+                        // Scroll events are delivered with the next frame, and the CDK reacts to them right away.
+                        const nextFrames = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                        const start = new Map(positions().map((item) => [item.text, item]));
+                        const maxima: Record<string, number> = Object.fromEntries([...start.keys()].map((text) => [text, 0]));
+                        for (const direction of [1, -1]) {
+                            for (let scrolled = 0; scrolled < range; scrolled += step) {
+                                scroller.scrollTop += direction * step;
+                                await nextFrames();
+                                for (const item of positions()) {
+                                    const origin = start.get(item.text)!;
+                                    const displacement = Math.max(Math.abs(item.x - origin.x), Math.abs(item.y - origin.y));
+                                    maxima[item.text] = Math.max(maxima[item.text], Math.round(displacement * 100) / 100);
+                                }
+                            }
+                        }
+                        return maxima;
+                    },
+                    { range: scrollRange, step: 3 },
+                );
+                for (const [text, displacement] of Object.entries(maxDisplacements)) {
+                    expect(displacement, `"${text}" must not move while the view scrolls during the drag`).toBeLessThanOrEqual(0.5);
+                }
+            } finally {
+                // Always release the pointer, so a failure cannot leave a held drag behind.
+                await page.mouse.up();
+            }
         });
     });
 

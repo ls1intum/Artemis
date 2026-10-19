@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -26,8 +25,6 @@ import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-in
 import { ModuleFeature } from 'app/app.constants';
 
 describe('FaqUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
     let faqUpdateComponent: FaqUpdateComponent;
     let faqService: FaqService;
@@ -64,7 +61,7 @@ describe('FaqUpdateComponent', () => {
                 FaIconComponent,
                 FaqUpdateComponent,
                 MockComponent(MarkdownEditorMonacoComponent),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockRouterLinkDirective,
                 MockComponent(FaqConsistencyComponent),
             ],
@@ -148,7 +145,7 @@ describe('FaqUpdateComponent', () => {
         vi.advanceTimersByTime(0);
 
         expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'ACCEPTED' });
-        expect(faqUpdateComponent.isSaving).toBe(false);
+        expect(faqUpdateComponent.isSaving()).toBe(false);
     });
 
     it('should propose faq', () => {
@@ -172,7 +169,7 @@ describe('FaqUpdateComponent', () => {
         vi.advanceTimersByTime(0);
 
         expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'PROPOSED' });
-        expect(faqUpdateComponent.isSaving).toBe(false);
+        expect(faqUpdateComponent.isSaving()).toBe(false);
     });
 
     it('should edit a faq', () => {
@@ -248,7 +245,7 @@ describe('FaqUpdateComponent', () => {
         const categories = [new FaqCategory('category1', 'red'), new FaqCategory('category2', 'blue')];
         faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.updateCategories(categories);
-        expect(faqUpdateComponent.faqCategories).toEqual(categories);
+        expect(faqUpdateComponent.faqCategories()).toEqual(categories);
         expect(faqUpdateComponent.faq.categories).toEqual(categories);
     });
 
@@ -256,13 +253,13 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
         faqUpdateComponent.validate();
-        expect(faqUpdateComponent.isAllowedToSave).toBe(false);
+        expect(faqUpdateComponent.isAllowedToSave()).toBe(false);
         faqUpdateComponent.faq = { questionAnswer: 'test1' } as Faq;
         faqUpdateComponent.validate();
-        expect(faqUpdateComponent.isAllowedToSave).toBe(false);
+        expect(faqUpdateComponent.isAllowedToSave()).toBe(false);
         faqUpdateComponent.faq = { questionTitle: 'test', questionAnswer: 'test1' } as Faq;
         faqUpdateComponent.validate();
-        expect(faqUpdateComponent.isAllowedToSave).toBe(true);
+        expect(faqUpdateComponent.isAllowedToSave()).toBe(true);
     });
 
     it('should fail while saving with ErrorResponse', () => {
@@ -270,7 +267,7 @@ describe('FaqUpdateComponent', () => {
         const error = { status: 404 };
         vi.spyOn(faqService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqUpdateComponent.save();
-        expect(faqUpdateComponent.isSaving).toBe(false);
+        expect(faqUpdateComponent.isSaving()).toBe(false);
         expect(alertServiceStub).toHaveBeenCalledOnce();
         vi.runAllTimers();
     });

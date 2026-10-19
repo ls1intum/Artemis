@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
@@ -25,7 +24,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 
 describe('ComplaintsForTutorComponent', () => {
-    setupTestBed({ zoneless: true });
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
     let fixture: ComponentFixture<ComplaintsForTutorComponent>;
     let injectedComplaintResponseService: ComplaintResponseService;
@@ -103,6 +101,37 @@ describe('ComplaintsForTutorComponent', () => {
         expect(complainTextArea.value).toEqual(handledComplaint.complaintText);
     });
 
+    it('should render the section heading and both column headings in the same heading style', async () => {
+        const handledComplaint = new Complaint();
+        handledComplaint.id = 1;
+        handledComplaint.accepted = true;
+        handledComplaint.complaintText = 'please check again';
+        handledComplaint.complaintResponse = new ComplaintResponse();
+        handledComplaint.complaintResponse.id = 1;
+        handledComplaint.complaintResponse.responseText = 'gj';
+        handledComplaint.complaintType = ComplaintType.COMPLAINT;
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('complaint', handledComplaint);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const sectionHeading = fixture.nativeElement.querySelector('h3') as HTMLElement;
+        const columnHeadings = Array.from(fixture.nativeElement.querySelectorAll('h4')) as HTMLElement[];
+        // The complaint and its response are sibling columns, so their headings must be the same element, otherwise the textareas start at different heights.
+        expect(columnHeadings).toHaveLength(2);
+        expect(fixture.nativeElement.querySelectorAll('h3')).toHaveLength(1);
+
+        // Bootstrap's unlayered heading rules win over layered utilities, so every utility needs the important modifier.
+        for (const heading of [sectionHeading, ...columnHeadings]) {
+            expect(['mb-2!', 'text-base!', 'leading-tight!', 'font-semibold!'].every((utility) => heading.classList.contains(utility))).toBe(true);
+        }
+        expect(columnHeadings[0].className).toBe(columnHeadings[1].className);
+        // The textareas follow their heading directly in both columns.
+        expect(columnHeadings[0].nextElementSibling).toBe(fixture.nativeElement.querySelector('#complaintTextArea'));
+        expect(columnHeadings[1].nextElementSibling?.querySelector('#responseTextArea')).not.toBeNull();
+    });
+
     it('should create a new complaint response for a unhandled complaint without a connected complaint response', () => {
         const unhandledComplaint = new Complaint();
         unhandledComplaint.id = 1;
@@ -162,7 +191,7 @@ describe('ComplaintsForTutorComponent', () => {
         fixture.detectChanges();
 
         expect(createLockStub).toHaveBeenCalledTimes(1);
-        expect(complaintsForTutorComponent.isLoading).toBe(false);
+        expect(complaintsForTutorComponent.isLoading()).toBe(false);
         expect(alertServiceErrorSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -213,7 +242,7 @@ describe('ComplaintsForTutorComponent', () => {
 
     it('should send event when accepting a complaint', () => {
         fixture.detectChanges();
-        complaintsForTutorComponent.isLockedForLoggedInUser = false;
+        complaintsForTutorComponent.isLockedForLoggedInUser.set(false);
 
         const unhandledComplaint = new Complaint();
         unhandledComplaint.id = 1;
@@ -240,7 +269,7 @@ describe('ComplaintsForTutorComponent', () => {
 
     it('should directly resolve when rejecting a complaint', () => {
         fixture.detectChanges();
-        complaintsForTutorComponent.isLockedForLoggedInUser = false;
+        complaintsForTutorComponent.isLockedForLoggedInUser.set(false);
 
         const unhandledComplaint = new Complaint();
         unhandledComplaint.id = 1;
@@ -306,9 +335,15 @@ describe('ComplaintsForTutorComponent', () => {
         fixture.detectChanges();
 
         const responseTextArea = fixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
+        // Drive the value through the [(ngModel)] input event so the (zoneless) change detection
+        // re-evaluates the buttons' [disabled] bindings; directly mutating the DOM value no longer
+        // marks those bindings dirty in Angular's zoneless reactivity model.
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
+        responseTextArea.dispatchEvent(new Event('input'));
         expect(responseTextArea.value).toHaveLength(26);
-        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(26);
+        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit()).toBe(26);
+
+        fixture.changeDetectorRef.detectChanges();
 
         const rejectComplaintButton = fixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         const acceptComplaintButton = fixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
@@ -316,6 +351,7 @@ describe('ComplaintsForTutorComponent', () => {
         expect(acceptComplaintButton.disabled).toBe(false);
 
         responseTextArea.value = responseTextArea.value + 'A';
+        responseTextArea.dispatchEvent(new Event('input'));
         expect(responseTextArea.value).toHaveLength(27);
 
         // Update fixture
@@ -365,7 +401,7 @@ describe('ComplaintsForTutorComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         // use the default value if the course would define a lower maximum for exam exercises
-        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(2000);
+        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit()).toBe(2000);
     });
 
     it.each(['success', 'failure'])('should handle %s after updating assessment after complaint', (successOrFailure: string) => {
@@ -388,10 +424,10 @@ describe('ComplaintsForTutorComponent', () => {
         fixture.componentRef.setInput('complaint', unhandledComplaint);
         complaintsForTutorComponent.complaintResponse = newComplaintResponse;
 
-        complaintsForTutorComponent.isLoading = false;
-        complaintsForTutorComponent.handled = false;
-        complaintsForTutorComponent.showLockDuration = true;
-        complaintsForTutorComponent.lockedByCurrentUser = true;
+        complaintsForTutorComponent.isLoading.set(false);
+        complaintsForTutorComponent.handled.set(false);
+        complaintsForTutorComponent.showLockDuration.set(true);
+        complaintsForTutorComponent.lockedByCurrentUser.set(true);
 
         complaintsForTutorComponent.updateAssessmentAfterComplaint.subscribe((assessmentAfterComplaint) =>
             // setTimeout is used to defer the callback execution
@@ -407,19 +443,19 @@ describe('ComplaintsForTutorComponent', () => {
 
         complaintsForTutorComponent.respondToComplaint(true);
 
-        expect(complaintsForTutorComponent.isLoading).toBe(true);
-        expect(complaintsForTutorComponent.handled).toBe(false);
-        expect(complaintsForTutorComponent.showLockDuration).toBe(true);
-        expect(complaintsForTutorComponent.lockedByCurrentUser).toBe(true);
+        expect(complaintsForTutorComponent.isLoading()).toBe(true);
+        expect(complaintsForTutorComponent.handled()).toBe(false);
+        expect(complaintsForTutorComponent.showLockDuration()).toBe(true);
+        expect(complaintsForTutorComponent.lockedByCurrentUser()).toBe(true);
 
         // Run all pending timers to execute the setTimeout callback
         vi.runAllTimers();
 
-        expect(complaintsForTutorComponent.isLoading).toBe(false);
+        expect(complaintsForTutorComponent.isLoading()).toBe(false);
 
-        expect(complaintsForTutorComponent.handled).toBe(isSuccess);
-        expect(complaintsForTutorComponent.showLockDuration).toBe(!isSuccess);
-        expect(complaintsForTutorComponent.lockedByCurrentUser).toBe(!isSuccess);
+        expect(complaintsForTutorComponent.handled()).toBe(isSuccess);
+        expect(complaintsForTutorComponent.showLockDuration()).toBe(!isSuccess);
+        expect(complaintsForTutorComponent.lockedByCurrentUser()).toBe(!isSuccess);
 
         vi.useRealTimers();
     });

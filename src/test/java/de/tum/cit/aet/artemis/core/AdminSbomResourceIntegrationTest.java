@@ -17,7 +17,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.CombinedSbomDTO;
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.admin.dto.SbomDTO;
@@ -25,6 +24,7 @@ import de.tum.cit.aet.artemis.admin.dto.osv.OsvVulnerabilityDTO;
 import de.tum.cit.aet.artemis.admin.web.AdminSbomResource;
 import de.tum.cit.aet.artemis.core.connector.OsvRequestMockProvider;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -49,6 +49,7 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @BeforeEach
     void setUp() {
+        userUtilService.addAdmin(TEST_PREFIX);
         osvRequestMockProvider.enableMockingOfRequests();
         // Clear vulnerability cache to ensure each test starts fresh
         var cache = cacheManager.getCache(VULNERABILITY_CACHE_NAME);
@@ -65,7 +66,7 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void getCombinedSbom_returnsOk_whenSbomAvailable() throws Exception {
-        var result = request.get("/api/core/admin/sbom", HttpStatus.OK, CombinedSbomDTO.class);
+        var result = request.get("/api/admin/sbom", HttpStatus.OK, CombinedSbomDTO.class);
 
         assertThat(result).isNotNull();
         assertThat(result.server()).isNotNull();
@@ -82,18 +83,18 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void getCombinedSbom_returnsForbidden_whenNotAdmin() throws Exception {
-        request.get("/api/core/admin/sbom", HttpStatus.FORBIDDEN, CombinedSbomDTO.class);
+        request.get("/api/admin/sbom", HttpStatus.FORBIDDEN, CombinedSbomDTO.class);
     }
 
     @Test
     void getCombinedSbom_returnsUnauthorized_whenNotLoggedIn() throws Exception {
-        request.get("/api/core/admin/sbom", HttpStatus.UNAUTHORIZED, CombinedSbomDTO.class);
+        request.get("/api/admin/sbom", HttpStatus.UNAUTHORIZED, CombinedSbomDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void getServerSbom_returnsOk_whenServerSbomAvailable() throws Exception {
-        var result = request.get("/api/core/admin/sbom/server", HttpStatus.OK, SbomDTO.class);
+        var result = request.get("/api/admin/sbom/server", HttpStatus.OK, SbomDTO.class);
 
         assertThat(result).isNotNull();
         assertThat(result.bomFormat()).isEqualTo("CycloneDX");
@@ -109,7 +110,7 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void getClientSbom_returnsOk_whenClientSbomAvailable() throws Exception {
-        var result = request.get("/api/core/admin/sbom/client", HttpStatus.OK, SbomDTO.class);
+        var result = request.get("/api/admin/sbom/client", HttpStatus.OK, SbomDTO.class);
 
         assertThat(result).isNotNull();
         assertThat(result.bomFormat()).isEqualTo("CycloneDX");
@@ -125,13 +126,13 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void getServerSbom_returnsForbidden_whenNotAdmin() throws Exception {
-        request.get("/api/core/admin/sbom/server", HttpStatus.FORBIDDEN, SbomDTO.class);
+        request.get("/api/admin/sbom/server", HttpStatus.FORBIDDEN, SbomDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void getClientSbom_returnsForbidden_whenNotAdmin() throws Exception {
-        request.get("/api/core/admin/sbom/client", HttpStatus.FORBIDDEN, SbomDTO.class);
+        request.get("/api/admin/sbom/client", HttpStatus.FORBIDDEN, SbomDTO.class);
     }
 
     @Test
@@ -140,7 +141,7 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         // Mock OSV API to return no vulnerabilities for the 4 components (2 server + 2 client)
         osvRequestMockProvider.mockBatchQueryWithNoVulnerabilities(4);
 
-        var result = request.get("/api/core/admin/sbom/vulnerabilities", HttpStatus.OK, ComponentVulnerabilitiesDTO.class);
+        var result = request.get("/api/admin/sbom/vulnerabilities", HttpStatus.OK, ComponentVulnerabilitiesDTO.class);
 
         assertThat(result).isNotNull();
         assertThat(result.totalVulnerabilities()).isZero();
@@ -174,7 +175,7 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         // Mock fetching full vulnerability details
         osvRequestMockProvider.mockVulnerabilityDetails(fullVulnerability);
 
-        var result = request.get("/api/core/admin/sbom/vulnerabilities", HttpStatus.OK, ComponentVulnerabilitiesDTO.class);
+        var result = request.get("/api/admin/sbom/vulnerabilities", HttpStatus.OK, ComponentVulnerabilitiesDTO.class);
 
         assertThat(result).isNotNull();
         assertThat(result.totalVulnerabilities()).isEqualTo(1);
@@ -191,7 +192,7 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void getVulnerabilities_returnsForbidden_whenNotAdmin() throws Exception {
-        request.get("/api/core/admin/sbom/vulnerabilities", HttpStatus.FORBIDDEN, ComponentVulnerabilitiesDTO.class);
+        request.get("/api/admin/sbom/vulnerabilities", HttpStatus.FORBIDDEN, ComponentVulnerabilitiesDTO.class);
     }
 
     @Test
@@ -200,7 +201,7 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         // Mock OSV API to return no vulnerabilities
         osvRequestMockProvider.mockBatchQueryWithNoVulnerabilities(4);
 
-        var result = request.get("/api/core/admin/sbom/vulnerabilities/refresh", HttpStatus.OK, ComponentVulnerabilitiesDTO.class);
+        var result = request.get("/api/admin/sbom/vulnerabilities/refresh", HttpStatus.OK, ComponentVulnerabilitiesDTO.class);
 
         assertThat(result).isNotNull();
         assertThat(result.totalVulnerabilities()).isZero();
@@ -212,7 +213,7 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void refreshVulnerabilities_returnsForbidden_whenNotAdmin() throws Exception {
-        request.get("/api/core/admin/sbom/vulnerabilities/refresh", HttpStatus.FORBIDDEN, ComponentVulnerabilitiesDTO.class);
+        request.get("/api/admin/sbom/vulnerabilities/refresh", HttpStatus.FORBIDDEN, ComponentVulnerabilitiesDTO.class);
     }
 
     @Test
@@ -226,9 +227,10 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         doReturn(versionInfo).when(artemisVersionService).getVersionInfo();
 
         // Mock mail service to avoid sending real emails
-        doNothing().when(mailService).sendVulnerabilityScanResultEmail(any(User.class), any(ComponentVulnerabilitiesDTO.class), any(ArtemisVersionDTO.class), anyBoolean());
+        doNothing().when(mailService).sendVulnerabilityScanResultEmail(any(MailRecipientDTO.class), any(ComponentVulnerabilitiesDTO.class), any(ArtemisVersionDTO.class),
+                anyBoolean());
 
-        request.postWithoutLocation("/api/core/admin/sbom/vulnerabilities/send-email", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/admin/sbom/vulnerabilities/send-email", null, HttpStatus.OK, null);
 
         osvRequestMockProvider.verify();
     }
@@ -236,11 +238,11 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void sendVulnerabilityEmail_returnsForbidden_whenNotAdmin() throws Exception {
-        request.postWithoutLocation("/api/core/admin/sbom/vulnerabilities/send-email", null, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/admin/sbom/vulnerabilities/send-email", null, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
     void sendVulnerabilityEmail_returnsUnauthorized_whenNotLoggedIn() throws Exception {
-        request.postWithoutLocation("/api/core/admin/sbom/vulnerabilities/send-email", null, HttpStatus.UNAUTHORIZED, null);
+        request.postWithoutLocation("/api/admin/sbom/vulnerabilities/send-email", null, HttpStatus.UNAUTHORIZED, null);
     }
 }

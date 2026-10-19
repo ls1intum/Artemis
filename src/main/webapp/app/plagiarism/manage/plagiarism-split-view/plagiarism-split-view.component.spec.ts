@@ -1,6 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, of } from 'rxjs';
@@ -20,19 +18,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison';
 import { FromToElement, PlagiarismSubmissionElement } from '../../shared/entities/PlagiarismSubmissionElement';
 
-const collapse = vi.fn();
-const setSizes = vi.fn();
-
-vi.mock('split.js', () => ({
-    default: vi.fn().mockImplementation(() => ({
-        collapse,
-        setSizes,
-    })),
-}));
-
 describe('Plagiarism Split View Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: PlagiarismSplitViewComponent;
     let fixture: ComponentFixture<PlagiarismSplitViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
@@ -64,7 +50,7 @@ describe('Plagiarism Split View Component', () => {
         comp = fixture.componentInstance;
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
 
-        comp.plagiarismComparison = comparison;
+        comp.plagiarismComparison.set(comparison);
         fixture.componentRef.setInput('comparison', {
             submissionA,
             submissionB,
@@ -78,26 +64,53 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('checks type of text exercise', () => {
-        comp.ngOnChanges({
-            exercise: { currentValue: textExercise } as SimpleChange,
-        });
+        // isProgrammingOrTextExercise is now a computed derived from exercise() (replaces the former ngOnChanges branch).
+        fixture.componentRef.setInput('exercise', textExercise as Exercise);
 
-        expect(comp.isProgrammingOrTextExercise).toBe(true);
+        expect(comp.isProgrammingOrTextExercise()).toBe(true);
     });
 
     it('should parse text matches for comparison', async () => {
-        fixture.componentRef.setInput('exercise', textExercise as Exercise);
         vi.spyOn(comp, 'parseTextMatches');
         vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
-        comp.ngOnChanges({
-            exercise: { currentValue: textExercise } as SimpleChange,
-            comparison: { currentValue: comparison } as SimpleChange,
-        });
+
+        // The constructor effect fetches and parses the comparison whenever comparison() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('exercise', textExercise as Exercise);
+        fixture.componentRef.setInput('comparison', comparison);
+        fixture.detectChanges();
 
         await Promise.resolve();
 
-        expect(comp.isProgrammingOrTextExercise).toBe(true);
+        expect(comp.isProgrammingOrTextExercise()).toBe(true);
         expect(comp.parseTextMatches).toHaveBeenCalledOnce();
+    });
+
+    it('should not fetch comparison until the course id can be resolved', () => {
+        const getComparisonSpy = vi
+            .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
+            .mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+
+        // With a comparison set but no exercise, courseId() is undefined, so the effect must not fetch.
+        fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
+        fixture.detectChanges();
+
+        expect(getComparisonSpy).not.toHaveBeenCalled();
+    });
+
+    it('should fetch the comparison when the exercise is bound after the comparison', () => {
+        const getComparisonSpy = vi
+            .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
+            .mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+
+        // The parent may bind the inputs in either order. The effect tracks the derived course id as well, so the late exercise still triggers the fetch.
+        fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
+        fixture.detectChanges();
+        expect(getComparisonSpy).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('exercise', textExercise as Exercise);
+        fixture.detectChanges();
+
+        expect(getComparisonSpy).toHaveBeenCalledExactlyOnceWith(textExercise.course!.id, 1);
     });
 
     it('should subscribe to the split control subject', () => {
@@ -109,28 +122,34 @@ describe('Plagiarism Split View Component', () => {
         expect(subscribeSpy).toHaveBeenCalledOnce();
     });
 
-    it('should collapse the left pane', () => {
-        comp.split = { collapse } as unknown as Split.Instance;
-
+    it('should collapse the right pane so the left pane takes all space', () => {
         comp.handleSplitControl('left');
+        fixture.detectChanges();
 
-        expect(collapse).toHaveBeenCalledWith(1);
+        // collapse is applied via a CSS class (panelSizes can't hide a pane because p-splitter coerces 0 -> 50%)
+        expect(comp.collapsedSide()).toBe('right');
+        expect(fixture.nativeElement.querySelector('.plagiarism-splitter')?.classList.contains('collapsed-right')).toBe(true);
     });
 
-    it('should collapse the right pane', () => {
-        comp.split = { collapse } as unknown as Split.Instance;
-
+    it('should collapse the left pane so the right pane takes all space', () => {
         comp.handleSplitControl('right');
+        fixture.detectChanges();
 
-        expect(collapse).toHaveBeenCalledWith(0);
+        expect(comp.collapsedSide()).toBe('left');
+        expect(fixture.nativeElement.querySelector('.plagiarism-splitter')?.classList.contains('collapsed-left')).toBe(true);
     });
 
-    it('should reset the split panes', () => {
-        comp.split = { setSizes } as unknown as Split.Instance;
+    it('should reset the split panes and clear any collapse', () => {
+        comp.collapsedSide.set('right');
 
         comp.handleSplitControl('even');
+        fixture.detectChanges();
 
-        expect(setSizes).toHaveBeenCalledWith([50, 50]);
+        expect(comp.collapsedSide()).toBeUndefined();
+        expect(comp.panelSizes()).toEqual([50, 50]);
+        const splitter = fixture.nativeElement.querySelector('.plagiarism-splitter');
+        expect(splitter?.classList.contains('collapsed-left')).toBe(false);
+        expect(splitter?.classList.contains('collapsed-right')).toBe(false);
     });
 
     it('should get the first text submission', () => {
@@ -284,10 +303,12 @@ describe('Plagiarism Split View Component', () => {
         fixture.componentRef.setInput('sortByStudentLogin', studentLogin);
         fixture.componentRef.setInput('exercise', textExercise as Exercise);
 
-        comp.ngOnChanges({ comparison: { currentValue: { id: 1 } } as SimpleChange });
+        // The constructor effect fetches and swaps the comparison whenever comparison() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
+        fixture.detectChanges();
 
         const originalPlagComp = createPlagiarismComparison();
-        const plagComp = comp.plagiarismComparison;
+        const plagComp = comp.plagiarismComparison()!;
 
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledOnce();
 

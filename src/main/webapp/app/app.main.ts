@@ -7,8 +7,7 @@ import { AppComponent } from './app.component';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { registerLocaleData } from '@angular/common';
 import locale from '@angular/common/locales/en';
-import dayjs from 'dayjs/esm';
-import { NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
 import { artemisIconPack } from 'app/foundation/icons/icons';
 
 ProdConfig();
@@ -19,16 +18,21 @@ bootstrapApplication(AppComponent, appConfig)
         // TODO: potentially move this code into AppComponent
         const library = app.injector.get(FaIconLibrary);
         library.addIconPacks(artemisIconPack);
-        const dpConfig = app.injector.get(NgbDatepickerConfig);
         const tooltipConfig = app.injector.get(NgbTooltipConfig);
         const breakpointObserver = app.injector.get(BreakpointObserver);
 
         // Perform initialization logic
         registerLocaleData(locale);
-        dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
+        // Attach all ng-bootstrap tooltips to <body> so they are not clipped by `overflow: hidden` ancestors
+        // (e.g. the flex sidebar / layout-content), and suppress them on touch (Handset) devices.
+        // ~140 [ngbTooltip] usages still rely on this global default until they are migrated to PrimeNG p-tooltip.
         tooltipConfig.container = 'body';
-
         tooltipConfig.disableTooltip = breakpointObserver.isMatched(Breakpoints.Handset);
     })
-    // eslint-disable-next-line no-undef
-    .catch((err) => console.error(err));
+    .catch((err) => {
+        // This is the last-resort handler for a failed application bootstrap. It runs before AppComponent has
+        // initialized Sentry (see AppComponent.initSentry), so captureException would be a no-op here — the
+        // console is the only reliable channel to surface a startup failure instead of it vanishing silently.
+        // eslint-disable-next-line no-console, no-undef -- bootstrap failure handler; Sentry is not yet initialized
+        console.error('Failed to bootstrap the Angular application', err);
+    });

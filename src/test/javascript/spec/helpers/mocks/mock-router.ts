@@ -28,7 +28,7 @@ export class MockRouter {
     navigate = createMockFn(Promise.resolve(true));
 
     /** Router state for testing */
-    routerState: RouterState;
+    routerState!: RouterState;
 
     /** Mock for Router.createUrlTree() */
     createUrlTree = createMockFn({ path: 'testValue' } as unknown as UrlTree);

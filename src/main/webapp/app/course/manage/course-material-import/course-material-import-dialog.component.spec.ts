@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { CourseMaterialImportDialogComponent } from './course-material-import-dialog.component';
@@ -23,8 +22,6 @@ import { PaginatorModule } from 'primeng/paginator';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('CourseMaterialImportDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseMaterialImportDialogComponent;
     let fixture: ComponentFixture<CourseMaterialImportDialogComponent>;
     let importService: CourseMaterialImportService;
@@ -330,6 +327,36 @@ describe('CourseMaterialImportDialogComponent', () => {
                 importFaqs: false,
             });
             expect(successSpy).toHaveBeenCalled();
+            expect(closeSpy).toHaveBeenCalled();
+            expect(emitSpy).toHaveBeenCalled();
+        });
+
+        it('should warn instead of reporting success when the server reports failed items', async () => {
+            vi.spyOn(importService, 'importMaterial').mockReturnValue(
+                of({
+                    exercisesImported: 1,
+                    lecturesImported: 0,
+                    examsImported: 0,
+                    competenciesImported: 0,
+                    tutorialGroupsImported: 0,
+                    faqsImported: 0,
+                    errors: ["Failed to import exercise 'Sorting': boom", "Failed to import exercise 'Trees': bang"],
+                }),
+            );
+            const successSpy = vi.spyOn(alertService, 'success');
+            const warningSpy = vi.spyOn(alertService, 'warning');
+            const closeSpy = vi.spyOn(component, 'close');
+            const emitSpy = vi.spyOn(component.importStarted, 'emit');
+
+            component.importExercises.set(true);
+            await component.executeImport();
+
+            expect(warningSpy).toHaveBeenCalledOnce();
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.course.import.partialSuccess', {
+                errors: "Failed to import exercise 'Sorting': boom; Failed to import exercise 'Trees': bang",
+            });
+            expect(successSpy).not.toHaveBeenCalled();
+            // Whatever was imported must still refresh the course, so the dialog closes and announces the import.
             expect(closeSpy).toHaveBeenCalled();
             expect(emitSpy).toHaveBeenCalled();
         });

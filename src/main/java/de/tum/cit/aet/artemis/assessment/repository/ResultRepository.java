@@ -8,10 +8,8 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -29,17 +27,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.core.util.RoundingUtil;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -75,14 +70,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE r.exerciseId IN :exerciseIds
             """)
     long countByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
-
-    @Query("""
-            SELECT r
-            FROM Result r
-                LEFT JOIN FETCH r.assessor
-            WHERE r.id = :resultId
-            """)
-    Optional<Result> findByIdWithEagerAssessor(@Param("resultId") long resultId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findAllBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
@@ -137,8 +124,11 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     List<Result> findLatestAutomaticResultsForExercise(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
-    List<Result> findResultsWithFeedbacksAndTestCaseByIdIn(List<Long> ids);
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
+    List<Result> findResultsWithFeedbacksByIdIn(List<Long> ids);
+
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "assessor" })
+    List<Result> findResultsWithFeedbacksAndAssessorByIdIn(Collection<Long> ids);
 
     /**
      * Get the latest results for each programming exercise student participation in an exercise from the database together with the list of feedback items.
@@ -146,56 +136,59 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @param exerciseId the id of the exercise to load from the database
      * @return a list of results.
      */
-    default List<Result> findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(long exerciseId) {
+    default List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(long exerciseId) {
         List<Long> ids = findLatestAutomaticResultsForExercise(exerciseId).stream().map(DomainObject::getId).toList();
 
         if (ids.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
-        return findResultsWithFeedbacksAndTestCaseByIdIn(ids);
+        return findResultsWithFeedbacksByIdIn(ids);
     }
 
     Optional<Result> findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
+    Optional<Result> findResultWithFeedbacksById(long resultId);
 
     /**
-     * Finds the first result by participation ID, including its feedback and test cases, ordered by completion date in descending order.
+     * Finds the first result by participation ID, including its feedback, ordered by completion date in descending order.
      * This method avoids in-memory paging by retrieving the first result directly from the database.
      *
      * @param participationId the ID of the participation to find the result for
-     * @return an {@code Optional} containing the first {@code Result} with feedback and test cases, ordered by completion date in descending order,
+     * @return an {@code Optional} containing the first {@code Result} with feedback, ordered by completion date in descending order,
      *         or an empty {@code Optional} if no result is found
      */
-    default Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
+    default Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(long participationId) {
         var resultOptional = findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
         }
         var id = resultOptional.get().getId();
-        return findResultWithFeedbacksAndTestCasesById(id);
+        return findResultWithFeedbacksById(id);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase", "submission" })
-    Optional<Result> findResultWithSubmissionAndFeedbacksTestCasesById(long resultId);
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "submission" })
+    Optional<Result> findResultWithSubmissionAndFeedbacksById(long resultId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.participation" })
+    Optional<Result> findResultWithSubmissionAndParticipationById(long resultId);
 
     /**
-     * Finds the first result by participation ID, including its submission, feedback, and test cases, ordered by completion date in descending order.
+     * Finds the first result by participation ID, including its submission and feedback, ordered by completion date in descending order.
      * This method avoids in-memory paging by retrieving the first result directly from the database.
      *
      * @param participationId the ID of the participation to find the result for
-     * @return an {@code Optional} containing the first {@code Result} with submission, feedback, and test cases, ordered by completion date in descending order,
+     * @return an {@code Optional} containing the first {@code Result} with submission and feedback, ordered by completion date in descending order,
      *         or an empty {@code Optional} if no result is found
      */
-    default Optional<Result> findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
+    default Optional<Result> findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(long participationId) {
         var resultOptional = findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
         }
         var id = resultOptional.get().getId();
-        return findResultWithSubmissionAndFeedbacksTestCasesById(id);
+        return findResultWithSubmissionAndFeedbacksById(id);
     }
 
     Optional<Result> findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
@@ -204,7 +197,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT r
             FROM Result r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") long resultId);
@@ -213,7 +205,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT r
             FROM Result r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
             WHERE r.id = :resultId
             """)
@@ -241,24 +232,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(@Param("resultId") long resultId);
 
     /**
-     * counts the number of assessments of a course, which are either rated or not rated (excluding test run participations)
-     *
-     * @param exerciseIdsWithManualAssessment - the ids of the exercises of the course (should be filtered to only include exercises with manual assessment)
-     * @return the number of assessments for the course
-     */
-    @Query("""
-            SELECT COUNT(r)
-            FROM Result r
-                JOIN r.submission s
-                JOIN s.participation p
-            WHERE r.completionDate IS NOT NULL
-                AND r.assessor IS NOT NULL
-                AND p.testRun = FALSE
-                AND r.exerciseId IN :exerciseIds
-            """)
-    long countAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIdsWithManualAssessment);
-
-    /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
      *
      * @param resultId the id of the result to load from the database
@@ -276,8 +249,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Optional<Result> findWithSubmissionAndFeedbackAndTeamStudentsById(@Param("resultId") long resultId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase", "assessmentNote" })
-    Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(long resultId);
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "assessmentNote" })
+    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(long resultId);
 
     /**
      * Gets the number of assessments with a rated result set by an assessor for an exercise
@@ -304,34 +277,58 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.testRun = FALSE
                 AND r.assessor IS NOT NULL
                 AND r.rated = TRUE
-                AND r.submission.submitted = TRUE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
+                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     /**
-     * Counts the number of finished assessments for a set of exercise IDs, ignoring test runs.
-     * Only submissions that have been submitted before the due date (if set) are considered.
+     * Counts the submissions of text, modeling and file upload exercises with at least one finished manual result, ignoring test runs.
+     * Every such submission counts exactly once, no matter whether it was submitted in time or late, whether its result is rated and how many results it has
+     * (e.g. after a complaint response). A participation can contain several submitted submissions, which are counted separately.
+     * This matches how {@code SubmissionRepository#countAllByExerciseIdsSubmittedBeforeDueDate} and {@code SubmissionRepository#countAllByExerciseIdsSubmittedAfterDueDate}
+     * count the submissions of the same exercises.
      *
      * @param exerciseIds set of exercise IDs
-     * @return the number of finished assessments for the given exercise IDs, ignoring test runs
+     * @return the number of assessed submissions for the given exercise IDs, ignoring test runs
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT s)
+            FROM Result r
+                JOIN r.submission s
+                JOIN s.participation p
+                JOIN p.exercise e
+            WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND e.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND r.assessor IS NOT NULL
+                AND s.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+            """)
+    long countNumberOfAssessedSubmissionsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Counts the participations of programming exercises with a submitted submission and at least one finished manual result, ignoring test runs.
+     * A student can have multiple submissions in a programming exercise, so the participations are counted, like
+     * {@code ProgrammingExerciseRepository#countAllSubmissionsByExerciseIdsSubmitted} does for the submissions of the same exercises.
+     *
+     * @param exerciseIds set of exercise IDs
+     * @return the number of assessed participations for the given exercise IDs, ignoring test runs
      */
     @Query("""
             SELECT COUNT(DISTINCT p)
-            FROM StudentParticipation p
+            FROM ProgrammingExerciseStudentParticipation p
                 JOIN p.submissions s
                 JOIN s.results r
                 JOIN p.exercise e
             WHERE e.id IN :exerciseIds
                 AND p.testRun = FALSE
                 AND r.assessor IS NOT NULL
-                AND r.rated = TRUE
-                AND r.submission.submitted = TRUE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
             """)
-    long countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+    long countNumberOfAssessedProgrammingParticipationsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * @param exerciseId id of exercise
@@ -405,7 +402,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.assessmentType IN :types
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
+                AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
             """)
     long countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(@Param("exerciseId") long exerciseId, @Param("types") List<AssessmentType> types);
 
@@ -420,7 +417,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.rated = FALSE
                 AND r.completionDate IS NOT NULL
                 AND p.exercise.dueDate IS NOT NULL
-                AND r.submission.submissionDate > p.exercise.dueDate
+                AND s.submissionDate > p.exercise.dueDate
             """)
     long countNumberOfAssessmentsByTypeForExerciseAfterDueDate(@Param("exerciseId") long exerciseId, @Param("types") List<AssessmentType> types);
 
@@ -499,6 +496,47 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return true if a result exists for the given submission ID, false otherwise.
      */
     boolean existsBySubmissionId(long submissionId);
+
+    /**
+     * Checks if the given submission has a manual result (manual or semi-automatic) for the given correction round.
+     *
+     * @param submissionId    the ID of the submission to check.
+     * @param correctionRound the correction round of the result.
+     * @return true if the submission has a manual result for the given correction round, false otherwise.
+     */
+    @Query("""
+            SELECT COUNT(r) > 0
+            FROM Result r
+            WHERE r.submission.id = :submissionId
+                AND r.correctionRound = :correctionRound
+                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
+            """)
+    boolean existsManualResultBySubmissionIdAndCorrectionRound(@Param("submissionId") long submissionId, @Param("correctionRound") int correctionRound);
+
+    /**
+     * Returns the manual results of the given submissions together with the correction round each belongs to.
+     * <p>
+     * Two callers need this. The scores overview renders assessment actions per correction round, so it needs one entry
+     * per round rather than only the newest result, and the exam score statistics report what the first round scored.
+     * Automatic and Athena results are left out because they are not correction rounds, which matches
+     * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose assessment
+     * type is not set yet.
+     *
+     * @param submissionIds the submissions whose manual results should be read
+     * @return the manual results of those submissions, in no particular order
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO(
+                result.submission.id, result.id, result.correctionRound, result.assessmentType, result.completionDate, result.hasComplaint, result.score)
+            FROM Result result
+            WHERE result.submission.id IN :submissionIds
+                AND (result.assessmentType IS NULL
+                    OR result.assessmentType NOT IN (
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                    ))
+            """)
+    List<CorrectionRoundResultDTO> findCorrectionRoundResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
 
     /**
      * Returns true if there is at least one result for the given exercise.
@@ -618,7 +656,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
+     * Given the exercise ids of a course, return the number of assessed submissions for these exercises that have been completed (e.g. no draft!).
+     * This is the counterpart of the submissions counted for the same exercises, i.e. one per submission for text, modeling and file upload exercises
+     * and one per participation for programming exercises, independent of the due date and the rated flag.
      *
      * @param exerciseIds - the exercise ids of the course we are interested in (should be filtered to only include exercises with manual assessment)
      * @return a number of assessments for the course
@@ -628,7 +668,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         if (exerciseIds == null || exerciseIds.isEmpty()) {
             return 0;
         }
-        return countAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
+        return countNumberOfAssessedSubmissionsForExerciseIdsIgnoreTestRuns(exerciseIds) + countNumberOfAssessedProgrammingParticipationsForExerciseIdsIgnoreTestRuns(exerciseIds);
     }
 
     /**
@@ -783,54 +823,12 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
             }
             else {
-                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
-                // TODO: what happens if getCredits is null?
-                totalPoints += feedback.getCredits();
+                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit.
+                // A comment-only feedback carries no credits (null); treat it as 0 so score calculation (e.g. during re-evaluation) does not fail.
+                totalPoints += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
             }
         }
         return totalPoints;
-    }
-
-    /**
-     * Calculates the sum of points of all feedbacks. Additionally, computes the sum of points of feedbacks belonging to the same {@link GradingCriterion}.
-     * Points are rounded as defined by the course settings.
-     *
-     * @param result for which the points should be summed up.
-     * @param course with the exercise the result belongs to.
-     * @return the result together with the total points and the points per criterion.
-     */
-    default ResultWithPointsPerGradingCriterionDTO calculatePointsPerGradingCriterion(final Result result, final Course course) {
-        final Map<Long, Double> pointsPerCriterion = new HashMap<>();
-        final Map<Long, Integer> gradingInstructionsUseCount = new HashMap<>();
-
-        for (final Feedback feedback : result.getFeedbacks()) {
-            final double feedbackPoints;
-            final Long criterionId;
-
-            if (feedback.getGradingInstruction() != null) {
-                feedbackPoints = feedback.computeTotalScore(0, gradingInstructionsUseCount);
-                criterionId = feedback.getGradingInstruction().getGradingCriterion().getId();
-            }
-            else {
-                feedbackPoints = feedback.getCredits() != null ? feedback.getCredits() : 0;
-                criterionId = null;
-            }
-
-            pointsPerCriterion.compute(criterionId, (_, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
-        }
-
-        final double totalPoints = RoundingUtil.roundScoreSpecifiedByCourseSettings(pointsPerCriterion.values().stream().mapToDouble(points -> points).sum(), course);
-
-        // points for feedbacks without criterion were only needed for totalPoints calculation
-        pointsPerCriterion.remove(null);
-
-        // round the point sums per criterion once at the end
-        pointsPerCriterion.entrySet().forEach(entry -> {
-            Double rounded = RoundingUtil.roundScoreSpecifiedByCourseSettings(entry.getValue(), course);
-            entry.setValue(rounded);
-        });
-
-        return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsPerCriterion);
     }
 
     /**
@@ -842,10 +840,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      */
     default Optional<Result> findLatestResultWithFeedbacksForParticipation(long participationId, boolean withSubmission) {
         if (withSubmission) {
-            return findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
         }
         else {
-            return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
         }
     }
 
@@ -863,8 +861,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return getValueElseThrow(findWithSubmissionAndFeedbackAndTeamStudentsById(resultId), resultId);
     }
 
-    default Result findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(long resultId) {
-        return getValueElseThrow(findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(resultId), resultId);
+    default Result findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(long resultId) {
+        return getValueElseThrow(findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(resultId), resultId);
     }
 
     /**
@@ -900,7 +898,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT r
             FROM Result r
                  LEFT JOIN FETCH r.feedbacks f
-                 LEFT JOIN FETCH f.testCase
             WHERE r.submission.id = :submissionId
             AND r.id = (
                  SELECT MAX(r2.id)
@@ -908,7 +905,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  WHERE r2.submission.id = :submissionId
                )
             """)
-    Optional<Result> findLatestResultWithFeedbacksAndTestcasesForSubmission(@Param("submissionId") long submissionId);
+    Optional<Result> findLatestResultWithFeedbacksForSubmission(@Param("submissionId") long submissionId);
 
     @Query("""
             SELECT r
@@ -947,7 +944,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
               FROM Submission s
                 JOIN s.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase tc
               WHERE s.id = :submissionId
                 AND r.id = (
                   SELECT MAX(r2.id)

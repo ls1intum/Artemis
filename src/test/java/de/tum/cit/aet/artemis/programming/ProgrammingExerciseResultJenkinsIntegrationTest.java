@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
@@ -36,7 +37,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     }
 
     private String getRepoName(ProgrammingExercise exercise, String userLogin) {
-        return (exercise.getProjectKey() + "-" + userLogin).toUpperCase();
+        return (exercise.getProjectKey() + "-" + userLogin).toUpperCase(Locale.ROOT);
     }
 
     private String getFolderName(ProgrammingExercise exercise, String repoName) {

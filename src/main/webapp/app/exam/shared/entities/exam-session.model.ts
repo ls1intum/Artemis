@@ -10,25 +10,26 @@ export enum SuspiciousSessionReason {
     SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS = 'SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS',
     IP_ADDRESS_OUTSIDE_OF_RANGE = 'IP_ADDRESS_OUTSIDE_OF_RANGE',
 }
-export class ExamSession implements BaseEntity {
-    public id?: number;
-    public studentExam?: StudentExam;
-    public sessionToken?: string;
-    public userAgent?: string;
-    public browserFingerprintHash?: string;
-    public instanceId?: string;
-    public ipAddress?: string;
-    public initialSession?: boolean;
-    public createdBy?: string;
-    public lastModifiedBy?: string;
-    public createdDate?: dayjs.Dayjs;
-    public lastModifiedDate?: Date;
-    public suspiciousReasons: SuspiciousSessionReason[];
+export interface ExamSession extends BaseEntity {
+    id?: number;
+    studentExam?: StudentExam;
+    sessionToken?: string;
+    userAgent?: string;
+    browserFingerprintHash?: string;
+    instanceId?: string;
+    ipAddress?: string;
+    initialSession?: boolean;
+    createdBy?: string;
+    lastModifiedBy?: string;
+    createdDate?: dayjs.Dayjs;
+    lastModifiedDate?: Date;
+    suspiciousReasons: SuspiciousSessionReason[];
 }
 
-export class SuspiciousExamSessions {
+export interface SuspiciousExamSessions {
     examSessions: ExamSession[];
 }
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class SuspiciousSessionsAnalysisOptions {
     constructor(
         sameIpAddressDifferentStudentExams: boolean,

@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -45,7 +45,7 @@ export interface IProgrammingExerciseGradingService {
     importCategoriesFromExercise(targetExerciseId: number, sourceExerciseId: number): Observable<StaticCodeAnalysisCategory[]>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseGradingService implements IProgrammingExerciseGradingService, OnDestroy {
     private websocketService = inject(WebsocketService);
     private http = inject(HttpClient);
@@ -74,7 +74,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      */
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined> {
         if (this.subjects[exerciseId]) {
-            return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | undefined>;
+            return this.subjects[exerciseId];
         }
         return this.getTestCases(exerciseId).pipe(
             map((testCases) => (testCases.length ? testCases : undefined)),

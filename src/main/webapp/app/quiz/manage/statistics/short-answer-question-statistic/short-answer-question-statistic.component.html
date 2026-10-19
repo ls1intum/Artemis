@@ -1,7 +1,7 @@
-@if (quizExercise) {
+@if (quizExercise()) {
     <div class="row">
         <div class="col-md-8 offset-md-2 text-center">
-            <h3>{{ quizExercise.title }}</h3>
+            <h3>{{ quizExercise().title }}</h3>
             <div class="row">
                 @if (question) {
                     <div class="col">
@@ -12,7 +12,7 @@
                             }
                         </h3>
                         <div class="short-answer-question-display-statistic">
-                            @for (textPart of textParts; track textPart) {
+                            @for (textPart of textParts(); track textPart) {
                                 <div class="short-answer-question-display">
                                     @for (element of textPart; track element) {
                                         <div class="short-answer-question-display__statistic-element">
@@ -21,7 +21,11 @@
                                             }
                                             @if (shortAnswerQuestionUtil.isInputField(element) && !showSolution) {
                                                 <div class="short-answer-question-container">
-                                                    <input class="short-answer-question-container__input" disabled />
+                                                    <input
+                                                        [attr.aria-label]="'accessibility.shortAnswer' | artemisTranslate: { number: shortAnswerQuestionUtil.getSpotNr(element) }"
+                                                        class="short-answer-question-container__input"
+                                                        disabled
+                                                    />
                                                     <div class="short-answer-question-container__statistic-letter">
                                                         <span>{{ getLetter(shortAnswerQuestionUtil.getSpotNr(element) - 1) + '.' }}</span>
                                                     </div>
@@ -30,6 +34,7 @@
                                             @if (shortAnswerQuestionUtil.isInputField(element) && showSolution) {
                                                 <div class="short-answer-question-container">
                                                     <input
+                                                        [attr.aria-label]="'accessibility.shortAnswerSolution' | artemisTranslate"
                                                         class="short-answer-question-container__input"
                                                         disabled
                                                         [style.background]="'lightgreen'"
@@ -48,7 +53,7 @@
                                 </div>
                             }
                         </div>
-                        <div #containerRef>
+                        <div>
                             <p>&nbsp;</p>
                             <div class="row">
                                 <div class="col-md-7 text-start">
@@ -67,24 +72,17 @@
                                     </p>
                                 </div>
                             </div>
-                            <ngx-charts-bar-vertical
-                                [view]="[containerRef.offsetWidth, 525]"
-                                [results]="ngxData"
-                                [scheme]="ngxColor"
-                                [showDataLabel]="true"
-                                [showXAxisLabel]="true"
-                                [showYAxisLabel]="true"
-                                [xAxisLabel]="xAxisLabel"
-                                [yAxisLabel]="yAxisLabel"
-                                [xAxis]="true"
-                                [yAxis]="true"
-                                [yScaleMax]="maxScale"
-                                [tooltipDisabled]="true"
-                                [rotateXAxisTicks]="false"
-                                [maxXAxisTickLength]="17"
-                                [dataLabelFormatting]="bindFormatting"
-                                [roundEdges]="false"
-                            />
+                            <div class="quiz-statistic-chart" style="height: 525px">
+                                <tumaet-ui-bar-chart
+                                    [labels]="chartData().labels"
+                                    [series]="chartData().series"
+                                    [config]="chartConfig()"
+                                    [ariaLabel]="
+                                        (rated ? 'artemisApp.showStatistic.questionStatistic.titleRated' : 'artemisApp.showStatistic.questionStatistic.titleUnrated')
+                                            | artemisTranslate
+                                    "
+                                />
+                            </div>
                             <div class="col-md-12 text-center button-row">
                                 <button (click)="switchSolution()" type="button" class="btn btn-primary show-solution">
                                     @if (showSolution) {

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A bonus source for an exam that maps bonus from another course or exam to the target exam
@@ -33,6 +34,7 @@ public class Bonus extends DomainObject {
     @ManyToOne(optional = false)
     @JoinColumn(name = "bonus_to_grading_scale_id", referencedColumnName = "id")
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Parent
     private GradingScale bonusToGradingScale;
 
     /**

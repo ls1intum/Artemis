@@ -20,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -38,6 +39,8 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "exerciseunitintegration";
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -76,7 +79,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 2);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, 2);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.course2 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.get(1).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().orElseThrow();
@@ -88,9 +91,9 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
         this.modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -190,7 +193,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createExerciseUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnitDtoFor(exercise), ExerciseUnitDTO.class, HttpStatus.FORBIDDEN);
@@ -238,7 +241,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
         }
 
         for (Exercise exercise : exercisesOfCourse) {
-            request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
+            request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, ExerciseResponseDTO.class);
         }
 
         verify(competencyProgressApi, never()).updateProgressForUpdatedLearningObjectAsync(any(), any());

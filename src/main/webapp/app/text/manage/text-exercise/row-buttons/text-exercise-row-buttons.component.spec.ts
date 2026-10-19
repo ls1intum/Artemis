@@ -4,7 +4,6 @@
  * including the delete exercise functionality.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -16,7 +15,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('TextExercise Row Buttons Component', () => {
-    setupTestBed({ zoneless: true });
     let comp: TextExerciseRowButtonsComponent;
     let fixture: ComponentFixture<TextExerciseRowButtonsComponent>;
     let textExerciseService: TextExerciseService;

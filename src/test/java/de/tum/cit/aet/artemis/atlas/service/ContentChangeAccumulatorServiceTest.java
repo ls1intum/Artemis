@@ -1,0 +1,504 @@
+package de.tum.cit.aet.artemis.atlas.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
+import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
+import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+
+/**
+ * Exercises the accumulator's debounce, per-day cap and requeue logic against a
+ * {@link LocalDataProviderService} (the in-memory {@code DistributedDataProvider}), whose
+ * {@code DistributedMap} is backed by per-key locks — so the lock-guarded read-modify-write semantics
+ * are tested without booting a distributed data layer. A {@link MutableClock} lets us simulate the
+ * passage of time past the debounce window and across day boundaries without touching
+ * {@link System#currentTimeMillis()}.
+ */
+class ContentChangeAccumulatorServiceTest {
+
+    private MutableClock clock;
+
+    private ContentChangeAccumulatorService service;
+
+    private CourseConfigurationRepository courseConfigurationRepository;
+
+    private LectureUnitRepositoryApi lectureUnitRepositoryApi;
+
+    private static final int DEBOUNCE_WINDOW_SECONDS = 60;
+
+    private static final int DAILY_CAP = 3;
+
+    @BeforeEach
+    void setUp() {
+        clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-test", 1.0, "", "gpt-5.6-luna", "high", false, DEBOUNCE_WINDOW_SECONDS, DAILY_CAP, 30000L,
+                10);
+        courseConfigurationRepository = mock(CourseConfigurationRepository.class);
+        // Default: every course resolves to the global defaults (no per-course override).
+        lenient().when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(anyLong()))
+                .thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, null, null)));
+        lectureUnitRepositoryApi = mock(LectureUnitRepositoryApi.class);
+        service = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties, courseConfigurationRepository,
+                Optional.of(lectureUnitRepositoryApi));
+        service.clearForTesting();
+    }
+
+    private void stubCourseConfig(long courseId, Integer windowOverride, Integer capOverride) {
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(courseId))
+                .thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, windowOverride, capOverride)));
+    }
+
+    @Test
+    void refreshLectureUnit_nonblankToBlankBurstDoesNotClaimOrConsumeQuota() {
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        clock.advanceSeconds(5);
+        service.refreshLectureUnit(1L, 30L, () -> false);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+
+        assertThat(service.listDueCourseIds()).isEmpty();
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+        for (int i = 0; i < DAILY_CAP; i++) {
+            service.record(1L, 100L + i);
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            assertThat(service.claimDueBatch(1L)).isPresent();
+        }
+    }
+
+    @Test
+    void refreshLectureUnit_removalPreservesOtherContentDebounceAndSpentQuota() {
+        stubCourseConfig(1L, null, 2);
+        service.record(1L, 99L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).isPresent();
+        service.record(1L, 10L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        service.refreshLectureUnit(1L, 31L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS);
+        service.refreshLectureUnit(1L, 30L, () -> false);
+
+        BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+        assertThat(claim.exerciseIds()).containsExactly(10L);
+        assertThat(claim.lectureUnitIds()).containsExactly(31L);
+        service.record(1L, 100L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+    }
+
+    @Test
+    void record_mergesMultipleEventsIntoSameCourseBucket() {
+        service.record(1L, 10L);
+        clock.advanceSeconds(5);
+        service.record(1L, 11L);
+
+        assertThat(service.listDueCourseIds()).isEmpty();
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+    }
+
+    @Test
+    void claimDueBatch_drainsBucketOnceDebounceWindowElapses() {
+        service.record(1L, 10L);
+        service.record(1L, 11L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+
+        assertThat(service.listDueCourseIds()).containsExactly(1L);
+
+        Optional<BatchClaim> claim = service.claimDueBatch(1L);
+        assertThat(claim).isPresent();
+        assertThat(claim.get().exerciseIds()).containsExactlyInAnyOrder(10L, 11L);
+
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+    }
+
+    @Test
+    void claimDueBatch_respectsPerDayCap() {
+        for (int i = 0; i < DAILY_CAP; i++) {
+            service.record(1L, 100L + i);
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            Optional<BatchClaim> claim = service.claimDueBatch(1L);
+            assertThat(claim).as("run #%d", i + 1).isPresent();
+        }
+
+        service.record(1L, 999L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+
+        clock.advanceSeconds(24 * 60 * 60);
+        Optional<BatchClaim> nextDayClaim = service.claimDueBatch(1L);
+        assertThat(nextDayClaim).isPresent();
+        assertThat(nextDayClaim.get().exerciseIds()).containsExactly(999L);
+    }
+
+    @Test
+    void listDueCourseIds_keepsCoursesIndependent() {
+        service.record(1L, 10L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        service.record(2L, 20L);
+
+        assertThat(service.listDueCourseIds()).containsExactly(1L);
+        assertThat(service.claimDueBatch(2L)).isEmpty();
+    }
+
+    @Test
+    void claimBatchNow_doesNotConsumeDailyCap() {
+        for (int i = 0; i < DAILY_CAP; i++) {
+            service.record(1L, 100L + i);
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            assertThat(service.claimDueBatch(1L)).as("scheduled run #%d", i + 1).isPresent();
+        }
+
+        service.record(1L, 200L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).as("scheduled cap must be exhausted").isEmpty();
+
+        Optional<BatchClaim> manualClaim = service.claimBatchNow(1L);
+        assertThat(manualClaim).as("manual flush must bypass daily cap").isPresent();
+        assertThat(manualClaim.get().exerciseIds()).containsExactly(200L);
+
+        service.record(1L, 300L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).as("manual flush must not have freed scheduled quota").isEmpty();
+    }
+
+    @Test
+    void requeueAfterConcurrentRun_refundsReservationSoRetriesDoNotBurnDailyCap() {
+        service.record(1L, 200L);
+
+        // More claim+requeue cycles than the daily cap: each models a scheduler tick that drained the
+        // batch but hit a concurrent run, so the reservation must be refunded and the batch stay claimable.
+        for (int i = 0; i < DAILY_CAP + 2; i++) {
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            Optional<BatchClaim> claim = service.claimDueBatch(1L);
+            assertThat(claim).as("retry tick #%d must still claim the batch", i + 1).isPresent();
+            assertThat(claim.get().exerciseIds()).containsExactly(200L);
+            service.requeueAfterConcurrentRun(1L, claim.get().exerciseIds());
+        }
+
+        // The cap was never consumed by the retries: a full run of DAILY_CAP scheduled orchestrations
+        // is still available, and only then is the cap exhausted.
+        for (int i = 0; i < DAILY_CAP; i++) {
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            assertThat(service.claimDueBatch(1L)).as("scheduled run #%d after retries", i + 1).isPresent();
+            service.record(1L, 300L + i);
+        }
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).as("cap exhausted only after DAILY_CAP real runs").isEmpty();
+    }
+
+    @Test
+    void requeueAfterFailedRun_keepsReservationSoFailedRetriesAreBoundedByDailyCap() {
+        service.record(1L, 200L);
+
+        // Each iteration models a scheduler tick that drained the batch but failed before committing
+        // anything: the ids are requeued, but the daily reservation is kept so failed retries are
+        // bounded by the cap. After DAILY_CAP attempts the batch can no longer be claimed today.
+        for (int i = 0; i < DAILY_CAP; i++) {
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            Optional<BatchClaim> claim = service.claimDueBatch(1L);
+            assertThat(claim).as("failed retry #%d must still claim the requeued batch", i + 1).isPresent();
+            assertThat(claim.get().exerciseIds()).containsExactly(200L);
+            service.requeueAfterFailedRun(1L, claim.get().exerciseIds());
+        }
+
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).as("cap exhausted after DAILY_CAP failed attempts").isEmpty();
+
+        // The changes were not discarded: the requeued id is still buffered and is claimable the next
+        // day once the cap resets.
+        clock.advanceSeconds(24 * 60 * 60);
+        Optional<BatchClaim> nextDayClaim = service.claimDueBatch(1L);
+        assertThat(nextDayClaim).as("requeued batch survives to the next day").isPresent();
+        assertThat(nextDayClaim.get().exerciseIds()).containsExactly(200L);
+    }
+
+    @Test
+    void claimDueBatch_honoursPerCourseDebounceWindowOverride() {
+        // Course 1 keeps the global 60s window; course 2 overrides it to 300s.
+        long globalCourse = 1L;
+        long overriddenCourse = 2L;
+        stubCourseConfig(overriddenCourse, 300, null);
+
+        service.record(globalCourse, 10L);
+        service.record(overriddenCourse, 20L);
+
+        // After the global window the global course is due, but the overridden course is not.
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.listDueCourseIds()).containsExactly(globalCourse);
+        assertThat(service.claimDueBatch(overriddenCourse)).as("overridden course must not be claimable before its longer window").isEmpty();
+
+        // Once the overridden window elapses, the overridden course becomes due too.
+        clock.advanceSeconds(300);
+        assertThat(service.listDueCourseIds()).contains(overriddenCourse);
+        Optional<BatchClaim> claim = service.claimDueBatch(overriddenCourse);
+        assertThat(claim).isPresent();
+        assertThat(claim.get().exerciseIds()).containsExactly(20L);
+    }
+
+    @Test
+    void claimDueBatch_honoursPerCourseDailyCapOverride() {
+        long courseId = 1L;
+        int capOverride = 1;
+        stubCourseConfig(courseId, null, capOverride);
+
+        service.record(courseId, 10L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(courseId)).as("first run within the override cap").isPresent();
+
+        // The override cap of 1 is exhausted even though the global cap (3) would still allow runs.
+        service.record(courseId, 11L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(courseId)).as("second run must be blocked by the per-course cap override").isEmpty();
+
+        // The cap resets the next day.
+        clock.advanceSeconds(24 * 60 * 60);
+        assertThat(service.claimDueBatch(courseId)).as("override cap resets the next day").isPresent();
+    }
+
+    @Test
+    void flush_dropsBufferedChangesSoNothingFires() {
+        long courseId = 1L;
+        service.record(courseId, 10L);
+        service.record(courseId, 11L);
+
+        service.flush(courseId);
+
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.listDueCourseIds()).doesNotContain(courseId);
+        assertThat(service.claimDueBatch(courseId)).as("a flushed course has nothing to claim").isEmpty();
+    }
+
+    @Test
+    void refreshLectureUnit_claimDrainsBothExerciseAndLectureUnitSets() {
+        service.record(1L, 10L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        service.refreshLectureUnit(1L, 31L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+
+        Optional<BatchClaim> claim = service.claimDueBatch(1L);
+        assertThat(claim).isPresent();
+        assertThat(claim.get().exerciseIds()).containsExactly(10L);
+        assertThat(claim.get().lectureUnitIds()).containsExactlyInAnyOrder(30L, 31L);
+
+        // The bucket is drained: a second claim finds nothing.
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+    }
+
+    @Test
+    void listDueCourseIds_includesCoursesWithOnlyLectureUnitChanges() {
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+
+        assertThat(service.listDueCourseIds()).containsExactly(1L);
+    }
+
+    /** Stub the persisted state the requeue path re-checks lecture units against. */
+    private void stubPersistedLectureUnits(TextUnit... units) {
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.of(units));
+    }
+
+    private static TextUnit textUnit(long courseId, long id, String content) {
+        Course course = new Course();
+        course.setId(courseId);
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        TextUnit unit = new TextUnit();
+        unit.setId(id);
+        unit.setContent(content);
+        unit.setLecture(lecture);
+        return unit;
+    }
+
+    @Test
+    void requeueAfterFailedRun_unitBlankedAfterClaim_isDroppedWhileExerciseStaysQueued() {
+        stubCourseConfig(1L, null, 2);
+        service.record(1L, 10L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+        assertThat(claim.lectureUnitIds()).containsExactly(30L);
+
+        // The unit is blanked while the claimed run is in flight: the refresh finds no buffered id to remove.
+        service.refreshLectureUnit(1L, 30L, () -> false);
+        stubPersistedLectureUnits(textUnit(1L, 30L, "   "));
+        service.requeueAfterFailedRun(1L, claim.exerciseIds(), claim.lectureUnitIds());
+
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim retry = service.claimDueBatch(1L).orElseThrow();
+        assertThat(retry.exerciseIds()).containsExactly(10L);
+        assertThat(retry.lectureUnitIds()).as("the blanked unit must not be restored by the requeue").isEmpty();
+    }
+
+    @Test
+    void requeueAfterFailedRun_unitOnlyBatchBlankedAfterClaim_spendsNoFurtherDailySlot() {
+        stubCourseConfig(1L, null, 2);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+
+        service.refreshLectureUnit(1L, 30L, () -> false);
+        stubPersistedLectureUnits(textUnit(1L, 30L, ""));
+        service.requeueAfterFailedRun(1L, claim.exerciseIds(), claim.lectureUnitIds());
+
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.listDueCourseIds()).isEmpty();
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+        // The failed run keeps its own reservation, but the dropped unit never consumes the second slot.
+        service.record(1L, 100L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L).orElseThrow().lectureUnitIds()).isEmpty();
+        service.record(1L, 101L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).as("daily cap reached").isEmpty();
+    }
+
+    @Test
+    void requeueAfterConcurrentRun_dropsDeletedAndForeignUnitsButStillRefundsReservation() {
+        stubCourseConfig(1L, null, 1);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        service.refreshLectureUnit(1L, 31L, () -> true);
+        service.refreshLectureUnit(1L, 32L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+
+        // 30 was deleted (absent from the lookup) and 32 moved to another course; only 31 is still eligible here.
+        stubPersistedLectureUnits(textUnit(1L, 31L, "Still relevant"), textUnit(2L, 32L, "Moved"));
+        service.requeueAfterConcurrentRun(1L, claim.exerciseIds(), claim.lectureUnitIds());
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim retry = service.claimDueBatch(1L).orElseThrow();
+        assertThat(retry.lectureUnitIds()).containsExactly(31L);
+
+        // Even when every unit is dropped the concurrent-run refund still applies, so the cap-1 course can run again.
+        stubPersistedLectureUnits();
+        service.requeueAfterConcurrentRun(1L, retry.exerciseIds(), retry.lectureUnitIds());
+        assertThat(service.listDueCourseIds()).isEmpty();
+        service.record(1L, 100L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).isPresent();
+    }
+
+    @Test
+    void requeueAfterFailedRun_reMergesBothSets() {
+        stubPersistedLectureUnits(textUnit(1L, 30L, "Recursion calls itself."));
+        service.record(1L, 10L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+
+        service.requeueAfterFailedRun(1L, claim.exerciseIds(), claim.lectureUnitIds());
+
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim requeued = service.claimDueBatch(1L).orElseThrow();
+        assertThat(requeued.exerciseIds()).containsExactly(10L);
+        assertThat(requeued.lectureUnitIds()).containsExactly(30L);
+    }
+
+    @Test
+    void requeueAfterConcurrentRun_reMergesBothSetsAndRefundsQuota() {
+        stubPersistedLectureUnits(textUnit(1L, 30L, "Recursion calls itself."));
+        service.record(1L, 10L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+
+        // More requeue cycles than the daily cap: the reservation must be refunded each time so the mixed batch stays claimable.
+        for (int i = 0; i < DAILY_CAP + 2; i++) {
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+            assertThat(claim.exerciseIds()).containsExactly(10L);
+            assertThat(claim.lectureUnitIds()).containsExactly(30L);
+            service.requeueAfterConcurrentRun(1L, claim.exerciseIds(), claim.lectureUnitIds());
+        }
+    }
+
+    @Test
+    void accumulator_serializationRoundTrip_preservesBothSets() throws Exception {
+        Instant now = Instant.parse("2026-04-24T12:00:00Z");
+        LocalDate today = LocalDate.of(2026, 4, 24);
+        ContentChangeAccumulator original = new ContentChangeAccumulator(Set.of(10L, 11L), Set.of(30L), now, 2, today);
+
+        ContentChangeAccumulator roundTripped = serializeDeserialize(original);
+
+        assertThat(roundTripped.exerciseIds()).containsExactlyInAnyOrder(10L, 11L);
+        assertThat(roundTripped.lectureUnitIds()).containsExactly(30L);
+        assertThat(roundTripped.dailyRunCount()).isEqualTo(2);
+        assertThat(roundTripped.lastEventTime()).isEqualTo(now);
+    }
+
+    @Test
+    void accumulator_nullLectureUnitIds_isGuardedToEmpty() {
+        // Rolling-upgrade safety: an entry serialized by an older node (before lectureUnitIds existed) deserializes
+        // with a null component; the compact constructor must coerce it to an empty set rather than propagate null.
+        Instant now = Instant.parse("2026-04-24T12:00:00Z");
+        ContentChangeAccumulator acc = new ContentChangeAccumulator(Set.of(10L), null, now, 0, LocalDate.of(2026, 4, 24));
+
+        assertThat(acc.lectureUnitIds()).isEmpty();
+        assertThat(acc.hasContent()).isTrue();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T serializeDeserialize(T value) throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ObjectOutputStream out = new ObjectOutputStream(bytes)) {
+            out.writeObject(value);
+        }
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+            return (T) in.readObject();
+        }
+    }
+
+    /**
+     * Simple mutable clock for tests — fixed to UTC because the service computes
+     * {@link java.time.LocalDate#now(Clock)} against the clock's zone.
+     */
+    private static final class MutableClock extends Clock {
+
+        private Instant now;
+
+        MutableClock(Instant start) {
+            this.now = start;
+        }
+
+        @Override
+        public java.time.ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(java.time.ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return now;
+        }
+
+        void advanceSeconds(long seconds) {
+            now = now.plusSeconds(seconds);
+        }
+    }
+}

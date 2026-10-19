@@ -6,7 +6,6 @@
  * - Background color display based on grading instruction credits
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextblockFeedbackDropdownComponent } from 'app/text/manage/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -15,7 +14,6 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 describe('TextblockFeedbackDropdownComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: TextblockFeedbackDropdownComponent;
     let fixture: ComponentFixture<TextblockFeedbackDropdownComponent>;
 

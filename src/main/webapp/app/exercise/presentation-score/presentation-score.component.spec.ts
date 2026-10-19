@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { of } from 'rxjs';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
@@ -41,8 +40,6 @@ const exerciseWithoutPresentationScore = {
 } as Exercise;
 
 describe('PresentationScoreComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PresentationScoreComponent;
     let fixture: ComponentFixture<PresentationScoreComponent>;
     let gradingService: GradingService;

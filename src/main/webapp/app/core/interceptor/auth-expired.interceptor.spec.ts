@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
@@ -10,8 +9,6 @@ import { throwError } from 'rxjs';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 describe('AuthExpiredInterceptor', () => {
-    setupTestBed({ zoneless: true });
-
     let authInterceptor: AuthExpiredInterceptor;
 
     let loginServiceMock: LoginService;

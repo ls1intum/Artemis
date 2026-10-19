@@ -17,5 +17,5 @@ export class TeamParticipateInfoBoxComponent {
     readonly stickyEnabled = input(true);
     readonly dockedToLeftSide = input(false);
     readonly dockedToRightSide = input(false);
-    readonly typing$ = input.required<Observable<any>>();
+    readonly typing$ = input.required<Observable<string>>();
 }

@@ -1,17 +1,19 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { round } from 'app/foundation/util/utils';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
-import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
     templateUrl: './statistics-score-distribution-graph.component.html',
-    styleUrls: ['../../chart/vertical-bar-chart.scss'],
-    imports: [TranslateDirective, BarChartModule],
+    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class StatisticsScoreDistributionGraphComponent implements OnInit {
     private navigationService = inject(ArtemisNavigationUtilService);
@@ -23,15 +25,16 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     readonly courseId = input.required<number>();
     readonly exerciseId = input.required<number>();
 
-    // ngx
-    ngxData: any[] = [];
-    ngxColor: Color = {
-        name: 'Statistics',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.DARK_BLUE],
-    };
-    yAxisTickFormatting = axisTickFormattingWithPercentageSign;
+    readonly chartEntries = signal<ChartSeriesEntry[]>([]);
+
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.DARK_BLUE]));
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
+        yAxis: { max: 100, tickFormatter: (value) => axisTickFormattingWithPercentageSign(String(value)) },
+        tooltip: {
+            label: (item) => `${this.lookUpAbsoluteValue(item.label)}`,
+        },
+        dataLabels: { formatter: (value) => `${value}` },
+    }));
 
     // Data
     barChartLabels: string[] = [];
@@ -52,7 +55,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
         } else {
             this.relativeChartData = new Array(10).fill(0);
         }
-        this.ngxData = this.relativeChartData.map((data, index) => ({ name: this.barChartLabels[index], value: data }));
+        this.chartEntries.set(this.relativeChartData.map((data, index) => ({ name: this.barChartLabels[index], value: data })));
     }
 
     /**
@@ -67,11 +70,10 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
 
     /**
      * Handles the event if a user clicks on a certain chart bar
-     * @param event the event passed by ngx-charts
+     * @param event identifies the clicked bar
      */
-    selectChartBar(event: any): void {
-        const index = this.barChartLabels.indexOf(event.name);
+    selectChartBar(event: TumAetUiChartSelectEvent): void {
         const route = [`/course-management/${this.courseId()}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
-        this.navigationService.routeInNewTab(route, { queryParams: { scoreRangeFilter: index } });
+        this.navigationService.routeInNewTab(route, { queryParams: { scoreRangeFilter: event.index } });
     }
 }

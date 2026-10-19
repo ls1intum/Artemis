@@ -32,12 +32,19 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             SELECT DISTINCT e
             FROM ModelingExercise e
                 LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.exerciseVariantGroup
             WHERE e.course.id = :courseId
             """)
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "exampleSubmissions.submission.results" })
+    // The plagiarism detection configuration is not part of the exercise: the edit form reads it from this endpoint, so the
+    // single caller attaches it with PlagiarismDetectionConfigRepository.attachTo, because without it the response omits a
+    // stored config, the form falls back to its defaults, and the next save overwrites the instructor's settings. The nested
+    // exampleSubmissions.submission.results path already fetches exampleSubmissions, so it is not listed on its own.
+    // exerciseVariantGroup is deliberately not listed: a sixth path would cross the query-quality over-fetch threshold.
+    // The single caller sets it from ExerciseVariantGroupService.findOwningGroup instead, the same by-id resolution the
+    // write path uses.
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "competencyLinks.competency", "exampleSubmissions.submission.results" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
@@ -51,7 +58,6 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
                 LEFT JOIN FETCH submission.results results
                 LEFT JOIN FETCH results.feedbacks
                 LEFT JOIN FETCH results.assessor
-                LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
                 LEFT JOIN FETCH modelingExercise.gradingCriteria
             WHERE modelingExercise.id = :exerciseId
             """)
@@ -60,16 +66,15 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @Query("""
             SELECT DISTINCT modelingExercise
             FROM ModelingExercise modelingExercise
+                LEFT JOIN FETCH modelingExercise.course
                 LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
                 LEFT JOIN FETCH exampleSubmissions.submission submission
                 LEFT JOIN FETCH submission.results results
                 LEFT JOIN FETCH results.feedbacks
                 LEFT JOIN FETCH results.assessor
-                LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
                 LEFT JOIN FETCH modelingExercise.gradingCriteria
                 LEFT JOIN FETCH modelingExercise.competencyLinks cl
                 LEFT JOIN FETCH cl.competency
-                LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
             WHERE modelingExercise.id = :exerciseId
             """)
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(@Param("exerciseId") Long exerciseId);
@@ -95,7 +100,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
      * @param exerciseId the id of the exercise to fetch
      * @return {@link ModelingExercise}
      */
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "course", "competencyLinks", "categories", "gradingCriteria" })
     Optional<ModelingExercise> findForVersioningById(long exerciseId);
 
     /**

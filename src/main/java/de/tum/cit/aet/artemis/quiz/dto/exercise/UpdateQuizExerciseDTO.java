@@ -33,7 +33,7 @@ public record UpdateQuizExerciseDTO(String title, String channelName, Set<String
         ZonedDateTime dueDate, IncludedInOverallScore includedInOverallScore, List<@Valid QuizQuestionFromEditorDTO> quizQuestions) implements CompetencyLinksHolderDTO {
 
     /**
-     * Creates a QuizExerciseFromEditorDTO from the given QuizExercise domain object.
+     * Creates an UpdateQuizExerciseDTO from the given QuizExercise domain object.
      *
      * @param quizExercise the quiz exercise to convert
      * @return the corresponding DTO

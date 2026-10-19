@@ -30,19 +30,24 @@ export class ExampleSubmissionAssessCommand {
     }
 
     private onFailure(error: HttpErrorResponse) {
-        const errorType = error.headers.get('x-artemisapp-error');
+        const errorKey = error.error?.errorKey;
+        const errorType = errorKey ? `error.${errorKey}` : error.headers.get('x-artemisapp-error');
 
-        if (errorType === 'error.invalid_assessment') {
-            this.feedbackMarker.markAllFeedbackToCorrect();
-
-            // Mark all wrongly made feedbacks accordingly.
-            const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
-            this.feedbackMarker.markWrongFeedback(correctionErrors);
-
-            const msg = correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
-            this.alertService.error(msg, { mistakeCount: correctionErrors.length });
-        } else {
+        if (errorType !== 'error.invalid_assessment') {
             onError(this.alertService, error);
+            return;
         }
+
+        const correctionErrors = error.error?.errors;
+        if (!Array.isArray(correctionErrors)) {
+            onError(this.alertService, error);
+            return;
+        }
+
+        this.feedbackMarker.markAllFeedbackToCorrect();
+        this.feedbackMarker.markWrongFeedback(correctionErrors);
+
+        const msg = correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
+        this.alertService.error(msg, { mistakeCount: correctionErrors.length });
     }
 }

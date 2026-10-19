@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -10,8 +9,6 @@ import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 
 describe('AdminSystemNotificationService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: AdminSystemNotificationService;
     let systemNotificationService: SystemNotificationService;
     let httpMock: HttpTestingController;

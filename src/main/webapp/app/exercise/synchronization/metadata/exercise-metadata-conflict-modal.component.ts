@@ -16,6 +16,8 @@ import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.mod
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { normalizeCategoryArray, normalizeCategoryEntry } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
+import { parseJson } from 'app/foundation/util/json.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Single field conflict between current editor state and incoming snapshot.
@@ -136,7 +138,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
      * Updates the decision state for a single field.
      */
     updateDecision(field: string, value: boolean): void {
-        const updated = Object.assign({}, this.decisions());
+        const updated = deepClone(this.decisions());
         updated[field] = value;
         this.decisions.set(updated);
     }
@@ -174,8 +176,8 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
             return value.format('YYYY-MM-DD HH:mm');
         }
         // Fallback for dayjs-like objects that fail isDayjs() due to module duplication
-        if (typeof value === 'object' && value !== null && typeof (value as any).format === 'function') {
-            const formatted = (value as any).format('YYYY-MM-DD HH:mm');
+        if (value && typeof value === 'object' && typeof (value as { format?: unknown }).format === 'function') {
+            const formatted = (value as { format: (template: string) => unknown }).format('YYYY-MM-DD HH:mm');
             if (typeof formatted === 'string') {
                 return formatted;
             }
@@ -189,7 +191,8 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
         try {
             return JSON.stringify(value);
         } catch {
-            return String(value);
+            // value could not be serialized (e.g. circular); fall back to the object tag without a base-toString coercion
+            return Object.prototype.toString.call(value);
         }
     }
 
@@ -257,7 +260,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
 
         return entries.map((entry) => ({
             labelKey: entry.labelKey,
-            value: config ? config[entry.key as keyof ProgrammingExerciseBuildConfig] : undefined,
+            value: config ? config[entry.key] : undefined,
         }));
     }
 
@@ -273,7 +276,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
         }
         if (typeof value === 'string') {
             try {
-                const parsed = JSON.parse(value);
+                const parsed = parseJson(value);
                 if (parsed !== undefined) {
                     return this.toCategoryEntries(parsed);
                 }

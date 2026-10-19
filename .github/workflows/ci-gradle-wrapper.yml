@@ -1,0 +1,25 @@
+name: Validate Gradle Wrapper
+
+# Keep this workflow directly runnable on protected-branch pushes so OpenSSF Scorecard can
+# associate wrapper validation with the latest default-branch commit. It remains reusable so
+# ci.yml can gate Gradle-related pull requests without adding another required status check.
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - release/*
+  workflow_call: {}
+
+permissions: {}
+
+jobs:
+  validate:
+    name: Validate Gradle Wrapper
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6  # v6.4.0

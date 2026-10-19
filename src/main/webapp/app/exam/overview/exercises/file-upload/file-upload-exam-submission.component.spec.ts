@@ -1,10 +1,10 @@
 import { ChangeDetectorRef } from '@angular/core';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By, SafeHtml } from '@angular/platform-browser';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -12,6 +12,7 @@ import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/f
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { createFileUploadSubmission } from 'test/helpers/mocks/service/mock-file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -21,15 +22,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 describe('FileUploadExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
     let comp: FileUploadExamSubmissionComponent;
     let alertService: AlertService;
@@ -55,8 +53,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 FileUploadExamSubmissionComponent,
-                FullscreenComponent,
-                MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
+                MockDirective(MarkdownDirective),
                 TranslatePipeMock,
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
                 MockDirective(TranslateDirective),
@@ -129,6 +126,50 @@ describe('FileUploadExamSubmissionComponent', () => {
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent === mockExercise.problemStatement);
             expect(el).not.toBeNull();
+        });
+    });
+
+    describe('upload controls', () => {
+        beforeEach(() => {
+            resetComponent();
+            fixture.detectChanges();
+        });
+
+        it('should place Upload right after the file input in one wrapping row', () => {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css('#fileUploadInput')).nativeElement;
+            const button: HTMLButtonElement = fixture.debugElement.query(By.css('[data-testid="file-upload-submit"]')).nativeElement;
+            const inputContainer = input.parentElement!;
+            const row = inputContainer.parentElement!;
+
+            // Upload is the next sibling of the input's container, so it is attached to the input instead of floating at the end of the panel
+            expect(inputContainer.nextElementSibling).toBe(button);
+            expect(button.parentElement).toBe(row);
+            expect(row.classList).toContain('flex');
+            expect(row.classList).toContain('flex-wrap');
+
+            // keyboard order is Choose File, then Upload
+            expect(input.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        });
+
+        it('should draw the file input as one bordered field, so that Upload is attached to the field and not to a bare filename', () => {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css('#fileUploadInput')).nativeElement;
+            const field = fixture.debugElement.query(By.css('[data-testid="file-upload-field"]')).nativeElement as HTMLElement;
+
+            expect(field).toBe(input.parentElement);
+            // the field draws the border and clips the corners of the selector button; the button itself has no border of its own except the one that separates it from the name
+            expect([...field.classList]).toEqual(expect.arrayContaining(['border', 'rounded-md', 'overflow-hidden']));
+            expect([...input.classList]).toEqual(expect.arrayContaining(['file:border-0', 'file:border-r']));
+            // the font of the selector is set with the important modifier, which keeps the field as high as the small Upload button (34px)
+            expect(input.classList).toContain('file:text-sm!');
+        });
+
+        it('should let the file input take the available width without a fixed fraction of the panel', () => {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css('#fileUploadInput')).nativeElement;
+            expect(input.classList).toContain('w-full');
+
+            for (let element = input.parentElement; element && element !== fixture.nativeElement; element = element.parentElement) {
+                expect([...element.classList].filter((className) => /(^|:)w-\d+\/\d+$/.test(className))).toEqual([]);
+            }
         });
     });
 
@@ -219,9 +260,42 @@ describe('FileUploadExamSubmissionComponent', () => {
             comp.studentSubmission().isSynced = true;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submittedFileName).toBe('file1.png');
-            expect(comp.submittedFileExtension).toBe('png');
+            expect(comp.submittedFileName()).toBe('file1.png');
+            expect(comp.submittedFileExtension()).toBe('png');
             expect(comp.submissionFile).toBeUndefined();
+        });
+    });
+
+    describe('exam timeline', () => {
+        beforeEach(() => {
+            resetComponent();
+            fixture.componentRef.setInput('examTimeline', true);
+        });
+
+        it('should show the submitted file with a download link although the submission has no filePathUrl', () => {
+            const downloadSpy = vi.spyOn(comp, 'downloadFile').mockImplementation(() => {});
+            expect(comp.studentSubmission().filePathUrl).toBeUndefined();
+
+            fixture.detectChanges();
+
+            const expectedUrl = addPublicFilePrefix('path/to/the/file/file1.png');
+            expect(comp.submittedFileName()).toBe('file1.png');
+            expect(comp.submittedFileUrl()).toBe(expectedUrl);
+            // the input submission is not modified, the url is derived state of the component
+            expect(comp.studentSubmission().filePathUrl).toBeUndefined();
+            const downloadLink = fixture.nativeElement.querySelector('a[jhiTranslate="artemisApp.fileUploadSubmission.download"]') as HTMLElement;
+            expect(downloadLink).not.toBeNull();
+            downloadLink.click();
+            expect(downloadSpy).toHaveBeenCalledWith(expectedUrl);
+        });
+
+        it('should show the not submitted hint instead of a file if the submission has no file', () => {
+            fixture.componentRef.setInput('studentSubmission', {} as FileUploadSubmission);
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('a[jhiTranslate="artemisApp.fileUploadSubmission.download"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('h6[jhiTranslate="artemisApp.timeline.fileUploadNotSubmitted"]')).not.toBeNull();
         });
     });
 
@@ -237,7 +311,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const studentSubmission = createFileUploadSubmission();
         fixture.componentRef.setInput('studentSubmission', studentSubmission);
         const jhiErrorSpy = vi.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
+        const event = { target: { files: [submissionFile] } } as unknown as Event;
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 
@@ -266,7 +340,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const studentSubmission = createFileUploadSubmission();
         fixture.componentRef.setInput('studentSubmission', studentSubmission);
         const jhiErrorSpy = vi.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
+        const event = { target: { files: [submissionFile] } } as unknown as Event;
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 
@@ -309,5 +383,27 @@ describe('FileUploadExamSubmissionComponent', () => {
             expect(updateStub).toHaveBeenCalledOnce();
             expect(comp.studentSubmission().filePath).toEqual(newFilePath);
         });
+    });
+
+    it('should notify the sync-state version on every isSynced transition', () => {
+        // `isSynced` is mutated in place, so under zoneless change detection the exam navigation sidebar and
+        // exercise overview only re-evaluate their saved/unsaved icons if the service-wide version signal is
+        // bumped. Without these notifications those indicators stay stale for file-upload exam exercises.
+        resetComponent();
+        fixture.detectChanges();
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
+
+        // Selecting a valid file marks the submission unsaved.
+        const submissionFile = new File([''], 'exampleSubmission.png');
+        comp.setFileSubmissionForExercise({ target: { files: [submissionFile] } } as unknown as Event);
+        expect(comp.studentSubmission().isSynced).toBe(false);
+        expect(notify).toHaveBeenCalledOnce();
+
+        // A successful upload marks it saved again.
+        vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of({ body: { filePath: 'path/to/file.png' } } as HttpResponse<FileUploadSubmission>));
+        comp.saveUploadedFile();
+        expect(comp.studentSubmission().isSynced).toBe(true);
+        expect(notify).toHaveBeenCalledTimes(2);
     });
 });

@@ -1,4 +1,4 @@
-import { Injectable, ViewContainerRef } from '@angular/core';
+import { Service, ViewContainerRef } from '@angular/core';
 import { ArtemisTextReplacementPlugin } from 'app/foundation/util/ArtemisTextReplacementPlugin';
 
 /**
@@ -14,10 +14,10 @@ import { ArtemisTextReplacementPlugin } from 'app/foundation/util/ArtemisTextRep
  */
 export const taskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/g;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseTaskExtensionWrapper extends ArtemisTextReplacementPlugin {
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
-    viewContainerRef: ViewContainerRef;
+    viewContainerRef!: ViewContainerRef; // assigned by ProgrammingExerciseInstructionComponent's constructor before any use
 
     /**
      * The task regex is coupled to the value used in ProgrammingExerciseTaskService in the server

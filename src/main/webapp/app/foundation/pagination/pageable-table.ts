@@ -1,8 +1,18 @@
+import { HttpResponse } from '@angular/common/http';
+
 export interface PageableResult<T> {
     content: T[];
     totalElements: number;
     totalPages?: number;
 }
+
+/**
+ * Maps a paged list response to a {@link PageableResult}, reading the total from the `X-Total-Count` header.
+ */
+export const toPageableResult = <T>(res: HttpResponse<T[]>): PageableResult<T> => ({
+    content: res.body ?? [],
+    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
+});
 
 export interface SearchResult<T> {
     resultsOnPage: T[];

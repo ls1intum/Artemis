@@ -16,7 +16,7 @@ def login_as_admin(session: requests.Session) -> None:
 
 def add_user_to_course(session: requests.Session, course_id: int, user_group: str, user_name: str) -> None:
     """Add a user to a specified course and group."""
-    url: str = f"{SERVER_URL}/core/courses/{course_id}/{user_group}/{user_name}"
+    url: str = f"{SERVER_URL}/course/courses/{course_id}/{user_group}/{user_name}"
     response: requests.Response = session.post(url, timeout=10)
     if response.status_code == 200:
         logging.info(f"Added user {user_name} to group {user_group}")
@@ -79,6 +79,8 @@ def get_user_details_by_index(user_index: int) -> Dict[str, Any]:
         "firstName": username,
         "lastName": username,
         "langKey": "en",
+        # Artemis sends no e-mail to a test user until it enables one, so a script that touches many of them stays off the SMTP quota
+        "isTestUser": True,
 
         "groups": groups,
         "password": password

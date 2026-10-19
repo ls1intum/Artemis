@@ -1,82 +1,73 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { mockExercise } from 'test/helpers/mocks/service/mock-team.service';
-
-// Store callbacks for testing
-let resizeStartCallback: ((event: any) => void) | undefined;
-let resizeEndCallback: ((event: any) => void) | undefined;
-let resizeMoveCallback: ((event: any) => void) | undefined;
-
-// Mock interactjs
-vi.mock('interactjs', () => {
-    const mockOn = vi.fn((eventName: string, callback: (event: any) => void) => {
-        if (eventName === 'resizestart') {
-            resizeStartCallback = callback;
-        } else if (eventName === 'resizeend') {
-            resizeEndCallback = callback;
-        } else if (eventName === 'resizemove') {
-            resizeMoveCallback = callback;
-        }
-        return { on: mockOn, unset: vi.fn() };
-    });
-
-    const mockResizable = vi.fn(() => ({
-        on: mockOn,
-        unset: vi.fn(),
-    }));
-
-    const mockInteract = Object.assign(
-        vi.fn(() => ({ resizable: mockResizable, unset: vi.fn() })),
-        {
-            modifiers: {
-                restrictSize: vi.fn(() => ({})),
-            },
-        },
-    );
-
-    return { default: mockInteract };
-});
+import { CollapsableAssessmentInstructionsComponent } from './collapsable-assessment-instructions.component';
 
 describe('CollapsableAssessmentInstructionsComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CollapsableAssessmentInstructionsComponent;
     let fixture: ComponentFixture<CollapsableAssessmentInstructionsComponent>;
 
-    beforeEach(async () => {
-        vi.clearAllMocks();
-        await TestBed.configureTestingModule({
-            schemas: [NO_ERRORS_SCHEMA],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+        });
 
         fixture = TestBed.createComponent(CollapsableAssessmentInstructionsComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('exercise', mockExercise);
         fixture.componentRef.setInput('readOnly', false);
-    });
-
-    it('should receive input properties correctly', () => {
-        fixture.componentRef.setInput('isAssessmentTraining', true);
-        fixture.componentRef.setInput('showAssessmentInstructions', false);
-        fixture.componentRef.setInput('collapsed', true);
-        fixture.componentRef.setInput('readOnly', true);
-
-        expect(component.isAssessmentTraining()).toBe(true);
-        expect(component.showAssessmentInstructions()).toBe(false);
-        expect(component.collapsed()).toBe(true);
-        expect(component.readOnly()).toBe(true);
+        fixture.detectChanges();
     });
 
     it('should have default input values', () => {
         expect(component.isAssessmentTraining()).toBe(false);
         expect(component.showAssessmentInstructions()).toBe(true);
         expect(component.collapsed()).toBe(false);
+        expect(component.exercise()).toEqual(mockExercise);
+    });
+
+    it('should render the expanded panel as a card with a primary header', () => {
+        const header = fixture.debugElement.query(By.css('.expanded-instructions .card > .card-header')).nativeElement as HTMLElement;
+
+        expect(header.classList).toContain('bg-primary');
+        expect(header.classList).toContain('text-white');
+        expect(header.querySelector('.card-title')).not.toBeNull();
+    });
+
+    it('should collapse when the card header is clicked and reopen from the collapsed bar', () => {
+        const header = fixture.debugElement.query(By.css('.expanded-instructions .card-header')).nativeElement as HTMLElement;
+        header.click();
+        fixture.detectChanges();
+
+        expect(component.collapsed()).toBe(true);
+        expect(fixture.debugElement.query(By.css('.expanded-instructions'))).toBeNull();
+
+        const collapsedBar = fixture.debugElement.query(By.css('.collapsed-instructions')).nativeElement as HTMLElement;
+        expect(collapsedBar.classList).toContain('bg-primary');
+        collapsedBar.click();
+        fixture.detectChanges();
+
+        expect(component.collapsed()).toBe(false);
+        expect(fixture.debugElement.query(By.css('.expanded-instructions'))).not.toBeNull();
+    });
+
+    it('should provide a named, keyboard-operable resize separator', async () => {
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const container = fixture.debugElement.query(By.css('.expanded-instructions')).nativeElement as HTMLElement;
+        const handle = fixture.debugElement.query(By.css('.draggable-left')).nativeElement as HTMLElement;
+        expect(handle.getAttribute('aria-label')).toBe('artemisApp.assessmentInstructions.instructions.resize');
+        expect(handle.getAttribute('role')).toBe('separator');
+        expect(handle.getAttribute('aria-orientation')).toBe('vertical');
+        expect(handle.tabIndex).toBe(0);
+
+        handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
+        expect(container.style.width).toBe('215px');
+        expect(handle.getAttribute('aria-valuenow')).toBe('215');
     });
 
     it('should expose icons', () => {
@@ -84,69 +75,5 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
         expect(component.faChevronLeft).toBeDefined();
         expect(component.faGripLinesVertical).toBeDefined();
         expect(component.farListAlt).toBeDefined();
-    });
-
-    it('should run ngAfterViewInit without errors', () => {
-        fixture.detectChanges();
-        expect(() => component.ngAfterViewInit()).not.toThrow();
-    });
-
-    it('should update collapsed model', () => {
-        expect(component.collapsed()).toBe(false);
-        component.collapsed.set(true);
-        expect(component.collapsed()).toBe(true);
-    });
-
-    it('should toggle collapsed state', () => {
-        expect(component.collapsed()).toBe(false);
-        component.collapsed.set(true);
-        expect(component.collapsed()).toBe(true);
-        component.collapsed.set(false);
-        expect(component.collapsed()).toBe(false);
-    });
-
-    it('should handle exercise input', () => {
-        expect(component.exercise()).toEqual(mockExercise);
-    });
-
-    describe('resize callbacks', () => {
-        beforeEach(() => {
-            fixture.detectChanges();
-            component.ngAfterViewInit();
-        });
-
-        it('should add card-resizable class on resizestart', () => {
-            expect(resizeStartCallback).toBeDefined();
-            const mockTarget = document.createElement('div');
-            const mockEvent = { target: mockTarget };
-
-            resizeStartCallback!(mockEvent);
-
-            expect(mockTarget.classList.contains('card-resizable')).toBe(true);
-        });
-
-        it('should remove card-resizable class on resizeend', () => {
-            expect(resizeEndCallback).toBeDefined();
-            const mockTarget = document.createElement('div');
-            mockTarget.classList.add('card-resizable');
-            const mockEvent = { target: mockTarget };
-
-            resizeEndCallback!(mockEvent);
-
-            expect(mockTarget.classList.contains('card-resizable')).toBe(false);
-        });
-
-        it('should update width on resizemove', () => {
-            expect(resizeMoveCallback).toBeDefined();
-            const mockTarget = document.createElement('div');
-            const mockEvent = {
-                target: mockTarget,
-                rect: { width: 500 },
-            };
-
-            resizeMoveCallback!(mockEvent);
-
-            expect(mockTarget.style.width).toBe('500px');
-        });
     });
 });

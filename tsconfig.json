@@ -10,21 +10,24 @@
         "declaration": false,
         "experimentalDecorators": true,
         "removeComments": true,
-        "strict": false,
-        "noImplicitReturns": false,
+        // "strict" enables the full strict family: alwaysStrict, strictNullChecks, strictBindCallApply,
+        // strictFunctionTypes, strictPropertyInitialization, noImplicitAny, noImplicitThis, useUnknownInCatchVariables.
+        "strict": true,
+        // The following are NOT part of "strict" and are enabled additionally:
+        "noImplicitReturns": true,
+        "noImplicitOverride": true,
         "noUnusedLocals": true,
         "noFallthroughCasesInSwitch": true,
-        "noImplicitAny": true,
-        "strictNullChecks": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,
         "outDir": "build/resources/main/static/app",
         "forceConsistentCasingInFileNames": true,
         "lib": ["es2024", "dom"],
         "typeRoots": ["node_modules/@types"],
-        "baseUrl": "./",
         "paths": {
-            "app/*": ["src/main/webapp/app/*"]
+            "app/*": ["./src/main/webapp/app/*"],
+            "src/*": ["./src/*"],
+            "@tumaet/ui-angular": ["./packages/tum-aet-ui/dist"]
         },
         "importHelpers": true
     },
@@ -35,10 +38,23 @@
         "strictInputAccessModifiers": true,
         "fullTemplateTypeCheck": true,
         "strictTemplates": true,
+        // Fails the build (NG8030) on a camelCase event binding that no directive on the element emits and that is not
+        // a native DOM event, which catches a misspelled or removed output instead of letting the handler never run.
+        // Only the Angular compiler checks this (`ng build`, `ng serve`, the language service): Vitest compiles
+        // templates JIT and `tsc` ignores them.
+        "strictUnclaimedEventNames": true,
         "preserveWhitespaces": true,
         "extendedDiagnostics": {
             "checks": {
-                "optionalChainNotNullable": "suppress"
+                // Suppressed: with `noUncheckedIndexedAccess` off, index access (`arr[i]`, `record[key]`) is
+                // typed non-nullable, so the ~380 guarding `?.` on index results are flagged as redundant even
+                // though they are required runtime guards. Enabling this would require a `noUncheckedIndexedAccess`
+                // migration first.
+                "optionalChainNotNullable": "suppress",
+                // Enforced: every `??` whose left side is non-nullable has been removed (genuine dead code) or,
+                // where the guard is needed at runtime (index access / a lazily-initialized signal), moved into a
+                // typed component method so the fallback is expressed in TS rather than the template.
+                "nullishCoalescingNotNullable": "error"
             }
         }
     },

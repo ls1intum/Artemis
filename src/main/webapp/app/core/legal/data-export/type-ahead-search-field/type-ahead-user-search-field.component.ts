@@ -1,10 +1,11 @@
 import { Component, inject, model, signal } from '@angular/core';
-import { Observable, OperatorFunction, catchError, map, of, switchMap, tap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Observable, OperatorFunction, Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { UserService } from 'app/account/user/shared/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/account/user/user.model';
 import { FormsModule } from '@angular/forms';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { AutoCompleteCompleteEvent, AutoCompleteModule, AutoCompleteSelectEvent } from 'primeng/autocomplete';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -12,8 +13,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-type-ahead-user-search-field',
     templateUrl: './type-ahead-user-search-field.component.html',
-    styleUrls: ['./type-ahead-user-search-field.component.scss'],
-    imports: [TranslateDirective, FormsModule, NgbTypeahead, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, AutoCompleteModule, FaIconComponent, ArtemisTranslatePipe],
 })
 export class TypeAheadUserSearchFieldComponent {
     private readonly userService = inject(UserService);
@@ -25,10 +25,21 @@ export class TypeAheadUserSearchFieldComponent {
     readonly searchNoResults = signal(false);
     readonly searchQueryTooShort = signal(true);
 
+    readonly suggestions = signal<User[]>([]);
+
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly MIN_SEARCH_QUERY_LENGTH = 3;
 
-    search: OperatorFunction<string, readonly User[]> = (login: Observable<string>) => {
+    /** Drives the search pipeline from the PrimeNG (completeMethod) event. */
+    private readonly query$ = new Subject<string>();
+
+    constructor() {
+        this.search(this.query$)
+            .pipe(takeUntilDestroyed())
+            .subscribe((users) => this.suggestions.set(users));
+    }
+
+    search: OperatorFunction<string, User[]> = (login: Observable<string>) => {
         return login.pipe(
             tap(() => {
                 // Reset all status flags at the beginning before any branching
@@ -60,6 +71,15 @@ export class TypeAheadUserSearchFieldComponent {
         );
     };
 
+    onComplete(event: AutoCompleteCompleteEvent): void {
+        this.query$.next(event.query);
+    }
+
+    onSelectUser(event: AutoCompleteSelectEvent): void {
+        this.loginOrName.set(event.value as User);
+        this.onChange();
+    }
+
     onChange(): void {
         const currentValue = this.loginOrName();
         // When user selects from typeahead, currentValue is a User object
@@ -71,12 +91,14 @@ export class TypeAheadUserSearchFieldComponent {
         if (user?.login) {
             this.loginOrName.set(user.login);
         }
-        this.searchQueryTooShort.set(normalizedValue.length < this.MIN_SEARCH_QUERY_LENGTH);
+        const tooShort = normalizedValue.length < this.MIN_SEARCH_QUERY_LENGTH;
+        this.searchQueryTooShort.set(tooShort);
+        if (tooShort) {
+            // Below minLength PrimeNG stops firing (completeMethod), so route the short value through the pipeline
+            // ourselves: switchMap then cancels any in-flight search and clears the now-stale suggestions.
+            this.query$.next(normalizedValue);
+        }
     }
 
     resultFormatter = (result: User): string => (result.name ?? '<no name>') + ' (' + (result.login ?? '<no login>') + ')';
-
-    inputFormatter(input: User | string): string {
-        return typeof input === 'string' ? input : (input.login ?? '');
-    }
 }

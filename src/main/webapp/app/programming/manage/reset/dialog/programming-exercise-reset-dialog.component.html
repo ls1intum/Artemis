@@ -1,4 +1,4 @@
-@if (!isLoading) {
+@if (!isLoading()) {
     <form name="resetForm" role="form" (ngSubmit)="resetProgrammingExercise()" #resetForm="ngForm">
         <div class="modal-body">
             <p [jhiTranslate]="'artemisApp.programmingExercise.reset.pleaseSelectOperations'" [translateValues]="{ title: programmingExercise.title }">
@@ -28,7 +28,7 @@
                                 <input class="form-check-input" type="checkbox" name="recreateBuildPlans" [(ngModel)]="this.programmingExerciseResetOptions.recreateBuildPlans" />
                                 <span
                                     [jhiTranslate]="
-                                        hasCustomizedBuildPlans
+                                        hasCustomizedBuildPlans()
                                             ? 'artemisApp.programmingExercise.reset.recreateCustomizedBuildPlans'
                                             : 'artemisApp.programmingExercise.reset.recreateBuildPlans'
                                     "
@@ -51,12 +51,12 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="clear()" [disabled]="resetInProgress">
+            <button type="button" class="btn btn-secondary" (click)="clear()" [disabled]="resetInProgress()">
                 <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             <div [style.cursor]="resetForm.form.invalid || !this.canSubmit ? 'not-allowed' : 'pointer'">
                 <button type="submit" class="btn btn-danger" [disabled]="resetForm.form.invalid || !this.canSubmit">
-                    @if (resetInProgress) {
+                    @if (resetInProgress()) {
                         <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
                     }
                     <fa-icon [icon]="faUndo" />&nbsp;

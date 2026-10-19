@@ -54,7 +54,7 @@
             {{ groupCommitCount() }}
         }
         @if (groupCommitIndex() === 0 && groupCommitCount() > 1) {
-            <button class="btn btn-link" (click)="onToggleExpand()">
+            <button type="button" class="btn btn-link" (click)="onToggleExpand()">
                 <span class="text-body-secondary">
                     @if (isExpanded()) {
                         <fa-icon [icon]="faAngleDown" size="lg" />

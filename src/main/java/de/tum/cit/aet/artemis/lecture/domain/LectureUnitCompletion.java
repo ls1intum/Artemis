@@ -17,6 +17,7 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * This class models the 'completion' association between a user and a lecture unit.
@@ -36,12 +37,14 @@ public class LectureUnitCompletion {
     @ManyToOne
     @MapsId("userId")
     @JsonIgnore
+    @Parent
     private User user;
 
     // TODO: double check if this could lead to issues when using learning paths
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("lectureUnitId")
     @JsonIgnore
+    @Parent
     private LectureUnit lectureUnit;
 
     @Column(name = "completed_date")

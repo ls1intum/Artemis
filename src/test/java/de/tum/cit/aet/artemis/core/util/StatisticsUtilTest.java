@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,7 @@ class StatisticsUtilTest {
 
     @Test
     void testCalculateMean_withEmptyList() {
-        List<Double> values = Collections.emptyList();
+        List<Double> values = List.of();
         double mean = StatisticsUtil.calculateMean(values);
         assertThat(mean).isEqualTo(0.0);
     }
@@ -53,7 +52,7 @@ class StatisticsUtilTest {
 
     @Test
     void testCalculateMedian_withEmptyList() {
-        List<Double> values = Collections.emptyList();
+        List<Double> values = List.of();
         double median = StatisticsUtil.calculateMedian(values);
         assertThat(median).isEqualTo(0.0);
     }
@@ -91,7 +90,7 @@ class StatisticsUtilTest {
 
     @Test
     void testCalculateStandardDeviation_withEmptyList() {
-        List<Double> values = Collections.emptyList();
+        List<Double> values = List.of();
         double stdDev = StatisticsUtil.calculateStandardDeviation(values);
         assertThat(stdDev).isEqualTo(0.0);
     }

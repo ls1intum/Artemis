@@ -4,17 +4,15 @@
  * organization management, and group assignment.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Subject, of, throwError } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Title } from '@angular/platform-browser';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import * as Sentry from '@sentry/angular';
 
 import { UserManagementUpdateComponent } from 'app/admin/user-management/update/user-management-update.component';
@@ -23,9 +21,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockProvider } from 'ng-mocks';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
@@ -34,10 +30,10 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { PROFILE_JENKINS } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 
 // Mock Sentry before tests run to prevent actual error reporting
 vi.mock('@sentry/angular', async () => {
@@ -48,19 +44,26 @@ vi.mock('@sentry/angular', async () => {
     };
 });
 
-describe('UserManagementUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
+const testBedProviders = [
+    LocalStorageService,
+    SessionStorageService,
+    { provide: TranslateService, useClass: MockTranslateService },
+    { provide: Router, useClass: MockRouter },
+    { provide: ProfileService, useClass: MockProfileService },
+    provideHttpClient(),
+    provideHttpClientTesting(),
+];
 
+describe('UserManagementUpdateComponent', () => {
     let component: UserManagementUpdateComponent;
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
     let adminUserService: AdminUserService;
     let titleService: Title;
-    let dialogService: DialogService;
     let translateService: TranslateService;
     let profileService: ProfileService;
 
     /** Test user data loaded from parent route */
-    const testUser = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT], ['admin'], undefined, undefined, undefined);
+    const testUser = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT]);
 
     /** Mock parent route containing user data from resolver */
     const parentRoute = {
@@ -72,18 +75,13 @@ describe('UserManagementUpdateComponent', () => {
     let mockRouterState: RouterState;
 
     beforeEach(async () => {
+        parentRoute.data = of({ user: testUser });
         await TestBed.configureTestingModule({
             imports: [UserManagementUpdateComponent],
             providers: [
+                { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
                 { provide: ActivatedRoute, useValue: mockRoute },
-                LocalStorageService,
-                SessionStorageService,
-                MockProvider(DialogService),
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
-                { provide: ProfileService, useClass: MockProfileService },
-                provideHttpClient(),
-                provideHttpClientTesting(),
+                ...testBedProviders,
             ],
         })
             .overrideTemplate(UserManagementUpdateComponent, '')
@@ -92,7 +90,6 @@ describe('UserManagementUpdateComponent', () => {
         fixture = TestBed.createComponent(UserManagementUpdateComponent);
         component = fixture.componentInstance;
         adminUserService = TestBed.inject(AdminUserService);
-        dialogService = TestBed.inject(DialogService);
         titleService = TestBed.inject(Title);
         translateService = TestBed.inject(TranslateService);
         profileService = TestBed.inject(ProfileService);
@@ -133,7 +130,7 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(getAllSpy).toHaveBeenCalledOnce();
-            expect(component.languages).toEqual(LANGUAGES);
+            expect(component.languages()).toEqual(LANGUAGES);
             expect(profileInfoSpy).toHaveBeenCalledOnce();
         });
 
@@ -210,6 +207,7 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(component.editForm.controls['id']).toBeDefined();
+            expect(component.editForm.controls['isTestUser']).toBeDefined();
         });
 
         it('should include SUPER_ADMIN authority when current user is a super admin', () => {
@@ -247,37 +245,303 @@ describe('UserManagementUpdateComponent', () => {
         });
     });
 
+    describe.each([true, false])('password byte limit (new user: %s)', (isNew) => {
+        beforeEach(() => {
+            const user = new User(isNew ? undefined : 123, 'byteuser', 'Byte', 'Test', 'byte@example.org', true, 'en', [Authority.STUDENT]);
+            user.internal = true;
+            component.user.set(user);
+            component['initializeForm']();
+            component.shouldRandomizePassword(false);
+        });
+
+        it.each(['ä'.repeat(37), '€'.repeat(25), '😀'.repeat(19), 'ä'.repeat(36) + 'a'])('should reject a password over 72 bytes: %s', async (password) => {
+            const createSpy = vi.spyOn(adminUserService, 'create').mockReturnValue(of(new HttpResponse({ body: component.user() })));
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user() })));
+            const confirmSpy = vi.spyOn(TestBed.inject(CredentialRevocationConfirmationService), 'confirm');
+            component.revokeCredentials.set(true);
+            component.editForm.patchValue({ password });
+
+            expect(component.editForm.get('password')!.hasError('maxbytes')).toBe(true);
+            await component.save();
+
+            expect(createSpy).not.toHaveBeenCalled();
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(confirmSpy).not.toHaveBeenCalled();
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it.each(['ä'.repeat(36), '€'.repeat(24), '😀'.repeat(18)])('should submit a password at the 72-byte limit: %s', async (password) => {
+            const method = isNew ? 'create' : 'update';
+            const saveSpy = vi.spyOn(adminUserService, method).mockReturnValue(of(new HttpResponse({ body: component.user() })));
+            component.editForm.patchValue({ password });
+
+            expect(component.editForm.valid).toBe(true);
+            await component.save();
+
+            expect(saveSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ password }));
+        });
+
+        it('should clear an oversized password when switching back to generating or keeping it', () => {
+            component.editForm.patchValue({ password: 'ä'.repeat(37) });
+            expect(component.editForm.get('password')!.invalid).toBe(true);
+
+            component.shouldRandomizePassword(true);
+
+            expect(component.editForm.get('password')!.value).toBe('');
+            expect(component.editForm.valid).toBe(true);
+        });
+    });
+
     describe('save', () => {
         it('should call update service when saving existing user', async () => {
             const existingUser = new User(123);
-            vi.spyOn(adminUserService, 'update').mockReturnValue(
+            const createSpy = vi.spyOn(adminUserService, 'create');
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: existingUser,
                     }),
                 ),
             );
-            component.user = existingUser;
-            component.user.login = 'test_user';
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.patchValue({ password: 'new-Password-123' });
+
+            await component.save();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 123, login: 'test_user', password: 'new-Password-123', revokeCredentials: false }));
+            expect(createSpy).not.toHaveBeenCalled();
+            expect(component.user()).toBe(updateSpy.mock.calls[0][0]);
+            expect(component.revokeCredentials()).toBe(false);
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it('should request credential revocation when explicitly selected for an existing user password change', async () => {
+            const existingUser = new User(123);
+            const createSpy = vi.spyOn(adminUserService, 'create');
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.patchValue({ password: 'new-Password-123' });
+            component.revokeCredentials.set(true);
+
+            await component.save();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 123, login: 'test_user', password: 'new-Password-123', revokeCredentials: true }));
+            expect(createSpy).not.toHaveBeenCalled();
+            expect(component.user().revokeCredentials).toBe(true);
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it("should ask before revoking another user's credentials, and not save when dismissed", async () => {
+            // The administrator is deleting someone else's authenticators and keys irreversibly, and unlike the owner they
+            // have no way to notice a mistyped click afterwards. Dismissing must leave the account untouched entirely.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm').mockResolvedValue(false);
+            const updateSpy = vi.spyOn(adminUserService, 'update');
+            const existingUser = new User(123);
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.patchValue({ password: 'new-Password-123' });
+            component.revokeCredentials.set(true);
+
+            await component.save();
+
+            expect(confirmSpy).toHaveBeenCalledExactlyOnceWith({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            expect(updateSpy).not.toHaveBeenCalled();
+            // The spinner must not be left running by an aborted save.
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it('should ask before deactivating an active user, because that revokes every credential', async () => {
+            // UserCreationService.updateUser revokes everything for a deactivation regardless of the checkbox, so a save
+            // with Activated cleared deletes all passkeys, keys and tokens. Confirming only the checkbox left that silent.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm').mockResolvedValue(false);
+            const updateSpy = vi.spyOn(adminUserService, 'update');
+            const existingUser = new User(123);
+            existingUser.activated = true;
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.patchValue({ activated: false });
+
+            await component.save();
+
+            expect(confirmSpy).toHaveBeenCalledExactlyOnceWith({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it('should not ask when a save revokes nothing', async () => {
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm');
+            const existingUser = new User(123);
+            vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.patchValue({ password: 'new-Password-123' });
+            component.revokeCredentials.set(false);
+
+            await component.save();
+
+            expect(confirmSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not submit a typed password after toggling back to keeping the existing one', async () => {
+            // Regression test: shouldRandomizePassword() used to reset only user().password, while save()
+            // submits editForm.getRawValue(). A password typed before toggling back was therefore still
+            // sent, silently changing it while revokeCredentials was forced to false — a real credential
+            // change that left the user's other credentials intact.
+            const existingUser = new User(123);
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
-            component.save();
+            // The admin opts to set a password, types one, then changes their mind and keeps the old one.
+            component.shouldRandomizePassword(false);
+            component.editForm.patchValue({ password: 'typed-Password-123' });
+            component.revokeCredentials.set(true);
+            component.shouldRandomizePassword(true);
 
-            expect(adminUserService.update).toHaveBeenCalledWith(existingUser);
+            await component.save();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            const submitted = updateSpy.mock.calls[0][0];
+            expect(submitted.password).toBeUndefined();
+            expect(submitted.revokeCredentials).toBe(false);
+            expect(component.editForm.get('password')?.value).toBe('');
+        });
+
+        it('should keep the form saveable when a new user with a manual password is switched to external', () => {
+            // Third route out of manual-password mode, and the one that does not go through
+            // shouldRandomizePassword() at all: the template hides the entire password section behind
+            // `@if (internal)`, so unchecking it destroys the input while a required rule left on the control
+            // would keep the form invalid — with no password field on screen to satisfy it.
+            // A new user (no id) is required here, since `internal` is disabled for existing users.
+            const newUser = new User();
+            component.user.set(newUser);
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.get('internal')!.enable();
+            component.editForm.patchValue({ internal: true });
+            const passwordControl = component.editForm.get('password')!;
+
+            component.shouldRandomizePassword(false);
+            component.editForm.patchValue({ password: 'typed-Password-123' });
+            expect(passwordControl.valid).toBe(true);
+
+            // The administrator decides the account is externally managed after all.
+            component.editForm.patchValue({ internal: false });
+
+            expect(passwordControl.errors).toBeNull();
+            expect(passwordControl.valid).toBe(true);
+            expect(passwordControl.value).toBe('');
+        });
+
+        it('should keep the form saveable after toggling back to keeping the existing password', () => {
+            // Second regression guard, found by exercising this in the browser. The password input lives inside
+            // `@if (!useRandomPassword())`, so toggling back destroys the RequiredValidator directive while its
+            // required rule stays composed on the control. Clearing the value then left the control invalid, the
+            // whole form invalid, and the Save button permanently disabled — so the fix above would have traded a
+            // silent password change for an admin who cannot save at all.
+            const existingUser = new User(123);
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            // An internal account: the password only applies to those, so the required rule is keyed on it.
+            component.editForm.patchValue({ internal: true });
+            const passwordControl = component.editForm.get('password')!;
+
+            component.shouldRandomizePassword(false);
+            expect(passwordControl.errors).toEqual({ required: true });
+
+            component.editForm.patchValue({ password: 'typed-Password-123' });
+            expect(passwordControl.valid).toBe(true);
+
+            component.shouldRandomizePassword(true);
+
+            expect(passwordControl.value).toBe('');
+            expect(passwordControl.errors).toBeNull();
+            expect(passwordControl.valid).toBe(true);
+        });
+
+        it('should never request credential revocation without a replacement password', async () => {
+            const existingUser = new User(123);
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.patchValue({ password: undefined });
+            component.revokeCredentials.set(true);
+
+            await component.save();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 123, login: 'test_user', password: undefined, revokeCredentials: false }));
+            expect(component.user().revokeCredentials).toBe(false);
             expect(component.isSaving()).toBe(false);
+        });
+
+        it.each([false, true])('should omit the password when creating an internal user with a random password (toggle back: %s)', async (toggleBack) => {
+            component.user.set(new User());
+            component['initializeForm']();
+            component.editForm.patchValue({
+                login: 'random-password-user',
+                firstName: 'Random',
+                lastName: 'Password',
+                email: 'random-password@example.org',
+                internal: true,
+            });
+            if (toggleBack) {
+                component.shouldRandomizePassword(false);
+                component.editForm.patchValue({ password: 'typed-Password-123' });
+                component.shouldRandomizePassword(true);
+            }
+            expect(component.editForm.valid).toBe(true);
+
+            await component.save();
+
+            const httpMock = TestBed.inject(HttpTestingController);
+            const request = httpMock.expectOne({ method: 'POST', url: 'api/account/admin/users' });
+            expect(request.request.serializeBody()).not.toContain('"password"');
+            request.flush({ id: 123, login: 'random-password-user', internal: true }, { status: 201, statusText: 'Created' });
+            expect(component.isSaving()).toBe(false);
+            httpMock.verify();
         });
 
         it('should call create service when saving new user', async () => {
             const newUser = new User();
-            vi.spyOn(adminUserService, 'create').mockReturnValue(of(new HttpResponse({ body: newUser })));
-            component.user = newUser;
+            const createSpy = vi.spyOn(adminUserService, 'create').mockReturnValue(of(new HttpResponse({ body: newUser })));
+            const updateSpy = vi.spyOn(adminUserService, 'update');
+            component.user.set(newUser);
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
+            component.editForm.patchValue({ password: 'new-Password-123' });
+            component.revokeCredentials.set(true);
 
-            component.save();
+            await component.save();
 
-            expect(adminUserService.create).toHaveBeenCalledWith(newUser);
+            expect(createSpy).toHaveBeenCalledOnce();
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(createSpy.mock.calls[0][0]).not.toHaveProperty('revokeCredentials');
+            expect(createSpy.mock.calls[0][0].id).toBeFalsy();
+            expect(createSpy.mock.calls[0][0].password).toBe('new-Password-123');
             expect(component.isSaving()).toBe(false);
         });
     });
@@ -289,107 +553,55 @@ describe('UserManagementUpdateComponent', () => {
     });
 
     it('should set password to undefined when using random password', () => {
-        component.user = { password: 'abc' } as User;
+        component.user.set({ password: 'abc' } as User);
+        component.revokeCredentials.set(true);
         component.shouldRandomizePassword(true);
-        expect(component.user.password).toBeUndefined();
+        expect(component.useRandomPassword()).toBe(true);
+        expect(component.user().password).toBeUndefined();
+        expect(component.revokeCredentials()).toBe(false);
 
         component.shouldRandomizePassword(false);
-        expect(component.user.password).toBe('');
+        expect(component.useRandomPassword()).toBe(false);
+        expect(component.user().password).toBe('');
+        expect(component.revokeCredentials()).toBe(false);
     });
 
     it('should open organizations modal and add selected organization', () => {
         const existingOrganization = {} as Organization;
-        component.user = { organizations: [existingOrganization] } as User;
-
-        const organizationSubject = new Subject<Organization>();
-        const mockDialogRef = {
-            onClose: organizationSubject.asObservable(),
-        } as unknown as DynamicDialogRef;
-        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        component.user.set({ organizations: [existingOrganization] } as User);
 
         component.openOrganizationsModal();
 
-        expect(openSpy).toHaveBeenCalledOnce();
-        expect(openSpy).toHaveBeenCalledWith(OrganizationSelectorComponent, expect.any(Object));
+        expect(component.orgSelectorVisible()).toBe(true);
 
-        // Simulate selecting a new organization
+        // Simulate selecting a new organization via the declarative selector dialog's output
         const newOrganization = {} as Organization;
-        organizationSubject.next(newOrganization);
-        // Check component.user.organizations directly since immutable operations create a new array
-        expect(component.user.organizations).toContain(existingOrganization);
-        expect(component.user.organizations).toContain(newOrganization);
-        expect(component.user.organizations).toHaveLength(2);
+        component.onOrgSelected(newOrganization);
+        // Check component.user().organizations directly since immutable operations create a new array
+        expect(component.user().organizations).toContain(existingOrganization);
+        expect(component.user().organizations).toContain(newOrganization);
+        expect(component.user().organizations).toHaveLength(2);
 
         // Test when user has no organizations yet
-        component.user.organizations = undefined;
-        organizationSubject.next(newOrganization);
-        expect(component.user.organizations).toEqual([newOrganization]);
+        component.user().organizations = undefined;
+        component.onOrgSelected(newOrganization);
+        expect(component.user().organizations).toEqual([newOrganization]);
     });
 
     it('should remove organization from user', () => {
         const organization1 = { id: 1 };
         const organization2 = { id: 2 };
-        component.user = { organizations: [organization1, organization2] } as User;
+        component.user.set({ organizations: [organization1, organization2] } as User);
 
         component.removeOrganizationFromUser(organization2);
 
-        expect(component.user.organizations).toEqual([organization1]);
-    });
-
-    it('should add selected group from autocomplete panel to user', () => {
-        const newGroup = 'nicegroup';
-        component.user = { groups: [] } as unknown as User;
-        component.allGroups = [newGroup];
-
-        const option = { viewValue: newGroup };
-        const event = { option } as unknown as MatAutocompleteSelectedEvent;
-
-        component.onSelected(event);
-
-        expect(component.user.groups).toEqual([newGroup]);
-    });
-
-    it('should add group to user on chip input', () => {
-        const newGroup = 'nicegroup';
-        component.allGroups = [newGroup];
-        component.user = { groups: [] } as unknown as User;
-
-        const event = { value: newGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-
-        component.onGroupAdd(component.user, event);
-
-        expect(component.user.groups).toEqual([newGroup]);
-        expect(event.chipInput!.clear).toHaveBeenCalledOnce();
-    });
-
-    it('should not add group that is not in allowed groups list', () => {
-        const allowedGroup = 'nicegroup';
-        const notAllowedGroup = 'badgroup';
-        component.allGroups = [allowedGroup];
-        component.user = { groups: [] } as unknown as User;
-
-        const event = { value: notAllowedGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-
-        component.onGroupAdd(component.user, event);
-
-        expect(component.user.groups).toEqual([]);
-        expect(event.chipInput!.clear).toHaveBeenCalledOnce();
-    });
-
-    it('should remove group from user', () => {
-        const group1 = 'nicegroup';
-        const group2 = 'badgroup';
-        component.user = { groups: [group1, group2] } as unknown as User;
-
-        component.onGroupRemove(component.user, group1);
-
-        expect(component.user.groups).toEqual([group2]);
+        expect(component.user().organizations).toEqual([organization1]);
     });
 
     describe('previousState', () => {
         it('should navigate to user detail page when editing existing user', () => {
             const routerMock = TestBed.inject(Router) as unknown as MockRouter;
-            component.user = { id: 123, login: 'testuser' } as User;
+            component.user.set({ id: 123, login: 'testuser' } as User);
 
             component.previousState();
 
@@ -398,7 +610,7 @@ describe('UserManagementUpdateComponent', () => {
 
         it('should navigate to user management overview when creating new user', () => {
             const routerMock = TestBed.inject(Router) as unknown as MockRouter;
-            component.user = { id: undefined } as unknown as User;
+            component.user.set({ id: undefined } as unknown as User);
 
             component.previousState();
 
@@ -406,70 +618,16 @@ describe('UserManagementUpdateComponent', () => {
         });
     });
 
-    it('should filter groups by lowercase search value', () => {
-        component.allGroups = ['AdminGroup', 'StudentGroup', 'TutorGroup'];
-
-        // @ts-ignore - accessing private method for testing
-        const result = component.filter('admin');
-
-        expect(result).toEqual(['AdminGroup']);
-    });
-
-    it('should add group to user when user has no groups yet', () => {
-        const newGroup = 'nicegroup';
-        component.allGroups = [newGroup];
-        component.user = {} as User; // No groups property
-
-        const event = { value: newGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-        component.onGroupAdd(component.user, event);
-
-        expect(component.user.groups).toEqual([newGroup]);
-    });
-
-    it('should not add duplicate group to user', () => {
-        const existingGroup = 'nicegroup';
-        component.allGroups = [existingGroup];
-        component.user = { groups: [existingGroup] } as unknown as User;
-
-        const event = { value: existingGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-        component.onGroupAdd(component.user, event);
-
-        expect(component.user.groups).toEqual([existingGroup]);
-    });
-
-    it('should handle empty group value on chip input', () => {
-        component.allGroups = ['nicegroup'];
-        component.user = { groups: [] } as unknown as User;
-
-        const event = { value: '', chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-        component.onGroupAdd(component.user, event);
-
-        expect(component.user.groups).toEqual([]);
-    });
-
-    it('should handle undefined modal selection', () => {
-        component.user = { organizations: [{ id: 1 }] as Organization[] } as User;
-
-        const organizationSubject = new Subject<Organization | undefined>();
-        const mockDialogRef = {
-            onClose: organizationSubject.asObservable(),
-        } as unknown as DynamicDialogRef;
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+    it('should not modify organizations when the selector is cancelled', () => {
+        component.user.set({ organizations: [{ id: 1 }] as Organization[] } as User);
 
         component.openOrganizationsModal();
-        organizationSubject.next(undefined);
+        expect(component.orgSelectorVisible()).toBe(true);
 
-        // Should not add undefined to organizations
-        expect(component.user.organizations).toHaveLength(1);
-    });
+        // Cancelling closes the dialog (orgSelectorVisible -> false) without adding an organization
+        component.orgSelectorVisible.set(false);
 
-    it('should filter out undefined groups when filtering', () => {
-        component.allGroups = ['AdminGroup', undefined as unknown as string, 'StudentGroup'];
-
-        // @ts-ignore - accessing private method for testing
-        const result = component.filter('group');
-
-        expect(result).toEqual(['AdminGroup', 'StudentGroup']);
+        expect(component.user().organizations).toHaveLength(1);
     });
 
     describe('ngOnInit - additional coverage', () => {
@@ -481,38 +639,12 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(organizationService.getOrganizationsByUser).toHaveBeenCalledWith(testUser.id);
-            expect(component.user.organizations).toEqual(mockOrganizations);
-        });
-
-        it('should handle groups from courseAdminService with body containing groups', () => {
-            const courseAdminService = TestBed.inject(CourseAdminService);
-            const mockGroups = ['group1', 'group2', undefined as unknown as string, 'group3'];
-            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
-
-            component.ngOnInit();
-
-            // Should filter out undefined groups
-            expect(component.allGroups).toEqual(['group1', 'group2', 'group3']);
-        });
-
-        it('should initialize empty groups for new user without id', () => {
-            // Simulate scenario where route returns no user (new user creation)
-            // The component initializes user.groups = [] when user.id is undefined
-            component.user = new User(); // No id
-            component.user.groups = undefined;
-            // @ts-ignore - accessing private method
-            component.initializeForm();
-
-            // Simulate new user scenario where groups should be initialized
-            if (!component.user.id) {
-                component.user.groups = [];
-            }
-            expect(component.user.groups).toEqual([]);
+            expect(component.user().organizations).toEqual(mockOrganizations);
         });
     });
 
     describe('save - additional coverage', () => {
-        it('should show Jenkins warning when login changes and no password set', () => {
+        it('should show Jenkins warning when login changes and no password set', async () => {
             const alertService = TestBed.inject(AlertService);
             const addAlertSpy = vi.spyOn(alertService, 'addAlert');
 
@@ -523,9 +655,9 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             // Setup existing user with different login
-            component.user = new User(123);
-            component.user.login = 'new_login';
-            component.user.password = undefined;
+            component.user.set(new User(123));
+            component.user().login = 'new_login';
+            component.user().password = undefined;
             // @ts-ignore - accessing private property for testing
             component.oldLogin = 'old_login';
 
@@ -535,9 +667,9 @@ describe('UserManagementUpdateComponent', () => {
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
-            vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user })));
+            vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user() })));
 
-            component.save();
+            await component.save();
 
             expect(addAlertSpy).toHaveBeenCalledWith({
                 type: AlertType.WARNING,
@@ -547,15 +679,15 @@ describe('UserManagementUpdateComponent', () => {
             });
         });
 
-        it('should not show Jenkins warning when login stays the same', () => {
+        it('should not show Jenkins warning when login stays the same', async () => {
             const alertService = TestBed.inject(AlertService);
             const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => profile === PROFILE_JENKINS);
 
             component.ngOnInit();
 
-            component.user = new User(123);
-            component.user.login = 'same_login';
+            component.user.set(new User(123));
+            component.user().login = 'same_login';
             // @ts-ignore - accessing private property for testing
             component.oldLogin = 'same_login';
 
@@ -565,61 +697,59 @@ describe('UserManagementUpdateComponent', () => {
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
-            vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user })));
+            vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user() })));
 
-            component.save();
+            await component.save();
 
             expect(addAlertSpy).not.toHaveBeenCalled();
         });
 
-        it('should handle update error correctly', () => {
+        it('should handle update error correctly', async () => {
             const existingUser = new User(123);
             existingUser.login = 'test_user';
             vi.spyOn(adminUserService, 'update').mockReturnValue(throwError(() => new Error('Update failed')));
-            component.user = existingUser;
+            component.user.set(existingUser);
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
             component.isSaving.set(true);
 
-            component.save();
+            await component.save();
 
             expect(component.isSaving()).toBe(false);
         });
 
-        it('should handle create error correctly', () => {
+        it('should handle create error correctly', async () => {
             const newUser = new User();
             vi.spyOn(adminUserService, 'create').mockReturnValue(throwError(() => new Error('Create failed')));
-            component.user = newUser;
+            component.user.set(newUser);
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
             component.isSaving.set(true);
 
-            component.save();
+            await component.save();
 
             expect(component.isSaving()).toBe(false);
         });
 
-        it('should preserve user groups and organizations when saving', () => {
+        it('should preserve organizations when saving', async () => {
             const existingUser = new User(123);
             existingUser.login = 'test_user';
-            existingUser.groups = ['group1', 'group2'];
             existingUser.organizations = [{ id: 1 }] as Organization[];
             vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));
-            component.user = existingUser;
+            component.user.set(existingUser);
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
-            component.save();
+            await component.save();
 
-            expect(component.user.groups).toEqual(['group1', 'group2']);
-            expect(component.user.organizations).toEqual([{ id: 1 }]);
+            expect(component.user().organizations).toEqual([{ id: 1 }]);
         });
     });
 
     describe('initializeForm', () => {
         it('should return early if editForm already exists', () => {
             // Initialize user first to avoid undefined error
-            component.user = new User(123);
+            component.user.set(new User(123));
 
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
@@ -634,7 +764,7 @@ describe('UserManagementUpdateComponent', () => {
         });
 
         it('should enable internal field for new users', () => {
-            component.user = new User(); // No id = new user
+            component.user.set(new User()); // No id = new user
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
@@ -642,17 +772,157 @@ describe('UserManagementUpdateComponent', () => {
         });
 
         it('should disable internal field for existing users', () => {
-            component.user = new User(123); // Has id = existing user
+            component.user.set(new User(123)); // Has id = existing user
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
             expect(component.editForm.get('internal')?.disabled).toBe(true);
         });
+
+        it('should patch the isTestUser flag so the checkbox reflects the persisted value', () => {
+            const testUser = new User(123);
+            testUser.isTestUser = true;
+            component.user.set(testUser);
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            expect(component.editForm.get('isTestUser')?.value).toBe(true);
+        });
+
+        it('should leave the isTestUser checkbox unchecked for a user that is not flagged', () => {
+            component.user.set(new User(123));
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            expect(component.editForm.get('isTestUser')?.value).toBeFalsy();
+        });
+    });
+
+    describe('course roles', () => {
+        beforeEach(() => {
+            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([]));
+            vi.spyOn(TestBed.inject(OrganizationManagementService), 'getOrganizationsByUser').mockReturnValue(of([]));
+            component.ngOnInit();
+        });
+
+        it('should identify the edited user by the login the server knows', () => {
+            component.editForm.get('login')?.setValue('typed-but-unsaved');
+
+            expect(component.persistedLogin()).toBe('user');
+        });
+
+        it('should add an authority the server granted because of a new course role and keep unsaved authority changes', () => {
+            component.editForm.get('authorities')?.setValue([Authority.STUDENT, Authority.ADMIN]);
+            const findUserSpy = vi
+                .spyOn(adminUserService, 'findUser')
+                .mockReturnValue(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR])));
+
+            component.onCourseRolesChanged();
+
+            expect(findUserSpy).toHaveBeenCalledWith('user');
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT, Authority.ADMIN, Authority.INSTRUCTOR]);
+        });
+
+        it('should drop an authority the server revoked because the last course role was removed', () => {
+            vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(
+                of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR])),
+            );
+            component.onCourseRolesChanged();
+            expect(component.editForm.get('authorities')?.value).toContain(Authority.INSTRUCTOR);
+
+            vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT])));
+            component.onCourseRolesChanged();
+
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT]);
+        });
+
+        it('should block saving until the authorities were refreshed after a change of the course roles', async () => {
+            const reloaded = new Subject<User>();
+            vi.spyOn(adminUserService, 'findUser').mockReturnValue(reloaded);
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRolesChanged();
+            await component.save();
+
+            expect(component['saveBlockedByCourseRoles']()).toBe(true);
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            reloaded.next(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR]));
+
+            expect(component['saveBlockedByCourseRoles']()).toBe(false);
+            expect(component.editForm.get('authorities')?.value).toContain(Authority.INSTRUCTOR);
+        });
+
+        it('should keep saving blocked when the refresh failed, and allow a retry', async () => {
+            const findUserSpy = vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(throwError(() => new Error('failed')));
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRolesChanged();
+            await component.save();
+
+            expect(component['authoritySync']()).toBe('failed');
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            findUserSpy.mockReturnValueOnce(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR])));
+            component.onCourseRolesChanged();
+
+            expect(component['authoritySync']()).toBe('idle');
+            expect(component.editForm.get('authorities')?.value).toContain(Authority.INSTRUCTOR);
+        });
+
+        it('should drop the response of a refresh that a later refresh superseded', () => {
+            const first = new Subject<User>();
+            const second = new Subject<User>();
+            vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(first).mockReturnValueOnce(second);
+
+            component.onCourseRolesChanged();
+            component.onCourseRolesChanged();
+            second.next(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR]));
+            first.next(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT]));
+
+            expect(component['authoritySync']()).toBe('idle');
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT, Authority.INSTRUCTOR]);
+        });
+
+        it('should block saving while a course role is being added or removed', async () => {
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRoleChangeInProgress(true);
+            await component.save();
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            component.onCourseRoleChangeInProgress(false);
+            await component.save();
+            expect(updateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should keep saving blocked until every overlapping change of the course roles ended', async () => {
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRoleChangeInProgress(true);
+            component.onCourseRoleChangeInProgress(true);
+            component.onCourseRoleChangeInProgress(false);
+            await component.save();
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            component.onCourseRoleChangeInProgress(false);
+            await component.save();
+            expect(updateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should leave the authorities untouched when the server changed none', () => {
+            component.editForm.get('authorities')?.setValue([Authority.STUDENT, Authority.EDITOR]);
+            vi.spyOn(adminUserService, 'findUser').mockReturnValue(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT])));
+
+            component.onCourseRolesChanged();
+
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT, Authority.EDITOR]);
+        });
     });
 
     describe('authority management', () => {
         beforeEach(() => {
-            component.user = new User(123);
+            component.user.set(new User(123));
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
         });
@@ -741,38 +1011,282 @@ describe('UserManagementUpdateComponent', () => {
             expect(sorted).toContain('ROLE_CUSTOM');
         });
     });
+});
 
-    describe('filteredGroups observable', () => {
-        it('should filter groups based on input value', async () => {
-            const courseAdminService = TestBed.inject(CourseAdminService);
-            const mockGroups = ['AdminGroup', 'StudentGroup', 'TutorGroup'];
-            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
+describe('UserManagementUpdateComponent credential revocation controls', () => {
+    let component: UserManagementUpdateComponent;
+    let fixture: ComponentFixture<UserManagementUpdateComponent>;
+    let parentRoute: { data: Observable<{ user: User | undefined }> };
 
-            component.ngOnInit();
-            await fixture.whenStable();
+    beforeEach(async () => {
+        parentRoute = { data: of({ user: undefined }) };
+        const route = { parent: parentRoute } as unknown as ActivatedRoute;
 
-            let filteredResult: string[] = [];
-            component.filteredGroups.subscribe((groups) => (filteredResult = groups));
+        await TestBed.configureTestingModule({
+            imports: [UserManagementUpdateComponent],
+            providers: [
+                { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
+                { provide: ActivatedRoute, useValue: route },
+                ...testBedProviders,
+            ],
+        }).compileComponents();
 
-            component.groupCtrl.setValue('admin');
+        vi.spyOn(TestBed.inject(AdminUserService), 'authorities').mockReturnValue(of([]));
+        vi.spyOn(TestBed.inject(AdminUserService), 'getCourseRoles').mockReturnValue(of([]));
+        vi.spyOn(TestBed.inject(OrganizationManagementService), 'getOrganizationsByUser').mockReturnValue(of([]));
+    });
 
-            expect(filteredResult).toEqual(['AdminGroup']);
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    async function render(user: User): Promise<void> {
+        parentRoute.data = of({ user });
+        fixture = TestBed.createComponent(UserManagementUpdateComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+    }
+
+    function checkboxInput(id: string): HTMLInputElement | null {
+        return fixture.nativeElement.querySelector(`input#${id}`);
+    }
+
+    it.each(['login', 'firstName', 'lastName', 'email', 'visibleRegistrationNumber'])('associates a visible label with the %s control', async (controlId) => {
+        await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
+
+        const label = fixture.nativeElement.querySelector(`label[for="${controlId}"]`);
+        expect(label).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(`#${controlId}`)).not.toBeNull();
+    });
+
+    it('shows the editable course roles of an existing user, identified by the login saved on the server', async () => {
+        await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
+        component.editForm.get('login')?.setValue('typed-but-unsaved');
+        fixture.detectChanges();
+
+        const courseRoles = fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-roles');
+        expect(courseRoles).not.toBeNull();
+        expect(courseRoles.componentInstance.editable()).toBe(true);
+        expect(courseRoles.componentInstance.login()).toBe('test_user');
+    });
+
+    describe('after a change of the course roles', () => {
+        const existingUser = () => new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]);
+
+        beforeEach(() => {
+            vi.spyOn(TestBed.inject(AdminUserService), 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.INSTRUCTOR]));
         });
 
-        it('should return all groups when value is undefined', async () => {
-            const courseAdminService = TestBed.inject(CourseAdminService);
-            const mockGroups = ['Group1', 'Group2'];
-            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
+        it('tells which global roles the change added or removed', async () => {
+            await render(existingUser());
+            vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValue(
+                of(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.INSTRUCTOR])),
+            );
 
-            component.ngOnInit();
-            await fixture.whenStable();
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
 
-            let filteredResult: string[] = [];
-            component.filteredGroups.subscribe((groups) => (filteredResult = groups));
-
-            component.groupCtrl.setValue(undefined);
-
-            expect(filteredResult).toEqual(['Group1', 'Group2']);
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-change-added"]')?.textContent).toContain('artemisApp.userManagement.roles.instructor');
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-change-removed"]')?.textContent).toContain('artemisApp.userManagement.roles.user');
         });
+
+        it('shows no notice when the change left the global roles alone', async () => {
+            await render(existingUser());
+            vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValue(of(existingUser()));
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-change"]')).toBeNull();
+        });
+
+        it('blocks the global role checkboxes and Save in the DOM while the authorities are refreshed', async () => {
+            await render(existingUser());
+            const reloaded = new Subject<User>();
+            vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValue(reloaded);
+            const checkboxInputs = () => Array.from<HTMLInputElement>(fixture.nativeElement.querySelectorAll('[data-testid="global-role-item"] input'));
+            const save = () => fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement;
+            expect(checkboxInputs().length).toBeGreaterThan(0);
+            expect(checkboxInputs().some((input) => input.disabled)).toBe(false);
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect(checkboxInputs().every((input) => input.disabled)).toBe(true);
+            expect(save().disabled).toBe(true);
+
+            reloaded.next(existingUser());
+            fixture.detectChanges();
+
+            expect(checkboxInputs().some((input) => input.disabled)).toBe(false);
+            expect(save().disabled).toBe(false);
+        });
+
+        it('keeps Save blocked with a retry when the refresh failed, while the global roles stay editable', async () => {
+            await render(existingUser());
+            const findUser = vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValueOnce(throwError(() => new Error('failed')));
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect((fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement).disabled).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-sync-failed"]')).not.toBeNull();
+
+            findUser.mockReturnValueOnce(of(existingUser()));
+            (fixture.nativeElement.querySelector('[data-testid="authority-sync-retry"] button') as HTMLButtonElement).click();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-sync-failed"]')).toBeNull();
+            expect((fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement).disabled).toBe(false);
+        });
+
+        it('disables the course role controls while the user is being saved', async () => {
+            await render(existingUser());
+
+            component.isSaving.set(true);
+            fixture.detectChanges();
+
+            const courseRoles = fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-roles');
+            expect(courseRoles.componentInstance.disabled()).toBe(true);
+        });
+    });
+
+    it('does not offer course roles while a user is being created', async () => {
+        await render(new User(undefined, 'new_user', 'New', 'User', 'new@example.com', true, 'en', [Authority.STUDENT]));
+        expect(fixture.nativeElement.querySelector('jhi-user-course-roles')).toBeNull();
+    });
+
+    it('labels the password field, which previously only carried a placeholder', async () => {
+        const existingUser = new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]);
+        existingUser.internal = true;
+        await render(existingUser);
+        component.shouldRandomizePassword(false);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('label[for="password"]')).not.toBeNull();
+    });
+
+    it.each([true, false])('shows the byte limit error and disables saving for an oversized password (new user: %s)', async (isNew) => {
+        const user = new User(isNew ? undefined : 123, 'byteuser', 'Byte', 'Test', 'byte@example.org', true, 'en', [Authority.STUDENT]);
+        user.internal = true;
+        await render(user);
+        component.shouldRandomizePassword(false);
+        const password = component.editForm.get('password')!;
+        password.setValue('ä'.repeat(37));
+        password.markAsTouched();
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector('#password') as HTMLInputElement;
+        const save = fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement;
+        const error = fixture.nativeElement.querySelector('[jhiTranslate="global.messages.validate.newpassword.maxbytes"]');
+        expect(error).not.toBeNull();
+        expect(input.getAttribute('aria-invalid')).toBe('true');
+        expect(save.disabled).toBe(true);
+
+        password.setValue('ä'.repeat(36));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[jhiTranslate="global.messages.validate.newpassword.maxbytes"]')).toBeNull();
+        expect(input.getAttribute('aria-invalid')).toBeNull();
+        expect(save.disabled).toBe(false);
+    });
+
+    it('marks every required field with a marker hidden from assistive technology', async () => {
+        await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
+
+        const markers = Array.from(fixture.nativeElement.querySelectorAll('.tumaet-ui-form-field-required')) as HTMLElement[];
+
+        expect(markers.length).toBe(4);
+        markers.forEach((marker) => expect(marker.getAttribute('aria-hidden')).toBe('true'));
+    });
+
+    it.each(['login', 'firstName', 'lastName', 'email'])('tells the user why %s is invalid once it is cleared', async (controlId) => {
+        await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
+
+        const control = component.editForm.get(controlId)!;
+        control.setValue('');
+        control.markAsDirty();
+        fixture.detectChanges();
+
+        // The field carries a required marker and points aria-describedby at this region, so leaving it empty
+        // would tell a screen reader that something is wrong without ever saying what.
+        const error = fixture.nativeElement.querySelector(`#${controlId}`).closest('tumaet-ui-form-field').querySelector('.tumaet-ui-form-field-error');
+        expect(error.hasAttribute('hidden')).toBe(false);
+        expect(error.textContent.trim()).not.toBe('');
+    });
+
+    it('should show an unchecked opt-in only while replacing an existing internal user password', async () => {
+        const existingUser = new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]);
+        existingUser.internal = true;
+        await render(existingUser);
+
+        const keepPasswordCheckbox = checkboxInput('randomPassword')!;
+        expect(keepPasswordCheckbox).not.toBeNull();
+        expect(keepPasswordCheckbox.checked).toBe(true);
+        expect(component.useRandomPassword()).toBe(true);
+        expect(fixture.nativeElement.querySelector('input#password')).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="revoke-credentials"]'))).toBeNull();
+
+        keepPasswordCheckbox.click();
+        fixture.detectChanges();
+
+        const revokeHost = fixture.debugElement.query(By.css('[data-testid="revoke-credentials"]'));
+        const revokeCheckbox = revokeHost.componentInstance as TumAetUiCheckboxComponent;
+        const revokeInput = checkboxInput('revokeCredentials')!;
+        expect(component.useRandomPassword()).toBe(false);
+        expect(keepPasswordCheckbox.checked).toBe(false);
+        expect(fixture.nativeElement.querySelector('input#password')).not.toBeNull();
+        expect(revokeHost).not.toBeNull();
+        expect(revokeInput.checked).toBe(false);
+        expect(revokeCheckbox.checked()).toBe(false);
+        expect(component.revokeCredentials()).toBe(false);
+        expect(fixture.nativeElement.querySelector('label[for="revokeCredentials"]')).not.toBeNull();
+
+        revokeInput.click();
+        fixture.detectChanges();
+
+        expect(revokeInput.checked).toBe(true);
+        expect(revokeCheckbox.checked()).toBe(true);
+        expect(component.revokeCredentials()).toBe(true);
+
+        keepPasswordCheckbox.click();
+        fixture.detectChanges();
+
+        expect(component.useRandomPassword()).toBe(true);
+        expect(component.revokeCredentials()).toBe(false);
+        expect(fixture.nativeElement.querySelector('input#password')).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="revoke-credentials"]'))).toBeNull();
+    });
+
+    it('should not offer credential revocation while creating an internal user', async () => {
+        const newUser = new User(undefined, 'new_user', 'New', 'User', 'new@example.com', true, 'en', [Authority.STUDENT]);
+        newUser.internal = true;
+        await render(newUser);
+
+        const randomPasswordCheckbox = checkboxInput('randomPassword')!;
+        expect(randomPasswordCheckbox).not.toBeNull();
+        expect(randomPasswordCheckbox.checked).toBe(true);
+        expect(fixture.nativeElement.querySelector('input#password')).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="revoke-credentials"]'))).toBeNull();
+
+        randomPasswordCheckbox.click();
+        fixture.detectChanges();
+
+        expect(component.useRandomPassword()).toBe(false);
+        expect(fixture.nativeElement.querySelector('input#password')).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="revoke-credentials"]'))).toBeNull();
+    });
+
+    it('should not show password or credential controls for an existing external user', async () => {
+        const externalUser = new User(123, 'external_user', 'External', 'User', 'external@example.com', true, 'en', [Authority.STUDENT]);
+        externalUser.internal = false;
+        await render(externalUser);
+
+        expect(component.editForm.get('internal')?.value).toBe(false);
+        expect(checkboxInput('randomPassword')).toBeNull();
+        expect(fixture.nativeElement.querySelector('input#password')).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="revoke-credentials"]'))).toBeNull();
+        expect(component.revokeCredentials()).toBe(false);
     });
 });

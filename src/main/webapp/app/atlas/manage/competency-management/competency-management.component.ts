@@ -9,11 +9,10 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
-    ImportAllCourseCompetenciesModalData,
     ImportAllCourseCompetenciesResult,
 } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
@@ -21,18 +20,16 @@ import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
-import {
-    CourseCompetenciesRelationModalComponent,
-    CourseCompetenciesRelationModalData,
-} from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
+import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyExplanationModalComponent } from 'app/atlas/manage/course-competency-explanation-modal/course-competency-explanation-modal.component';
-import { AgentChatModalComponent, AgentChatModalData } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
+import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
 import { AccountService } from 'app/core/auth/account.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -50,6 +47,17 @@ import { AccountService } from 'app/core/auth/account.service';
     ],
 })
 export class CompetencyManagementComponent implements OnInit, OnDestroy {
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly dialogService = inject(DialogService);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly accountService = inject(AccountService);
+    private readonly pendingTasks = inject(PendingTasks);
+
     protected readonly faEdit = faEdit;
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
@@ -61,17 +69,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'Competencies';
     readonly CourseCompetencyType = CourseCompetencyType;
-
-    private readonly activatedRoute = inject(ActivatedRoute);
-    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
-    private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly profileService = inject(ProfileService);
-    private readonly irisSettingsService = inject(IrisSettingsService);
-    private readonly featureToggleService = inject(FeatureToggleService);
-    private readonly localStorageService = inject(LocalStorageService);
-    private readonly accountService = inject(AccountService);
-    private readonly pendingTasks = inject(PendingTasks);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly isLoading = signal<boolean>(false);
@@ -89,11 +86,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(async () => await this.loadCourseCompetencies(courseId));
+            void untracked(async () => await this.loadCourseCompetencies(courseId));
         });
         effect(() => {
             const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-            untracked(async () => {
+            void untracked(async () => {
                 if (irisEnabled) {
                     await this.loadIrisEnabled();
                 }
@@ -108,9 +105,13 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         }
         this.localStorageService.store('alreadyVisitedCompetencyManagement', true);
 
+        // The agent itself only exists when AtlasLLM is configured; the runtime toggle is a finer gate on top of it.
+        // Without the module check, an instance that enables the toggle without a chat model would offer a chat whose
+        // endpoint is not registered at all.
+        const atlasLLMActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM);
         this.agentChatSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent).subscribe((isFeatureEnabled) => {
             const hasAuthority = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR);
-            this.agentChatEnabled.set(hasAuthority && isFeatureEnabled);
+            this.agentChatEnabled.set(atlasLLMActive && hasAuthority && isFeatureEnabled);
         });
     }
 
@@ -123,7 +124,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             const courseSettings = await firstValueFrom(this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId()));
             this.irisEnabled.set(courseSettings?.settings?.enabled ?? false);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         }
     }
 
@@ -148,7 +149,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             }
             this.courseCompetencies.set(courseCompetencies);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
             done();
@@ -166,7 +167,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             resizable: false,
             showHeader: false,
             styleClass: 'course-competencies-relation-graph-modal',
-            data: <CourseCompetenciesRelationModalData>{
+            data: {
                 courseId: this.courseId(),
                 courseCompetencies: this.courseCompetencies(),
             },
@@ -186,7 +187,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             draggable: false,
             resizable: false,
             showHeader: false,
-            data: <ImportAllCourseCompetenciesModalData>{ courseId: this.courseId() },
+            data: { courseId: this.courseId() },
         });
         if (!dialogRef) {
             return;
@@ -208,7 +209,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 this.alertService.warning(`artemisApp.courseCompetency.importAll.warning`, { courseTitle: courseTitle });
             }
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         }
     }
 
@@ -266,7 +267,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             draggable: false,
             resizable: false,
             showHeader: false,
-            data: <AgentChatModalData>{
+            data: {
                 courseId: this.courseId(),
                 onCompetencyChanged: () => this.loadCourseCompetencies(this.courseId()),
             },

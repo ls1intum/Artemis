@@ -6,9 +6,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule } from 'primeng/paginator';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { LecturePagingService } from 'app/lecture/manage/services/lecture-paging.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 const tableColumns: Column<Lecture>[] = [
     {
@@ -34,7 +36,7 @@ const tableColumns: Column<Lecture>[] = [
 @Component({
     selector: 'jhi-lecture-import',
     templateUrl: '../../../shared-ui/import/import.component.html',
-    imports: [FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination],
+    imports: [FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, PaginatorModule, ArtemisTranslatePipe],
 })
 export class LectureImportComponent extends ImportComponent<Lecture> {
     constructor() {

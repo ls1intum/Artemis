@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { map } from 'rxjs/operators';
@@ -9,9 +9,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 type EntityResponseType = HttpResponse<ExerciseUnit>;
 type EntityArrayResponseType = HttpResponse<ExerciseUnit[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class ExerciseUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
@@ -20,7 +18,7 @@ export class ExerciseUnitService {
 
     create(exerciseUnit: ExerciseUnit, lectureId: number): Observable<EntityResponseType> {
         if (exerciseUnit.exercise) {
-            exerciseUnit.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseUnit.exercise);
+            ExerciseService.stringifyExerciseCategories(exerciseUnit.exercise);
         }
 
         return this.httpClient

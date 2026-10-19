@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -30,6 +29,15 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { Authority } from 'app/foundation/constants/authority.constants';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { TeamService } from 'app/exercise/team/team.service';
+import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
+import { User } from 'app/account/user/user.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -70,14 +78,16 @@ const coursesInDashboard: CourseForDashboardDTO[] = [course1Dashboard, course2Da
 const courses: Course[] = [course1, course2];
 const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardDTO;
 
+function createAuthenticatedUser(authority: Authority): User {
+    return new User(1, 'test-user', 'Test', 'User', 'test-user@example.com', true, 'en', [authority]);
+}
+
 @Component({
     template: '',
 })
 class DummyComponent {}
 
 describe('CoursesComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CoursesComponent;
     let fixture: ComponentFixture<CoursesComponent>;
     let courseService: CourseManagementService;
@@ -86,10 +96,14 @@ describe('CoursesComponent', () => {
     let router: Router;
     let location: Location;
     let httpMock: HttpTestingController;
+    let accountService: AccountService;
+    let teamAssignmentSubscribeSpy: ReturnType<typeof vi.spyOn>;
 
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
     beforeEach(async () => {
+        const teamAssignmentUpdates = of<TeamAssignmentPayload>();
+        teamAssignmentSubscribeSpy = vi.spyOn(teamAssignmentUpdates, 'subscribe');
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }]),
@@ -105,6 +119,9 @@ describe('CoursesComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
                 MockProvider(AlertService),
+                MockProvider(WebsocketService),
+                { provide: TeamService, useValue: { teamAssignmentUpdates: Promise.resolve(teamAssignmentUpdates) } },
+                MockProvider(FeatureToggleService),
                 MockProvider(CourseAccessStorageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -123,6 +140,7 @@ describe('CoursesComponent', () => {
         TestBed.inject(AlertService);
         httpMock = TestBed.inject(HttpTestingController);
         router = TestBed.inject(Router);
+        accountService = TestBed.inject(AccountService);
         fixture.detectChanges();
     });
 
@@ -131,6 +149,12 @@ describe('CoursesComponent', () => {
     });
 
     describe('onInit', () => {
+        it('should subscribe to the injected team assignment stream on init', async () => {
+            await fixture.whenStable();
+
+            expect(teamAssignmentSubscribeSpy).toHaveBeenCalledOnce();
+        });
+
         it('should call loadAndFilterCourses on init', () => {
             const loadAndFilterCoursesSpy = vi.spyOn(component, 'loadAndFilterCourses');
 
@@ -148,8 +172,10 @@ describe('CoursesComponent', () => {
             component.ngOnInit();
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
-            expect(component.courses).toEqual(courses);
-            expect(component.nextRelevantExams).toHaveLength(0);
+            expect(component.courses()).toEqual(courses);
+            expect(component.regularCourses()).toEqual([course1]);
+            expect(component.testCourses()).toEqual([course2]);
+            expect(component.nextRelevantExams()).toHaveLength(0);
         });
 
         it('should handle an empty response body correctly when fetching all courses for dashboard', () => {
@@ -160,7 +186,7 @@ describe('CoursesComponent', () => {
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
             req.flush(null);
-            expect(component.courses).toBeUndefined();
+            expect(component.courses()).toBeUndefined();
         });
 
         it('should load exercises on init', () => {
@@ -195,10 +221,10 @@ describe('CoursesComponent', () => {
                 courses.push(course);
             }
 
-            component.courses = courses;
+            component.courses.set(courses);
             component.sortCoursesInRecentlyAccessedAndRegularCourses();
-            expect(component.regularCourses).toEqual(courses);
-            expect(component.recentlyAccessedCourses).toEqual([]);
+            expect(component.regularCourses()).toEqual(courses);
+            expect(component.recentlyAccessedCourses()).toEqual([]);
             expect(recentCoursesSpy).not.toHaveBeenCalled();
 
             // Test for more than 5 courses
@@ -206,21 +232,23 @@ describe('CoursesComponent', () => {
                 const course = { id: i };
                 courses.push(course);
             }
-            component.courses = courses;
+            component.courses.set(courses);
             component.sortCoursesInRecentlyAccessedAndRegularCourses();
-            expect(component.regularCourses).toEqual(courses.slice(2));
-            expect(component.recentlyAccessedCourses).toEqual(courses.slice(0, 2));
+            expect(component.regularCourses()).toEqual(courses.slice(2));
+            expect(component.recentlyAccessedCourses()).toEqual(courses.slice(0, 2));
             expect(recentCoursesSpy).toHaveBeenCalledOnce();
         });
     });
 
     it('should load next relevant exam', async () => {
         const navigateSpy = vi.spyOn(router, 'navigate');
-        component.nextRelevantCourseForExam = course1;
-        component.nextRelevantExams = [exam1];
+        // nextRelevantCourseForExam is derived from the relevant exam's course
+        const relevantExam: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: course1 };
+        component.nextRelevantExams.set([relevantExam]);
         component.openExam();
         await fixture.whenStable();
 
+        expect(component.nextRelevantCourseForExam()).toEqual(course1);
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'exams', 3]);
         expect(location.path()).toBe('/courses/1/exams/3');
     });
@@ -236,14 +264,10 @@ describe('CoursesComponent', () => {
             testExam: true,
         };
         const course6 = { id: 3, exams: [testExam1], exercises: [exercise1] };
-        const coursesForDashboard = new CoursesForDashboardDTO();
-        const courseForDashboard1 = new CourseForDashboardDTO();
-        courseForDashboard1.course = course1;
-        const courseForDashboard2 = new CourseForDashboardDTO();
-        courseForDashboard2.course = course2;
-        const courseForDashboard6 = new CourseForDashboardDTO();
-        courseForDashboard6.course = course6;
-        coursesForDashboard.courses = [courseForDashboard1, courseForDashboard2, courseForDashboard6];
+        const courseForDashboard1 = { course: course1 } as CourseForDashboardDTO;
+        const courseForDashboard2 = { course: course2 } as CourseForDashboardDTO;
+        const courseForDashboard6 = { course: course6 } as CourseForDashboardDTO;
+        const coursesForDashboard: CoursesForDashboardDTO = { courses: [courseForDashboard1, courseForDashboard2, courseForDashboard6] };
 
         const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
         const serverDateServiceSpy = vi.spyOn(serverDateService, 'now');
@@ -261,14 +285,49 @@ describe('CoursesComponent', () => {
         await fixture.whenStable();
 
         expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
-        expect(component.courses).toEqual([course1, course2, course6]);
-        expect(component.nextRelevantExams).toEqual([]);
+        expect(component.courses()).toEqual([course1, course2, course6]);
+        expect(component.nextRelevantExams()).toEqual([]);
     });
 
     it('should initialize search course text correctly', () => {
         const searchedCourse = 'Test Course';
         component.setSearchValue('Test Course');
-        expect(searchedCourse).toBe(component.searchCourseText);
+        expect(searchedCourse).toBe(component.searchCourseText());
+    });
+
+    it('should show the course request action to instructors', () => {
+        accountService.authenticate(createAuthenticatedUser(Authority.INSTRUCTOR));
+        component.coursesLoaded.set(true);
+        fixture.detectChanges();
+
+        const requestCourseButton = fixture.debugElement.query(By.css('#request-course')).injector.get(TumAetUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
+        expect(requestCourseButton.severity()).toBe('primary');
+        expect(enrollmentButton.severity()).toBe('secondary');
+        expect(fixture.nativeElement.querySelector('#create-course')).toBeNull();
+    });
+
+    it('should show the course creation action to administrators', () => {
+        accountService.authenticate(createAuthenticatedUser(Authority.ADMIN));
+        component.coursesLoaded.set(true);
+        fixture.detectChanges();
+
+        const createCourseButton = fixture.debugElement.query(By.css('#create-course')).injector.get(TumAetUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
+        expect(createCourseButton.severity()).toBe('primary');
+        expect(enrollmentButton.severity()).toBe('secondary');
+        expect(fixture.nativeElement.querySelector('#request-course')).toBeNull();
+    });
+
+    it('should show primary course enrollment without course management actions to students', () => {
+        accountService.authenticate(createAuthenticatedUser(Authority.STUDENT));
+        component.coursesLoaded.set(true);
+        fixture.detectChanges();
+
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
+        expect(enrollmentButton.severity()).toBe('primary');
+        expect(fixture.nativeElement.querySelector('#request-course')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#create-course')).toBeNull();
     });
 
     it('should adjust sort direction by clicking on sort icon', () => {
@@ -277,13 +336,15 @@ describe('CoursesComponent', () => {
         component.ngOnInit();
 
         expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
-        expect(component.courses).toEqual(courses);
-        expect(component.isSortAscending).toBe(true);
+        expect(component.courses()).toEqual(courses);
+        expect(component.isSortAscending()).toBe(true);
 
         const onSortSpy = vi.spyOn(component, 'onSort');
         const button = fixture.debugElement.nativeElement.querySelector('#test-sort');
+        const sortButton = fixture.debugElement.query(By.css('#test-sort')).injector.get(TumAetUiButtonDirective);
         button.click();
         expect(onSortSpy).toHaveBeenCalledOnce();
-        expect(component.isSortAscending).toBe(false);
+        expect(component.isSortAscending()).toBe(false);
+        expect(sortButton.variant()).toBe('text');
     });
 });

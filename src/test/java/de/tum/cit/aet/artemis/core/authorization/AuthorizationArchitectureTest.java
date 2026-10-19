@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.authorization;
 
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
@@ -24,18 +25,24 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceRoleInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceRoleInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceRoleInLectureUnit;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
+import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
 class AuthorizationArchitectureTest extends AbstractArchitectureTest {
@@ -62,6 +69,70 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
         ArchRule rule = noMethods().that().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).should().beAnnotatedWith(PreAuthorize.class)
                 .because("All endpoints should be secured using the Artemis enforcement annotations. Refer to the server guidelines in our documentation.");
         rule.check(productionClasses);
+    }
+
+    @Test
+    void testCurrentCallerAuthorizationDoesNotUseAdministratorAccountClassification() {
+        noClasses().that().doNotHaveFullyQualifiedName(AuthorizationCheckService.class.getName()).should().callMethod(AuthorizationCheckService.class, "isAdmin")
+                .because("current-caller authorization must use request-bound administrator elevation instead of account classification").check(productionClasses);
+
+        noClasses().that().doNotHaveFullyQualifiedName(AuthorizationCheckService.class.getName()).and().doNotHaveFullyQualifiedName(ExamRegistrationService.class.getName())
+                .should().callMethod(AuthorizationCheckService.class, "isAdmin", User.class)
+                .because("isAdmin(User) classifies arbitrary accounts; current-caller authorization must use request-bound administrator elevation").check(productionClasses);
+
+        // The overload that reaches the database by login is the same account classification with a different argument.
+        // WebsocketConfiguration used it to authorize the admin build queue, job and agent topics, which let an
+        // administrator authenticated with a password subscribe on the strength of their persisted role alone. Callers
+        // that have no SecurityContext use ElevatedAccessService.isAdminElevationActive with the authentication their
+        // session carries instead.
+        noClasses().that().doNotHaveFullyQualifiedName(AuthorizationCheckService.class.getName()).should().callMethod(AuthorizationCheckService.class, "isAdmin", String.class)
+                .because("isAdmin(String) classifies an account; current-caller authorization must use request-bound administrator elevation").check(productionClasses);
+    }
+
+    /**
+     * {@code PasskeyAuthenticationService} throws so that an explicit administrator endpoint can turn the reason into
+     * the structured passkey error a client acts on. Everything else asks {@link ElevatedAccessService}, which answers
+     * the same question from the claims the token already carries and returns a boolean, so a list endpoint can fall
+     * back to its role-filtered query. Only {@link EnforceAdmin} and {@link EnforceSuperAdmin} use the throwing
+     * service, and they reference it from a SpEL expression that records no compile-time dependency.
+     */
+    @Test
+    void testPasskeyAuthenticationForAdministratorElevationIsCentralized() {
+        noClasses().that().doNotHaveFullyQualifiedName(PasskeyAuthenticationService.class.getName()).should().dependOnClassesThat()
+                .haveFullyQualifiedName(PasskeyAuthenticationService.class.getName())
+                .because("administrator elevation is decided by ElevatedAccessService; only the explicit administrator annotations use the throwing passkey check")
+                .check(productionClasses);
+    }
+
+    /**
+     * The administrator override is granted by the authorization services, which weigh the configured passkey
+     * requirement. An annotation that asserted the administrator role itself would hand it out without that check.
+     *
+     * <p>
+     * The two URL rules in {@code SecurityConfiguration} are the deliberate exceptions and are not expressible here:
+     * {@code /api/admin/**} lets the request reach an annotation that does check, so that it can answer with the
+     * structured passkey error, and {@code /management/**} asks for elevation explicitly because no annotated handler
+     * serves the actuator endpoints.
+     */
+    @Test
+    void testAuthorizationAnnotationsDoNotAssertTheAdministratorRoleThemselves() {
+        ArchRule rule = classes().that().areAnnotatedWith(PreAuthorize.class).and().doNotHaveFullyQualifiedName(EnforceAdmin.class.getName()).and()
+                .doNotHaveFullyQualifiedName(EnforceSuperAdmin.class.getName()).should(notAssertAnAdministratorRole())
+                .because("administrator access must come from ElevatedAccessService, EnforceAdmin or EnforceSuperAdmin rather than from asserting the role");
+        rule.allowEmptyShould(true).check(productionClasses);
+    }
+
+    private ArchCondition<JavaClass> notAssertAnAdministratorRole() {
+        return new ArchCondition<>("not assert an administrator role in @PreAuthorize") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                String expression = item.getAnnotationOfType(PreAuthorize.class).value();
+                if (expression.contains("'ADMIN'") || expression.contains("'SUPER_ADMIN'")) {
+                    events.add(violated(item, "%s asserts an administrator role directly: %s".formatted(item.getFullName(), expression)));
+                }
+            }
+        };
     }
 
     @Test

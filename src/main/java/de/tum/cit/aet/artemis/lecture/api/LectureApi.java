@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -34,10 +33,6 @@ public class LectureApi extends AbstractLectureApi {
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
         this.lectureRepository = lectureRepository;
-    }
-
-    public Set<Lecture> filterLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
-        return lectureService.filterLecturesWithActiveAttachments(course, lecturesWithAttachments, user);
     }
 
     public Lecture importLecture(final Lecture importedLecture, final Course course, boolean importLectureUnits) {

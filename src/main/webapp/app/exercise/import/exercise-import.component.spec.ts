@@ -6,7 +6,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
@@ -21,10 +20,12 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseImportComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseImportComponent>;
     let comp: ExerciseImportComponent;
 
@@ -84,7 +85,7 @@ describe('ExerciseImportComponent', () => {
     it('should initialize the content', () => {
         fixture.detectChanges();
 
-        expect(comp.content).toEqual({ resultsOnPage: [], numberOfPages: 0 });
+        expect(comp.content()).toEqual({ resultsOnPage: [], numberOfPages: 0 });
     });
 
     it('should close the dialog', () => {
@@ -115,13 +116,13 @@ describe('ExerciseImportComponent', () => {
         comp.onPageChange(expectedPageNumber);
         vi.advanceTimersByTime(10);
         expect(comp.page).toBe(expectedPageNumber);
-        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+        expect(comp.total()).toBe(numberOfPages * defaultPageSize);
 
         expectedPageNumber = 2;
         comp.onPageChange(expectedPageNumber);
         vi.advanceTimersByTime(10);
         expect(comp.page).toBe(expectedPageNumber);
-        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+        expect(comp.total()).toBe(numberOfPages * defaultPageSize);
 
         comp.onPageChange(0);
         vi.advanceTimersByTime(10);
@@ -145,6 +146,10 @@ describe('ExerciseImportComponent', () => {
         searchStub.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
+        // Flush and ignore the initial load performed on init (see the ImportComponent regression test),
+        // then assert the debounced search behavior triggered by the search term.
+        vi.advanceTimersByTime(300);
+        searchStub.mockClear();
 
         const expectedSearchTerm = 'search term';
         comp.searchTerm = expectedSearchTerm;
@@ -158,7 +163,7 @@ describe('ExerciseImportComponent', () => {
     });
 
     const resetContent = () => {
-        comp.content = { resultsOnPage: [], numberOfPages: 0 };
+        comp.content.set({ resultsOnPage: [], numberOfPages: 0 });
     };
 
     // The paging service is mocked to emit synchronously via of(...), so the only asynchrony is the
@@ -171,7 +176,7 @@ describe('ExerciseImportComponent', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(300);
         expect(searchStub).toHaveBeenCalledWith(state, { isCourseFilter: true, isExamFilter: true, programmingLanguage: undefined });
-        expect(comp.content).toEqual(searchResult);
+        expect(comp.content()).toEqual(searchResult);
         searchStub.mockClear();
         resetContent();
     };
@@ -183,7 +188,7 @@ describe('ExerciseImportComponent', () => {
         vi.advanceTimersByTime(10);
 
         expect(searchStub).toHaveBeenCalledWith(expectedState, { isCourseFilter: true, isExamFilter: true, programmingLanguage: undefined });
-        expect(comp.content).toEqual(searchResult);
+        expect(comp.content()).toEqual(searchResult);
         comp.sortRows();
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     };
@@ -230,7 +235,7 @@ describe('ExerciseImportComponent', () => {
         expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, { isCourseFilter: true, isExamFilter: true, programmingLanguage: undefined });
 
         expect(comp.searchTerm).toEqual(givenSearchTerm);
-        expect(comp.content).toEqual(searchResult);
+        expect(comp.content()).toEqual(searchResult);
         comp.sortRows();
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     });
@@ -258,14 +263,17 @@ describe('ExerciseImportComponent', () => {
         searchStub.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<QuizExercise>));
 
         fixture.detectChanges();
-        expect(comp.isCourseFilter).toBe(true);
-        expect(comp.isExamFilter).toBe(true);
+        expect(comp.isCourseFilter()).toBe(true);
+        expect(comp.isExamFilter()).toBe(true);
+        // Flush and ignore the initial load performed on init before asserting the filter-triggered search.
+        vi.advanceTimersByTime(300);
+        searchStub.mockClear();
 
         comp.onCourseFilterChange();
         comp.onExamFilterChange();
         vi.advanceTimersByTime(299);
-        expect(comp.isCourseFilter).toBe(false);
-        expect(comp.isExamFilter).toBe(false);
+        expect(comp.isCourseFilter()).toBe(false);
+        expect(comp.isExamFilter()).toBe(false);
         expect(searchStub).not.toHaveBeenCalled();
 
         vi.advanceTimersByTime(1);
@@ -319,11 +327,63 @@ describe('ExerciseImportComponent', () => {
     });
 
     it('should sort by exam title when only the exam filter is active', () => {
-        comp.isExamFilter = true;
-        comp.isCourseFilter = false;
+        comp.isExamFilter.set(true);
+        comp.isCourseFilter.set(false);
 
         comp.sortedColumn = 'COURSE_TITLE';
 
         expect(comp.sortedColumn).toBe('EXAM_TITLE');
+    });
+});
+
+describe('ExerciseImportComponent template', () => {
+    let fixture: ComponentFixture<ExerciseImportComponent>;
+    let comp: ExerciseImportComponent;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject<Exercise | undefined>() } },
+                { provide: Router, useValue: { navigate: vi.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        })
+            // Render the real template but stub the translate directive so no TranslateService is required.
+            .overrideComponent(ExerciseImportComponent, {
+                remove: { imports: [TranslateDirective] },
+                add: { imports: [MockJhiTranslateDirective] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseImportComponent);
+        comp = fixture.componentInstance;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.QUIZ);
+        vi.spyOn(TestBed.inject(QuizExercisePagingService), 'search').mockReturnValue(of({ numberOfPages: 0, resultsOnPage: [] }));
+    });
+
+    it('should render the results as a normal table with the header aligned above the rows', () => {
+        const exercise = new QuizExercise(undefined, undefined);
+        exercise.id = 1;
+        exercise.title = 'Some exercise';
+
+        // detect changes first so that ngOnInit runs (it resets the content), then populate the table
+        fixture.detectChanges();
+        comp.content.set({ resultsOnPage: [exercise], numberOfPages: 1 });
+        fixture.detectChanges();
+
+        const table: HTMLTableElement = fixture.nativeElement.querySelector('table');
+        // Regression guard: a bare `flex` class turned the table into a flex row, so the browser
+        // laid out <thead> and <tbody> as side-by-side items (header next to the rows) instead of
+        // stacking them. The table (and its rows) must not carry the flex classes.
+        expect(table.classList.contains('flex')).toBe(false);
+        expect(table.querySelector('thead tr')?.classList.contains('flex-row')).toBe(false);
+        expect(table.querySelector('tbody tr')?.classList.contains('flex-row')).toBe(false);
+
+        // In a normal table every row has the same number of columns as the header, so they align.
+        const headerColumns = table.querySelectorAll('thead tr th').length;
+        const firstRowColumns = table.querySelectorAll('tbody tr:first-child td').length;
+        expect(firstRowColumns).toBe(headerColumns);
     });
 });

@@ -17,10 +17,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentCompetencyDTO;
@@ -50,7 +51,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class CompetencyExpertToolsService {
 
     /**
@@ -119,7 +120,7 @@ public class CompetencyExpertToolsService {
         }
     }
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final CompetencyRepository competencyRepository;
 
@@ -131,7 +132,7 @@ public class CompetencyExpertToolsService {
 
     private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
 
-    public CompetencyExpertToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository,
+    public CompetencyExpertToolsService(JsonMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository,
             AtlasAgentSessionCacheService sessionCacheService) {
         this.objectMapper = objectMapper;
         this.competencyRepository = competencyRepository;
@@ -327,6 +328,7 @@ public class CompetencyExpertToolsService {
                     competency.setDescription(comp.getDescription());
                     competency.setTaxonomy(comp.getTaxonomy());
                     competency.setCourse(course);
+                    competency.setGeneratedByAi(true);
                     competencyRepository.save(competency);
                     comp.setCompetencyId(competency.getId());
                     createCount++;
@@ -382,7 +384,7 @@ public class CompetencyExpertToolsService {
     }
 
     /**
-     * Convert object to JSON using Jackson ObjectMapper.
+     * Convert object to JSON using Jackson JsonMapper.
      *
      * @param object the object to serialize
      * @return JSON string representation
@@ -391,7 +393,7 @@ public class CompetencyExpertToolsService {
         try {
             return objectMapper.writeValueAsString(object);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return "{\"error\": \"Failed to serialize response\"}";
         }
     }

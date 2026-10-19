@@ -100,7 +100,7 @@ export class TutorParticipationGraphComponent {
     navigate() {
         const link = this.routerLink();
         if (link.length > 0) {
-            this.router.navigate([link]);
+            void this.router.navigate([link]);
         }
     }
 

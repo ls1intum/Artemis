@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A {@link TutorialGroupSchedule} is a schedule for a {@link TutorialGroup}. It represents a recurrence pattern for {@link TutorialGroupSession}s.
@@ -34,7 +35,8 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 public class TutorialGroupSchedule extends DomainObject {
 
     @OneToOne
-    @JoinColumn(name = "tutorial_group_id")
+    @JoinColumn(name = "tutorial_group_id", nullable = false)
+    @Parent
     private TutorialGroup tutorialGroup;
 
     /**
@@ -108,7 +110,6 @@ public class TutorialGroupSchedule extends DomainObject {
      * The sessions that were generated from this schedule, i.e. the sessions that follow this recurrence pattern.
      * Do NOT use orphanRemoval = true, as it will delete the sessions when they are disconnected from the schedule.
      */
-    // No @Cache here on purpose: mutated whenever sessions are regenerated from schedule changes. See #12574 / #12584.
     @OneToMany(mappedBy = "tutorialGroupSchedule", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "tutorialGroupSchedule", allowSetters = true)
     private List<TutorialGroupSession> tutorialGroupSessions = new ArrayList<>();

@@ -4,24 +4,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 
 class PyrisLectureIngestionStatusUpdateDTOSerializationTest {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final JsonMapper mapper = new JsonMapper();
 
     @Test
-    void deserializesSnakeCaseErrorCode() throws Exception {
-        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":42,\"error_code\":\"YOUTUBE_PRIVATE\"}";
+    void deserializesErrorCodeFromErrorObject() throws Exception {
+        String json = "{\"result\":\"done\",\"runState\":\"FAILED\",\"error\":{\"code\":\"YOUTUBE_PRIVATE\"},\"jobId\":42}";
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
-        assertThat(dto.errorCode()).isEqualTo("YOUTUBE_PRIVATE");
+        assertThat(dto.error().code()).isEqualTo("YOUTUBE_PRIVATE");
     }
 
     @Test
     void deserializesDisplayPageNumbers() throws Exception {
-        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":42,\"displayPageNumbers\":[1,2,-1]}";
+        String json = "{\"result\":\"done\",\"runState\":\"FINISHED\",\"jobId\":42,\"displayPageNumbers\":[1,2,-1]}";
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.displayPageNumbers()).containsExactly(1, 2, -1);
     }

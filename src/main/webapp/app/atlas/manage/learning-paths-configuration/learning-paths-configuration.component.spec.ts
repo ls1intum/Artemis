@@ -9,10 +9,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { LearningPathsConfigurationDTO } from 'app/atlas/shared/entities/learning-path.model';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathsConfigurationComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathsConfigurationComponent;
     let fixture: ComponentFixture<LearningPathsConfigurationComponent>;
     let learningPathApiService: LearningPathApiService;

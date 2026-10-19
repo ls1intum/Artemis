@@ -29,8 +29,10 @@ export class TableEditableFieldComponent {
     pattern = input<RegExp>();
     isRequired = input(false);
     translationBase = input<string>('');
-    value = input<any>();
-    onValueUpdate = input.required<(value: any) => any>();
+    value = input<string | number>();
+    // The field edits text, so the update callback always receives the raw string typed into the input.
+    // It may return the coerced value the field should display (number/string/boolean) or undefined.
+    onValueUpdate = input.required<(value: string) => string | number | boolean | undefined>();
 
     constructor() {
         effect(() => {
@@ -38,14 +40,14 @@ export class TableEditableFieldComponent {
         });
     }
 
-    inputValue: any;
+    inputValue: string | number | boolean | undefined;
 
     /**
      * Triggers a value update signal and delegates the task to method specified in the Output decorator,
      * sending in also the updated value of the object.
      * @param event The event that occurred.
      */
-    sendValueUpdate(event: any) {
-        this.inputValue = this.onValueUpdate()(event.target.value);
+    sendValueUpdate(event: Event) {
+        this.inputValue = this.onValueUpdate()((event.target as HTMLInputElement).value);
     }
 }

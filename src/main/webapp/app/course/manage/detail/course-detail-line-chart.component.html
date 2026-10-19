@@ -12,6 +12,7 @@
                     @if (course().startDate) {
                         <div class="d-flex">
                             <button
+                                type="button"
                                 class="btn"
                                 [disabled]="!showLifetimeOverview() && displayedNumberOfWeeks() === 4"
                                 (click)="displayPeriodOverview(4)"
@@ -20,6 +21,7 @@
                                 [translateValues]="{ amount: 4 }"
                             ></button>
                             <button
+                                type="button"
                                 class="btn"
                                 [disabled]="!showLifetimeOverview() && displayedNumberOfWeeks() === 8"
                                 (click)="displayPeriodOverview(8)"
@@ -28,6 +30,7 @@
                                 [translateValues]="{ amount: 8 }"
                             ></button>
                             <button
+                                type="button"
                                 class="btn"
                                 [disabled]="showLifetimeOverview()"
                                 (click)="displayLifetimeOverview()"
@@ -38,42 +41,24 @@
                         <span class="pt-1">|</span>
                     }
                     <div class="d-flex gap-1">
-                        <button class="btn" [disabled]="startDateDisplayed()" (click)="switchTimeSpan(SwitchTimeSpanDirection.LEFT)">
+                        <button type="button" class="btn" [disabled]="startDateDisplayed()" (click)="switchTimeSpan(SwitchTimeSpanDirection.LEFT)">
                             <fa-icon [icon]="faArrowLeft" />
                         </button>
-                        <button class="btn" [disabled]="showsCurrentWeek()" (click)="switchTimeSpan(SwitchTimeSpanDirection.RIGHT)">
+                        <button type="button" class="btn" [disabled]="showsCurrentWeek()" (click)="switchTimeSpan(SwitchTimeSpanDirection.RIGHT)">
                             <fa-icon [icon]="faArrowRight" />
                         </button>
                     </div>
                 </div>
-                <div #containerRef class="d-flex mt-1 justify-content-center align-items-center h-99">
+                <div class="d-flex mt-1 justify-content-center align-items-center h-99">
                     @if (!loading()) {
-                        <ngx-charts-line-chart
-                            [view]="[containerRef.offsetWidth, 320]"
-                            [scheme]="chartColor"
-                            [showXAxisLabel]="true"
-                            [xAxis]="true"
-                            [yAxis]="true"
-                            [xAxisLabel]="xAxisLabel()"
-                            [results]="data()"
-                            [yScaleMin]="0"
-                            [yScaleMax]="100"
-                            [yAxisTickFormatting]="formatYAxis"
-                            [curve]="curve"
-                            [referenceLines]="[average()]"
-                            [showRefLines]="true"
-                            [showRefLabels]="true"
-                        >
-                            <ng-template #tooltipTemplate let-model="model">
-                                <span>{{ model.series }} in {{ model.name }}: </span><br />
-                                <b class="tooltip-header">{{ findAbsoluteValue(model) }} ({{ model.value }}%)</b>
-                            </ng-template>
-                            <ng-template #seriesTooltipTemplate let-model="model">
-                                @if (model.length) {
-                                    <span> {{ model[0].name }}: {{ findAbsoluteValue(model[0]) }} </span>
-                                }
-                            </ng-template>
-                        </ngx-charts-line-chart>
+                        <div class="active-students-chart" style="height: 320px; width: 100%">
+                            <tumaet-ui-line-chart
+                                [labels]="chartData().labels"
+                                [series]="chartData().series"
+                                [config]="chartConfig()"
+                                [ariaLabel]="'artemisApp.courseStatistics.activeStudents' | artemisTranslate"
+                            />
+                        </div>
                     } @else {
                         <h1 class="spinner">
                             <fa-icon [icon]="faSpinner" animation="spin" />

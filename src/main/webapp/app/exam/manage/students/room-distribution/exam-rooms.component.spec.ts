@@ -21,15 +21,10 @@ import {
 } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { MockDeleteDialogService } from 'test/helpers/mocks/service/mock-delete-dialog.service';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamRoomsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamRoomsComponent;
     let fixture: ComponentFixture<ExamRoomsComponent>;
     let service: ExamRoomsService;
@@ -42,7 +37,6 @@ describe('ExamRoomsComponent', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
-                { provide: DeleteDialogService, useClass: MockDeleteDialogService },
                 ExamRoomsService,
             ],
         }).compileComponents();
@@ -223,7 +217,7 @@ describe('ExamRoomsComponent', () => {
     it('should enable upload button on valid file selection', () => {
         fixture.detectChanges();
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
-        const fileSelectLabel = fixture.debugElement.nativeElement.querySelector('label[for="roomDataFileSelect"]');
+        const fileSelectLabel = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelectButton');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
         const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
 

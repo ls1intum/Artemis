@@ -6,6 +6,7 @@ export enum ComplaintAction {
     RESOLVE_COMPLAINT = 'RESOLVE_COMPLAINT',
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class ComplaintResponseUpdateDTO {
     public responseText?: string;
     public complaintIsAccepted?: boolean;
@@ -15,13 +16,13 @@ export class ComplaintResponseUpdateDTO {
 /**
  * DTO representing a complaint response returned by the server.
  */
-export class ComplaintResponseDTO {
-    public id: number;
-    public responseText?: string;
-    public submittedTime?: dayjs.Dayjs;
-    public isCurrentlyLocked?: boolean;
-    public lockEndDate?: dayjs.Dayjs;
-    public complaintIsAccepted?: boolean;
-    public complaintId: number;
-    public reviewer?: UserPublicInfoDTO;
+export interface ComplaintResponseDTO {
+    id: number;
+    responseText?: string;
+    submittedTime?: dayjs.Dayjs;
+    isCurrentlyLocked?: boolean;
+    lockEndDate?: dayjs.Dayjs;
+    complaintIsAccepted?: boolean;
+    complaintId: number;
+    reviewer?: UserPublicInfoDTO;
 }

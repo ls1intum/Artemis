@@ -1,32 +1,40 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { Subject, Subscription, combineLatest } from 'rxjs';
+import { Subject, Subscription, combineLatest, forkJoin } from 'rxjs';
 import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { switchMap, tap } from 'rxjs/operators';
+import { finalize, switchMap, tap } from 'rxjs/operators';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
-import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { ASC, DESC, ITEMS_PER_PAGE, SIZE, SORT } from 'app/foundation/constants/pagination.constants';
+import { faEye, faFileImport, faFilter, faPencil, faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiPaginatorComponent,
+    TumAetUiRadioButtonComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { UsersImportButtonComponent } from 'app/shared-ui/user-import/button/users-import-button.component';
+import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteUsersButtonComponent } from './delete-users-button/delete-users-button.component';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { NgClass } from '@angular/common';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -35,6 +43,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MODULE_FEATURE_LDAP, addPublicFilePrefix } from 'app/app.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { BulkUserDeletionImpact, UserDeletionResult } from 'app/account/user/shared/user-deletion.model';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -105,32 +115,40 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
  * Component for managing users in the admin area.
  * Provides search, filtering, pagination, and user management capabilities.
  */
+/** How many accounts the deletion dialog names before it falls back to a count, so the confirmation stays reachable. */
+const MAX_LISTED_DELETION_ACCOUNTS = 10;
+
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
-    styleUrls: ['./user-management.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
-        UsersImportButtonComponent,
+        UsersImportDialogComponent,
         RouterLink,
         FaIconComponent,
         FormsModule,
         ReactiveFormsModule,
         DeleteUsersButtonComponent,
-        DeleteButtonDirective,
-        NgClass,
-        SortDirective,
-        SortByDirective,
         ProfilePictureComponent,
         SearchHighlightComponent,
         ItemCountComponent,
-        PaginatorModule,
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        TumAetUiInputDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiRadioButtonComponent,
+        TumAetUiMessageComponent,
         HelpIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        DialogModule,
+        TumAetUiDialogComponent,
     ],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
@@ -138,6 +156,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     private readonly accountService = inject(AccountService);
     private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
     private readonly router = inject(Router);
     private readonly eventManager = inject(EventManager);
     private readonly localStorageService = inject(LocalStorageService);
@@ -155,6 +174,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /** Current logged-in user */
     readonly currentAccount = signal<User | undefined>(undefined);
 
+    /** Server-calculated, fingerprinted impact currently awaiting administrator confirmation. */
+    readonly deletionImpact = signal<BulkUserDeletionImpact | undefined>(undefined);
+
+    readonly deletionDialogVisible = signal(false);
+
+    readonly deletionLoading = signal(false);
+
+    readonly deletionConfirmation = signal('');
+
     /** List of users displayed in the table */
     readonly users = signal<User[]>([]);
 
@@ -167,8 +195,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /** Total number of items for pagination */
     readonly totalItems = signal(0);
 
+    /** Page sizes the user can choose from */
+    readonly pageSizeOptions = [10, 20, 50, 100, 200];
+
     /** Items per page for pagination */
-    readonly itemsPerPage = ITEMS_PER_PAGE;
+    readonly itemsPerPage = signal(ITEMS_PER_PAGE);
 
     /** Current page number */
     readonly page = signal(1);
@@ -203,19 +234,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     readonly dialogError = this.dialogErrorSource.asObservable();
 
     /** Search form */
-    userSearchForm: FormGroup;
+    userSearchForm!: FormGroup; // initialized in ngOnInit()
 
     /** Icons */
-    protected readonly faSort = faSort;
     protected readonly faPlus = faPlus;
-    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
     protected readonly faEye = faEye;
-    protected readonly faWrench = faWrench;
-
-    /** Button constants */
-    protected readonly medium = ButtonSize.MEDIUM;
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
+    protected readonly faPencil = faPencil;
+    protected readonly faFileImport = faFileImport;
+    protected readonly faSync = faSync;
 
     /**
      * Initializes the component, sets up search subscription, and loads user data.
@@ -229,7 +256,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                     this.adminUserService.query(
                         {
                             page: this.page() - 1,
-                            pageSize: this.itemsPerPage,
+                            pageSize: this.itemsPerPage(),
                             searchTerm: this.searchTerm(),
                             sortingOrder: this.ascending() ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                             sortedColumn: this.predicate(),
@@ -253,8 +280,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.userSearchForm = new FormGroup({
             searchControl: new FormControl('', { updateOn: 'change' }),
         });
-        this.accountService.identity().then((user) => {
-            this.currentAccount.set(user!);
+        void this.accountService.identity().then((user) => {
+            this.currentAccount.set(user);
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
         });
@@ -294,7 +321,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         const tempInStorage = temp
             ? temp
                   .split(',')
-                  .map((filter: keyof Filter) => type[filter] as E) // type assertion
+                  .map((filter: string) => type[filter as keyof Filter] as E) // type assertion
                   .filter(Boolean)
             : [];
         return new Set<E>(tempInStorage);
@@ -319,7 +346,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     toggleAuthorityFilter(filter: Set<AuthorityFilter>, value: AuthorityFilter) {
         this.updateNoAuthority(false);
-        this.toggleFilter<AuthorityFilter>(filter, value, this.authorityKey);
+        // updateNoAuthority replaces the filter object with a detached copy, so `filter` is no longer the Set the
+        // signal holds. Re-read it instead of mutating the caller's now-orphaned reference.
+        this.toggleFilter<AuthorityFilter>(this.filters().authorityFilter, value, this.authorityKey);
     }
 
     /**
@@ -397,7 +426,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     updateNoAuthority(value: boolean) {
         this.localStorageService.store<boolean>(UserStorageKey.NO_AUTHORITY, value);
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.noAuthority = value;
         this.filters.set(filters);
     }
@@ -406,7 +435,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Deselect all roles
      */
     deselectAllRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set();
         this.filters.set(filters);
         this.localStorageService.remove(UserStorageKey.AUTHORITY);
@@ -417,7 +446,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select empty roles
      */
     selectEmptyRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set();
         this.filters.set(filters);
         this.updateNoAuthority(true);
@@ -427,7 +456,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select all roles
      */
     selectAllRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set(this.authorityFilters);
         this.filters.set(filters);
         this.updateNoAuthority(false);
@@ -444,8 +473,13 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Apply the filter and close the modal.
      */
     applyFilter() {
-        this.loadAll();
         this.filterModalVisible.set(false);
+        // The current page may not exist for the new filters
+        if (this.page() === 1) {
+            this.loadAll();
+        } else {
+            this.goToFirstPage();
+        }
     }
 
     /**
@@ -453,7 +487,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param user whose activation status should be changed
      * @param isActivated true if user should be activated, otherwise false
      */
-    setActive(user: User, isActivated: boolean) {
+    async setActive(user: User, isActivated: boolean): Promise<void> {
+        // Deactivating revokes every credential of the account, so it is confirmed like any other deletion. Activating
+        // deletes nothing and is not interrupted.
+        if (!isActivated) {
+            const confirmed = await this.credentialRevocationConfirmationService.confirm({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            if (!confirmed) {
+                return;
+            }
+        }
         const action = isActivated ? this.adminUserService.activate : this.adminUserService.deactivate;
         action.call(this.adminUserService, user.id!).subscribe({
             next: () => {
@@ -509,17 +551,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     deleteAllSelectedUsers() {
         const logins = this.selectedUsers().map((user) => user.login!);
-        this.adminUserService.deleteUsers(logins).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'userListModification',
-                    content: 'Deleted users',
-                });
-                this.selectedUsers.set([]);
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+        this.openPermanentDeletionDialog(logins);
     }
 
     /**
@@ -536,10 +568,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
+        const searchTermChanged = this.searchControl.value !== this.searchTerm();
         this.searchTerm.set(this.searchControl.value);
         if (this.searchTerm().length >= 3 || this.searchTerm().length === 0) {
             this.searchInvalid.set(false);
-            this.search.next();
+            // The current page may not exist for the new search term; the navigation reloads the users
+            if (searchTermChanged && this.page() !== 1) {
+                this.goToFirstPage();
+            } else {
+                this.search.next();
+            }
         } else {
             this.searchInvalid.set(true);
         }
@@ -558,18 +596,41 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Transitions to another page and/or sorting order
      */
     transition(): void {
-        this.router.navigate(['/admin/user-management'], {
+        void this.router.navigate(['/admin/user-management'], {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
                 page: this.page(),
+                size: this.itemsPerPage(),
                 sort: `${this.predicate()},${this.ascending() ? ASC : DESC}`,
             },
         });
     }
 
-    /** Handles a PrimeNG paginator page change by converting the 0-indexed event page to the 1-indexed page and navigating. */
-    onPageChange(event: PaginatorState): void {
-        this.page.set((event.page ?? 0) + 1);
+    /** Handles a tumaet-ui paginator page change by converting the 0-indexed page to the 1-indexed page and navigating. */
+    onPageChange(page: number): void {
+        this.page.set(page + 1);
+        this.transition();
+    }
+
+    /** Handles a tumaet-ui paginator page size change by applying the new size and returning to the first page. */
+    onPageSizeChange(pageSize: number): void {
+        this.itemsPerPage.set(pageSize);
+        this.goToFirstPage();
+    }
+
+    /** Navigates to the first page; the resulting route change reloads the users. */
+    private goToFirstPage(): void {
+        this.page.set(1);
+        this.transition();
+    }
+
+    /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
+    onTableSort(event: TumAetUiTableSortEvent): void {
+        if (!event.field) {
+            return;
+        }
+        this.predicate.set(event.field);
+        this.ascending.set(event.order === 1);
         this.transition();
     }
 
@@ -580,6 +641,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         }).subscribe(({ data, params }) => {
             const pageParam = params.get('page');
             this.page.set(pageParam != undefined ? +pageParam : 1);
+            const sizeParam = Number(params.get(SIZE));
+            this.itemsPerPage.set(this.pageSizeOptions.includes(sizeParam) ? sizeParam : ITEMS_PER_PAGE);
             const sort = (params.get(SORT) ?? data['defaultSort']).split(',');
             this.predicate.set(sort[0]);
             this.ascending.set(sort[1] === ASC);
@@ -592,15 +655,115 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param login of the user that should be deleted
      */
     deleteUser(login: string) {
-        this.adminUserService.deleteUser(login).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'userListModification',
-                    content: 'Deleted a user',
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        this.openPermanentDeletionDialog([login]);
+    }
+
+    openPermanentDeletionDialog(logins: string[]) {
+        if (!logins.length) {
+            return;
+        }
+        this.deletionLoading.set(true);
+        this.adminUserService
+            .getBulkDeletionImpact(logins)
+            .pipe(finalize(() => this.deletionLoading.set(false)))
+            .subscribe({
+                next: (response) => {
+                    this.deletionImpact.set(response.body ?? undefined);
+                    this.deletionConfirmation.set('');
+                    this.deletionDialogVisible.set(true);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+    }
+
+    /**
+     * The accounts named in the deletion dialog. A very long selection is cut off so that the confirmation stays
+     * reachable; the remainder is reported as a count.
+     */
+    readonly listedDeletionAccounts = computed(() => this.deletionImpact()?.users.slice(0, MAX_LISTED_DELETION_ACCOUNTS) ?? []);
+
+    readonly unlistedDeletionAccountCount = computed(() => Math.max(0, (this.deletionImpact()?.users.length ?? 0) - MAX_LISTED_DELETION_ACCOUNTS));
+
+    permanentDeletionConfirmationExpected(): string {
+        const impact = this.deletionImpact();
+        if (!impact) {
+            return '';
+        }
+        return impact.users.length === 1 ? impact.users[0].login : impact.users.length.toString();
+    }
+
+    permanentDeletionConfirmed(): boolean {
+        return this.deletionConfirmation() === this.permanentDeletionConfirmationExpected();
+    }
+
+    deletionOverridesRetention(): boolean {
+        return this.deletionImpact()?.users.some((user) => user.retentionOverrideRequired) ?? false;
+    }
+
+    confirmPermanentDeletion() {
+        const impact = this.deletionImpact();
+        if (!impact || !this.permanentDeletionConfirmed()) {
+            return;
+        }
+        this.deletionLoading.set(true);
+        this.adminUserService
+            .deleteUsers({
+                users: impact.users.map((user) => ({ login: user.login, impactFingerprint: user.impactFingerprint })),
+            })
+            .pipe(finalize(() => this.deletionLoading.set(false)))
+            .subscribe({
+                next: (response) => {
+                    const results = response.body ?? [];
+                    if (results.some((result) => result.status === 'PLAN_CHANGED')) {
+                        // Successful entries were already committed independently. Only a changed plan can be safely
+                        // re-previewed; forbidden or failed entries need separate administrator review.
+                        const changedLogins = results.filter((result) => result.status === 'PLAN_CHANGED').map((result) => result.login);
+                        this.selectedUsers.set(this.selectedUsers().filter((user) => user.login && changedLogins.includes(user.login)));
+                        if (results.some((result) => result.status === 'DELETED')) {
+                            this.eventManager.broadcast({ name: 'userListModification', content: 'Deleted users' });
+                        }
+                        if (results.some((result) => result.status !== 'DELETED' && result.status !== 'PLAN_CHANGED')) {
+                            this.alertService.warning('artemisApp.userManagement.permanentDeletion.partialFailure');
+                        }
+                        this.alertService.warning('artemisApp.userManagement.permanentDeletion.planChanged');
+                        this.openPermanentDeletionDialog(changedLogins);
+                        return;
+                    }
+                    if (results.some((result) => result.status !== 'DELETED')) {
+                        this.alertService.warning('artemisApp.userManagement.permanentDeletion.partialFailure');
+                    }
+                    this.finishAccountLifecycleChange(results);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+    }
+
+    deactivateInstead() {
+        const impact = this.deletionImpact();
+        if (!impact?.users.length) {
+            return;
+        }
+        this.deletionLoading.set(true);
+        forkJoin(impact.users.map((user) => this.adminUserService.deactivate(user.userId)))
+            .pipe(finalize(() => this.deletionLoading.set(false)))
+            .subscribe({
+                next: () => this.finishAccountLifecycleChange([]),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+    }
+
+    closePermanentDeletionDialog() {
+        this.deletionDialogVisible.set(false);
+        this.deletionImpact.set(undefined);
+        this.deletionConfirmation.set('');
+    }
+
+    private finishAccountLifecycleChange(results: UserDeletionResult[]) {
+        this.closePermanentDeletionDialog();
+        this.selectedUsers.set([]);
+        this.eventManager.broadcast({
+            name: 'userListModification',
+            content: results.length ? 'Permanently deleted users' : 'Deactivated users',
         });
     }
 

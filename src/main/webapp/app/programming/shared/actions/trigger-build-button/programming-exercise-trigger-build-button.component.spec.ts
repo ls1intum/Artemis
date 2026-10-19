@@ -1,12 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -26,8 +25,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('TriggerBuildButtonSpec', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseStudentTriggerBuildButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseStudentTriggerBuildButtonComponent>;
     let debugElement: DebugElement;
@@ -51,7 +48,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
+            imports: [],
             providers: [
                 JhiLanguageHelper,
                 ChangeDetectorRef,
@@ -62,6 +59,7 @@ describe('TriggerBuildButtonSpec', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         })
             .compileComponents()

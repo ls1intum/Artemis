@@ -1,0 +1,178 @@
+---
+id: feature-usage
+title: Feature Usage
+sidebar_label: Feature Usage
+---
+
+Artemis counts how its features are used and shows the result on **Admin → Monitoring and Diagnostics → Feature Usage**.
+The counters are produced by the server itself, so no external analytics tool is involved and no data leaves the
+deployment.
+
+How the tracking works internally is described in
+[Feature Usage Analysis](/developer/feature-usage) in the developer guide.
+
+The page answers three questions that are otherwise hard to answer:
+
+* Which features do people actually use, and which does nobody touch?
+* Which features only look busy, because a page calls them automatically, while nobody uses them?
+* Which optional features are switched on somewhere, as opposed to switched on and then ignored?
+
+## Features and product areas
+
+The page lists the features of Artemis the way users know them, such as **Online code editor**, **Take an exam** or
+**AI problem statement generation**, grouped into product areas such as **Programming exercises**, **Exams** or
+**AI for instructors and tutors**. A feature is usually served by several endpoints, often in several modules, and the page
+shows those modules and the controllers behind them one level below the feature. The complete list of features, and of
+the endpoints behind each of them, is the [Feature Usage Catalogue](/developer/feature-usage-catalogue).
+
+## What is counted
+
+Every call to the server is counted for the feature it belongs to, and classified by what it says about use:
+
+| Counts as | Meaning | Examples |
+|-----------|---------|----------|
+| **Action** | The user did something with the feature | Submitting code, creating an exam, generating a problem statement |
+| **View** | The user looked at something the feature shows | Opening the course calendar, reading an FAQ |
+| **Automatic** | The page called the server on its own | A status check that runs on every page load, a badge, a breadcrumb title |
+| **System** | Another system called the server | A build agent cloning a repository for a build, an AI service reporting back |
+
+**Only actions and views count as use.** Automatic and system calls are shown next to them, but they never make a feature
+"used". This distinction is the reason the page exists in its current form: counted by calls alone, a status check that a
+frequently visited page sends on every load made features that nobody used look like the busiest ones.
+
+Calls reach the page through three channels:
+
+| Channel | What it covers |
+|---------|----------------|
+| REST | Every API endpoint, discovered automatically from the server's own mapping table at startup |
+| Git | Clone, pull and push over HTTPS through the built-in git server. A fetch counts as a view, a push as an action. Clones made for a build count as system calls of the build. Git over SSH is not counted |
+| Background | Work the server does on behalf of a feature: continuous plagiarism control, Athena feedback suggestions and course notification delivery |
+
+:::note
+The error rate of a background feature is only as good as the outcome the code behind it can observe, and one of them
+cannot observe much. Push notifications are counted when they are handed to the push relay: that pipeline is asynchronous
+several levels deep and swallows relay errors after retrying, so **Notification delivery** counts whether push is used at
+all, and its error rate says nothing about push. Read a zero error rate there as "no information" rather than as "no
+failures".
+:::
+
+For each endpoint, day and caller role, Artemis stores the number of calls, how many of them failed, and the total and
+maximum duration. Nothing else. There is no user id, login, address or course in the data, so a counter cannot be traced
+back to a person and the feature needs no consent.
+
+The page describes **this deployment**, not Artemis in general. A feature whose module is not enabled here is marked
+**Not offered here** rather than listed as unused, and it is hidden unless you switch on **Show features not offered here**.
+Features that are only recorded outside REST, such as notification delivery, count as not offered until they are used for
+the first time.
+
+## Reading the page
+
+Pick a period of 7, 30, 90 or 180 days in the title bar. The cards at the top count features, the unit the page lists:
+
+* **Features used**: features with at least one action or view, out of those offered here.
+* **Only automatic or system calls**: features that received automatic or system calls only. Somebody opened the pages
+  that contain them, or another system called them, but nobody used them.
+* **Unused**: features offered here without a single call.
+* **Viewed, no actions**: features that were looked at, but whose actions nobody took. For a feature people mostly read,
+  such as the FAQs, this can be fine. For an authoring aid, it usually means nobody took the step it is for.
+* **Not offered here**: features whose module is not enabled in this deployment. The line below counts the endpoints that
+  this version no longer offers at all; they keep their history but are not a decision to make.
+* **Uses**: actions and views, with the automatic and the system calls listed separately below.
+* **Recording since**: when this deployment started recording. "Unused over 180 days" means little on a server that has been
+  recording for a week.
+
+Four tabs then present the data:
+
+* **Features** is the one to start from. It is a tree of product area, feature, module and controller, and individual
+  endpoint. An area shows how many of its features were used; a feature shows its status, whether it was only viewed, and
+  how many courses or exercises have it switched on where that is known. Open a feature to see which controllers and
+  endpoints carry its traffic, and how each endpoint's calls count.
+* **Needs attention** lists the features a decision starts from, grouped into **Only automatic or system calls**,
+  **Unused** and **Viewed, no actions**.
+* **Adoption** is not usage at all but configuration: how many courses, exercises, exams or quizzes have each optional
+  setting switched on, listed under the feature it switches on.
+* **Endpoints** is the technical view: every endpoint with its module, controller, how its calls count and which feature it
+  serves. Endpoints that belong to no feature are listed here only, and counted nowhere else; they are endpoints an earlier
+  version offered.
+
+The columns mean:
+
+* **Actions**, **Views**, **Automatic** and **System**: the calls of the period, split by how they count.
+* **Active days**: the number of days with at least one action or view. Read it together with the counts: a feature with
+  500 views spread over 90 days is used more steadily than one with 50 000 on a single afternoon. Automatic calls never
+  make a day active.
+* **Errors** and **Mean**, plus **Max** on the **Endpoints** tab: useful for spotting a feature that is used but broken or
+  slow. These are not a replacement for proper monitoring: there are no percentiles here, and requests rejected by
+  authentication before they reach a handler are not counted at all.
+
+A feature, and an area above it, counts actions and views only. An endpoint row shows that endpoint's own calls, whatever
+they count as, so an automatic endpoint can show active days, errors and a mean duration while its feature shows none.
+
+Click the chart icon on a feature or an endpoint for its daily trend, with actions, views, automatic and system calls as
+separate lines.
+
+Search by a feature's name or description, a module, a controller or a path, and narrow the page to one **area**. Filter by
+**caller role** to ask a more precise question: which features do students actually use, and which instructor features does
+nobody touch? A feature the selected role never called still appears, because that is exactly what the question is about.
+The role breakdown card is never filtered, so it stays comparable.
+
+A few limitations are worth keeping in mind while reading. The first two are stated on the page itself:
+
+* The role is the caller's **global** role. Someone who instructs any course counts as an instructor everywhere, and git
+  and background features have no caller at all and are recorded as anonymous.
+* WebSocket traffic is not counted, so features that mostly communicate over the websocket (live quizzes, messaging, exam
+  synchronisation) are under-reported relative to their real use.
+* Git over SSH is not counted, so **Local IDE and Git** under-reports on deployments where students mostly clone over SSH.
+* A feature that is only recorded outside REST, such as **Continuous plagiarism control**, stays listed as offered after
+  its module is switched off, and then reads as unused rather than as not offered.
+
+## Weekly email
+
+Every Monday at 09:00 the administrators receive a summary by email, an hour after the weekly vulnerability report so the
+two do not arrive together. It carries the number of uses, the features used and not used, a table per product area with the
+change against the previous week, the areas that saw no use at all, and a link to this page. Like the page, it counts
+actions and views only. Its "not used" figure covers both the unused features and those that only received automatic
+calls, and states how many of them are of the second kind. It is a summary on
+purpose: the mail exists to tell you whether it is worth opening the page, not to replace it.
+
+The mail is only sent when an administrator address is configured, and never from a development environment or a test
+server. Only the node with the `scheduling` profile sends it, so a cluster does not produce one copy per node. Use **Send
+weekly email now** on the page to check delivery and recipients without waiting for Monday.
+
+```yaml
+artemis:
+    feature-usage:
+        digest:
+            enabled: true
+            recipients: [] # empty falls back to info.contact
+    scheduling:
+        feature-usage-digest-time: 0 0 9 * * MON
+```
+
+## Configuration
+
+```yaml
+artemis:
+    feature-usage:
+        enabled: true         # master switch
+        retention-period: 400 # days before a daily bucket is deleted
+        flush-interval: 5m    # how often each node writes its counters
+```
+
+Everything is on by default and needs no setup. Setting `enabled: false` stops all recording; rows already written stay
+readable on the page.
+
+The retention default of 400 days covers the longest period the page offers plus a comparison with the same period a
+year earlier, which is the natural unit for a teaching platform. A nightly job at 03:25 deletes anything older.
+
+## Cost
+
+Recording a call is a map lookup and a few counter increments in memory, well under a microsecond, with no database
+access on the request path. Each node writes its accumulated counters every five minutes, which in practice is a few
+hundred small updates per interval.
+
+Storage is a table of daily buckets. Expect on the order of a couple of thousand rows per day and well under a million
+rows in total at the default retention, so tens of megabytes rather than gigabytes.
+
+Because counters are held in memory between flushes, killing a node loses at most one flush interval of counts. A
+graceful shutdown flushes first. That trade is deliberate: usage analysis does not warrant a database write per request.

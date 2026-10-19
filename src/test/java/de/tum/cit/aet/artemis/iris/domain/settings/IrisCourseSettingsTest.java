@@ -4,37 +4,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 class IrisCourseSettingsTest {
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Test
-    void of_trimsBlankInstructionsAndDefaultsVariant() {
-        var dto = IrisCourseSettings.of(true, "  trimmed text  ", null, null);
+    void of_trimsBlankInstructionsAndDefaultsVariantAndSupportLevel() {
+        var dto = IrisCourseSettings.of(true, "  trimmed text  ", null, null, null);
 
         assertThat(dto.customInstructions()).isEqualTo("trimmed text");
         assertThat(dto.variant()).isEqualTo(IrisPipelineVariant.DEFAULT);
+        assertThat(dto.supportLevel()).isEqualTo(IrisSupportLevel.MODERATE);
         // null rateLimit is preserved (means "use defaults"), not converted to empty()
         assertThat(dto.rateLimit()).isNull();
     }
 
     @Test
     void of_convertsEmptyInstructionsToNull() {
-        var dto = IrisCourseSettings.of(true, "   ", IrisPipelineVariant.ADVANCED, IrisRateLimitConfiguration.empty());
+        var dto = IrisCourseSettings.of(true, "   ", IrisPipelineVariant.ADVANCED, IrisSupportLevel.HIGH, IrisRateLimitConfiguration.empty());
 
         assertThat(dto.customInstructions()).isNull();
         assertThat(dto.variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
+        assertThat(dto.supportLevel()).isEqualTo(IrisSupportLevel.HIGH);
         assertThat(dto.rateLimit()).isEqualTo(IrisRateLimitConfiguration.empty());
     }
 
     @Test
-    void jsonRoundtrip_preservesSanitizedPayload() throws JsonProcessingException {
-        var original = IrisCourseSettings.of(false, "  trimmed text  ", IrisPipelineVariant.ADVANCED, new IrisRateLimitConfiguration(10, 5));
+    void jsonRoundtrip_preservesSanitizedPayload() throws JacksonException {
+        var original = IrisCourseSettings.of(false, "  trimmed text  ", IrisPipelineVariant.ADVANCED, IrisSupportLevel.LOW, new IrisRateLimitConfiguration(10, 5));
 
         String serialized = objectMapper.writeValueAsString(original);
         var deserialized = objectMapper.readValue(serialized, IrisCourseSettings.class);
@@ -42,7 +44,97 @@ class IrisCourseSettingsTest {
         assertThat(deserialized.enabled()).isFalse();
         assertThat(deserialized.customInstructions()).isEqualTo("trimmed text");
         assertThat(deserialized.variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
+        assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.LOW);
         assertThat(deserialized.rateLimit()).isEqualTo(new IrisRateLimitConfiguration(10, 5));
+    }
+
+    /**
+     * The three states of the legacy-trigger switch, and why the third one exists.
+     * <p>
+     * A settings row written before the field existed has no key, and a full PUT from one of the two clients that do
+     * not edit the field omits it. Both deserialize to null, which must NOT be read as "off": every course behaved as
+     * "on" before the field existed, and silently disabling Artemis' own proactive events for the whole installation
+     * on upgrade would be the opposite of a no-op. This is the inverse of proactiveStruggleEnabled above, where absent
+     * genuinely means off.
+     */
+    @Test
+    void legacyBuildTriggers_absentKeyReadsAsOn() throws JacksonException {
+        var withoutKey = objectMapper.readValue("{\"enabled\":true}", IrisCourseSettings.class);
+
+        assertThat(withoutKey.legacyBuildTriggersEnabled()).isNull();
+        assertThat(withoutKey.legacyBuildTriggersEffective()).isTrue();
+    }
+
+    @Test
+    void legacyBuildTriggers_explicitFalseSurvivesARoundTrip() throws JacksonException {
+        var off = IrisCourseSettings.of(true, null, null, null, null, false, false);
+
+        var json = objectMapper.writeValueAsString(off);
+        // The value has to reach the JSON: NON_EMPTY drops a null, and dropping an explicit false would turn the
+        // admin's opt-out back into the default on the next read.
+        assertThat(json).contains("\"legacyBuildTriggersEnabled\":false");
+
+        var read = objectMapper.readValue(json, IrisCourseSettings.class);
+        assertThat(read.legacyBuildTriggersEnabled()).isFalse();
+        assertThat(read.legacyBuildTriggersEffective()).isFalse();
+    }
+
+    @Test
+    void legacyBuildTriggers_undecidedIsNotSerialized() throws JacksonException {
+        var undecided = IrisCourseSettings.of(true, null, null, null, null, false, null);
+
+        assertThat(objectMapper.writeValueAsString(undecided)).doesNotContain("legacyBuildTriggersEnabled");
+    }
+
+    @Test
+    void legacyBuildTriggers_explicitNullIsIndistinguishableFromAnAbsentKey() throws JacksonException {
+        // Deliberate: both mean "this payload says nothing", and the update path merges the stored value for both.
+        var explicitNull = objectMapper.readValue("{\"enabled\":true,\"legacyBuildTriggersEnabled\":null}", IrisCourseSettings.class);
+
+        assertThat(explicitNull.legacyBuildTriggersEnabled()).isNull();
+        assertThat(explicitNull.legacyBuildTriggersEffective()).isTrue();
+    }
+
+    @Test
+    void legacyBuildTriggers_theShortFactoriesLeaveTheDecisionOpen() {
+        assertThat(IrisCourseSettings.of(true, null, null, null, null).legacyBuildTriggersEnabled()).isNull();
+        assertThat(IrisCourseSettings.of(true, null, null, null, null, true).legacyBuildTriggersEnabled()).isNull();
+        assertThat(IrisCourseSettings.defaultSettings().legacyBuildTriggersEnabled()).isNull();
+        assertThat(IrisCourseSettings.defaultSettings().legacyBuildTriggersEffective()).isTrue();
+    }
+
+    @Test
+    void proactiveStruggle_defaultsOff_andRoundtripsWhenEnabled() throws JacksonException {
+        assertThat(IrisCourseSettings.of(true, null, null, null, null).proactiveStruggleEffective()).isFalse();
+
+        var enabled = IrisCourseSettings.of(true, null, IrisPipelineVariant.DEFAULT, null, null, true);
+        var json = objectMapper.writeValueAsString(enabled);
+        assertThat(objectMapper.readValue(json, IrisCourseSettings.class).proactiveStruggleEffective()).isTrue();
+    }
+
+    @Test
+    void proactiveStruggle_absentKeyIsUndecidedAndReadsAsOff() throws JacksonException {
+        // A course persisted before this field existed has no key, and so does a full PUT from one of the two
+        // clients that do not edit the flag. Both deserialize to null, which the update path merges from what is
+        // stored instead of reading as an opt-out; read on its own it stays off, which is the default.
+        var withoutKey = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\"}", IrisCourseSettings.class);
+
+        assertThat(withoutKey.proactiveStruggleEnabled()).isNull();
+        assertThat(withoutKey.proactiveStruggleEffective()).isFalse();
+    }
+
+    @Test
+    void deserialization_withoutSupportLevel_defaultsToModerate() throws JacksonException {
+        var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\"}", IrisCourseSettings.class);
+
+        assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.MODERATE);
+    }
+
+    @Test
+    void deserialization_withHighSupportLevel_isPreserved() throws JacksonException {
+        var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\",\"supportLevel\":\"high\"}", IrisCourseSettings.class);
+
+        assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.HIGH);
     }
 
     @Test

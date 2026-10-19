@@ -10,7 +10,6 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -39,7 +38,6 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
     styleUrls: ['../../../../shared/programming-exercise-form.scss', './programming-exercise-problem.component.scss'],
     imports: [
         TranslateDirective,
-        NgbAlert,
         TooltipModule,
         TextareaModule,
         ProgrammingExerciseInstructionComponent,
@@ -56,6 +54,17 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
     ],
 })
 export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
+    private translateService = inject(TranslateService);
+    /** Shared helper that encapsulates all AI-powered problem statement operations. */
+    readonly aiOps = new ProblemStatementAiOperationsHelper(
+        inject(ProblemStatementService),
+        inject(AlertService),
+        inject(ArtemisIntelligenceService),
+        inject(ProfileService),
+        inject(DestroyRef),
+        inject(Injector),
+    );
+
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
     protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
 
@@ -68,22 +77,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     /** Tracks the authoritative competency links state, updated whenever links change from any source. */
     readonly activeCompetencyLinks = signal<CompetencyExerciseLink[]>([]);
 
-    private translateService = inject(TranslateService);
-
     // Child component reference for refreshing competency selection
     private competencySelectionComponent = viewChild(CompetencySelectionComponent);
 
     readonly editableInstructions = viewChild<ProgrammingExerciseEditableInstructionComponent>('editableInstructions');
-
-    /** Shared helper that encapsulates all AI-powered problem statement operations. */
-    readonly aiOps = new ProblemStatementAiOperationsHelper(
-        inject(ProblemStatementService),
-        inject(AlertService),
-        inject(ArtemisIntelligenceService),
-        inject(ProfileService),
-        inject(DestroyRef),
-        inject(Injector),
-    );
 
     // Delegate signals for template binding compatibility
     readonly userPrompt = this.aiOps.userPrompt;
@@ -165,7 +162,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         if (exercise) {
             // undefined means all competencies were unlinked — treat as empty array.
             const updatedLinks = (competencyLinks ?? []).map((link) =>
-                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight),
+                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight, link.generatedByAi),
             );
             exercise.competencyLinks = updatedLinks;
             // Update the reactive signal so the checklist panel badges update immediately.

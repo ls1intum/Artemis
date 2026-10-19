@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch;
 
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertFaqExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertFaqNotInWeaviate;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -55,9 +55,9 @@ class FaqWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILo
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         // Pyris is not running in integration tests — stub the FAQ deletion to prevent PyrisConnectorException
-        doNothing().when(pyrisFaqApi).deleteFaq(any());
+        doNothing().when(pyrisFaqApi).deleteFaq(anyLong(), anyLong());
     }
 
     @Nested
@@ -80,7 +80,7 @@ class FaqWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILo
             long faq1Id = faq1.getId();
             long faq2Id = faq2.getId();
 
-            request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
             assertFaqNotInWeaviate(weaviateService, faq1Id);
             assertFaqNotInWeaviate(weaviateService, faq2Id);

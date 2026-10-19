@@ -1,4 +1,3 @@
-import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { describe, expect, it } from 'vitest';
 
@@ -6,7 +5,6 @@ import {
     convertTutorialGroupArrayDatesFromServer,
     convertTutorialGroupDatesFromServer,
     convertTutorialGroupFreePeriodDatesFromServer,
-    convertTutorialGroupResponseArrayDatesFromServer,
     convertTutorialGroupSessionDatesFromServer,
     convertTutorialGroupsConfigurationDatesFromServer,
 } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
@@ -139,23 +137,5 @@ describe('convertTutorialGroupEntityDates', () => {
 
         expect(dayjs.isDayjs(result[0].nextSession?.start)).toBe(true);
         expect(dayjs.isDayjs(result[0].nextSession?.end)).toBe(true);
-    });
-
-    it('should convert tutorial group response arrays from the server', () => {
-        const response = new HttpResponse<TutorialGroup[]>({
-            body: [
-                {
-                    nextSession: {
-                        start: rawServerDate(START),
-                        end: rawServerDate(END),
-                    } as LegacyTutorialGroupSession,
-                } as TutorialGroup,
-            ],
-        });
-
-        const result = convertTutorialGroupResponseArrayDatesFromServer(response);
-
-        expect(dayjs.isDayjs(result.body?.[0].nextSession?.start)).toBe(true);
-        expect(dayjs.isDayjs(result.body?.[0].nextSession?.end)).toBe(true);
     });
 });

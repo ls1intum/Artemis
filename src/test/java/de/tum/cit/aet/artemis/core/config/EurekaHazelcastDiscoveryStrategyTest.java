@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.StreamSupport;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +36,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
 
         // Create the discovery strategy with a mock logger and the helper via constructor
         ILogger mockLogger = mock(ILogger.class);
-        discoveryStrategy = new EurekaHazelcastDiscoveryStrategy(mockLogger, Collections.emptyMap(), eurekaInstanceHelper);
+        discoveryStrategy = new EurekaHazelcastDiscoveryStrategy(mockLogger, Map.of(), eurekaInstanceHelper);
     }
 
     @Nested
@@ -46,7 +46,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
         void shouldReturnEmptyWhenEurekaInstanceHelperIsNull() {
             // Create a strategy with null helper
             ILogger mockLogger = mock(ILogger.class);
-            EurekaHazelcastDiscoveryStrategy strategyWithNullHelper = new EurekaHazelcastDiscoveryStrategy(mockLogger, Collections.emptyMap(), null);
+            EurekaHazelcastDiscoveryStrategy strategyWithNullHelper = new EurekaHazelcastDiscoveryStrategy(mockLogger, Map.of(), null);
 
             Iterable<DiscoveryNode> nodes = strategyWithNullHelper.discoverNodes();
 
@@ -55,7 +55,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
 
         @Test
         void shouldReturnEmptyWhenNoNodesDiscovered() {
-            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(Collections.emptyList());
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of());
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -200,7 +200,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
             EurekaHazelcastDiscoveryStrategyFactory factory = new EurekaHazelcastDiscoveryStrategyFactory(eurekaInstanceHelper);
             ILogger mockLogger = mock(ILogger.class);
 
-            var strategy = factory.newDiscoveryStrategy(null, mockLogger, Collections.emptyMap());
+            var strategy = factory.newDiscoveryStrategy(null, mockLogger, Map.of());
 
             assertThat(strategy).isInstanceOf(EurekaHazelcastDiscoveryStrategy.class);
 

@@ -24,7 +24,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;
@@ -70,8 +69,6 @@ const submissionWithAnswers = {
 const exercise = { id: 1, studentParticipations: [studentParticipation], quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] } as QuizExercise;
 
 describe('QuizExamSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizExamSummaryComponent>;
     let component: QuizExamSummaryComponent;
 
@@ -105,11 +102,11 @@ describe('QuizExamSummaryComponent', () => {
     it('should initialize the solution dictionaries correctly', () => {
         fixture.componentRef.setInput('submission', submissionWithAnswers);
         fixture.detectChanges();
-        expect(component.selectedAnswerOptions.get(1)![0]).toEqual(correctAnswerOption);
+        expect(component.selectedAnswerOptions().get(1)![0]).toEqual(correctAnswerOption);
         expect(component.getScoreForQuizQuestion(1)).toBe(1);
-        expect(component.dragAndDropMappings.get(2)![0]).toEqual(correctDragAndDropMapping);
+        expect(component.dragAndDropMappings().get(2)![0]).toEqual(correctDragAndDropMapping);
         expect(component.getScoreForQuizQuestion(2)).toBe(1);
-        expect(component.shortAnswerSubmittedTexts.get(3)![0]).toEqual(shortAnswerSubmittedText);
+        expect(component.shortAnswerSubmittedTexts().get(3)![0]).toEqual(shortAnswerSubmittedText);
         expect(component.getScoreForQuizQuestion(3)).toBe(1);
     });
 });

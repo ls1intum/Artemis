@@ -43,8 +43,8 @@ public class ConversationFactory {
      */
     public static Post createBasicPost(int index, User author) {
         Post post = new Post();
-        post.setTitle(String.format("Title Post %s", (index + 1)));
-        post.setContent(String.format("Content Post %s", (index + 1)));
+        post.setTitle("Title Post %s".formatted((index + 1)));
+        post.setContent("Content Post %s".formatted((index + 1)));
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setAuthor(author);

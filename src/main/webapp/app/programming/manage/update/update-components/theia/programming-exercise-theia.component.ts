@@ -1,16 +1,17 @@
 import { KeyValuePipe } from '@angular/common';
-import { Component, effect, inject, input } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
-    imports: [FormsModule, KeyValuePipe, TranslateDirective],
+    imports: [FormsModule, KeyValuePipe, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseTheiaComponent {
     private theiaService = inject(TheiaService);
@@ -19,7 +20,7 @@ export class ProgrammingExerciseTheiaComponent {
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
 
     programmingLanguage?: ProgrammingLanguage;
-    theiaImages = {};
+    readonly theiaImages = signal<object>({});
 
     constructor() {
         // Replicates the previous ngOnChanges behavior: whenever either input changes, reload the
@@ -70,20 +71,20 @@ export class ProgrammingExerciseTheiaComponent {
             next: (images) => {
                 if (!images) {
                     // Remove selection if no image is available
-                    this.theiaImages = {};
+                    this.theiaImages.set({});
                     this.resetImageSelection();
                     return;
                 }
 
-                this.theiaImages = images;
+                this.theiaImages.set(images);
 
                 // Set the first image as default if none is selected
                 if (programmingExercise.buildConfig && !programmingExercise.buildConfig.theiaImage && Object.values(images).length > 0) {
-                    programmingExercise.buildConfig.theiaImage = Object.values(images).first() as string;
+                    programmingExercise.buildConfig.theiaImage = Object.values(images).first();
                 }
             },
             error: () => {
-                this.theiaImages = {};
+                this.theiaImages.set({});
                 this.resetImageSelection();
             },
         });

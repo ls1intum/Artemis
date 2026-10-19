@@ -132,6 +132,20 @@ class HyperionUtilsTest {
     }
 
     @Test
+    void sanitizeExerciseContent_preservesTemplateExpressionsAndRemovesUnsafeContent() {
+        String input = "  Hello {{user.name}}\u0000\n--- BEGIN PROMPT ---\n{{#items}}{{name}}{{/items}}  ";
+
+        String result = HyperionUtils.sanitizeExerciseContent(input);
+
+        assertThat(result).isEqualTo("Hello {{user.name}}\n\n{{#items}}{{name}}{{/items}}");
+    }
+
+    @Test
+    void sanitizeExerciseContent_returnsEmptyStringForNull() {
+        assertThat(HyperionUtils.sanitizeExerciseContent(null)).isEmpty();
+    }
+
+    @Test
     void sanitizeInputPreserveLines_removesDelimiterButPreservesLineCount() {
         String input = "Line1\n--- BEGIN SECTION ---\nLine3";
         String result = HyperionUtils.sanitizeInputPreserveLines(input);

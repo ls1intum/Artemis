@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -16,10 +16,10 @@ import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export-row-builder';
-import { mean, median, standardDeviation } from 'simple-statistics';
+import { mean, median, standardDeviation } from 'app/foundation/util/statistics.util';
 import { CsvExportOptions } from 'app/shared-ui/export/modal/export-modal.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { MODULE_FEATURE_PLAGIARISM, VERSION } from 'app/app.constants';
 import { ExcelExportRowBuilder } from 'app/shared-ui/export/row-builder/excel-export-row-builder';
 import { ExportRow, ExportRowBuilder } from 'app/shared-ui/export/row-builder/export-row-builder';
@@ -28,6 +28,7 @@ import {
     COURSE_OVERALL_POINTS_KEY,
     COURSE_OVERALL_SCORE_KEY,
     EMAIL_KEY,
+    EXCESS_VARIANT_POINTS_KEY,
     GRADE_KEY,
     NAME_KEY,
     POINTS_KEY,
@@ -35,6 +36,7 @@ import {
     PRESENTATION_SCORE_KEY,
     REGISTRATION_NUMBER_KEY,
     SCORE_KEY,
+    UNCAPPED_COURSE_POINTS_KEY,
     USERNAME_KEY,
 } from 'app/shared-ui/export/export-constants';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
@@ -116,6 +118,10 @@ export class CourseScoresComponent implements OnInit {
     // Max values signals
     readonly maxNumberOfPointsPerExerciseType = signal(new Map<ExerciseType, number>());
     readonly maxNumberOfOverallPoints = signal(0);
+    // The max points counting every variant in full, i.e. before any variant group's maxPoints cap is applied.
+    readonly maxNumberOfUncappedPoints = signal(0);
+    // The max points that do NOT count towards the grade because they exceed an exercise variant group's maxPoints cap.
+    readonly maxNumberOfExcessVariantPoints = signal(0);
     readonly maxNumberOfPresentationPoints = signal(0);
 
     // Average values signals
@@ -123,7 +129,15 @@ export class CourseScoresComponent implements OnInit {
     readonly averageNumberOfSuccessfulExercises = signal(0);
     readonly averageNumberOfPointsPerExerciseTypes = signal(new Map<ExerciseType, number>());
     readonly averageNumberOfOverallPoints = signal(0);
+    readonly averageNumberOfUncappedPoints = signal(0);
+    readonly averageNumberOfExcessVariantPoints = signal(0);
     readonly averageNumberOfPresentationPoints = signal(0);
+
+    /**
+     * Whether any variant-group cap actually deducts points; the uncapped and excess columns would otherwise show
+     * only zeros beside a duplicate of the overall points.
+     */
+    readonly variantCapReducesPoints = computed<boolean>(() => this.maxNumberOfExcessVariantPoints() > 0);
 
     // Grading scale state signals
     readonly gradingScaleExists = signal(false);
@@ -189,7 +203,7 @@ export class CourseScoresComponent implements OnInit {
         this.initializeExerciseTitles();
         this.includedExercises.set(this.determineExercisesIncludedInScore(course));
         this.numberOfReleasedExercises.set(this.determineReleasedExercises(course).length);
-        this.calculateCourseStatistics(course.id!);
+        void this.calculateCourseStatistics(course.id!);
     }
 
     /**
@@ -279,7 +293,7 @@ export class CourseScoresComponent implements OnInit {
             const stats = this.studentStatistics();
             const maxPoints = this.maxNumberOfOverallPoints();
             const course = this.course();
-            this.scoresToDisplay.set(stats.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxPoints, course!)));
+            this.scoresToDisplay.set(stats.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxPoints, course)));
             this.highlightBar(HighlightType.AVERAGE);
         });
     }
@@ -299,26 +313,41 @@ export class CourseScoresComponent implements OnInit {
             exercisesOfType.forEach((exercise) => maxPointsOfAllExercisesOfType.set(exercise.id!, exercise.maxPoints));
             this.exerciseMaxPointsPerType.set(exerciseType, maxPointsOfAllExercisesOfType);
 
-            const maxPointsOfAllIncludedExercisesOfType = exercisesOfType
+            const includedExercisesOfType = exercisesOfType
                 // only exercises marked as included_completely increase the maximum reachable number of points
-                .filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY)
-                .map((exercise) => exercise.maxPoints!);
+                .filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
 
-            maxPointsPerType.set(exerciseType, sum(maxPointsOfAllIncludedExercisesOfType));
+            // Non-variant exercises are summed individually.
+            const nonVariantMaxPoints = sum(includedExercisesOfType.filter((exercise) => !this.isExerciseVariant(exercise)).map((exercise) => exercise.maxPoints!));
+            // Exercise variants: each group contributes at most its configured maxPoints. Quirk for cross-type groups:
+            // each type bucket caps at the full group cap, so the per-type columns can jointly exceed it. Only the
+            // overall total (computed below across all types) is authoritative for the course score.
+            const variantGroupMaxPoints = this.variantGroupCappedPoints(includedExercisesOfType.map((exercise) => ({ exercise, value: exercise.maxPoints! })));
+            maxPointsPerType.set(exerciseType, nonVariantMaxPoints + variantGroupMaxPoints);
         }
         this.maxNumberOfPointsPerExerciseType.set(maxPointsPerType);
 
-        let overallPoints = 0;
-        for (const maxNumberOfPointsPerExerciseTypeElement of maxPointsPerType) {
-            overallPoints += maxNumberOfPointsPerExerciseTypeElement[1];
-        }
-        this.maxNumberOfOverallPoints.set(overallPoints);
+        // The overall max caps each group as a whole across all types (summing the per-type maxima would not cap
+        // cross-type groups), so compute it over all included exercises directly, mirroring the server-side total.
+        const includedCompletelyExercises = includedExercises.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
+        // Non-variant exercises are summed individually.
+        const nonVariantOverallMaxPoints = sum(includedCompletelyExercises.filter((exercise) => !this.isExerciseVariant(exercise)).map((exercise) => exercise.maxPoints!));
+        // Exercise variants: each group contributes at most its configured maxPoints (capped across all exercise types).
+        const variantGroupOverallMaxPoints = this.variantGroupCappedPoints(includedCompletelyExercises.map((exercise) => ({ exercise, value: exercise.maxPoints! })));
+        const creditedOverallMaxPoints = nonVariantOverallMaxPoints + variantGroupOverallMaxPoints;
+        this.maxNumberOfOverallPoints.set(creditedOverallMaxPoints);
+        // The max points not counting towards the grade: the uncapped max minus the credited (capped) max.
+        const uncappedOverallMaxPoints = sum(includedCompletelyExercises.map((exercise) => exercise.maxPoints!));
+        this.maxNumberOfUncappedPoints.set(uncappedOverallMaxPoints);
+        this.maxNumberOfExcessVariantPoints.set(uncappedOverallMaxPoints - creditedOverallMaxPoints);
 
         this.calculateReachablePresentationPoints();
     }
 
     /**
-     * Calculates the reachable presentation points and adds them to the max number of overall points
+     * Calculates the reachable presentation points and adds them to the max number of overall points. The uncapped
+     * maximum receives them as well, so the exported relation "uncapped - excess variant points = overall" also holds
+     * for the maximum row; the excess variant points themselves are unaffected by presentations.
      */
     private calculateReachablePresentationPoints() {
         const scale = this.gradingScale();
@@ -330,8 +359,9 @@ export class CourseScoresComponent implements OnInit {
             const reachablePointsWithPresentation = (-maxOverall / (presentationsWeight - 100)) * 100;
             const reachablePresentationPoints = (reachablePointsWithPresentation * presentationsWeight) / 100.0;
             const course = this.course();
-            this.maxNumberOfPresentationPoints.set(roundValueSpecifiedByCourseSettings(reachablePresentationPoints, course!));
+            this.maxNumberOfPresentationPoints.set(roundValueSpecifiedByCourseSettings(reachablePresentationPoints, course));
             this.maxNumberOfOverallPoints.set(maxOverall + this.maxNumberOfPresentationPoints());
+            this.maxNumberOfUncappedPoints.set(this.maxNumberOfUncappedPoints() + this.maxNumberOfPresentationPoints());
         }
     }
 
@@ -359,6 +389,8 @@ export class CourseScoresComponent implements OnInit {
                 this.updateStudentStatisticsWithExerciseResults(student, exercise);
             }
 
+            this.applyVariantGroupCaps(student, includedExercises);
+
             for (const exerciseType of this.exerciseTypes) {
                 if (maxPointsPerType.get(exerciseType)! > 0) {
                     student.scorePerExerciseType.set(exerciseType, (student.sumPointsPerExerciseType.get(exerciseType)! / maxPointsPerType.get(exerciseType)!) * 100);
@@ -378,6 +410,8 @@ export class CourseScoresComponent implements OnInit {
         this.averageNumberOfPointsPerExerciseTypes.set(avgPointsPerType);
 
         this.averageNumberOfOverallPoints.set(average(statistics.map((student) => student.overallPoints)));
+        this.averageNumberOfUncappedPoints.set(average(statistics.map((student) => student.overallPointsUncapped)));
+        this.averageNumberOfExcessVariantPoints.set(average(statistics.map((student) => student.excessVariantPoints)));
         this.averageNumberOfPresentationPoints.set(average(statistics.map((student) => student.presentationPoints)));
         this.averageNumberOfSuccessfulExercises.set(average(statistics.map((student) => student.numberOfSuccessfulExercises)));
         this.averageNumberOfParticipatedExercises.set(average(statistics.map((student) => student.numberOfParticipatedExercises)));
@@ -395,7 +429,9 @@ export class CourseScoresComponent implements OnInit {
     }
 
     /**
-     * Updates the students' statistics with the presentation points.
+     * Updates the students' statistics with the presentation points. Both the credited overall points and the uncapped
+     * points receive them, so the exported relation "uncapped - excess variant points = overall" keeps holding; the
+     * excess variant points themselves are unaffected by presentations.
      * @param studentStatistics
      */
     private addPresentationPointsForStudent(studentStatistics: CourseScoresStudentStatistics) {
@@ -405,11 +441,12 @@ export class CourseScoresComponent implements OnInit {
         const course = this.course()!;
 
         if (studentStatistics.presentationScore > 0 && presentationsNumber > 0 && maxPresentationPoints > 0) {
-            const presentationPointAvg = studentStatistics.presentationScore / presentationsNumber!;
+            const presentationPointAvg = studentStatistics.presentationScore / presentationsNumber;
             const presentationPoints = (maxPresentationPoints * presentationPointAvg) / 100.0;
 
             studentStatistics.presentationPoints = roundValueSpecifiedByCourseSettings(presentationPoints, course);
             studentStatistics.overallPoints += studentStatistics.presentationPoints;
+            studentStatistics.overallPointsUncapped += studentStatistics.presentationPoints;
         }
     }
 
@@ -458,11 +495,10 @@ export class CourseScoresComponent implements OnInit {
             const pointsAchievedByStudentInExercise = roundValueSpecifiedByCourseSettings((gradeScore.score * relevantMaxPoints) / 100, course);
             student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
             const includedIDs = includedExercises.map((includedExercise) => includedExercise.id);
-            // We only include this exercise if it is included in the exercise score
+            // We only include this exercise if it is included in the exercise score.
+            // Note: overallPoints and sumPointsPerExerciseType are summed up in a separate pass (see applyVariantGroupCaps)
+            // so that the points of variants in an exercise variant group can be capped at the group's maxPoints.
             if (includedIDs.includes(exercise.id)) {
-                student.overallPoints += pointsAchievedByStudentInExercise;
-                const oldPointsSum = student.sumPointsPerExerciseType.get(exercise.type!)!;
-                student.sumPointsPerExerciseType.set(exercise.type!, oldPointsSum + pointsAchievedByStudentInExercise);
                 student.numberOfParticipatedExercises += 1;
                 exercise.numberOfParticipationsWithRatedResult! += 1;
                 if (gradeScore.score >= 100) {
@@ -480,13 +516,75 @@ export class CourseScoresComponent implements OnInit {
     }
 
     /**
+     * Computes the per-type and overall point sums, capping each variant group at its maxPoints (mirrors the
+     * server's CourseScoreCalculationService).
+     * @param student the student whose point sums should be (re)computed
+     * @param includedExercises the exercises that are included in the course score
+     */
+    private applyVariantGroupCaps(student: CourseScoresStudentStatistics, includedExercises: Exercise[]): void {
+        const pointsAchieved = (exercise: Exercise) => student.pointsPerExercise.get(exercise.id!)!;
+        for (const exerciseType of this.exerciseTypes) {
+            const exercisesOfType = includedExercises.filter((exercise) => exercise.type === exerciseType && student.pointsPerExercise.has(exercise.id!));
+            // Non-variant exercises are summed individually.
+            const nonVariantPoints = sum(exercisesOfType.filter((exercise) => !this.isExerciseVariant(exercise)).map(pointsAchieved));
+            // Exercise variants: capped per group at the group's configured maxPoints.
+            const variantGroupPoints = this.variantGroupCappedPoints(exercisesOfType.map((exercise) => ({ exercise, value: pointsAchieved(exercise) })));
+            student.sumPointsPerExerciseType.set(exerciseType, nonVariantPoints + variantGroupPoints);
+        }
+        // The overall points cap each group as a whole across all types (summing the per-type sums would not cap
+        // cross-type groups), so compute it over all included exercises directly, mirroring the server-side total.
+        const overallExercises = includedExercises.filter((exercise) => student.pointsPerExercise.has(exercise.id!));
+        // Non-variant exercises are summed individually.
+        const nonVariantOverall = sum(overallExercises.filter((exercise) => !this.isExerciseVariant(exercise)).map(pointsAchieved));
+        // Exercise variants: capped per group (across all exercise types).
+        const variantGroupOverall = this.variantGroupCappedPoints(overallExercises.map((exercise) => ({ exercise, value: pointsAchieved(exercise) })));
+        student.overallPoints = nonVariantOverall + variantGroupOverall;
+        // The points not counting towards the grade: the uncapped achieved points minus the credited (capped) overallPoints.
+        const overallPointsUncapped = sum(overallExercises.map(pointsAchieved));
+        student.overallPointsUncapped = overallPointsUncapped;
+        student.excessVariantPoints = overallPointsUncapped - student.overallPoints;
+    }
+
+    /**
+     * Whether the exercise belongs to a variant group with a points cap; only those take the capped path.
+     * @param exercise the exercise to check
+     */
+    private isExerciseVariant(exercise: Exercise): boolean {
+        return exercise.exerciseVariantGroup?.id !== undefined && exercise.exerciseVariantGroup.maxPoints !== undefined;
+    }
+
+    /**
+     * Sums the variant groups' contributions, capping each at its maxPoints. Non-variant contributions are summed
+     * separately and ignored here.
+     * @param contributions the per-exercise contributions, each carrying the exercise and the value it contributes
+     * @returns the summed, per-group capped contribution of the variant groups
+     */
+    private variantGroupCappedPoints(contributions: { exercise: Exercise; value: number }[]): number {
+        const sumPerVariantGroup = new Map<number, number>();
+        const capPerVariantGroup = new Map<number, number>();
+        for (const { exercise, value } of contributions) {
+            if (!this.isExerciseVariant(exercise)) {
+                continue;
+            }
+            const variantGroup = exercise.exerciseVariantGroup!;
+            sumPerVariantGroup.set(variantGroup.id!, (sumPerVariantGroup.get(variantGroup.id!) ?? 0) + value);
+            capPerVariantGroup.set(variantGroup.id!, variantGroup.maxPoints!);
+        }
+        let total = 0;
+        for (const [variantGroupId, groupSum] of sumPerVariantGroup) {
+            total += Math.min(groupSum, capPerVariantGroup.get(variantGroupId)!);
+        }
+        return total;
+    }
+
+    /**
      * Sets the grading scale
      * @param gradingScaleDTO
      */
     setUpGradingScale(gradingScaleDTO: GradingScaleDTO) {
         this.gradingScaleExists.set(true);
         gradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(gradingScaleDTO.gradeSteps.gradeSteps);
-        this.gradingScale.set(toEntity(gradingScaleDTO, this.course()!));
+        this.gradingScale.set(toEntity(gradingScaleDTO, this.course()));
         this.isBonus.set(gradingScaleDTO.gradeSteps.gradeType === GradeType.BONUS);
         this.maxGrade.set(this.gradingService.maxGrade(gradingScaleDTO.gradeSteps.gradeSteps));
     }
@@ -529,13 +627,15 @@ export class CourseScoresComponent implements OnInit {
         if (!studentStatistics.gradeScores.length) {
             // Currently the server does not return CourseScoresStudentStatistics for users without participations,
             // but this should handle noParticipation grade if the server response changes.
-            return {
+            const noParticipationGradeStep: Partial<GradeStep> = {
                 gradeName: gradingScale.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
-            } as GradeStep;
-        } else if (plagiarismMap[studentStatistics.student.id!]) {
-            return {
+            };
+            return noParticipationGradeStep as GradeStep;
+        } else if (plagiarismMap[studentStatistics.student.id]) {
+            const plagiarismGradeStep: Partial<GradeStep> = {
                 gradeName: gradingScale.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
-            } as GradeStep;
+            };
+            return plagiarismGradeStep as GradeStep;
         } else {
             const overallPercentageForStudent = studentStatistics.overallPoints && maxOverall ? (studentStatistics.overallPoints / maxOverall) * 100 : 0;
             return this.gradingService.findMatchingGradeStep(gradingScale.gradeSteps, overallPercentageForStudent);
@@ -559,6 +659,27 @@ export class CourseScoresComponent implements OnInit {
         const course = this.course();
         return this.localeConversionService.toLocaleString(numberToLocalize, course?.accuracyOfScores);
     }
+
+    /**
+     * Expresses excess variant points (a positive magnitude) as a deduction: the negated value, or 0 when there is no
+     * excess (so the displayed/exported value is "0" rather than "-0").
+     */
+    private excessVariantPointsAsDeduction(points: number): number {
+        return points > 0 ? -points : 0;
+    }
+
+    /**
+     * Localizes the excess variant points as a negative deduction (e.g. "-13"), or "0" when there is no excess.
+     */
+    localizeExcessVariantPoints(points: number): string {
+        return this.localize(this.excessVariantPointsAsDeduction(points));
+    }
+
+    readonly localizedMaxExcessVariantPoints = computed(() => this.localizeExcessVariantPoints(this.maxNumberOfExcessVariantPoints()));
+    readonly localizedAverageExcessVariantPoints = computed(() => this.localizeExcessVariantPoints(this.averageNumberOfExcessVariantPoints()));
+
+    readonly localizedMaxUncappedPoints = computed(() => this.localize(this.maxNumberOfUncappedPoints()));
+    readonly localizedAverageUncappedPoints = computed(() => this.localize(this.averageNumberOfUncappedPoints()));
 
     /**
      * Method for exporting the csv with the needed data
@@ -618,17 +739,14 @@ export class CourseScoresComponent implements OnInit {
      */
     exportAsCsv(keys: string[], rows: ExportRow[], customOptions: CsvExportOptions) {
         const course = this.course()!;
-        const generalExportOptions = {
-            showLabels: true,
-            showTitle: false,
-            filename: `${course.title} Scores`,
-            useTextFile: false,
-            useBom: true,
+        downloadCsv(rows, {
             columnHeaders: keys,
-        };
-        const csvExportConfig = mkConfig(Object.assign(generalExportOptions, customOptions));
-        const csvData = generateCsv(csvExportConfig)(rows);
-        download(csvExportConfig)(csvData);
+            fileName: `${course.title} Scores`,
+            fieldSeparator: customOptions.fieldSeparator,
+            quoteStrings: customOptions.quoteStrings,
+            quoteCharacter: customOptions.quoteCharacter,
+            decimalSeparator: customOptions.decimalSeparator,
+        });
     }
 
     /**
@@ -662,6 +780,9 @@ export class CourseScoresComponent implements OnInit {
             keys.push(PRESENTATION_POINTS_KEY, PRESENTATION_SCORE_KEY);
         }
 
+        if (this.variantCapReducesPoints()) {
+            keys.push(UNCAPPED_COURSE_POINTS_KEY, EXCESS_VARIANT_POINTS_KEY);
+        }
         keys.push(COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY);
 
         if (course.presentationScore) {
@@ -715,6 +836,10 @@ export class CourseScoresComponent implements OnInit {
             rowData.setScore(PRESENTATION_SCORE_KEY, presentationScore);
         }
 
+        if (this.variantCapReducesPoints()) {
+            rowData.setPoints(UNCAPPED_COURSE_POINTS_KEY, studentStatistics.overallPointsUncapped);
+            rowData.setPoints(EXCESS_VARIANT_POINTS_KEY, this.excessVariantPointsAsDeduction(studentStatistics.excessVariantPoints));
+        }
         const overallScore = roundScorePercentSpecifiedByCourseSettings(studentStatistics.overallPoints / maxOverall, course);
         rowData.setPoints(COURSE_OVERALL_POINTS_KEY, studentStatistics.overallPoints);
         rowData.setScore(COURSE_OVERALL_SCORE_KEY, overallScore);
@@ -752,6 +877,10 @@ export class CourseScoresComponent implements OnInit {
             rowData.setScore(PRESENTATION_SCORE_KEY, 100);
         }
 
+        if (this.variantCapReducesPoints()) {
+            rowData.setPoints(UNCAPPED_COURSE_POINTS_KEY, this.maxNumberOfUncappedPoints());
+            rowData.setPoints(EXCESS_VARIANT_POINTS_KEY, this.excessVariantPointsAsDeduction(this.maxNumberOfExcessVariantPoints()));
+        }
         rowData.setPoints(COURSE_OVERALL_POINTS_KEY, maxOverall);
         rowData.setScore(COURSE_OVERALL_SCORE_KEY, 100);
 
@@ -798,6 +927,10 @@ export class CourseScoresComponent implements OnInit {
             rowData.setScore(PRESENTATION_SCORE_KEY, averagePresentationScore);
         }
 
+        if (this.variantCapReducesPoints()) {
+            rowData.setPoints(UNCAPPED_COURSE_POINTS_KEY, this.averageNumberOfUncappedPoints());
+            rowData.setPoints(EXCESS_VARIANT_POINTS_KEY, this.excessVariantPointsAsDeduction(this.averageNumberOfExcessVariantPoints()));
+        }
         const averageOverallScore = roundScorePercentSpecifiedByCourseSettings(avgOverall / maxOverall, course);
         rowData.setPoints(COURSE_OVERALL_POINTS_KEY, avgOverall);
         rowData.setScore(COURSE_OVERALL_SCORE_KEY, averageOverallScore);
@@ -988,14 +1121,26 @@ export class CourseScoresComponent implements OnInit {
             return;
         }
 
-        const allCoursePoints = sum(course.exercises!.map((exercise) => exercise.maxPoints ?? 0)) + maxPresentationPoints;
+        // Non-variant exercises summed individually; each variant group contributes at most its configured maxPoints.
+        const allCourseExercises = course.exercises!;
+        const nonVariantCoursePoints = sum(allCourseExercises.filter((exercise) => !this.isExerciseVariant(exercise)).map((exercise) => exercise.maxPoints ?? 0));
+        const variantGroupCoursePoints = this.variantGroupCappedPoints(allCourseExercises.map((exercise) => ({ exercise, value: exercise.maxPoints ?? 0 })));
+        const allCoursePoints = nonVariantCoursePoints + variantGroupCoursePoints + maxPresentationPoints;
         const includedPointsPerStudent = statistics.map((student) => student.overallPoints);
         // average points and score included
         const scores = includedPointsPerStudent.map((point) => point / maxOverall);
         this.averageScoreIncluded.set(roundScorePercentSpecifiedByCourseSettings(avgOverall / maxOverall, course));
 
         // average points and score total
-        const achievedPointsTotal = statistics.map((student) => sum(Array.from(student.pointsPerExercise.values())) + student.presentationPoints);
+        const achievedPointsTotal = statistics.map((student) => {
+            const participatedExercises = allCourseExercises.filter((exercise) => exercise.id !== undefined && student.pointsPerExercise.has(exercise.id));
+            const pointsAchieved = (exercise: Exercise) => student.pointsPerExercise.get(exercise.id!)!;
+            // Non-variant exercises are summed individually.
+            const nonVariantPoints = sum(participatedExercises.filter((exercise) => !this.isExerciseVariant(exercise)).map(pointsAchieved));
+            // Exercise variants: capped per group.
+            const variantGroupPoints = this.variantGroupCappedPoints(participatedExercises.map((exercise) => ({ exercise, value: pointsAchieved(exercise) })));
+            return nonVariantPoints + variantGroupPoints + student.presentationPoints;
+        });
         const averageScores = achievedPointsTotal.map((totalPoints) => totalPoints / allCoursePoints);
 
         this.averagePointsTotal.set(this.calculateAveragePoints(achievedPointsTotal));

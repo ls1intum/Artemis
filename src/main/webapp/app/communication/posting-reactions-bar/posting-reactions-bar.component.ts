@@ -1,6 +1,6 @@
-import { Component, OnInit, effect, inject, input, output, untracked, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/foundation/pipes/reacting-users-on-posting.pipe';
@@ -16,7 +16,7 @@ import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
 import { AccountService } from 'app/core/auth/account.service';
-import { DisplayPriority } from '../metis.util';
+import { DisplayPriority } from '../communication.util';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -27,14 +27,15 @@ import { PostCreateEditModalComponent } from 'app/communication/posting-create-e
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import dayjs from 'dayjs/esm';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
-import { MetisConversationService } from '../service/metis-conversation.service';
+import { CourseConversationsService } from '../service/course-conversations.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { map } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { firstValueFrom } from 'rxjs';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
@@ -92,6 +93,13 @@ interface ReactionMetaDataMap {
     ],
 })
 export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
+    private communicationService = inject(CommunicationService);
+    private accountService = inject(AccountService);
+    private conversationService = inject(ConversationService);
+    private dialogService = inject(DialogService);
+    private courseConversationsService = inject(CourseConversationsService);
+    private courseSidebarService = inject(CourseSidebarService);
+
     constructor() {
         effect(() => {
             // Track signal inputs that were monitored in ngOnChanges
@@ -101,9 +109,11 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             untracked(() => {
                 if (!postingValue) return;
                 this.updatePostingWithReactions();
-                this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(postingValue as Posting);
-                this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-                this.isAuthorOfOriginalPost = this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((postingValue as AnswerPost).post!) : false;
+                this.isAuthorOfPosting = this.communicationService.currentUserIsAuthorOfPosting(postingValue);
+                this.isAtLeastTutorInCourse.set(this.communicationService.currentUserIsAtLeastTutorInCourse());
+                this.isAuthorOfOriginalPost.set(
+                    this.getPostingType() === 'answerPost' ? this.communicationService.currentUserIsAuthorOfPosting((postingValue as AnswerPost).post!) : false,
+                );
                 if (this.getPostingType() === 'post') {
                     this.resetTooltipsAndPriority();
                 }
@@ -130,18 +140,18 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
-    showReactionSelector = false;
-    isAtLeastTutorInCourse: boolean;
-    isAuthorOfPosting: boolean;
-    isAuthorOfOriginalPost: boolean;
-    isAnswerOfAnnouncement: boolean;
-    isAtLeastInstructorInCourse: boolean;
-    mayEdit: boolean;
-    mayDelete: boolean;
-    canMarkAsUnread: boolean;
-    pinTooltip: string;
-    displayPriority: DisplayPriority;
-    canPin = false;
+    readonly showReactionSelector = signal(false);
+    readonly isAtLeastTutorInCourse = signal<boolean>(undefined!);
+    isAuthorOfPosting!: boolean; // set in ngOnInit() from communicationService
+    readonly isAuthorOfOriginalPost = signal<boolean>(undefined!);
+    readonly isAnswerOfAnnouncement = signal<boolean>(undefined!);
+    isAtLeastInstructorInCourse!: boolean; // set in ngOnInit() from communicationService
+    readonly mayEdit = signal<boolean>(undefined!);
+    readonly mayDelete = signal<boolean>(undefined!);
+    readonly canMarkAsUnread = signal<boolean>(undefined!);
+    readonly pinTooltip = signal<string>(undefined!);
+    readonly displayPriority = signal<DisplayPriority>(undefined!);
+    readonly canPin = signal<boolean>(false);
     channels: (ChannelDTO | GroupChatDTO)[] = [];
     users: UserPublicInfoDTO[] = [];
     posting = input<T>();
@@ -172,28 +182,24 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     isDeleteEvent = output<boolean>();
     createEditModal = viewChild.required<PostCreateEditModalComponent>('createEditModal');
 
-    private metisService = inject(MetisService);
-    private accountService = inject(AccountService);
-    private conversationService = inject(ConversationService);
-    private dialogService = inject(DialogService);
-    private metisConversationService = inject(MetisConversationService);
-    private courseSidebarService = inject(CourseSidebarService);
-
     /**
      * on initialization: updates the current posting and its reactions,
-     * invokes metis service to check user authority
+     * invokes communication service to check user authority
      */
     ngOnInit() {
         this.updatePostingWithReactions();
-        this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting() as Posting);
-        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        this.isAnswerOfAnnouncement =
-            this.getPostingType() === 'answerPost' ? (getAsChannelDTO((this.posting() as AnswerPost).post?.conversation)?.isAnnouncementChannel ?? false) : false;
-        this.isAuthorOfOriginalPost = this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((this.posting() as AnswerPost).post!) : false;
+        this.isAuthorOfPosting = this.communicationService.currentUserIsAuthorOfPosting(this.posting() as Posting);
+        this.isAtLeastTutorInCourse.set(this.communicationService.currentUserIsAtLeastTutorInCourse());
+        this.isAtLeastInstructorInCourse = this.communicationService.currentUserIsAtLeastInstructorInCourse();
+        this.isAnswerOfAnnouncement.set(
+            this.getPostingType() === 'answerPost' ? (getAsChannelDTO((this.posting() as AnswerPost).post?.conversation)?.isAnnouncementChannel ?? false) : false,
+        );
+        this.isAuthorOfOriginalPost.set(
+            this.getPostingType() === 'answerPost' ? this.communicationService.currentUserIsAuthorOfPosting((this.posting() as AnswerPost).post!) : false,
+        );
 
         if (this.getPostingType() === 'post') {
-            const currentConversation = this.metisService.getCurrentConversation();
+            const currentConversation = this.communicationService.getCurrentConversation();
             this.setCanPin(currentConversation);
             this.resetTooltipsAndPriority();
         }
@@ -218,23 +224,23 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      */
     setCanPin(currentConversation: ConversationDTO | undefined) {
         if (!currentConversation) {
-            this.canPin = this.metisService.metisUserIsAtLeastTutorInCourse();
+            this.canPin.set(this.communicationService.currentUserIsAtLeastTutorInCourse());
             return;
         }
 
         if (isChannelDTO(currentConversation)) {
-            this.canPin = currentConversation.hasChannelModerationRights ?? false;
+            this.canPin.set(currentConversation.hasChannelModerationRights ?? false);
         } else if (isGroupChatDTO(currentConversation)) {
-            this.canPin = currentConversation.creator?.id === this.accountService.userIdentity()?.id;
+            this.canPin.set(currentConversation.creator?.id === this.accountService.userIdentity()?.id);
         } else if (isOneToOneChatDTO(currentConversation)) {
-            this.canPin = true;
+            this.canPin.set(true);
         }
-        this.canPinOutput.emit(this.canPin);
+        this.canPinOutput.emit(this.canPin());
     }
 
     private resetTooltipsAndPriority() {
-        this.displayPriority = (this.posting() as Post).displayPriority!;
-        this.pinTooltip = this.getPinTooltip();
+        this.displayPriority.set((this.posting() as Post).displayPriority!);
+        this.pinTooltip.set(this.getPinTooltip());
     }
 
     getShowNewMessageIcon(): boolean {
@@ -244,9 +250,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
 
         let showIcon = false;
         // iterate over all answer posts
-        (this.sortedAnswerPosts() as unknown as AnswerPost[]).forEach((answerPost: Posting) => {
+        this.sortedAnswerPosts()?.forEach((answerPost: Posting) => {
             // check if the answer post is newer than the last read date
-            const isAuthor = this.metisService.metisUserIsAuthorOfPosting(answerPost);
+            const isAuthor = this.communicationService.currentUserIsAuthorOfPosting(answerPost);
             const lastReadDate = this.lastReadDate?.();
             const creationDate = answerPost.creationDate;
 
@@ -265,13 +271,13 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      *
      */
     getPinTooltip(): string {
-        if (this.canPin && this.displayPriority === DisplayPriority.PINNED) {
-            return 'artemisApp.metis.removePinPostTooltip';
+        if (this.canPin() && this.displayPriority() === DisplayPriority.PINNED) {
+            return 'artemisApp.communication.removePinPostTooltip';
         }
-        if (this.canPin && this.displayPriority !== DisplayPriority.PINNED) {
-            return 'artemisApp.metis.pinPostTooltip';
+        if (this.canPin() && this.displayPriority() !== DisplayPriority.PINNED) {
+            return 'artemisApp.communication.pinPostTooltip';
         }
-        return 'artemisApp.metis.pinnedPostTooltip';
+        return 'artemisApp.communication.pinnedPostTooltip';
     }
 
     /**
@@ -301,7 +307,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * map that lists associated reaction (by emojiId) for the current posting together with its count
      * and a flag that indicates if the current user has used this reaction
      */
-    reactionMetaDataMap: ReactionMetaDataMap = {};
+    readonly reactionMetaDataMap = signal<ReactionMetaDataMap>({});
+
+    /** keys (posting id and emoji id) of the create or delete requests that have not finished yet */
+    private readonly pendingRequestKeys = new Set<string>();
 
     /**
      * builds and returns a Reaction model out of an emojiId and thereby sets the answerPost property properly
@@ -311,9 +320,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
         const reaction = new Reaction();
         reaction.emojiId = emojiId;
         if (this.getPostingType() === 'answerPost') {
-            reaction.answerPost = this.posting() as AnswerPost;
+            reaction.answerPost = this.posting();
         } else {
-            reaction.post = this.posting() as Post;
+            reaction.post = this.posting();
         }
         return reaction;
     }
@@ -332,7 +341,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * closes the emoji selector overly if user clicks the '.reaction-button' again or somewhere outside the overlay
      */
     toggleEmojiSelect() {
-        this.showReactionSelector = !this.showReactionSelector;
+        this.showReactionSelector.set(!this.showReactionSelector());
     }
 
     /**
@@ -346,29 +355,66 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     }
 
     /**
-     * adds or removes a reaction by invoking the metis service,
+     * adds or removes a reaction by invoking the communication service,
      * depending on if the current user already reacted with the given emojiId (remove) or not (add)
      * @param emojiId emojiId representing the reaction to be added/removed
      */
     addOrRemoveReaction(emojiId: string): void {
-        const existingReactionIdx = (this.posting() as Posting).reactions
-            ? (this.posting() as Posting).reactions!.findIndex((reaction) => reaction.user?.id === this.metisService.getUser().id && reaction.emojiId === emojiId)
+        // The posting is captured now: the thread sidebar reuses this component for another posting, so the response may arrive while another one is shown.
+        const targetPosting = this.posting() as Posting;
+        const isTargetStillShown = () => this.posting()?.id === targetPosting.id;
+        // The decision below relies on the reactions of the posting, which only change once the server answered. A second click before that would
+        // act on stale data and send the same request twice, which the server rejects, so the click would seem to have no effect.
+        const requestKey = `${targetPosting.id}-${emojiId}`;
+        if (this.pendingRequestKeys.has(requestKey)) {
+            return;
+        }
+        const existingReactionIdx = targetPosting.reactions
+            ? targetPosting.reactions.findIndex((reaction) => reaction.user?.id === this.communicationService.getUser().id && reaction.emojiId === emojiId)
             : -1;
-        if ((this.posting() as Posting).reactions && existingReactionIdx > -1) {
-            const reactionToDelete = (this.posting() as Posting).reactions![existingReactionIdx];
-            this.metisService.deleteReaction(reactionToDelete).subscribe(() => {
-                (this.posting() as Posting).reactions = (this.posting() as Posting).reactions?.filter((reaction) => reaction.id !== reactionToDelete.id);
-                this.updatePostingWithReactions();
-                this.showReactionSelector = false;
-                this.reactionsUpdated.emit((this.posting() as Posting).reactions!);
-            });
+        this.pendingRequestKeys.add(requestKey);
+        if (targetPosting.reactions && existingReactionIdx > -1) {
+            const reactionToDelete = targetPosting.reactions[existingReactionIdx];
+            this.communicationService
+                .deleteReaction(reactionToDelete)
+                .pipe(finalize(() => this.pendingRequestKeys.delete(requestKey)))
+                .subscribe({
+                    next: () => {
+                        if (!isTargetStillShown()) {
+                            return;
+                        }
+                        const posting = this.posting() as Posting;
+                        posting.reactions = posting.reactions?.filter((reaction) => reaction.id !== reactionToDelete.id);
+                        this.updatePostingWithReactions();
+                        this.showReactionSelector.set(false);
+                        this.reactionsUpdated.emit(posting.reactions!);
+                    },
+                    // the error handler interceptor already reports failed requests
+                    error: () => {},
+                });
         } else {
             const reactionToCreate = this.buildReaction(emojiId);
-            this.metisService.createReaction(reactionToCreate).subscribe(() => {
-                this.updatePostingWithReactions();
-                this.showReactionSelector = false;
-                this.reactionsUpdated.emit((this.posting() as Posting).reactions || []);
-            });
+            this.communicationService
+                .createReaction(reactionToCreate)
+                .pipe(finalize(() => this.pendingRequestKeys.delete(requestKey)))
+                .subscribe({
+                    next: (createdReaction) => {
+                        if (!isTargetStillShown()) {
+                            return;
+                        }
+                        // The websocket update that carries the new reaction can arrive after the response. Add the reaction here so that the next click
+                        // already sees it, unless the websocket update was faster.
+                        const posting = this.posting() as Posting;
+                        if (createdReaction && !posting.reactions?.some((reaction) => reaction.id === createdReaction.id)) {
+                            posting.reactions = [...(posting.reactions ?? []), createdReaction];
+                        }
+                        this.updatePostingWithReactions();
+                        this.showReactionSelector.set(false);
+                        this.reactionsUpdated.emit(posting.reactions || []);
+                    },
+                    // the error handler interceptor already reports failed requests
+                    error: () => {},
+                });
         }
     }
 
@@ -381,9 +427,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             const filteredReactions = (this.posting() as Posting).reactions!.filter(
                 (reaction: Reaction) => reaction.emojiId !== this.pinEmojiId || reaction.emojiId !== this.archiveEmojiId,
             );
-            this.reactionMetaDataMap = this.buildReactionMetaDataMap(filteredReactions);
+            this.reactionMetaDataMap.set(this.buildReactionMetaDataMap(filteredReactions));
         } else {
-            this.reactionMetaDataMap = {};
+            this.reactionMetaDataMap.set({});
         }
     }
 
@@ -393,7 +439,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      */
     buildReactionMetaDataMap(reactions: Reaction[]): ReactionMetaDataMap {
         return reactions.reduce((metaDataMap: ReactionMetaDataMap, reaction: Reaction) => {
-            const hasReacted = reaction.user?.id === this.metisService.getUser().id;
+            const hasReacted = reaction.user?.id === this.communicationService.getUser().id;
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const reactingUser = hasReacted ? PLACEHOLDER_USER_REACTED : reaction.user?.name!;
             const reactionMetaData: ReactionMetaData = {
@@ -401,7 +447,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                 hasReacted: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
                 reactingUsers: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].reactingUsers.concat(reactingUser) : [reactingUser],
             };
-            return { ...metaDataMap, [reaction.emojiId!]: reactionMetaData };
+            return cloneWith(metaDataMap, { [reaction.emojiId!]: reactionMetaData });
         }, {});
     }
 
@@ -414,40 +460,40 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * Returns true if any emoji reaction has a count greater than zero.
      */
     isAnyReactionCountAboveZero(): boolean {
-        return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);
+        return Object.values(this.reactionMetaDataMap()).some((reaction) => reaction.count >= 1);
     }
 
     /**
-     * invokes the metis service to delete posting
+     * invokes the communication service to delete posting
      */
     deletePosting(): void {
         this.isDeleteEvent.emit(true);
     }
 
     /**
-     * changes the state of the displayPriority property on a post to PINNED by invoking the metis service
+     * changes the state of the displayPriority property on a post to PINNED by invoking the communication service
      * in case the displayPriority is already set to PINNED, it will be changed to NONE
      */
     togglePin() {
-        if (this.canPin) {
-            if (this.displayPriority === DisplayPriority.PINNED) {
-                this.displayPriority = DisplayPriority.NONE;
+        if (this.canPin()) {
+            if (this.displayPriority() === DisplayPriority.PINNED) {
+                this.displayPriority.set(DisplayPriority.NONE);
             } else {
-                this.displayPriority = DisplayPriority.PINNED;
+                this.displayPriority.set(DisplayPriority.PINNED);
             }
-            (this.posting() as Post).displayPriority = this.displayPriority;
-            this.metisService.updatePostDisplayPriority((this.posting() as Posting).id!, this.displayPriority).subscribe();
+            (this.posting() as Post).displayPriority = this.displayPriority();
+            this.communicationService.updatePostDisplayPriority((this.posting() as Posting).id!, this.displayPriority()).subscribe();
         }
     }
 
     /**
      * toggles the resolvesPost property of an answer post if the user is at least tutor in a course or the user is the author of the original post,
-     * delegates the update to the metis service
+     * delegates the update to the communication service
      */
     toggleResolvesPost(): void {
-        if (this.isAtLeastTutorInCourse || this.isAuthorOfOriginalPost) {
+        if (this.isAtLeastTutorInCourse() || this.isAuthorOfOriginalPost()) {
             (this.posting() as AnswerPost).resolvesPost = !(this.posting() as AnswerPost).resolvesPost;
-            this.metisService.updateAnswerPost(this.posting() as AnswerPost).subscribe();
+            this.communicationService.updateAnswerPost(this.posting() as AnswerPost).subscribe();
         }
     }
 
@@ -458,7 +504,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * @returns {DisplayPriority} The display priority of the post.
      */
     checkIfPinned(): DisplayPriority {
-        return this.displayPriority;
+        return this.displayPriority();
     }
 
     /** Emits view open event and shows answer modal */
@@ -478,13 +524,13 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * Emits the result via output.
      */
     setMayEdit(): void {
-        this.mayEdit = this.isAuthorOfPosting;
-        this.mayEditOutput.emit(this.mayEdit);
+        this.mayEdit.set(this.isAuthorOfPosting);
+        this.mayEditOutput.emit(this.mayEdit());
     }
 
     setCanMarkAsUnread(): void {
-        this.canMarkAsUnread = !this.isAuthorOfPosting && this.getPostingType() === 'post';
-        this.canMarkAsUnreadOutput.emit(this.canMarkAsUnread);
+        this.canMarkAsUnread.set(!this.isAuthorOfPosting && this.getPostingType() === 'post');
+        this.canMarkAsUnreadOutput.emit(this.canMarkAsUnread());
     }
 
     /**
@@ -492,7 +538,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      */
     editPosting() {
         if (this.getPostingType() === 'post') {
-            if ((this.posting() as Post)!.title != '') {
+            if ((this.posting() as Post).title != '') {
                 this.createEditModal().open();
             } else {
                 this.isModalOpen.emit();
@@ -516,7 +562,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     }
 
     markMessageAsUnread() {
-        this.metisService.markMessageAsUnread(this.posting()!);
+        this.communicationService.markMessageAsUnread(this.posting()!);
     }
 
     /**
@@ -543,24 +589,27 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                     // Filter only non-announcement channels for forwarding
                     conversations.forEach((conversation) => {
                         if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel) {
-                            this.channels.push(conversation as ChannelDTO);
+                            this.channels.push(conversation);
                         } else if (conversation.type === ConversationType.GROUP_CHAT) {
                             (conversation as GroupChatDTO).name = this.conversationService.getConversationName(conversation);
-                            this.channels.push(conversation as GroupChatDTO);
+                            this.channels.push(conversation);
                         }
                     });
 
                     // Open the forward message dialog using PrimeNG DialogService
-                    const ref = this.dialogService.open(ForwardMessageDialogComponent, {
-                        ...defaultFirstLayerDialogOptions,
-                        closable: false,
-                        data: {
-                            users: [],
-                            channels: this.channels,
-                            postToForward: post,
-                            courseId: this.course()?.id,
-                        },
-                    });
+                    const ref = this.dialogService.open(
+                        ForwardMessageDialogComponent,
+                        cloneWith(defaultFirstLayerDialogOptions, {
+                            closable: false,
+                            focusOnShow: false,
+                            data: {
+                                users: [],
+                                channels: this.channels,
+                                postToForward: post,
+                                courseId: this.course()?.id,
+                            },
+                        }),
+                    );
 
                     ref?.onClose.subscribe(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string } | undefined) => {
                         if (selection) {
@@ -574,7 +623,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                                 if (userLogins.length === 1) {
                                     // Direct message
                                     try {
-                                        const response = await firstValueFrom(this.metisConversationService.createDirectConversation(userLogins[0]));
+                                        const response = await firstValueFrom(this.courseConversationsService.createDirectConversation(userLogins[0]));
                                         newConversation = (response?.body ?? undefined) as Conversation;
                                         if (newConversation) {
                                             allSelections.push(newConversation);
@@ -585,7 +634,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                                 } else {
                                     // Group message
                                     try {
-                                        const response = await firstValueFrom(this.metisConversationService.createGroupConversation(userLogins));
+                                        const response = await firstValueFrom(this.courseConversationsService.createGroupConversation(userLogins));
                                         if (response && response.body) {
                                             newConversation = response.body as Conversation;
                                             allSelections.push(newConversation);
@@ -609,10 +658,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     }
 
     /**
-     * Sends the post to selected conversation with optional new content via MetisService.
+     * Sends the post to selected conversation with optional new content via CommunicationService.
      */
     forwardPost(post: Posting, conversation: Conversation, content: string, isAnswer: boolean): void {
-        this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({
+        this.communicationService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({
             complete: () => {
                 this.courseSidebarService.reloadSidebar();
             },
@@ -632,10 +681,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
 
         const canDeleteAnnouncement = isAnswerOfAnnouncement ? this.isAtLeastInstructorInCourse : true;
         const mayDeleteOtherUsers =
-            (isCourseWide && this.isAtLeastTutorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
+            (isCourseWide && this.isAtLeastTutorInCourse()) || (getAsChannelDTO(this.communicationService.getCurrentConversation())?.hasChannelModerationRights ?? false);
 
-        this.mayDelete = !this.isReadOnlyMode() && !this.previewMode() && (this.isAuthorOfPosting || mayDeleteOtherUsers) && canDeleteAnnouncement;
-        this.mayDeleteOutput.emit(this.mayDelete);
+        this.mayDelete.set(!this.isReadOnlyMode() && !this.previewMode() && (this.isAuthorOfPosting || mayDeleteOtherUsers) && canDeleteAnnouncement);
+        this.mayDeleteOutput.emit(this.mayDelete());
     }
 
     private getConversation(): Conversation | undefined {
@@ -651,10 +700,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     }
 
     getSaved(): boolean {
-        return <boolean>(this.posting() as Posting)?.isSaved;
+        return (this.posting() as Posting)?.isSaved as boolean;
     }
 
     getResolvesPost(): boolean {
-        return <boolean>(this.posting() as AnswerPost)?.resolvesPost;
+        return (this.posting() as AnswerPost)?.resolvesPost as boolean;
     }
 }

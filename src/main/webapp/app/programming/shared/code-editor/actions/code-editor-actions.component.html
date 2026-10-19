@@ -17,7 +17,7 @@
             type="button"
             class="btn btn-danger navbar-btn me-3"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [overwriteDisabled]="disableActions()"
+            [overwriteDisabled]="disableActions() || isResolvingConflict()"
             (click)="resetRepository()"
             [ngbTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
         >

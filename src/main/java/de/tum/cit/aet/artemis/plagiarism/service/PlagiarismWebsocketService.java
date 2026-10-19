@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import java.io.IOException;
+import static de.tum.cit.aet.artemis.plagiarism.web.PlagiarismWebsocketTopics.PROGRAMMING_PLAGIARISM_CHECK;
+import static de.tum.cit.aet.artemis.plagiarism.web.PlagiarismWebsocketTopics.TEXT_PLAGIARISM_CHECK;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,9 +13,11 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
 
@@ -26,9 +30,9 @@ public class PlagiarismWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public PlagiarismWebsocketService(WebsocketMessagingService websocketMessagingService, ObjectMapper objectMapper) {
+    public PlagiarismWebsocketService(WebsocketMessagingService websocketMessagingService, JsonMapper objectMapper) {
         this.websocketMessagingService = websocketMessagingService;
         this.objectMapper = objectMapper;
     }
@@ -40,7 +44,7 @@ public class PlagiarismWebsocketService {
      * @param plagiarismCheckState The plagiarism check state
      * @param messages             optional messages to send
      */
-    public void notifyInstructorAboutPlagiarismState(String topic, PlagiarismCheckState plagiarismCheckState, List<String> messages) {
+    public void notifyInstructorAboutPlagiarismState(WebsocketDestination topic, PlagiarismCheckState plagiarismCheckState, List<String> messages) {
         Map<String, String> payload = new HashMap<>();
         payload.put("state", plagiarismCheckState.toString());
         payload.put("messages", String.join("\n", messages));
@@ -48,7 +52,7 @@ public class PlagiarismWebsocketService {
         try {
             websocketMessagingService.sendMessage(topic, objectMapper.writeValueAsString(payload));
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             log.info("Couldn't notify the user about the plagiarism state for topic {}: {}", topic, e.getMessage());
         }
     }
@@ -59,8 +63,8 @@ public class PlagiarismWebsocketService {
      * @param programmingExerciseId the id of the exercise
      * @return the topic
      */
-    public String getProgrammingExercisePlagiarismCheckTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/plagiarism-check";
+    public WebsocketDestination getProgrammingExercisePlagiarismCheckTopic(long programmingExerciseId) {
+        return PROGRAMMING_PLAGIARISM_CHECK.at(programmingExerciseId);
     }
 
     /**
@@ -69,7 +73,7 @@ public class PlagiarismWebsocketService {
      * @param textExerciseId the id of the exercise
      * @return the topic
      */
-    public String getTextExercisePlagiarismCheckTopic(Long textExerciseId) {
-        return "/topic/text-exercises/" + textExerciseId + "/plagiarism-check";
+    public WebsocketDestination getTextExercisePlagiarismCheckTopic(long textExerciseId) {
+        return TEXT_PLAGIARISM_CHECK.at(textExerciseId);
     }
 }

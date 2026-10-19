@@ -23,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationUpdateDTO;
 import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
@@ -36,11 +38,9 @@ import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage(UserFeature.SYSTEM_NOTIFICATIONS)
 @RestController
-// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/" prefix.
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/admin/", NotificationLegacyRestPaths.COMMUNICATION_PREFIX + "admin/" })
+@RequestMapping("api/notification/admin/")
 public class AdminSystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminSystemNotificationResource.class);
@@ -68,7 +68,7 @@ public class AdminSystemNotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("system-notifications")
-    public ResponseEntity<SystemNotification> createSystemNotification(@RequestBody SystemNotificationUpdateDTO dto,
+    public ResponseEntity<SystemNotificationDTO> createSystemNotification(@RequestBody SystemNotificationUpdateDTO dto,
             @RequestParam(defaultValue = "false") boolean sendMaintenanceEmail) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", dto);
         if (dto.id() != null) {
@@ -89,7 +89,7 @@ public class AdminSystemNotificationResource {
         }
 
         return ResponseEntity.created(new URI("/api/notifications/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(SystemNotificationDTO.from(result));
     }
 
     /**
@@ -111,7 +111,7 @@ public class AdminSystemNotificationResource {
      *         status 500 (Internal Server Error) if the system notification couldn't be updated
      */
     @PutMapping("system-notifications")
-    public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotificationUpdateDTO updateDTO) {
+    public ResponseEntity<SystemNotificationDTO> updateSystemNotification(@RequestBody SystemNotificationUpdateDTO updateDTO) {
         log.debug("REST request to update SystemNotification : {}", updateDTO);
         if (updateDTO.id() == null) {
             throw new BadRequestAlertException("ID must not be null", ENTITY_NAME, "idNull");
@@ -127,7 +127,8 @@ public class AdminSystemNotificationResource {
         this.systemNotificationService.validateDatesElseThrow(existingNotification);
         SystemNotification result = systemNotificationRepository.save(existingNotification);
         systemNotificationService.distributeActiveAndFutureNotificationsToClients();
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
+                .body(SystemNotificationDTO.from(result));
     }
 
     /**

@@ -1,8 +1,10 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, filter, shareReplay, timeout } from 'rxjs';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 
 /** Maximum time (ms) to wait for a WebSocket response before the Observable errors. */
 export const IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS = 60_000;
@@ -10,9 +12,7 @@ export const IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS = 60_000;
 /** STOMP channel on which Artemis pushes global search answer updates for the current user. */
 const GLOBAL_SEARCH_ANSWER_WS_CHANNEL = '/user/topic/iris/global-search-answer';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class IrisSearchAnswerService {
     private readonly http = inject(HttpClient);
     private readonly websocketService = inject(WebsocketService);
@@ -39,11 +39,11 @@ export class IrisSearchAnswerService {
      * The Observable completes after the final result message (`isThinking: false`).
      * `switchMap` in the caller guarantees the previous subscription is torn down before the next starts.
      */
-    ask(query: string, limit = 5): Observable<IrisSearchStatusUpdate> {
+    ask(query: string, limit = 5, courseIds?: number[], excludeCourseIds?: number[]): Observable<IrisSearchStatusUpdate> {
         return new Observable<IrisSearchStatusUpdate>((subscriber) => {
             // Generate the correlation ID client-side so it's known before the HTTP call.
             // The server registers this ID as the Hazelcast job token; WebSocket callbacks echo it back.
-            const runId = window.crypto.randomUUID();
+            const runId = generateUuid();
 
             // 1. Attach to the shared STOMP subscription, filtering to this run's messages only.
             //    The shared Observable keeps the underlying STOMP channel open as long as any
@@ -64,9 +64,12 @@ export class IrisSearchAnswerService {
                 });
 
             // 2. Fire the HTTP request with the client-generated runId. Server returns 202 with no body.
-            const httpSubscription = this.http.post('api/iris/search-answer', { query, limit, runId }).subscribe({
-                error: (err) => subscriber.error(err),
-            });
+            // The answer card shows its own failure state, so the global error alert would only repeat it.
+            const httpSubscription = this.http
+                .post('api/iris/search-answer', { query, limit, runId, courseIds, excludeCourseIds }, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) })
+                .subscribe({
+                    error: (err) => subscriber.error(err),
+                });
 
             return () => {
                 wsSubscription.unsubscribe();

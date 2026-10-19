@@ -1,5 +1,6 @@
 import { Page } from '@playwright/test';
 import { BASE_API } from '../../../constants';
+import { readResponseJson } from '../../../utils';
 import { QuizBatch } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 export class QuizExerciseOverviewPage {
@@ -10,15 +11,29 @@ export class QuizExerciseOverviewPage {
     }
 
     /**
+     * Opens the quiz's batch popover, which only renders its add/start buttons while open. Idempotent.
+     * @param exerciseId The ID of the quiz exercise whose batch popover to open.
+     */
+    private async openBatchMenu(exerciseId: number) {
+        const addBatchButton = this.page.locator(`#instructor-quiz-add-${exerciseId}`);
+        if (await addBatchButton.isVisible()) {
+            return;
+        }
+        await this.page.locator(`#instructor-quiz-batches-${exerciseId}`).click();
+        await addBatchButton.waitFor({ state: 'visible' });
+    }
+
+    /**
      * Adds a quiz batch to the quiz exercise with the given ID.
      * @param exerciseId The ID of the quiz exercise to add a batch to.
      * @returns The created quiz batch.
      */
     async addQuizBatch(exerciseId: number): Promise<QuizBatch> {
+        await this.openBatchMenu(exerciseId);
         const responsePromise = this.page.waitForResponse(`${BASE_API}/quiz/quiz-exercises/${exerciseId}/add-batch`);
         await this.page.locator(`#instructor-quiz-add-${exerciseId}`).click();
         const response = await responsePromise;
-        return await response.json();
+        return await readResponseJson(response);
     }
 
     /**
@@ -27,7 +42,16 @@ export class QuizExerciseOverviewPage {
      * @param batchId The ID of the batch to start.
      */
     async startQuizBatch(exerciseId: number, batchId: number) {
+        await this.openBatchMenu(exerciseId);
+        // Wait for the start-batch request to actually complete before returning. Otherwise a student joining the batch
+        // immediately afterwards can race the in-flight start, find the batch not yet started, and never see the quiz
+        // question — the root cause of the batch-join flake.
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes(`/quiz/quiz-batches/${batchId}/start-batch`) && resp.request().method() === 'PUT' && resp.ok(),
+            { timeout: 20000 },
+        );
         await this.page.locator(`#instructor-quiz-start-${exerciseId}-${batchId}`).click();
+        await responsePromise;
     }
 
     /**

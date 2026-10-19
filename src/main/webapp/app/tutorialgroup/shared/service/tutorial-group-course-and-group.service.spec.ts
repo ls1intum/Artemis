@@ -1,28 +1,32 @@
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { signal } from '@angular/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupCourseAndGroupService } from './tutorial-group-course-and-group.service';
-import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
-import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorial-group-session';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
 describe('TutorialGroupCourseAndGroupService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: TutorialGroupCourseAndGroupService;
+    let authenticationState: BehaviorSubject<User | undefined>;
+    const entityTitleService = { setTitle: vi.fn() };
 
     let tutorialGroupApiService: { getTutorialGroup: ReturnType<typeof vi.fn> };
     let courseManagementService: { find: ReturnType<typeof vi.fn> };
     let alertService: { addErrorAlert: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
+        authenticationState = new BehaviorSubject<User | undefined>({ id: 1, internal: true });
         tutorialGroupApiService = {
             getTutorialGroup: vi.fn(),
         };
@@ -36,7 +40,12 @@ describe('TutorialGroupCourseAndGroupService', () => {
         TestBed.configureTestingModule({
             providers: [
                 TutorialGroupCourseAndGroupService,
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiService },
+                {
+                    provide: AccountService,
+                    useValue: { userIdentity: signal<User | undefined>({ id: 1, internal: true }), getAuthenticationState: () => authenticationState.asObservable() },
+                },
+                { provide: EntityTitleService, useValue: entityTitleService },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiService },
                 { provide: CourseManagementService, useValue: courseManagementService },
                 { provide: AlertService, useValue: alertService },
             ],
@@ -150,7 +159,58 @@ describe('TutorialGroupCourseAndGroupService', () => {
 
         expect(tutorialGroupApiService.getTutorialGroup).toHaveBeenCalledWith(2, 17);
         expect(service.tutorialGroup()).toEqual(new TutorialGroupDetailData(tutorialGroup));
+        expect(entityTitleService.setTitle).toHaveBeenCalledWith(EntityType.TUTORIAL_GROUP, [17], tutorialGroup.title);
         expect(service.isTutorialGroupLoading()).toBe(false);
+    });
+
+    it('clears a previous group and prevents an older response from replacing the requested group', () => {
+        const first = new Subject<RawTutorialGroupDetailData>();
+        const second = new Subject<RawTutorialGroupDetailData>();
+        const oldGroup = createTutorialGroupDetailData([]);
+        const newGroup = { ...oldGroup, id: 18, title: 'TG 18' };
+        service.tutorialGroup.set(new TutorialGroupDetailData(oldGroup));
+        tutorialGroupApiService.getTutorialGroup.mockReturnValueOnce(first).mockReturnValueOnce(second);
+        service.fetchTutorialGroup(2, 17);
+        service.fetchTutorialGroup(2, 18);
+        expect(service.tutorialGroup()).toBeUndefined();
+        second.next(newGroup);
+        first.next(oldGroup);
+        expect(service.tutorialGroup()?.id).toBe(18);
+        expect(entityTitleService.setTitle).toHaveBeenLastCalledWith(EntityType.TUTORIAL_GROUP, [18], 'TG 18');
+    });
+
+    it('cancels pending group and course responses when the user changes', () => {
+        const groupResponse = new Subject<RawTutorialGroupDetailData>();
+        const courseResponse = new Subject<HttpResponse<Course>>();
+        tutorialGroupApiService.getTutorialGroup.mockReturnValue(groupResponse);
+        courseManagementService.find.mockReturnValue(courseResponse);
+        service.fetchTutorialGroup(2, 17);
+        service.fetchCourse(2);
+
+        authenticationState.next({ id: 2, internal: true });
+        groupResponse.next(createTutorialGroupDetailData([]));
+        courseResponse.next(new HttpResponse({ body: new Course() }));
+
+        expect(service.tutorialGroup()).toBeUndefined();
+        expect(service.course()).toBeUndefined();
+        expect(service.isTutorialGroupLoading()).toBe(false);
+        expect(service.isCourseLoading()).toBe(false);
+        expect(entityTitleService.setTitle).not.toHaveBeenCalled();
+    });
+
+    it('clears cached group and course on logout but preserves them for the same user', () => {
+        const group = new TutorialGroupDetailData(createTutorialGroupDetailData([]));
+        const course = new Course();
+        service.tutorialGroup.set(group);
+        service.course.set(course);
+
+        authenticationState.next({ id: 1, internal: true, login: 'updated-login' });
+        expect(service.tutorialGroup()).toBe(group);
+        expect(service.course()).toBe(course);
+
+        authenticationState.next(undefined);
+        expect(service.tutorialGroup()).toBeUndefined();
+        expect(service.course()).toBeUndefined();
     });
 
     it('should show error alert if fetching tutorial group fails and clear loading state', () => {

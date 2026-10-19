@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Simulates WebAuthn client (browser) operations for integration testing.
@@ -68,7 +68,7 @@ public class WebAuthnClientSimulator {
 
     private static final byte FLAG_ATTESTED_CREDENTIAL_DATA = 0x40;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper objectMapper = new JsonMapper();
 
     private final SecureRandom secureRandom = new SecureRandom();
 

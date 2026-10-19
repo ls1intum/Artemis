@@ -22,10 +22,10 @@ export function getRegistrationCredentialFromMalformed1Password8Object(
         ? encodeAsBase64Url(new Uint8Array(malformed1Password8RegistrationCredential.response.attestationObject))
         : undefined;
     const authenticatorDataBase64 = malformed1Password8RegistrationCredential.response.getAuthenticatorData?.()
-        ? encodeAsBase64Url(new Uint8Array(malformed1Password8RegistrationCredential.response.getAuthenticatorData!()))
+        ? encodeAsBase64Url(new Uint8Array(malformed1Password8RegistrationCredential.response.getAuthenticatorData()))
         : undefined;
     const publicKeyBase64 = malformed1Password8RegistrationCredential.response.getPublicKey?.()
-        ? encodeAsBase64Url(new Uint8Array(malformed1Password8RegistrationCredential.response.getPublicKey!()))
+        ? encodeAsBase64Url(new Uint8Array(malformed1Password8RegistrationCredential.response.getPublicKey()))
         : undefined;
 
     return {
@@ -60,7 +60,7 @@ export function getLoginCredentialFromMalformed1Password8Object(
     const rawIdBase64 = encodeAsBase64Url(new Uint8Array(malformed1Password8LoginCredential.rawId));
     const clientDataJSONBase64 = encodeAsBase64Url(new Uint8Array(malformed1Password8LoginCredential.response.clientDataJSON));
     const authenticatorDataBase64 = malformed1Password8LoginCredential.response.authenticatorData
-        ? encodeAsBase64Url(new Uint8Array(malformed1Password8LoginCredential.response.authenticatorData!))
+        ? encodeAsBase64Url(new Uint8Array(malformed1Password8LoginCredential.response.authenticatorData))
         : undefined;
     const signatureBase64 = malformed1Password8LoginCredential.response.signature
         ? encodeAsBase64Url(new Uint8Array(malformed1Password8LoginCredential.response.signature))

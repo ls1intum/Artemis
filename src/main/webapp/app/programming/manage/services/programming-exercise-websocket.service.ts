@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -19,7 +19,7 @@ export interface IProgrammingExerciseWebsocketService {
     getTestCaseState(programmingExerciseId: number): Observable<boolean>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgrammingExerciseWebsocketService {
     private websocketService = inject(WebsocketService);
     private readonly accountService = inject(AccountService);
@@ -75,7 +75,7 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
      */
     private initTestCaseStateSubscription(programmingExerciseId: number) {
         const testCaseTopic = `/topic/programming-exercises/${programmingExerciseId}/test-cases-changed`;
-        this.subjects[programmingExerciseId] = new BehaviorSubject(undefined);
+        this.subjects[programmingExerciseId] = new BehaviorSubject<boolean | undefined>(undefined);
         this.connections[programmingExerciseId] = this.websocketService
             .subscribe<boolean>(testCaseTopic)
             .pipe(tap((testCasesChanged) => this.notifySubscribers(programmingExerciseId, testCasesChanged)))
@@ -91,6 +91,6 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
      */
     getTestCaseState(programmingExerciseId: number) {
         const existingSubject = this.subjects[programmingExerciseId];
-        return (existingSubject || this.initTestCaseStateSubscription(programmingExerciseId)).asObservable().pipe(filter((val) => val !== undefined)) as Observable<boolean>;
+        return (existingSubject || this.initTestCaseStateSubscription(programmingExerciseId)).asObservable().pipe(filter((val) => val !== undefined));
     }
 }

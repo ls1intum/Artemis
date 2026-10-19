@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -29,25 +29,33 @@ import {
     isStudentParticipation,
 } from 'app/exercise/result/result.utils';
 import { CsvDownloadService } from 'app/foundation/util/CsvDownloadService';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
 export type ResultsWithPointsArrayResponseType = HttpResponse<ResultWithPointsPerGradingCriterion[]>;
 
 export interface Badge {
-    class: string;
+    severity: 'success' | 'info' | 'secondary';
     text: string;
     tooltip: string;
 }
 
+/**
+ * Request options that are appended as query parameters when fetching results with points per grading criterion.
+ */
+export interface ResultsWithPointsRequestOptions {
+    withSubmissions?: boolean;
+}
+
 export interface IResultService {
-    getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
+    getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: ResultsWithPointsRequestOptions) => Observable<ResultsWithPointsArrayResponseType>;
     getFeedbackDetailsForResult: (participationId: number, result: Result) => Observable<HttpResponse<Feedback[]>>;
     getResultsWithPointsPerGradingCriterion: (exercise: Exercise) => Observable<ResultsWithPointsArrayResponseType>;
     triggerDownloadCSV: (rows: string[], csvFileName: string) => void;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ResultService implements IResultService {
     private http = inject(HttpClient);
     private translateService = inject(TranslateService);
@@ -62,14 +70,17 @@ export class ResultService implements IResultService {
     /**
      * Generates the result string for the given exercise and result.
      * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
-     * If either of the arguments is undefined the error is forwarded to sentry and an empty string is returned
+     * If the result or the exercise is undefined the error is forwarded to sentry and an empty string is returned.
+     *
+     * A missing `participation` is NOT an error: example submissions own a result without belonging to a
+     * participation. Only the programming branch reads the participation, and it degrades gracefully without one.
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
-     * @param participation the participation of the exercise and result
+     * @param participation the participation of the exercise and result, if the result belongs to one
      * @param short flag that indicates if the resultString should use the short format
      */
     getResultString(result: Result | undefined, exercise: Exercise | undefined, participation: Participation | undefined, short?: boolean): string {
-        if (result && exercise && participation) {
+        if (result && exercise) {
             return this.getResultStringDefinedParameters(result, exercise, participation, short);
         } else {
             captureException('Tried to generate a result string, but either the result or exercise was undefined');
@@ -85,8 +96,8 @@ export class ResultService implements IResultService {
      * @param participation the participation of the exercise and result
      * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringDefinedParameters(result: Result, exercise: Exercise, participation: Participation, short: boolean | undefined): string {
-        const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
+    private getResultStringDefinedParameters(result: Result, exercise: Exercise, participation: Participation | undefined, short: boolean | undefined): string {
+        const relativeScore = roundValueSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {
             if (isAthenaAIResult(result)) {
@@ -94,7 +105,7 @@ export class ResultService implements IResultService {
             }
             return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         } else {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, participation, relativeScore, points, short);
+            return this.getResultStringProgrammingExercise(result, exercise, participation, relativeScore, points, short);
         }
     }
 
@@ -148,12 +159,12 @@ export class ResultService implements IResultService {
     private getResultStringProgrammingExercise(
         result: Result,
         exercise: ProgrammingExercise,
-        participation: Participation,
+        participation: Participation | undefined,
         relativeScore: number,
         points: number,
         short: boolean | undefined,
     ): string {
-        const latestSubmission = (result.submission ?? participation.submissions?.[0]) as ProgrammingSubmission;
+        const latestSubmission = (result.submission ?? participation?.submissions?.[0]) as ProgrammingSubmission;
         let buildAndTestMessage: string;
         if (isAIResultAndFailed(result)) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
@@ -173,13 +184,16 @@ export class ResultService implements IResultService {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulTests', {
                 numberOfTestsPassed:
                     result.passedTestCaseCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.passedTestCaseCount,
-                numberOfTestsTotal: result.testCaseCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.testCaseCount,
+                numberOfTestsTotal: result.testCaseCount >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.testCaseCount,
             });
         }
 
         let resultString = this.getBaseResultStringProgrammingExercise(result, relativeScore, points, buildAndTestMessage, short);
 
-        if (isStudentParticipation(result) && isResultPreliminary(result, participation, exercise)) {
+        // Only student participations get the "(preliminary)" suffix; a programming exercise's template and solution
+        // participations must not. Pass the participation, never the result: both types are all-optional members, so
+        // `isStudentParticipation(result)` type-checks and then always answers true.
+        if (participation && isStudentParticipation(participation) && isResultPreliminary(result, participation, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
         }
 
@@ -213,7 +227,7 @@ export class ResultService implements IResultService {
             return this.translateService.instant('artemisApp.result.resultString.programmingCodeIssues', {
                 relativeScore,
                 buildAndTestMessage,
-                numberOfIssues: result.codeIssueCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.codeIssueCount,
+                numberOfIssues: result.codeIssueCount >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.codeIssueCount,
                 points,
             });
         } else {
@@ -225,7 +239,7 @@ export class ResultService implements IResultService {
         }
     }
 
-    getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: any): Observable<ResultsWithPointsArrayResponseType> {
+    getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: ResultsWithPointsRequestOptions): Observable<ResultsWithPointsArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<ResultWithPointsPerGradingCriterion[]>(`${this.exerciseResourceUrl}/${exerciseId}/results-with-points-per-criterion`, {
@@ -246,7 +260,7 @@ export class ResultService implements IResultService {
     }
 
     public convertResultDatesFromClient(result: Result): Result {
-        return Object.assign({}, result, {
+        return cloneWith(result, {
             completionDate: convertDateFromClient(result.completionDate),
             submission: undefined,
         });
@@ -277,7 +291,7 @@ export class ResultService implements IResultService {
 
     private convertResultDatesFromServer(result: Result) {
         result.completionDate = convertDateFromServer(result.completionDate);
-        ParticipationService.convertParticipationDatesFromServer(result.submission?.participation as StudentParticipation);
+        ParticipationService.convertParticipationDatesFromServer(result.submission?.participation);
         SubmissionService.convertSubmissionDateFromServer(result.submission);
     }
 
@@ -309,22 +323,15 @@ export class ResultService implements IResultService {
     public static processReceivedResult(exercise: Exercise, result: Result): Result {
         if (result.submission?.participation) {
             (result.submission.participation as StudentParticipation).exercise = exercise;
-            // Nest submission into participation so that it is available for the result component
         }
         result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.submission?.participation?.initializationDate ?? exercise.releaseDate!);
         return result;
     }
 
-    /**
-     * Utility function
-     */
     private static durationInMinutes(completionDate: dayjs.Dayjs, initializationDate: dayjs.Dayjs) {
         return dayjs(completionDate).diff(initializationDate, 'minutes');
     }
 
-    /**
-     * Utility function used to trigger the download of a CSV file
-     */
     public triggerDownloadCSV(rows: string[], csvFileName: string) {
         const csvContent = 'data:text/csv;charset=utf-8,' + rows.join('\n');
         this.csvDownloadService.downloadCSV(csvContent, csvFileName);
@@ -333,11 +340,11 @@ export class ResultService implements IResultService {
     public static evaluateBadge(participation: Participation, result: Result): Badge {
         if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
             if (isPracticeMode(participation) || isPracticeResult(result)) {
-                return { class: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
+                return { severity: 'secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
             }
         }
         return result.rated
-            ? { class: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
-            : { class: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
+            ? { severity: 'success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
+            : { severity: 'info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
     }
 }

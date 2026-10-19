@@ -1,9 +1,9 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class QuizTrainingSettingsService {
     private http = inject(HttpClient);
 

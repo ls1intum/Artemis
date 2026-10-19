@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { CourseSettingsComponent } from 'app/course/overview/course-settings/course-settings.component';
 import { Component } from '@angular/core';
@@ -14,8 +13,6 @@ import { of } from 'rxjs';
 class NotificationSettingsStubComponent {}
 
 describe('CourseSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CourseSettingsComponent, NotificationSettingsStubComponent],

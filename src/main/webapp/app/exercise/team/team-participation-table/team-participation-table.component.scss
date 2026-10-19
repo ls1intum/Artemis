@@ -1,53 +1,5 @@
-$space-left-from-divider: 50px;
-
-.ngx-datatable.bootstrap .datatable-header .datatable-header-cell {
-    border-bottom: none !important;
-}
-
-.datatable-row-wrapper:last-child .datatable-body-row {
-    border-bottom: 1px solid var(--team-participation-table-last-row-border-bottom);
-}
-
-.datatable-row-left {
-    & > .datatable-body-cell:last-child {
-        position: relative;
-        overflow: visible !important;
-
-        &::after {
-            $border-width: 1px;
-
-            content: ' ';
-            position: absolute;
-            width: 5px;
-            right: -5px;
-            top: -$border-width;
-            height: calc(100% + #{$border-width});
-            box-shadow: 8px 0 12px -15px inset var(--team-participation-table-box-shadow-color);
-        }
-    }
-
-    .datatable-row-odd &,
-    .datatable-header-inner & {
-        background-color: var(--team-participation-table-header-inner-background);
-    }
-}
-
-.datatable-cell-space-left {
-    .datatable-header-cell-template-wrap,
-    .datatable-body-cell-label {
-        padding-left: $space-left-from-divider;
-    }
-}
-
-.datatable-row-current-exercise {
+.team-participation-current-exercise {
     background-color: var(--team-participation-table-current-exercise-bg) !important;
-
-    &.datatable-row-even,
-    &.datatable-row-odd {
-        .datatable-row-left {
-            background-color: var(--team-participation-table-current-exercise-bg);
-        }
-    }
 }
 
 .current-team {
@@ -55,6 +7,21 @@ $space-left-from-divider: 50px;
     color: var(--team-participation-table-current-exercise-text);
 }
 
-.btn[disabled]:hover {
-    cursor: not-allowed;
+// Shadow on the right edge of the frozen-left column area
+// Targets the last left-frozen cell in each row using PrimeNG's .p-datatable-frozen-column class.
+.p-datatable-thead tr th.p-datatable-frozen-column:has(+ th:not(.p-datatable-frozen-column)),
+.p-datatable-tbody tr td.p-datatable-frozen-column:has(+ td:not(.p-datatable-frozen-column)) {
+    overflow: visible !important;
+
+    &::after {
+        $border-width: 1px;
+
+        content: '';
+        position: absolute;
+        width: 5px;
+        right: -5px;
+        top: -$border-width;
+        height: calc(100% + #{$border-width});
+        box-shadow: 8px 0 12px -15px inset var(--team-participation-table-box-shadow-color);
+    }
 }

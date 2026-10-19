@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, output } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { NodeDimension } from '@swimlane/ngx-graph';
+import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
 import { CompetencyGraphNodeDTO, CompetencyGraphNodeValueType } from 'app/atlas/shared/entities/learning-path.model';
 
 export interface SizeUpdate {
     id: string;
-    dimension: NodeDimension;
+    dimension: GraphNodeDimension;
 }
 
 @Component({
@@ -18,6 +18,8 @@ export interface SizeUpdate {
     styleUrl: './competency-node.component.scss',
 })
 export class CompetencyNodeComponent implements AfterViewInit {
+    private readonly element = inject(ElementRef);
+
     protected readonly CompetencyGraphNodeValueType = CompetencyGraphNodeValueType;
     // height of node element in pixels
     private readonly nodeHeight = 45.59;
@@ -27,7 +29,6 @@ export class CompetencyNodeComponent implements AfterViewInit {
 
     readonly value = computed(() => this.competencyNode().value);
 
-    private readonly element = inject(ElementRef);
     readonly onSizeSet = output<SizeUpdate>();
 
     ngAfterViewInit(): void {

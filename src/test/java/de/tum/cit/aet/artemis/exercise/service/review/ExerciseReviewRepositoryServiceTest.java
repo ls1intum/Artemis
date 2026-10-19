@@ -9,10 +9,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
+import org.eclipse.jgit.lib.ObjectReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -22,10 +23,11 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewRepositoryService.ConsistencyTargetRepositoryUris;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -40,14 +42,14 @@ class ExerciseReviewRepositoryServiceTest {
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Mock
-    private GitService gitService;
+    private BareGitRepositoryService bareGitRepositoryService;
 
     private ExerciseReviewRepositoryService repositoryService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        repositoryService = new ExerciseReviewRepositoryService(programmingExerciseRepository, auxiliaryRepositoryRepository, gitService);
+        repositoryService = new ExerciseReviewRepositoryService(programmingExerciseRepository, auxiliaryRepositoryRepository, bareGitRepositoryService);
     }
 
     @Test
@@ -55,7 +57,7 @@ class ExerciseReviewRepositoryServiceTest {
         String commitSha = repositoryService.resolveLatestCommitSha(CommentThreadLocationType.PROBLEM_STATEMENT, null, 42L);
 
         assertThat(commitSha).isNull();
-        verifyNoInteractions(programmingExerciseRepository, auxiliaryRepositoryRepository, gitService);
+        verifyNoInteractions(programmingExerciseRepository, auxiliaryRepositoryRepository, bareGitRepositoryService);
     }
 
     @Test
@@ -74,12 +76,12 @@ class ExerciseReviewRepositoryServiceTest {
         exercise.setTemplateParticipation(templateParticipation);
 
         when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(1L)).thenReturn(Optional.of(exercise));
-        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("template-hash");
+        when(bareGitRepositoryService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("template-hash");
 
         String commitSha = repositoryService.resolveLatestCommitSha(CommentThreadLocationType.TEMPLATE_REPO, null, 1L);
 
         assertThat(commitSha).isEqualTo("template-hash");
-        verify(gitService).getLastCommitHash(any(LocalVCRepositoryUri.class));
+        verify(bareGitRepositoryService).getLastCommitHash(any(LocalVCRepositoryUri.class));
     }
 
     @Test
@@ -90,12 +92,12 @@ class ExerciseReviewRepositoryServiceTest {
         exercise.setSolutionParticipation(solutionParticipation);
 
         when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(2L)).thenReturn(Optional.of(exercise));
-        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("solution-hash");
+        when(bareGitRepositoryService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("solution-hash");
 
         String commitSha = repositoryService.resolveLatestCommitSha(CommentThreadLocationType.SOLUTION_REPO, null, 2L);
 
         assertThat(commitSha).isEqualTo("solution-hash");
-        verify(gitService).getLastCommitHash(any(LocalVCRepositoryUri.class));
+        verify(bareGitRepositoryService).getLastCommitHash(any(LocalVCRepositoryUri.class));
     }
 
     @Test
@@ -104,12 +106,12 @@ class ExerciseReviewRepositoryServiceTest {
         exercise.setTestRepositoryUri("http://localhost/git/EX1/ex1-tests.git");
 
         when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(3L)).thenReturn(Optional.of(exercise));
-        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("test-hash");
+        when(bareGitRepositoryService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("test-hash");
 
         String commitSha = repositoryService.resolveLatestCommitSha(CommentThreadLocationType.TEST_REPO, null, 3L);
 
         assertThat(commitSha).isEqualTo("test-hash");
-        verify(gitService).getLastCommitHash(any(LocalVCRepositoryUri.class));
+        verify(bareGitRepositoryService).getLastCommitHash(any(LocalVCRepositoryUri.class));
     }
 
     @Test
@@ -120,7 +122,7 @@ class ExerciseReviewRepositoryServiceTest {
         String commitSha = repositoryService.resolveLatestCommitSha(CommentThreadLocationType.TEMPLATE_REPO, null, 4L);
 
         assertThat(commitSha).isNull();
-        verify(gitService, never()).getLastCommitHash(any(LocalVCRepositoryUri.class));
+        verify(bareGitRepositoryService, never()).getLastCommitHash(any(LocalVCRepositoryUri.class));
     }
 
     @Test
@@ -168,7 +170,7 @@ class ExerciseReviewRepositoryServiceTest {
 
         when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(9L)).thenReturn(Optional.of(exercise));
         when(auxiliaryRepositoryRepository.findById(12L)).thenReturn(Optional.of(auxiliaryRepository));
-        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("aux-hash");
+        when(bareGitRepositoryService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("aux-hash");
 
         String commitSha = repositoryService.resolveLatestCommitSha(CommentThreadLocationType.AUXILIARY_REPO, 12L, 9L);
 
@@ -203,7 +205,7 @@ class ExerciseReviewRepositoryServiceTest {
         auxiliaryRepository.setId(77L);
         auxiliaryRepository.setRepositoryUri("http://localhost/git/EX1/ex1-aux.git");
         auxiliaryRepository.setExercise(exercise);
-        exercise.setAuxiliaryRepositories(List.of(auxiliaryRepository));
+        exercise.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
 
         when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(10L)).thenReturn(Optional.of(exercise));
 
@@ -218,7 +220,7 @@ class ExerciseReviewRepositoryServiceTest {
     void shouldReturnValidationErrorWhenRepositoryUriIsMissingForFileValidation() {
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(), Map.of());
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris, null);
 
         assertThat(validationError).contains("repository URI for TEMPLATE_REPO is missing");
     }
@@ -227,9 +229,9 @@ class ExerciseReviewRepositoryServiceTest {
     void shouldReturnValidationErrorWhenFileValidationFailsDueToGitError() {
         LocalVCRepositoryUri templateUri = new LocalVCRepositoryUri("http://localhost/git/EX1/ex1-template.git");
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(CommentThreadLocationType.TEMPLATE_REPO, templateUri), Map.of());
-        when(gitService.getBareRepository(eq(templateUri), eq(false))).thenThrow(new RuntimeException("boom"));
+        when(bareGitRepositoryService.getBareRepository(eq(templateUri), eq(false))).thenThrow(new RuntimeException("boom"));
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris, null);
 
         assertThat(validationError).isPresent();
         assertThat(validationError.get()).contains("file existence check failed");
@@ -237,17 +239,32 @@ class ExerciseReviewRepositoryServiceTest {
     }
 
     @Test
+    void shouldReturnValidationErrorWhenRequestedCommitIsMissing() throws Exception {
+        LocalVCRepositoryUri templateUri = new LocalVCRepositoryUri("http://localhost/git/EX1/ex1-template.git");
+        ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(CommentThreadLocationType.TEMPLATE_REPO, templateUri), Map.of());
+        Repository repository = org.mockito.Mockito.mock(Repository.class);
+        ObjectReader objectReader = org.mockito.Mockito.mock(ObjectReader.class);
+        when(bareGitRepositoryService.getBareRepository(eq(templateUri), eq(false))).thenReturn(repository);
+        when(repository.newObjectReader()).thenReturn(objectReader);
+        when(repository.resolve("missing-sha^{commit}")).thenReturn(null);
+
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris, "missing-sha");
+
+        assertThat(validationError).contains("commit 'missing-sha' is missing in TEMPLATE_REPO");
+    }
+
+    @Test
     void shouldResolveAuxiliaryRepositoryUriWhenValidatingAuxiliaryRepositoryFile() {
         LocalVCRepositoryUri auxiliaryUri = new LocalVCRepositoryUri("http://localhost/git/EX1/ex1-aux.git");
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(), Map.of(77L, auxiliaryUri));
-        when(gitService.getBareRepository(eq(auxiliaryUri), eq(false))).thenThrow(new RuntimeException("boom"));
+        when(bareGitRepositoryService.getBareRepository(eq(auxiliaryUri), eq(false))).thenThrow(new RuntimeException("boom"));
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.AUXILIARY_REPO, 77L, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.AUXILIARY_REPO, 77L, "src/main/App.java", uris, null);
 
         assertThat(validationError).isPresent();
         assertThat(validationError.get()).contains("file existence check failed");
         assertThat(validationError.get()).contains("boom");
-        verify(gitService).getBareRepository(eq(auxiliaryUri), eq(false));
+        verify(bareGitRepositoryService).getBareRepository(eq(auxiliaryUri), eq(false));
     }
 
     private static ProgrammingExercise createProgrammingExercise(long id) {

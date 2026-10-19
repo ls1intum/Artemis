@@ -69,7 +69,7 @@
 
         &:hover,
         &.active {
-            background: color-mix(in srgb, var(--overview-card-nested-bg, var(--bs-body-bg)) 75%, white);
+            background: color-mix(in srgb, var(--bs-body-color) 8%, transparent);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
     }

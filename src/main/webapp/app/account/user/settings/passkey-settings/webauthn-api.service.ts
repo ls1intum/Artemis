@@ -1,19 +1,20 @@
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 // import { PasskeyOptions } from 'app/account/user/settings/passkey-settings/entities/passkey-options.model';
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { RegisterPasskeyDTO } from 'app/account/user/settings/passkey-settings/dto/register-passkey.dto';
 import { PasskeyLoginResponseDTO } from 'app/account/user/settings/passkey-settings/dto/passkey-login-response.dto';
 import { RegisterPasskeyResponseDTO } from 'app/account/user/settings/passkey-settings/dto/register-passkey-response.dto';
+import { SerializableLoginCredential } from 'app/account/user/settings/passkey-settings/entities/serializable-login-credential';
 
 /**
  * Note: [WebAuthn4j](https://github.com/webauthn4j/webauthn4j) exposes the endpoints, the endpoints are not explicitly defined in a resource
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class WebauthnApiService extends BaseApiHttpService {
     /**
      * The endpoints are provided by spring and not explicitly defined in a resource, therefore there is no "/api" prefix
      */
-    protected baseUrl = '';
+    protected override baseUrl = '';
 
     /**
      * @see {@link https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html#passkeys-register-options}
@@ -39,7 +40,9 @@ export class WebauthnApiService extends BaseApiHttpService {
     /**
      * @see {@link https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html#passkeys-verify-get}
      */
-    async loginWithPasskey(publicKeyCredential: PublicKeyCredential): Promise<PasskeyLoginResponseDTO> {
+    async loginWithPasskey(publicKeyCredential: Credential | SerializableLoginCredential): Promise<PasskeyLoginResponseDTO> {
+        // The credential is only JSON-serialized for the request body; it may be a real PublicKeyCredential or the
+        // SerializableLoginCredential workaround object produced for misbehaving authenticators (Bitwarden / 1Password 8).
         return await this.post<PasskeyLoginResponseDTO>(`login/webauthn`, publicKeyCredential);
     }
 }

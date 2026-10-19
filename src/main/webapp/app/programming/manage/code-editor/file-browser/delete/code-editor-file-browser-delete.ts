@@ -25,7 +25,7 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     readonly parent = signal<IFileDeleteDelegate | undefined>(undefined);
     readonly fileType = signal<FileType | undefined>(undefined);
 
-    isLoading: boolean;
+    isLoading = false;
 
     // Icons
     faBan = faBan;

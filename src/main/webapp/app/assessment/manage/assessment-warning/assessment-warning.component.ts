@@ -1,8 +1,9 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -20,8 +21,8 @@ export class AssessmentWarningComponent {
     readonly exercise = input.required<Exercise>();
     readonly submissions = input<Submission[]>([]);
 
-    isBeforeExerciseDueDate = false;
-    showWarning = false;
+    readonly isBeforeExerciseDueDate = signal<boolean>(false);
+    readonly showWarning = signal<boolean>(false);
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
@@ -29,17 +30,24 @@ export class AssessmentWarningComponent {
     constructor() {
         effect(() => {
             const exercise = this.exercise();
-            // Read submissions to register it as a dependency
-            this.submissions();
+            const submissions = this.submissions();
             if (exercise.dueDate) {
                 const now = dayjs();
-                this.isBeforeExerciseDueDate = now.isBefore(exercise.dueDate);
-                this.showWarning = now.isBefore(this.getLatestDueDate()) && !exercise.allowFeedbackRequests;
+                this.isBeforeExerciseDueDate.set(now.isBefore(exercise.dueDate));
+                this.showWarning.set(now.isBefore(this.getLatestDueDate()) && !this.isFeedbackRequestSubmission(submissions));
             } else {
-                this.isBeforeExerciseDueDate = false;
-                this.showWarning = false;
+                this.isBeforeExerciseDueDate.set(false);
+                this.showWarning.set(false);
             }
         });
+    }
+
+    /**
+     * A course-wide Athena formative-feedback toggle does not prove that a given submission is an actual feedback request.
+     * Only suppress the warning when a submission carries an AUTOMATIC_ATHENA result, i.e. it was legitimately created before the due date via a feedback request.
+     */
+    private isFeedbackRequestSubmission(submissions: Submission[]): boolean {
+        return submissions.some((submission) => submission.results?.some((result) => result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA));
     }
 
     private getLatestDueDate(): dayjs.Dayjs | undefined {

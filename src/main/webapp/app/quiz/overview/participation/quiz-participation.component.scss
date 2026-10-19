@@ -21,18 +21,18 @@
     color: var(--quiz-participation-footer-content-time-critical-color);
 }
 
+// Overlays sit at the vertical middle of the viewport and are
+// centered horizontally over the quiz via --quiz-overlay-center-x, which is measured in the component.
 .quiz-submitted-overlay,
 .quiz-waiting-for-start-overlay,
 .quiz-is-active-overlay,
 .quiz-is-over-overlay {
     position: fixed !important;
     top: 50%;
-    left: 50%;
-    -webkit-transform: translate3d(-50%, -50%, 0);
-    -moz-transform: translate3d(-50%, -50%, 0);
-    -ms-transform: translate3d(-50%, -50%, 0);
-    -o-transform: translate3d(-50%, -50%, 0);
-    transform: translate3d(-50%, -50%, 0);
+    left: var(--quiz-overlay-center-x, 50%);
+    transform: translate(-50%, -50%);
+    display: var(--quiz-overlay-display, block);
+    max-width: calc(var(--quiz-overlay-max-width, 90vw) - 2rem);
     box-shadow:
         0 3px 6px rgba(0, 0, 0, 0.16),
         0 3px 6px rgba(0, 0, 0, 0.23);

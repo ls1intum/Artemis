@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, output, viewChild } from '@angular/core';
+import { Component, computed, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
@@ -7,10 +7,11 @@ import { Subject } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-checkout-directories',
-    imports: [HelpIconComponent, TranslateDirective, FormsModule],
+    imports: [HelpIconComponent, TranslateDirective, FormsModule, ArtemisTranslatePipe],
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
     styleUrls: ['../../programming-exercise-form.scss'],
 })
@@ -51,7 +52,7 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
         return this.programmingExercise().buildConfig?.solutionCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.solutionCheckoutDirectory) || '';
     });
 
-    formValid = true;
+    readonly formValid = signal(true);
     formValidChanges = new Subject();
 
     field_assignmentRepositoryCheckoutPath = viewChild<NgModel>('field_assignmentRepositoryCheckoutPath');
@@ -90,8 +91,8 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
             (!this.field_testRepositoryCheckoutPath() || this.field_testRepositoryCheckoutPath()?.valid) &&
             (!this.field_solutionRepositoryCheckoutPath() || this.field_solutionRepositoryCheckoutPath()?.valid),
         );
-        this.formValid = isFormValid && this.areValuesUnique([this.assignmentCheckoutPath(), this.testCheckoutPath(), this.solutionCheckoutPath()]);
-        this.formValidChanges.next(this.formValid);
+        this.formValid.set(isFormValid && this.areValuesUnique([this.assignmentCheckoutPath(), this.testCheckoutPath(), this.solutionCheckoutPath()]));
+        this.formValidChanges.next(this.formValid());
     }
 
     areValuesUnique(values: (string | undefined)[]): boolean {

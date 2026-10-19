@@ -2,75 +2,88 @@
     [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
     [visible]="overlay.isOpen()"
     (visibleChange)="$event ? overlay.open() : overlay.close()"
-    (onHide)="overlay.close()"
+    (onHide)="onDialogHide()"
     (onShow)="focusInput()"
     [modal]="true"
     [closable]="true"
     [showHeader]="false"
     [closeOnEscape]="false"
     [dismissableMask]="true"
-    contentStyleClass="p-0 d-flex flex-column h-100 overflow-hidden"
+    contentStyleClass="p-0 flex flex-col h-full overflow-hidden"
     position="center"
     styleClass="global-search-dialog"
 >
     <!-- Search Input Container -->
     <jhi-global-search-input
         [searchQuery]="searchQuery()"
-        [activeFilters]="activeFilters()"
-        [courseFilterLabel]="activeCourseLabel()"
+        [chips]="chips()"
         [isLoading]="isLoading()"
+        [operator]="operator()"
+        [operatorValueValid]="operatorValueValid()"
+        [operatorUnknown]="deadEnd()"
+        [menuVisible]="filterMenuOpen()"
+        [activeOptionId]="activeOptionId()"
+        [resultsListboxId]="resultsListboxId()"
+        [activeResultId]="activeResultId()"
+        [filterShortcutLabel]="filterShortcutLabel()"
+        [filterDisabled]="filterTriggerDisabled()"
         (searchInput)="onSearchInput($event)"
-        (filterRemoved)="removeFilter($event)"
-        (courseFilterRemoved)="removeCourseFilter()"
-        (backspaceOnEmpty)="onBackspaceRemoveFilter()"
+        (chipRemoved)="onChipRemoved($event)"
+        (chipSelected)="onChipSelected($event)"
+        (backspaceAtStart)="onBackspaceAtStart($event)"
+        (filterTrigger)="openFilterPicker()"
     />
-    <!-- Results Area -->
+    <!-- Results Area — also hosts the filter menu while a filter is being composed (no overlay dropdown). -->
     <div class="results-container">
-        @switch (currentView()) {
-            @case (SearchView.Navigation) {
-                @if (overlay.isOpen()) {
-                    <jhi-global-search-navigation-view
-                        [searchQuery]="searchQuery()"
-                        [selectedIndex]="selectedIndex()"
-                        [results]="results()"
-                        [hasSearched]="hasSearched()"
-                        [showResults]="showResults()"
-                        [isLoading]="isLoading()"
-                        [searchError]="searchError()"
-                        [activeFilters]="activeFilters()"
-                        (viewSelected)="navigateTo($event)"
-                        (entityClick)="onEntityClick($event)"
-                    />
-                }
-            }
-            @case (SearchView.Lecture) {
-                <jhi-global-search-lecture-results (back)="navigateTo(SearchView.Navigation)" [searchQuery]="searchQuery()" [selectedIndex]="selectedIndex()" />
-            }
+        @if (filterMenuOpen()) {
+            <jhi-global-search-filter-menu
+                [options]="menuOptions()"
+                [activeIndex]="menuActiveIndex()"
+                [headerKey]="menuHeaderKey()"
+                [message]="deadEndMessage()"
+                [emptyReasonKey]="emptyMenuReasonKey()"
+                [exclude]="operator()?.negate ?? false"
+                [showBack]="!!backDestination()"
+                (optionSelected)="onOptionSelected($event)"
+                (optionHovered)="onOptionHovered($event)"
+                (back)="onFilterBack()"
+            />
+        } @else if (overlay.isOpen()) {
+            <jhi-global-search-navigation-view
+                [searchQuery]="searchQuery()"
+                [selectedIndex]="selectedIndex()"
+                [results]="results()"
+                [hasSearched]="hasSearched()"
+                [showResults]="showResults()"
+                [isLoading]="isLoading()"
+                [searchError]="searchError()"
+                [contentSearchActive]="contentSearchActive()"
+                [courseIds]="courseIdsParam()"
+                [excludeCourseIds]="excludeCourseIdsParam()"
+                [contentPreview]="contentPreview()"
+                (showContentHits)="showContentHits()"
+                [canShowMore]="canShowMore()"
+                (showMore)="showMoreResults()"
+            />
         }
     </div>
     <!-- Keyboard hints footer -->
-    <div class="search-footer flex-shrink-0 text-start">
-        <div class="keyboard-hints d-flex align-items-center justify-content-between text-secondary w-100 gap-3">
-            <span class="d-flex align-items-center gap-1">
-                <span class="d-flex align-items-center gap-1">
-                    <kbd
-                        class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border"
-                        [attr.aria-label]="'global.search.arrowUpAriaLabel' | artemisTranslate"
-                    >
+    <div class="search-footer shrink-0 text-start">
+        <div class="keyboard-hints flex items-center justify-between w-full gap-3">
+            <span class="flex items-center gap-1">
+                <span class="flex items-center gap-1">
+                    <kbd class="key-hint-small inline-flex items-center font-mono border" [attr.aria-label]="'global.search.arrowUpAriaLabel' | artemisTranslate">
                         <fa-icon [icon]="faArrowUp" aria-hidden="true" />
                     </kbd>
-                    <kbd
-                        class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border"
-                        [attr.aria-label]="'global.search.arrowDownAriaLabel' | artemisTranslate"
-                    >
+                    <kbd class="key-hint-small inline-flex items-center font-mono border" [attr.aria-label]="'global.search.arrowDownAriaLabel' | artemisTranslate">
                         <fa-icon [icon]="faArrowDown" aria-hidden="true" />
                     </kbd>
                 </span>
                 <span class="ms-2">{{ 'global.search.toNavigate' | artemisTranslate }}</span>
             </span>
-            <span class="d-flex align-items-center gap-1">
-                <kbd class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border" aria-label="Escape">ESC</kbd>
-                <span class="ms-2">{{ 'global.search.toClose' | artemisTranslate }}</span>
+            <span class="flex items-center gap-1">
+                <kbd class="key-hint-small inline-flex items-center font-mono border" aria-label="Escape">ESC</kbd>
+                <span class="ms-2">{{ escapeHintKey() | artemisTranslate }}</span>
             </span>
         </div>
     </div>

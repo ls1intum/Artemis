@@ -1,5 +1,4 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { NgStyle } from '@angular/common';
 import * as utils from 'app/calendar/shared/util/calendar-util';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { Dayjs } from 'dayjs/esm';
@@ -27,7 +26,7 @@ interface Day {
 
 @Component({
     selector: 'jhi-calendar-events-per-day-section',
-    imports: [NgStyle, CalendarEventDetailPopoverComponent],
+    imports: [CalendarEventDetailPopoverComponent],
     templateUrl: './calendar-events-per-day-section.component.html',
     styleUrl: './calendar-events-per-day-section.component.scss',
 })
@@ -141,8 +140,8 @@ export class CalendarEventsPerDaySectionComponent {
         const secondStartDate = secondEvent.startDate;
         const secondEndDate = this.getDisplayedEndOf(secondEvent);
 
-        const firstStartFallsInSecondRange = this.doesDateFallInRange(firstStartDate, secondStartDate, secondEndDate!);
-        const firstEndFallsInSecondRange = this.doesDateFallInRange(firstEndDate, secondStartDate, secondEndDate!);
+        const firstStartFallsInSecondRange = this.doesDateFallInRange(firstStartDate, secondStartDate, secondEndDate);
+        const firstEndFallsInSecondRange = this.doesDateFallInRange(firstEndDate, secondStartDate, secondEndDate);
         const firstEventEngulfsSecondEvent = this.doesFirstRangeEngulfSecondRange(firstStartDate, firstEndDate, secondStartDate, secondEndDate);
         return firstStartFallsInSecondRange || firstEndFallsInSecondRange || firstEventEngulfsSecondEvent;
     }

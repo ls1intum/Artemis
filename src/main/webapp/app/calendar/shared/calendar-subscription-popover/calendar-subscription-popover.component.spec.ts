@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
@@ -8,8 +7,6 @@ const getParametersOf = (urlStr: string) => new URL(urlStr, 'http://dummy.invali
 const splitFilterParameters = (parameters: URLSearchParams) => (parameters.get('filterOptions') ?? '').split(',').filter(Boolean).sort();
 
 describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CalendarSubscriptionPopoverComponent>;
     let component: CalendarSubscriptionPopoverComponent;
 
@@ -58,6 +55,17 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         const url = component.subscriptionUrl();
         const parameters = getParametersOf(url);
         expect(parameters.get('language')).toBe('GERMAN');
+    });
+
+    it('copies the subscription link and shows the confirmation icon', () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal('navigator', { clipboard: { writeText } });
+
+        component.copySubscriptionUrlToClipboard();
+
+        expect(writeText).toHaveBeenCalledWith(component.subscriptionUrl());
+        expect(component.copiedUrl()).toBe(true);
+        vi.unstubAllGlobals();
     });
 
     it('marks the last remaining checkbox as disabled', () => {

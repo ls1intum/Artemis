@@ -7,8 +7,8 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 export type ProgrammingExerciseCreationConfig = {
     titleNamePattern: string;
     shortNamePattern: RegExp;
-    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
-    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
+    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: string) => string | undefined;
+    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: string) => string | undefined;
     refreshAuxiliaryRepositoryChecks: () => void;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -17,7 +17,6 @@ export type ProgrammingExerciseCreationConfig = {
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryDuplicateNames: boolean;
     checkoutSolutionRepositoryAllowed: boolean;
-    customBuildPlansSupported: string;
     invalidDirectoryNamePattern: RegExp;
     invalidRepositoryNamePattern: RegExp;
     isImportFromExistingExercise: boolean;
@@ -46,11 +45,8 @@ export type ProgrammingExerciseCreationConfig = {
     validOnlineIdeSelection: () => boolean | undefined;
     inProductionEnvironment: boolean;
     recreateBuildPlans: boolean;
-    onRecreateBuildPlanOrUpdateTemplateChange: () => void;
-    updateTemplate: boolean;
-    recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
+    recreateBuildPlanChange: () => void; // default false
     isExamMode: boolean;
     isEdit: boolean;
     showSummary: boolean;
-    buildPlanLoaded: boolean;
 };

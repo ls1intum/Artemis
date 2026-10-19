@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 
@@ -72,6 +74,27 @@ public class ParticipationAuthorizationCheckService {
     }
 
     /**
+     * Whether authorized course staff may see participant identities and identifying repository metadata.
+     * Callers must check access to the exercise separately.
+     *
+     * @param exercise the exercise being accessed
+     * @return whether the current user may see identities
+     */
+    public boolean canSeeParticipantInformation(Exercise exercise) {
+        return authCheckService.isAtLeastInstructorForExercise(exercise) || !exerciseDateService.isAssessmentAnonymizationActive(exercise);
+    }
+
+    /**
+     * Keeps an owner's direct access to their own data during anonymous assessment.
+     *
+     * @param participation the participation being accessed
+     * @return whether the current user may see its identifying data
+     */
+    public boolean canSeeParticipantInformation(StudentParticipation participation) {
+        return authCheckService.isOwnerOfParticipation(participation) || canSeeParticipantInformation(participation.getExercise());
+    }
+
+    /**
      * Checks if the current user is allowed to access the given participation.
      * <p>
      * Throws an {@link AccessForbiddenException} if not.
@@ -105,7 +128,7 @@ public class ParticipationAuthorizationCheckService {
             return true;
         }
         // 2. Check if the user is at least a teaching assistant of the course
-        return userRepository.isAtLeastTeachingAssistantInParticipation(userLogin, studentParticipationId);
+        return userRepository.isAtLeastTeachingAssistantInParticipation(userLogin, studentParticipationId) || authCheckService.isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -115,7 +138,7 @@ public class ParticipationAuthorizationCheckService {
      * @return True, if the current user is allowed to access the participation; false otherwise.
      */
     public boolean canAccessParticipation(@NonNull final ParticipationInterface participation) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         return canAccessParticipation(participation, user);
     }
 
@@ -181,8 +204,50 @@ public class ParticipationAuthorizationCheckService {
 
         // if the user is not the owner of the participation, the user can only see it in case they are
         // a teaching assistant, an editor or an instructor of the course, or in case they are an admin
-        final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+    }
+
+    /**
+     * Whether the participation is locked, for a caller holding a projection of the exercise.
+     * <p>
+     * The same decision as {@link #isLocked(ProgrammingExerciseStudentParticipation, ProgrammingExercise)}, for the
+     * git request path. Everything it needs from the exercise is an id, a flag or a date, so the projection carries
+     * all of it.
+     *
+     * @param participation the student's participation
+     * @param exercise      the projected exercise
+     * @return true if the participation is locked
+     */
+    public boolean isLocked(ProgrammingExerciseStudentParticipation participation, GitRepositoryAccessDTO exercise) {
+        if (participation.isPracticeMode()) {
+            return false;
+        }
+
+        if (exerciseDateService.isAfterDueDate(participation, exercise)) {
+            return true;
+        }
+
+        if (exercise.isExamExercise()) {
+            var api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+            Optional<Boolean> studentExamSubmitted;
+            if (exercise.isTestExamExercise()) {
+                studentExamSubmitted = api.isSubmitted(participation.getId());
+            }
+            else {
+                studentExamSubmitted = api.isSubmitted(exercise.examId(), participation.getParticipant().getId());
+            }
+            // if the corresponding student exam was already submitted, the participation is locked
+            // if the student exam does not exist yet, the participation should not exist either
+            return studentExamSubmitted.orElse(true);
+        }
+
+        var submissionPolicy = submissionPolicyRepository.findByProgrammingExerciseId(exercise.exerciseId());
+
+        if (submissionPolicy != null && submissionPolicy.isActive() && submissionPolicy instanceof LockRepositoryPolicy) {
+            return submissionRepository.countByParticipationId(participation.getId()) >= submissionPolicy.getSubmissionLimit();
+        }
+        return false;
     }
 
     /**

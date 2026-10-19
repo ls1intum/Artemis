@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GlobalNotificationSettingsService } from './global-notifications-settings.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -10,6 +10,9 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export const GLOBAL_NOTIFICATION_TYPES = {
     NEW_LOGIN: 'NEW_LOGIN',
@@ -17,6 +20,9 @@ export const GLOBAL_NOTIFICATION_TYPES = {
     VCS_TOKEN_EXPIRED: 'VCS_TOKEN_EXPIRED',
     SSH_KEY_EXPIRED: 'SSH_KEY_EXPIRED',
     MAINTENANCE: 'MAINTENANCE',
+    MAVEN_CENTRAL_RATE_LIMIT: 'MAVEN_CENTRAL_RATE_LIMIT',
+    PASSWORD_CHANGED: 'PASSWORD_CHANGED',
+    CREDENTIALS_REVOKED: 'CREDENTIALS_REVOKED',
 } as const;
 
 export type GlobalNotificationType = keyof typeof GLOBAL_NOTIFICATION_TYPES;
@@ -29,15 +35,19 @@ interface NotificationTypeLink {
 
 @Component({
     selector: 'jhi-email-notifications-settings',
-    imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink],
+    imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink, TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchComponent, ArtemisTranslatePipe],
     templateUrl: './global-notifications-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
 export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
+    private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
+    private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+
     protected readonly faSpinner = faSpinner;
     protected readonly notificationTypes = Object.values(GLOBAL_NOTIFICATION_TYPES);
-    protected filteredNotificationTypes: GlobalNotificationType[] = [];
-    protected notificationLabels: Partial<Record<GlobalNotificationType, string>> = {};
+    protected readonly filteredNotificationTypes = signal<GlobalNotificationType[]>([]);
+    protected readonly notificationLabels = signal<Partial<Record<GlobalNotificationType, string>>>({});
 
     public readonly notificationTypeLinks: NotificationTypeLink[] = [
         {
@@ -56,11 +66,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
             translationKey: 'artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings',
         },
     ];
-    notificationSettings: { [key: string]: boolean } | undefined;
-
-    private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
-    private profileService = inject(ProfileService);
-    private alertService = inject(AlertService);
+    readonly notificationSettings = signal<{ [key: string]: boolean } | undefined>(undefined);
 
     private getAllSub?: Subscription;
     private updateSub?: Subscription;
@@ -69,8 +75,8 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
-        this.filteredNotificationTypes = this.notificationTypes.filter((type) => this.isSettingAvailable(type));
-        this.notificationLabels = Object.fromEntries(this.filteredNotificationTypes.map((type) => [type, this.getNotificationTypeLabel(type)]));
+        this.filteredNotificationTypes.set(this.notificationTypes.filter((type) => this.isSettingAvailable(type)));
+        this.notificationLabels.set(Object.fromEntries(this.filteredNotificationTypes().map((type) => [type, this.getNotificationTypeLabel(type)])));
         this.loadSettings();
     }
 
@@ -86,7 +92,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
         this.getAllSub?.unsubscribe();
         this.getAllSub = this.globalNotificationSettingsService.getAll().subscribe({
             next: (settings: { [key: string]: boolean } | undefined) => {
-                this.notificationSettings = settings;
+                this.notificationSettings.set(settings);
             },
             error: (error) => {
                 onError(this.alertService, error);
@@ -103,8 +109,9 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
         this.updateSub?.unsubscribe();
         this.updateSub = this.globalNotificationSettingsService.update(type, enabled).subscribe({
             next: () => {
-                if (this.notificationSettings) {
-                    this.notificationSettings[type] = enabled;
+                const current = this.notificationSettings();
+                if (current) {
+                    this.notificationSettings.set(cloneWith(current, { [type]: enabled }));
                 }
                 this.alertService.success('artemisApp.userSettings.globalNotificationSettings.updateSuccess');
             },

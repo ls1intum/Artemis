@@ -8,11 +8,8 @@ import { Component } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Exercise Update Warning Service', () => {
-    setupTestBed({ zoneless: true });
-
     let updateWarningService: ExerciseUpdateWarningService;
     let loadExerciseSpy: ReturnType<typeof vi.spyOn>;
     let openSpy: ReturnType<typeof vi.spyOn>;

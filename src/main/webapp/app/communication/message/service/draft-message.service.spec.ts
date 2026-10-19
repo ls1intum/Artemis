@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { DraftData, DraftService } from './draft-message.service';
@@ -7,8 +6,6 @@ import { DraftData, DraftService } from './draft-message.service';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 describe('DraftService', () => {
-    setupTestBed({ zoneless: true });
-
     let draftService: DraftService;
     let localStorageService: LocalStorageService;
 

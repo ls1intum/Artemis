@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LtiCourseCardComponent } from 'app/lti/manage/lti-course-card/lti-course-card.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
@@ -12,9 +11,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { MockDirective } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import enCourse from '../../../../i18n/en/course.json';
+import deCourse from '../../../../i18n/de/course.json';
 
 describe('LtiCourseCardComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LtiCourseCardComponent;
     let fixture: ComponentFixture<LtiCourseCardComponent>;
 
@@ -51,14 +51,14 @@ describe('LtiCourseCardComponent', () => {
 
     it('should set default color if no color is specified in course', () => {
         fixture.detectChanges();
-        expect(component.courseColor).toBe(ARTEMIS_DEFAULT_COLOR);
+        expect(component.courseColor()).toBe(ARTEMIS_DEFAULT_COLOR);
     });
 
     it('should use course color if specified', () => {
         const testColor = '#123456';
         fixture.componentRef.setInput('course', { id: 1, shortName: 'lti-course', title: 'LTI COURSE', color: testColor });
         fixture.detectChanges();
-        expect(component.courseColor).toBe(testColor);
+        expect(component.courseColor()).toBe(testColor);
     });
 
     it('should display course ID', () => {
@@ -94,6 +94,29 @@ describe('LtiCourseCardComponent', () => {
         expect(compiled.querySelector('.card-body').textContent).toContain('42');
     });
 
+    it('should only use translation keys that exist in the English and German course translations', () => {
+        const testCourse = {
+            id: 1,
+            shortName: 'test',
+            title: 'Test',
+            numberOfStudents: 42,
+            startDate: dayjs('2023-01-01'),
+            endDate: dayjs('2023-12-31'),
+        };
+
+        fixture.componentRef.setInput('course', testCourse);
+        fixture.detectChanges();
+
+        const keys = Array.from(fixture.nativeElement.querySelectorAll('[jhiTranslate]'), (element) => (element as HTMLElement).getAttribute('jhiTranslate') as string);
+        expect(keys).toContain('artemisApp.course.delete.summary.numberOfStudents');
+
+        const resolve = (translations: object, key: string) => key.split('.').reduce<unknown>((node, part) => (node as Record<string, unknown> | undefined)?.[part], translations);
+        for (const key of keys) {
+            expect(resolve(enCourse, key), `missing English translation for ${key}`).toBeTypeOf('string');
+            expect(resolve(deCourse, key), `missing German translation for ${key}`).toBeTypeOf('string');
+        }
+    });
+
     it('should display description when available', () => {
         const testDescription = 'This is a test course description';
         const testCourse = {
@@ -115,8 +138,8 @@ describe('LtiCourseCardComponent', () => {
         fixture.componentRef.setInput('course', { id: 1, shortName: 'test', title: 'Test', color: darkColor });
         fixture.detectChanges();
 
-        expect(component.courseColor).toBe(darkColor);
-        expect(component.contentColor).toBeDefined();
+        expect(component.courseColor()).toBe(darkColor);
+        expect(component.contentColor()).toBeDefined();
     });
 
     it('should compute contrasting text color for light background', () => {
@@ -124,8 +147,8 @@ describe('LtiCourseCardComponent', () => {
         fixture.componentRef.setInput('course', { id: 1, shortName: 'test', title: 'Test', color: lightColor });
         fixture.detectChanges();
 
-        expect(component.courseColor).toBe(lightColor);
-        expect(component.contentColor).toBeDefined();
+        expect(component.courseColor()).toBe(lightColor);
+        expect(component.contentColor()).toBeDefined();
     });
 
     it('should display course title', () => {

@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
@@ -29,7 +29,7 @@ export class PlagiarismHeaderComponent {
     readonly splitControlSubject = input.required<Subject<string>>();
 
     readonly plagiarismStatus = PlagiarismStatus;
-    isLoading = false;
+    readonly isLoading = signal(false);
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
@@ -50,7 +50,7 @@ export class PlagiarismHeaderComponent {
     }
 
     private askForConfirmationOfDenying(onConfirm: () => void) {
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         const dialogRef = openConfirmAutofocusDialog(this.dialogService, {
             title: 'artemisApp.plagiarism.denyAfterConfirmModalTitle',
@@ -61,7 +61,7 @@ export class PlagiarismHeaderComponent {
             if (result?.confirmed) {
                 onConfirm();
             } else {
-                this.isLoading = false;
+                this.isLoading.set(false);
             }
         });
     }
@@ -71,19 +71,19 @@ export class PlagiarismHeaderComponent {
      * @param status the new status of the comparison
      */
     updatePlagiarismStatus(status: PlagiarismStatus) {
-        this.isLoading = true;
+        this.isLoading.set(true);
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison();
         if (comparison && comparison.id) {
             const courseId = getCourseId(this.exercise());
             if (courseId === undefined) {
                 this.alertService.error('error.courseIdUndefined');
-                this.isLoading = false;
+                this.isLoading.set(false);
                 return;
             }
             this.plagiarismCasesService.updatePlagiarismComparisonStatus(courseId, comparison.id, status).subscribe(() => {
                 comparison.status = status;
-                this.isLoading = false;
+                this.isLoading.set(false);
             });
         }
     }

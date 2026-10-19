@@ -19,7 +19,7 @@ export abstract class TextEditorDomainActionWithOptions extends TextEditorDomain
         return this.values;
     }
 
-    executeInCurrentEditor(args?: DomainActionWithOptionsArguments) {
+    override executeInCurrentEditor(args?: DomainActionWithOptionsArguments) {
         super.executeInCurrentEditor(args);
     }
 }

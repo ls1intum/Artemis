@@ -1,24 +1,34 @@
-<div class="d-flex justify-content-between">
+<div class="flex justify-between">
     @let currentCourseId = courseId();
     @let currentSidebarData = sidebarData();
     @if (currentCourseId && currentSidebarData) {
-        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+        <div [class.sidebar-collapsed]="isCollapsed()">
             <jhi-sidebar
                 [itemSelected]="itemSelected()"
                 [courseId]="currentCourseId"
                 [sidebarData]="currentSidebarData"
                 [collapseState]="DEFAULT_COLLAPSE_STATE"
                 [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                [pageTitle]="pageTitle()"
+                [showSidebarToggle]="true"
+                [isSidebarCollapsed]="isCollapsed()"
+                (toggleSidebar)="toggleSidebar()"
             />
         </div>
 
         @if (itemSelected()) {
-            <div class="vw-100 module-bg rounded-3">
-                <router-outlet />
+            <!-- flex-1 min-w-0 rather than a viewport width: the panel shares the row with the sidebar. -->
+            <div class="module-bg min-w-0 flex-1 rounded-lg">
+                <router-outlet (activate)="onSubRouteActivate($event)" />
             </div>
         } @else {
-            <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
-                <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.tutorialGroups.selectTutorialGroup"></div>
+            <div class="module-bg flex min-w-0 flex-1 flex-col rounded-lg p-3">
+                @if (isCollapsed()) {
+                    <div>
+                        <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                    </div>
+                }
+                <div class="my-auto w-full text-center" jhiTranslate="artemisApp.courseOverview.tutorialGroups.selectTutorialGroup"></div>
             </div>
         }
     }

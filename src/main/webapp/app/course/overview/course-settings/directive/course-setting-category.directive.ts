@@ -16,15 +16,15 @@ export abstract class CourseSettingCategoryDirective implements OnInit, OnDestro
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
 
-    private parentParamSubscription: Subscription;
-    private courseUpdatesSubscription: Subscription;
+    private parentParamSubscription?: Subscription;
+    private courseUpdatesSubscription?: Subscription;
 
     course?: Course;
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from parent route params
 
     ngOnInit(): void {
         if (this.route.parent) {
-            this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
+            this.parentParamSubscription = this.route.parent.params.subscribe((params) => {
                 this.courseId = Number(params.courseId);
 
                 if (this.courseId) {

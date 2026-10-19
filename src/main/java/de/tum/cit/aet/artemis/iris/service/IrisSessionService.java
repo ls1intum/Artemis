@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatBasedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
@@ -38,6 +40,8 @@ public class IrisSessionService {
 
     private final UserRepository userRepository;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final IrisChatSessionService irisChatSessionService;
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
@@ -47,8 +51,9 @@ public class IrisSessionService {
     private final IrisSettingsService irisSettingsService;
 
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
-            IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService) {
+            IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService, UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.irisChatSessionService = irisChatSessionService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
@@ -74,12 +79,33 @@ public class IrisSessionService {
      * @throws AccessForbiddenException If the user has not accepted the Iris privacy policy yet
      */
     public void checkHasAccessToIrisSession(IrisSession session, @Nullable User user) {
+        checkHasAccessToIrisSession(session, user, true);
+    }
+
+    /**
+     * The same access check, minus the LLM opt-in gate.
+     *
+     * <p>
+     * For the paths that record what a student did with a message Iris has ALREADY sent them. Refusing those on a
+     * lapsed opt-in leaves the record wrong rather than protecting anything: the hint was delivered under the
+     * opt-in that was live at the time, no new model work is authorised by writing down that the student dismissed
+     * it, and a client that must eventually write a terminal outcome would retry forever against a 403. Activation,
+     * ownership and the course/exercise role are all still checked.
+     *
+     * @param session The session to check
+     * @param user    The user to check; loaded from the database when null
+     */
+    public void checkHasAccessToIrisSessionWithoutLlmOptIn(IrisSession session, @Nullable User user) {
+        checkHasAccessToIrisSession(session, user, false);
+    }
+
+    private void checkHasAccessToIrisSession(IrisSession session, @Nullable User user, boolean requireLlmOptIn) {
         if (user == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithAuthorities();
         }
         var wrapper = getIrisSessionSubService(session);
-        if (session.shouldSelectLLMUsage()) {
-            user.hasOptedIntoLLMUsageElseThrow();
+        if (requireLlmOptIn && session.shouldSelectLLMUsage()) {
+            userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         }
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
     }
@@ -87,10 +113,10 @@ public class IrisSessionService {
     /**
      * @param session The session to get a message for
      * @param <S>     The type of the session
-     * @see #requestMessageFromIris(IrisSession, Map)
+     * @see #requestMessageFromIris(IrisSession, Map, List, String)
      */
     public <S extends IrisSession> void requestMessageFromIris(S session) {
-        requestMessageFromIris(session, Map.of());
+        requestMessageFromIris(session, Map.of(), List.of(), null);
     }
 
     /**
@@ -99,14 +125,16 @@ public class IrisSessionService {
      *
      * @param session          The session to get a message for
      * @param uncommittedFiles The uncommitted files from the client
+     * @param context          Optional list of context objects providing information about what the user is viewing (not persisted)
+     * @param clientId         Identifies the browser tab the message was sent from, so a command Iris issues mid-pipeline is addressed back to it; null if the client sent none
      * @param <S>              The type of the session
      * @throws BadRequestException If the session type is invalid
      */
-    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles) {
+    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            if (!uncommittedFiles.isEmpty() && session instanceof IrisChatSession chatSession) {
-                irisChatSessionService.requestAndHandleResponseWithUncommittedChanges(chatSession, uncommittedFiles);
+            if (session instanceof IrisChatSession chatSession) {
+                irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context, clientId);
             }
             else {
                 chatWrapper.requestAndHandleResponse(wrapper.irisSession);

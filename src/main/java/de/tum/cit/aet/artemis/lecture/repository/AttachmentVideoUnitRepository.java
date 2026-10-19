@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
@@ -17,6 +19,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 
 /**
  * Spring Data JPA repository for the Attachment Unit entity.
@@ -70,9 +73,28 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
         return getValueElseThrow(findWithSlidesAndCompetenciesById(attachmentVideoUnitId), attachmentVideoUnitId);
     }
 
+    @Query("""
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+                LEFT JOIN FETCH attachmentVideoUnit.attachment
+                JOIN FETCH attachmentVideoUnit.lecture lecture
+                JOIN FETCH lecture.course
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
+            """)
+    Optional<AttachmentVideoUnit> findWithLectureAndCourseAndAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
+    @Query("""
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+                LEFT JOIN FETCH attachmentVideoUnit.attachment
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
+            """)
+    Optional<AttachmentVideoUnit> findWithAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
     /**
-     * Find AttachmentVideoUnits from active, non-test courses that don't have a processing state yet.
-     * Used by the backfill scheduler to process legacy units that existed before the processing pipeline was deployed.
+     * Find AttachmentVideoUnits from active, non-test courses that don't have a processing state yet, newest courses first
+     * (the same order as {@link #findReconcileCourseIdsNewestFirst}). Used by the backfill scheduler to process legacy units
+     * that existed before the processing pipeline was deployed.
      *
      * @param now      the current time for determining active courses
      * @param pageable pagination to limit results
@@ -82,6 +104,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             SELECT avu FROM AttachmentVideoUnit avu
             JOIN avu.lecture l
             JOIN l.course c
+            LEFT JOIN avu.attachment attachment
             LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = avu.id
             WHERE ps.id IS NULL
                 AND (c.startDate <= :now OR c.startDate IS NULL)
@@ -91,9 +114,128 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (
                     (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
                     OR
-                    (avu.attachment IS NOT NULL AND avu.attachment.link LIKE '%.pdf')
+                    (attachment IS NOT NULL AND LOWER(attachment.link) LIKE '%.pdf')
+                )
+            ORDER BY c.endDate DESC, c.startDate DESC, c.id DESC, avu.id
+            """)
+    List<AttachmentVideoUnit> findUnprocessedUnitsFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
+
+    /**
+     * Finds active attachment video units for which no Iris synchronization state exists yet.
+     * This supports a bounded rollout backfill for units created before retryable synchronization
+     * was introduced.
+     *
+     * <p>
+     * The attachment is joined explicitly rather than navigated to as {@code avu.attachment.link}, which is an implicit
+     * inner join: it dropped every unit without an attachment before the surrounding {@code OR} was evaluated, so a unit
+     * carrying only a video was never backfilled.
+     *
+     * <p>
+     * Only units whose content processing finished are considered. Pyris answers a synchronization for anything else
+     * with "lecture unit has not been ingested", so creating a state for one manufactures work that can only fail:
+     * before this condition existed, every eligible unit that had never been ingested was pushed once an hour for as
+     * long as its course stayed active. Reaching {@code DONE} is a good indication rather than a guarantee, since a
+     * unit whose course has Iris disabled also completes without being ingested; such a unit reports its
+     * synchronization as skipped instead of failing.
+     *
+     * @param now      the current time for determining active courses
+     * @param pageable pagination to limit results
+     * @return attachment video units without an Iris synchronization state
+     */
+    @Query("""
+            SELECT avu FROM AttachmentVideoUnit avu
+            JOIN avu.lecture l
+            JOIN l.course c
+            LEFT JOIN avu.attachment attachment
+            LEFT JOIN IrisLectureUnitSyncState syncState ON syncState.lectureUnitId = avu.id AND syncState.visibilityHash IS NOT NULL
+            WHERE syncState.id IS NULL
+                AND EXISTS (
+                    SELECT 1 FROM LectureUnitProcessingState processingState
+                    WHERE processingState.lectureUnit.id = avu.id
+                        AND processingState.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE
+                )
+                AND (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.testCourse = FALSE
+                AND l.isTutorialLecture = FALSE
+                AND (
+                    (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
+                    OR
+                    (attachment IS NOT NULL AND LOWER(attachment.link) LIKE '%.pdf')
                 )
             ORDER BY avu.id
             """)
-    List<AttachmentVideoUnit> findUnprocessedUnitsFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
+    List<AttachmentVideoUnit> findUnitsMissingIrisSyncStateFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
+
+    /**
+     * Find all non-test course ids, newest first: by end date and then start date, latest first, so running courses come
+     * before the ones that ended. Drives the ingestion reconciler's walk over all courses, including inactive and archived ones, so
+     * recent material is ingested before older material.
+     * <p>
+     * Deliberately not limited to courses that still hold attachment video units: the walk is also what garbage-collects a
+     * course's Iris rows through {@code deleteOrphanedIndexRows}, and a course whose last unit was deleted while Iris was
+     * unavailable still holds rows for it. Nor does it filter out tutorial lectures, whose rows are cleaned up the same way
+     * via {@link #findTutorialLectureUnitIdentities}; the per-unit reconcile loop excludes them from re-ingestion through
+     * {@link #findAllWithAttachmentByCourseId}.
+     *
+     * @return the ids of all non-test courses, newest first
+     */
+    @Query("""
+            SELECT c.id FROM Course c
+            WHERE c.testCourse = FALSE
+            ORDER BY c.endDate DESC, c.startDate DESC, c.id DESC
+            """)
+    List<Long> findReconcileCourseIdsNewestFirst();
+
+    /**
+     * Find every attachment video unit of a course with its attachment, lecture, and course fetched.
+     * Used by the ingestion reconciler, which computes content fingerprints (attachment link, video source)
+     * for all units of the walked course.
+     *
+     * @param courseId the ID of the course
+     * @return all attachment video units of the course
+     */
+    @Query("""
+            SELECT avu FROM AttachmentVideoUnit avu
+                LEFT JOIN FETCH avu.attachment
+                JOIN FETCH avu.lecture l
+                JOIN FETCH l.course c
+            WHERE c.id = :courseId
+                AND l.isTutorialLecture = FALSE
+            ORDER BY avu.id
+            """)
+    List<AttachmentVideoUnit> findAllWithAttachmentByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * From the given ids, return those that still correspond to an existing attachment video unit.
+     * Used by the ingestion reconciler to batch its orphan check into a single query instead of one
+     * {@code existsById} per census row.
+     *
+     * @param ids candidate lecture unit ids
+     * @return the subset of ids that exist as attachment video units
+     */
+    @Query("""
+            SELECT avu.id FROM AttachmentVideoUnit avu
+            WHERE avu.id IN :ids
+            """)
+    Set<Long> findExistingIds(@Param("ids") Collection<Long> ids);
+
+    /**
+     * From the given ids, return the identities of those attachment video units whose lecture is a tutorial lecture.
+     * Used by the ingestion reconciler to delete the index rows of units whose lecture became a tutorial lecture after
+     * they were ingested: such a unit still exists, so the orphan check keeps it, and the per-unit loop excludes it.
+     * The identity comes from the database rather than the census, whose lecture id is missing when the index holds
+     * only chunks of the unit, and the deletion is scoped by lecture id.
+     *
+     * @param ids candidate lecture unit ids
+     * @return course, lecture, and unit ids of the given units that belong to a tutorial lecture
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO(l.course.id, l.id, avu.id)
+            FROM AttachmentVideoUnit avu
+                JOIN avu.lecture l
+            WHERE avu.id IN :ids
+                AND l.isTutorialLecture = TRUE
+            """)
+    List<IngestionJobIdentityDTO> findTutorialLectureUnitIdentities(@Param("ids") Collection<Long> ids);
 }

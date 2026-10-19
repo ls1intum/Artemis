@@ -22,11 +22,9 @@ public class WeaviateConnectionFailureAnalyzer extends AbstractFailureAnalyzer<W
 
     private String buildDescription(WeaviateConnectionException cause) {
         String scheme = cause.isSecure() ? ConfigurationValidator.HTTPS_SCHEME : ConfigurationValidator.HTTP_SCHEME;
-        return String.format(
-                "Failed to connect to Weaviate vector database.%n%n" + "Connection details:%n" + "    Host: %s%n" + "    HTTP Port: %d (%s://%s:%d)%n" + "    gRPC Port: %d%n%n"
-                        + "Error: %s%n",
-                cause.getHttpHost(), cause.getHttpPort(), scheme, cause.getHttpHost(), cause.getHttpPort(), cause.getGrpcPort(),
-                cause.getCause() != null ? cause.getCause().getMessage() : cause.getMessage());
+        return ("Failed to connect to Weaviate vector database.%n%n" + "Connection details:%n" + "    Host: %s%n" + "    HTTP Port: %d (%s://%s:%d)%n" + "    gRPC Port: %d%n%n"
+                + "Error: %s%n").formatted(cause.getHttpHost(), cause.getHttpPort(), scheme, cause.getHttpHost(), cause.getHttpPort(), cause.getGrpcPort(),
+                        cause.getCause() != null ? cause.getCause().getMessage() : cause.getMessage());
     }
 
     private String buildAction(WeaviateConnectionException cause) {

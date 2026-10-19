@@ -52,7 +52,7 @@ export function triggerDeleteDialogDelete(handler: DeleteDialogDeleteHandler, ad
 /**
  * Data that will be passed to the delete dialog component
  */
-export class DeleteDialogData {
+export interface DeleteDialogData {
     // error message emitted from the component delete method, that will be handled by the dialog
     // when delete method succeeded empty message is sent
     dialogError?: Observable<string>;

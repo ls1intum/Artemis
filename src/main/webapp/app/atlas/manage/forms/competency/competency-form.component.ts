@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, effect, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
@@ -6,6 +6,7 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-competency-form',
@@ -13,7 +14,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./competency-form.component.scss'],
     imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective],
 })
-export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnChanges {
+export class CompetencyFormComponent extends CourseCompetencyFormComponent {
     formData = input<CourseCompetencyFormData>({
         id: undefined,
         title: undefined,
@@ -25,36 +26,8 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
     });
     competency = input.required<Competency>();
 
-    constructor() {
-        super();
-        effect(() => {
-            this.courseId();
-            if (!this.form) {
-                this.initializeForm();
-            }
-            const fd = this.formData();
-            this.updateTitleUniqueValidator();
-            if (this.isEditMode() && fd) {
-                this.setFormValues(fd);
-            }
-        });
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        this.initializeForm();
-        this.updateTitleUniqueValidator();
-        const fd = this.formData();
-        if (this.isEditMode() && fd) {
-            this.setFormValues(fd);
-        }
-    }
-
-    private setFormValues(formData: CourseCompetencyFormData) {
-        this.form.patchValue(formData);
-    }
-
     submitForm() {
-        const competencyFormData: CourseCompetencyFormData = { ...this.form.value };
+        const competencyFormData: CourseCompetencyFormData = deepClone(this.form.value);
         this.formSubmitted.emit(competencyFormData);
     }
 }

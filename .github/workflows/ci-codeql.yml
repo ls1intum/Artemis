@@ -1,0 +1,73 @@
+name: CodeQL
+
+# CodeQL static security analysis (Java + JavaScript/TypeScript). Invoked by ci.yml as an
+# advisory PR/push check and by codeql-analysis.yml for the weekly scheduled scan, so the
+# scan steps live in exactly one place. CodeQL must build the Java code itself (its tracer has
+# to observe compilation to build the analysis database — a prebuilt WAR cannot be analysed),
+# so that part is inherent, not a duplication that can be cached away. The JS/TS extractor,
+# by contrast, analyses `.ts` source directly and never touches a built Angular bundle, so we
+# don't build one here at all — only `prebuild` runs, since it generates
+# environment.override.ts, a real source file several `.ts` files import.
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to analyse. PR runs use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+
+permissions: {}  # default-deny; the job grants only what CodeQL needs
+
+# Workflow-level node/java pins are drift-checked by ci-workflows.yml.
+env:
+  CI: true
+  node: 24
+  java: 25
+
+jobs:
+  analyse:
+    name: Analyse (Java + JS/TS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      security-events: write  # upload the SARIF results to the code-scanning API
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413  # v6.1.0
+        with:
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+      - name: Setup Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+          # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          languages: javascript, java
+          config-file: ./.github/codeql/codeql-config.yml
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Prepare client source
+        run: pnpm run clean-www && pnpm run prebuild
+      # Only the compile has to run under the tracer. `bootWar` would add resource processing, the
+      # git properties, the SBOM tasks and the WAR packaging, none of which CodeQL reads.
+      - name: Build Java
+        run: ./gradlew -Pprod -Pwar compileJava -x webapp
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -11,7 +11,7 @@ import { Setting } from 'app/account/user/settings/user-settings.model';
 
 export const SCIENCE_SETTING_LOCAL_STORAGE_KEY = 'artemisapp.science.settings';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ScienceSettingsService {
     private userSettingsService = inject(UserSettingsService);
     private localStorageService = inject(LocalStorageService);
@@ -56,10 +56,7 @@ export class ScienceSettingsService {
 
         this.userSettingsService.loadSettings(UserSettingsCategory.SCIENCE_SETTINGS).subscribe({
             next: (res: HttpResponse<Setting[]>) => {
-                const currentScienceSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
-                    res.body!,
-                    UserSettingsCategory.SCIENCE_SETTINGS,
-                ) as ScienceSetting[];
+                const currentScienceSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(res.body!, UserSettingsCategory.SCIENCE_SETTINGS);
 
                 this.storeScienceSettings(currentScienceSettings);
                 this.currentScienceSettingsSubject.next(currentScienceSettings);

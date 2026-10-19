@@ -34,7 +34,7 @@
             <fa-icon [icon]="icon()!" />
         </a>
     }
-    <p-menu #menu [model]="menuItems" [popup]="true" appendTo="body" styleClass="chat-history-item-menu">
+    <p-menu #menu [model]="menuItems()" [popup]="true" appendTo="body" styleClass="chat-history-item-menu">
         <ng-template #item let-item>
             <a class="p-menu-item-link danger">
                 <fa-icon [icon]="faTrash" />

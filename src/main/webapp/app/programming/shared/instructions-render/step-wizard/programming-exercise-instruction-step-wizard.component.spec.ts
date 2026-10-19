@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
@@ -18,8 +17,6 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseInstructionStepWizardComponent>;
     let debugElement: DebugElement;
 
@@ -105,5 +102,27 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
                 },
             }),
         );
+    });
+
+    // Task names are taken from the rendered markdown, so special characters arrive HTML-escaped (e.g. ">" as "&gt;")
+    it('should show the unescaped task name in the tooltip and the feedback dialog header', () => {
+        const result: Result = {
+            id: 1,
+            completionDate: dayjs('2022-01-06T22:15:29.203+02:00'),
+            feedbacks: [{ testCase: { testName: 'testCoverage', id: 1 }, positive: false, detailText: 'lorem ipsum' }],
+        };
+        fixture.componentRef.setInput('latestResult', result);
+        fixture.componentRef.setInput('tasks', [{ id: 1, completeString: '[task][Coverage >= 80%](1)', taskName: 'Coverage &gt;= 80% &amp; <code>Foo</code>', testIds: [1] }]);
+        fixture.detectChanges();
+
+        const steps = fixture.componentInstance.steps();
+        expect(steps).toHaveLength(1);
+        expect(steps[0].title).toBe('Coverage >= 80% & Foo');
+
+        const translateService = TestBed.inject(TranslateService);
+        const instantSpy = vi.spyOn(translateService, 'instant');
+        fixture.componentInstance.showDetailsForTests(steps[0].testIds, 'Coverage &gt;= 80% &amp; <code>Foo</code>');
+
+        expect(instantSpy).toHaveBeenCalledWith('artemisApp.result.detail.feedbackForTask', { taskName: 'Coverage >= 80% & Foo' });
     });
 });

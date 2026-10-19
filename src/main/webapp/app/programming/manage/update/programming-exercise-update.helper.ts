@@ -21,7 +21,6 @@ export enum ProgrammingExerciseInputField {
     PACKAGE_NAME = 'packageName',
     ENABLE_STATIC_CODE_ANALYSIS = 'enableStaticCodeAnalysis',
     SEQUENTIAL_TEST_RUNS = 'sequentialTestRuns',
-    CUSTOMIZE_BUILD_SCRIPT = 'customizeBuildScript',
 
     // Version Control section
     ALLOW_BRANCHING = 'allowBranching',
@@ -43,7 +42,6 @@ export enum ProgrammingExerciseInputField {
     ASSESSMENT_DUE_DATE = 'assessmentDueDate',
     EXAMPLE_SOLUTION_PUBLICATION_DATE = 'exampleSolutionPublicationDate',
     COMPLAINT_ON_AUTOMATIC_ASSESSMENT = 'complaintOnAutomaticAssessment',
-    MANUAL_FEEDBACK_REQUESTS = 'manualFeedbackRequests',
     SHOW_TEST_NAMES_TO_STUDENTS = 'showTestNamesToStudents',
     INCLUDE_TESTS_INTO_EXAMPLE_SOLUTION = 'includeTestsIntoExampleSolution',
     ASSESSMENT_INSTRUCTIONS = 'assessmentInstructions',
@@ -72,7 +70,6 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, 
     packageName: true,
     enableStaticCodeAnalysis: false,
     sequentialTestRuns: false,
-    customizeBuildScript: false,
     // Version Control section
     allowBranching: false,
     // Problem section
@@ -91,7 +88,6 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, 
     assessmentDueDate: true,
     exampleSolutionPublicationDate: false,
     complaintOnAutomaticAssessment: false,
-    manualFeedbackRequests: false,
     showTestNamesToStudents: false,
     includeTestsIntoExampleSolution: false,
     assessmentInstructions: true,

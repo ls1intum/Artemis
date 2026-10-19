@@ -1,21 +1,25 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, input, model, signal, viewChild } from '@angular/core';
 import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
-import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
-/**
- * @deprecated Use {@link TitleChannelNamePrimengComponent} instead.
- */
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
     viewProviders: [{ provide: ControlContainer, useExisting: NgForm }],
-    imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, HelpIconComponent],
+    imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, FaIconComponent, ArtemisTranslatePipe, TumAetUiInputDirective, TumAetUiTooltipDirective],
 })
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly titleErrorId = `title-error-${generateUuid()}`;
+
     title = model<string | undefined>(undefined);
     channelName = model<string | undefined>(undefined);
     channelNamePrefix = input<string | undefined>('');
@@ -26,10 +30,13 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     channelNameHelpIconText = input<string>('artemisApp.programmingExercise.channelNameTooltip');
     emphasizeLabels = input<boolean>(false);
     minTitleLength = input<number>();
+    maxTitleLength = input<number>();
     initChannelName = input<boolean>(true);
     hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     alreadyUsedTitles = input<Set<string>>(new Set());
+    /** Renders a * next to the title and channel-name labels. Opt-in so lectures and exams are unaffected. */
+    showRequiredMarker = input<boolean>(false);
 
     titleOnPageLoad = signal<string | undefined>(undefined);
 
@@ -44,13 +51,19 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
         return this.fieldChannelName()!;
     }
 
-    titleChange = output<string>();
-    channelNameChange = output<string>();
-
     isValid = signal<boolean>(false);
 
     fieldTitleSubscription?: Subscription;
     fieldChannelNameSubscription?: Subscription;
+
+    /**
+     * Whether the title is one of the {@link alreadyUsedTitles}, as the title field's validator decides it, but as a signal so
+     * that a host's computed() follows it. The title the form was opened with does not count, as the field does not count it.
+     */
+    readonly isTitleDisallowed = computed(() => {
+        const title = this.title();
+        return title !== undefined && title !== this.titleOnPageLoad() && this.alreadyUsedTitles().has(title);
+    });
 
     isChannelFieldDisplayed = computed(() => {
         return !this.hideChannelName() && (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.channelName);
@@ -62,13 +75,12 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
             this.registerChangeListeners();
         });
 
-        effect(
-            function removeInitialTitleInEditFromForbiddenTitles() {
-                if (this.titleOnPageLoad()) {
-                    this.alreadyUsedTitles().delete(this.titleOnPageLoad());
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            const titleOnPageLoad = this.titleOnPageLoad();
+            if (titleOnPageLoad) {
+                this.alreadyUsedTitles().delete(titleOnPageLoad);
+            }
+        });
     }
 
     ngAfterViewInit() {
@@ -106,7 +118,6 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     updateTitle(newTitle: string) {
         this.title.set(newTitle);
-        this.titleChange.emit(this.title() ?? '');
         this.updateChannelName();
     }
 
@@ -132,6 +143,5 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
         const formattedName = removeTrailingHyphens ? nameWithoutSpecialCharacters.replace(TRAILING_HYPHENS, '') : nameWithoutSpecialCharacters;
 
         this.channelName.set(formattedName.slice(0, 30));
-        this.channelNameChange.emit(this.channelName() ?? '');
     }
 }

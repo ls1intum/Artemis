@@ -1,4 +1,4 @@
-@for (notification of notificationsToDisplay; track notification) {
+@for (notification of notificationsToDisplay(); track notification) {
     <div class="system-notification" [ngClass]="{ info: (notification.type || INFO) === INFO, warning: notification.type === WARNING }">
         <div class="notification-text">
             <span class="notification-title">

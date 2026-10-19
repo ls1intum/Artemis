@@ -195,7 +195,7 @@ public class CourseStatsService {
         usersByDate.forEach((date, users) -> {
             int year = date < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
             ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
-            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(date - 1) : firstDateOfYear.plusWeeks(date);
+            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks((long) date - 1) : firstDateOfYear.plusWeeks(date);
             StatisticsEntry listElement = new StatisticsEntry(start, users.size());
             returnList.add(listElement);
         });
@@ -247,19 +247,20 @@ public class CourseStatsService {
 
         Set<Long> exerciseIds = courseExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         start = System.currentTimeMillis();
-        long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(courseExerciseIdsWithManualAssessments);
-        log.debug("resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns took {} ms for exercises with ids {}", System.currentTimeMillis() - start,
-                courseExerciseIdsWithManualAssessments);
+        long numberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIdsWithManualAssessments);
+        log.debug("resultRepository.countNumberOfAssessments took {} ms for exercises with ids {}", System.currentTimeMillis() - start, courseExerciseIdsWithManualAssessments);
+        // the submissions are counted over the same exercises as the assessments, so that the assessment progress is consistent
         start = System.currentTimeMillis();
-        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIds)
-                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);
+        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(courseExerciseIdsWithManualAssessments)
+                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(courseExerciseIdsWithManualAssessments);
         log.debug("number of in time submissions: {}", numberOfInTimeSubmissions);
         log.debug(
                 "submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate and programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted took {} ms for exercises with ids {}",
-                System.currentTimeMillis() - start, exerciseIds);
+                System.currentTimeMillis() - start, courseExerciseIdsWithManualAssessments);
         start = System.currentTimeMillis();
-        long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIds);
-        log.debug("submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate took {} ms for exercises with ids {}", System.currentTimeMillis() - start, exerciseIds);
+        long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(courseExerciseIdsWithManualAssessments);
+        log.debug("submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate took {} ms for exercises with ids {}", System.currentTimeMillis() - start,
+                courseExerciseIdsWithManualAssessments);
 
         long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
         log.debug("number of late submissions: {}, total number of submissions: {}", numberOfLateSubmissions, numberOfSubmissions);
@@ -321,10 +322,11 @@ public class CourseStatsService {
 
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
-        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(courseExerciseIds);
-        numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(courseExerciseIds);
+        // the submissions are counted over the same exercises as the assessments, so that the assessment progress is consistent
+        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(courseExerciseIdsWithManualAssessments);
+        numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(courseExerciseIdsWithManualAssessments);
 
-        final long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(courseExerciseIds);
+        final long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(courseExerciseIdsWithManualAssessments);
         long numberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIdsWithManualAssessments);
         stats.setTotalNumberOfAssessments(numberOfAssessments);
 
@@ -338,15 +340,14 @@ public class CourseStatsService {
         stats.setNumberOfComplaints(numberOfComplaints);
         final long numberOfComplaintResponses = complaintService.countComplaintResponsesByExerciseIds(courseExerciseIds);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(),
-                course.getId());
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), course.getId());
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
-        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByCourseId(course.getId());
+        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(courseExerciseIds);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, courseExerciseIdsWithManualAssessments);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
-        stats.setNumberOfRatings(ratingRepository.countByResult_Submission_Participation_Exercise_Course_Id(course.getId()));
+        stats.setNumberOfRatings(ratingRepository.countByResultExerciseIds(courseExerciseIds));
         return stats;
     }
 
@@ -358,11 +359,8 @@ public class CourseStatsService {
      * @return end date of the time span
      */
     public ZonedDateTime determineEndDateForActiveStudents(Course course) {
-        var endDate = TimeUtil.now();
-        if (course.getEndDate() != null && TimeUtil.now().isAfter(course.getEndDate())) {
-            endDate = course.getEndDate();
-        }
-        return endDate;
+        var now = TimeUtil.now();
+        return now.isAfter(course.getEndDate()) ? course.getEndDate() : now;
     }
 
     /**
@@ -376,12 +374,8 @@ public class CourseStatsService {
      * @return the allowed time span size
      */
     public int determineTimeSpanSizeForActiveStudents(Course course, ZonedDateTime endDate, int maximalSize) {
-        var spanTime = maximalSize;
-        if (course.getStartDate() != null) {
-            long amountOfWeeksBetween = calculateWeeksBetweenDates(course.getStartDate(), endDate);
-            spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
-        }
-        return spanTime;
+        long amountOfWeeksBetween = calculateWeeksBetweenDates(course.getStartDate(), endDate);
+        return Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
     }
 
     /**

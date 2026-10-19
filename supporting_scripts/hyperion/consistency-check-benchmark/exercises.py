@@ -11,8 +11,7 @@ import urllib3
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from logging_config import logging
 
-from utils import MAX_THREADS, PECV_BENCH_DIR, PECV_BENCH_URL, PECV_BENCH_BRANCH, PECV_BENCH_DATASET_DIR, PECV_BENCH_DATASET_URL, DATASET_VERSION, COURSE_EXERCISES, SERVER_URL, login_as_admin
-from course import get_course_id_request
+from utils import MAX_THREADS, PECV_BENCH_DIR, PECV_BENCH_URL, PECV_BENCH_BRANCH, PECV_BENCH_DATASET_DIR, PECV_BENCH_DATASET_URL, DATASET_VERSION, COURSE_EXERCISES, SERVER_URL
 
 def get_pecv_bench_dir() -> str:
     """
@@ -271,7 +270,9 @@ def check_pecv_bench_setup(pecv_bench_dir: str) -> bool:
         sys.path.insert(0, pecv_bench_dir)
 
     try:
-        import cli
+        # Import solely to probe that pecv-bench (the `cli` package) is installed; the module is
+        # used via its submodules elsewhere, so the bare import is intentionally unreferenced here.
+        import cli  # pylint: disable=unused-import
         return True
     except ImportError:
         logging.error("Step 4 failed: Could not import 'cli' from pecv-bench. Dependencies might not be installed.")

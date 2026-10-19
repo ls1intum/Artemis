@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
@@ -38,7 +37,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         this.user = user;
     }
 
-    private static final long MAX_BLOB_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+    private static final long MAX_BLOB_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
 
     /**
      * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
@@ -49,20 +48,21 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
     @Override
     public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
 
-        Iterator<ReceiveCommand> iterator = commands.iterator();
-        if (!iterator.hasNext()) {
+        if (commands.isEmpty()) {
             // E.g. no refs were updated during the push operation.
             // Note: There is no command that we can set a REJECTED Result on so this will continue into the LocalVCPostPushHook and we have to return there again.
             return;
         }
 
-        ReceiveCommand command = iterator.next();
-
         // There should only be one ReceiveCommand. If there are multiple, e.g. because the user pushes to multiple branches simultaneously, we reject the push.
-        if (iterator.hasNext()) {
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push multiple refs at once.");
+        // Every single command has to be rejected here: JGit applies every command that a hook leaves on NOT_ATTEMPTED, so rejecting only one of them would let
+        // the remaining refs through without any of the checks below.
+        if (commands.size() > 1) {
+            commands.forEach(multiRefCommand -> multiRefCommand.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push multiple refs at once."));
             return;
         }
+
+        ReceiveCommand command = commands.iterator().next();
 
         Repository repository = receivePack.getRepository();
 
@@ -137,7 +137,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             while (treeWalk.next()) {
                 FileMode mode = treeWalk.getFileMode(0);
                 if (FileMode.SYMLINK.equals(mode)) {
-                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("""
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
                             Symbolic links are not allowed: '%s'.
                             To fix this, remove the symbolic link and replace it with the actual file or directory.
 
@@ -147,18 +147,19 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                                 * If it's a file symlink: run 'del "%1$s"'
                                 * If it's a directory symlink: run 'rmdir "%1$s"'
 
-                            After removing the symlink, replace it with the correct file or folder, add it with 'git add', and commit the changes.""", treeWalk.getPathString()));
+                            After removing the symlink, replace it with the correct file or folder, add it with 'git add', and commit the changes."""
+                            .formatted(treeWalk.getPathString()));
                     break;
                 }
                 if (FileMode.GITLINK.equals(mode)) {
-                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("""
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
                             Git submodules are not allowed: '%s'.
                             To remove the submodule from your repository:
                             1. Run: 'git rm --cached "%1$s"'
                             2. Delete the submodule directory: 'rm -rf "%1$s"' (macOS/Linux) or 'rmdir /s "%1$s"' (Windows)
                             3. Edit the '.gitmodules' file and remove the corresponding section.
                             4. Optionally, clean up '.git/config' if it contains a [submodule "%1$s"] section.
-                            5. Commit all changes.""", treeWalk.getPathString()));
+                            5. Commit all changes.""".formatted(treeWalk.getPathString()));
                     break;
                 }
 
@@ -166,7 +167,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 ObjectLoader loader = reader.open(objectId);
                 if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
-                            String.format("File '%s' exceeds 10MB size limit (%.2f MB)", treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
+                            "File '%s' exceeds 10MB size limit (%.2f MB)".formatted(treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
                     break;
                 }
             }

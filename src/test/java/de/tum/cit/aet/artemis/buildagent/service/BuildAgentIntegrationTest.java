@@ -40,10 +40,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.DistributedQueue;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
@@ -89,6 +89,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Autowired
     private BuildAgentInformationService buildAgentInformationService;
 
+    @Autowired
+    private BuildJobManagementService buildJobManagementService;
+
     @BeforeAll
     void init() {
         processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
@@ -113,19 +116,43 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             resumeBuildAgentTopic.publish(buildAgentShortName);
             await().atMost(10, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
         }
+        // Ensure no build job from a previous test is still executing on the shared executor. A straggler
+        // completing mid-test (e.g. a retry-then-succeed job) would otherwise reset shared counters such as
+        // consecutiveBuildJobFailures, causing this test's own failure counting to silently under-count.
+        await().atMost(30, TimeUnit.SECONDS).until(() -> buildJobManagementService.getRunningBuildJobIds().isEmpty());
     }
 
+    /**
+     * Resets the shared build-agent state after each test so it cannot leak into the next one. The distributed build
+     * job queue, processing-jobs map, and result queue are cleared <em>before</em> the agent is resumed (and once more
+     * afterwards), and the agent is un-paused if a test left it paused. See the inline comment for why the clear must
+     * precede the resume.
+     */
     @AfterEach
     void cleanup() {
-        // Ensure the build agent is resumed after each test to not affect subsequent tests
+        // Clear queued work BEFORE resuming the agent. If we resumed first (as the previous version did), the resume
+        // would pick up a job that a paused test had cancelled and re-queued, and re-run it. Because some tests mock the
+        // container start to sleep far longer than the build, that re-run keeps executing in the background, leaks past
+        // this test boundary, and contaminates the next test's getRunningBuildJobIds()/build job queue -> flaky tests
+        // (notably testPauseBuildAgentBehavior). This mirrors the clear-then-resume order already used in @BeforeEach.
+        buildJobQueue.clear();
+        processingJobs.clear();
+        resultQueue.clear();
+
+        // Ensure the build agent is resumed after each test to not affect subsequent tests.
         if (sharedQueueProcessingService.isPaused()) {
             resumeBuildAgentTopic.publish(buildAgentShortName);
             await().atMost(10, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
         }
-        // Clear any remaining items
+
+        // Clear once more in case the resume produced residue.
         buildJobQueue.clear();
         processingJobs.clear();
         resultQueue.clear();
+
+        // Wait for this test's own in-flight jobs to finish executing before the next test's @BeforeEach runs,
+        // for the same reason as the wait in clearQueues() above.
+        await().atMost(30, TimeUnit.SECONDS).until(() -> buildJobManagementService.getRunningBuildJobIds().isEmpty());
     }
 
     @Test
@@ -666,7 +693,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Test
     void testDockerVersionIsRetrievedAndStoredInBuildAgentDetails() {
         // Trigger the scheduled Docker version update manually
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
 
         // Verify that the Docker version was retrieved and stored
         assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("24.0.0-test");
@@ -684,14 +711,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Test
     void testDockerVersionChangePropagatedToDistributedMap() {
         // First, trigger an initial update
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
         assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("24.0.0-test");
 
         // Now mock a version change
         DockerClientTestService.mockVersionCmd(dockerClient, "25.0.0-updated");
 
         // Trigger the update again
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
 
         // Verify the version was updated
         assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("25.0.0-updated");
@@ -707,13 +734,13 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     /**
-     * Test that the updateDockerVersion method handles exceptions gracefully.
+     * Test that the build runner status refresh handles exceptions gracefully.
      * When Docker version retrieval fails, the method should log a warning but not throw.
      */
     @Test
     void testDockerVersionRetrievalFailureHandledGracefully() {
         // Store the current version
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
         String originalVersion = buildAgentInformationService.getDockerVersion();
 
         // Mock versionCmd to throw an exception
@@ -722,7 +749,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         doThrow(new RuntimeException("Docker daemon unavailable")).when(versionCmd).exec();
 
         // Trigger the update - should not throw
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
 
         // Version should remain unchanged (graceful degradation)
         assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo(originalVersion);
@@ -737,7 +764,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Test
     void testDockerVersionIncludedInBuildAgentDetailsAfterBuild() {
         // Ensure Docker version is set
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
 
         // Run a build job
         var queueItem = createBaseBuildJobQueueItemForTrigger();

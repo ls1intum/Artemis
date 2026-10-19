@@ -1,12 +1,16 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { Observable } from 'rxjs';
 
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
-@Injectable({ providedIn: 'root' })
+/** Prefix of the link of a file stored under the lecture attachment path, as in attachments/lecture/{lectureId}/{filename}. */
+const LECTURE_ATTACHMENT_LINK_PREFIX = 'attachments/lecture/';
+
+@Service()
 export class FileService {
     private http = inject(HttpClient);
     private resourceUrl = 'api/core/files';
@@ -75,9 +79,10 @@ export class FileService {
      *
      * @param downloadUrl url that is stored in the attachment model
      * @param downloadName the name given to the attachment
+     * @param version attachment version used to invalidate cached downloads after a replacement
      */
-    downloadFileByAttachmentName(downloadUrl: string, downloadName: string) {
-        const normalizedDownloadUrl = this.createAttachmentFileUrl(downloadUrl, downloadName, true);
+    downloadFileByAttachmentName(downloadUrl: string, downloadName: string, version?: number) {
+        const normalizedDownloadUrl = this.createAttachmentFileUrl(downloadUrl, downloadName, true, version);
         const newWindow = window.open('about:blank');
         newWindow!.location.href = normalizedDownloadUrl;
         return newWindow;
@@ -89,14 +94,30 @@ export class FileService {
      * @param downloadUrl url that is stored in the attachment model
      * @param downloadName the name given to the attachment
      * @param encodeName whether or not to encode the downloadName
+     * @param version attachment version used to invalidate cached downloads after a replacement
      */
-    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean) {
+    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean, version?: number) {
         const downloadUrlComponents = downloadUrl.split('/');
         // take the last element
         const extension = downloadUrlComponents.pop()!.split('.').pop();
         const restOfUrl = downloadUrlComponents.join('/');
         const encodedDownloadName = encodeName ? encodeURIComponent(downloadName + '.' + extension) : downloadName + '.' + extension;
-        return restOfUrl + '/' + encodedDownloadName;
+        const attachmentUrl = restOfUrl + '/' + encodedDownloadName;
+        return this.addAttachmentVersionToUrl(attachmentUrl, version);
+    }
+
+    /**
+     * Adds the attachment version to a URL so replacements use a new browser cache entry.
+     *
+     * @param attachmentUrl attachment URL to version
+     * @param version attachment version used to invalidate cached downloads after a replacement
+     */
+    addAttachmentVersionToUrl(attachmentUrl: string, version?: number | null): string {
+        if (version === undefined || version === null) {
+            return attachmentUrl;
+        }
+        const separator = attachmentUrl.includes('?') ? '&' : '?';
+        return `${attachmentUrl}${separator}version=${version}`;
     }
 
     /**
@@ -105,7 +126,7 @@ export class FileService {
      * @param lectureId the id of the lecture
      */
     downloadMergedFile(lectureId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/attachments/lecture/${lectureId}/merge-pdf`, {
+        return this.http.get(`${this.resourceUrl}/attachments/lectures/${lectureId}/merge-pdf`, {
             observe: 'response',
             responseType: 'blob',
         });
@@ -129,7 +150,7 @@ export class FileService {
     getUniqueFileName(extension: string, mapOfFiles?: Map<string, { path?: string; file: File }>): string {
         let name;
         do {
-            name = window.crypto.randomUUID().toString() + '.' + extension;
+            name = generateUuid() + '.' + extension;
         } while (mapOfFiles && mapOfFiles.has(name));
         return name;
     }
@@ -145,9 +166,18 @@ export class FileService {
     /**
      * Returns the student version of the given link.
      *
+     * The lecture attachment route takes no student segment, so a link naming it is what a student downloads as it is.
+     * The server no longer hands out such a link for an attachment video unit: it serves every unit's attachment under
+     * the unit and resolves where the file actually lies on its side, see Attachment.fileLocation. The check is here
+     * for a link a client was handed before the upgrade and still holds, the same reason the legacy request paths stay
+     * mapped, see CoreLegacyFileRestPaths.
+     *
      * @param link the file link
      */
     createStudentLink(link: string): string {
+        if (link.startsWith(LECTURE_ATTACHMENT_LINK_PREFIX)) {
+            return link;
+        }
         const lastSlashIndex = link.lastIndexOf('/');
         return `${link.substring(0, lastSlashIndex)}/student${link.substring(lastSlashIndex)}`;
     }

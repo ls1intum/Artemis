@@ -1,45 +1,36 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
- * A ShortAnswerMapping.
+ * A ShortAnswerMapping links a {@link ShortAnswerSpot} to a {@link ShortAnswerSolution}.
+ * <p>
+ * This is the in-memory / wire representation used by the REST DTOs, the raw exam submission/conduction endpoints, the scoring strategies and the client. It carries the spot and
+ * solution as nested objects (the shape the client expects), plus derived, transient {@code shortAnswerSpotIndex}/{@code shortAnswerSolutionIndex} for the editor UI.
+ * <p>
+ * It is intentionally <b>not</b> what gets persisted: a question's correct mappings are stored inside {@link ShortAnswerQuestionContent} as normalized, id-based
+ * {@link ShortAnswerCorrectMapping} entries. {@link ShortAnswerQuestion#getCorrectMappings()} builds these object-based mappings on demand by resolving the stored ids against the
+ * owning question, and {@code setCorrectMappings(...)} extracts the ids back into the stored form. Formerly a JPA entity backed by {@code short_answer_mapping}; it is now a plain
+ * POJO. Mirrors {@link DragAndDropMapping}.
+ * <p>
+ * It still extends {@link DomainObject} to reuse the {@code id} field and its id-based {@code equals}/{@code hashCode}; the inherited JPA annotations are inert because this class
+ * is no longer an {@code @Entity}. For a question's correct mapping the {@code id} is the question-scoped mapping id.
  */
-// No @Cache here on purpose: part of the quiz-submission merge graph. See #12574 / #12584.
-@Entity
-@Table(name = "short_answer_mapping")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerMapping extends DomainObject implements QuizQuestionComponent<ShortAnswerQuestion> {
+public class ShortAnswerMapping extends DomainObject {
 
-    @Column(name = "short_answer_spot_index")
+    // Derived, transient: the position of the spot / solution within the question's ordered lists. Populated when building the mapping from stored content; never persisted.
     private Integer shortAnswerSpotIndex;
 
-    @Column(name = "short_answer_solution_index")
     private Integer shortAnswerSolutionIndex;
 
-    @Column(name = "invalid")
     private Boolean invalid;
 
-    @ManyToOne
     private ShortAnswerSolution solution;
 
-    @ManyToOne
     private ShortAnswerSpot spot;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
-    @JsonIgnore
-    private ShortAnswerQuestion question;
 
     public Integer getShortAnswerSpotIndex() {
         return shortAnswerSpotIndex;
@@ -91,31 +82,9 @@ public class ShortAnswerMapping extends DomainObject implements QuizQuestionComp
         return this;
     }
 
-    public ShortAnswerQuestion getQuestion() {
-        return question;
-    }
-
-    @Override
-    public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
-        this.question = shortAnswerQuestion;
-    }
-
     @Override
     public String toString() {
         return "ShortAnswerMapping{" + "id=" + getId() + ", shortAnswerSpotIndex=" + getShortAnswerSpotIndex() + ", shortAnswerSolutionIndex=" + getShortAnswerSolutionIndex()
                 + ", invalid='" + isInvalid() + "'" + "}";
-    }
-
-    /**
-     * Stable, constant hashCode that does not change when Hibernate assigns the id on persist. This is required because
-     * {@link ShortAnswerQuestion#correctMappings} is a {@code Set<ShortAnswerMapping>}: factories and DTO mappers add
-     * transient mappings (id == null) to the set, and the id-based default would change after persist and silently
-     * break HashSet membership. Returning a constant forces all instances into the same bucket; the (id-based)
-     * {@code equals} contract still distinguishes them. The performance impact is negligible — a question's mapping
-     * set is small. Mirrors the same pattern on {@link de.tum.cit.aet.artemis.assessment.domain.Feedback}.
-     */
-    @Override
-    public int hashCode() {
-        return ShortAnswerMapping.class.hashCode();
     }
 }

@@ -1,13 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { PrivacyStatement } from 'app/admin/legal/privacy-statement.model';
 import { Observable } from 'rxjs';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
 import { Imprint } from 'app/admin/legal/imprint.model';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LegalDocumentService {
     private http = inject(HttpClient);
 
@@ -19,27 +17,27 @@ export class LegalDocumentService {
     private resourceUrlPrivacyStatementUpdate = 'api/admin/privacy-statement';
 
     getPrivacyStatement(language: LegalDocumentLanguage): Observable<PrivacyStatement> {
-        return this.getRequestToResource(language, LegalDocumentType.PRIVACY_STATEMENT) as Observable<PrivacyStatement>;
+        return this.getRequestToResource(language, LegalDocumentType.PRIVACY_STATEMENT);
     }
 
     getPrivacyStatementForUpdate(language: LegalDocumentLanguage): Observable<PrivacyStatement> {
-        return this.getRequestForUpdateToResource(language, LegalDocumentType.PRIVACY_STATEMENT) as Observable<PrivacyStatement>;
+        return this.getRequestForUpdateToResource(language, LegalDocumentType.PRIVACY_STATEMENT);
     }
 
     updatePrivacyStatement(privacyStatement: PrivacyStatement): Observable<PrivacyStatement> {
-        return this.putRequestToResource(privacyStatement, LegalDocumentType.PRIVACY_STATEMENT) as Observable<PrivacyStatement>;
+        return this.putRequestToResource(privacyStatement, LegalDocumentType.PRIVACY_STATEMENT);
     }
 
     getImprint(language: LegalDocumentLanguage): Observable<Imprint> {
-        return this.getRequestToResource(language, LegalDocumentType.IMPRINT) as Observable<Imprint>;
+        return this.getRequestToResource(language, LegalDocumentType.IMPRINT);
     }
 
     getImprintForUpdate(language: LegalDocumentLanguage): Observable<Imprint> {
-        return this.getRequestForUpdateToResource(language, LegalDocumentType.IMPRINT) as Observable<Imprint>;
+        return this.getRequestForUpdateToResource(language, LegalDocumentType.IMPRINT);
     }
 
     updateImprint(imprint: Imprint): Observable<Imprint> {
-        return this.putRequestToResource(imprint, LegalDocumentType.IMPRINT) as Observable<Imprint>;
+        return this.putRequestToResource(imprint, LegalDocumentType.IMPRINT);
     }
 
     private getRequestToResource(language: LegalDocumentLanguage, type: LegalDocumentType): Observable<LegalDocument> {

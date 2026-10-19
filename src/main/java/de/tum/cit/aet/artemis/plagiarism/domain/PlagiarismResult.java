@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.JPlagResult;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -58,6 +59,8 @@ public class PlagiarismResult extends AbstractAuditingEntity {
      * Exercise for which plagiarism was detected.
      */
     @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
     protected Exercise exercise;
 
     /**
@@ -99,9 +102,12 @@ public class PlagiarismResult extends AbstractAuditingEntity {
     }
 
     /**
-     * @return an unmodifiable list of the similar distribution
+     * @return an unmodifiable list of the similar distribution, or null if no distribution has been initialized yet
      */
     public List<Integer> getSimilarityDistribution() {
+        if (this.similarityDistribution == null) {
+            return null;
+        }
         return this.similarityDistribution.entrySet().stream().sorted(comparingInt(Entry::getKey)).map(Entry::getValue).toList();
     }
 

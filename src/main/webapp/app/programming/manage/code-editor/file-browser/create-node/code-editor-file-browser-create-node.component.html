@@ -1,7 +1,8 @@
-<li class="list-group-item border-0" id="file-browser-create-node">
+<div class="list-group-item border-0" data-testid="file-browser-create-node">
     <fa-icon aria-hidden="true" [icon]="createFileType() === FileType.FILE ? faFile : faFolder" [fixedWidth]="true" />
     <span class="ms-1"
         ><input
+            [attr.aria-label]="'accessibility.createFileOrFolder' | artemisTranslate"
             #creatingInput
             value=""
             (keyup.enter)="createFile($event)"
@@ -9,4 +10,4 @@
             (keyup.esc)="onClearCreatingFile.emit($event)"
             class="list-group-item__input"
     /></span>
-</li>
+</div>

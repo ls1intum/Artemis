@@ -14,12 +14,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -30,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
+@FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
 @RestController
 @RequestMapping("api/localci/")
 public class AutomaticAfterDueDateResource {
@@ -61,6 +66,7 @@ public class AutomaticAfterDueDateResource {
      * @param requestDTO contains exercise/exam context and timeline/build-phase inputs for computation
      * @return the computed date or null if the value would not be set
      */
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("programming-exercises/timeline/automatic-after-due-date-preview")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
@@ -70,7 +76,7 @@ public class AutomaticAfterDueDateResource {
 
         ProgrammingExercise programmingExercise = null;
         if (programmingExerciseId != null) {
-            programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(programmingExerciseId);
+            programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
             authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         }
         Exam exam = null;

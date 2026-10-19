@@ -11,6 +11,7 @@ import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -33,12 +34,14 @@ import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-
 import { QuizExamSummaryComponent } from 'app/exam/overview/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/overview/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
+import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { NgClass } from '@angular/common';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -54,7 +57,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -208,9 +210,14 @@ function sharedSetup(url: string[]) {
                         FaIconComponent,
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),
-                        NgClass,
                         RouterLink,
-                        NgbTooltip,
+                        TumAetUiButtonDirective,
+                        TumAetUiMessageComponent,
+                        TumAetUiTagComponent,
+                        MockDirective(TumAetUiTooltipDirective),
+                        ExamExerciseHeaderComponent,
+                        MockComponent(ExamRequestAiFeedbackButtonComponent),
+                        MockComponent(CourseSidebarToggleButtonComponent),
                         MockComponent(ExamGeneralInformationComponent),
                         MockComponent(ExamResultOverviewComponent),
                         MockComponent(CollapsibleCardComponent),
@@ -223,7 +230,6 @@ function sharedSetup(url: string[]) {
                         MockComponent(FileUploadExamSummaryComponent),
                         MockComponent(ComplaintsStudentViewComponent),
                         MockComponent(ProgrammingExamSummaryComponent),
-                        MockComponent(TestRunRibbonComponent),
                     ],
                 },
             })
@@ -241,8 +247,6 @@ function sharedSetup(url: string[]) {
 }
 
 describe('ExamResultSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     sharedSetup(['', '']);
 
     it('should expand all exercises and call print when Export PDF is clicked', async () => {
@@ -251,18 +255,19 @@ describe('ExamResultSummaryComponent', () => {
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
 
         expect(exportToPDFButton).not.toBeNull();
+        expect(exportToPDFButton.nativeElement.getAttribute('data-testid')).toBe('exam-summary-export-button');
 
-        component.exerciseInfos[1].isCollapsed = true;
-        component.exerciseInfos[2].isCollapsed = true;
-        component.exerciseInfos[3].isCollapsed = true;
-        component.exerciseInfos[4].isCollapsed = true;
+        component.exerciseInfos()[1].isCollapsed = true;
+        component.exerciseInfos()[2].isCollapsed = true;
+        component.exerciseInfos()[3].isCollapsed = true;
+        component.exerciseInfos()[4].isCollapsed = true;
 
         exportToPDFButton.nativeElement.click();
 
-        expect(component.exerciseInfos[1].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[2].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[3].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[4].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[1].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[2].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[3].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[4].isCollapsed).toBe(false);
 
         await fixture.whenStable();
         expect(printStub).toHaveBeenCalledOnce();
@@ -278,7 +283,7 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExam()).toEqual(studentExam);
         expect(serviceSpy).toHaveBeenCalledOnce();
         expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id, studentExam.user!.id);
-        expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
+        expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
     });
 
     it.each([
@@ -334,18 +339,18 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExam().id).toBe(studentExam.id);
 
         const courseId = 10;
-        component.courseId = courseId;
+        component.courseId.set(courseId);
         plagiarismServiceSpy.mockClear();
 
         // After init, studentExamGradeInfoDTO should be set with the original studentExam
-        component.studentExamGradeInfoDTO = {} as StudentExamWithGradeDTO;
+        component.studentExamGradeInfoDTO.set({} as StudentExamWithGradeDTO);
 
         // Switch to a different studentExam — the effect propagates the new value to studentExamGradeInfoDTO and reloads plagiarism cases with the new courseId
         const studentExam3 = { id: 3, exam: studentExam.exam, user, exercises } as StudentExam;
         fixture.componentRef.setInput('studentExam', studentExam3);
         fixture.detectChanges();
         await Promise.resolve();
-        expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
+        expect(component.studentExamGradeInfoDTO()!.studentExam).toEqual(studentExam3);
         expect(component.studentExam().id).toBe(studentExam3.id);
         expect(plagiarismServiceSpy).toHaveBeenCalledOnce();
         expect(plagiarismServiceSpy).toHaveBeenCalledWith(courseId, [1, 2, 3, 4]);
@@ -355,29 +360,29 @@ describe('ExamResultSummaryComponent', () => {
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(true);
-        expect(component.testExamConduction).toBe(true);
+        expect(component.testExamConduction()).toBe(true);
 
         studentExamForTestExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(true);
-        expect(component.testExamConduction).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
     });
 
     it('should correctly identify a RealExam', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(false);
-        expect(component.testExamConduction).toBe(false);
-        expect(component.isTestRun).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
 
         studentExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(false);
-        expect(component.testExamConduction).toBe(false);
-        expect(component.isTestRun).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
     });
 
@@ -386,16 +391,16 @@ describe('ExamResultSummaryComponent', () => {
         component.testRunConduction = true;
         expect(component.resultsArePublished).toBe(false);
 
-        component.testExamConduction = true;
+        component.testExamConduction.set(true);
         component.testRunConduction = false;
         expect(component.resultsArePublished).toBe(false);
 
-        component.isTestRun = true;
-        component.testExamConduction = false;
+        component.isTestRun.set(true);
+        component.testExamConduction.set(false);
         expect(component.resultsArePublished).toBe(true);
 
         component.isTestExam = true;
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         expect(component.resultsArePublished).toBe(true);
 
         component.isTestExam = false;
@@ -423,22 +428,22 @@ describe('ExamResultSummaryComponent', () => {
 
         component.isTestExam = true;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
         component.isTestExam = false;
-        component.isTestRun = true;
+        component.isTestRun.set(true);
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         component.studentExam().exam!.examStudentReviewStart = examStudentReviewStart;
         component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
         component.studentExam().exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(false);
+        expect(component.isAfterStudentReviewStart()).toBe(false);
 
         expect(dateSpy).toHaveBeenCalled();
     });
@@ -449,21 +454,21 @@ describe('ExamResultSummaryComponent', () => {
 
         component.isTestExam = true;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
         component.isTestExam = false;
-        component.isTestRun = true;
+        component.isTestRun.set(true);
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
         component.studentExam().exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(false);
+        expect(component.isBeforeStudentReviewEnd()).toBe(false);
 
         expect(dateSpy).toHaveBeenCalled();
     });
@@ -482,11 +487,11 @@ describe('ExamResultSummaryComponent', () => {
                 },
             } as StudentResult;
 
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam, studentResult };
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentExam, studentResult });
         });
 
         it('should return undefined if exercise result is undefined', () => {
-            component.studentExamGradeInfoDTO.studentResult.exerciseGroupIdToExerciseResult = {};
+            component.studentExamGradeInfoDTO()!.studentResult.exerciseGroupIdToExerciseResult = {};
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
             expect(scoreAsPercentage).toBeUndefined();
@@ -504,7 +509,7 @@ describe('ExamResultSummaryComponent', () => {
             textExerciseResult.achievedScore = undefined;
             textExerciseResult.maxScore = 10;
             textExerciseResult.achievedPoints = 6.066666;
-            component.studentExamGradeInfoDTO.studentExam!.exam!.course!.accuracyOfScores = 3;
+            component.studentExamGradeInfoDTO()!.studentExam!.exam!.course!.accuracyOfScores = 3;
 
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
@@ -518,6 +523,34 @@ describe('ExamResultSummaryComponent', () => {
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
             expect(scoreAsPercentage).toBeUndefined();
+        });
+    });
+
+    describe('getTextColorAndIconClassByExercise', () => {
+        function exerciseWithStaleResult(exerciseId: number, staleScore: number): TextExercise {
+            const staleResult = { id: exerciseId, score: staleScore, rated: true, completionDate: dayjs().subtract(1, 'hour') } as Result;
+            const submission = { id: exerciseId, results: [staleResult] } as TextSubmission;
+            const participation = { id: exerciseId, submissions: [submission] } as StudentParticipation;
+            return { id: exerciseId, type: ExerciseType.TEXT, studentParticipations: [participation], exerciseGroup } as TextExercise;
+        }
+
+        it('should color the percentage based on the authoritative exam score, not the stale participation result', () => {
+            // Participation result still holds the pre-complaint (failing) score, while the exam grade info
+            // reflects the accepted complaint with full points.
+            const exercise = exerciseWithStaleResult(42, 20);
+            const studentResult = {
+                exerciseGroupIdToExerciseResult: { [exercise.id!]: { exerciseId: exercise.id, achievedScore: 100 } as ExerciseResult },
+            } as StudentResult;
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentResult });
+
+            expect(component.getTextColorAndIconClassByExercise(exercise).textColorClass).toBe('text-state-success');
+        });
+
+        it('should fall back to the participation result color when there is no authoritative exam score', () => {
+            const exercise = exerciseWithStaleResult(43, 20);
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentResult: { exerciseGroupIdToExerciseResult: {} } as StudentResult });
+
+            expect(component.getTextColorAndIconClassByExercise(exercise).textColorClass).toBe('text-state-danger');
         });
     });
 
@@ -556,7 +589,7 @@ describe('ExamResultSummaryComponent', () => {
             const scrollIntoViewSpy = vi.fn();
 
             fixture.componentRef.setInput('studentExam', studentExam);
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentExam });
 
             // Call detectChanges first to render the DOM before mocking getElementById
             fixture.detectChanges();
@@ -573,11 +606,144 @@ describe('ExamResultSummaryComponent', () => {
         });
     });
 
+    describe('page frame', () => {
+        const element = (selector: string): HTMLElement | null => fixture.nativeElement.querySelector(selector);
+        const header = (): HTMLElement => element('#exam-results-title [data-testid="exam-exercise-header"]')!;
+        const title = (): HTMLElement => element('#exam-results-title [data-testid="exam-exercise-title"]')!;
+        const actions = (): HTMLElement => header().lastElementChild as HTMLElement;
+        const submittedExam = (overrides: Partial<Exam> = {}): StudentExam => ({ ...studentExam, submitted: true, exam: { ...exam, ...overrides } as Exam }) as StudentExam;
+
+        it('shows the page title in the shared 40px title row that holds the export button', () => {
+            fixture.detectChanges();
+
+            expect(header().classList).toContain('h-10');
+            expect(title().textContent).toContain('artemisApp.exam.examSummary.examResults');
+            // the id the "back to overview" scroll falls back to stays on the title row
+            expect(element('#exam-results-title')!.contains(title())).toBe(true);
+            expect(actions().querySelector('#exportToPDFButton')).not.toBeNull();
+        });
+
+        it('lays out the actions in the title row without floats: the AI feedback button first, the export button last, both small', () => {
+            fixture.detectChanges();
+
+            const children = [...actions().children];
+            expect(children.map((child) => child.id || child.tagName.toLowerCase())).toEqual(['jhi-exam-request-ai-feedback-button', 'exportToPDFButton']);
+            const exportButton = children[1];
+            // the small size is 34px, so the button fits the 40px row
+            expect(exportButton.classList).toContain('tumaet:text-sm');
+            expect(exportButton.classList).not.toContain('tumaet:text-base');
+            expect(exportButton.classList).not.toContain('float-right');
+            // the host of a button that is not shown must not leave an empty flex item (and an extra gap) behind
+            expect(children[0].classList).toContain('contents');
+        });
+
+        it('puts the toggle of a collapsed sidebar in front of the title inside the same row, and forwards its click', () => {
+            fixture.detectChanges();
+            expect(element('jhi-course-sidebar-toggle-button')).toBeNull();
+
+            fixture.componentRef.setInput('isSidebarCollapsed', true);
+            fixture.detectChanges();
+
+            expect(title().previousElementSibling?.tagName.toLowerCase()).toBe('jhi-course-sidebar-toggle-button');
+            expect(actions().querySelector('jhi-course-sidebar-toggle-button')).toBeNull();
+
+            const toggled = vi.fn();
+            component.toggleSidebar.subscribe(toggled);
+            fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent)).componentInstance.toggleSidebar.emit();
+            expect(toggled).toHaveBeenCalledOnce();
+        });
+
+        it('marks a test run with a tag next to the title instead of the diagonal ribbon', () => {
+            fixture.detectChanges();
+            expect(element('#testRunRibbon')).toBeNull();
+
+            component.isTestRun.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            const tag = element('#testRunRibbon')!;
+            expect(tag.tagName.toLowerCase()).toBe('tumaet-ui-tag');
+            expect(title().nextElementSibling).toBe(tag);
+            expect(element('jhi-test-run-ribbon')).toBeNull();
+        });
+
+        it('shows only the AI feedback button, aligned to the right edge, when an instructor looks at a test run', () => {
+            fixture.componentRef.setInput('instructorView', true);
+            fixture.detectChanges();
+            component.isTestRun.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(element('#exam-results-title')).toBeNull();
+            expect(element('#testRunRibbon')).toBeNull();
+            const aiButton = element('jhi-exam-request-ai-feedback-button')!;
+            expect(aiButton.parentElement!.classList).toContain('justify-end');
+            // the old float and the extra right margin left the button 8px short of the edge
+            expect(aiButton.classList).not.toContain('float-right');
+            expect(aiButton.classList).not.toContain('mr-2!');
+        });
+
+        it('makes the back-to-overview button a small one', () => {
+            fixture.detectChanges();
+
+            const button = element('#back-to-overview-button')!;
+            expect(button.getAttribute('data-testid')).toBe('exam-summary-back-button');
+            expect(button.classList).toContain('tumaet:text-sm');
+            expect(button.classList).not.toContain('tumaet:text-base');
+        });
+
+        it('styles the exercises heading like a section heading and keeps the note about unpublished results apart from it', () => {
+            fixture.componentRef.setInput('studentExam', submittedExam({ publishResultsDate: dayjs().add(2, 'hours') }));
+            fixture.detectChanges();
+
+            const heading = element('h3[jhiTranslate="artemisApp.exam.exercises"]')!;
+            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
+            expect(heading.classList).toContain('text-base!');
+            expect(heading.classList).toContain('font-semibold!');
+            expect(heading.getAttribute('data-testid')).toBe('exam-summary-heading');
+            expect(heading.classList).toContain('mb-3!');
+            expect(element('fa-icon.info-icon')!.parentElement!.classList).toContain('mb-6!');
+        });
+
+        it('adds no margins around the complaint area that would open an empty line above it', () => {
+            fixture.componentRef.setInput('studentExam', submittedExam({ examStudentReviewStart: dayjs().subtract(1, 'hour'), examStudentReviewEnd: dayjs().add(1, 'hour') }));
+            fixture.detectChanges();
+
+            const complaintView = element('jhi-complaint-student-view')!;
+            expect(complaintView).not.toBeNull();
+            expect(complaintView.classList.length).toBe(0);
+        });
+
+        it('caps the problem statement panel of every exercise card at 45% of the card, but not in the printout', () => {
+            fixture.detectChanges();
+
+            const content = element('.collapsible-content')!;
+            expect(content.style.getPropertyValue('--resizeable-container-right-max-width')).toBe('45%');
+
+            component.isPrinting.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(content.style.getPropertyValue('--resizeable-container-right-max-width')).toBe('none');
+        });
+
+        it('makes the plagiarism case link and the example solution toggle small buttons', () => {
+            fixture.componentRef.setInput('studentExam', submittedExam({ exampleSolutionPublicationDate: dayjs().subtract(1, 'hour') }));
+            fixture.detectChanges();
+            component.plagiarismCaseInfos.set({ [textExercise.id!]: { id: 5, verdict: PlagiarismVerdict.PLAGIARISM } });
+            fixture.changeDetectorRef.detectChanges();
+
+            const link = fixture.debugElement.query(By.css('a[tumAetUiButton]')).nativeElement as HTMLElement;
+            const toggle = element(`#show-sample-solution-button-${textExercise.id}`)!;
+            for (const button of [link, toggle]) {
+                expect(button.classList).toContain('tumaet:text-sm');
+                expect(button.classList).not.toContain('tumaet:text-base');
+            }
+        });
+    });
+
     describe('toggleShowSampleSolution', () => {
         it('should be called on button click', () => {
-            component.exerciseInfos = {
+            component.exerciseInfos.set({
                 1: { isCollapsed: false, displayExampleSolution: true } as ResultSummaryExerciseInfo,
-            };
+            });
             exam.exampleSolutionPublicationDate = dayjs().subtract(1, 'hour');
             const toggleShowSampleSolutionSpy = vi.spyOn(component, 'toggleShowSampleSolution');
 

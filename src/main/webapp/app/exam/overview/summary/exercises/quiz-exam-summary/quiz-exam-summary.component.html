@@ -1,7 +1,9 @@
 @if (quizParticipation().quizQuestions && quizParticipation().quizQuestions!.length > 0) {
     <div class="quiz-container">
         @if (showMissingResultsNotice) {
-            <div class="alert alert-info mb-2" jhiTranslate="artemisApp.exam.examSummary.missingResultNotice"></div>
+            <tumaet-ui-message severity="info" class="mb-2">
+                <span jhiTranslate="artemisApp.exam.examSummary.missingResultNotice"></span>
+            </tumaet-ui-message>
         }
         @for (question of quizParticipation().quizQuestions!; track question; let i = $index) {
             <div class="quiz-content">
@@ -10,11 +12,11 @@
                         id="question{{ i }}"
                         class="quiz-question"
                         [question]="question"
-                        [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
+                        [selectedAnswerOptions]="selectedAnswerOptions().get(question.id!)!"
                         [clickDisabled]="true"
                         [showResult]="resultsPublished() && !showMissingResultsNotice"
                         [quizQuestions]="quizParticipation().quizQuestions"
-                        [submittedResult]="result!"
+                        [submittedResult]="result()!"
                         [forceSampleSolution]="false"
                         [questionIndex]="i + 1"
                         [score]="getScoreForQuizQuestion(question.id!)"
@@ -25,7 +27,7 @@
                         id="question{{ i }}"
                         class="quiz-question"
                         [question]="question"
-                        [mappings]="dragAndDropMappings.get(question.id!)!"
+                        [mappings]="dragAndDropMappings().get(question.id!)!"
                         [clickDisabled]="true"
                         [showResult]="resultsPublished() && !showMissingResultsNotice"
                         [forceSampleSolution]="false"
@@ -38,7 +40,7 @@
                         id="question{{ i }}"
                         class="quiz-question"
                         [question]="question"
-                        [submittedTexts]="shortAnswerSubmittedTexts.get(question.id!)!"
+                        [submittedTexts]="shortAnswerSubmittedTexts().get(question.id!)!"
                         [clickDisabled]="true"
                         [showResult]="resultsPublished() && !showMissingResultsNotice"
                         [forceSampleSolution]="false"

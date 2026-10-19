@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
@@ -8,8 +7,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('DifficultyBadge', () => {
-    setupTestBed({ zoneless: true });
-
     let component: DifficultyBadgeComponent;
     let fixture: ComponentFixture<DifficultyBadgeComponent>;
     let exercise: ProgrammingExercise;

@@ -5,24 +5,38 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 
 /**
  * DTO for lecture ingestion status updates received from Pyris.
  *
  * @param result             result payload from Pyris
- * @param stages             pipeline stage details
+ * @param runState           current pipeline run state
+ * @param error              optional error details; {@code error.code} carries ingestion error codes
  * @param jobId              identifier of the Pyris job
- * @param errorCode          optional machine-readable error code (e.g. {@code YOUTUBE_PRIVATE});
- *                               serialized as {@code error_code} on the wire.
- *                               Only consumed when the terminal stage is an error;
- *                               ignored (treated as {@code null}) on successful completions
  * @param displayPageNumbers optional slide-to-displayed-page-number mapping from Pyris;
  *                               only expected on terminal callbacks and {@code null} otherwise
+ * @param stageName          optional name of the pipeline stage the run is currently in (stage-level liveness)
+ * @param stageProgress      optional progress counter within the current stage
+ * @param stageTotal         optional total work items of the current stage
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisLectureIngestionStatusUpdateDTO(String result, List<PyrisStageDTO> stages, long jobId, @Nullable @JsonProperty("error_code") String errorCode,
-        @Nullable List<Integer> displayPageNumbers) {
+public record PyrisLectureIngestionStatusUpdateDTO(String result, PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, long jobId,
+        @Nullable List<Integer> displayPageNumbers, @Nullable String stageName, @Nullable Integer stageProgress, @Nullable Integer stageTotal) {
+
+    /**
+     * Compatibility constructor for callers that do not carry the optional stage fields.
+     *
+     * @param result             result payload from Pyris
+     * @param runState           current pipeline run state
+     * @param error              optional error details
+     * @param jobId              identifier of the Pyris job
+     * @param displayPageNumbers optional slide-to-displayed-page-number mapping
+     */
+    public PyrisLectureIngestionStatusUpdateDTO(String result, PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, long jobId,
+            @Nullable List<Integer> displayPageNumbers) {
+        this(result, runState, error, jobId, displayPageNumbers, null, null, null);
+    }
 }

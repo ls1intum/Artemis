@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import {
@@ -35,9 +35,7 @@ type EntityArrayResponseType = HttpResponse<Competency[]>;
 type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
 type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CompetencyService extends CourseCompetencyService {
     /**
      * Get competency suggestions from AtlasML API
@@ -59,14 +57,14 @@ export class CompetencyService extends CourseCompetencyService {
         );
     }
 
-    getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
+    override getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)),
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
     }
 
-    findById(competencyId: number, courseId: number) {
+    override findById(competencyId: number, courseId: number) {
         return this.httpClient.get<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseDTOType) => {
                 const mapped = this.mapCompetencyResponse(res);
@@ -83,10 +81,25 @@ export class CompetencyService extends CourseCompetencyService {
             .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
     }
 
+    /** Creates a competency through the server-owned Hyperion checklist provenance route. */
+    createFromHyperionChecklist(competency: Competency, courseId: number): Observable<EntityResponseType> {
+        const request: CourseCompetencyRequestDTO = toCourseCompetencyRequestDTO(competency);
+        return this.httpClient
+            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/generated-from-hyperion-checklist`, request, { observe: 'response' })
+            .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
+    }
+
     createBulk(competencies: Competency[], courseId: number) {
         const request = competencies.map((competency) => toCourseCompetencyRequestDTO(competency));
         return this.httpClient
             .post<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk`, request, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)));
+    }
+
+    createBulkFromCourseDescription(competencies: Competency[], courseId: number) {
+        const request = competencies.map((competency) => toCourseCompetencyRequestDTO(competency));
+        return this.httpClient
+            .post<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk/generated-from-description`, request, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)));
     }
 
@@ -120,7 +133,7 @@ export class CompetencyService extends CourseCompetencyService {
             .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapCompetencyImportResponse(res)));
     }
 
-    importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
+    override importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
         const payload: CourseCompetencyImportOptionsDTO = {
             importExercises: false,
             importRelations: importRelations,

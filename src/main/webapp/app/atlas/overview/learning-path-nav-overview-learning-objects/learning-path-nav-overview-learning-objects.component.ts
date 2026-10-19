@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
@@ -18,12 +19,12 @@ import { NgClass } from '@angular/common';
     styleUrl: './learning-path-nav-overview-learning-objects.component.scss',
 })
 export class LearningPathNavOverviewLearningObjectsComponent {
-    protected readonly faCheckCircle = faCheckCircle;
-    protected readonly faLock = faLock;
-
     private readonly alertService = inject(AlertService);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
+
+    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faLock = faLock;
 
     readonly learningPathId = input.required<number>();
     readonly competencyId = input.required<number>();
@@ -42,7 +43,7 @@ export class LearningPathNavOverviewLearningObjectsComponent {
 
     constructor() {
         effect(() => {
-            untracked(() => this.loadLearningObjects());
+            untracked(() => void this.loadLearningObjects());
         });
     }
 
@@ -55,7 +56,7 @@ export class LearningPathNavOverviewLearningObjectsComponent {
             const learningObjects = await this.learningPathApiService.getLearningPathCompetencyLearningObjects(this.learningPathId(), this.competencyId());
             this.learningObjects.set(learningObjects);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
         }

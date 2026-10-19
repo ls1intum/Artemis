@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -14,18 +15,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.retry.NonTransientAiException;
-import org.springframework.ai.retry.TransientAiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.openai.errors.InternalServerException;
+import com.openai.errors.OpenAIException;
+import com.openai.errors.OpenAIIoException;
+import com.openai.errors.OpenAIRetryableException;
+import com.openai.errors.RateLimitException;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
@@ -35,11 +40,9 @@ import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import tools.jackson.core.JacksonException;
 
 /**
  * Abstract base class for AI-powered code generation strategies.
@@ -54,7 +57,13 @@ public abstract class HyperionCodeGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationService.class);
 
-    private static final ObjectMapper OBJECT_MAPPER = JsonObjectMapper.get();
+    /** Every run of characters that is not an uppercase letter or a digit, replaced by an underscore in a constant name. */
+    private static final Pattern NON_CONSTANT_NAME_CHARACTER_RUN = Pattern.compile("[^A-Z0-9]+");
+
+    /** Leading or trailing underscores of a generated constant name. */
+    private static final Pattern LEADING_OR_TRAILING_UNDERSCORES = Pattern.compile("(?:^_+)|(?:_+$)");
+
+    private static final JsonMapper OBJECT_MAPPER = JsonObjectMapper.get();
 
     private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*})\\s*```", Pattern.DOTALL);
 
@@ -94,11 +103,13 @@ public abstract class HyperionCodeGenerationService {
 
     private static final int MAX_SELECTED_FEEDBACK_THREADS_LENGTH = 12000;
 
+    private static final int MAX_TEST_CONTEXT_LENGTH = 16000;
+
     /**
      * Regex that matches control characters except carriage return, line feed, and tab.
      * Used to sanitize consistency issue text before prompt rendering.
      */
-    private static final String CONTROL_CHARS_PATTERN = "[\\p{Cntrl}&&[^\r\n\t]]";
+    private static final Pattern CONTROL_CHARACTER_TO_STRIP = Pattern.compile("[\\p{Cntrl}&&[^\r\n\t]]");
 
     private static final String BUILD_ENVIRONMENT_CONTEXT_TEMPLATE_VARIABLE = "buildEnvironmentContext";
 
@@ -128,10 +139,10 @@ public abstract class HyperionCodeGenerationService {
      * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
      * @param consistencyIssues       formatted consistency issues to inform the generation prompts
      * @param selectedFeedbackThreads selected review-thread payload to inform the generation prompts
-     * @return list of generated code files
+     * @return generated code response containing files to write and obsolete files to remove
      * @throws NetworkingException if AI service communication fails
      */
-    public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
+    public CodeGenerationResponseDTO generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
         if (user == null) {
             throw new IllegalArgumentException("user must not be null");
@@ -147,13 +158,44 @@ public abstract class HyperionCodeGenerationService {
         String normalizedSelectedFeedbackThreads = normalizeSelectedFeedbackThreads(selectedFeedbackThreads);
         CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, normalizedBuildEnvironmentContext,
                 normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
-        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
-                normalizedBuildEnvironmentContext, normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
+        // Carry retry feedback into the file-structure, headers, and logic stages (not just the plan) via the plan string, which all three already consume.
+        String planWithFeedback = augmentPlanWithBuildFeedback(solutionPlanResponse.getSolutionPlan(), previousBuildLogs);
+        CodeGenerationResponseDTO fileStructureResponse = defineFileStructure(user, exercise, courseId, planWithFeedback, repositoryStructure, normalizedBuildEnvironmentContext,
+                normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
+        CodeGenerationResponseDTO headersResponse = generateClassAndMethodHeaders(user, exercise, courseId, planWithFeedback, repositoryStructure,
+                normalizedBuildEnvironmentContext, normalizedConsistencyIssues, normalizedSelectedFeedbackThreads, fileStructureResponse);
+        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, planWithFeedback, repositoryStructure, normalizedBuildEnvironmentContext,
+                normalizedConsistencyIssues, normalizedSelectedFeedbackThreads, headersResponse);
 
-        return coreLogicResponse.getFiles();
+        return mergeStageDeletedFiles(coreLogicResponse, solutionPlanResponse, fileStructureResponse, headersResponse);
     }
 
-    public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
+    /**
+     * Appends the previous attempt's build/test feedback to the plan so downstream stages regenerate against the exact
+     * reported errors. Returns the plan unchanged on the first attempt (no feedback yet).
+     */
+    private String augmentPlanWithBuildFeedback(String solutionPlan, String previousBuildLogs) {
+        if (previousBuildLogs == null || previousBuildLogs.isBlank()) {
+            return solutionPlan;
+        }
+        return solutionPlan + "\n\n**Previous build feedback (fix these exact compile/test errors, keeping every generated file mutually consistent):**\n" + previousBuildLogs;
+    }
+
+    private CodeGenerationResponseDTO mergeStageDeletedFiles(CodeGenerationResponseDTO finalResponse, CodeGenerationResponseDTO... stageResponses) {
+        LinkedHashSet<String> deletedFiles = new LinkedHashSet<>();
+        for (CodeGenerationResponseDTO stageResponse : stageResponses) {
+            if (stageResponse != null) {
+                deletedFiles.addAll(stageResponse.getDeletedFiles());
+            }
+        }
+        if (finalResponse != null) {
+            deletedFiles.addAll(finalResponse.getDeletedFiles());
+            return new CodeGenerationResponseDTO(finalResponse.getSolutionPlan(), finalResponse.getFiles(), List.copyOf(deletedFiles));
+        }
+        return new CodeGenerationResponseDTO(null, List.of(), List.copyOf(deletedFiles));
+    }
+
+    public CodeGenerationResponseDTO generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
         return generateCode(user, exercise, courseId, previousBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues, DEFAULT_SELECTED_FEEDBACK_THREADS);
     }
@@ -180,7 +222,7 @@ public abstract class HyperionCodeGenerationService {
         if (trimmed.isEmpty()) {
             return DEFAULT_SELECTED_FEEDBACK_THREADS;
         }
-        String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
+        String sanitized = CONTROL_CHARACTER_TO_STRIP.matcher(trimmed).replaceAll("").trim();
         if (sanitized.length() > MAX_SELECTED_FEEDBACK_THREADS_LENGTH) {
             return truncateSelectedFeedbackThreadsSafely(sanitized);
         }
@@ -221,7 +263,7 @@ public abstract class HyperionCodeGenerationService {
                 limitedThreads.remove(limitedThreads.size() - 1);
             }
         }
-        catch (JsonProcessingException ignored) {
+        catch (JacksonException ignored) {
             return null;
         }
     }
@@ -242,7 +284,7 @@ public abstract class HyperionCodeGenerationService {
                     return serialized;
                 }
             }
-            catch (JsonProcessingException ignored) {
+            catch (JacksonException ignored) {
                 // Keep scanning backward for an earlier complete JSON object.
             }
             searchIndex = closingBraceIndex - 1;
@@ -250,7 +292,7 @@ public abstract class HyperionCodeGenerationService {
         return DEFAULT_SELECTED_FEEDBACK_THREADS;
     }
 
-    private String serializeIfWithinSelectedFeedbackThreadsLimit(JsonNode payload) throws JsonProcessingException {
+    private String serializeIfWithinSelectedFeedbackThreadsLimit(JsonNode payload) {
         String serialized = OBJECT_MAPPER.writeValueAsString(payload);
         return serialized.length() <= MAX_SELECTED_FEEDBACK_THREADS_LENGTH ? serialized : null;
     }
@@ -263,7 +305,7 @@ public abstract class HyperionCodeGenerationService {
         if (trimmed.isEmpty()) {
             return emptyFallback;
         }
-        String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
+        String sanitized = CONTROL_CHARACTER_TO_STRIP.matcher(trimmed).replaceAll("").trim();
         String redacted = redactSecrets(sanitized).trim();
         if (redacted.isEmpty()) {
             return emptyFallback;
@@ -328,8 +370,40 @@ public abstract class HyperionCodeGenerationService {
         variables.put("repositoryStructure", repositoryStructure);
         variables.put(BUILD_ENVIRONMENT_CONTEXT_TEMPLATE_VARIABLE, buildEnvironmentContext);
         variables.put("consistencyIssues", consistencyIssues);
+        // TESTS has no score target and no {{targetBuildOutcome}} slot in its prompts, so only SOLUTION/TEMPLATE populate it.
+        String targetBuildOutcome = targetBuildOutcomeInstruction();
+        if (targetBuildOutcome != null) {
+            variables.put("targetBuildOutcome", targetBuildOutcome);
+        }
         variables.put(SELECTED_FEEDBACK_THREADS_TEMPLATE_VARIABLE, selectedFeedbackThreads);
+        variables.put("testContext", capLength(testContext(exercise), MAX_TEST_CONTEXT_LENGTH));
         return variables;
+    }
+
+    /**
+     * The test sources the generated code must satisfy, used to match the exact tested API and behaviour. Defaults to a
+     * "no tests" marker; the SOLUTION strategy overrides it to read the test repository. TEMPLATE keeps the default so it
+     * stays an incomplete starting point rather than pre-satisfying the tests, and TESTS keeps it because it generates
+     * the tests themselves.
+     */
+    protected String testContext(ProgrammingExercise exercise) {
+        return "No tests available yet.";
+    }
+
+    private static String capLength(String value, int maxLength) {
+        if (value == null) {
+            return "";
+        }
+        return value.length() > maxLength ? value.substring(0, maxLength) + "\n... (truncated)" : value;
+    }
+
+    private String targetBuildOutcomeInstruction() {
+        return switch (getRepositoryType()) {
+            case TEMPLATE -> "The generated template repository must compile but achieve exactly 0% in the generated tests. "
+                    + "Keep all core exercise logic incomplete so no functional tests pass before students solve the task.";
+            case SOLUTION -> "The generated solution repository must compile and achieve exactly 100% in the generated tests. Implement all required behavior completely.";
+            default -> null;
+        };
     }
 
     /**
@@ -353,10 +427,10 @@ public abstract class HyperionCodeGenerationService {
             storeTokenUsage(user, exercise, courseId, prompt, chatResponse);
             return response;
         }
-        catch (TransientAiException e) {
+        catch (OpenAIIoException | OpenAIRetryableException | RateLimitException | InternalServerException e) {
             throw new NetworkingException("Temporary AI service issue. Please retry.", e);
         }
-        catch (NonTransientAiException e) {
+        catch (OpenAIException e) {
             throw new NetworkingException("AI request failed due to configuration or input. Check model and request.", e);
         }
         catch (IllegalArgumentException e) {
@@ -394,7 +468,7 @@ public abstract class HyperionCodeGenerationService {
                     return response;
                 }
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 log.debug("Failed to parse AI response candidate {}/{} as code generation JSON", index + 1, candidates.size(), e);
                 // Try the next candidate.
             }
@@ -436,9 +510,11 @@ public abstract class HyperionCodeGenerationService {
     private static boolean isResponseProcessingException(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
-            // Check for both Jackson 2 (com.fasterxml) and Jackson 3 (tools.jackson) exceptions,
-            // since Spring AI's BeanOutputConverter uses Jackson 3 internally.
-            if (current instanceof JsonProcessingException || current instanceof JacksonException || current instanceof IllegalArgumentException) {
+            // Both Jackson generations have to be recognised here. Artemis serializes with Jackson 3, but Jackson 2
+            // stays on the runtime classpath for the third-party libraries that carry their own mapper, so a parse
+            // failure raised inside one of those still reaches this chain. The Jackson 2 type is matched by name
+            // because ArchitectureTest.testNoJackson2InProductionCode forbids importing it.
+            if (current instanceof JacksonException || current.getClass().getName().startsWith("com.fasterxml.jackson.") || current instanceof IllegalArgumentException) {
                 return true;
             }
             current = current.getCause();
@@ -486,11 +562,8 @@ public abstract class HyperionCodeGenerationService {
             if (model == null || model.isBlank()) {
                 return;
             }
-            Integer promptTokenCount = usage.getPromptTokens();
-            Integer completionTokenCount = usage.getCompletionTokens();
-            if (promptTokenCount == null && completionTokenCount == null) {
-                return;
-            }
+            int promptTokenCount = usage.getPromptTokens();
+            int completionTokenCount = usage.getCompletionTokens();
             Long exerciseId = exercise != null ? exercise.getId() : null;
             if (courseId == null) {
                 log.warn("Skipping token usage persistence for Hyperion code generation due to missing courseId (exerciseId={}, prompt={})", exerciseId, prompt);
@@ -512,15 +585,12 @@ public abstract class HyperionCodeGenerationService {
     }
 
     /**
-     * Normalizes nullable or negative token counts before persistence.
+     * Normalizes negative token counts before persistence.
      *
      * @param tokenCount token count reported by the model metadata
      * @return non-negative token count
      */
-    private static int sanitizeTokenCount(Integer tokenCount) {
-        if (tokenCount == null) {
-            return 0;
-        }
+    private static int sanitizeTokenCount(int tokenCount) {
         return Math.max(tokenCount, 0);
     }
 
@@ -553,7 +623,8 @@ public abstract class HyperionCodeGenerationService {
         int extensionSeparatorIndex = fileName.lastIndexOf('.');
         String fileNameWithoutExtension = extensionSeparatorIndex > 0 ? fileName.substring(0, extensionSeparatorIndex) : fileName;
 
-        String sanitized = fileNameWithoutExtension.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_").replaceAll("^_+|_+$", "");
+        String underscored = NON_CONSTANT_NAME_CHARACTER_RUN.matcher(fileNameWithoutExtension.toUpperCase(Locale.ROOT)).replaceAll("_");
+        String sanitized = LEADING_OR_TRAILING_UNDERSCORES.matcher(underscored).replaceAll("");
         return sanitized.isBlank() ? "UNKNOWN" : sanitized;
     }
 
@@ -608,53 +679,22 @@ public abstract class HyperionCodeGenerationService {
      * Generates class definitions and method signatures.
      * Third step in the 4-step generation pipeline.
      *
-     * @param user                    the user requesting code generation
-     * @param exercise                the programming exercise to create headers for
-     * @param courseId                the resolved course id for telemetry attribution
-     * @param solutionPlan            the high-level solution plan from step 1
-     * @param repositoryStructure     tree-format representation of current repository structure
-     * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
-     * @param consistencyIssues       formatted consistency issues to inform the generation prompts
-     * @param selectedFeedbackThreads selected review-thread payload to inform the generation prompts
-     * @return AI response containing class and method headers
-     * @throws NetworkingException if AI service communication fails
+     * @param user          the user requesting code generation
+     * @param solutionPlan  the high-level solution plan from step 1
+     * @param fileStructure the file structure from step 2
      */
     protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan,
-            String repositoryStructure, String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
-
-    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
-        return generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
-                DEFAULT_SELECTED_FEEDBACK_THREADS);
-    }
+            String repositoryStructure, String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO fileStructure)
+            throws NetworkingException;
 
     /**
-     * Generates the core implementation logic for the solution.
+     * Generates the core implementation for each file based on the previously computed headers.
      * Fourth and final step in the 4-step generation pipeline.
      *
-     * @param user                    the user requesting code generation
-     * @param exercise                the programming exercise to implement
-     * @param courseId                the resolved course id for telemetry attribution
-     * @param solutionPlan            the high-level solution plan from step 1
-     * @param repositoryStructure     tree-format representation of current repository structure
-     * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
-     * @param consistencyIssues       formatted consistency issues to inform the generation prompts
-     * @param selectedFeedbackThreads selected review-thread payload to inform the generation prompts
-     * @return AI response containing complete implementation with generated files
-     * @throws NetworkingException if AI service communication fails
+     * @param headers AI response from step 3 containing class and method headers
      */
     protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO headers) throws NetworkingException;
 
-    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
-        return generateCoreLogic(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues, DEFAULT_SELECTED_FEEDBACK_THREADS);
-    }
-
-    /**
-     * Returns the repository type that this strategy generates code for.
-     *
-     * @return the repository type (SOLUTION, TEMPLATE, or TESTS)
-     */
     protected abstract RepositoryType getRepositoryType();
 }

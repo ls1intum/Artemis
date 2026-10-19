@@ -1,132 +1,81 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TranslateService } from '@ngx-translate/core';
 import { PdfUploadTarget, PdfUploadTargetDialogComponent } from './pdf-upload-target-dialog.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { Subject } from 'rxjs';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PdfUploadTargetDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfUploadTargetDialogComponent;
     let fixture: ComponentFixture<PdfUploadTargetDialogComponent>;
-    let dialogRef: DynamicDialogRef;
-    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+    let targetSelectedSpy: Mock<(target: PdfUploadTarget) => void>;
+
+    const lectures = [{ id: 1, title: 'Introduction' } as Lecture, { id: 2, title: 'Testing' } as Lecture];
 
     beforeEach(async () => {
-        dialogRefCloseSpy = vi.fn();
-        dialogRef = {
-            close: dialogRefCloseSpy,
-            onClose: new Subject<any>(),
-        } as unknown as DynamicDialogRef;
-
         await TestBed.configureTestingModule({
             imports: [PdfUploadTargetDialogComponent],
-            providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                {
-                    provide: DynamicDialogConfig,
-                    useValue: {
-                        data: {
-                            lectures: [],
-                            uploadedFiles: [],
-                        },
-                    },
-                },
-            ],
-        })
-            .overrideComponent(PdfUploadTargetDialogComponent, {
-                remove: { imports: [ArtemisTranslatePipe, TranslateDirective] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)] },
-            })
-            .compileComponents();
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
 
         fixture = TestBed.createComponent(PdfUploadTargetDialogComponent);
         component = fixture.componentInstance;
-        await fixture.whenStable();
+        targetSelectedSpy = vi.fn();
+        component.targetSelected.subscribe(targetSelectedSpy);
     });
 
     afterEach(() => {
+        fixture.destroy();
         vi.restoreAllMocks();
     });
 
-    describe('initialization', () => {
-        it('should create with default values', () => {
-            expect(component).toBeTruthy();
+    function dropFiles(...names: string[]): void {
+        fixture.componentRef.setInput(
+            'uploadedFiles',
+            names.map((name) => new File([''], name, { type: 'application/pdf' })),
+        );
+    }
+
+    it('should start with a new lecture as the target', () => {
+        expect(component.targetType()).toBe('new');
+        expect(component.selectedLectureId()).toBeUndefined();
+        expect(component.newLectureTitle()).toBe('');
+        expect(component.isValid()).toBe(false);
+    });
+
+    describe('derived lecture title', () => {
+        it.each([
+            [['Introduction.pdf'], 'Introduction'],
+            [['Lecture_01.pdf', 'Lecture_02.pdf'], 'Lecture 01'],
+            [['Software-Engineering_Basics.pdf'], 'Software Engineering Basics'],
+            [['Upper.PDF'], 'Upper'],
+            [['  padded .pdf'], 'padded'],
+            [['a__-__b.pdf'], 'a b'],
+        ])('should derive the title from %s', (names, expectedTitle) => {
+            dropFiles(...names);
+
+            expect(component.newLectureTitle()).toBe(expectedTitle);
+        });
+
+        it('should start over when other files are dropped', () => {
+            fixture.componentRef.setInput('lectures', lectures);
+            dropFiles('First.pdf');
+            component.onTargetTypeChange('existing');
+            component.selectedLectureId.set(2);
+            component.newLectureTitle.set('Edited title');
+
+            dropFiles('Second.pdf');
+
             expect(component.targetType()).toBe('new');
             expect(component.selectedLectureId()).toBeUndefined();
-            expect(component.newLectureTitle()).toBe('');
-            expect(component.lectures()).toEqual([]);
-            expect(component.uploadedFiles()).toEqual([]);
+            expect(component.newLectureTitle()).toBe('Second');
         });
     });
 
-    describe('initializeWithFiles', () => {
-        it('should set uploaded files and derive title from first filename', () => {
-            const files = [new File(['content'], 'Chapter_01_Introduction.pdf', { type: 'application/pdf' })];
-
-            (component as any).initializeWithFiles(files);
-
-            expect(component.uploadedFiles()).toEqual(files);
-            expect(component.newLectureTitle()).toBe('Chapter 01 Introduction');
-        });
-
-        it('should handle multiple files and use first filename for title', () => {
-            const files = [new File(['content1'], 'First_File.pdf', { type: 'application/pdf' }), new File(['content2'], 'Second_File.pdf', { type: 'application/pdf' })];
-
-            (component as any).initializeWithFiles(files);
-
-            expect(component.uploadedFiles()).toHaveLength(2);
-            expect(component.newLectureTitle()).toBe('First File');
-        });
-
-        it('should not set title when no files provided', () => {
-            (component as any).initializeWithFiles([]);
-
-            expect(component.uploadedFiles()).toEqual([]);
-            expect(component.newLectureTitle()).toBe('');
-        });
-
-        it('should clean up filename with dashes', () => {
-            const files = [new File(['content'], 'lecture-notes-week-5.pdf', { type: 'application/pdf' })];
-
-            (component as any).initializeWithFiles(files);
-
-            expect(component.newLectureTitle()).toBe('lecture notes week 5');
-        });
-
-        it('should handle uppercase PDF extension', () => {
-            const files = [new File(['content'], 'MyLecture.PDF', { type: 'application/pdf' })];
-
-            (component as any).initializeWithFiles(files);
-
-            expect(component.newLectureTitle()).toBe('MyLecture');
-        });
-
-        it('should trim whitespace from derived title', () => {
-            const files = [new File(['content'], '  spaced_name  .pdf', { type: 'application/pdf' })];
-
-            (component as any).initializeWithFiles(files);
-
-            expect(component.newLectureTitle()).toBe('spaced name');
-        });
-
-        it('should collapse multiple spaces in derived title', () => {
-            const files = [new File(['content'], 'file__with___many_spaces.pdf', { type: 'application/pdf' })];
-
-            (component as any).initializeWithFiles(files);
-
-            expect(component.newLectureTitle()).toBe('file with many spaces');
-        });
-    });
-
-    describe('onTargetTypeChange', () => {
-        it('should set target type to new and clear selected lecture', () => {
-            component.selectedLectureId.set(123);
+    describe('target', () => {
+        it('should clear the selected lecture when switching back to a new lecture', () => {
+            component.onTargetTypeChange('existing');
+            component.selectedLectureId.set(2);
 
             component.onTargetTypeChange('new');
 
@@ -134,155 +83,90 @@ describe('PdfUploadTargetDialogComponent', () => {
             expect(component.selectedLectureId()).toBeUndefined();
         });
 
-        it('should set target type to existing without clearing lecture id', () => {
-            component.selectedLectureId.set(123);
+        it('should keep the selected lecture when switching to an existing lecture', () => {
+            component.selectedLectureId.set(2);
 
             component.onTargetTypeChange('existing');
 
-            expect(component.targetType()).toBe('existing');
-            expect(component.selectedLectureId()).toBe(123);
-        });
-    });
-
-    describe('onLectureSelect', () => {
-        it('should set selected lecture id from select event', () => {
-            const event = { target: { value: '42' } } as unknown as Event;
-
-            component.onLectureSelect(event);
-
-            expect(component.selectedLectureId()).toBe(42);
+            expect(component.selectedLectureId()).toBe(2);
         });
 
-        it('should set undefined when empty value selected', () => {
-            component.selectedLectureId.set(123);
-            const event = { target: { value: '' } } as unknown as Event;
+        it.each([
+            ['Intro', true],
+            ['', false],
+            ['   ', false],
+        ])('should accept the new lecture title "%s": %s', (title, valid) => {
+            component.newLectureTitle.set(title);
 
-            component.onLectureSelect(event);
-
-            expect(component.selectedLectureId()).toBeUndefined();
-        });
-    });
-
-    describe('isValid', () => {
-        describe('when target type is new', () => {
-            beforeEach(() => {
-                component.onTargetTypeChange('new');
-            });
-
-            it('should return true when title is not empty', () => {
-                component.newLectureTitle.set('My Lecture');
-
-                expect(component.isValid()).toBe(true);
-            });
-
-            it('should return false when title is empty', () => {
-                component.newLectureTitle.set('');
-
-                expect(component.isValid()).toBe(false);
-            });
-
-            it('should return false when title contains only whitespace', () => {
-                component.newLectureTitle.set('   ');
-
-                expect(component.isValid()).toBe(false);
-            });
+            expect(component.isValid()).toBe(valid);
         });
 
-        describe('when target type is existing', () => {
-            beforeEach(() => {
-                component.onTargetTypeChange('existing');
-            });
+        it('should require a selected lecture for an existing lecture', () => {
+            component.onTargetTypeChange('existing');
+            expect(component.isValid()).toBe(false);
 
-            it('should return true when lecture is selected', () => {
-                component.selectedLectureId.set(42);
-
-                expect(component.isValid()).toBe(true);
-            });
-
-            it('should return false when no lecture is selected', () => {
-                expect(component.isValid()).toBe(false);
-            });
+            component.selectedLectureId.set(1);
+            expect(component.isValid()).toBe(true);
         });
     });
 
     describe('confirm', () => {
-        it('should close dialog with new lecture result when valid', () => {
-            component.onTargetTypeChange('new');
-            component.newLectureTitle.set('My New Lecture');
+        it('should emit a new lecture with the trimmed title and close', () => {
+            component.visible.set(true);
+            component.newLectureTitle.set('  New Lecture  ');
 
             component.confirm();
 
-            expect(dialogRefCloseSpy).toHaveBeenCalledTimes(1);
-            const result = dialogRefCloseSpy.mock.calls[0][0] as PdfUploadTarget;
-            expect(result.targetType).toBe('new');
-            expect(result.newLectureTitle).toBe('My New Lecture');
-            expect(result.lectureId).toBeUndefined();
+            expect(targetSelectedSpy).toHaveBeenCalledExactlyOnceWith({ targetType: 'new', lectureId: undefined, newLectureTitle: 'New Lecture' } satisfies PdfUploadTarget);
+            expect(component.visible()).toBe(false);
         });
 
-        it('should close dialog with existing lecture result when valid', () => {
+        it('should emit the selected existing lecture and close', () => {
+            component.visible.set(true);
             component.onTargetTypeChange('existing');
-            component.selectedLectureId.set(99);
+            component.selectedLectureId.set(2);
 
             component.confirm();
 
-            expect(dialogRefCloseSpy).toHaveBeenCalledTimes(1);
-            const result = dialogRefCloseSpy.mock.calls[0][0] as PdfUploadTarget;
-            expect(result.targetType).toBe('existing');
-            expect(result.lectureId).toBe(99);
-            expect(result.newLectureTitle).toBeUndefined();
+            expect(targetSelectedSpy).toHaveBeenCalledExactlyOnceWith({ targetType: 'existing', lectureId: 2, newLectureTitle: undefined } satisfies PdfUploadTarget);
+            expect(component.visible()).toBe(false);
         });
 
-        it('should trim lecture title in result', () => {
-            component.onTargetTypeChange('new');
-            component.newLectureTitle.set('  Trimmed Title  ');
+        it.each(['new', 'existing'] as const)('should neither emit nor close while the %s target is incomplete', (targetType) => {
+            component.visible.set(true);
+            component.onTargetTypeChange(targetType);
 
             component.confirm();
 
-            const result = dialogRefCloseSpy.mock.calls[0][0] as PdfUploadTarget;
-            expect(result.newLectureTitle).toBe('Trimmed Title');
-        });
-
-        it('should not close dialog when invalid', () => {
-            component.onTargetTypeChange('new');
-            component.newLectureTitle.set('');
-
-            component.confirm();
-
-            expect(dialogRefCloseSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not close dialog when existing type but no lecture selected', () => {
-            component.onTargetTypeChange('existing');
-
-            component.confirm();
-
-            expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+            expect(targetSelectedSpy).not.toHaveBeenCalled();
+            expect(component.visible()).toBe(true);
         });
     });
 
-    describe('cancel', () => {
-        it('should close dialog without result', () => {
-            component.cancel();
+    it('should close without choosing a target on cancel', () => {
+        component.visible.set(true);
 
-            expect(dialogRefCloseSpy).toHaveBeenCalledTimes(1);
-            expect(dialogRefCloseSpy).toHaveBeenCalledWith();
-        });
+        component.cancel();
+
+        expect(component.visible()).toBe(false);
+        expect(targetSelectedSpy).not.toHaveBeenCalled();
     });
 
-    describe('lectures signal', () => {
-        it('should allow setting lectures array', () => {
-            const lecture1 = new Lecture();
-            lecture1.id = 1;
-            lecture1.title = 'Lecture 1';
-            const lecture2 = new Lecture();
-            lecture2.id = 2;
-            lecture2.title = 'Lecture 2';
+    it('should list the dropped files and offer existing lectures only when there are any', async () => {
+        dropFiles('Introduction.pdf', 'Testing.pdf');
+        component.visible.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-            component.lectures.set([lecture1, lecture2]);
+        const dialog = document.querySelector<HTMLElement>('[data-testid="pdf-upload-target-dialog"]')!;
+        expect(dialog.textContent).toContain('Introduction.pdf');
+        expect(dialog.textContent).toContain('Testing.pdf');
+        expect(dialog.querySelector('#targetExisting')).toBeNull();
+        expect(document.querySelector<HTMLInputElement>('#lectureTitleInput')?.value).toBe('Introduction');
 
-            expect(component.lectures()).toHaveLength(2);
-            expect(component.lectures()[0].title).toBe('Lecture 1');
-            expect(component.lectures()[1].title).toBe('Lecture 2');
-        });
+        fixture.componentRef.setInput('lectures', lectures);
+        fixture.detectChanges();
+
+        expect(dialog.querySelector('#targetExisting')).not.toBeNull();
     });
 });

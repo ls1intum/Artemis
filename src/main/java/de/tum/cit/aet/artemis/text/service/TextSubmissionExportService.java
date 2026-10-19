@@ -33,7 +33,7 @@ public class TextSubmissionExportService extends SubmissionExportService {
     protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
         if (((TextSubmission) submission).getText() == null) {
             if (!file.exists()) {
-                file.createNewFile(); // create empty file if submission is empty
+                Files.createFile(file.toPath()); // create empty file if submission is empty
             }
         }
         else {
@@ -51,7 +51,7 @@ public class TextSubmissionExportService extends SubmissionExportService {
      * @param submissionsFolderName base folder name to save the file to
      */
     public void saveSubmissionToFile(TextSubmission submission, String studentLogin, String submissionsFolderName) throws IOException {
-        String submissionFileName = String.format("%s-%s%s", submission.getId(), studentLogin, this.getFileEndingForSubmission(submission));
+        String submissionFileName = "%s-%s%s".formatted(submission.getId(), studentLogin, this.getFileEndingForSubmission(submission));
         Path submissionPath = Path.of(submissionsFolderName, submissionFileName);
 
         if (!Files.exists(submissionPath)) {

@@ -6,43 +6,59 @@
                 fontSizeInRem="0.8"
                 imageId="user-profile-picture"
                 defaultPictureId="user-default-profile-picture"
-                [authorId]="userId"
-                [authorName]="userName"
-                [imageUrl]="addPublicFilePrefix(userImageUrl)"
+                [authorId]="userId()"
+                [authorName]="userName()"
+                [imageUrl]="addPublicFilePrefix(userImageUrl())"
             />
             @if (isChannel(activeConversation()!) && conversationMember()?.isChannelModerator) {
                 <fa-icon [icon]="faUserGear" [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelModeratorTooltip' | artemisTranslate" />
             }
-            <a (click)="userNameClicked()" class="bs-body-color" [ngClass]="{ disabled: isCurrentUser }"> {{ userLabel }} </a>
+            <a
+                (click)="userNameClicked()"
+                class="bs-body-color"
+                [ngClass]="{ disabled: isCurrentUser() }"
+                [attr.aria-disabled]="isCurrentUser()"
+                #keyboardAction16
+                role="button"
+                [attr.tabindex]="isCurrentUser() ? -1 : 0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
+            >
+                {{ userLabel() }}
+            </a>
             @if (!conversationMember()?.isStudent) {
-                <fa-icon class="ms-1 text-secondary" [icon]="userIcon" [ngbTooltip]="userTooltip" />
+                <fa-icon class="ms-1 text-secondary" [icon]="userIcon()" [ngbTooltip]="userTooltip()" />
             }
         </span>
         <div ngbDropdown class="d-inline-block" #userDropdown="ngbDropdown">
-            @if (canBeRemovedFromConversation || canBeGrantedChannelModeratorRole || canBeRevokedChannelModeratorRole) {
+            @if (canBeRemovedFromConversation() || canBeGrantedChannelModeratorRole() || canBeRevokedChannelModeratorRole()) {
                 <button class="btn btn-outline-secondary dropdown-toggle interaction" type="button" ngbDropdownToggle>
                     <fa-icon [icon]="faEllipsis" size="xs" />
                 </button>
             }
             <div ngbDropdownMenu>
-                @if (canBeRemovedFromConversation) {
+                @if (canBeRemovedFromConversation()) {
                     <button
+                        type="button"
                         ngbDropdownItem
                         class="text-danger remove-member"
                         (click)="openRemoveFromConversationDialog($event)"
                         jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.memberRow.removeUser"
                     ></button>
                 }
-                @if (canBeGrantedChannelModeratorRole) {
+                @if (canBeGrantedChannelModeratorRole()) {
                     <button
+                        type="button"
                         ngbDropdownItem
                         class="text-danger grant-moderator"
                         (click)="openGrantChannelModeratorRoleDialog($event)"
                         jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.memberRow.grantModeratorRole"
                     ></button>
                 }
-                @if (canBeRevokedChannelModeratorRole) {
+                @if (canBeRevokedChannelModeratorRole()) {
                     <button
+                        type="button"
                         ngbDropdownItem
                         class="text-danger revoke-moderator"
                         (click)="openRevokeChannelModeratorRoleDialog($event)"

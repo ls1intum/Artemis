@@ -16,8 +16,7 @@ export class ExamTestRunPage {
 
     async confirmTestRun() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-runs`);
-        // The create-test-run dialog was migrated from NgbModal (.modal-dialog) to PrimeNG (.p-dialog).
-        await this.page.locator('.p-dialog, .modal-dialog').first().locator('#createTestRunButton').click();
+        await this.page.getByRole('dialog').first().locator('#createTestRunButton').click();
         return await responsePromise;
     }
 
@@ -71,43 +70,43 @@ export class ExamTestRunPage {
     }
 
     getWorkingTime(testRunId: number) {
-        return this.getTestRun(testRunId).locator('.working-time');
+        return this.getTestRun(testRunId).getByTestId('test-run-working-time');
     }
 
     getStarted(testRunId: number) {
-        return this.getTestRun(testRunId).locator('.started');
+        return this.getTestRun(testRunId).getByTestId('test-run-started');
     }
 
     getSubmitted(testRunId: number) {
-        return this.getTestRun(testRunId).locator('.submitted');
+        return this.getTestRun(testRunId).getByTestId('test-run-submitted');
     }
 
     getTestRunIdElement(testRunId: number) {
-        return this.getTestRun(testRunId).locator('.testrun-id');
+        return this.getTestRun(testRunId).getByTestId('test-run-id');
     }
 
     async changeWorkingTime(testRunId: number) {
-        await this.page.locator(`#testrun-${testRunId}`).locator('.manage-worktime').click();
+        await this.page.locator(`#testrun-${testRunId}`).getByTestId('test-run-manage-worktime').click();
         // Wait for navigation to the detail page and for the working time form to be ready
         await this.page.waitForURL(`**/test-runs/${testRunId}`);
         await this.page.locator('#workingTimeHours').waitFor({ state: 'visible', timeout: 30000 });
     }
 
     async startTestRun(testRunId: number) {
-        const startButton = this.page.locator(`#testrun-${testRunId}`).locator('.start-testrun');
+        const startButton = this.page.locator(`#testrun-${testRunId}`).getByTestId('test-run-start');
         await startButton.waitFor({ state: 'visible', timeout: 10000 });
         await startButton.click();
     }
 
     async deleteTestRun(testRunId: number) {
-        const deleteButton = this.page.locator(`#testrun-${testRunId}`).locator('.delete-testrun');
+        const deleteButton = this.page.locator(`#testrun-${testRunId}`).getByTestId('test-run-delete');
         await deleteButton.waitFor({ state: 'visible', timeout: 10000 });
         await deleteButton.click();
         const confirmInput = this.page.locator('#confirm-entity-name');
         await confirmInput.waitFor({ state: 'visible', timeout: 10000 });
         await confirmInput.fill('Test Run');
-        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-runs/*`);
+        const responsePromise = this.page.waitForResponse((response) => response.request().method() === 'DELETE' && /\/test-runs\/\d+$/.test(response.url()));
         await this.page.getByTestId('delete-dialog-confirm-button').click();
-        await responsePromise;
+        return await responsePromise;
     }
 }

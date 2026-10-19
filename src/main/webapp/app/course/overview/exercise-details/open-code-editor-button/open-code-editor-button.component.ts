@@ -24,7 +24,7 @@ export class OpenCodeEditorButtonComponent {
     readonly loading = input(false);
     readonly smallButtons = input.required<boolean>();
     readonly participations = input.required<ProgrammingExerciseStudentParticipation[]>();
-    readonly courseAndExerciseNavigationUrlSegment = input.required<any[]>();
+    readonly courseAndExerciseNavigationUrlSegment = input.required<(string | number | undefined)[]>();
     readonly exercise = input.required<Exercise>();
     readonly hideLabelMobile = input(false);
 
@@ -48,7 +48,8 @@ export class OpenCodeEditorButtonComponent {
                 if (!courseAndExerciseNavigationUrlSegment || !exercise || !participations) {
                     return;
                 }
-                this._courseAndExerciseNavigationUrl.set(courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => `${acc}/${segment}`));
+                const [firstSegment, ...remainingSegments] = courseAndExerciseNavigationUrlSegment;
+                this._courseAndExerciseNavigationUrl.set(remainingSegments.reduce<string>((acc, segment) => `${acc}/${segment}`, `${firstSegment}`));
                 const shouldPreferPractice = this.participationService.shouldPreferPractice(exercise);
                 this._activeParticipation.set(this.participationService.getSpecificStudentParticipation(participations, shouldPreferPractice) ?? participations[0]);
             });
@@ -58,6 +59,6 @@ export class OpenCodeEditorButtonComponent {
     switchPracticeMode() {
         const newPracticeMode = !this._isPracticeMode();
         this._isPracticeMode.set(newPracticeMode);
-        this._activeParticipation.set(this.participationService.getSpecificStudentParticipation(this.participations()!, newPracticeMode)!);
+        this._activeParticipation.set(this.participationService.getSpecificStudentParticipation(this.participations(), newPracticeMode));
     }
 }

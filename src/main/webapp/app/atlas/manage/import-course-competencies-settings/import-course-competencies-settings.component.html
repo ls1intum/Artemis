@@ -47,27 +47,14 @@
                     [ngbTooltip]="'artemisApp.courseCompetency.importSettings.referenceDateTooltip' | artemisTranslate"
                 />
             </div>
-            <div class="d-flex">
-                <input
-                    class="form-control position-relative ps-5"
-                    id="reference-date-field"
-                    type="text"
-                    [value]="referenceDate()"
-                    [owlDateTime]="dt"
-                    [owlDateTimeTrigger]="dt"
-                    (dateTimeChange)="setReferenceDate($event)"
-                    name="datePicker"
-                />
-                <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
-                    <fa-icon [icon]="faCalendarAlt" />
-                </button>
-                <div class="position-relative">
-                    <button class="btn position-absolute" type="button" style="right: 0" (click)="setReferenceDate(undefined)">
-                        <fa-icon [icon]="faCircleXmark" [class.text-secondary]="!referenceDate()" />
-                    </button>
-                </div>
-                <owl-date-time #dt />
-            </div>
+            <tumaet-ui-date-picker
+                inputId="reference-date-field"
+                [hideLabelName]="true"
+                [shouldDisplayTimeZoneWarning]="false"
+                [value]="referenceDate()"
+                (valueChange)="setReferenceDate($event)"
+                (inputValidityChange)="referenceDateTextValidChange.emit($event)"
+            />
         </div>
         <div class="col p-0 ps-2 align-items-center">
             <div class="d-flex align-items-center">

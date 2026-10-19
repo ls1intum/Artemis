@@ -3,11 +3,10 @@ package de.tum.cit.aet.artemis.globalsearch;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertChannelExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
-import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 
-import java.time.Duration;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -67,9 +66,9 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        doNothing().when(pyrisFaqApi).deleteFaq(any());
+        doNothing().when(pyrisFaqApi).deleteFaq(anyLong(), anyLong());
     }
 
     private Channel createPublicChannel(String name) {
@@ -101,9 +100,9 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
 
         long post1Id = post1.getId();
         long post2Id = post2.getId();
-        request.postWithoutResponseBody("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertPostNotInWeaviate(weaviateService, post1Id);
             assertPostNotInWeaviate(weaviateService, post2Id);
         });
@@ -120,9 +119,9 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
         assertChannelExistsInWeaviate(weaviateService, channel);
 
         long postId = post.getId();
-        request.postWithoutResponseBody("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertPostNotInWeaviate(weaviateService, postId);
             assertChannelExistsInWeaviate(weaviateService, channel);
         });
@@ -134,7 +133,7 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
         Channel channel = createPublicChannel("reset-isolation-test");
         Post post = createAndSavePost(channel);
 
-        Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         User otherInstructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         Channel otherChannel = new Channel();
         otherChannel.setName("other-course-channel");
@@ -151,9 +150,9 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
 
         long postId = post.getId();
         long otherPostId = otherPost.getId();
-        request.postWithoutResponseBody("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertPostNotInWeaviate(weaviateService, postId);
             assertPostExistsInWeaviate(weaviateService, otherPostId);
         });

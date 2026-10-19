@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { type MockInstance, vi } from 'vitest';
 import * as monaco from 'monaco-editor';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -14,8 +13,6 @@ import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service'
 const originalResizeObserver = globalThis.ResizeObserver;
 
 describe('MonacoEditorService', () => {
-    setupTestBed({ zoneless: true });
-
     let monacoEditorService: MonacoEditorService;
     let setThemeSpy: MockInstance;
     let registerLanguageSpy: MockInstance;

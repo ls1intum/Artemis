@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock y-monaco to avoid needing the full Monaco API in tests. The component transitively imports the
 // editable-instruction editor, which pulls in y-monaco's deep `monaco-editor/esm/...` import; that subpath
@@ -20,7 +19,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
+import { Competency, CompetencyExerciseLink, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { By } from '@angular/platform-browser';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -29,11 +30,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemStatementGenerationResponse';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
+import { ProblemStatementGenerationResponse } from 'app/openapi/model/problem-statement-generation-response';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
-import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
+import { ProblemStatementGenerationRequest } from 'app/openapi/model/problem-statement-generation-request';
+import { ProblemStatementRefinementResponse } from 'app/openapi/model/problem-statement-refinement-response';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 
 /**
@@ -60,8 +61,6 @@ const setEditableInstructions = (c: ProgrammingExerciseProblemComponent, stub: P
 };
 
 describe('ProgrammingExerciseProblemComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
     let comp: ProgrammingExerciseProblemComponent;
 
@@ -89,7 +88,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: HyperionProblemStatementApiService, useValue: mockHyperionApiService },
+                { provide: HyperionProblemStatementApi, useValue: mockHyperionApiService },
                 { provide: AlertService, useValue: mockAlertService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -276,6 +275,29 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(programmingExercise.competencyLinks).toHaveLength(1);
         expect(programmingExercise.competencyLinks![0]).toBeInstanceOf(CompetencyExerciseLink);
         expect(emitSpy).toHaveBeenCalled();
+    });
+
+    it('should run the competency links handler once per selection change (regression: infinite valueChange loop)', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.detectChanges();
+
+        const selection = fixture.debugElement.query(By.directive(CompetencySelectionComponent)).componentInstance as CompetencySelectionComponent;
+        const competency = { id: 1, title: 'Test' } as Competency;
+        selection.setCompetencyLinks([competency]);
+
+        const handlerSpy = vi.spyOn(comp, 'onCompetencyLinksChange');
+        const valueChangeSpy = vi.spyOn(selection.valueChange, 'emit');
+        const refreshSpy = vi.spyOn(selection, 'refreshWithLinks');
+
+        // a single user click on the competency checkbox
+        selection.toggleCompetency(new CompetencyLearningObjectLink(competency, 1));
+
+        expect(valueChangeSpy).toHaveBeenCalledOnce();
+        expect(handlerSpy).toHaveBeenCalledOnce();
+        expect(refreshSpy).toHaveBeenCalledOnce();
+        expect(programmingExercise.competencyLinks).toHaveLength(1);
+        expect(selection.checkboxStates()).toEqual({ 1: true });
     });
 
     it('should handle handleProblemStatementAction for generate', () => {

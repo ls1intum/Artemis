@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -17,7 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DisplayPriority, UserRole } from 'app/communication/metis.util';
+import { DisplayPriority, UserRole } from 'app/communication/communication.util';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -25,48 +24,47 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { By } from '@angular/platform-browser';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/foundation/pipes/reacting-users-on-posting.pipe';
 import {
-    metisAnnouncement,
-    metisCourse,
-    metisPostExerciseUser1,
-    metisPostExerciseUser2,
-    metisPostInChannel,
-    metisResolvingAnswerPostUser1,
-    metisUser1,
+    communicationAnnouncement,
+    communicationCourse,
+    communicationPostExerciseUser1,
+    communicationPostExerciseUser2,
+    communicationPostInChannel,
+    communicationResolvingAnswerPostUser1,
+    communicationUser1,
     sortedAnswerArray,
     unApprovedAnswerPost1,
-} from 'test/helpers/sample/metis-sample-data';
+} from 'test/helpers/sample/communication-sample-data';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { User } from 'app/account/user/user.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { Subject, of } from 'rxjs';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { Subject, of, throwError } from 'rxjs';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 
 describe('PostingReactionsBarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingReactionsBarComponent<Posting>;
     let fixture: ComponentFixture<PostingReactionsBarComponent<Posting>>;
     let debugElement: DebugElement;
-    let metisService: MetisService;
+    let communicationService: CommunicationService;
     let accountService: AccountService;
     let courseSidebarService: CourseSidebarService;
     let reloadSidebarSpy: ReturnType<typeof vi.spyOn>;
-    let metisServiceUpdateDisplayPriorityMock: ReturnType<typeof vi.spyOn>;
-    let metisServiceUserIsAtLeastTutorStub: ReturnType<typeof vi.spyOn>;
-    let metisServiceUserIsAtLeastInstructorStub: ReturnType<typeof vi.spyOn>;
-    let metisServiceUserIsAuthorOfPostingStub: ReturnType<typeof vi.spyOn>;
-    let metisServiceUpdateAnswerPostMock: ReturnType<typeof vi.spyOn>;
+    let communicationServiceUpdateDisplayPriorityMock: ReturnType<typeof vi.spyOn>;
+    let communicationServiceUserIsAtLeastTutorStub: ReturnType<typeof vi.spyOn>;
+    let communicationServiceUserIsAtLeastInstructorStub: ReturnType<typeof vi.spyOn>;
+    let communicationServiceUserIsAuthorOfPostingStub: ReturnType<typeof vi.spyOn>;
+    let communicationServiceUpdateAnswerPostMock: ReturnType<typeof vi.spyOn>;
     let post: Post;
     let reactionToCreate: Reaction;
     let reactionToDelete: Reaction;
@@ -94,12 +92,12 @@ describe('PostingReactionsBarComponent', () => {
                 provideHttpClientTesting(),
                 MockProvider(SessionStorageService),
                 MockProvider(CourseSidebarService),
-                { provide: MetisService, useClass: MetisService },
+                { provide: CommunicationService, useClass: CommunicationService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: DialogService, useValue: { open: vi.fn() } },
             ],
@@ -109,33 +107,33 @@ describe('PostingReactionsBarComponent', () => {
             add: { imports: [MockComponent(PostCreateEditModalComponent)] },
         });
         fixture = TestBed.createComponent(PostingReactionsBarComponent);
-        metisService = TestBed.inject(MetisService);
+        communicationService = TestBed.inject(CommunicationService);
         accountService = TestBed.inject(AccountService);
         courseSidebarService = TestBed.inject(CourseSidebarService);
         reloadSidebarSpy = vi.spyOn(courseSidebarService, 'reloadSidebar');
         debugElement = fixture.debugElement;
         component = fixture.componentInstance;
-        metisServiceUpdateDisplayPriorityMock = vi.spyOn(metisService, 'updatePostDisplayPriority');
-        metisServiceUserIsAtLeastTutorStub = vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
-        metisServiceUserIsAtLeastInstructorStub = vi.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
-        metisServiceUserIsAuthorOfPostingStub = vi.spyOn(metisService, 'metisUserIsAuthorOfPosting');
-        metisServiceUpdateAnswerPostMock = vi.spyOn(metisService, 'updateAnswerPost');
-        vi.spyOn(metisService, 'getUser').mockReturnValue(metisUser1);
+        communicationServiceUpdateDisplayPriorityMock = vi.spyOn(communicationService, 'updatePostDisplayPriority');
+        communicationServiceUserIsAtLeastTutorStub = vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse');
+        communicationServiceUserIsAtLeastInstructorStub = vi.spyOn(communicationService, 'currentUserIsAtLeastInstructorInCourse');
+        communicationServiceUserIsAuthorOfPostingStub = vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting');
+        communicationServiceUpdateAnswerPostMock = vi.spyOn(communicationService, 'updateAnswerPost');
+        vi.spyOn(communicationService, 'getUser').mockReturnValue(communicationUser1);
         consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-        createForwardedMessagesSpy = vi.spyOn(metisService, 'createForwardedMessages');
+        createForwardedMessagesSpy = vi.spyOn(communicationService, 'createForwardedMessages');
         post = new Post();
         post.id = 1;
-        post.author = metisUser1;
+        post.author = communicationUser1;
         post.displayPriority = DisplayPriority.NONE;
         fixture.componentRef.setInput('sortedAnswerPosts', sortedAnswerArray);
         fixture.componentRef.setInput('posting', post);
         reactionToDelete = new Reaction();
         reactionToDelete.id = 1;
         reactionToDelete.emojiId = 'smile';
-        reactionToDelete.user = metisUser1;
+        reactionToDelete.user = communicationUser1;
         reactionToDelete.post = post;
         post.reactions = [reactionToDelete];
-        metisService.setCourse(metisCourse);
+        communicationService.setCourse(communicationCourse);
     });
 
     afterEach(() => {
@@ -144,7 +142,7 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     function getEditButton(): DebugElement | null {
-        return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.edit'));
+        return debugElement.query(By.css('[data-testid="posting-reaction-edit"]'));
     }
 
     function getDeleteButton(): DebugElement | null {
@@ -156,20 +154,20 @@ describe('PostingReactionsBarComponent', () => {
     }
 
     function getForwardButton(): DebugElement | null {
-        return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.forward'));
+        return debugElement.query(By.css('[data-testid="posting-reaction-forward"]'));
     }
 
     it('should initialize user authority and reactions correctly', () => {
-        metisCourse.isAtLeastTutor = false;
-        metisService.setCourse(metisCourse);
-        const differentUser = { ...metisUser1, id: 999 };
-        vi.spyOn(metisService, 'getUser').mockReturnValue(differentUser);
+        communicationCourse.isAtLeastTutor = false;
+        communicationService.setCourse(communicationCourse);
+        const differentUser = { ...communicationUser1, id: 999 };
+        vi.spyOn(communicationService, 'getUser').mockReturnValue(differentUser);
         component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).toBe(false);
+        expect(component.isAtLeastTutorInCourse()).toBe(false);
         fixture.changeDetectorRef.detectChanges();
         const reaction = getElement(debugElement, 'ngx-emoji');
         expect(reaction).toBeDefined();
-        expect(component.reactionMetaDataMap).toEqual({
+        expect(component.reactionMetaDataMap()).toEqual({
             smile: {
                 count: 1,
                 hasReacted: false,
@@ -182,7 +180,7 @@ describe('PostingReactionsBarComponent', () => {
         fixture.componentRef.setInput('isReadOnlyMode', false);
         fixture.componentRef.setInput('previewMode', false);
         fixture.componentRef.setInput('posting', { id: 1, title: 'Test Post' } as Post);
-        vi.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
+        vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(true);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
 
@@ -201,9 +199,9 @@ describe('PostingReactionsBarComponent', () => {
             hasChannelModerationRights: true,
         } as ChannelDTO;
 
-        vi.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(false);
-        vi.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
-        vi.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
+        vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(false);
+        vi.spyOn(communicationService, 'currentUserIsAtLeastInstructorInCourse').mockReturnValue(false);
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(channelConversation);
 
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
@@ -220,9 +218,9 @@ describe('PostingReactionsBarComponent', () => {
             hasChannelModerationRights: true,
         } as ChannelDTO;
 
-        vi.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(false);
-        vi.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(true);
-        vi.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
+        vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(false);
+        vi.spyOn(communicationService, 'currentUserIsAtLeastInstructorInCourse').mockReturnValue(true);
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(channelConversation);
 
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
@@ -240,9 +238,9 @@ describe('PostingReactionsBarComponent', () => {
             hasChannelModerationRights: true,
         } as ChannelDTO;
 
-        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
-        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
-        vi.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
+        communicationServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
+        communicationServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(channelConversation);
 
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
@@ -251,15 +249,15 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     it('should display the delete option to tutor if posting is in course-wide channel from a student', () => {
-        metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
-        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
+        communicationServiceUserIsAtLeastTutorStub.mockReturnValue(true);
+        communicationServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
         const channelConversation = {
             type: ConversationType.CHANNEL,
             isCourseWide: true,
             hasChannelModerationRights: true,
         } as ChannelDTO;
-        vi.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
-        fixture.componentRef.setInput('posting', { ...metisResolvingAnswerPostUser1, post: { ...metisPostInChannel }, authorRole: UserRole.USER } as AnswerPost);
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(channelConversation);
+        fixture.componentRef.setInput('posting', { ...communicationResolvingAnswerPostUser1, post: { ...communicationPostInChannel }, authorRole: UserRole.USER } as AnswerPost);
         fixture.componentRef.setInput('isEmojiCount', false);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
@@ -267,15 +265,15 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     it('should display edit and delete options to post author', () => {
-        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
+        communicationServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
         expect(getEditButton()).not.toBeNull();
         expect(getDeleteButton()).not.toBeNull();
     });
 
     it('should not display the edit option to user (even instructor) if they are not the author of posting', () => {
-        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
-        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
+        communicationServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
+        communicationServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
 
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
@@ -287,8 +285,8 @@ describe('PostingReactionsBarComponent', () => {
         fixture.componentRef.setInput('isReadOnlyMode', false);
         fixture.componentRef.setInput('previewMode', false);
         fixture.componentRef.setInput('posting', { conversation: { isCourseWide: false } } as Post);
-        vi.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(false);
-        vi.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
+        vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(false);
+        vi.spyOn(communicationService, 'currentUserIsAtLeastInstructorInCourse').mockReturnValue(false);
 
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
@@ -298,16 +296,16 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     it('should not display edit option but should display delete option to tutor if posting is in course-wide channel', () => {
-        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
-        metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
-        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
+        communicationServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
+        communicationServiceUserIsAtLeastTutorStub.mockReturnValue(true);
+        communicationServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
         const channelConversation = {
             type: ConversationType.CHANNEL,
             isCourseWide: true,
             hasChannelModerationRights: true,
         } as ChannelDTO;
-        vi.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
-        fixture.componentRef.setInput('posting', { ...metisPostInChannel, authorRole: UserRole.USER });
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(channelConversation);
+        fixture.componentRef.setInput('posting', { ...communicationPostInChannel, authorRole: UserRole.USER });
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         expect(getEditButton()).toBeNull();
@@ -315,9 +313,9 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     it('should not display edit and delete options to tutor if posting is announcement', () => {
-        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
-        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
-        fixture.componentRef.setInput('posting', metisAnnouncement);
+        communicationServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
+        communicationServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
+        fixture.componentRef.setInput('posting', communicationAnnouncement);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         expect(getEditButton()).toBeNull();
@@ -325,9 +323,9 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     it('should display edit and delete options to instructor if their posting is announcement', () => {
-        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
-        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
-        fixture.componentRef.setInput('posting', metisAnnouncement);
+        communicationServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
+        communicationServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
+        fixture.componentRef.setInput('posting', communicationAnnouncement);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         expect(getEditButton()).not.toBeNull();
@@ -335,16 +333,16 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     it('should display the delete option to instructor if posting is in course-wide channel from a student', () => {
-        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
-        metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
-        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
+        communicationServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
+        communicationServiceUserIsAtLeastTutorStub.mockReturnValue(true);
+        communicationServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
         const channelConversation = {
             type: ConversationType.CHANNEL,
             isCourseWide: true,
             hasChannelModerationRights: true,
         } as ChannelDTO;
-        vi.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
-        fixture.componentRef.setInput('posting', { ...metisPostInChannel, authorRole: UserRole.USER });
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(channelConversation);
+        fixture.componentRef.setInput('posting', { ...communicationPostInChannel, authorRole: UserRole.USER });
 
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
@@ -357,7 +355,7 @@ describe('PostingReactionsBarComponent', () => {
         { type: ConversationType.GROUP_CHAT, creator: { id: 99 } },
         { type: ConversationType.ONE_TO_ONE },
     ])('should initialize user authority and reactions correctly with same user', (dto: ConversationDTO) => {
-        vi.spyOn(metisService, 'getCurrentConversation').mockReturnValue(dto);
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(dto);
         accountService.userIdentity.set({ id: 99 } as User);
 
         reactionToDelete.user = { id: 99 } as User;
@@ -367,14 +365,14 @@ describe('PostingReactionsBarComponent', () => {
         fixture.componentRef.setInput('isEmojiCount', true);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.reactionMetaDataMap).toEqual({
+        expect(component.reactionMetaDataMap()).toEqual({
             smile: {
                 count: 1,
                 hasReacted: true,
                 reactingUsers: [PLACEHOLDER_USER_REACTED],
             },
         });
-        expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTooltip');
+        expect(component.pinTooltip()).toBe('artemisApp.communication.pinPostTooltip');
     });
 
     it.each`
@@ -387,55 +385,193 @@ describe('PostingReactionsBarComponent', () => {
         expect(component.emojisToShowFilter(param.input)).toBe(param.expect);
     });
 
-    it('should invoke metis service method with correctly built reaction to create it', () => {
+    it('should invoke communication service method with correctly built reaction to create it', () => {
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
-        const metisServiceCreateReactionMock = vi.spyOn(metisService, 'createReaction');
+        const communicationServiceCreateReactionMock = vi.spyOn(communicationService, 'createReaction');
         reactionToCreate = new Reaction();
         reactionToCreate.emojiId = '+1';
         reactionToCreate.post = component.posting();
         component.addOrRemoveReaction(reactionToCreate.emojiId);
-        expect(metisServiceCreateReactionMock).toHaveBeenCalledWith(reactionToCreate);
-        expect(component.showReactionSelector).toBeFalsy();
+        expect(communicationServiceCreateReactionMock).toHaveBeenCalledWith(reactionToCreate);
+        expect(component.showReactionSelector()).toBeFalsy();
     });
 
-    it('should invoke metis service method with own reaction to delete it', () => {
+    it('should close the reacting users tooltip when a reaction button is clicked so that no outdated list stays open', () => {
+        fixture.componentRef.setInput('isEmojiCount', true);
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(of(undefined));
+
+        const reactionButton = fixture.debugElement.query(By.css('button.reaction-button.clickable[class*="reaction-button--reacted"]'));
+        const tooltip = reactionButton.injector.get(NgbTooltip);
+        const closeSpy = vi.spyOn(tooltip, 'close');
+
+        reactionButton.nativeElement.click();
+
+        expect(closeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should invoke communication service method with own reaction to delete it', () => {
         post.author!.id = 99;
         fixture.componentRef.setInput('posting', post);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
-        const metisServiceDeleteReactionMock = vi.spyOn(metisService, 'deleteReaction');
+        const communicationServiceDeleteReactionMock = vi.spyOn(communicationService, 'deleteReaction');
         component.addOrRemoveReaction(reactionToDelete.emojiId!);
-        expect(metisServiceDeleteReactionMock).toHaveBeenCalledWith(reactionToDelete);
-        expect(component.showReactionSelector).toBeFalsy();
+        expect(communicationServiceDeleteReactionMock).toHaveBeenCalledWith(reactionToDelete);
+        expect(component.showReactionSelector()).toBeFalsy();
     });
 
-    it('should invoke metis service method with own reaction to remove it', () => {
+    describe('quickly toggling the same reaction', () => {
+        beforeEach(() => {
+            post.reactions = [];
+            fixture.componentRef.setInput('posting', post);
+            component.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+        });
+
+        it('should ignore further clicks on an emoji while its request is still running', () => {
+            const createSubject = new Subject<Reaction>();
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should show the created reaction as soon as the response arrived', () => {
+            const createSubject = new Subject<Reaction>();
+            vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+
+            component.updateReaction('+1');
+            createSubject.next(createdReaction('+1', 10));
+            createSubject.complete();
+
+            expect(post.reactions).toHaveLength(1);
+            expect(component.reactionMetaDataMap()['+1'].hasReacted).toBe(true);
+        });
+
+        it('should remove the reaction on the next click even if the websocket update has not arrived yet', () => {
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(of(createdReaction('+1', 10)));
+            const deleteReactionSpy = vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(of(undefined));
+
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledOnce();
+            expect(deleteReactionSpy).toHaveBeenCalledOnce();
+            expect(post.reactions).toHaveLength(0);
+        });
+
+        it('should not add the reaction twice when the websocket update arrived before the response', () => {
+            const reaction = createdReaction('+1', 10);
+            const createSubject = new Subject<Reaction>();
+            vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+
+            component.updateReaction('+1');
+            post.reactions = [reaction];
+            createSubject.next(reaction);
+
+            expect(post.reactions).toHaveLength(1);
+        });
+
+        it('should accept a click on an emoji again after its request failed', () => {
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(throwError(() => new Error('conflict')));
+
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should not add a created reaction to the posting that is shown after the request was sent', () => {
+            const otherPost = new Post();
+            otherPost.id = 2;
+            otherPost.reactions = [];
+            const createSubject = new Subject<Reaction>();
+            vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+            const reactionsUpdatedSpy = vi.spyOn(component.reactionsUpdated, 'emit');
+
+            component.updateReaction('+1');
+            // the thread sidebar reuses the component for another post before the response arrives
+            fixture.componentRef.setInput('posting', otherPost);
+            createSubject.next(createdReaction('+1', 10));
+            createSubject.complete();
+
+            expect(otherPost.reactions).toHaveLength(0);
+            expect(reactionsUpdatedSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not remove a reaction from the posting that is shown after the request was sent', () => {
+            const ownReaction = createdReaction('+1', 10);
+            post.reactions = [ownReaction];
+            const otherPost = new Post();
+            otherPost.id = 2;
+            const otherReaction = createdReaction('smile', 10);
+            otherPost.reactions = [otherReaction];
+            const deleteSubject = new Subject<void>();
+            vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(deleteSubject);
+            const reactionsUpdatedSpy = vi.spyOn(component.reactionsUpdated, 'emit');
+
+            component.updateReaction('+1');
+            fixture.componentRef.setInput('posting', otherPost);
+            deleteSubject.next();
+            deleteSubject.complete();
+
+            expect(otherPost.reactions).toEqual([otherReaction]);
+            expect(reactionsUpdatedSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not block the same emoji on another posting while a request for the previous posting is running', () => {
+            const otherPost = new Post();
+            otherPost.id = 2;
+            otherPost.reactions = [];
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(new Subject<Reaction>());
+
+            component.updateReaction('+1');
+            fixture.componentRef.setInput('posting', otherPost);
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledTimes(2);
+        });
+
+        function createdReaction(emojiId: string, id: number): Reaction {
+            const reaction = new Reaction();
+            reaction.id = id;
+            reaction.emojiId = emojiId;
+            reaction.user = communicationUser1;
+            return reaction;
+        }
+    });
+
+    it('should invoke communication service method with own reaction to remove it', () => {
         component.ngOnInit();
         const addOrRemoveSpy = vi.spyOn(component, 'addOrRemoveReaction');
         component.updateReaction(reactionToDelete.emojiId!);
         expect(addOrRemoveSpy).toHaveBeenCalledWith(reactionToDelete.emojiId!);
     });
 
-    it('should invoke metis service method when pin icon is toggled', () => {
-        vi.spyOn(metisService, 'getCurrentConversation').mockReturnValue({ type: ConversationType.CHANNEL, hasChannelModerationRights: true } as ChannelDTO);
+    it('should invoke communication service method when pin icon is toggled', () => {
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue({ type: ConversationType.CHANNEL, hasChannelModerationRights: true } as ChannelDTO);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         const pinEmoji = getElement(debugElement, '.pin');
         pinEmoji.click();
         (component.posting() as Post)!.displayPriority = DisplayPriority.PINNED;
-        expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(component.posting()!.id!, DisplayPriority.PINNED);
+        expect(communicationServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(component.posting()!.id!, DisplayPriority.PINNED);
         // Trigger the effect by re-setting the posting input
         const updatedPost = { ...component.posting()! } as Post;
         fixture.componentRef.setInput('posting', updatedPost);
         fixture.detectChanges();
         // set correct tooltips for tutor and post that is pinned and not archived
-        expect(component.pinTooltip).toBe('artemisApp.metis.removePinPostTooltip');
+        expect(component.pinTooltip()).toBe('artemisApp.communication.removePinPostTooltip');
     });
 
     it('should show non-clickable pin emoji with correct tooltip for student when post is pinned', () => {
-        metisCourse.isAtLeastTutor = false;
-        metisService.setCourse(metisCourse);
+        communicationCourse.isAtLeastTutor = false;
+        communicationService.setCourse(communicationCourse);
         post.displayPriority = DisplayPriority.PINNED;
         fixture.componentRef.setInput('posting', post);
         component.ngOnInit();
@@ -443,14 +579,14 @@ describe('PostingReactionsBarComponent', () => {
         const pinEmoji = getElement(debugElement, '.pin.reaction-button--not-hoverable');
         expect(pinEmoji).toBeDefined();
         pinEmoji.click();
-        expect(metisServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
+        expect(communicationServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
         // set correct tooltips for student and post that is pinned
-        expect(component.pinTooltip).toBe('artemisApp.metis.pinnedPostTooltip');
+        expect(component.pinTooltip()).toBe('artemisApp.communication.pinnedPostTooltip');
     });
 
     it('should display button to show single answer', () => {
         fixture.componentRef.setInput('posting', post);
-        fixture.componentRef.setInput('sortedAnswerPosts', [metisPostExerciseUser1]);
+        fixture.componentRef.setInput('sortedAnswerPosts', [communicationPostExerciseUser1]);
         fixture.componentRef.setInput('showAnswers', false);
         fixture.changeDetectorRef.detectChanges();
         const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn'));
@@ -460,7 +596,7 @@ describe('PostingReactionsBarComponent', () => {
 
     it('should display button to show multiple answers', () => {
         fixture.componentRef.setInput('posting', post);
-        fixture.componentRef.setInput('sortedAnswerPosts', [metisPostExerciseUser1, metisPostExerciseUser2]);
+        fixture.componentRef.setInput('sortedAnswerPosts', [communicationPostExerciseUser1, communicationPostExerciseUser2]);
         fixture.componentRef.setInput('showAnswers', false);
         fixture.changeDetectorRef.detectChanges();
         const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn'));
@@ -497,20 +633,20 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     it('should not display edit and delete options to users that are neither author or tutor', () => {
-        metisServiceUserIsAtLeastTutorStub.mockReturnValue(false);
-        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
-        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
+        communicationServiceUserIsAtLeastTutorStub.mockReturnValue(false);
+        communicationServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
+        communicationServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
         fixture.changeDetectorRef.detectChanges();
         expect(getEditButton()).toBeNull();
         expect(getDeleteButton()).toBeNull();
     });
 
     it('should emit event to create embedded view when edit icon is clicked', () => {
-        fixture.componentRef.setInput('posting', metisResolvingAnswerPostUser1);
+        fixture.componentRef.setInput('posting', communicationResolvingAnswerPostUser1);
         const openPostingCreateEditModalEmitSpy = vi.spyOn(component.openPostingCreateEditModal, 'emit');
-        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
+        communicationServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
-        getElement(debugElement, '.edit').click();
+        getElement(debugElement, '[data-testid="posting-reaction-edit"]').click();
         expect(openPostingCreateEditModalEmitSpy).toHaveBeenCalledOnce();
     });
 
@@ -522,18 +658,18 @@ describe('PostingReactionsBarComponent', () => {
         expect(answerNowButton).toBeNull();
     });
 
-    it('should invoke metis service when toggle resolve is clicked', () => {
+    it('should invoke communication service when toggle resolve is clicked', () => {
         unApprovedAnswerPost1.post = post;
         fixture.componentRef.setInput('posting', unApprovedAnswerPost1);
         fixture.componentRef.setInput('isEmojiCount', false);
 
-        metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
+        communicationServiceUserIsAtLeastTutorStub.mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
         expect(getResolveButton()).not.toBeNull();
         const previousState = (component.posting() as AnswerPost).resolvesPost;
         component.toggleResolvesPost();
         expect(component.getResolvesPost()).toEqual(!previousState);
-        expect(metisServiceUpdateAnswerPostMock).toHaveBeenCalledOnce();
+        expect(communicationServiceUpdateAnswerPostMock).toHaveBeenCalledOnce();
     });
 
     it('should create a Reaction with answerPost when posting type is answerPost', () => {
@@ -562,7 +698,7 @@ describe('PostingReactionsBarComponent', () => {
         component.setCanPin(channelConversation);
         fixture.changeDetectorRef.detectChanges();
         component.togglePin();
-        expect(metisServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
+        expect(communicationServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
     });
 
     it('should emit isDeleteEvent when deletePosting is called', () => {
@@ -572,25 +708,25 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     it('should toggle pin and update displayPriority when user has permission', () => {
-        vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse').mockReturnValue(true);
+        vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(true);
 
         const moderatorChannel = {
             type: ConversationType.CHANNEL,
             hasChannelModerationRights: true,
         } as ChannelDTO;
-        vi.spyOn(metisService, 'getCurrentConversation').mockReturnValue(moderatorChannel);
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(moderatorChannel);
 
         fixture.componentRef.setInput('posting', post);
         component.ngOnInit();
-        expect(component.displayPriority).toBe(DisplayPriority.NONE);
+        expect(component.displayPriority()).toBe(DisplayPriority.NONE);
 
         component.togglePin();
-        expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(post.id!, DisplayPriority.PINNED);
-        expect(component.displayPriority).toBe(DisplayPriority.PINNED);
+        expect(communicationServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(post.id!, DisplayPriority.PINNED);
+        expect(component.displayPriority()).toBe(DisplayPriority.PINNED);
 
         component.togglePin();
-        expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(post.id!, DisplayPriority.NONE);
-        expect(component.displayPriority).toBe(DisplayPriority.NONE);
+        expect(communicationServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(post.id!, DisplayPriority.NONE);
+        expect(component.displayPriority()).toBe(DisplayPriority.NONE);
     });
 
     it('should display forward button and invoke forwardMessage function when clicked', () => {
@@ -630,7 +766,7 @@ describe('PostingReactionsBarComponent', () => {
     });
 
     it('should not call openForwardMessageView when course id is not set', async () => {
-        metisService.setCourse(undefined);
+        communicationService.setCourse(undefined);
 
         const dialogServiceSpy = vi.spyOn(component['dialogService'], 'open').mockReturnValue({
             onClose: new Subject().asObservable(),
@@ -642,6 +778,19 @@ describe('PostingReactionsBarComponent', () => {
 
         expect(dialogServiceSpy).not.toHaveBeenCalled();
         expect(createForwardedMessagesSpy).not.toHaveBeenCalled();
+    });
+
+    it('should open the forward dialog without moving focus away from the recipient search input', () => {
+        const conversationService = TestBed.inject(ConversationService);
+        vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [] })));
+        const dialogOpenSpy = vi.spyOn(component['dialogService'], 'open').mockReturnValue({ onClose: new Subject().asObservable() } as any);
+
+        fixture.componentRef.setInput('course', { id: 1 });
+
+        component.openForwardMessageView({ id: 5 } as Post, false);
+
+        expect(dialogOpenSpy).toHaveBeenCalledOnce();
+        expect(dialogOpenSpy.mock.calls[0][1]).toEqual(expect.objectContaining({ focusOnShow: false }));
     });
 
     it('should call createForwardedMessages with the correct arguments', () => {
@@ -659,10 +808,10 @@ describe('PostingReactionsBarComponent', () => {
         expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
-    it('should call markMessageAsUnread on metisService', () => {
+    it('should call markMessageAsUnread on communicationService', () => {
         const testPost = { id: 2, conversation: { id: 1 } } as Posting;
         fixture.componentRef.setInput('posting', testPost);
-        const markMessageAsUnreadSpy = vi.spyOn(metisService, 'markMessageAsUnread');
+        const markMessageAsUnreadSpy = vi.spyOn(communicationService, 'markMessageAsUnread');
 
         component.markMessageAsUnread();
 

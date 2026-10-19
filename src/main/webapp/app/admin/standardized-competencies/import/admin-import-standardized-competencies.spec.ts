@@ -2,20 +2,20 @@
  * Vitest tests for AdminImportStandardizedCompetenciesComponent.
  * Tests the import functionality for standardized competencies from JSON files.
  */
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -25,10 +25,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('AdminImportStandardizedCompetenciesComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
     let component: AdminImportStandardizedCompetenciesComponent;
 
@@ -46,11 +45,15 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
         }).overrideComponent(AdminImportStandardizedCompetenciesComponent, {
             set: {
                 imports: [
+                    ArtemisTranslatePipe,
                     MockModule(FontAwesomeModule),
                     MockComponent(StandardizedCompetencyDetailComponent),
                     MockComponent(KnowledgeAreaTreeComponent),
                     MockComponent(ButtonComponent),
-                    MockPipe(HtmlForMarkdownPipe),
+                    MockComponent(TumAetUiButtonComponent),
+                    MockComponent(TumAetUiMessageComponent),
+                    MockDirective(TumAetUiTooltipDirective),
+                    MockDirective(MarkdownDirective),
                 ],
             },
         });

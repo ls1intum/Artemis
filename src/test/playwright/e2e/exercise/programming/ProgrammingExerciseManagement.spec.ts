@@ -1,8 +1,10 @@
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import dayjs from 'dayjs';
 
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
-import { generateUUID } from '../../../support/utils';
+import { dismissPasskeyReminderIfPresent } from '../../../support/dismissPasskeyReminder';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { SEED_COURSES } from '../../../support/seedData';
@@ -23,6 +25,11 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
 
         test('Creates a new programming exercise', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, programmingExerciseCreation }) => {
             await login(admin, '/');
+            // The passkey setup reminder is a CDK overlay whose backdrop swallows the next click without failing it:
+            // createProgrammingExercise clicks twice, so the first click dismisses the backdrop and the second only
+            // opens the create menu, leaving the page on the exercise list with no navigation and no error. That is why
+            // this reads as a timeout on waitForURL rather than as an interaction failure.
+            await dismissPasskeyReminderIfPresent(page);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
@@ -34,8 +41,12 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await programmingExerciseCreation.setShortName('programming' + generateUUID());
             await programmingExerciseCreation.setPoints(100);
             await programmingExerciseCreation.checkAllowOnlineEditor();
+            // Avoid the immediate-release confirmation, which is skipped when the course is marked as a test course.
+            const releaseDate = page.getByLabel('Release Date', { exact: true });
+            await releaseDate.fill(dayjs().add(1, 'day').format('DD.MM.YYYY HH:mm'));
+            await releaseDate.press('Tab');
             const response = await programmingExerciseCreation.generate();
-            const exercise: Exercise = await response.json();
+            const exercise: Exercise = await readResponseJson(response);
             createdExerciseId = exercise.id;
             await expect(courseManagementExercises.getExerciseTitle(exerciseTitle)).toBeVisible();
             await page.waitForURL(`**/programming-exercises/${exercise.id}**`);
@@ -50,6 +61,10 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             programmingExerciseCreation,
         }) => {
             await login(admin, '/');
+            // Same overlay as in the test above, and the same silent symptom: without this, the double click in
+            // createProgrammingExercise is spent dismissing the backdrop and opening the menu, so the page stays on the
+            // exercise list and waitForURL below times out after a minute with nothing to say why.
+            await dismissPasskeyReminderIfPresent(page);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
@@ -99,7 +114,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
     test.describe('Programming exercise team creation', () => {
         let exercise: ProgrammingExercise;
 
-        // Users are pre-enrolled via seed data (user_groups.csv)
+        // Users are pre-enrolled via seed data (user_course_role.csv)
 
         test.beforeEach('Setup team programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);

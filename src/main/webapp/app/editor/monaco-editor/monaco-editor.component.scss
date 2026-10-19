@@ -35,6 +35,16 @@
 }
 
 /*
+ * The chat completions (emojis, user mentions, channel references) are short entries; Monaco's
+ * default 430px suggest widget looks oversized for them. Scoping works despite fixedOverflowWidgets:
+ * the widget is position: fixed but remains inside the editor's DOM subtree. !important is required
+ * because Monaco sets the width as an inline style.
+ */
+jhi-posting-markdown-editor .suggest-widget {
+    width: 300px !important;
+}
+
+/*
  * Adjusts the font size to better match the glyph margin
  */
 [class*='codicon-']::before {
@@ -48,7 +58,7 @@
 .monaco-add-review-comment-button::before {
     cursor: pointer;
     content: '\ea6b'; // codicon-comment-add
-    font-family: codicon;
+    font-family: codicon, monospace;
     font-size: 1.1em;
     background-color: var(--link-color);
     color: var(--white);

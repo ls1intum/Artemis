@@ -3,6 +3,7 @@ import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * DTO for grading scale response.
@@ -18,7 +19,7 @@ export interface GradingScaleDTO {
  * Converts a GradingScale DTO to an entity.
  */
 export function toEntity(dto: GradingScaleDTO, course?: Course, exam?: Exam): GradingScale {
-    const entity = new GradingScale(dto.gradeSteps.gradeType, dto.gradeSteps.gradeSteps?.map((step) => ({ ...step })) ?? []);
+    const entity = new GradingScale(dto.gradeSteps.gradeType, dto.gradeSteps.gradeSteps?.map((step) => deepClone(step)) ?? []);
 
     entity.id = dto.id;
     entity.plagiarismGrade = dto.gradeSteps.plagiarismGrade;
@@ -43,7 +44,7 @@ export function toGradingScaleDTO(entity?: GradingScale): GradingScaleDTO {
     const gradeStepsDTO: GradeStepsDTO = {
         title: entity.exam?.title ?? entity.course?.title ?? '',
         gradeType: entity.gradeType,
-        gradeSteps: entity.gradeSteps?.map((step) => ({ ...step })) ?? [],
+        gradeSteps: entity.gradeSteps?.map((step) => deepClone(step)) ?? [],
         maxPoints: entity.exam?.examMaxPoints ?? entity.course?.maxPoints ?? 0,
         plagiarismGrade: entity.plagiarismGrade ?? GradingScale.DEFAULT_PLAGIARISM_GRADE,
         noParticipationGrade: entity.noParticipationGrade ?? GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,

@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,16 +16,18 @@ import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/qui
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { BarChartModule } from '@swimlane/ngx-charts';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Subscription } from 'rxjs';
+import { EMPTY, filter, merge, startWith, switchMap } from 'rxjs';
+import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
+import { TumAetUiBarChartComponent, TumAetUiChartDatumContext } from '@tumaet/ui-angular';
+import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
-    styleUrls: ['./quiz-point-statistic.component.scss', '../../../../exercise/chart/vertical-bar-chart.scss'],
-    imports: [FaIconComponent, TranslateDirective, BarChartModule, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+    styleUrls: ['./quiz-point-statistic.component.scss'],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiBarChartComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -32,84 +35,66 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
-    private changeDetector = inject(ChangeDetectorRef);
     private serverDateService = inject(ArtemisServerDateService);
+    private destroyRef = inject(DestroyRef);
 
     readonly round = round;
 
-    quizExercise: QuizExercise;
-    quizPointStatistic: QuizPointStatistic;
+    readonly quizExercise = signal<QuizPointStatisticsResponse | undefined>(undefined);
+    quizPointStatistic!: QuizPointStatistic; // set in loadQuizSuccess() before the chart is rendered
 
     labels: string[] = [];
 
     label: string[] = [];
     backgroundColor: string[] = [];
 
-    maxScore: number;
-    websocketChannelForData: string;
-    quizExerciseChannel: string;
-    private quizExerciseSubscription?: Subscription;
-    private quizDataSubscription?: Subscription;
-
-    // variables for ngx-charts
-    legend = false;
-    showXAxisLabel = true;
-    showYAxisLabel = true;
-    xAxis = true;
-    yAxis = true;
-    roundEdges = true;
-    showDataLabel = true;
-    height = 500;
-    animations = false;
+    readonly maxScore = signal<number>(undefined!);
+    websocketChannelForData!: string; // set in ngOnInit() from the route params before use
+    quizExerciseChannel!: string; // set in ngOnInit() from the route params before use
 
     // timer
     waitingForQuizStart = false;
-    remainingTimeText = '?';
-    remainingTimeSeconds = 0;
-    interval: any;
+    readonly remainingTimeText = signal('?');
+    readonly remainingTimeSeconds = signal(0);
+    interval!: ReturnType<typeof setInterval>; // set in ngOnInit() via setInterval(), cleared in ngOnDestroy()
 
     // Icons
     faSync = faSync;
-
     ngOnInit() {
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
         });
-        this.route.params.subscribe((params) => {
-            // use different REST-call if the User is a Student
-            if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
-                    this.loadQuizSuccess(res.body!);
-                });
-            }
+        this.route.params
+            .pipe(
+                switchMap((params) => {
+                    const exerciseId = Number(params['exerciseId']);
+                    this.websocketChannelForData = `/topic/statistic/${exerciseId}`;
+                    this.quizExerciseChannel = `/topic/courses/${params['courseId']}/quizExercises`;
 
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-
-            if (!this.quizExerciseChannel) {
-                this.quizExerciseChannel = '/topic/courses/' + params['courseId'] + '/quizExercises';
-
-                // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-                this.quizExerciseSubscription = this.websocketService.subscribe<QuizExercise>(this.quizExerciseChannel).subscribe((quiz: QuizExercise) => {
-                    if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
-                        this.loadQuizSuccess(quiz);
+                    if (!this.accountService.isAtLeastTutor()) {
+                        return EMPTY;
                     }
-                });
-            }
 
-            // ask for new Data if the websocket for new statistical data was notified
-            this.quizDataSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe((quiz: QuizExercise) => {
-                if (quiz.quizPointStatistic) {
-                    this.loadNewData(quiz.quizPointStatistic);
-                }
+                    const quizStartUpdates = this.websocketService
+                        .subscribe<QuizExercise>(this.quizExerciseChannel)
+                        .pipe(filter((quiz) => this.waitingForQuizStart && exerciseId === quiz.id));
+                    const statisticUpdates = this.websocketService.subscribe<number>(this.websocketChannelForData);
+
+                    return merge(quizStartUpdates, statisticUpdates).pipe(
+                        startWith(exerciseId),
+                        switchMap(() => this.quizExerciseService.findPointStatistic(exerciseId)),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((res) => {
+                this.loadQuizSuccess(res.body!);
             });
-        });
 
         // update displayed times in UI regularly
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
         }, UI_RELOAD_TIME);
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -117,22 +102,23 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      */
     updateDisplayedTimes() {
         const translationBasePath = 'artemisApp.showStatistic.';
+        const quizExercise = this.quizExercise();
         // update remaining time
-        if (this.quizExercise && this.quizExercise.dueDate) {
-            const endDate = this.quizExercise.dueDate;
+        if (quizExercise?.dueDate) {
+            const endDate = quizExercise.dueDate;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
-                this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
+                this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
+                this.remainingTimeText.set(this.relativeTimeText(this.remainingTimeSeconds()));
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds = -1;
-                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizHasEnded');
+                this.remainingTimeSeconds.set(-1);
+                this.remainingTimeText.set(this.translateService.instant(translationBasePath + 'quizHasEnded'));
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds = 0;
-            this.remainingTimeText = '?';
+            this.remainingTimeSeconds.set(0);
+            this.remainingTimeText.set('?');
         }
     }
 
@@ -143,34 +129,11 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
-        }
+        return formatQuizRelativeTime(remainingTimeSeconds);
     }
 
     ngOnDestroy() {
         clearInterval(this.interval);
-        this.quizExerciseSubscription?.unsubscribe();
-        this.quizDataSubscription?.unsubscribe();
-    }
-
-    /**
-     * load the new quizPointStatistic from the server if the Websocket has been notified
-     *
-     * @param statistic the new quizPointStatistic from the server with the new Data.
-     */
-    loadNewData(statistic: QuizPointStatistic) {
-        // if the Student finds a way to the Website
-        //      -> the Student will be sent back to Courses
-        if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['courses']);
-        }
-        this.quizPointStatistic = statistic;
-        this.loadData();
     }
 
     /**
@@ -178,16 +141,16 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      *
      * @param quizExercise the quizExercise, which this quiz-point-statistic presents.
      */
-    loadQuizSuccess(quizExercise: QuizExercise) {
+    loadQuizSuccess(quizExercise: QuizPointStatisticsResponse) {
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['courses']);
+            void this.router.navigate(['courses']);
         }
-        this.quizExercise = quizExercise;
-        this.waitingForQuizStart = !this.quizExercise.quizStarted;
-        this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
-        this.maxScore = calculateMaxScore(this.quizExercise);
+        this.quizExercise.set(quizExercise);
+        this.waitingForQuizStart = !quizExercise.quizStarted;
+        this.quizPointStatistic = quizExercise.quizPointStatistic;
+        this.maxScore.set(calculateMaxScore(quizExercise));
 
         this.loadData();
     }
@@ -212,7 +175,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
             (no negative points are achievable and the maximum points are defined by the quiz itself)
             Lastly, the last bar in the chart also covers the maximum points, that is why we change the upper border notation in this case from ')' to ']'
              */
-            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore);
+            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore());
             label += index !== this.quizPointStatistic.pointCounters!.length - 1 ? ')' : ']';
             this.label.push(label);
             this.ratedData.push(pointCounter.ratedCounter!);
@@ -221,7 +184,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         });
 
         this.chartLabels = this.label;
-        this.ngxColor.domain = this.backgroundColor;
+        this.chartColors.set([...this.backgroundColor]);
 
         // load data into the chart
         this.loadDataInDiagram();
@@ -233,21 +196,14 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      */
     loadDataInDiagram(): void {
         this.setData(this.quizPointStatistic);
-        this.pushDataToNgxEntry(this.changeDetector);
+        this.updateChartData();
 
         // add Axes-labels based on selected language
         this.setAxisLabels('artemisApp.showStatistic.quizPointStatistic.xAxes', 'artemisApp.showStatistic.quizPointStatistic.yAxes');
     }
 
-    /**
-     *
-     * Recalculate the complete statistic on the server in case something went wrong with it
-     *
-     */
-    recalculate() {
-        this.quizExerciseService.recalculate(this.quizExercise.id!).subscribe((res) => {
-            this.loadQuizSuccess(res.body!);
-        });
+    protected override formatTooltipLabel(item: TumAetUiChartDatumContext): string {
+        return this.tooltipLine('artemisApp.showStatistic.tooltip.pointRange', item.value);
     }
 
     /**

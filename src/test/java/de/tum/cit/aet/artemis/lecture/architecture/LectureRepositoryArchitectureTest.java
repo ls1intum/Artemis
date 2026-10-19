@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.architecture;
 
-import java.util.Set;
-
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleRepositoryArchitectureTest;
 
 class LectureRepositoryArchitectureTest extends AbstractModuleRepositoryArchitectureTest {
@@ -10,14 +8,4 @@ class LectureRepositoryArchitectureTest extends AbstractModuleRepositoryArchitec
         return ARTEMIS_PACKAGE + ".lecture";
     }
 
-    // TODO: This method should be removed once all repositories are tested
-    @Override
-    protected Set<String> testTransactionalExclusions() {
-        return Set.of(
-                "de.tum.cit.aet.artemis.lecture.service.LectureImportService.importLecture(de.tum.cit.aet.artemis.lecture.domain.Lecture, de.tum.cit.aet.artemis.course.domain.Course, boolean)",
-                // dispatchPendingJobs and handleIrisReset need @Transactional because they use
-                // FOR UPDATE SKIP LOCKED and bulk state resets, and their callers have no transaction context.
-                "de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.dispatchPendingJobs()",
-                "de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.handleIrisReset()");
-    }
 }

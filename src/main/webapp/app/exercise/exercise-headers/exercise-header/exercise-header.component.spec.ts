@@ -1,24 +1,24 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
+import { ExerciseHeaderComponent, pillsFitInTitleBar } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
 import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/exercise-header-actions/exercise-header-actions.component';
-import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ParticipationModeToggleComponent } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -27,15 +27,56 @@ import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-d
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
+import { AccountService } from 'app/core/auth/account.service';
+import { signal } from '@angular/core';
+import { User } from 'app/account/user/user.model';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('ExerciseHeaderComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseHeaderComponent>;
 
     const submitCallback = vi.fn();
 
+    /**
+     * The global jsdom stub never calls back, so the bar would never learn a width. This one records the callbacks and
+     * lets a test deliver a layout, which is the only way to reach the decision the bar makes about the pills.
+     */
+    let resizeCallbacks: (() => void)[];
+    const originalResizeObserver = globalThis.ResizeObserver;
+
+    /** Reports `width` for the element behind `testId`, or leaves it unmeasured when it is not rendered. */
+    function stubWidth(testId: string, width: number): void {
+        const element: HTMLElement | null = fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+        if (element) {
+            element.getBoundingClientRect = () => ({ width }) as DOMRect;
+        }
+    }
+
+    /** Lays the bar out at these widths and lets the component react, as a resize in the browser would. */
+    function layOutBar(widths: { bar: number; controls: number; pills: number; countdown?: number }): void {
+        const bar: HTMLElement = fixture.nativeElement.querySelector('#exercise-header');
+        bar.getBoundingClientRect = () => ({ width: widths.bar }) as DOMRect;
+        stubWidth('exercise-header-controls', widths.controls);
+        stubWidth('exercise-header-pills', widths.pills);
+        stubWidth('exercise-header-countdown', widths.countdown ?? 0);
+        resizeCallbacks.forEach((callback) => callback());
+        fixture.detectChanges();
+    }
+
     beforeEach(() => {
+        resizeCallbacks = [];
+        globalThis.ResizeObserver = class {
+            constructor(callback: () => void) {
+                resizeCallbacks.push(callback);
+            }
+            observe(): void {}
+            unobserve(): void {}
+            disconnect(): void {}
+        } as unknown as typeof ResizeObserver;
+
         TestBed.configureTestingModule({
             imports: [ExerciseHeaderComponent],
             providers: [
@@ -44,15 +85,21 @@ describe('ExerciseHeaderComponent', () => {
                 MockProvider(QuizExerciseService),
                 MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
-                MockProvider(ParticipationService),
-                MockProvider(ProfileService),
+                MockProvider(ParticipationService, {
+                    getSpecificStudentParticipation: (participations: StudentParticipation[], testRun: boolean) =>
+                        participations.find((participation) => !!participation.testRun === testRun),
+                }),
+                MockProvider(AccountService, { userIdentity: signal({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User) }),
+                MockProvider(ProfileService, { isModuleFeatureActive: () => true }),
             ],
         });
 
-        // Mock child components of ExerciseHeaderComponent not under test
+        // Mock child components of ExerciseHeaderComponent not under test. The information boxes are mocked rather
+        // than rendered because the real ones reach all the way down to the result history's PrimeNG dialog service;
+        // what the header owns is the decision to show them, which the mock still reports.
         TestBed.overrideComponent(ExerciseHeaderComponent, {
-            remove: { imports: [ExerciseHeadersInformationComponent, ParticipationModeToggleComponent] },
-            add: { imports: [MockComponent(ExerciseHeadersInformationComponent), MockComponent(ParticipationModeToggleComponent)] },
+            remove: { imports: [ParticipationModeToggleComponent, ExerciseHeadersInformationComponent] },
+            add: { imports: [MockComponent(ParticipationModeToggleComponent), MockComponent(ExerciseHeadersInformationComponent)] },
         });
 
         // Mock complex child imports of ExerciseHeaderActionsComponent to avoid deep dependency chains
@@ -73,6 +120,10 @@ describe('ExerciseHeaderComponent', () => {
         });
 
         fixture = TestBed.createComponent(ExerciseHeaderComponent);
+    });
+
+    afterEach(() => {
+        globalThis.ResizeObserver = originalResizeObserver;
     });
 
     it('should hide submit button when the due date has passed', () => {
@@ -103,6 +154,277 @@ describe('ExerciseHeaderComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.query(By.css('#submit-exercise'))).not.toBeNull();
+    });
+
+    describe('compact title bar', () => {
+        beforeEach(() => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.MODELING;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+        });
+
+        it('should render the bar on the shared title bar contract', () => {
+            const bar = fixture.nativeElement.querySelector('#exercise-header');
+
+            expect(bar.classList).toContain('page-top-bar');
+            expect(bar.classList).not.toContain('detail-header-card');
+        });
+
+        it('should render the status and due date pills in the bar', () => {
+            const pills = fixture.nativeElement.querySelector('jhi-exercise-headers-information');
+
+            expect(pills).not.toBeNull();
+            expect(pills.getAttribute('placement')).toBe('titleBar');
+        });
+
+        it('should only render the quiz countdown for quizzes', () => {
+            expect(fixture.nativeElement.querySelector('jhi-quiz-exercise-countdown')).toBeNull();
+        });
+    });
+
+    describe('status and due date pills', () => {
+        function renderBar(): void {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.MODELING;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+        }
+
+        function renderQuizBar(): void {
+            const quiz = new QuizExercise(undefined, undefined);
+            quiz.id = 1;
+            quiz.type = ExerciseType.QUIZ;
+            fixture.componentRef.setInput('exercise', quiz);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+        }
+
+        function pillsAreRendered(): boolean {
+            return fixture.nativeElement.querySelector('[data-testid="exercise-header-pills"]') !== null;
+        }
+
+        it('keeps the pills while the title still has its room, and drops them when it does not', () => {
+            // A wide bar: the controls and the pills together still leave the title far more than its minimum.
+            expect(pillsFitInTitleBar(1400, 400, 380)).toBe(true);
+            // The same content on a narrow bar would leave the title 112px, so the pills give way.
+            expect(pillsFitInTitleBar(900, 400, 380)).toBe(false);
+            // Exactly the minimum still counts as room.
+            expect(pillsFitInTitleBar(1068, 400, 380)).toBe(true);
+            expect(pillsFitInTitleBar(1067, 400, 380)).toBe(false);
+        });
+
+        it('shows the pills before anything is measured, because a pill that is not rendered has no width to read', () => {
+            expect(pillsFitInTitleBar(0, 0, 0)).toBe(true);
+            expect(pillsFitInTitleBar(1400, 400, 0)).toBe(true);
+
+            renderBar();
+
+            expect(pillsAreRendered()).toBe(true);
+        });
+
+        it('takes the pills off a bar that has no room for them and reports it', () => {
+            const reported: boolean[] = [];
+            fixture.componentRef.instance.showsPillsChange.subscribe((shows: boolean) => reported.push(shows));
+            renderBar();
+
+            layOutBar({ bar: 900, controls: 400, pills: 380 });
+
+            expect(pillsAreRendered()).toBe(false);
+            expect(reported.at(-1)).toBe(false);
+        });
+
+        it('keeps the pills away across further resizes at the same width, rather than flickering them in and out', () => {
+            renderBar();
+            layOutBar({ bar: 900, controls: 400, pills: 380 });
+            expect(pillsAreRendered()).toBe(false);
+
+            // The pills are gone, so this resize measures no width for them. Forgetting the width they had would read
+            // as "not measured yet", put them straight back, measure them too wide, and take them away again - on
+            // every frame. The width measured while they were up is what settles it.
+            layOutBar({ bar: 900, controls: 400, pills: 0 });
+
+            expect(pillsAreRendered()).toBe(false);
+        });
+
+        it('places the due date and the status after the title, not over with the buttons', () => {
+            renderBar();
+            const positionOf = (selector: string): number => {
+                const bar: HTMLElement = fixture.nativeElement.querySelector('#exercise-header');
+                return Array.from(bar.children).indexOf(bar.querySelector(selector)!);
+            };
+
+            // Title, then the pills, then the controls the bar holds at its far end.
+            expect(positionOf('h5')).toBeLessThan(positionOf('[data-testid="exercise-header-pills"]'));
+            expect(positionOf('[data-testid="exercise-header-pills"]')).toBeLessThan(positionOf('[data-testid="exercise-header-controls"]'));
+        });
+
+        it('puts a running quiz clock where the due date would be, between the title and the status', () => {
+            renderQuizBar();
+
+            const bar: HTMLElement = fixture.nativeElement.querySelector('#exercise-header');
+            const positions = Array.from(bar.children);
+            const countdown = bar.querySelector('[data-testid="exercise-header-countdown"]')!;
+            const pills = bar.querySelector('[data-testid="exercise-header-pills"]')!;
+
+            expect(positions.indexOf(bar.querySelector('h5')!)).toBeLessThan(positions.indexOf(countdown));
+            expect(positions.indexOf(countdown)).toBeLessThan(positions.indexOf(pills));
+        });
+
+        it('counts the quiz countdown against the title, now that it sits beside it rather than with the buttons', () => {
+            renderQuizBar();
+
+            // This bar has room for the pills while nothing else stands between the title and the buttons.
+            layOutBar({ bar: 1200, controls: 400, pills: 380, countdown: 0 });
+            expect(pillsAreRendered()).toBe(true);
+
+            // The clock is never taken away, so its width is space the title cannot have either - and with it there is
+            // no longer enough left. Leaving it out of the calculation would keep the pills and squeeze the title.
+            layOutBar({ bar: 1200, controls: 400, pills: 380, countdown: 150 });
+
+            expect(pillsAreRendered()).toBe(false);
+        });
+
+        it('brings the pills back once the bar has room for them again', () => {
+            renderBar();
+            layOutBar({ bar: 900, controls: 400, pills: 380 });
+            expect(pillsAreRendered()).toBe(false);
+
+            layOutBar({ bar: 1400, controls: 400, pills: 0 });
+
+            expect(pillsAreRendered()).toBe(true);
+        });
+    });
+
+    describe('programming exercise AI feedback button', () => {
+        function configureProgrammingExercise(allowOnlineEditor: boolean | undefined, submitted: boolean, hasResult: boolean): void {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.course = { athenaFormativeFeedbackEnabled: true };
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            exercise.allowOnlineEditor = allowOnlineEditor;
+
+            const participation = new StudentParticipation();
+            participation.submissions = [{ submitted, results: hasResult ? [new Result()] : [] }];
+            exercise.studentParticipations = [participation];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.detectChanges();
+        }
+
+        it('should enable the feedback button for a submitted submission', () => {
+            configureProgrammingExercise(false, true, false);
+
+            const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton).not.toBeNull();
+            // isSubmitted is what the button enables itself on, so asserting its presence alone would pass either way.
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
+        });
+
+        it.each([false, true])('should disable the feedback button for an unsubmitted submission with hasResult=%s', (hasResult) => {
+            configureProgrammingExercise(false, false, hasResult);
+
+            const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton).not.toBeNull();
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(false);
+        });
+
+        it('should hide the feedback button when the exercise has not been started', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.course = { athenaFormativeFeedbackEnabled: true };
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            exercise.allowOnlineEditor = false;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
+        });
+
+        it.each([true, undefined])('should hide the feedback button when allowOnlineEditor is %s', (allowOnlineEditor) => {
+            configureProgrammingExercise(allowOnlineEditor, true, false);
+
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
+        });
+    });
+
+    it('should show the sidebar collapse button before the exercise heading when enabled and collapsed', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+        exercise.title = 'Modeling Exercise';
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        // The bar itself is the title row now; there is no inner row element to reach for.
+        const titleRow = fixture.debugElement.query(By.css('#exercise-header')).nativeElement as HTMLElement;
+        const sidebarToggle = titleRow.querySelector('.btn-sidebar-collapse');
+        const heading = titleRow.querySelector('h5');
+
+        expect(sidebarToggle).not.toBeNull();
+        expect(heading).not.toBeNull();
+        expect(Array.from(titleRow.querySelectorAll('button, h5')).indexOf(sidebarToggle!)).toBeLessThan(Array.from(titleRow.querySelectorAll('button, h5')).indexOf(heading!));
+    });
+
+    it('should hide the sidebar collapse button next to the exercise heading when the sidebar is expanded', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+    });
+
+    it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+        const emitSpy = vi.spyOn(fixture.componentInstance.toggleSidebar, 'emit');
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should mark the sidebar collapse button as collapsed when the sidebar is collapsed', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse')).classes['is-collapsed']).toBeTruthy();
     });
 
     describe('hasGradedSubmission', () => {
@@ -146,9 +468,27 @@ describe('ExerciseHeaderComponent', () => {
 
             expect(fixture.componentInstance.hasGradedSubmission()).toBe(true);
         });
+
+        it('should be false for a quiz submission that was only collected automatically when the quiz ended', () => {
+            // The quiz evaluation marks unsubmitted submissions as submitted with type TIMEOUT —
+            // the student still missed the deadline and must not get a "Graded" badge.
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const participation = new StudentParticipation();
+            participation.submissions = [{ submitted: true, type: SubmissionType.TIMEOUT }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.hasGradedSubmission()).toBe(false);
+            expect(fixture.componentInstance.showGradedMode()).toBe(false);
+        });
     });
 
-    describe('hasPracticeSubmission', () => {
+    describe('showPracticeMode', () => {
         it('should be false when there is no practice participation and mode is graded', () => {
             const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             exercise.type = ExerciseType.MODELING;
@@ -157,10 +497,10 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('courseId', 5);
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.hasPracticeSubmission()).toBe(false);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(false);
         });
 
-        it('should be true when practice participation has a submitted submission', () => {
+        it('should be true when a practice participation exists, regardless of its submissions', () => {
             const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             exercise.type = ExerciseType.MODELING;
             const practiceParticipation = new StudentParticipation();
@@ -171,7 +511,26 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.hasPracticeSubmission()).toBe(true);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+        });
+
+        it('should be true when a practice participation without submissions exists and mode is graded', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.testRun = true;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.componentRef.setInput('participationMode', 'graded');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
         });
 
         it('should be true when mode is practice even without a practice participation', () => {
@@ -186,7 +545,197 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.hasPracticeSubmission()).toBe(true);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+        });
+    });
+
+    describe('showGradedMode', () => {
+        it('should be false for a graded participation without submissions when no practice participation exists', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: false }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showGradedMode()).toBe(false);
+        });
+
+        it('should be true for a graded participation without submissions when a practice participation exists', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.testRun = true;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+
+        it('should be true when the graded participation has a submitted submission', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+
+        it('should be true without any graded participation when a practice participation exists, so the student can see the missed graded mode', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.testRun = true;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+
+        it('should be true during a quiz practice run of a missed quiz (no submitted graded submission, practice participation not yet created)', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: false }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+    });
+
+    describe('onNewParticipation', () => {
+        it('should switch to practice mode and keep the practice option for a new practice participation', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.detectChanges();
+
+            const emitSpy = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.testRun = true;
+            fixture.componentInstance.onNewParticipation(practiceParticipation);
+
+            expect(emitSpy).toHaveBeenCalledWith(practiceParticipation);
+            expect(fixture.componentInstance.participationMode()).toBe('practice');
+            expect(fixture.componentInstance.effectivePracticeParticipation()).toBe(practiceParticipation);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+
+        it('should keep the graded mode for a new graded participation', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+
+            const emitSpy = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+            const gradedParticipation = new StudentParticipation();
+            fixture.componentInstance.onNewParticipation(gradedParticipation);
+
+            expect(emitSpy).toHaveBeenCalledWith(gradedParticipation);
+            expect(fixture.componentInstance.participationMode()).toBe('graded');
+            expect(fixture.componentInstance.showPracticeMode()).toBe(false);
+        });
+    });
+
+    describe('viewing a past submission', () => {
+        it('should hide the submit action and offer the continue action instead', () => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.type = ExerciseType.MODELING;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('onSubmitExercise', submitCallback);
+            const continueCallback = () => {};
+            fixture.componentRef.setInput('onContinueToLatest', continueCallback);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBe(submitCallback);
+            expect(fixture.componentInstance.onContinueExercise()).toBeUndefined();
+
+            // Reported by the details panel, which owns the information boxes that know it.
+            fixture.componentRef.setInput('isViewingSubmission', true);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBeUndefined();
+            expect(fixture.componentInstance.onContinueExercise()).toBe(continueCallback);
+        });
+    });
+
+    describe('quiz practice attempt state', () => {
+        const configureQuizPractice = (exercise: QuizExercise | ModelingExercise, participationMode: 'graded' | 'practice', quizPracticeAttemptFinished: boolean) => {
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('participationMode', participationMode);
+            fixture.componentRef.setInput('quizPracticeAttemptFinished', quizPracticeAttemptFinished);
+            fixture.componentRef.setInput('onSubmitExercise', submitCallback);
+            fixture.detectChanges();
+        };
+
+        it('should mark a quiz practice attempt as in progress until it is finished', () => {
+            configureQuizPractice(new QuizExercise(undefined, undefined), 'practice', false);
+            expect(fixture.componentInstance.quizPracticeInProgress()).toBe(true);
+
+            fixture.componentRef.setInput('quizPracticeAttemptFinished', true);
+            fixture.detectChanges();
+            expect(fixture.componentInstance.quizPracticeInProgress()).toBe(false);
+        });
+
+        it('should not mark a quiz practice attempt as in progress in graded mode', () => {
+            configureQuizPractice(new QuizExercise(undefined, undefined), 'graded', false);
+
+            expect(fixture.componentInstance.quizPracticeInProgress()).toBe(false);
+        });
+
+        it('should not mark a practice attempt as in progress for other exercise types', () => {
+            configureQuizPractice(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined), 'practice', false);
+
+            expect(fixture.componentInstance.quizPracticeInProgress()).toBe(false);
+        });
+
+        it('should offer submit during a quiz practice attempt and hide it once the attempt is finished', () => {
+            configureQuizPractice(new QuizExercise(undefined, undefined), 'practice', false);
+            expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBe(submitCallback);
+
+            fixture.componentRef.setInput('quizPracticeAttemptFinished', true);
+            fixture.detectChanges();
+            expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBeUndefined();
         });
     });
 

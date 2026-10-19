@@ -25,7 +25,7 @@ import org.springframework.web.client.RestClient;
  * It provides the RestClientTransportClientFactories and RestClientDiscoveryClientOptionalArgs that would normally not be instantiated
  * when Jersey is found by Eureka.
  */
-@Conditional(CoreOrHazelcastBuildAgent.class)
+@Conditional(HazelcastDistributedDataCondition.class)
 @Configuration
 @Lazy(false)
 public class EurekaClientConfiguration {

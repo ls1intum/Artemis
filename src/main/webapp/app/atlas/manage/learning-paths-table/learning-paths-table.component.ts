@@ -5,7 +5,8 @@ import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { onError } from 'app/foundation/util/global.utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogService } from 'primeng/dynamicdialog';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
@@ -24,16 +25,16 @@ enum TableColumn {
 @Component({
     selector: 'jhi-learning-paths-table',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbPaginationModule, NgbTypeaheadModule, FormsModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [PaginatorModule, NgbTypeaheadModule, FormsModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './learning-paths-table.component.html',
     styleUrls: ['./learning-paths-table.component.scss', '../learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsTableComponent {
-    protected readonly faSpinner = faSpinner;
-
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
     private readonly dialogService = inject(DialogService);
+
+    protected readonly faSpinner = faSpinner;
 
     readonly courseId = input.required<number>();
 
@@ -58,22 +59,21 @@ export class LearningPathsTableComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            (async () => {
-                await Promise.all([this.loadLearningPaths(courseId), this.loadAverageProgress(courseId)]);
-            })();
+            // Both loaders report their own failures through the alert service.
+            void Promise.all([this.loadLearningPaths(courseId), this.loadAverageProgress(courseId)]);
         });
     }
 
     private async loadLearningPaths(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const searchState = <SearchTermPageableSearch>{
+            const searchState = {
                 page: this.page(),
                 pageSize: this.pageSize(),
                 searchTerm: this.searchTerm(),
                 sortingOrder: this.sortingOrder(),
                 sortedColumn: this.sortedColumn(),
-            };
+            } satisfies SearchTermPageableSearch;
             const searchResults = await this.learningPathApiService.getLearningPathInformation(courseId, searchState);
             this.searchResults.set(searchResults);
         } catch (error) {
@@ -102,6 +102,11 @@ export class LearningPathsTableComponent {
     async setPage(pageNumber: number): Promise<void> {
         this.page.set(pageNumber);
         await this.loadLearningPaths(this.courseId());
+    }
+
+    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
+    onPageChange(event: PaginatorState): void {
+        void this.setPage((event.page ?? 0) + 1);
     }
 
     openCompetencyGraph(learningPathId: number, name: string | undefined): void {

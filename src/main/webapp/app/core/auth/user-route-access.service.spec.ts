@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ActivatedRouteSnapshot, Route, Router, RouterModule } from '@angular/router';
@@ -20,8 +19,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('UserRouteAccessService', () => {
-    setupTestBed({ zoneless: true });
-
     const routeStateMock: any = { snapshot: {}, url: '/courses/20/exercises/4512' };
     const route = 'courses/:courseId/exercises/:exerciseId';
     let service: UserRouteAccessService;

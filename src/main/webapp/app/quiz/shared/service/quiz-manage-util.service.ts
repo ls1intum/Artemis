@@ -6,6 +6,7 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { captureException } from '@sentry/angular';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import {
+    MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH,
     MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD,
     MAX_QUIZ_QUESTION_HINT_LENGTH_THRESHOLD,
     MAX_QUIZ_QUESTION_LENGTH_THRESHOLD,
@@ -69,6 +70,7 @@ export function isQuizQuestionValid(question: QuizQuestion, dragAndDropQuestionU
                 question.title &&
                 question.title !== '' &&
                 question.title.length < MAX_QUIZ_QUESTION_LENGTH_THRESHOLD &&
+                dndQuestion.dragItems?.every((dragItem) => dragItem.pictureFilePath || (dragItem.text?.length ?? 0) <= MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH) &&
                 dndQuestion.correctMappings &&
                 dndQuestion.correctMappings.length > 0 &&
                 dragAndDropQuestionUtil.solve(dndQuestion).length &&
@@ -92,7 +94,7 @@ export function isQuizQuestionValid(question: QuizQuestion, dragAndDropQuestionU
             );
         }
         default: {
-            captureException(new Error('Unknown question type: ' + question));
+            captureException(new Error('Unknown question type: ' + question.type));
             return question.title && question.title !== '';
         }
     }
@@ -192,6 +194,12 @@ export function computeQuizQuestionInvalidReason(
 
     if (question.type === QuizQuestionType.DRAG_AND_DROP) {
         const dndQuestion = question as DragAndDropQuestion;
+        if (dndQuestion.dragItems?.some((dragItem) => !dragItem.pictureFilePath && (dragItem.text?.length ?? 0) > MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH)) {
+            invalidReasons.push({
+                translateKey: 'artemisApp.quizExercise.invalidReasons.dragItemTextLength',
+                translateValues: { index: index + 1, threshold: MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH },
+            });
+        }
         if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
@@ -281,15 +289,15 @@ export function checkForInvalidFlaggedQuestions(questions: QuizQuestion[]): Inva
         const invalidQuestion = question.invalid;
         const invalidElements: InvalidElement[] = [];
         if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-            pushToInvalidElements((<MultipleChoiceQuestion>question).answerOptions, invalidElements);
+            pushToInvalidElements((question as MultipleChoiceQuestion).answerOptions, invalidElements);
         } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-            pushToInvalidElements((<DragAndDropQuestion>question).dragItems, invalidElements);
-            pushToInvalidElements((<DragAndDropQuestion>question).correctMappings, invalidElements);
-            pushToInvalidElements((<DragAndDropQuestion>question).dropLocations, invalidElements);
+            pushToInvalidElements((question as DragAndDropQuestion).dragItems, invalidElements);
+            pushToInvalidElements((question as DragAndDropQuestion).correctMappings, invalidElements);
+            pushToInvalidElements((question as DragAndDropQuestion).dropLocations, invalidElements);
         } else {
-            pushToInvalidElements((<ShortAnswerQuestion>question).solutions, invalidElements);
-            pushToInvalidElements((<ShortAnswerQuestion>question).correctMappings, invalidElements);
-            pushToInvalidElements((<ShortAnswerQuestion>question).spots, invalidElements);
+            pushToInvalidElements((question as ShortAnswerQuestion).solutions, invalidElements);
+            pushToInvalidElements((question as ShortAnswerQuestion).correctMappings, invalidElements);
+            pushToInvalidElements((question as ShortAnswerQuestion).spots, invalidElements);
         }
         if (invalidQuestion || invalidElements.length !== 0) {
             invalidQuestions[question.id!] = invalidElements.length !== 0 ? invalidElements : [];
@@ -306,7 +314,7 @@ export function checkForInvalidFlaggedQuestions(questions: QuizQuestion[]): Inva
  */
 function pushToInvalidElements(array: CanBecomeInvalid[] | undefined, invalidElements: InvalidElement[]): void {
     if (array !== undefined) {
-        array!.forEach(function (option: CanBecomeInvalid) {
+        array.forEach(function (option: CanBecomeInvalid) {
             if (option.invalid) {
                 invalidElements.push(option);
             }

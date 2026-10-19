@@ -88,6 +88,25 @@ export class CommunicationAPIRequests {
     }
 
     /**
+     * Retrieves a single conversation of the currently logged-in user by its id.
+     *
+     * @param courseId - The id of the course
+     * @param conversationId - The id of the conversation
+     * @returns Promise<ChannelDTO | undefined> the conversation, or undefined if the user cannot see it.
+     */
+    async getConversationById(courseId: number, conversationId: number): Promise<ChannelDTO | undefined> {
+        const response = await this.page.request.get(`api/communication/courses/${courseId}/conversations`);
+        if (!response.ok()) {
+            throw new Error(`Failed to fetch the conversations of course ${courseId}: ${response.status()} ${response.statusText()}`);
+        }
+        const conversations: ConversationDTO[] = await response.json();
+        const conversation = conversations.find((conv: ConversationDTO) => conv.id === conversationId);
+        // The endpoint returns mixed conversation types, so narrow rather than cast: a one-to-one or
+        // group chat with this id yields undefined instead of a bogus ChannelDTO.
+        return conversation ? getAsChannelDTO(conversation) : undefined;
+    }
+
+    /**
      * Retrieves the exercise channel for a given course and exercise.
      *
      * @param courseId - The ID of the course.
@@ -186,6 +205,16 @@ export class CommunicationAPIRequests {
     async joinUserIntoChannel(course: Course, channelId: number, user: UserCredentials) {
         const data = [user.username];
         await this.page.request.post(`api/communication/courses/${course.id}/channels/${channelId}/register`, { data });
+    }
+
+    /**
+     * Marks all messages in a conversation as read for the currently authenticated user.
+     *
+     * @param courseId - The id of the course.
+     * @param conversationId - The id of the conversation to mark as read.
+     */
+    async markConversationAsRead(courseId: number, conversationId: number) {
+        await this.page.request.patch(`api/communication/courses/${courseId}/conversations/${conversationId}/mark-as-read`);
     }
 
     /**

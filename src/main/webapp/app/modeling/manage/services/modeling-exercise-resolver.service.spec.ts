@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
@@ -16,8 +15,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { Course } from 'app/course/shared/entities/course.model';
 
 describe('ModelingExerciseResolver', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ModelingExerciseResolver;
     let currentRoute: ActivatedRouteSnapshot;
 

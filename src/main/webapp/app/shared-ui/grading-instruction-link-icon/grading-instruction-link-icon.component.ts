@@ -4,13 +4,13 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass } from '@angular/common';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-grading-instruction-link-icon',
     templateUrl: './grading-instruction-link-icon.component.html',
-    imports: [FaIconComponent, NgbTooltip, NgClass, ArtemisTranslatePipe],
+    styleUrl: './grading-instruction-link-icon.component.scss',
+    imports: [FaIconComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })
 export class GradingInstructionLinkIconComponent implements OnInit {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -20,7 +20,7 @@ export class GradingInstructionLinkIconComponent implements OnInit {
 
     instruction = signal<GradingInstruction | undefined>(undefined);
     confirmIcon = faTrash;
-    showConfirm = false;
+    readonly showConfirm = signal(false);
 
     ngOnInit(): void {
         this.instruction.set(this.feedback().gradingInstruction);
@@ -47,6 +47,6 @@ export class GradingInstructionLinkIconComponent implements OnInit {
      * toggle showConfirm
      */
     toggle(): void {
-        this.showConfirm = !this.showConfirm;
+        this.showConfirm.update((value) => !value);
     }
 }

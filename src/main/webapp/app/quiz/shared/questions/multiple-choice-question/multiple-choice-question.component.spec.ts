@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
+import { Logger, compile } from 'sass';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -15,8 +15,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('MultipleChoiceQuestionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<MultipleChoiceQuestionComponent>;
     let component: MultipleChoiceQuestionComponent;
     let artemisMarkdownService: ArtemisMarkdownService;
@@ -53,13 +51,13 @@ describe('MultipleChoiceQuestionComponent', () => {
         fixture.componentRef.setInput('question', question);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.renderedQuestion.text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
-        expect(component.renderedQuestion.hint).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.hint));
-        expect(component.renderedQuestion.explanation).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.explanation));
-        expect(component.renderedQuestion.renderedSubElements).toHaveLength(1);
+        expect(component.renderedQuestion().text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
+        expect(component.renderedQuestion().hint).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.hint));
+        expect(component.renderedQuestion().explanation).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.explanation));
+        expect(component.renderedQuestion().renderedSubElements).toHaveLength(1);
 
         const expectedAnswer = question.answerOptions![0];
-        const renderedAnswer = component.renderedQuestion.renderedSubElements[0];
+        const renderedAnswer = component.renderedQuestion().renderedSubElements[0];
         expect(safeHtmlToString(renderedAnswer.text)).toEqual(toHtml(expectedAnswer.text!));
         expect(safeHtmlToString(renderedAnswer.hint)).toEqual(toHtml(expectedAnswer.hint!));
         expect(safeHtmlToString(renderedAnswer.explanation)).toEqual(toHtml(expectedAnswer.explanation!));
@@ -80,13 +78,13 @@ describe('MultipleChoiceQuestionComponent', () => {
 
         fixture.componentRef.setInput('question', question);
         fixture.changeDetectorRef.detectChanges();
-        expect(component.renderedQuestion.text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
-        expect(component.renderedQuestion.hint).toBe('');
-        expect(component.renderedQuestion.explanation).toBe('');
-        expect(component.renderedQuestion.renderedSubElements).toHaveLength(1);
+        expect(component.renderedQuestion().text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
+        expect(component.renderedQuestion().hint).toBe('');
+        expect(component.renderedQuestion().explanation).toBe('');
+        expect(component.renderedQuestion().renderedSubElements).toHaveLength(1);
 
         const expectedAnswer = question.answerOptions![0];
-        const renderedAnswer = component.renderedQuestion.renderedSubElements[0];
+        const renderedAnswer = component.renderedQuestion().renderedSubElements[0];
         expect(safeHtmlToString(renderedAnswer.explanation)).toEqual(toHtml(expectedAnswer.explanation!));
         expect(safeHtmlToString(renderedAnswer.text)).toEqual(toHtml(expectedAnswer.text!));
         expect(safeHtmlToString(renderedAnswer.hint)).toBe('');
@@ -102,6 +100,25 @@ describe('MultipleChoiceQuestionComponent', () => {
         }
         return '';
     }
+
+    it('should not hard-code the color of the invalid hint icon, so it stays readable in the dark theme', () => {
+        const question: MultipleChoiceQuestion = {
+            id: 1,
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions: [{ id: 1, text: 'answer-text', invalid: true }],
+        };
+
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('showResult', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const icon: HTMLElement | null = fixture.nativeElement.querySelector('.answer-options-result td.solution fa-icon');
+        expect(icon).toBeTruthy();
+        expect(icon!.getAttribute('style') ?? '').not.toContain('color');
+    });
 
     it('should return true is if the answer option was selected', () => {
         const answerOptions: AnswerOption[] = [
@@ -191,6 +208,208 @@ describe('MultipleChoiceQuestionComponent', () => {
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
     });
 
+    it('should keep pre-existing selections when adding another option (multi-select)', () => {
+        // Regression test for answer loss in exams: when the component is initialized with
+        // already-selected options (e.g. a resumed exam, a page reload, or a recreated
+        // component after hand-in-early), selecting a further option must keep the existing
+        // selections instead of replacing them with only the newly clicked one.
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+            { id: 3, invalid: false },
+        ];
+
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+
+        fixture.componentRef.setInput('question', question);
+        // Pre-existing selections, as if loaded from a previously saved submission.
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0], answerOptions[1]]);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted: AnswerOption[] | undefined;
+        component.selectedAnswerOptionsChange.subscribe((v) => (emitted = v));
+
+        // Add a third option.
+        component.toggleSelection(answerOptions[2]);
+
+        expect(emitted).toBeDefined();
+        const emittedIds = emitted!.map((option) => option.id).sort((a, b) => (a ?? 0) - (b ?? 0));
+        expect(emittedIds).toEqual([1, 2, 3]);
+    });
+
+    it('should accumulate rapid successive toggles before the input round-trips (no answer loss)', () => {
+        // In zoneless mode the input only updates on the next change-detection cycle, so two toggles dispatched within
+        // the same frame both read the same (not-yet-updated) input. Without an in-frame working copy the second toggle
+        // would drop the option added by the first. This asserts both additions are kept.
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+            { id: 3, invalid: false },
+            { id: 4, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0], answerOptions[1]]);
+        fixture.changeDetectorRef.detectChanges();
+
+        const emissions: AnswerOption[][] = [];
+        component.selectedAnswerOptionsChange.subscribe((v) => emissions.push(v));
+
+        // Two toggles WITHOUT re-feeding the input in between (clicks within one change-detection frame).
+        component.toggleSelection(answerOptions[2]);
+        component.toggleSelection(answerOptions[3]);
+
+        expect(emissions).toHaveLength(2);
+        expect(emissions[0].map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 2, 3]);
+        expect(emissions[1].map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 2, 3, 4]);
+    });
+
+    it('should reset the working copy when the input changes, then build on the new input', () => {
+        // After the parent round-trips (or the submission is reloaded), the working copy must be discarded so the next
+        // toggle starts from the authoritative input.
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+            { id: 3, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0]]);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted: AnswerOption[] | undefined;
+        component.selectedAnswerOptionsChange.subscribe((v) => (emitted = v));
+
+        component.toggleSelection(answerOptions[1]);
+        expect(emitted!.map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 2]);
+
+        // The authoritative input is replaced (e.g. a reload restoring only option 3); the next toggle must build on it.
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[2]]);
+        fixture.changeDetectorRef.detectChanges();
+        component.toggleSelection(answerOptions[0]);
+        expect(emitted!.map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 3]);
+    });
+
+    it('should remove a pre-existing option when toggled off (multi-select)', () => {
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0], answerOptions[1]]);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted: AnswerOption[] | undefined;
+        component.selectedAnswerOptionsChange.subscribe((v) => (emitted = v));
+
+        component.toggleSelection(answerOptions[0]);
+        expect(emitted!.map((o) => o.id)).toEqual([2]);
+    });
+
+    it('should not mutate the input array when toggling', () => {
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        const input = [answerOptions[0]];
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', input);
+        fixture.changeDetectorRef.detectChanges();
+
+        component.toggleSelection(answerOptions[1]);
+        expect(input).toEqual([answerOptions[0]]);
+    });
+
+    it('should handle answer options without an id by reference identity', () => {
+        const a: AnswerOption = { invalid: false };
+        const b: AnswerOption = { invalid: false };
+        const answerOptions: AnswerOption[] = [a, b];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', [a]);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted: AnswerOption[] | undefined;
+        component.selectedAnswerOptionsChange.subscribe((v) => (emitted = v));
+
+        component.toggleSelection(b);
+        expect(emitted).toEqual([a, b]);
+
+        fixture.componentRef.setInput('selectedAnswerOptions', emitted!);
+        fixture.changeDetectorRef.detectChanges();
+        component.toggleSelection(a);
+        expect(emitted).toEqual([b]);
+    });
+
+    it('should not emit when click is disabled', () => {
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0]]);
+        fixture.componentRef.setInput('clickDisabled', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted = false;
+        component.selectedAnswerOptionsChange.subscribe(() => (emitted = true));
+        component.toggleSelection(answerOptions[1]);
+        expect(emitted).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
+    });
+
     it('should toggle answer options, but only allow one to be selected for single choice questions', () => {
         const answerOptions: AnswerOption[] = [
             { id: 1, invalid: false },
@@ -237,5 +456,49 @@ describe('MultipleChoiceQuestionComponent', () => {
         component.toggleSelection(answerOptions[1]);
         expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(true);
+    });
+
+    // Regression test for issue #8927: KaTeX marks the output of \text and \texttt with the class "text", which the
+    // answer option styling (padding and font size of the answer's own text element) used to match as well.
+    // Vitest does not apply component styles, so the component's SCSS is compiled and attached to the document here.
+    describe('answer option styling', () => {
+        let styleElement: HTMLStyleElement;
+
+        beforeEach(() => {
+            const { css } = compile('src/main/webapp/app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component.scss', { logger: Logger.silent });
+            styleElement = document.createElement('style');
+            styleElement.textContent = css;
+            document.head.appendChild(styleElement);
+        });
+
+        afterEach(() => styleElement.remove());
+
+        it.each([
+            ['answer options', false, '.answer-options .answer-option .content > .text'],
+            ['result table', true, '.answer-options-result .answer-option .content > .text'],
+        ])('should not apply the answer text styling to KaTeX text elements in the %s', (_name, showResult, answerTextSelector) => {
+            const question: MultipleChoiceQuestion = {
+                text: 'some-text',
+                exportQuiz: false,
+                randomizeOrder: true,
+                invalid: false,
+                answerOptions: [{ id: 1, text: '$$\\texttt{x}$$', invalid: false }],
+                scoringType: ScoringType.ALL_OR_NOTHING,
+            };
+            fixture.componentRef.setInput('question', question);
+            fixture.componentRef.setInput('showResult', showResult);
+            fixture.changeDetectorRef.detectChanges();
+
+            const answerText = fixture.nativeElement.querySelector(answerTextSelector) as HTMLElement;
+            const katexText = answerText.querySelector('.katex .text') as HTMLElement;
+
+            // The answer's own text element keeps its styling (this also proves that the compiled styles are applied).
+            expect(getComputedStyle(answerText).paddingRight).toBe('8px');
+            expect(getComputedStyle(answerText).fontSize).toBe('16px');
+            // KaTeX text elements must not get the answer's padding. The font size cannot be asserted here: jsdom has no
+            // KaTeX stylesheet, and the inherited default is already 16px. The same selector applies both declarations.
+            expect(katexText).not.toBeNull();
+            expect(getComputedStyle(katexText).paddingRight).not.toBe('8px');
+        });
     });
 });

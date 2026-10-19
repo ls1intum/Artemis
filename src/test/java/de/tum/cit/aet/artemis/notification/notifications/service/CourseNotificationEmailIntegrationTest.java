@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.notification.notifications.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
@@ -29,6 +30,9 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.TestAccountEmailService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailRetryQueueService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -49,7 +53,7 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
 
     static {
         try {
-            SERVER_URL = new URL("http://localhost:9000");
+            SERVER_URL = URI.create("http://localhost:9000").toURL();
         }
         catch (Exception e) {
             throw new RuntimeException(e);
@@ -61,6 +65,12 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private SpringTemplateEngine templateEngine;
+
+    @Autowired
+    private MailRetryQueueService mailRetryQueue;
+
+    @Autowired
+    private TestAccountEmailService testAccountEmailPolicy;
 
     private MailSendingService testMailSendingService;
 
@@ -89,7 +99,7 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
         var mailEnabledProperties = new ArtemisProperties();
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
-        testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
+        testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine, mailRetryQueue, testAccountEmailPolicy);
         ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", SERVER_URL);
 
         recipient = new User();
@@ -448,6 +458,37 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(body).contains("Physik");
     }
 
+    // -- Atlas competency update notification --
+
+    @Test
+    void atlasCompetencyUpdateNotification_shouldRenderAppliedChangesInEnglish() throws Exception {
+        // The e-mail service renders changesMarkdown to sanitized HTML before the template sees it.
+        Map<String, Object> params = new HashMap<>(Map.of("courseTitle", "Algorithms", "outcome", "COMPLETED", "exerciseCount", 2, "appliedCount", 3, "createdCount", 1,
+                "editedCount", 0, "deletedCount", 0, "assignedCount", 2, "unassignedCount", 0, "omittedCount", 4));
+        params.put("changesMarkdown", "<p>Created competency Sorting (APPLY).<br><em>The new exercise practices sorting.</em></p>");
+
+        sendCourseNotificationEmail("atlasCompetencyUpdateNotification", params, "en");
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("Atlas automatically updated the competencies of the course &quot;Algorithms&quot; after changes to 2 learning object(s).");
+        assertThat(body).contains("Competencies created: 1, edited: 0, deleted: 0. Learning object links added or updated: 2, removed: 0.");
+        assertThat(body).contains("Created competency Sorting (APPLY).").contains("<em>The new exercise practices sorting.</em>");
+        assertThat(body).contains("4 further change(s) are not listed here.");
+    }
+
+    @Test
+    void atlasCompetencyUpdateNotification_shouldRenderFailureWithoutChangesInGerman() throws Exception {
+        recipient.setLangKey("de");
+        Map<String, Object> params = Map.of("courseTitle", "Algorithmen", "outcome", "FAILED", "exerciseCount", 1, "appliedCount", 0, "createdCount", 0, "editedCount", 0,
+                "deletedCount", 0, "assignedCount", 0, "unassignedCount", 0, "omittedCount", 0);
+
+        sendCourseNotificationEmail("atlasCompetencyUpdateNotification", params, "de");
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("ist nach Änderungen an 1 Lernobjekt(en) fehlgeschlagen. Es wurden keine Kompetenzen oder Verknüpfungen geändert.");
+        assertThat(body).doesNotContain("Übernommene Änderungen");
+    }
+
     // -- Helper methods --
 
     /**
@@ -458,6 +499,7 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
         Locale locale = Locale.forLanguageTag(langKey);
         Context context = new Context(locale);
         context.setVariable("serverUrl", SERVER_URL);
+        context.setVariable("baseUrl", SERVER_URL);
         context.setVariable("notificationType", notificationType);
         context.setVariable("recipient", recipient);
         context.setVariable("courseId", COURSE_ID);
@@ -468,7 +510,7 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
 
         String content = testTemplateEngine.process("mail/course_notification/" + notificationType, context);
         String subject = mainMessageSource.getMessage("email.courseNotification." + notificationType + ".title", null, locale);
-        testMailSendingService.sendEmailSync(recipient, subject, content, false, true);
+        testMailSendingService.sendEmailSync(MailRecipientDTO.from(recipient), subject, content, false, true);
     }
 
     private String getDeliveredEmailBody() throws Exception {

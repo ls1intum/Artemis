@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.domain.settings;
 
+import java.util.Locale;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -32,7 +34,7 @@ public enum IrisPipelineVariant {
         if (raw == null) {
             return DEFAULT;
         }
-        return switch (raw.toLowerCase()) {
+        return switch (raw.toLowerCase(Locale.ROOT)) {
             case "advanced" -> ADVANCED;
             case "default" -> DEFAULT;
             default -> DEFAULT;

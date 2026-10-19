@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -41,11 +43,15 @@ public class AccountService {
 
     private final ProfileService profileService;
 
-    public AccountService(UserRepository userRepository, UserService userService, UserCreationService userCreationService, ProfileService profileService) {
+    private final AccountSecurityEventService accountSecurityEventService;
+
+    public AccountService(UserRepository userRepository, UserService userService, UserCreationService userCreationService, ProfileService profileService,
+            AccountSecurityEventService accountSecurityEventService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.profileService = profileService;
+        this.accountSecurityEventService = accountSecurityEventService;
     }
 
     /**
@@ -59,13 +65,14 @@ public class AccountService {
     }
 
     /**
-     * A password is invalid if it is empty, too short or too long.
+     * A password is invalid if it is empty, outside the character limits or exceeds BCrypt's UTF-8 byte limit.
      *
      * @param password the password to validate
      * @return whether the password is invalid or not
      */
     public boolean isPasswordLengthInvalid(String password) {
-        return StringUtils.isEmpty(password) || password.length() < Constants.PASSWORD_MIN_LENGTH || password.length() > Constants.PASSWORD_MAX_LENGTH;
+        return StringUtils.isEmpty(password) || password.length() < Constants.PASSWORD_MIN_LENGTH || password.length() > Constants.PASSWORD_MAX_LENGTH
+                || password.getBytes(StandardCharsets.UTF_8).length > Constants.PASSWORD_MAX_BYTES;
     }
 
     /**
@@ -92,12 +99,18 @@ public class AccountService {
         }
 
         final String userLogin = currentUser.getLogin();
-        Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
-        if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
-            throw new EmailAlreadyUsedException();
-        }
+        // Captured before the update: once the address has been replaced there is no longer any way to reach the
+        // previous one, and that is where the change notice has to go.
+        final String previousEmail = currentUser.getEmail();
+        final String previousLangKey = currentUser.getLangKey();
 
         userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(), userDTO.getImageUrl());
+
+        boolean emailChanged = !Objects.equals(User.canonicalEmail(previousEmail), User.canonicalEmail(userDTO.getEmail()));
+        if (emailChanged) {
+            User updatedUser = userRepository.getUserByLoginElseThrow(userLogin);
+            accountSecurityEventService.recordEmailChanged(updatedUser, previousEmail, previousLangKey);
+        }
     }
 
 }

@@ -46,9 +46,9 @@ export abstract class LectureUnit implements BaseEntity {
 
 export function getIcon(lectureUnitType: LectureUnitType): IconProp {
     if (!lectureUnitType) {
-        return faQuestion as IconProp;
+        return faQuestion;
     }
-    return lectureUnitIcons[lectureUnitType] as IconProp;
+    return lectureUnitIcons[lectureUnitType];
 }
 
 export function getIconTooltip(lectureUnitType: LectureUnitType) {

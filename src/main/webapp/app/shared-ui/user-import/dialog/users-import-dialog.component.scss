@@ -1,9 +1,3 @@
-$success-text-color: #155724;
-$success-bg-color: #d4edda;
-
-$error-text-color: #dc3545;
-$error-bg-color: #f8d7da;
-
 :host {
     display: block;
 }
@@ -18,78 +12,26 @@ $error-bg-color: #f8d7da;
     margin-bottom: 0.1rem;
 }
 
-.import-success,
-.import-fail {
-    position: relative;
-
-    &:nth-child(odd)::before {
-        content: '';
-        pointer-events: none;
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.03);
-    }
+tr.import-success {
+    background-color: color-mix(in srgb, var(--success) 12%, transparent) !important;
+    color: var(--success) !important;
 }
 
-table.table.table-striped .import-success {
-    td,
-    th {
-        color: $success-text-color;
-        background-color: $success-bg-color;
-    }
+tr.import-not-found {
+    background-color: color-mix(in srgb, var(--danger) 12%, transparent) !important;
+    color: var(--danger) !important;
 }
 
-table.table.table-striped .import-fail {
-    td,
-    th {
-        color: $error-text-color;
-        background-color: $error-bg-color;
-    }
+tr.import-warning {
+    background-color: color-mix(in srgb, var(--warning) 12%, transparent) !important;
+    color: var(--warning) !important;
 }
 
 .header-fixed {
     width: 100%;
 
-    thead,
-    tbody,
-    thead > tr,
-    tbody > tr,
-    thead > tr > th,
-    tbody > tr > td,
-    th {
-        display: block;
-    }
-
-    tbody > tr::after,
-    thead > tr::after {
-        content: ' ';
-        display: block;
-        visibility: hidden;
-        clear: both;
-    }
-
-    thead {
-        overflow-y: scroll;
-    }
-
-    tbody {
-        overflow-y: scroll;
+    .p-datatable-table-container {
         min-height: 150px;
-        max-height: max(300px, 100vh - 500px);
-    }
-
-    tbody > tr > td,
-    tbody > tr > td,
-    th {
-        width: 25%; // divide by the number of table columns: calc(100% / 4)
-        float: left;
-    }
-
-    tr {
-        display: flex !important;
     }
 
     td,
@@ -100,8 +42,16 @@ table.table.table-striped .import-fail {
     }
 }
 
-.modal-footer {
-    button[disabled] {
-        cursor: not-allowed;
+.csv-example-table {
+    border-collapse: collapse;
+
+    th,
+    td {
+        border: 1px solid var(--p-content-border-color);
+        padding: 0.4rem 0.75rem;
     }
+}
+
+button[disabled] {
+    cursor: not-allowed;
 }

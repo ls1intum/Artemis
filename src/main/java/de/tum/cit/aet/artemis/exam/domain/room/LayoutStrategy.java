@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 
 @Conditional(ExamEnabled.class)
@@ -50,6 +51,7 @@ public class LayoutStrategy extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_room_id", nullable = false)
     @JsonBackReference
+    @Parent
     private ExamRoom examRoom;
 
     /**

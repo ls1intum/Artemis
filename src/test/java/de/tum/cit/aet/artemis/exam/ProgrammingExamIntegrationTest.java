@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -22,13 +23,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -53,7 +55,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
@@ -76,7 +78,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
 
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         examUtilService.addExam(course1);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
@@ -101,7 +103,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_rescheduleProgramming_titleChanged_shouldNotReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setTitle("New title");
 
@@ -113,7 +115,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_rescheduleProgramming_changeDateSubSecondPrecision_shouldNotReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
 
         ZonedDateTime visibleDate = examWithProgrammingEx.getVisibleDate();
@@ -130,7 +132,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_rescheduleProgramming_visibleAndStartDateChanged_shouldReschedule() throws Exception {
         // Add a programming exercise to the exam and change the dates in order to invoke a rescheduling
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
 
         ZonedDateTime visibleDate = examWithProgrammingEx.getVisibleDate();
@@ -146,7 +148,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_rescheduleProgramming_visibleDateChanged_shouldReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
 
@@ -158,7 +160,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_rescheduleProgramming_gracePeriodChanged_shouldReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setGracePeriod(examWithProgrammingEx.getGracePeriod() + 60);
 
@@ -172,14 +174,13 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     void testImportExamWithSingleProgrammingExercise_successful() throws Exception {
         programmingExerciseTestService.setup(this, versionControlService);
 
-        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Course sourceCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
-        programmingExerciseTestService.setupRepositoryMocks(sourceExercise, programmingExerciseTestService.sourceExerciseRepo, programmingExerciseTestService.sourceSolutionRepo,
-                programmingExerciseTestService.sourceTestRepo, programmingExerciseTestService.sourceAuxRepo);
+        programmingExerciseTestService.setupSourceRepositories(sourceExercise);
         exerciseRepository.save(sourceExercise);
 
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
@@ -191,7 +192,10 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
 
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course1.getId());
 
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, Exam.class, HttpStatus.CREATED);
+        // The import response carries only the imported exam's id/title; re-fetch the persisted exam graph to assert it.
+        Long importedExamId = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, HttpStatus.CREATED).exam()
+                .id();
+        final Exam received = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(importedExamId);
 
         assertThat(received.getExerciseGroups()).hasSize(1);
         Exercise importedExercise = received.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
@@ -210,6 +214,45 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithProgrammingExercise_repositoryCopyFailureReportedAsIncomplete() throws Exception {
+        // Regression test for the resilient exam import: when a programming exercise's repository copy fails mid-import,
+        // its basis entity has already been committed (importProgrammingExerciseBasis is @Transactional, and runs before
+        // the repository copy). The import must still succeed (no 5xx) and report that exercise as INCOMPLETE in the
+        // response body (it failed partway and may have left a partial exercise that needs review) - rather than the
+        // empty-group cleanup hitting the exercise -> exercise_group RESTRICT foreign key on the committed-but-failed
+        // exercise and aborting the whole import with a 5xx.
+        programmingExerciseTestService.setup(this, versionControlService);
+
+        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        programmingExerciseTestService.setupSourceRepositories(sourceExercise);
+        exerciseRepository.save(sourceExercise);
+
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
+        doNothing().when(continuousIntegrationService).createProjectForExercise(any());
+
+        // Fail the repository copy, which happens after the (transactional) basis import has already persisted the new exercise.
+        doThrow(new RuntimeException("Simulated repository copy failure")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithHistory(any(), any(), any());
+
+        String sourceTitle = sourceExercise.getTitle();
+        ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course1.getId());
+
+        // The import must NOT abort with a 5xx; it succeeds and reports the failing programming exercise in the response body.
+        ExamImportResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class,
+                HttpStatus.CREATED);
+
+        // The programming exercise failed during the (post-commit) repository copy, so it is reported as incomplete (may need review), not as a clean skip.
+        assertThat(result.incompleteExercises()).as("the programming exercise must be reported as incomplete").contains(sourceTitle);
+        // Nothing was cleanly skipped, so the skipped list is empty and omitted from the response (DTO uses @JsonInclude(NON_EMPTY)).
+        assertThat(result.skippedExercises()).as("no exercise must be reported as cleanly skipped").isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithProgrammingExercise_preCheckFailed() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         ExerciseGroup programmingGroup = ExamFactory.generateExerciseGroup(false, exam);
@@ -217,16 +260,14 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         exam.setId(null);
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
-        programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
         exerciseRepository.save(programming);
 
         versionControlService.createProjectForExercise(programming);
         createdProjectKey = programming.getProjectKey();
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.performMvcRequest(
-                post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
-                .andExpect(status().isBadRequest())
+        request.performMvcRequest(post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ExamImportDTO.of(exam, course1.getId())))).andExpect(status().isBadRequest())
                 .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
     }
 

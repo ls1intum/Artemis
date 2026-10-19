@@ -38,7 +38,7 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationIn
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         textExercise = ExerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
     }
 

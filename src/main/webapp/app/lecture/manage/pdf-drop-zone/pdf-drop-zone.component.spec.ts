@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PdfDropZoneComponent } from './pdf-drop-zone.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -8,8 +7,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('PdfDropZoneComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfDropZoneComponent;
     let fixture: ComponentFixture<PdfDropZoneComponent>;
 
@@ -67,7 +64,7 @@ describe('PdfDropZoneComponent', () => {
                 length: 1,
                 0: pdfFile,
                 item: (index: number) => (index === 0 ? pdfFile : null),
-            } as FileList;
+            } as unknown as FileList;
 
             const event = {
                 preventDefault: vi.fn(),
@@ -95,7 +92,7 @@ describe('PdfDropZoneComponent', () => {
                     if (index === 1) return txtFile;
                     return null;
                 },
-            } as FileList;
+            } as unknown as FileList;
 
             const event = {
                 preventDefault: vi.fn(),
@@ -116,7 +113,7 @@ describe('PdfDropZoneComponent', () => {
                 length: 1,
                 0: txtFile,
                 item: (index: number) => (index === 0 ? txtFile : null),
-            } as FileList;
+            } as unknown as FileList;
 
             const event = {
                 preventDefault: vi.fn(),
@@ -137,7 +134,7 @@ describe('PdfDropZoneComponent', () => {
                 length: 1,
                 0: pdfFile,
                 item: (index: number) => (index === 0 ? pdfFile : null),
-            } as FileList;
+            } as unknown as FileList;
 
             const event = {
                 preventDefault: vi.fn(),
@@ -174,7 +171,7 @@ describe('PdfDropZoneComponent', () => {
                 length: 1,
                 0: pdfFile,
                 item: (index: number) => (index === 0 ? pdfFile : null),
-            } as FileList;
+            } as unknown as FileList;
 
             const input = {
                 files: mockFileList,
@@ -231,7 +228,7 @@ describe('PdfDropZoneComponent', () => {
                     if (index === 2) return pdfFile3;
                     return null;
                 },
-            } as FileList;
+            } as unknown as FileList;
 
             const event = {
                 preventDefault: vi.fn(),

@@ -1,13 +1,9 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from './slice-navigator.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SliceNavigatorComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: SliceNavigatorComponent;
     let fixture: ComponentFixture<SliceNavigatorComponent>;
 
@@ -18,7 +14,7 @@ describe('SliceNavigatorComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [SliceNavigatorComponent, MockComponent(ButtonComponent)],
+            imports: [SliceNavigatorComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

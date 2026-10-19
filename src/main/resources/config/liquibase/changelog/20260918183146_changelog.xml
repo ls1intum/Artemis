@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        The failed-build-log retention job drains the legacy build_log_entry table in batches ordered by timestamp and
+        id. Long-lived installations can have a large backlog when this cleanup first ships, so the ordering columns
+        need a covering index to avoid scanning and sorting the table again for every batch.
+    -->
+    <changeSet id="20260918183146-01-build-log-entry-retention-index" author="krusche">
+        <createIndex indexName="idx_build_log_entry_time_id" tableName="build_log_entry">
+            <column name="time"/>
+            <column name="id"/>
+        </createIndex>
+        <rollback>
+            <dropIndex indexName="idx_build_log_entry_time_id" tableName="build_log_entry"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

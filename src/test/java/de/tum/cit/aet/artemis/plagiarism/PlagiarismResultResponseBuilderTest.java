@@ -37,7 +37,7 @@ class PlagiarismResultResponseBuilderTest {
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().plagiarismResult()).isSameAs(plagiarismResult);
+        assertThat(response.getBody().plagiarismResult().comparisons()).hasSize(plagiarismResult.getComparisons().size());
         assertThat(response.getBody().plagiarismResultStats().numberOfDetectedSubmissions()).isEqualTo(3);
         assertThat(response.getBody().plagiarismResultStats().averageSimilarity()).isEqualTo(0.78);
         assertThat(response.getBody().plagiarismResultStats().maximalSimilarity()).isEqualTo(0.78);
@@ -55,7 +55,7 @@ class PlagiarismResultResponseBuilderTest {
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().plagiarismResult()).isSameAs(plagiarismResult);
+        assertThat(response.getBody().plagiarismResult().comparisons()).hasSize(plagiarismResult.getComparisons().size());
         assertThat(response.getBody().plagiarismResultStats().numberOfDetectedSubmissions()).isEqualTo(3);
         assertThat(response.getBody().plagiarismResultStats().averageSimilarity()).isEqualTo(0.78);
         assertThat(response.getBody().plagiarismResultStats().maximalSimilarity()).isEqualTo(0.78);

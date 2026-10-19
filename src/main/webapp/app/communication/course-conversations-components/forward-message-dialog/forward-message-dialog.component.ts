@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, signal, viewChild } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -18,13 +18,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { NgClass } from '@angular/common';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faHashtag, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -42,37 +42,36 @@ interface CombinedOption {
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
     imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective, FaIconComponent],
-    providers: [MetisService, LinkPreviewService, LinkifyService, MetisConversationService],
+    providers: [CommunicationService, LinkPreviewService, LinkifyService, CourseConversationsService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
+    protected dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
+    private courseManagementService = inject(CourseManagementService);
+    private renderer = inject(Renderer2);
+
     channels = signal<(ChannelDTO | GroupChatDTO)[]>([]);
     users = signal<UserPublicInfoDTO[]>([]);
     postToForward = signal<Post | undefined>(undefined);
     courseId = signal<number | undefined>(undefined);
     editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
     filteredChannels: (ChannelDTO | GroupChatDTO)[] = [];
-    filteredUsers: UserPublicInfoDTO[] = [];
+    readonly filteredUsers = signal<UserPublicInfoDTO[]>([]);
     selectedChannels: (ChannelDTO | GroupChatDTO)[] = [];
     selectedUsers: UserPublicInfoDTO[] = [];
-    combinedOptions: CombinedOption[] = [];
-    filteredOptions: CombinedOption[] = [];
-    defaultActions: TextEditorAction[];
+    readonly combinedOptions = signal<CombinedOption[]>([]);
+    readonly filteredOptions = signal<CombinedOption[]>([]);
+    readonly defaultActions = signal<TextEditorAction[]>([]);
     searchTerm: string = '';
     newPost = new Post();
     isInputFocused = false;
-    showDropdown = false;
-    showFullForwardedMessage = false;
-    isContentLong = false;
+    readonly showDropdown = signal(false);
+    readonly showFullForwardedMessage = signal(false);
+    readonly isContentLong = signal(false);
 
-    protected dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
     protected searchInput = viewChild<ElementRef>('searchInput');
     protected messageContent = viewChild<ElementRef>('messageContent');
     readonly maxContentLength = MAX_CONTENT_LENGTH;
-
-    private courseManagementService = inject(CourseManagementService);
-    private cdr = inject(ChangeDetectorRef);
-    private renderer = inject(Renderer2);
 
     protected readonly faPeopleGroup = faPeopleGroup;
     protected readonly faHashtag = faHashtag;
@@ -94,11 +93,11 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
             }
         }
         this.filteredChannels = this.channels() || [];
-        this.defaultActions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()];
-        this.filteredUsers = this.users();
+        this.defaultActions.set([new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()]);
+        this.filteredUsers.set(this.users());
 
         // Combine users and channels into a single options list
-        this.combinedOptions = [
+        this.combinedOptions.set([
             ...this.channels()
                 .filter((channel: ChannelDTO | GroupChatDTO) => channel.name !== undefined)
                 .map((channel) => ({
@@ -113,7 +112,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
                 type: 'user',
                 img: user.imageUrl!,
             })),
-        ];
+        ]);
 
         this.filterOptions();
         this.focusInput();
@@ -131,14 +130,13 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     checkIfContentOverflows(): void {
         if (this.messageContent()) {
             const nativeElement = this.messageContent()!.nativeElement;
-            this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
-            this.cdr.detectChanges();
+            this.isContentLong.set(nativeElement.scrollHeight > nativeElement.clientHeight);
         }
     }
 
     /** Toggles whether full forwarded message content should be shown */
     toggleShowFullForwardedMessage(): void {
-        this.showFullForwardedMessage = !this.showFullForwardedMessage;
+        this.showFullForwardedMessage.update((value) => !value);
     }
 
     /** Updates content of the new post with editor input */
@@ -152,6 +150,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     filterItems(event: Event): void {
         this.searchTerm = (event.target as HTMLInputElement).value;
         this.filterOptions();
+        this.showDropdown.set(true);
     }
 
     /**
@@ -173,18 +172,17 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
                         }),
                     )
                     .subscribe((users) => {
-                        this.filteredUsers = users;
+                        this.filteredUsers.set(users);
                         this.updateCombinedOptions();
-                        this.cdr.detectChanges();
                     });
             } else {
-                this.filteredUsers = [];
+                this.filteredUsers.set([]);
             }
 
             this.filteredChannels = this.channels().filter((channel: ChannelDTO | GroupChatDTO) => channel.name?.toLowerCase().includes(lowerCaseSearchTerm));
             this.updateCombinedOptions();
         } else {
-            this.filteredUsers = [...this.users()];
+            this.filteredUsers.set([...this.users()]);
             this.filteredChannels = [...this.channels()];
             this.updateCombinedOptions();
         }
@@ -194,20 +192,20 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      * Combines filtered channels and users into a unified options list.
      */
     private updateCombinedOptions(): void {
-        this.filteredOptions = [
+        this.filteredOptions.set([
             ...this.filteredChannels.map((channel) => ({
                 id: channel.id!,
                 name: channel.name!,
                 type: channel.type!,
                 img: '',
             })),
-            ...this.filteredUsers.map((user) => ({
+            ...this.filteredUsers().map((user) => ({
                 id: user.id!,
                 name: user.name!,
                 type: 'user',
                 img: user.imageUrl!,
             })),
-        ];
+        ]);
     }
 
     /**
@@ -226,7 +224,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         } else if (option.type === 'user') {
             const existing = this.selectedUsers.find((user) => user.id === option.id);
             if (!existing) {
-                const user = this.filteredUsers.find((user) => user.id === option.id);
+                const user = this.filteredUsers().find((user) => user.id === option.id);
                 if (user) {
                     this.selectedUsers.push(user);
                 }
@@ -234,7 +232,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         }
         this.searchTerm = '';
         this.filterOptions();
-        this.showDropdown = false;
+        this.showDropdown.set(false);
         this.focusInput();
     }
 
@@ -280,16 +278,20 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         return content.length <= this.maxContentLength;
     }
 
-    /** Sets input focus and opens dropdown */
+    /** Remembers the input focus. The dropdown is not opened here, because the input is also focused programmatically when the dialog opens. */
     onInputFocus(): void {
         this.isInputFocused = true;
-        this.showDropdown = true;
+    }
+
+    /** Opens the dropdown when the user clicks into the search input */
+    onInputClick(): void {
+        this.showDropdown.set(true);
     }
 
     /** Hides dropdown when input loses focus */
     onInputBlur(): void {
         this.isInputFocused = false;
-        this.showDropdown = false;
+        this.showDropdown.set(false);
     }
 
     /** Programmatically focuses on the search input field */
@@ -305,7 +307,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
         if (this.searchInput() && !this.searchInput()!.nativeElement.contains(event.target)) {
-            this.showDropdown = false;
+            this.showDropdown.set(false);
         }
     }
 

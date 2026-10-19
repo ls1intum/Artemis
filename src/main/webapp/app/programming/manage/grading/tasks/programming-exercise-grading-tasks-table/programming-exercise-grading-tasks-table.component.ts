@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -45,20 +45,20 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     faMedal = faMedal;
     faAsterisk = faAsterisk;
 
-    isSaving = false;
-    tasks: ProgrammingExerciseTask[] = [];
-    allTasksExpandedSubject: Subject<boolean>;
+    readonly isSaving = signal(false);
+    readonly tasks = signal<ProgrammingExerciseTask[]>([]);
+    readonly allTasksExpandedSubject = signal<Subject<boolean>>(undefined!);
 
     currentSort: Sort | undefined;
 
-    isExamExercise = false;
+    readonly isExamExercise = signal(false);
 
     get ignoreInactive() {
         return this.taskService.ignoreInactive;
     }
 
     ngOnInit(): void {
-        this.allTasksExpandedSubject = new Subject();
+        this.allTasksExpandedSubject.set(new Subject());
         this.gradingStatisticsObservable().subscribe((gradingStatistics) => {
             this.taskService.configure(this.exercise(), this.course(), gradingStatistics).subscribe(this.updateTasks);
         });
@@ -68,11 +68,11 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             descending: true,
         };
 
-        this.isExamExercise = isExamExercise(this.exercise());
+        this.isExamExercise.set(isExamExercise(this.exercise()));
     }
 
     updateTasks = () => {
-        this.tasks = this.taskService.updateTasks();
+        this.tasks.set(this.taskService.updateTasks());
     };
 
     toggleShowInactiveTestsShown = () => {
@@ -81,20 +81,20 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     };
 
     saveTestCases = () => {
-        this.isSaving = true;
-        this.taskService.saveTestCases().subscribe(() => (this.isSaving = false));
+        this.isSaving.set(true);
+        this.taskService.saveTestCases().subscribe(() => this.isSaving.set(false));
     };
 
     resetTestCases = () => {
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.taskService.resetTestCases().subscribe(() => {
-            this.isSaving = false;
+            this.isSaving.set(false);
             this.updateTasks();
         });
     };
 
     toggleAllTasksExpanded = (value: boolean) => {
-        this.allTasksExpandedSubject.next(value);
+        this.allTasksExpandedSubject().next(value);
     };
 
     changeSort = (by: Sort['by']) => {
@@ -134,21 +134,22 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             return this.currentSort?.descending ? order : -order;
         };
 
-        this.tasks = this.tasks.sort(comparator);
+        const sortedTasks = [...this.tasks()].sort(comparator);
 
         // the objects task and test have their name attribute named differently, making this necessary
         if (this.currentSort?.by === 'name') {
-            comparator = (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
-                const order = this.compareStringForAttribute('testName')(a, b);
+            comparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase, b: ProgrammingExerciseTask | ProgrammingExerciseTestCase) => {
+                const order = this.compareStringForAttribute<ProgrammingExerciseTestCase>('testName')(a, b);
                 return this.currentSort?.descending ? order : -order;
             };
         }
-        this.tasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
+        sortedTasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
+        this.tasks.set(sortedTasks);
     };
 
     private compareNumForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseTestCase>(attributeKey: keyof T): TaskComparator => {
-        return (a: T, b: T) => {
-            return ((a[attributeKey] as number) ?? 0) - ((b[attributeKey] as number) ?? 0);
+        return (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase, b: ProgrammingExerciseTask | ProgrammingExerciseTestCase) => {
+            return (((a as T)[attributeKey] as number) ?? 0) - (((b as T)[attributeKey] as number) ?? 0);
         };
     };
 
@@ -159,9 +160,9 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     private compareStringForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseServerSideTask | ProgrammingExerciseTestCase>(
         attributeKey: keyof T,
     ): TaskComparator => {
-        return (a: T, b: T) => {
-            const aType = a[attributeKey] ?? '';
-            const bType = b[attributeKey] ?? '';
+        return (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase, b: ProgrammingExerciseTask | ProgrammingExerciseTestCase) => {
+            const aType = (a as T)[attributeKey] ?? '';
+            const bType = (b as T)[attributeKey] ?? '';
 
             if (aType < bType) return -1;
             if (aType > bType) return 1;

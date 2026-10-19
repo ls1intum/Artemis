@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO.NO_SEMESTER_TAG;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -10,6 +9,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -20,9 +20,11 @@ import java.util.stream.Stream;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthContributor;
 import org.springframework.boot.health.contributor.HealthContributors;
@@ -41,6 +43,7 @@ import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 import com.zaxxer.hikari.HikariDataSource;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.dto.ActiveUserWindowCountsDTO;
 import de.tum.cit.aet.artemis.admin.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
@@ -180,7 +183,14 @@ public class MetricsBean {
     // NOTE: only active on scheduling node
     private final AtomicLong missingBuildResultsGauge = new AtomicLong(0);
 
-    private boolean scheduledMetricsEnabled = false;
+    // NOTE: only active on scheduling node
+    private final AtomicLong failedBuildsGauge = new AtomicLong(0);
+
+    @Value("${artemis.scheduled-metrics.enabled:true}")
+    private boolean scheduledMetricsEnabled = true;
+
+    @Value("${artemis.websocket-log.enabled:false}")
+    private boolean websocketLogEnabled = false;
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
@@ -238,10 +248,12 @@ public class MetricsBean {
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
 
-        if (profileService.isSchedulingActive()) {
-            // Should only be activated if the scheduling profile is present, because these metrics are the same for all instances
-            scheduledMetricsEnabled = true;
+        // Scheduled metrics are identical across instances, so they run only on the scheduling node. They can additionally be turned off via
+        // artemis.scheduled-metrics.enabled. Combine the injected configuration flag with the scheduling profile (instead of forcing it on) so
+        // the configured value is respected and the scheduled recalculation methods below correctly skip on non-scheduling nodes.
+        scheduledMetricsEnabled = scheduledMetricsEnabled && profileService.isSchedulingActive();
 
+        if (scheduledMetricsEnabled) {
             registerActiveAdminMetrics();
             registerExerciseAndExamMetrics();
             registerStudentExerciseMetrics();
@@ -252,7 +264,7 @@ public class MetricsBean {
             calculateActiveUserMetrics();
 
             if (profileService.isLocalCIActive()) {
-                registerMissingBuildResultsMetrics();
+                registerBuildJobResultMetrics();
             }
         }
 
@@ -267,7 +279,7 @@ public class MetricsBean {
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
         // later one, e.g. in the code editor. Therefore, we call this method here directly to get a reference and adapt the logging period!
         // Note: this mechanism prevents that this is logged during testing
-        if (!profileService.isProfileActive(SPRING_PROFILE_TEST)) {
+        if (!profileService.isProfileActive(SPRING_PROFILE_TEST) && websocketLogEnabled) {
             webSocketStats.setLoggingPeriod(WEBSOCKET_LOGGING_DELAY_SECONDS * 1000L);
             scheduler.scheduleAtFixedRate(() -> {
                 final var connectedUsers = userRegistry.getUsers();
@@ -287,7 +299,7 @@ public class MetricsBean {
             // The health status gets mapped to a double value, as only doubles can be returned by a Gauge.
             if (healthContributor instanceof HealthIndicator healthIndicator) {
                 Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
-                        .tag(ARTEMIS_HEALTH_TAG, healthIndicator.getClass().getSimpleName().toLowerCase()).register(meterRegistry);
+                        .tag(ARTEMIS_HEALTH_TAG, healthIndicator.getClass().getSimpleName().toLowerCase(Locale.ROOT)).register(meterRegistry);
             }
 
             // The DiscoveryCompositeHealthContributor can consist of several HealthIndicators, so they must all be published
@@ -295,7 +307,7 @@ public class MetricsBean {
                 for (HealthContributors.Entry discoveryHealthContributor : discoveryCompositeHealthContributor) {
                     if (discoveryHealthContributor.contributor() instanceof HealthIndicator healthIndicator) {
                         Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
-                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.name().toLowerCase()).register(meterRegistry);
+                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.name().toLowerCase(Locale.ROOT)).register(meterRegistry);
                     }
                 }
             }
@@ -348,10 +360,10 @@ public class MetricsBean {
         return localCIDistributedDataAccessService.map(DistributedDataAccessService::getResultQueueSize).orElse(0);
     }
 
-    private long extractMissingBuildResults() {
+    private BuildJobsStatisticsDTO extractBuildJobStatistics() {
         // calculate build statistics in the last 24 hours for all courses by passing null as courseId
-        var buildResultStatistics = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(1), null);
-        return BuildJobsStatisticsDTO.of(buildResultStatistics).missingBuilds();
+        var buildResultStatistics = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(1));
+        return BuildJobsStatisticsDTO.of(buildResultStatistics);
     }
 
     // This is ALWAYS active on all nodes
@@ -430,9 +442,10 @@ public class MetricsBean {
         activeAdminsGauge = MultiGauge.builder("artemis.users.admins.active").description("User logins of active admin accounts").register(meterRegistry);
     }
 
-    private void registerMissingBuildResultsMetrics() {
+    private void registerBuildJobResultMetrics() {
         Gauge.builder("artemis.global.buildjobs.missing_results", missingBuildResultsGauge::get).description("Number of build jobs missing results in the last 24 hours")
                 .register(meterRegistry);
+        Gauge.builder("artemis.global.buildjobs.failed", failedBuildsGauge::get).description("Number of failed build jobs in the last 24 hours").register(meterRegistry);
     }
 
     /**
@@ -445,8 +458,9 @@ public class MetricsBean {
         }
         var startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         updateActiveAdminsMetrics();
 
@@ -465,8 +479,9 @@ public class MetricsBean {
         }
         var startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         var activeSince = ZonedDateTime.now().minusDays(14);
 
@@ -499,17 +514,18 @@ public class MetricsBean {
     }
 
     /**
-     * Calculate the number of missing build results and store it in a Gauge.
+     * Calculate the number of missing and failed build results and store them in Gauges.
      * The calculation is performed every minute and should only be done on the scheduling node.
      * Only executed if the "scheduling" and "localCI" profile is present.
      */
     @Scheduled(fixedRate = 60 * 1000, initialDelay = 30 * 1000) // Every minute with an initial delay of 30 seconds
-    public void calculateMissingBuildResults() {
+    public void calculateBuildJobResultMetrics() {
         if (!scheduledMetricsEnabled || !profileService.isLocalCIActive()) {
             return;
         }
-        long missingBuildResults = extractMissingBuildResults();
-        missingBuildResultsGauge.set(missingBuildResults);
+        var buildJobStatistics = extractBuildJobStatistics();
+        missingBuildResultsGauge.set(buildJobStatistics.missingBuilds());
+        failedBuildsGauge.set(buildJobStatistics.failedBuilds());
     }
 
     /**
@@ -608,7 +624,7 @@ public class MetricsBean {
      * NOTE: only active on scheduling node
      */
     private void registerPublicArtemisMetrics() {
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setSystemAuthorizationObject();
 
         activeUserMultiGauge = MultiGauge.builder("artemis.statistics.public.active_users").description("Number of active users within the last period, specified in days")
                 .register(meterRegistry);
@@ -644,8 +660,9 @@ public class MetricsBean {
 
         final long startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         final ZonedDateTime now = ZonedDateTime.now();
 
@@ -678,7 +695,12 @@ public class MetricsBean {
     private void updateActiveUserMultiGauge(ZonedDateTime now) {
         final Integer[] activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
 
-        final var counts = statisticsRepository.countActiveUsersByWindows(now, now.minusDays(1), now.minusDays(7), now.minusDays(14), now.minusDays(30));
+        // The database only reports the last submission per active user: aggregating the windows in SQL required a
+        // jhi_user join for the test user flag, which cost the selective submission_date range scan (see
+        // StatisticsRepository#findLastSubmissionPerActiveUser). Both the windows and the test user exclusion are
+        // therefore applied here.
+        final var lastSubmissions = statisticsRepository.findLastSubmissionPerActiveUser(now, now.minusDays(30));
+        final var counts = ActiveUserWindowCountsDTO.of(lastSubmissions, userRepository.findAllTestUserIds(), now);
 
         // A mutable list is required here because otherwise the values can not be updated correctly
         final List<MultiGauge.Row<?>> gauges = Stream.of(activeUserPeriodsInDays).map(periodInDays -> {
@@ -699,8 +721,7 @@ public class MetricsBean {
     private void updateStudentsCourseMultiGauge(Set<ActiveCourseDTO> activeCourses) {
         // A mutable collection is required here because otherwise the values can not be updated correctly
         final Set<MultiGauge.Row<?>> gauges = activeCourses.stream().map(course -> {
-            final String semesterTag = course.semester() != null ? course.semester() : NO_SEMESTER_TAG;
-            final Tags tags = Tags.of("courseId", Long.toString(course.id()), "courseName", course.title(), "semester", semesterTag);
+            final Tags tags = Tags.of("courseId", Long.toString(course.id()), "courseName", course.title(), "semester", course.semester());
             final long studentCount = course.numberOfStudents();
             return MultiGauge.Row.of(tags, studentCount);
         }).collect(Collectors.toSet());
@@ -722,13 +743,15 @@ public class MetricsBean {
         final Optional<ActiveCourseDTO> examCourse = courses.stream().filter(course -> Objects.equals(course.id(), exam.courseId())).findAny();
 
         final List<Tag> tags = new ArrayList<>();
+        // If the exam's course is not in the active-courses set, none of its three tags are emitted. Tags.of sorts by
+        // key, so collecting the semester here rather than after the exam tags does not change the resulting series.
         examCourse.ifPresent(course -> {
             tags.add(Tag.of("courseId", Long.toString(course.id())));
             tags.add(Tag.of("courseName", course.title()));
+            tags.add(Tag.of("semester", course.semester()));
         });
         tags.add(Tag.of("examId", Long.toString(exam.id())));
         tags.add(Tag.of("examName", exam.title()));
-        tags.add(Tag.of("semester", examCourse.map(ActiveCourseDTO::semester).orElse(NO_SEMESTER_TAG)));
 
         return Tags.of(tags);
     }
@@ -775,7 +798,10 @@ public class MetricsBean {
      * @param health the Health whose status should be mapped
      * @return a double corresponding to the health status
      */
-    private double mapHealthToDouble(Health health) {
+    private double mapHealthToDouble(@Nullable Health health) {
+        if (health == null) {
+            return -3;
+        }
         return switch (health.getStatus().getCode()) {
             case "UP" -> 1;
             case "DOWN" -> 0;

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import dayjs from 'dayjs/esm';
@@ -20,6 +20,8 @@ import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/d
 import { QuizExerciseManageButtonsComponent } from '../manage-buttons/quiz-exercise-manage-buttons.component';
 import { QuizExerciseLifecycleButtonsComponent } from '../lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -31,6 +33,7 @@ import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/
         QuizExerciseLifecycleButtonsComponent,
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
+        AtlasOrchestrationTriggerComponent,
     ],
 })
 export class QuizExerciseDetailComponent implements OnInit {
@@ -42,16 +45,16 @@ export class QuizExerciseDetailComponent implements OnInit {
     readonly documentationType: DocumentationType = 'Quiz';
     readonly dayjs = dayjs;
 
-    courseId: number;
-    examId: number;
-    quizId: number;
-    isExamMode: boolean;
-    showStatistics: boolean;
+    courseId!: number; // set in ngOnInit() from route params
+    examId!: number; // set in ngOnInit() from route params
+    quizId!: number; // set in ngOnInit() from route params
+    readonly isExamMode = signal<boolean>(false);
+    readonly showStatistics = signal<boolean>(false);
 
-    quizExercise: QuizExercise;
-    statistics: ExerciseManagementStatisticsDto;
+    readonly quizExercise = signal<QuizExercise>(undefined!);
+    readonly statistics = signal<ExerciseManagementStatisticsDto>(undefined!);
 
-    detailOverviewSections: DetailOverviewSection[];
+    readonly detailOverviewSections = signal<DetailOverviewSection[]>([]);
 
     /**
      * Load the quizzes of the course for export on init.
@@ -62,31 +65,31 @@ export class QuizExerciseDetailComponent implements OnInit {
         this.quizId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         if (this.examId && groupId) {
-            this.isExamMode = true;
+            this.isExamMode.set(true);
         }
         this.load();
     }
 
     load() {
         this.quizExerciseService.find(this.quizId).subscribe(async (response: HttpResponse<QuizExercise>) => {
-            this.quizExercise = response.body!;
-            this.quizExercise.quizBatches = this.quizExercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-            this.quizExercise.isEditable = (this.quizExercise.isEditable ?? true) && isQuizEditable(this.quizExercise);
-            this.quizExercise.status = this.quizExerciseService.getStatus(this.quizExercise);
-            this.quizExercise.startDate = this.quizExercise.dueDate && dayjs(this.quizExercise.dueDate).subtract(this.quizExercise.duration ?? 0, 'second');
-            this.showStatistics = !this.quizExercise.releaseDate || dayjs(this.quizExercise.releaseDate).isBefore(dayjs());
-            if (this.showStatistics) {
-                this.statistics = await firstValueFrom(this.statisticsService.getExerciseStatistics(this.quizId));
+            this.quizExercise.set(response.body!);
+            this.quizExercise().quizBatches = this.quizExercise().quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+            this.quizExercise().isEditable = (this.quizExercise().isEditable ?? true) && isQuizEditable(this.quizExercise());
+            this.quizExercise().status = this.quizExerciseService.getStatus(this.quizExercise());
+            this.quizExercise().startDate = this.quizExercise().dueDate && dayjs(this.quizExercise().dueDate).subtract(this.quizExercise().duration ?? 0, 'second');
+            this.showStatistics.set(!this.quizExercise().releaseDate || dayjs(this.quizExercise().releaseDate).isBefore(dayjs()));
+            if (this.showStatistics()) {
+                this.statistics.set(await firstValueFrom(this.statisticsService.getExerciseStatistics(this.quizId)));
             }
-            this.detailOverviewSections = this.getExerciseDetailSections();
+            this.detailOverviewSections.set(this.getExerciseDetailSections());
         });
     }
 
     getExerciseDetailSections(): DetailOverviewSection[] {
-        const exercise = this.quizExercise;
-        const mcCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.MULTIPLE_CHOICE)?.length ?? 0;
-        const dndCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.DRAG_AND_DROP)?.length ?? 0;
-        const shortCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.SHORT_ANSWER)?.length ?? 0;
+        const exercise = this.quizExercise();
+        const mcCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.MULTIPLE_CHOICE)?.length ?? 0;
+        const dndCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.DRAG_AND_DROP)?.length ?? 0;
+        const shortCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.SHORT_ANSWER)?.length ?? 0;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
@@ -101,8 +104,7 @@ export class QuizExerciseDetailComponent implements OnInit {
         }
         return [
             generalSection,
-            {
-                ...modeSection,
+            cloneWith(modeSection, {
                 details: [
                     ...modeSection.details,
                     { type: DetailType.Boolean, title: 'artemisApp.quizExercise.randomizeQuestionOrder', data: { boolean: exercise.randomizeQuestionOrder } },
@@ -117,7 +119,7 @@ export class QuizExerciseDetailComponent implements OnInit {
                         data: { text: this.translateService.instant('artemisApp.quizExercise.detail.questionCount.value', { mcCount, dndCount, shortCount }) },
                     },
                 ],
-            },
+            }),
             {
                 headline: 'artemisApp.exercise.sections.grading',
                 details: defaultGradingDetails,

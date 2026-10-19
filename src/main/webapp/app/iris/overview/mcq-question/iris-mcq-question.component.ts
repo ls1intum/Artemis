@@ -3,6 +3,7 @@ import { McqData, McqQuestionData } from 'app/iris/shared/entities/iris-content-
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 /**
  * Interactive multiple-choice question component rendered inside Iris chat messages.
@@ -30,7 +31,7 @@ export class IrisMcqQuestionComponent {
     // Output event for carousel parent
     answerChanged = output<{ selectedIndex: number | undefined; submitted: boolean }>();
 
-    private readonly instanceId = window.crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+    private readonly instanceId = generateUuid();
     /** Unique id for the question label element, used to link aria-labelledby across instances. */
     readonly questionLabelId = `mcq-question-label-${this.instanceId}`;
 

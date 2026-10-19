@@ -10,8 +10,7 @@ import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
@@ -29,17 +28,19 @@ import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 @Service
 public class ArtemisGitServletService extends GitServlet {
 
-    private static final Logger log = LoggerFactory.getLogger(ArtemisGitServletService.class);
-
     private final LocalVCServletService localVCServletService;
+
+    private final LocalVCUsageTrackingService usageTrackingService;
 
     /**
      * Constructor for ArtemisGitServlet.
      *
      * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
+     * @param usageTrackingService  counts completed fetch and push operations for the feature usage analysis
      */
-    public ArtemisGitServletService(LocalVCServletService localVCServletService) {
+    public ArtemisGitServletService(LocalVCServletService localVCServletService, LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
+        this.usageTrackingService = usageTrackingService;
     }
 
     /**
@@ -86,24 +87,24 @@ public class ArtemisGitServletService extends GitServlet {
         });
 
         // Add filters that every request to the JGit Servlet goes through, one for each fetch request, and one for each push request.
-        this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService));
-        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService));
+        this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService, usageTrackingService));
+        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, usageTrackingService));
 
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
             // we only need to set the PreReceiveHook and PostReceiveHook for authorized POST requests, as only these trigger onPreReceive or onPostReceive.
             if (isAuthorizedPostRequest(request)) {
+                final User user;
                 try {
-                    String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-                    User user = localVCServletService.getUserByAuthHeader(authorizationHeader);
-                    // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
-                    receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                    // Add a hook that triggers the creation of a new submission after the push went through successfully.
-                    receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
+                    user = localVCServletService.getUserByAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
                 }
-                catch (LocalVCAuthException exception) {
-                    log.error("Error while retrieving user from request header: {}", exception.getMessage());
+                catch (LocalVCAuthException e) {
+                    throw new ServiceNotAuthorizedException("Could not resolve the authenticated LocalVC push user", e);
                 }
+                // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
+                receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
+                // Add a hook that triggers the creation of a new submission after the push went through successfully.
+                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
             }
             return receivePack;
         });

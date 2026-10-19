@@ -1,22 +1,31 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
+import dayjs from 'dayjs/esm';
 
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { Audit } from './audit.model';
-import { AuditsService } from './audits.service';
+import { AuditsQuery, AuditsService } from './audits.service';
+import { AuditLogType } from './audit-log-type.model';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import {
+    TumAetUiDatePickerComponent,
+    TumAetUiMessageComponent,
+    TumAetUiPaginatorComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTableDirective,
+    TumAetUiTabsComponent,
+} from '@tumaet/ui-angular';
 
 /**
  * Admin component for viewing system audit logs.
@@ -25,7 +34,23 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-audit',
     templateUrl: './audits.component.html',
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, ItemCountComponent, PaginatorModule, ArtemisDatePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        ItemCountComponent,
+        TumAetUiPaginatorComponent,
+        ArtemisDatePipe,
+        AdminTitleBarTitleDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
+        TumAetUiDatePickerComponent,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+    ],
 })
 export class AuditsComponent implements OnInit {
     private readonly auditsService = inject(AuditsService);
@@ -35,6 +60,46 @@ export class AuditsComponent implements OnInit {
 
     /** Audit log entries */
     readonly audits = signal<Audit[]>([]);
+
+    /**
+     * Payload keys the generic list leaves out: `message` and `remoteAddress` are rendered above with their own
+     * formatting, and `sessionId` identifies a session rather than describing the event, so it has no place on screen.
+     */
+    private static readonly SEPARATELY_RENDERED_DATA_KEYS = new Set(['message', 'remoteAddress', 'sessionId']);
+
+    /**
+     * The rows the table renders: each audit plus the entries of its `data` payload that the row does not already show
+     * in a column of its own.
+     *
+     * Precomputed rather than derived in the template, because only the general log's payload has a known shape. A
+     * domain action records its own keys (`course`, `exerciseId`, ...) and an account security event records e.g.
+     * `reason`, so a column that only rendered `message` and `remoteAddress` would leave the Application and Security
+     * tabs with an empty Extra data column for almost every row.
+     *
+     * A falsy value is dropped rather than rendered as a dangling `key:` label; the server stores the payload as
+     * strings, so an absent entry arrives as an empty string, `null` or `undefined` depending on the event.
+     */
+    readonly auditRows = computed(() =>
+        this.audits().map((audit) => ({
+            audit,
+            otherData: Object.entries(audit.data ?? {})
+                .filter(([key, value]) => !AuditsComponent.SEPARATELY_RENDERED_DATA_KEYS.has(key) && !!value)
+                .map(([key, value]) => ({ key, value: value as string })),
+        })),
+    );
+
+    /**
+     * Which of the three audit logs is shown. Each is a separate table with its own retention period, so switching tabs
+     * queries a different (and much smaller) table rather than filtering one large one.
+     */
+    readonly logType = signal<AuditLogType>(AuditLogType.GENERAL);
+
+    /** The tabs rendered above the table, in display order. */
+    readonly logTypeTabs: readonly { value: AuditLogType; labelKey: string }[] = [
+        { value: AuditLogType.GENERAL, labelKey: 'audits.logType.general' },
+        { value: AuditLogType.SECURITY, labelKey: 'audits.logType.security' },
+        { value: AuditLogType.APPLICATION, labelKey: 'audits.logType.application' },
+    ];
 
     /** Date range filter - from date */
     readonly fromDate = signal('');
@@ -57,8 +122,28 @@ export class AuditsComponent implements OnInit {
     /** Items per page */
     readonly itemsPerPage = ITEMS_PER_PAGE;
 
-    /** Whether data can be loaded (date range is valid) */
-    readonly canLoad = computed(() => this.fromDate() !== '' && this.toDate() !== '');
+    /**
+     * Whether a complete date range is set. Filtering is applied only then; with one or both dates cleared the page
+     * shows every audit, which is what clearing a filter is expected to mean. The server matches that shape: its
+     * filtered endpoint requires both dates, and the plain one returns all of them.
+     */
+    readonly hasDateRange = computed(() => this.fromDate() !== '' && this.toDate() !== '');
+
+    /**
+     * What the from picker holds: the last date it committed. It is kept apart from {@link fromDate}, the applied filter,
+     * because feeding the filter back to the picker would clear its draft text whenever the text stops being a date.
+     */
+    readonly fromDateValue = signal<dayjs.Dayjs | undefined>(undefined);
+
+    /** What the to picker holds, kept apart from {@link toDate} for the same reason as {@link fromDateValue}. */
+    readonly toDateValue = signal<dayjs.Dayjs | undefined>(undefined);
+
+    /**
+     * Whether the text typed into each picker is a date. A picker keeps its last valid date while the text is not one,
+     * so an invalid text is tracked here and keeps that stale date out of the filter.
+     */
+    protected readonly isFromTextValid = signal(true);
+    protected readonly isToTextValid = signal(true);
 
     private readonly dateFormat = 'yyyy-MM-dd';
 
@@ -71,26 +156,127 @@ export class AuditsComponent implements OnInit {
     }
 
     transition(): void {
-        if (this.canLoad()) {
-            this.router.navigate(['/admin/audits'], {
-                queryParams: {
-                    page: this.page(),
-                    sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),
-                    from: this.fromDate(),
-                    to: this.toDate(),
-                },
-            });
+        void this.router.navigate(['/admin/audits'], {
+            queryParams: {
+                page: this.page(),
+                sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),
+                // Left out rather than sent empty, so the URL reads as "no date filter" and `handleNavigation` does
+                // not try to parse a blank value back into a date.
+                from: this.fromDate() || undefined,
+                to: this.toDate() || undefined,
+                logType: this.logType(),
+            },
+        });
+    }
+
+    /**
+     * Applies a date picked or cleared in the from picker and reloads. The filter ignores it while the typed text is not a date,
+     * because the filter is cleared then and {@link onFromTextValidityChange} applies the date once the text is valid again.
+     */
+    onFromDateChange(value: dayjs.Dayjs | undefined): void {
+        this.fromDateValue.set(value);
+        if (this.isFromTextValid()) {
+            this.updateFromDate(value);
+            this.transition();
         }
     }
 
-    /** Updates the from date filter */
-    updateFromDate(value: string): void {
-        this.fromDate.set(value);
+    /**
+     * Clears the from filter when the typed text stops being a date, and restores the picker's date once it is one again. The picker
+     * keeps its value and the text typed so far; only the filter changes.
+     *
+     * @param isValid whether the typed text is a date
+     * @param value the date the picker currently holds, used when the text becomes valid again without a new date
+     */
+    onFromTextValidityChange(isValid: boolean, value: dayjs.Dayjs | undefined): void {
+        if (isValid !== this.isFromTextValid()) {
+            this.isFromTextValid.set(isValid);
+            this.updateFromDate(isValid ? value : undefined);
+            this.transition();
+        }
     }
 
-    /** Updates the to date filter */
-    updateToDate(value: string): void {
-        this.toDate.set(value);
+    /** Applies a date picked or cleared in the to picker and reloads. See {@link onFromDateChange}. */
+    onToDateChange(value: dayjs.Dayjs | undefined): void {
+        this.toDateValue.set(value);
+        if (this.isToTextValid()) {
+            this.updateToDate(value);
+            this.transition();
+        }
+    }
+
+    /** Clears the to filter when the typed text stops being a date, and restores the picker's date once it is one again. See {@link onFromTextValidityChange}. */
+    onToTextValidityChange(isValid: boolean, value: dayjs.Dayjs | undefined): void {
+        if (isValid !== this.isToTextValid()) {
+            this.isToTextValid.set(isValid);
+            this.updateToDate(isValid ? value : undefined);
+            this.transition();
+        }
+    }
+
+    /**
+     * Updates the from date filter from the date picker value.
+     * The audits service consumes yyyy-MM-dd strings, so the dayjs value is converted at the boundary.
+     */
+    updateFromDate(value: dayjs.Dayjs | undefined): void {
+        this.fromDate.set(this.toDateString(value));
+    }
+
+    /**
+     * Updates the to date filter from the date picker value.
+     * See {@link updateFromDate} for the conversion rationale.
+     */
+    updateToDate(value: dayjs.Dayjs | undefined): void {
+        this.toDate.set(this.toDateString(value));
+    }
+
+    /**
+     * Shows the applied filter dates in the pickers after the URL set them. A picker whose text is not a date keeps what the
+     * user is typing: its filter is empty then, which is no date to show.
+     */
+    private syncPickerValues(): void {
+        if (this.isFromTextValid() && this.toDateString(this.fromDateValue()) !== this.fromDate()) {
+            this.fromDateValue.set(this.toPickerDate(this.fromDate()));
+        }
+        if (this.isToTextValid() && this.toDateString(this.toDateValue()) !== this.toDate()) {
+            this.toDateValue.set(this.toPickerDate(this.toDate()));
+        }
+    }
+
+    /** Converts a picker value to the yyyy-MM-dd string the audits service expects. */
+    private toDateString(value: dayjs.Dayjs | undefined): string {
+        if (value == undefined) {
+            return '';
+        }
+        const parsed = dayjs(value);
+        // dayjs format tokens differ from Angular's DatePipe (`this.dateFormat`): year/day are UPPERCASE
+        // (`YYYY`/`DD`); the lowercase `yyyy`/`dd` would render literally / as the weekday and break the URL value.
+        return parsed.isValid() ? parsed.format('YYYY-MM-DD') : '';
+    }
+
+    /** Converts a stored yyyy-MM-dd string to the dayjs value the date picker binds to. */
+    private toPickerDate(value: string): dayjs.Dayjs | undefined {
+        if (!value) {
+            return undefined;
+        }
+        const parsed = dayjs(value);
+        return parsed.isValid() ? parsed : undefined;
+    }
+
+    /**
+     * Switches to another audit log. Resets to the first page, because page numbers do not carry over between logs.
+     *
+     * @param value the selected tab value, as emitted by the tabs component. Its emitted type includes `undefined`,
+     *                  which is ignored here: only a value matching a known log triggers a switch.
+     */
+    onLogTypeChange(value: string | number | undefined): void {
+        const selected = value as AuditLogType;
+        if (!Object.values(AuditLogType).includes(selected) || selected === this.logType()) {
+            return;
+        }
+        this.logType.set(selected);
+        this.page.set(1);
+        this.transition();
     }
 
     /** Updates the current page */
@@ -99,14 +285,11 @@ export class AuditsComponent implements OnInit {
     }
 
     /**
-     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the
-     * component's 1-indexed page. No-op while the date range is incomplete (mirrors the former disabled paginator).
+     * Handles a paginator page change. The emitted page is 0-indexed, so it is converted to the
+     * component's 1-indexed page.
      */
-    onPageChange(event: PaginatorState): void {
-        if (!this.canLoad()) {
-            return;
-        }
-        this.updatePage((event.page ?? 0) + 1);
+    onPageChange(page: number): void {
+        this.updatePage(page + 1);
         this.transition();
     }
 
@@ -134,26 +317,44 @@ export class AuditsComponent implements OnInit {
             const sort = (params.get('sort') ?? data['defaultSort']).split(',');
             this.predicate.set(sort[0]);
             this.ascending.set(sort[1] === 'asc');
-            if (params.get('from')) {
-                this.fromDate.set(this.datePipe.transform(params.get('from'), this.dateFormat)!);
+            /*
+             * Read the two dates together rather than one at a time. A URL that carries only one of them is what
+             * clearing a picker produces, and the page treats a half-filled range as no filter at all
+             * (`hasDateRange`). Setting them independently would leave the missing half on the default `ngOnInit`
+             * seeded, pair it with the surviving date, and reload the very filter the user had just cleared. Only a
+             * URL carrying neither keeps those defaults, which is what a plain visit to the page gets.
+             */
+            const from = params.get('from');
+            const to = params.get('to');
+            if (from || to) {
+                this.fromDate.set(from ? this.datePipe.transform(from, this.dateFormat)! : '');
+                this.toDate.set(to ? this.datePipe.transform(to, this.dateFormat)! : '');
             }
-            if (params.get('to')) {
-                this.toDate.set(this.datePipe.transform(params.get('to'), this.dateFormat)!);
-            }
+            this.syncPickerValues();
+            const logTypeParam = params.get('logType');
+            // Set the log on every emission rather than only for a valid parameter: Angular reuses this component across
+            // query-parameter-only navigations, so leaving the signal untouched would keep querying the previously
+            // selected log. An absent or unknown value (e.g. a hand-edited URL) falls back to the general log.
+            const isKnownLogType = !!logTypeParam && Object.values(AuditLogType).includes(logTypeParam as AuditLogType);
+            this.logType.set(isKnownLogType ? (logTypeParam as AuditLogType) : AuditLogType.GENERAL);
             this.loadData();
         });
     }
 
     private loadData(): void {
-        this.auditsService
-            .query({
-                page: this.page() - 1,
-                size: this.itemsPerPage,
-                sort: this.sort(),
-                fromDate: this.fromDate(),
-                toDate: this.toDate(),
-            })
-            .subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
+        const query: AuditsQuery = {
+            page: this.page() - 1,
+            size: this.itemsPerPage,
+            sort: this.sort(),
+            logType: this.logType(),
+        };
+        // Both dates or neither: the filtered endpoint is only matched when both parameters are present, and
+        // sending a blank one would reach it with a value that cannot be parsed as a date.
+        if (this.hasDateRange()) {
+            query.fromDate = this.fromDate();
+            query.toDate = this.toDate();
+        }
+        this.auditsService.query(query).subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
     }
 
     private sort(): string[] {

@@ -1,14 +1,14 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
@@ -31,13 +31,13 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
         }
 
         try {
-            ObjectMapper objectMapper = JsonObjectMapper.get();
+            JsonMapper objectMapper = JsonObjectMapper.get();
             JsonNode agsClaimJson = objectMapper.convertValue(idToken.getClaim(Claims.AGS_CLAIM), JsonNode.class);
 
             JsonNode scopes = agsClaimJson.get("scope");
             List<String> scopeList = null;
             if (scopes != null && scopes.isArray() && scopes.has(Scopes.AGS_SCORE)) {
-                scopeList = Collections.singletonList(Scopes.AGS_SCORE);
+                scopeList = List.of(Scopes.AGS_SCORE);
             }
 
             // For moodle lineItem is stored in lineitem claim, for edX it is in lineitems
@@ -49,7 +49,9 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
                 lineItemNode = agsClaimJson.get("lineitem");
             }
 
-            String lineItem = lineItemNode != null ? lineItemNode.asText() : null;
+            // asString(null) rather than asString(): Jackson 2's asText() yielded "" for a non-string node, Jackson 3
+            // throws, and this claim comes from a third-party LMS rather than from Artemis.
+            String lineItem = lineItemNode != null ? lineItemNode.asString(null) : null;
             return Optional.of(new Lti13AgsClaim(scopeList, lineItem));
         }
         catch (IllegalStateException | ClassCastException ex) {

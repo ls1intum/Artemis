@@ -1,6 +1,11 @@
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 
+// A row is consumed by two mutually incompatible sinks: `downloadCsv` requires primitive CsvCellValue
+// values, while the Excel builder stores CommonSpreadsheetCellObject cells. No single non-`any` type is
+// both a supertype of the Excel cell (needed to store it) and a subtype of CsvCellValue (needed to pass it
+// to downloadCsv), so the shared alias stays `any` until the two export paths use distinct row types.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- see comment above; CSV vs. Excel sinks need incompatible value types
 export type ExportRow = any;
 
 /**

@@ -7,9 +7,9 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record CompetencyDTO(long id) {
+public record CompetencyDTO(long id, String title) {
 
     public static CompetencyDTO of(CourseCompetency competency) {
-        return new CompetencyDTO(competency.getId());
+        return new CompetencyDTO(competency.getId(), competency.getTitle());
     }
 }

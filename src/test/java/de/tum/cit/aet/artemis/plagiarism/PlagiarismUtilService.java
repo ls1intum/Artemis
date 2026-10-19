@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -49,6 +50,9 @@ public class PlagiarismUtilService {
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
+
+    @Autowired
     private CourseTestRepository courseRepo;
 
     @Autowired
@@ -70,7 +74,7 @@ public class PlagiarismUtilService {
     private ParticipationUtilService participationUtilService;
 
     private Course createCourseWithUsers(String userPrefix, int studentsAmount) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         userUtilService.addUsers(userPrefix, studentsAmount, 1, 1, 1);
         return course;
     }
@@ -80,8 +84,11 @@ public class PlagiarismUtilService {
         var exercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
         exercise.setMode(mode);
         course.addExercises(exercise);
-        courseRepo.save(course);
-        return exerciseRepository.save(exercise);
+        courseRepo.saveWithDefaultConfigurations(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        var savedExercise = exerciseRepository.save(exercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     private ModelingExercise createModelingExercise(String userPrefix, int studentsAmount, ExerciseMode mode) {
@@ -89,8 +96,11 @@ public class PlagiarismUtilService {
         var exercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, FUTURE_TIMESTAMP, DiagramType.ClassDiagram, course);
         exercise.setMode(mode);
         course.addExercises(exercise);
-        courseRepo.save(course);
-        return exerciseRepository.save(exercise);
+        courseRepo.saveWithDefaultConfigurations(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        var savedExercise = exerciseRepository.save(exercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     private StudentParticipation saveParticipationAndAddSubmission(StudentParticipation participation, Submission submission) {
@@ -121,6 +131,7 @@ public class PlagiarismUtilService {
             exercise.addParticipation(participation);
         }
         exerciseRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
         return exercise.getId();
     }
 
@@ -143,6 +154,7 @@ public class PlagiarismUtilService {
             exercise.addParticipation(participation);
         }
         exerciseRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
         return exercise.getId();
     }
 
@@ -165,6 +177,7 @@ public class PlagiarismUtilService {
             exercise.addParticipation(participation);
         }
         exerciseRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
         return exercise.getId();
     }
 
@@ -187,6 +200,7 @@ public class PlagiarismUtilService {
             exercise.addParticipation(participation);
         }
         exerciseRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
         return exercise.getId();
     }
 

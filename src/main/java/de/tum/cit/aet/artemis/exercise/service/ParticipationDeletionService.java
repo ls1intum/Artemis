@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -118,6 +118,15 @@ public class ParticipationDeletionService {
             delete(participation.getId(), false);
         }
 
+        // The async ParticipantScoreScheduleService (on the scheduling node) may re-create a participant score
+        // from a still-pending task while the results above are being deleted. The participant_score -> result
+        // foreign keys are ON DELETE SET NULL, so those result deletes never fail; and once all results of the
+        // exercise are gone the scheduler can no longer create a score (it computes an empty score and deletes it
+        // instead). A final bulk delete therefore removes any score that slipped in during the loop, so the
+        // subsequent exercise deletion does not hit the participant_score -> exercise RESTRICT constraint. This
+        // closes the race cluster-wide without any transaction or cross-node coordination.
+        participantScoreRepository.deleteAllByExerciseId(exercise.getId());
+
         if (recalculateCompetencyProgress) {
             competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
         }
@@ -163,7 +172,9 @@ public class ParticipationDeletionService {
                     versionControlService.orElseThrow().deleteRepository(repositoryUri);
                 }
                 catch (Exception ex) {
-                    log.error("Could not delete repository: {}", ex.getMessage());
+                    // Keep the deletion best-effort (the participation must still be deleted), but log the full exception:
+                    // a failed repository deletion strands a broken repository on disk that needs to be diagnosed.
+                    log.error("Could not delete repository {} of participation {}", repositoryUri, participationId, ex);
                 }
             }
             // delete local repository cache
@@ -197,15 +208,16 @@ public class ParticipationDeletionService {
         }
 
         Set<Submission> submissions = participation.getSubmissions();
-        // Delete all results for this participation
-        Set<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toSet());
+        // Delete all results for this participation.
+        // submission.getResults() can contain null entries (see Submission#removeNullResults), so filter those out to avoid an NPE below.
+        Set<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull).collect(Collectors.toSet());
         // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
         // This is okay here, because we delete the whole participation (no older results will exist for the score)
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
             // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-            submission.setResults(Collections.emptyList());
+            submission.setResults(Set.of());
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
             }

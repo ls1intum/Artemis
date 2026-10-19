@@ -10,7 +10,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { CsvCellValue, CsvRow, downloadCsv } from 'app/foundation/util/csv-download.util';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -62,7 +62,7 @@ export class ExerciseScoresExportButtonComponent {
                 scrollToTopOfPage();
                 return;
             }
-            const isTeamExercise = !!(results[0].result!.submission!.participation! as StudentParticipation).team;
+            const isTeamExercise = !!(results[0].result.submission!.participation! as StudentParticipation).team;
             const gradingCriteria: GradingCriterion[] = ExerciseScoresExportButtonComponent.sortedGradingCriteria(exercise);
 
             let keys;
@@ -100,22 +100,14 @@ export class ExerciseScoresExportButtonComponent {
      * @param fieldSeparator Optional parameter for exporting the CSV file using a custom separator symbol
      */
     private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[], fieldSeparator = ';') {
-        const options = {
+        downloadCsv(rows, {
+            columnHeaders: keys,
+            fileName: filename,
             fieldSeparator,
             quoteStrings: true,
             quoteCharacter: '"',
             decimalSeparator: 'locale',
-            showLabels: true,
-            showTitle: false,
-            filename,
-            useTextFile: false,
-            useBom: true,
-            columnHeaders: keys,
-        };
-
-        const csvExportConfig = mkConfig(options);
-        const csvData = generateCsv(csvExportConfig)(rows);
-        download(csvExportConfig)(csvData);
+        });
     }
 
     /**
@@ -142,7 +134,7 @@ export class ExerciseScoresExportButtonComponent {
  *
  * For a list of all possible keys see {@link ExerciseScoresRowBuilder.keys}.
  */
-type ExerciseScoresRow = any;
+type ExerciseScoresRow = CsvRow;
 
 class ExerciseScoresRowBuilder {
     private readonly exercise: Exercise;
@@ -193,7 +185,7 @@ class ExerciseScoresRowBuilder {
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row. Replaced by the empty string if undefined.
      */
-    private set<T>(key: string, value: T) {
+    private set(key: string, value: CsvCellValue) {
         this.csvRow[key] = value ?? '';
     }
 

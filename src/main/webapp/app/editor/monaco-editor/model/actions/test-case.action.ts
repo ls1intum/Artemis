@@ -25,7 +25,7 @@ export class TestCaseAction extends TextEditorDomainActionWithOptions {
      * @param translateService The translation service to use for translating the action label.
      * @throws error If the action is already registered with an editor or no model is attached to the editor.
      */
-    register(editor: TextEditor, translateService: TranslateService) {
+    override register(editor: TextEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ValueItem>(
             editor,
@@ -34,7 +34,7 @@ export class TestCaseAction extends TextEditorDomainActionWithOptions {
         );
     }
 
-    dispose() {
+    override dispose() {
         super.dispose();
         this.disposableCompletionProvider?.dispose();
     }
@@ -43,7 +43,7 @@ export class TestCaseAction extends TextEditorDomainActionWithOptions {
      * Executes the action in the current editor with the given arguments (selected item).
      * @param args
      */
-    executeInCurrentEditor(args?: DomainActionWithOptionsArguments): void {
+    override executeInCurrentEditor(args?: DomainActionWithOptionsArguments): void {
         super.executeInCurrentEditor(args);
     }
 

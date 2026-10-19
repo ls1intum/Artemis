@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
@@ -59,7 +59,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
             VcsRepositoryUri solutionRepositoryUri) {
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryUri);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryUri, false);
     }
 
     @Override
@@ -73,16 +73,13 @@ public class JenkinsService implements ContinuousIntegrationService {
         deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
         deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
 
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURI(RepositoryType.TEMPLATE));
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURI(RepositoryType.SOLUTION));
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURI(RepositoryType.TEMPLATE), true);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURI(RepositoryType.SOLUTION), true);
     }
 
     @Override
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
-        // Make sure the build config is loaded
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(sourceExercise);
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(targetExercise);
         return jenkinsBuildPlanService.copyBuildPlan(sourceExercise, sourcePlanName, targetExercise, targetPlanName);
     }
 
@@ -113,7 +110,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             TestResultsDTO dto = TestResultsDTO.convert(requestBody);
             return jenkinsBuildPlanService.getBuildPlanKeyFromTestResults(dto);
         }
-        catch (JsonProcessingException jsonProcessingException) {
+        catch (JacksonException jsonProcessingException) {
             throw new JenkinsException("Something went wrong trying to parse the requestBody while getting the PlanKey from Jenkins!");
         }
     }
@@ -125,7 +122,11 @@ public class JenkinsService implements ContinuousIntegrationService {
             return null;
         }
 
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        var exercise = participation.getProgrammingExercise();
+        if (exercise == null) {
+            return null;
+        }
+        final var projectKey = exercise.getProjectKey();
         final var planKey = participation.getBuildPlanId();
         return jenkinsBuildPlanService.getBuildStatusOfPlan(projectKey, planKey);
     }

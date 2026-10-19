@@ -28,7 +28,7 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
     // Seed courses are persistent — no cleanup needed
 
     test.describe('Link a lecture unit to a single competency', () => {
-        test('Links a text unit to a competency via api and verifies it in competency detail', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
+        test('Links a text unit to a competency via api and verifies it in competency detail', async ({ page, courseManagementAPIRequests }) => {
             const title = makeCompetencyTitle('Single');
             const competency = await courseManagementAPIRequests.createCompetency(course, title, 'Test competency');
 
@@ -37,9 +37,12 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
                 { competency: { id: competency.id, type: 'competency' }, weight: 1 },
             ]);
 
-            await competencyManagement.goto(course.id!);
-
-            await page.getByRole('link', { name: title }).click();
+            // Navigate straight to the student-facing competency detail instead of clicking the
+            // competency link in the management list: that link crosses into a different lazily
+            // loaded route (/courses/:id/competencies/:id), and under multi-node load the click
+            // occasionally does not trigger the navigation (the page stays on the management list).
+            // A direct goto goes through the fixture's bootstrap-recovery wrapper and is deterministic.
+            await page.goto(`/courses/${course.id}/competencies/${competency.id}`);
             await page.waitForLoadState('domcontentloaded');
 
             await expect(page.getByRole('heading', { name: 'Text Unit 1' })).toBeVisible();

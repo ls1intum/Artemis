@@ -1,9 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 import {
     ExerciseEditorSyncEvent,
     ExerciseEditorSyncEventType,
@@ -90,7 +91,7 @@ type FileSyncEntry = {
  * (`CodeEditorInstructorAndEditorContainerComponent`) is always destroyed and recreated on
  * navigation, ensuring a clean lifecycle.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorFileSyncService {
     private syncService = inject(ExerciseEditorSyncService);
     private accountService = inject(AccountService);
@@ -552,7 +553,7 @@ export class CodeEditorFileSyncService {
                 }
                 // Tie-breaker: lexicographically smaller sessionId wins for determinism
                 return (next.sessionId ?? '') < (best.sessionId ?? '') ? next : best;
-            });
+            }, responses[0]);
             const update = decodeBase64ToUint8Array(selected.yjsUpdate);
             Y.applyUpdate(entry.doc, update, FileSyncOrigin.Remote);
             entry.activeLeaderTimestamp = selected.leaderTimestamp;
@@ -570,7 +571,7 @@ export class CodeEditorFileSyncService {
             });
         }
         this.flushQueuedFullContentRequests(entry, entry.filePath);
-        const finalContent = entry.text.toString();
+        const finalContent = entry.text.toJSON();
         const contentDivergedFromFallback = finalContent !== entry.fallbackInitialContent;
         entry.awaitingInitialSync = false;
         this.initialSyncFinalizedSubject.next({ filePath: entry.filePath, contentDivergedFromFallback, finalContent });
@@ -817,6 +818,6 @@ export class CodeEditorFileSyncService {
     }
 
     private generateRequestId(): string {
-        return window.crypto.randomUUID();
+        return generateUuid();
     }
 }

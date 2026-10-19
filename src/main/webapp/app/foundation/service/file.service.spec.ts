@@ -1,14 +1,11 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/foundation/service/file.service';
 
 describe('FileService', () => {
-    setupTestBed({ zoneless: true });
-
     const firstUniqueFileName = 'someOtherUniqueFileName';
     const secondUniqueFileName = 'someUniqueFileName';
 
@@ -125,7 +122,7 @@ describe('FileService', () => {
     describe('downloadMergedFile', () => {
         it('should download the merged PDF file', () => {
             const lectureId = 123;
-            const expectedUrl = `api/core/files/attachments/lecture/${lectureId}/merge-pdf`;
+            const expectedUrl = `api/core/files/attachments/lectures/${lectureId}/merge-pdf`;
             const blobResponse = new Blob(['PDF content'], { type: 'application/pdf' });
 
             fileService.downloadMergedFile(lectureId).subscribe((response) => {
@@ -187,6 +184,28 @@ describe('FileService', () => {
             expect(newWindow).not.toBeNull();
             expect(newWindow!.location.href).toBe(encodedUrl);
         });
+
+        it('should include the attachment version in the download URL', () => {
+            const downloadUrl = 'http://example.com/files/attachment.pdf';
+            const newWindowMock = { location: { href: '' } } as Window;
+
+            vi.spyOn(window, 'open').mockReturnValue(newWindowMock);
+
+            fileService.downloadFileByAttachmentName(downloadUrl, 'Lecture Slides', 4);
+
+            expect(newWindowMock.location.href).toBe('http://example.com/files/Lecture%20Slides.pdf?version=4');
+        });
+    });
+
+    describe('addAttachmentVersionToUrl', () => {
+        it('should preserve existing query parameters', () => {
+            expect(fileService.addAttachmentVersionToUrl('http://example.com/attachment.pdf?download=true', 4)).toBe('http://example.com/attachment.pdf?download=true&version=4');
+        });
+
+        it('should leave the URL unchanged when no version is available', () => {
+            expect(fileService.addAttachmentVersionToUrl('http://example.com/attachment.pdf')).toBe('http://example.com/attachment.pdf');
+            expect(fileService.addAttachmentVersionToUrl('http://example.com/attachment.pdf', null)).toBe('http://example.com/attachment.pdf');
+        });
     });
 
     describe('replaceAttachmentPrefixAndUnderscores', () => {
@@ -206,6 +225,13 @@ describe('FileService', () => {
 
             const result = fileService.createStudentLink(link);
             expect(result).toBe(expectedStudentLink);
+        });
+
+        it('should leave a link under the lecture attachment path alone', () => {
+            const link = 'attachments/lecture/42/slides.pdf';
+
+            const result = fileService.createStudentLink(link);
+            expect(result).toBe(link);
         });
     });
 });

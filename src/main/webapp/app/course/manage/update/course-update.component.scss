@@ -1,64 +1,219 @@
-hr {
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-}
+@import 'src/main/webapp/content/scss/artemis-mixins';
 
-.color-preview {
-    cursor: pointer;
-    height: 35px;
-}
+/*
+ * Padding of the card the form scrolls in, which the footer cancels to span the card and sit flush with its bottom. The
+ * create page sets it on its own body below; when editing, the course management body brings the same 1rem through
+ * its `p-3` class, so change both together.
+ */
+$course-form-inset: 1rem;
 
-.headline {
-    align-items: center;
+/*
+ * Creating a course has no course shell around it, so the page brings the frame the admin and course management shells
+ * use: a title bar above a content card that scrolls on its own, together filling the space between navbar and footer.
+ */
+.course-create-layout {
+    @include shell-content-height;
+
     display: flex;
+    flex-direction: column;
+    padding: var(--spacing-divider) var(--spacing-divider) 0;
+}
+
+#course-create-title-bar {
+    @include title-bar-frame;
+
+    flex: none;
+    margin-bottom: var(--spacing-divider);
+}
+
+#course-create-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: $course-form-inset;
+}
+
+/* Bootstrap's heading styles are unlayered and would win over Tailwind utilities, so the size is set here. */
+.course-create-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+/* The form fills its scroll container, so the footer rests at the bottom even when the content is short. */
+.course-form {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.course-form-sections {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    gap: 2rem;
     width: 100%;
+    max-width: 56rem;
+    margin: 0 auto;
+    padding-bottom: 1.5rem;
+}
 
-    .no-image {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        background-color: var(--gray-400);
-        border-radius: 50%;
-        height: 100px;
-        width: 100px;
-        text-align: center;
-        color: var(--black);
-    }
+/*
+ * Tabbing to a field near the bottom of the scroll area would leave it under the sticky footer, since the browser
+ * counts it as visible already. The margin makes it scroll clear of the footer, in both page frames. The controls
+ * render inside TUM AET UI and PrimeNG components, hence the piercing selector.
+ */
+:host ::ng-deep .course-form-sections :is(input, textarea, button, [tabindex]) {
+    scroll-margin-bottom: 7rem;
+}
 
-    jhi-image {
-        ::ng-deep img {
-            border-radius: 50%;
-            height: 100px;
-            width: auto;
-        }
+.course-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+
+    & + & {
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-color);
     }
 }
 
-.icon-button-wrapper {
-    position: absolute;
-    border-radius: 50%;
-    display: inline-flex;
-    justify-content: center;
+.course-form-section-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* Matches the label of a TUM AET UI form field, for the controls that bring no field of their own. */
+.course-form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.course-form-hint {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--artemis-control-muted);
+}
+
+/* One checkbox or switch with its label: every option reads the same, whether or not it has settings of its own. */
+.course-form-option {
+    display: flex;
     align-items: center;
-    width: 30px;
-    height: 30px;
-    box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, 0.1);
+    gap: 0.5rem;
 }
 
-.nested-form-group-head {
-    font-weight: bold;
-    margin-bottom: 0.5rem;
+.course-form-option-label {
+    margin: 0;
+    font-weight: 400;
+    cursor: pointer;
 }
 
-.nested-form-group {
-    margin-left: 1.35rem;
-    margin-bottom: 0.5rem;
+/* Settings that only apply while the option above them is checked. The rule shows what they belong to. */
+.course-form-nested {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-inline-start: 0.5rem;
+    padding: 0.25rem 0 0.25rem 1.25rem;
+    border-inline-start: 2px solid var(--border-color);
 }
 
-.row.nested-form-group {
-    margin-left: calc(1.35rem - var(--bs-gutter-x) / 2);
+.course-form-select {
+    display: block;
+    width: 100%;
 }
 
-.nested-form-group.last {
-    margin-bottom: 1rem;
+.course-form-footer {
+    position: sticky;
+    bottom: -$course-form-inset;
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    margin: 0 (-$course-form-inset) (-$course-form-inset);
+    padding: 0.75rem $course-form-inset;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--module-bg);
+}
+
+/* Wide enough to read, so on a narrow screen it takes a row of its own above the buttons instead of being squeezed. */
+.course-form-status {
+    flex: 1 1 20rem;
+    min-width: 0;
+}
+
+.course-form-issue-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.course-icon {
+    position: relative;
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+}
+
+.course-icon-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    border: 1px dashed var(--artemis-control-border);
+    background-color: var(--artemis-control-background);
+    color: var(--artemis-control-muted);
+    line-height: 1.1;
+    text-align: center;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--artemis-control-border-hover);
+        color: var(--artemis-control-color);
+    }
+}
+
+.course-icon-image ::ng-deep img {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.course-icon-action {
+    position: absolute;
+    bottom: -0.25rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.course-icon-action-start {
+    inset-inline-start: -0.25rem;
+}
+
+.course-icon-action-end {
+    inset-inline-end: -0.25rem;
+}
+
+/* Same height as a text input, so the swatch lines up with the title field beside it. */
+.course-color-swatch {
+    width: 4rem;
+    height: 2.5rem;
+    border: 1px solid var(--artemis-control-border);
+    border-radius: 0.375rem;
+    cursor: pointer;
 }

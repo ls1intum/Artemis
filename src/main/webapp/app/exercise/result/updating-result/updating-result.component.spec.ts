@@ -1,6 +1,5 @@
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -24,13 +23,11 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { MissingResultInformation } from 'app/exercise/result/result.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('UpdatingResultComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: UpdatingResultComponent;
     let fixture: ComponentFixture<UpdatingResultComponent>;
     let participationWebsocketService: ParticipationWebsocketService;
@@ -101,78 +98,102 @@ describe('UpdatingResultComponent', () => {
         vi.restoreAllMocks();
     });
 
-    // Drive ngOnInit before ngOnChanges so isLocalCIEnabled is settled when the participation change fires.
-    // (Angular's natural lifecycle is the reverse on first detection — keeping the manual ordering is the
-    // pragmatic way to preserve the original assertions without changing production behaviour.)
+    // detectChanges runs ngOnInit (settling isLocalCIEnabled) and then the constructor effect, which reacts to the
+    // participation id. This replaces the former manual ngOnInit + ngOnChanges orchestration.
     const cleanInitializeGraded = (participation = initialParticipation) => {
         fixture.componentRef.setInput('participation', participation);
-        comp.ngOnInit();
-        triggerChanges(comp, { property: 'participation', currentValue: participation });
+        fixture.detectChanges();
     };
 
     const cleanInitializeUngraded = (participation = initialParticipation) => {
         fixture.componentRef.setInput('showUngradedResults', true);
         fixture.componentRef.setInput('participation', participation);
-        comp.ngOnInit();
-        triggerChanges(comp, { property: 'participation', currentValue: participation });
+        fixture.detectChanges();
     };
 
     it('should not try to subscribe for new results if no participation is provided', () => {
-        triggerChanges(comp, { property: 'participation', currentValue: undefined, firstChange: true });
+        // participation stays undefined; the effect guards out without subscribing.
+        fixture.detectChanges();
 
         expect(subscribeForLatestResultOfParticipationStub).not.toHaveBeenCalled();
-        expect(comp.result).toBeUndefined();
+        expect(comp.result()).toBeUndefined();
     });
 
     it('should use the newest rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeGraded();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledExactlyOnceWith(initialParticipation.id, true, undefined);
-        expect(comp.result!.id).toBe(gradedResult2.id);
+        expect(comp.result()!.id).toBe(gradedResult2.id);
     });
 
     it('should use the newest (un)rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeUngraded();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledExactlyOnceWith(initialParticipation.id, true, undefined);
-        expect(comp.result!.id).toBe(ungradedResult2.id);
+        expect(comp.result()!.id).toBe(ungradedResult2.id);
     });
 
     it('should react to rated, but not to unrated results if showUngradedResults is false', () => {
         cleanInitializeGraded();
-        const currentResult = comp.result;
+        const currentResult = comp.result();
         subscribeForLatestResultOfParticipationSubject.next(newUngradedResult);
-        expect(comp.result!.id).toBe(currentResult!.id);
+        expect(comp.result()!.id).toBe(currentResult!.id);
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
-        expect(comp.result!.id).toBe(newGradedResult.id);
+        expect(comp.result()!.id).toBe(newGradedResult.id);
     });
 
     it('should react to both rated and unrated results if showUngradedResults is true', () => {
         cleanInitializeUngraded();
         subscribeForLatestResultOfParticipationSubject.next(newUngradedResult);
-        expect(comp.result!.id).toBe(newUngradedResult.id);
+        expect(comp.result()!.id).toBe(newUngradedResult.id);
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
-        expect(comp.result!.id).toBe(newGradedResult.id);
+        expect(comp.result()!.id).toBe(newGradedResult.id);
     });
 
     it('should update result and establish new websocket connection on participation change', () => {
         cleanInitializeGraded();
-        const unsubscribeSpy = vi.spyOn(comp.resultSubscription, 'unsubscribe');
+        const unsubscribeSpy = vi.spyOn(comp.resultSubscription!, 'unsubscribe');
         const newParticipation = { id: 80, exercise, student, submissions: [{ results: [{ id: 1, rated: true }] }] } as Participation;
         cleanInitializeGraded(newParticipation);
         expect(unsubscribeSpy).toHaveBeenNthCalledWith(1);
-        expect(comp.result!.id).toBe(newParticipation.submissions![0].results![0].id);
+        expect(comp.result()!.id).toBe(newParticipation.submissions![0].results![0].id);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(2);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenNthCalledWith(1, initialParticipation.id, true, undefined);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenNthCalledWith(2, newParticipation.id, true, undefined);
 
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
-        expect(comp.result!.id).toBe(newGradedResult.id);
+        expect(comp.result()!.id).toBe(newGradedResult.id);
+    });
+
+    it('should tear down active subscriptions when the participation becomes undefined', () => {
+        cleanInitializeGraded();
+        expect(comp.resultSubscription).toBeDefined();
+        const unsubscribeSpy = vi.spyOn(comp.resultSubscription!, 'unsubscribe');
+
+        fixture.componentRef.setInput('participation', undefined);
+        fixture.detectChanges();
+
+        expect(unsubscribeSpy).toHaveBeenCalled();
+        expect(comp.resultSubscription).toBeUndefined();
+    });
+
+    it('releases the shared submission-service state when the participation becomes undefined', () => {
+        fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING } as Exercise);
+        cleanInitializeGraded(); // registers submission state for participation id 1
+        const unsubscribeSharedSpy = vi.spyOn(programmingSubmissionService, 'unsubscribeForLatestSubmissionOfParticipation');
+
+        fixture.componentRef.setInput('participation', undefined);
+        fixture.detectChanges();
+
+        // The valid→undefined transition must release the shared ProgrammingSubmissionService state for the
+        // previous participation (subject, mapping, timers), not just the local observer, or it leaks until logout.
+        expect(unsubscribeSharedSpy).toHaveBeenCalledWith(initialParticipation.id);
+        expect(comp.submissionSubscription).toBeUndefined();
     });
 
     it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {
         fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING } as Exercise);
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
-        expect(comp.isBuilding).toBe(false);
+        expect(comp.isBuilding()).toBe(false);
     });
 
     it('should set the isBuilding attribute to true if exerciseType is PROGRAMMING and there is a latest pending submission', () => {
@@ -184,31 +205,31 @@ describe('UpdatingResultComponent', () => {
         );
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
-        expect(comp.isBuilding).toBe(true);
-        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
+        expect(comp.isBuilding()).toBe(true);
+        expect(comp.missingResultInfo()).toBe(MissingResultInformation.NONE);
         // LocalCI is not enabled, so the buildStartDate and estimatedCompletionDate should not be set
-        expect(comp.buildStartDate).toBeUndefined();
-        expect(comp.estimatedCompletionDate).toBeUndefined();
+        expect(comp.buildStartDate()).toBeUndefined();
+        expect(comp.estimatedCompletionDate()).toBeUndefined();
     });
 
     it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
         fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING } as Exercise);
-        comp.isBuilding = true;
+        comp.isBuilding.set(true);
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
-        expect(comp.isBuilding).toBe(false);
-        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
+        expect(comp.isBuilding()).toBe(false);
+        expect(comp.missingResultInfo()).toBe(MissingResultInformation.NONE);
     });
 
     it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (offline IDE)', () => {
         fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING, allowOfflineIde: true } as ProgrammingExercise);
-        comp.isBuilding = true;
+        comp.isBuilding.set(true);
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
-        expect(comp.isBuilding).toBe(false);
-        expect(comp.missingResultInfo).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
+        expect(comp.isBuilding()).toBe(false);
+        expect(comp.missingResultInfo()).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
     });
 
     it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (online IDE)', () => {
@@ -216,15 +237,15 @@ describe('UpdatingResultComponent', () => {
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
-        expect(comp.missingResultInfo).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
+        expect(comp.missingResultInfo()).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
     });
 
     it('should not set the isBuilding attribute to true if the exerciseType is not PROGRAMMING', () => {
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).not.toHaveBeenCalled();
-        expect(comp.isBuilding).toBeUndefined();
-        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
+        expect(comp.isBuilding()).toBe(false);
+        expect(comp.missingResultInfo()).toBe(MissingResultInformation.NONE);
     });
 
     it('should update the building status if the submission was before the due date', () => {
@@ -232,8 +253,8 @@ describe('UpdatingResultComponent', () => {
         fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING, dueDate: submission.submissionDate.add(1, 'hour') } as Exercise);
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
-        expect(comp.isBuilding).toBe(true);
-        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
+        expect(comp.isBuilding()).toBe(true);
+        expect(comp.missingResultInfo()).toBe(MissingResultInformation.NONE);
     });
 
     it('should not update the building status if the submission was after the due date', () => {
@@ -241,8 +262,8 @@ describe('UpdatingResultComponent', () => {
         fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING, dueDate: submission.submissionDate.subtract(1, 'minute') } as Exercise);
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
-        expect(comp.isBuilding).toBeUndefined();
-        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
+        expect(comp.isBuilding()).toBe(false);
+        expect(comp.missingResultInfo()).toBe(MissingResultInformation.NONE);
     });
 
     it('should set the isQueue and isBuilding attribute to true with correct timing', () => {
@@ -260,16 +281,16 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
 
-        expect(comp.isBuilding).toBeFalsy();
-        expect(comp.isQueued).toBeTruthy();
-        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
-        expect(comp.estimatedCompletionDate).toBe(queueReleaseDate);
+        expect(comp.isBuilding()).toBe(false);
+        expect(comp.isQueued()).toBe(true);
+        expect(comp.missingResultInfo()).toBe(MissingResultInformation.NONE);
+        expect(comp.estimatedCompletionDate()).toBe(queueReleaseDate);
 
         // Now the submission is building
         pendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3, buildTimingInfo });
-        expect(comp.isBuilding).toBeTruthy();
-        expect(comp.isQueued).toBeFalsy();
-        expect(comp.buildStartDate).toBe(buildTimingInfo.buildStartDate);
-        expect(comp.estimatedCompletionDate).toBe(buildTimingInfo.estimatedCompletionDate);
+        expect(comp.isBuilding()).toBe(true);
+        expect(comp.isQueued()).toBe(false);
+        expect(comp.buildStartDate()).toBe(buildTimingInfo.buildStartDate);
+        expect(comp.estimatedCompletionDate()).toBe(buildTimingInfo.estimatedCompletionDate);
     });
 });

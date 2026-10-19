@@ -16,6 +16,6 @@ export class ExerciseCreateButtonComponent extends ExerciseManageButtonComponent
     linkToExerciseCreation() {
         this.beforeNavigate.emit();
         this.modalService.dismissAll();
-        this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', 'new']);
+        void this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', 'new']);
     }
 }

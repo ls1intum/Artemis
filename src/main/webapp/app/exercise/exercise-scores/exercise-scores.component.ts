@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewEncapsulation, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -40,6 +40,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ParticipationScoreDTO } from './participation-score-dto.model';
 import { ParticipationScoreSearch } from 'app/foundation/pagination/pageable-table';
 import { TableLazyLoadEvent } from 'primeng/table';
@@ -53,6 +55,9 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ParticipationPrivacyService } from 'app/exercise/participation/participation-privacy.service';
+import { ParticipationAccessNoticeComponent } from 'app/exercise/participation/participation-access-notice.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Filter properties for a result
@@ -74,6 +79,7 @@ export enum FilterProp {
     encapsulation: ViewEncapsulation.None,
     imports: [
         TranslateDirective,
+        ParticipationAccessNoticeComponent,
         FaIconComponent,
         RouterLink,
         ExternalSubmissionButtonComponent,
@@ -97,6 +103,18 @@ export enum FilterProp {
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
+    private readonly route = inject(ActivatedRoute);
+    private readonly privacyService = inject(ParticipationPrivacyService);
+    private readonly accountService = inject(AccountService);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly resultService = inject(ResultService);
+    private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private readonly participationService = inject(ParticipationService);
+    private readonly profileService = inject(ProfileService);
+    private readonly alertService = inject(AlertService);
+    private readonly breakpointObserver = inject(BreakpointObserver);
+
     protected readonly faDownload = faDownload;
     protected readonly faSync = faSync;
     protected readonly faFolderOpen = faFolderOpen;
@@ -107,17 +125,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly AssessmentType = AssessmentType;
     readonly FilterProp = FilterProp;
-
-    private readonly route = inject(ActivatedRoute);
-    private readonly accountService = inject(AccountService);
-    private readonly courseService = inject(CourseManagementService);
-    private readonly exerciseService = inject(ExerciseService);
-    private readonly resultService = inject(ResultService);
-    private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
-    private readonly participationService = inject(ParticipationService);
-    private readonly profileService = inject(ProfileService);
-    private readonly alertService = inject(AlertService);
-    private readonly breakpointObserver = inject(BreakpointObserver);
 
     // Laptop and smaller: covers screens up to 1400px
     private static readonly LAPTOP_BREAKPOINT = '(max-width: 1400px)';
@@ -141,6 +148,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     readonly course = signal<Course | undefined>(undefined);
     readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly hideParticipantInformation = computed(() => this.privacyService.isParticipantInformationHidden(this.exercise()));
+    /** Editors retain live repository access even when participant identities are masked. */
+    readonly canAccessLiveRepository = computed(() => !!this.exercise()?.isAtLeastEditor || !!this.exercise()?.isAtLeastInstructor || !this.hideParticipantInformation());
     readonly isAdmin = signal(false);
     readonly participations = signal<ParticipationScoreDTO[]>([]);
     readonly totalRows = signal(0);
@@ -170,10 +180,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     private lastLazyEvent: TableLazyLoadEvent | undefined;
     private currentLoadRequestId = 0;
-    paramSub: Subscription;
+    paramSub!: Subscription; // set in ngOnInit(), unsubscribed in ngOnDestroy()
 
     // Template refs for cell rendering
     readonly nameCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('nameCellTemplate');
+    readonly repositoryCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('repositoryCellTemplate');
     readonly completionDateTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('completionDateTemplate');
     readonly lastResultTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('lastResultTemplate');
     readonly assessmentTypeTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('assessmentTypeTemplate');
@@ -188,6 +199,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         striped: true,
         scrollable: true,
         scrollHeight: 'flex',
+        showSearch: !this.hideParticipantInformation(),
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
         rowActionsAlignment: 'start',
     }));
@@ -198,14 +210,25 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         const compact = this.isLaptopOrSmaller();
 
         const cols: ColumnDef<ParticipationScoreDTO>[] = [
-            {
-                headerKey: ex.teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
-                field: 'participantName',
-                width: '140px',
-                sort: true,
-                templateRef: this.nameCellTemplate(),
-            },
+            !this.hideParticipantInformation()
+                ? {
+                      headerKey: ex.teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
+                      field: 'participantName',
+                      width: '140px',
+                      sort: true,
+                      templateRef: this.nameCellTemplate(),
+                  }
+                : { headerKey: 'artemisApp.participation.participationId', field: 'participationId', width: '140px', sort: true },
         ];
+
+        if (ex.type === ExerciseType.PROGRAMMING && !this.hideParticipantInformation()) {
+            cols.push({
+                headerKey: 'artemisApp.participation.repository',
+                width: '80px',
+                sort: false,
+                templateRef: this.repositoryCellTemplate(),
+            });
+        }
 
         cols.push(
             {
@@ -270,6 +293,20 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return cols;
     });
 
+    constructor() {
+        let previouslyHidden = true;
+        effect(() => {
+            const hidden = this.hideParticipantInformation();
+            if (hidden && !previouslyHidden) {
+                untracked(() => {
+                    this.participations.set([]);
+                    this.loadPage();
+                });
+            }
+            previouslyHidden = hidden;
+        });
+    }
+
     ngOnInit() {
         this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
         this.isAdmin.set(this.accountService.isAdmin());
@@ -310,12 +347,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
-        const search: ParticipationScoreSearch = {
-            ...base,
+        const search: ParticipationScoreSearch = cloneWith(base, {
+            searchTerm: this.hideParticipantInformation() ? '' : base.searchTerm,
+            sortedColumn: this.hideParticipantInformation() && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
             filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
             scoreRangeLower: this.rangeFilter()?.lowerBound,
             scoreRangeUpper: this.rangeFilter()?.upperBound,
-        };
+        });
 
         this.participationService.searchParticipationScores(ex.id, search).subscribe({
             next: (result) => {
@@ -346,9 +384,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   '/course-management',
                   course.id!.toString(),
                   'exams',
-                  ex.exerciseGroup!.exam!.id!.toString(),
+                  ex.exerciseGroup.exam!.id!.toString(),
                   'exercise-groups',
-                  ex.exerciseGroup!.id!.toString(),
+                  ex.exerciseGroup.id!.toString(),
                   ex.type + '-exercises',
                   ex.id!.toString(),
                   'participations',
@@ -434,7 +472,32 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         result.successful = dto.successful;
         result.completionDate = dto.completionDate;
         result.assessmentType = dto.assessmentType;
+        result.testCaseCount = dto.testCaseCount;
+        result.passedTestCaseCount = dto.passedTestCaseCount;
+        result.codeIssueCount = dto.codeIssueCount;
+        result.correctionRound = dto.correctionRoundResults?.find((roundResult) => roundResult.resultId === dto.resultId)?.correctionRound;
         return result;
+    }
+
+    /**
+     * Builds the results the submission row works with: the newest one, which carries the score the table shows, and
+     * one per correction round, which is what the assessment actions of each round act on. The newest result is often
+     * one of the rounds itself, so it is not added twice.
+     */
+    private toResults(dto: ParticipationScoreDTO): Result[] {
+        const latestResult = this.toResult(dto);
+        const roundResults = (dto.correctionRoundResults ?? [])
+            .filter((roundResult) => roundResult.resultId !== dto.resultId)
+            .map((roundResult) => {
+                const result = new Result();
+                result.id = roundResult.resultId;
+                result.correctionRound = roundResult.correctionRound;
+                result.assessmentType = roundResult.assessmentType;
+                result.completionDate = roundResult.completionDate;
+                result.hasComplaint = roundResult.hasComplaint;
+                return result;
+            });
+        return latestResult ? [latestResult, ...roundResults] : roundResults;
     }
 
     /**
@@ -448,25 +511,27 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             type: ex?.type === ExerciseType.PROGRAMMING ? ParticipationType.PROGRAMMING : ParticipationType.STUDENT,
             exercise: ex,
             submissionCount: dto.submissionCount,
-            submissions: dto.submissionId
-                ? [
-                      {
-                          id: dto.submissionId,
-                          results: dto.resultId
-                              ? [
-                                    {
-                                        id: dto.resultId,
-                                        score: dto.score,
-                                        successful: dto.successful,
-                                        completionDate: dto.completionDate,
-                                        assessmentType: dto.assessmentType,
-                                    },
-                                ]
-                              : [],
-                      },
-                  ]
-                : [],
-        } as Participation;
+            submissions: dto.submissionId ? [this.toSubmission(dto)] : [],
+        };
+    }
+
+    /**
+     * Builds the minimal submission that {@link toParticipation} embeds.
+     *
+     * Programming exercises get a real {@link ProgrammingSubmission}, which is where `buildFailed` is declared and
+     * which sets `submissionExerciseType` in its constructor. The previous conditional spread smuggled `buildFailed`
+     * into a plain Submission literal, which only type-checked because spreads skip excess-property checking.
+     */
+    private toSubmission(dto: ParticipationScoreDTO): Submission {
+        const results = this.toResults(dto);
+        if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
+            const submission = new ProgrammingSubmission();
+            submission.id = dto.submissionId;
+            submission.results = results;
+            submission.buildFailed = dto.buildFailed;
+            return submission;
+        }
+        return { id: dto.submissionId, results };
     }
 
     /**

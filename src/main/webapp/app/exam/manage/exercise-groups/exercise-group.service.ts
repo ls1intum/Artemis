@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -6,7 +6,7 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 type EntityResponseType = HttpResponse<ExerciseGroup>;
 type EntityArrayResponseType = HttpResponse<ExerciseGroup[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseGroupService {
     private http = inject(HttpClient);
 
@@ -66,5 +66,18 @@ export class ExerciseGroupService {
      */
     findAllForExam(courseId: number, examId: number): Observable<EntityArrayResponseType> {
         return this.http.get<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups`, { observe: 'response' });
+    }
+
+    /**
+     * Move an exam exercise into a different exercise group of the same exam. Rejected by the server (409) once any
+     * student exam has been generated for the exam, since that would desync already-picked exercise selections and
+     * the exam's cached point totals.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param exerciseId The id of the exercise to move.
+     * @param exerciseGroupId The id of the target exercise group.
+     */
+    moveExerciseToGroup(courseId: number, examId: number, exerciseId: number, exerciseGroupId: number): Observable<HttpResponse<void>> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercises/${exerciseId}/exercise-group`, { exerciseGroupId }, { observe: 'response' });
     }
 }

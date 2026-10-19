@@ -41,9 +41,8 @@ public record RepoNameProgrammingStudentParticipationDTO(long id, ZonedDateTime 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record RepoNameProgrammingExerciseDTO(long id, String problemStatement, String title, String shortName, ZonedDateTime releaseDate, ZonedDateTime startDate,
             ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Double maxPoints, Double bonusPoints, AssessmentType assessmentType,
-            boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, DifficultyLevel difficulty, ExerciseMode mode,
-            IncludedInOverallScore includedInOverallScore, ExerciseType exerciseType, ZonedDateTime exampleSolutionPublicationDate, RepoNameCourseDTO course, String projectKey,
-            ProgrammingLanguage programmingLanguage, Boolean showTestNamesToStudents) {
+            boolean allowComplaintsForAutomaticAssessments, DifficultyLevel difficulty, ExerciseMode mode, IncludedInOverallScore includedInOverallScore, ExerciseType exerciseType,
+            ZonedDateTime exampleSolutionPublicationDate, RepoNameCourseDTO course, String projectKey, ProgrammingLanguage programmingLanguage, Boolean showTestNamesToStudents) {
 
         /**
          * Converts a ProgrammingExercise into a dto for the endpoint
@@ -56,7 +55,7 @@ public record RepoNameProgrammingStudentParticipationDTO(long id, ZonedDateTime 
             return Optional.ofNullable(exercise)
                     .map(e -> new RepoNameProgrammingExerciseDTO(e.getId(), e.getProblemStatement(), e.getTitle(), e.getShortName(), e.getReleaseDate(), e.getStartDate(),
                             e.getDueDate(), e.getAssessmentDueDate(), e.getMaxPoints(), e.getBonusPoints(), e.getAssessmentType(), e.getAllowComplaintsForAutomaticAssessments(),
-                            e.getAllowFeedbackRequests(), e.getDifficulty(), e.getMode(), e.getIncludedInOverallScore(), e.getExerciseType(), e.getExampleSolutionPublicationDate(),
+                            e.getDifficulty(), e.getMode(), e.getIncludedInOverallScore(), e.getExerciseType(), e.getExampleSolutionPublicationDate(),
                             RepoNameCourseDTO.of(e.getCourseViaExerciseGroupOrCourseMember()), e.getProjectKey(), e.getProgrammingLanguage(), e.getShowTestNamesToStudents()))
                     .orElse(null);
         }

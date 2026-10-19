@@ -1,0 +1,36 @@
+name: Agent Skills
+
+# Run independently of ci-quality.yml so Markdown-only changes are checked.
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to check. PR runs use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  skill-checks:
+    name: Skill Structure and References
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.14'
+      # The parsers decide what the check below sees, so a regression there would pass silently.
+      - name: Checker self-test
+        run: python supporting_scripts/check_skill_references.py --self-test
+      - name: Skill frontmatter, routing and path references
+        if: ${{ !cancelled() }}
+        run: python supporting_scripts/check_skill_references.py

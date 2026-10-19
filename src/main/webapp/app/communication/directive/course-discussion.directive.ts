@@ -1,35 +1,35 @@
-import { Directive, inject } from '@angular/core';
+import { Directive, inject, signal } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
+import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/communication.util';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Subscription } from 'rxjs';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 
 @Directive({
-    providers: [MetisService],
+    providers: [CommunicationService],
 })
 export abstract class CourseDiscussionDirective {
-    protected metisService = inject(MetisService);
+    protected communicationService = inject(CommunicationService);
 
     searchText?: string;
-    currentPostContextFilter: PostContextFilter;
-    formGroup: FormGroup;
+    currentPostContextFilter!: PostContextFilter; // set by setFilterAndSort() (implemented in subclasses) before use
+    formGroup!: FormGroup; // set by resetFormGroup() (implemented in subclasses)
     readonly ButtonType = ButtonType;
-    course?: Course;
-    createdPost: Post;
-    posts: Post[] = [];
-    isLoading = true;
+    readonly course = signal<Course | undefined>(undefined);
+    readonly createdPost = signal<Post | undefined>(undefined);
+    readonly posts = signal<Post[]>([]);
+    readonly isLoading = signal(true);
 
     currentSortCriterion = PostSortCriterion.CREATION_DATE;
-    currentSortDirection?: SortDirection;
+    readonly currentSortDirection = signal<SortDirection | undefined>(undefined);
     readonly SortBy = PostSortCriterion;
     readonly SortDirection = SortDirection;
 
-    protected postsSubscription: Subscription;
-    protected paramSubscription: Subscription;
+    protected postsSubscription?: Subscription;
+    protected paramSubscription?: Subscription;
 
     // Icons
     faPlus = faPlus;
@@ -40,12 +40,12 @@ export abstract class CourseDiscussionDirective {
     faLongArrowAltDown = faLongArrowAltDown;
 
     /**
-     * on changing any filter, the metis service is invoked to deliver all posts for the
+     * on changing any filter, the communication service is invoked to deliver all posts for the
      * currently set context, filtered on the server
      */
     onSelectContext(): void {
         this.setFilterAndSort();
-        this.metisService.getFilteredPosts(this.currentPostContextFilter);
+        this.communicationService.getFilteredPosts(this.currentPostContextFilter);
     }
 
     /**

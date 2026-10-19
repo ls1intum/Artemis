@@ -15,7 +15,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 enum DateOffsetType {
     HOURS = 'hours',
@@ -23,8 +22,6 @@ enum DateOffsetType {
 }
 
 describe('ExamStatusComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamStatusComponent>;
     let component: ExamStatusComponent;
     let examChecklistService: ExamChecklistService;
@@ -85,11 +82,11 @@ describe('ExamStatusComponent', () => {
 
     it('should set examConductionState correctly if exam is started but not finished yet', () => {
         prepareForExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
-        component.mandatoryPreparationFinished = true;
+        component.mandatoryPreparationFinished.set(true);
 
         fixture.detectChanges();
 
-        expect(component.examConductionState).toBe(ExamConductionState.RUNNING);
+        expect(component.examConductionState()).toBe(ExamConductionState.RUNNING);
     });
 
     it('should set examConductionState correctly if exam not started yet', () => {
@@ -97,17 +94,17 @@ describe('ExamStatusComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.examConductionState).toBe(ExamConductionState.PLANNED);
+        expect(component.examConductionState()).toBe(ExamConductionState.PLANNED);
     });
 
     it('should set examConductionState correctly if exam is finished', () => {
         prepareForExamConductionStateTest(dayjs().add(-2, DateOffsetType.DAYS), -1, DateOffsetType.DAYS);
-        component.mandatoryPreparationFinished = true;
+        component.mandatoryPreparationFinished.set(true);
         const course = { isAtLeastInstructor: true } as Course;
         fixture.componentRef.setInput('course', course);
         fixture.detectChanges();
 
-        expect(component.examConductionState).toBe(ExamConductionState.FINISHED);
+        expect(component.examConductionState()).toBe(ExamConductionState.FINISHED);
     });
 
     it('should set examReviewState correctly if exam review phase is not defined', () => {
@@ -116,7 +113,7 @@ describe('ExamStatusComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.examReviewState).toBe(ExamReviewState.UNSET);
+        expect(component.examReviewState()).toBe(ExamReviewState.UNSET);
     });
 
     it('should set examReviewState correctly if exam review phase is currently running', () => {
@@ -124,14 +121,14 @@ describe('ExamStatusComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.examReviewState).toBe(ExamReviewState.RUNNING);
+        expect(component.examReviewState()).toBe(ExamReviewState.RUNNING);
 
         exam.examStudentReviewStart = dayjs().add(-1, DateOffsetType.DAYS);
         fixture.componentRef.setInput('exam', exam);
 
         fixture.detectChanges();
 
-        expect(component.examReviewState).toBe(ExamReviewState.RUNNING);
+        expect(component.examReviewState()).toBe(ExamReviewState.RUNNING);
     });
 
     it('should set examReviewState correctly if exam review phase is finished', () => {
@@ -139,7 +136,7 @@ describe('ExamStatusComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.examReviewState).toBe(ExamReviewState.FINISHED);
+        expect(component.examReviewState()).toBe(ExamReviewState.FINISHED);
     });
 
     it('should set examReviewState correctly if exam review phase is defined in future', () => {
@@ -148,7 +145,7 @@ describe('ExamStatusComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.examReviewState).toBe(ExamReviewState.PLANNED);
+        expect(component.examReviewState()).toBe(ExamReviewState.PLANNED);
     });
 
     it('should set flags for exam preparation steps correctly', () => {
@@ -162,13 +159,13 @@ describe('ExamStatusComponent', () => {
         fixture.componentRef.setInput('course', course);
         fixture.detectChanges();
 
-        expect(component.configuredExercises).toBe(true);
-        expect(component.registeredStudents).toBe(true);
-        expect(component.generatedStudentExams).toBe(true);
-        expect(component.preparedExerciseStart).toBe(true);
-        expect(component.numberOfGeneratedStudentExams).toBe(42);
-        expect(component.examPreparationFinished).toBe(true);
-        expect(component.mandatoryPreparationFinished).toBe(true);
+        expect(component.configuredExercises()).toBe(true);
+        expect(component.registeredStudents()).toBe(true);
+        expect(component.generatedStudentExams()).toBe(true);
+        expect(component.preparedExerciseStart()).toBe(true);
+        expect(component.numberOfGeneratedStudentExams()).toBe(42);
+        expect(component.examPreparationFinished()).toBe(true);
+        expect(component.mandatoryPreparationFinished()).toBe(true);
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
 
         examChecklist.numberOfGeneratedStudentExams = undefined;
@@ -176,23 +173,23 @@ describe('ExamStatusComponent', () => {
         fixture.componentRef.setInput('exam', { ...exam });
         fixture.detectChanges();
 
-        expect(component.numberOfGeneratedStudentExams).toBe(0);
+        expect(component.numberOfGeneratedStudentExams()).toBe(0);
     });
 
     it('should set examConductionState correctly if TestExam is started but not finished yet', () => {
         prepareForTestExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
-        component.mandatoryPreparationFinished = true;
+        component.mandatoryPreparationFinished.set(true);
         fixture.detectChanges();
 
-        expect(component.examConductionState).toBe(ExamConductionState.RUNNING);
+        expect(component.examConductionState()).toBe(ExamConductionState.RUNNING);
     });
 
     it('should set examConductionState correctly if TestExam is started but not finished yet AND preparation is not finished AND user is editor', () => {
         prepareForTestExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
-        component.mandatoryPreparationFinished = false;
+        component.mandatoryPreparationFinished.set(false);
         fixture.detectChanges();
         // Editors and TAs have no access to the required data to determine, if the preparation is not yet finished -> use RUNNING in this case
-        expect(component.examConductionState).toBe(ExamConductionState.RUNNING);
+        expect(component.examConductionState()).toBe(ExamConductionState.RUNNING);
     });
 
     it('should set examConductionState correctly if TestExam not started yet', () => {
@@ -200,7 +197,7 @@ describe('ExamStatusComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.examConductionState).toBe(ExamConductionState.PLANNED);
+        expect(component.examConductionState()).toBe(ExamConductionState.PLANNED);
     });
 
     it('should set flags for TestExam preparation steps correctly', () => {
@@ -215,13 +212,13 @@ describe('ExamStatusComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.configuredExercises).toBe(true);
-        expect(component.registeredStudents).toBe(false);
-        expect(component.generatedStudentExams).toBe(false);
-        expect(component.preparedExerciseStart).toBe(false);
-        expect(component.numberOfGeneratedStudentExams).toBe(0);
-        expect(component.examPreparationFinished).toBe(true);
-        expect(component.mandatoryPreparationFinished).toBe(true);
+        expect(component.configuredExercises()).toBe(true);
+        expect(component.registeredStudents()).toBe(false);
+        expect(component.generatedStudentExams()).toBe(false);
+        expect(component.preparedExerciseStart()).toBe(false);
+        expect(component.numberOfGeneratedStudentExams()).toBe(0);
+        expect(component.examPreparationFinished()).toBe(true);
+        expect(component.mandatoryPreparationFinished()).toBe(true);
         expect(getExamStatisticsStub).toHaveBeenCalledWith(testExam);
         expect(calculateExercisePointsStub).toHaveBeenCalledWith(true, testExam);
     });

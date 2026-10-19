@@ -8,7 +8,6 @@ import { of, take } from 'rxjs';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -28,8 +27,6 @@ function getExerciseGroups(equalPoints: boolean) {
 }
 
 describe('ExamChecklistService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamChecklistService;
     const exam = new Exam();
     const examChecklist = new ExamChecklist();

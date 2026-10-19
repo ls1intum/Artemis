@@ -32,13 +32,13 @@ export class TextEditorPage {
     }
 
     async shouldShowNumberOfWords(numberOfWords: number): Promise<void> {
-        const wordCountElement = this.page.locator('#word-count');
+        const wordCountElement = this.page.locator('[data-testid="word-count"]');
         await expect(wordCountElement).toContainText(numberOfWords.toString());
         await expect(wordCountElement).toBeVisible();
     }
 
     async shouldShowNumberOfCharacters(numberOfCharacters: number): Promise<void> {
-        const characterCountElement = this.page.locator('#character-count');
+        const characterCountElement = this.page.locator('[data-testid="character-count"]');
         await expect(characterCountElement).toContainText(numberOfCharacters.toString());
         await expect(characterCountElement).toBeVisible();
     }

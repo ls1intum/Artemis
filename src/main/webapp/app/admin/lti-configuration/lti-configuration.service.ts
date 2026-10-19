@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
@@ -18,14 +18,23 @@ export interface LtiPlatformConfigurationUpdateDTO {
     tokenUri: string;
 }
 
-@Injectable({ providedIn: 'root' })
+/**
+ * Pagination and sorting parameters for querying LTI platform configurations.
+ */
+export interface LtiPlatformConfigurationQuery {
+    page?: number;
+    size?: number;
+    sort?: string[];
+}
+
+@Service()
 export class LtiConfigurationService {
     private http = inject(HttpClient);
 
     /**
      * Sends a GET request to retrieve all lti platform configurations
      */
-    query(req?: any): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
+    query(req?: LtiPlatformConfigurationQuery): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
         const params: HttpParams = createRequestOption(req);
         return this.http.get<LtiPlatformConfiguration[]>('api/lti/lti-platforms', {
             params,

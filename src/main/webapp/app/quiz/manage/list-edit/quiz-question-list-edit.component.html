@@ -9,7 +9,7 @@
                 <p jhiTranslate="artemisApp.quizExercise.questionsDescription"></p>
             </div>
             @if (!disabled() && hyperionEnabled()) {
-                <button class="section-header-action" (click)="onAiGenerateRequested.emit()">
+                <button type="button" class="section-header-action" (click)="onAiGenerateRequested.emit()">
                     <fa-icon [icon]="faWandMagicSparkles" class="me-1" />
                     <span jhiTranslate="artemisApp.quizExercise.aiGeneration.button"></span>
                 </button>
@@ -35,9 +35,10 @@
                             <jhi-quiz-ai-question-refinement-panel
                                 [question]="quizQuestion"
                                 [courseId]="courseId()"
-                                [isOpen]="openRefinementQuestions().has(quizQuestion)"
-                                [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
-                                [externalReasoning]="bulkRefinementReasonings().get(quizQuestion)"
+                                [isOpen]="openRefinementQuestions.has(quizQuestion)"
+                                [isRefinementPanelCollapsed]="collapsedQuestions.has(quizQuestion)"
+                                [externalReasoning]="bulkRefinementReasonings.get(quizQuestion)"
+                                [externalPreviousQuestion]="bulkRefinementPreviousQuestions.get(quizQuestion)"
                                 (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
                                 (reasoningDismissed)="clearReasoning(quizQuestion)"
                             />
@@ -72,23 +73,23 @@
             }
             @if (!disabled()) {
                 <div class="add-question-actions">
-                    <button id="quiz-add-mc-question" class="add-question-btn" (click)="addMultipleChoiceQuestion()">
+                    <button type="button" data-testid="quiz-add-mc-question" class="add-question-btn" (click)="addMultipleChoiceQuestion()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addMultipleChoiceQuestion"></span>
                     </button>
-                    <button id="quiz-add-dnd-question" class="add-question-btn" (click)="addDragAndDropQuestion()">
+                    <button type="button" data-testid="quiz-add-dnd-question" class="add-question-btn" (click)="addDragAndDropQuestion()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
                     </button>
-                    <button id="quiz-import-apollon-dnd-question" class="add-question-btn" (click)="importApollonDragAndDropQuestion()">
+                    <button type="button" data-testid="quiz-import-apollon-dnd-question" class="add-question-btn" (click)="importApollonDragAndDropQuestion()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addApollonDragAndDropQuestion"></span>
                     </button>
-                    <button id="quiz-add-short-answer-question" class="add-question-btn" (click)="addShortAnswerQuestion()">
+                    <button type="button" data-testid="quiz-add-short-answer-question" class="add-question-btn" (click)="addShortAnswerQuestion()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addShortAnswerQuestion"></span>
                     </button>
-                    <button class="add-question-btn" (click)="showHideExistingQuestions()" [class.active]="showExistingQuestions">
+                    <button type="button" class="add-question-btn" (click)="showHideExistingQuestions()" [class.active]="showExistingQuestions()">
                         <fa-icon [icon]="faFileImport" />
                         <span jhiTranslate="artemisApp.quizExercise.addExistingQuestions"></span>
                     </button>
@@ -97,7 +98,7 @@
             @if (!disabled()) {
                 <div class="mt-2 mb-3">
                     <jhi-quiz-question-list-edit-existing
-                        [show]="showExistingQuestions"
+                        [show]="showExistingQuestions()"
                         [courseId]="courseId()"
                         [filePool]="fileMap"
                         (onQuestionsAdded)="handleExistingQuestionsAdded($event)"

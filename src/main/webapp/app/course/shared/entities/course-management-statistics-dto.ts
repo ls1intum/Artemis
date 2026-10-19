@@ -1,6 +1,6 @@
 import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
 
-export class CourseManagementStatisticsDTO {
+export interface CourseManagementStatisticsDTO {
     averageScoreOfCourse: number;
     averageScoresOfExercises: CourseManagementStatisticsModel[];
 }

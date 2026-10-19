@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed, inject } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -13,8 +12,6 @@ import { MockProvider } from 'ng-mocks';
 import { Renderer2, RendererFactory2 } from '@angular/core';
 
 describe('Language Helper', () => {
-    setupTestBed({ zoneless: true });
-
     const renderer2: Renderer2 = {
         setAttribute: () => {},
     } as unknown as Renderer2;

@@ -10,6 +10,8 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Simple toggle component for enabling/disabling Iris at the course level.
@@ -18,8 +20,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-iris-enabled',
     templateUrl: './iris-enabled.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent],
-    standalone: true,
+    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [
         `
@@ -34,59 +35,24 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
                 gap: 0.75rem;
             }
 
-            .iris-toggle-group {
-                display: flex;
-                border: 1px solid var(--bs-border-color);
-                border-radius: 0.625rem;
-                overflow: hidden;
-            }
-
-            .iris-toggle-btn {
-                flex: 1;
-                padding: 0.5rem 1rem;
-                border: none;
-                background: var(--overview-card-nested-bg, var(--bs-body-bg));
-                color: var(--bs-secondary-color);
-                font-weight: 500;
-                font-size: 0.88rem;
-                cursor: pointer;
-                transition: all 0.2s ease;
-
-                &:first-child {
-                    border-right: 1px solid var(--bs-border-color);
-                }
-            }
-
-            .iris-toggle-btn--active-on {
-                background: #10b981;
-                color: white;
-                font-weight: 600;
-            }
-
-            .iris-toggle-btn--active-off {
-                background: #ef4444;
-                color: white;
-                font-weight: 600;
-            }
-
             .iris-configure-link {
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 gap: 0.4rem;
                 padding: 0.5rem 1rem;
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--p-content-border-color);
                 border-radius: 0.625rem;
-                background: var(--overview-card-nested-bg, var(--bs-body-bg));
-                color: var(--bs-body-color);
+                background: var(--overview-card-nested-bg, var(--p-content-background));
+                color: var(--p-text-color);
                 font-weight: 500;
                 font-size: 0.88rem;
                 text-decoration: none;
                 transition: all 0.2s ease;
 
                 &:hover {
-                    background: var(--bs-tertiary-bg);
-                    border-color: var(--bs-secondary-border-subtle);
+                    background: var(--p-content-hover-background);
+                    border-color: var(--p-content-border-color);
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
                 }
             }
@@ -94,9 +60,10 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     ],
 })
 export class IrisEnabledComponent implements OnInit {
-    protected readonly faArrowRight = faArrowRight;
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
+
+    protected readonly faArrowRight = faArrowRight;
 
     course = input.required<Course>();
 
@@ -152,10 +119,8 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     /**
-     * Get the route to the settings page
+     * Route to the settings page. Computed rather than a method, because `[routerLink]="settingsRoute()"` is evaluated
+     * on every change-detection pass and a fresh array each pass makes RouterLink re-process the link every time.
      */
-    getSettingsRoute(): string[] {
-        const courseId = this.course()?.id;
-        return ['/course-management', String(courseId), 'iris-settings'];
-    }
+    readonly settingsRoute = computed(() => ['/course-management', String(this.course()?.id), 'iris-settings']);
 }

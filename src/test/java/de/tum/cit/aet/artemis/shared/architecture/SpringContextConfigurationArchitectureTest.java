@@ -3,9 +3,14 @@ package de.tum.cit.aet.artemis.shared.architecture;
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.belongToAnyOf;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -24,6 +29,14 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaField;
+import com.tngtech.archunit.lang.ArchCondition;
+import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
+
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -33,7 +46,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalV
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTemplateTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
@@ -63,7 +78,7 @@ class SpringContextConfigurationArchitectureTest extends AbstractArchitectureTes
             AbstractSpringIntegrationJenkinsLocalVCTest.class, AbstractSpringIntegrationJenkinsLocalVCTestBase.class, AbstractSpringIntegrationJenkinsLocalVCTemplateTest.class,
             AbstractSpringIntegrationJenkinsLocalVCBatchTest.class,
             // Local CI + LocalVC integration tests
-            AbstractSpringIntegrationLocalCILocalVCTest.class,
+            AbstractSpringIntegrationLocalCILocalVCTest.class, AbstractSpringIntegrationLocalCILocalVCTestBase.class, AbstractSpringIntegrationLocalCILocalVCBatchTest.class,
             // LocalVC with SAML authentication tests
             AbstractSpringIntegrationLocalVCSamlTest.class,
             // Build agent tests
@@ -247,5 +262,59 @@ class SpringContextConfigurationArchitectureTest extends AbstractArchitectureTes
                 .because("@Conditional* annotations are meant for Spring beans, not test classes. " + "They have no effect on test classes and should not be used. "
                         + "See the developer documentation on 'Spring Boot Server Starts and Context Configuration' for details.")
                 .check(filteredClasses);
+    }
+
+    /**
+     * Ensures that every mocked or spied bean is reset after each test.
+     * <p>
+     * A {@code @MockitoBean} or {@code @MockitoSpyBean} lives on the shared Spring context, so stubbing it is global
+     * state: whatever one test sets stays set for every test that follows in the same context. Tests that stub the
+     * same bean themselves hide this, which is why it surfaces as an order-dependent failure in a class that never
+     * touches the bean at all - it inherits a stub from a class that ran earlier. That is what
+     * {@code LocalVCFetchAndPushIntegrationTest} did with {@code ldapTemplate}, leaving LDAP accepting every password
+     * for the rest of the run.
+     * <p>
+     * A bean counts as reset when the class that declares it reads it in a method annotated with {@code @AfterEach},
+     * or in one named {@code resetSpyBeans} - the root base class declares that method without the annotation and
+     * lets its subclasses annotate their override.
+     */
+    @Test
+    void testEveryMockedBeanIsResetAfterEachTest() {
+        ArchRule rule = classes().that(declareAMockedBean()).should(resetEveryMockedBeanTheyDeclare())
+                .because("stubbing a bean on the shared context outlives the test that did it, so a bean left stubbed decides how later tests behave. "
+                        + "See the developer documentation on 'Spring Boot Server Starts and Context Configuration' for details.");
+        rule.check(testClasses);
+    }
+
+    private DescribedPredicate<JavaClass> declareAMockedBean() {
+        return new DescribedPredicate<>("declare a mocked or spied bean") {
+
+            @Override
+            public boolean test(JavaClass javaClass) {
+                return javaClass.getFields().stream().anyMatch(SpringContextConfigurationArchitectureTest::isMockedBean);
+            }
+        };
+    }
+
+    private ArchCondition<JavaClass> resetEveryMockedBeanTheyDeclare() {
+        return new ArchCondition<>("reset every mocked or spied bean they declare") {
+
+            @Override
+            public void check(JavaClass testClass, ConditionEvents events) {
+                // Field names are enough: the accesses below are all on `this`, and a class cannot declare two fields
+                // of the same name.
+                Set<String> resetBeans = testClass.getMethods().stream().filter(method -> method.isAnnotatedWith(AfterEach.class) || "resetSpyBeans".equals(method.getName()))
+                        .flatMap(method -> method.getFieldAccesses().stream()).map(access -> access.getTarget().getName()).collect(Collectors.toSet());
+
+                testClass.getFields().stream().filter(SpringContextConfigurationArchitectureTest::isMockedBean).filter(field -> !resetBeans.contains(field.getName()))
+                        .forEach(field -> events.add(SimpleConditionEvent.violated(field,
+                                "%s is never reset. Add it to the Mockito.reset(...) call in %s, so that stubbing it cannot leak into the tests that run afterwards."
+                                        .formatted(field.getFullName(), testClass.getSimpleName()))));
+            }
+        };
+    }
+
+    private static boolean isMockedBean(JavaField field) {
+        return field.isAnnotatedWith(MockitoBean.class) || field.isAnnotatedWith(MockitoSpyBean.class);
     }
 }

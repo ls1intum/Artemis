@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -15,13 +14,10 @@ import { CourseAdminService } from 'app/course/manage/services/course-admin.serv
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Course Admin Service', () => {
-    setupTestBed({ zoneless: true });
-
     let courseAdminService: CourseAdminService;
     let httpMock: HttpTestingController;
     const resourceUrl = 'api/admin/courses';
     let course: Course;
-    let returnedFromService: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -38,7 +34,6 @@ describe('Course Admin Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
 
         ({ course } = createSampleCourse());
-        returnedFromService = { ...course } as Course;
     });
 
     afterEach(() => {
@@ -46,16 +41,17 @@ describe('Course Admin Service', () => {
         vi.restoreAllMocks();
     });
 
-    it('should create course', () => {
+    it('should create a course and hand back the id the server assigned', () => {
         delete course.id;
 
         courseAdminService
-            .create({ ...course })
+            .create(course)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({ ...course, id: 1234 }));
+            .subscribe((res) => expect(res.body).toEqual({ id: 1234 }));
 
         const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
-        req.flush(returnedFromService);
+        expect(req.request.body).toBeInstanceOf(FormData);
+        req.flush({ id: 1234 });
     });
 
     it('should delete a course', () => {

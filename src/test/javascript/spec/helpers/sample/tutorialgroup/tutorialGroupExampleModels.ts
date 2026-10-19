@@ -4,7 +4,7 @@ import dayjs from 'dayjs/esm';
 import { User } from 'app/account/user/user.model';
 
 export class UserWithLabel extends User {
-    label: string;
+    label!: string;
 }
 
 export const generateExampleTutorialGroup = ({

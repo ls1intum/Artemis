@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnInit, inject, input, model, signal, viewChild } from '@angular/core';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
@@ -10,20 +11,21 @@ import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { FileService } from 'app/foundation/service/file.service';
 
 @Component({
@@ -32,16 +34,19 @@ import { FileService } from 'app/foundation/service/file.service';
     providers: [{ provide: ExamSubmissionComponent, useExisting: FileUploadExamSubmissionComponent }],
     imports: [
         TranslateDirective,
-        IncludedInScoreBadgeComponent,
+        ExamExerciseHeaderComponent,
         ResizeableContainerComponent,
         FaIconComponent,
         ExamExerciseUpdateHighlighterComponent,
         UpperCasePipe,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private examParticipationService = inject(ExamParticipationService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
     private fileService = inject(FileService);
@@ -55,15 +60,15 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     exercise = input.required<FileUploadExercise>();
     readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
 
-    submittedFileName: string;
-    submittedFileExtension: string;
-    participation: StudentParticipation;
-    result: Result;
+    readonly submittedFileName = signal<string | undefined>(undefined);
+    readonly submittedFileExtension = signal<string | undefined>(undefined);
+    readonly submittedFileUrl = signal<string | undefined>(undefined);
+    participation?: StudentParticipation;
+    result?: Result;
     submissionFile?: File;
 
     readonly ButtonType = ButtonType;
 
-    readonly IncludedInOverallScore = IncludedInOverallScore;
     filePath?: string;
 
     // Icons
@@ -84,7 +89,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
         this.problemStatementHtml.set(newProblemStatementHtml);
-        this.changeDetectorReference.detectChanges();
     }
 
     /**
@@ -92,9 +96,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * Here the file selected with the -browse- button is handled.
      * @param event {object} Event object which contains the uploaded file
      */
-    setFileSubmissionForExercise(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setFileSubmissionForExercise(event: Event): void {
+        const fileList = (event.target as HTMLInputElement).files;
+        if (fileList && fileList.length) {
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.exercise().filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
@@ -104,6 +108,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
             } else {
                 this.submissionFile = submissionFile;
                 this.studentSubmission().isSynced = false;
+                // isSynced is mutated in place; notify sync-state-dependent UI (exam navigation sidebar, exercise
+                // overview, save button) so it re-evaluates under zoneless change detection.
+                this.examParticipationService.notifySubmissionSyncStateChanged();
             }
         }
     }
@@ -145,10 +152,13 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if ((this.studentSubmission().isSynced && this.studentSubmission().filePath) || (this.examTimeline() && this.studentSubmission().filePath)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
-            const filePath = this.studentSubmission()!.filePath!.split('/');
-            this.submittedFileName = filePath.last()!;
-            const fileName = this.submittedFileName.split('.');
-            this.submittedFileExtension = fileName.last()!;
+            // submissions loaded from the server (e.g. in the exam timeline) only contain the file path, the download url is derived from it
+            this.submittedFileUrl.set(this.studentSubmission().filePathUrl ?? addPublicFilePrefix(this.studentSubmission().filePath));
+            const filePath = this.studentSubmission().filePath!.split('/');
+            const submittedFileName = filePath.last()!;
+            this.submittedFileName.set(submittedFileName);
+            const fileName = submittedFileName.split('.');
+            this.submittedFileExtension.set(fileName.last());
         }
     }
 
@@ -160,13 +170,14 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if (!this.submissionFile) {
             return;
         }
-        this.fileUploadSubmissionService.update(this.studentSubmission() as FileUploadSubmission, this.exercise().id!, this.submissionFile).subscribe({
+        this.fileUploadSubmissionService.update(this.studentSubmission(), this.exercise().id!, this.submissionFile).subscribe({
             next: (res) => {
                 const submissionFromServer = res.body!;
                 this.studentSubmission().filePath = submissionFromServer.filePath;
                 this.studentSubmission().filePathUrl = addPublicFilePrefix(submissionFromServer.filePath);
                 this.studentSubmission().isSynced = true;
                 this.studentSubmission().submitted = true;
+                this.examParticipationService.notifySubmissionSyncStateChanged();
                 this.updateViewFromSubmission();
             },
             error: () => this.onError(),

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
@@ -10,8 +9,6 @@ import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service'
 const originalResizeObserver = globalThis.ResizeObserver;
 
 describe('MonacoDiffEditorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<MonacoDiffEditorComponent>;
     let comp: MonacoDiffEditorComponent;
 

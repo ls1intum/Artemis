@@ -14,11 +14,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('TextExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
     let component: TextExamSubmissionComponent;
 
@@ -52,7 +50,7 @@ describe('TextExamSubmissionComponent', () => {
         fixture.detectChanges();
         component.onDeactivate();
 
-        expect(component.answer).toBe('Hello World');
+        expect(component.answer()).toBe('Hello World');
         expect(component.wordCount).toBe(2);
         expect(component.characterCount).toBe(11);
         expect(component.getExerciseId()).toEqual(exercise.id);
@@ -65,7 +63,7 @@ describe('TextExamSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.answer).toBe('');
+        expect(component.answer()).toBe('');
         expect(component.wordCount).toBe(0);
         expect(component.characterCount).toBe(0);
     });
@@ -99,7 +97,7 @@ describe('TextExamSubmissionComponent', () => {
 
         component.updateProblemStatement(TestBed.inject(ArtemisMarkdownService).safeHtmlForMarkdown(newProblemStatement));
 
-        expect((component.problemStatementHtml as any).changingThisBreaksApplicationSecurity).toBe(htmlForMarkdown(newProblemStatement));
+        expect((component.problemStatementHtml() as any).changingThisBreaksApplicationSecurity).toBe(htmlForMarkdown(newProblemStatement));
     });
 
     it('should trigger text editor events', async () => {
@@ -109,7 +107,7 @@ describe('TextExamSubmissionComponent', () => {
 
         fixture.detectChanges();
         fixture.whenStable().then(() => {
-            expect(component.answer).toBe('Hello World');
+            expect(component.answer()).toBe('Hello World');
             const textareaDebugElement = fixture.debugElement.query(By.css('#text-editor'));
             expect(textareaDebugElement).not.toBeNull();
             const textarea = textareaDebugElement.nativeElement;
@@ -127,7 +125,7 @@ describe('TextExamSubmissionComponent', () => {
     it('should update the answer if the submission version changes', () => {
         const submissionVersion = { id: 1, content: 'submission version', submission: textSubmission, createdDate: dayjs('2021-01-01') };
         component.setSubmissionVersion(submissionVersion);
-        expect(component.answer).toBe('submission version');
+        expect(component.answer()).toBe('submission version');
         expect(component.submissionVersion).toBe(submissionVersion);
     });
 
@@ -140,5 +138,20 @@ describe('TextExamSubmissionComponent', () => {
         const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
         saveButton.triggerEventHandler('save', null);
         expect(saveExerciseSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the sync-state version whenever it marks the submission unsaved', () => {
+        // `isSynced` is mutated in place, so under zoneless change detection the exam navigation sidebar and
+        // exercise overview only re-evaluate their saved/unsaved icons if this notification fires. Without it a
+        // student editing this exercise type during an exam sees no unsaved-changes indicator.
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
+
+        component.onTextEditorInput({ target: { value: 'abc' } } as unknown as Event);
+
+        expect(component.studentSubmission().isSynced).toBe(false);
+        expect(notify).toHaveBeenCalledTimes(1);
     });
 });

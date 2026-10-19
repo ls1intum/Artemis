@@ -35,7 +35,7 @@ export class BrowserFingerprintInterceptor implements HttpInterceptor {
      * @param next - The next handler in the interceptor chain
      * @returns Observable of the HTTP event stream
      */
-    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
         if (isRequestToArtemisServer(request) && (this.cachedInstanceId || this.cachedFingerprint || this.cachedSessionId)) {
             request = request.clone({
                 setHeaders: {

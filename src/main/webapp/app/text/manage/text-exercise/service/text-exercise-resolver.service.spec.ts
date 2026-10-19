@@ -3,7 +3,6 @@
  * Verifies the resolver's behavior for resolving text exercises in different contexts.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text-exercise-resolver.service';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
@@ -19,7 +18,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { Course } from 'app/course/shared/entities/course.model';
 
 describe('TextExerciseResolver', () => {
-    setupTestBed({ zoneless: true });
     let resolver: TextExerciseResolver;
     let route: ActivatedRouteSnapshot;
 

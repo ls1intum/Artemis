@@ -61,7 +61,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 
-        final var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        final var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
@@ -192,6 +192,20 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         checkCanAccessParticipation(programmingExercise, participation, true, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdministratorCanAccessStudentParticipationById() {
+        userUtilService.addAdmin(TEST_PREFIX);
+
+        assertThat(participationAuthCheckService.canAccessStudentParticipation(participation.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testUnrelatedStudentCannotAccessStudentParticipationById() {
+        assertThat(participationAuthCheckService.canAccessStudentParticipation(participation.getId())).isFalse();
     }
 
     void checkCanAccessParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation, final boolean shouldBeAllowed,

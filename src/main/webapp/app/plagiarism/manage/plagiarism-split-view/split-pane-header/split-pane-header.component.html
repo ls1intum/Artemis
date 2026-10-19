@@ -1,5 +1,17 @@
 <div class="split-pane-header" ngbDropdown>
-    <div class="split-pane-header-top" data-toggle="dropdown" [ngClass]="{ active: showFiles, clickable: hasFiles() }" (click)="toggleShowFiles(true)">
+    <div
+        class="split-pane-header-top"
+        data-toggle="dropdown"
+        [ngClass]="{ active: showFiles(), clickable: hasFiles() }"
+        (click)="toggleShowFiles(true)"
+        [attr.aria-expanded]="hasFiles() ? showFiles() : null"
+        #keyboardAction2
+        [attr.role]="hasFiles() ? 'button' : null"
+        [attr.tabindex]="hasFiles() ? 0 : null"
+        (keydown.enter)="hasFiles() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="hasFiles() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="hasFiles() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    >
         @if (hasActiveFile()) {
             <div class="split-pane-header-file-name">
                 <fa-icon class="file-arrow-down" [icon]="faChevronDown" />
@@ -8,7 +20,7 @@
         }
         <div>{{ studentLogin() || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}</div>
     </div>
-    @if (showFiles) {
+    @if (showFiles()) {
         <ul (mouseleave)="toggleShowFiles(true, false)" class="split-pane-header-files">
             @for (file of files(); track file; let idx = $index) {
                 <li
@@ -16,7 +28,13 @@
                     ngbDropdownItem
                     (mouseenter)="triggerMouseEnter(file, idx)"
                     (click)="handleFileSelect(file, idx, true)"
-                    [ngClass]="{ hover: idx === hoveredFileIndex }"
+                    [ngClass]="{ hover: idx === hoveredFileIndex() }"
+                    #keyboardAction14
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction14.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction14.click() : undefined"
                 >
                     <span [class.split-pane-header-file-with-match]="file.hasMatch">{{ file.file }}</span>
                 </li>

@@ -13,6 +13,7 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { captureException } from '@sentry/angular';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-team-students-online-list',
@@ -28,13 +29,13 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     readonly SHOW_TYPING_DURATION = 2000; // ms
     readonly SEND_TYPING_INTERVAL = this.SHOW_TYPING_DURATION / 1.5;
 
-    readonly typing$ = input<Observable<any> | undefined>(undefined);
+    readonly typing$ = input<Observable<string> | undefined>(undefined);
     readonly participation = input.required<StudentParticipation>();
 
-    currentUser: User;
+    currentUser?: User;
     onlineTeamStudents: OnlineTeamStudent[] = [];
     typingTeamStudents: OnlineTeamStudent[] = [];
-    websocketTopic: string;
+    websocketTopic!: string; // set in setupOnlineTeamStudentsReceiver() (from ngOnInit) before any read
     private websocketSubscription?: Subscription;
     private typingSubscription?: Subscription;
 
@@ -49,7 +50,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
      * client sometimes and thus the list is explicitly requested once more after a short timeout to cover those cases.
      */
     ngOnInit(): void {
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             this.currentUser = user;
             this.setupOnlineTeamStudentsReceiver();
             this.setupTypingIndicatorSender();
@@ -69,7 +70,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
                 error: (error: unknown) => captureException(error),
             });
         setTimeout(() => {
-            this.websocketService.send<object>(this.buildWebsocketTopic('/trigger'), {});
+            this.websocketService.send<object>(this.buildSendDestination('/trigger'), {});
         }, 700);
     }
 
@@ -77,7 +78,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         const typing$ = this.typing$();
         if (typing$) {
             this.typingSubscription = typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
-                next: () => this.websocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
+                next: () => this.websocketService.send<object>(this.buildSendDestination('/typing'), {}),
                 error: (error: unknown) => captureException(error),
             });
         }
@@ -153,19 +154,28 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     }
 
     private convertOnlineTeamStudentsFromServer(students: OnlineTeamStudent[]) {
-        return students.map((student) => {
-            return {
-                ...student,
+        // The server may send null dates (never typed/acted); the accessors and templates handle that. The array
+        // cast (on the map result, not an object literal — so it satisfies consistent-type-assertions) keeps the
+        // stream typed as OnlineTeamStudent[] the way it was before strictFunctionTypes enforced the callback variance.
+        return students.map((student) =>
+            cloneWith(student, {
                 lastTypingDate: student.lastTypingDate !== null ? dayjs(student.lastTypingDate) : null,
                 lastActionDate: student.lastActionDate !== null ? dayjs(student.lastActionDate) : null,
-            };
-        });
+            }),
+        ) as OnlineTeamStudent[];
     }
 
     /**
-     * Topic for updates on online status of team members (needs to match route in ParticipationTeamWebsocketService.java)
+     * Topic for updates on online status of team members (needs to match ExerciseWebsocketTopics.TEAM_ONLINE_STUDENTS)
      */
-    private buildWebsocketTopic(path = ''): string {
-        return `/topic/participations/${this.participation().id}/team${path}`;
+    private buildWebsocketTopic(): string {
+        return `/topic/participations/${this.participation().id}/team`;
+    }
+
+    /**
+     * Destination for messages to the server (needs to match the routes in ParticipationTeamWebsocketService.java)
+     */
+    private buildSendDestination(path: string): string {
+        return `/app/participations/${this.participation().id}/team${path}`;
     }
 }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ACTIVE_MODULE_FEATURES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -10,6 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 /**
  * Test for {@link ModuleFeatureInfoContributor}.
@@ -22,7 +24,9 @@ class ModuleFeatureInfoContributorTest {
     private static final List<String> modulePropertyNames = List.of(
         Constants.ATLAS_ENABLED_PROPERTY_NAME,
         Constants.ATLASML_ENABLED_PROPERTY_NAME,
+        Constants.ATLASLLM_ENABLED_PROPERTY_NAME,
         Constants.HYPERION_ENABLED_PROPERTY_NAME,
+        Constants.DEIMOS_ENABLED_PROPERTY_NAME,
         Constants.EXAM_ENABLED_PROPERTY_NAME,
         Constants.PLAGIARISM_ENABLED_PROPERTY_NAME,
         Constants.TEXT_ENABLED_PROPERTY_NAME,
@@ -38,7 +42,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.ATHENA_ENABLED_PROPERTY_NAME,
         Constants.APOLLON_ENABLED_PROPERTY_NAME,
         Constants.LDAP_ENABLED_PROPERTY_NAME,
-        Constants.SAML2_ENABLED_PROPERTY_NAME
+        Constants.SAML2_ENABLED_PROPERTY_NAME,
+        Constants.WEAVIATE_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
 
@@ -46,7 +51,10 @@ class ModuleFeatureInfoContributorTest {
     private static final List<String> moduleFeatures = List.of(
         Constants.MODULE_FEATURE_ATLAS,
         Constants.MODULE_FEATURE_ATLASML,
+        Constants.MODULE_FEATURE_ATLASLLM,
         Constants.MODULE_FEATURE_HYPERION,
+        Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+        Constants.MODULE_FEATURE_DEIMOS,
         Constants.MODULE_FEATURE_EXAM,
         Constants.MODULE_FEATURE_PLAGIARISM,
         Constants.MODULE_FEATURE_TEXT,
@@ -62,7 +70,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.MODULE_FEATURE_ATHENA,
         Constants.MODULE_FEATURE_APOLLON,
         Constants.MODULE_FEATURE_LDAP,
-        Constants.MODULE_FEATURE_SAML2
+        Constants.MODULE_FEATURE_SAML2,
+        Constants.MODULE_FEATURE_GLOBAL_SEARCH
     );
     // @formatter:on
 
@@ -82,6 +91,8 @@ class ModuleFeatureInfoContributorTest {
             mockProperty(key, true);
         }
         mockProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, true);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, true);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
 
         ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv);
 
@@ -106,6 +117,8 @@ class ModuleFeatureInfoContributorTest {
             mockProperty(key, propertyEnabled);
         }
         mockProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, passkeyAdminRequired);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, propertyEnabled);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(propertyEnabled);
 
         ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv);
 

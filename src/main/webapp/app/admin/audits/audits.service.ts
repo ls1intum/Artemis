@@ -1,14 +1,28 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Audit } from 'app/admin/audits/audit.model';
+import { AuditLogType } from 'app/admin/audits/audit-log-type.model';
 
-@Injectable({ providedIn: 'root' })
+/**
+ * Query parameters for retrieving audit entries.
+ */
+export interface AuditsQuery {
+    page?: number;
+    size?: number;
+    sort?: string[];
+    fromDate?: string;
+    toDate?: string;
+    /** Which of the three audit logs to read. Defaults to the general log on the server if omitted. */
+    logType?: AuditLogType;
+}
+
+@Service()
 export class AuditsService {
     private http = inject(HttpClient);
 
-    query(req: any): Observable<HttpResponse<Audit[]>> {
+    query(req: AuditsQuery): Observable<HttpResponse<Audit[]>> {
         const params: HttpParams = createRequestOption(req);
 
         const requestURL = 'api/admin/audits';

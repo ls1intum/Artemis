@@ -1,15 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { QuizExercisePagingService } from './quiz-exercise-paging.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 
 describe('QuizExercisePagingService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: QuizExercisePagingService;
     let httpMock: HttpTestingController;
 

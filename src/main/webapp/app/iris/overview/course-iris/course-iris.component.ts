@@ -6,7 +6,18 @@ import { map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
+import { CourseOverviewRoutePath } from 'app/course/overview/course-overview-route-path';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { IRIS_SESSION_QUERY_PARAM } from 'app/iris/shared/entities/iris-session.model';
+
+/** Parses a route parameter holding an id, or yields undefined when it is missing or not a number. */
+function toId(value: string | undefined): number | undefined {
+    if (!value) {
+        return undefined;
+    }
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+}
 
 @Component({
     selector: 'jhi-course-iris',
@@ -15,7 +26,7 @@ import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
     imports: [CourseChatbotComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CourseIrisComponent {
+export class CourseIrisComponent implements SidebarView {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly irisChatService = inject(IrisChatService);
@@ -26,16 +37,16 @@ export class CourseIrisComponent {
         initialValue: undefined,
     });
 
-    readonly courseId = computed(() => {
-        const value = this.courseIdParam();
-        if (!value) {
-            return undefined;
-        }
-        const parsed = Number(value);
-        return Number.isNaN(parsed) ? undefined : parsed;
+    private readonly sessionIdParam = toSignal(this.route.queryParamMap.pipe(map((params) => params.get(IRIS_SESSION_QUERY_PARAM) ?? undefined)), {
+        initialValue: undefined,
     });
 
-    isCollapsed = false;
+    readonly courseId = computed(() => toId(this.courseIdParam()));
+
+    /** The session a link asks to open, e.g. the chat a global search answer was continued in. */
+    readonly sessionId = computed(() => toId(this.sessionIdParam()));
+
+    readonly isCollapsed = computed<boolean>(() => !(this.courseChatbot()?.isChatHistoryOpen() ?? true));
 
     constructor() {
         // When the user opts out of AI from the chat's LLM selection modal while on this page,
@@ -43,13 +54,12 @@ export class CourseIrisComponent {
         this.irisChatService.llmOptedOut$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             const id = this.courseId();
             if (id !== undefined) {
-                this.router.navigate(['/courses', id, CourseOverviewRoutePath.EXERCISES]);
+                void this.router.navigate(['/courses', id, CourseOverviewRoutePath.EXERCISES]);
             }
         });
     }
 
     toggleSidebar(): void {
         this.courseChatbot()?.toggleChatHistory();
-        this.isCollapsed = !this.isCollapsed;
     }
 }

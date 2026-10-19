@@ -17,8 +17,10 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -45,6 +47,9 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
     @Autowired
     private UserTestRepository userRepository;
 
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
@@ -61,7 +66,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
         @BeforeEach
         void initTestCase() {
-            Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+            Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
             modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
 
             participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
@@ -353,30 +358,26 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
         @BeforeEach
         void setUp() {
-            course = courseUtilService.addEmptyCourse();
+            course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
             userUtilService.addSuperAdmin(TEST_PREFIX);
             superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
-            // Add student to the course's student group
             student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-            student.setGroups(Set.of(course.getStudentGroupName()));
-            userRepository.save(student);
 
-            // Add tutor to the course's TA group
+            // student2 is a student-role user acting as TA in this course for superadmin tests
             tutor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-            tutor.setGroups(Set.of(course.getTeachingAssistantGroupName()));
-            userRepository.save(tutor);
+            userUtilService.enrollUserInCourse(tutor, course, CourseRole.TEACHING_ASSISTANT);
+            // Re-fetch so that tutor.courseRoles reflects the newly added TA role (stale in-memory object)
+            tutor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
-            // Create and add editor to the course's editor group
+            // editor is a freshly created user — not covered by the prefix enrollment above
             userUtilService.createAndSaveUser(TEST_PREFIX + "editor");
             editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor");
-            editor.setGroups(Set.of(course.getEditorGroupName()));
-            userRepository.save(editor);
+            userUtilService.enrollUserInCourse(editor, course, CourseRole.EDITOR);
+            // Re-fetch so that editor.courseRoles reflects the newly added EDITOR role
+            editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor");
 
-            // Add instructor to the course's instructor group
             instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-            instructor.setGroups(Set.of(course.getInstructorGroupName()));
-            userRepository.save(instructor);
         }
 
         @Test

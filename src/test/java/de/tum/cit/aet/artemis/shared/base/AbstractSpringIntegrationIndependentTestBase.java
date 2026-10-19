@@ -19,6 +19,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.admin.service.SbomService;
 import de.tum.cit.aet.artemis.admin.service.VulnerabilityService;
+import de.tum.cit.aet.artemis.athena.service.AthenaScheduleService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
+import de.tum.cit.aet.artemis.notification.service.NotificationScheduleService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -86,6 +89,16 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @MockitoBean
     protected TumLiveService tumLiveService;
 
+    // Both scan every exercise with an upcoming release, assessment or due date once, a fixed delay after startup, on a
+    // shared scheduler thread; mocked here (rather than in a leaf test class) so every Independent test shares one Spring
+    // context instead of each override combination spawning its own. See CourseOverviewLoadProfileTest, which reads
+    // process-wide Hibernate query statistics and would otherwise misattribute either scan's queries to itself.
+    @MockitoBean
+    protected NotificationScheduleService notificationScheduleService;
+
+    @MockitoBean
+    protected AthenaScheduleService athenaScheduleService;
+
     // Mock PasskeyAuthenticationService to allow super admin operations in tests
     // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
     @MockitoSpyBean
@@ -108,6 +121,8 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
+            // Since Spring AI 2.0 the ChatClient merges request options into the model's options, which must be non-null
+            when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         }
         // Mock passkey authentication to always return true for super admin operations in tests
         // Use doReturn instead of when().thenReturn() because the method throws an exception
@@ -121,7 +136,8 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
-        Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService);
+        Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService, examLiveEventsService, groupNotificationScheduleService,
+                passkeyAuthenticationService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }
@@ -130,6 +146,12 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
         }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);
+        }
+        if (notificationScheduleService != null) {
+            Mockito.reset(notificationScheduleService);
+        }
+        if (athenaScheduleService != null) {
+            Mockito.reset(athenaScheduleService);
         }
         if (chatMemoryRepository != null) {
             Mockito.reset(chatMemoryRepository);

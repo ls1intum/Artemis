@@ -33,9 +33,9 @@ export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComp
     initialValue = signal<string | undefined>(undefined);
     translationKeys = signal<GenericUpdateTextPropertyTranslationKeys | undefined>(undefined);
 
-    form: FormGroup;
+    form!: FormGroup; // set in initializeForm() from initialize()
 
-    initialize() {
+    override initialize() {
         super.initialize(['propertyName', 'maxPropertyLength', 'translationKeys']);
         if (this.isInitialized) {
             this.initializeForm();

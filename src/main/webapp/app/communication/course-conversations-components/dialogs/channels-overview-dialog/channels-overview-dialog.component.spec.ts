@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -34,8 +33,6 @@ const examples: ChannelDTO[] = [
 
 examples.forEach((exampleChannel) => {
     describe('ChannelsOverviewDialogComponent for ' + exampleChannel.subType + ' channels', () => {
-        setupTestBed({ zoneless: true });
-
         let component: ChannelsOverviewDialogComponent;
         let fixture: ComponentFixture<ChannelsOverviewDialogComponent>;
         const course = { id: 1, isAtLeastInstructor: true } as Course;

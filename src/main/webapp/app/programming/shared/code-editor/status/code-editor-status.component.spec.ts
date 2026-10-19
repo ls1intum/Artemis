@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -11,8 +10,6 @@ import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/serv
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorStatusComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorStatusComponent;
     let fixture: ComponentFixture<CodeEditorStatusComponent>;
 

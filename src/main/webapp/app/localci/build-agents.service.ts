@@ -1,20 +1,33 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
+import { BuildAgentAddressInfo, BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { catchError } from 'rxjs/operators';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BuildAgentsService {
-    public adminResourceUrl = 'api/admin';
-
     private readonly http = inject(HttpClient);
+
+    public adminResourceUrl = 'api/admin';
 
     /**
      * Get all build agents
      */
     getBuildAgentSummary(): Observable<BuildAgentInformation[]> {
         return this.http.get<BuildAgentInformation[]>(`${this.adminResourceUrl}/build-agents`);
+    }
+
+    /**
+     * Get the network addresses every build agent is registered to connect from.
+     *
+     * Separate from the agent information because it is recorded by the core nodes rather than by the agents.
+     */
+    getBuildAgentAddresses(): Observable<BuildAgentAddressInfo[]> {
+        return this.http.get<BuildAgentAddressInfo[]>(`${this.adminResourceUrl}/build-agent-addresses`).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to fetch build agent addresses\n${err.message}`));
+            }),
+        );
     }
 
     /**

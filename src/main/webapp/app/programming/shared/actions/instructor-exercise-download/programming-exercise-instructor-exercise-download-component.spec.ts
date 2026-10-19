@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from 'app/programming/shared/actions/instructor-exercise-download/programming-exercise-instructor-exercise-download.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { throwError } from 'rxjs';
@@ -12,8 +11,6 @@ import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('ProgrammingExerciseInstructorExerciseDownloadComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ProgrammingExerciseInstructorExerciseDownloadComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructorExerciseDownloadComponent>;
     let service: ProgrammingExerciseService;
@@ -21,8 +18,8 @@ describe('ProgrammingExerciseInstructorExerciseDownloadComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ProgrammingExerciseInstructorExerciseDownloadComponent, MockComponent(ButtonComponent)],
-            providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }],
+            imports: [ProgrammingExerciseInstructorExerciseDownloadComponent, MockComponent(ButtonComponent)],
+            providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }, provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseInstructorExerciseDownloadComponent);

@@ -3,13 +3,14 @@ import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-file-browser-create-node',
     templateUrl: './code-editor-file-browser-create-node.component.html',
     styleUrls: ['./code-editor-file-browser-create-node.component.scss'],
     providers: [NgbModal],
-    imports: [FaIconComponent],
+    imports: [FaIconComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     FileType = FileType;
@@ -24,12 +25,13 @@ export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     onCreateFile = output<string>();
     onClearCreatingFile = output<Event>();
 
-    createFile(event: any) {
-        if (!event.target.value) {
+    createFile(event: Event) {
+        const value = (event.target as HTMLInputElement).value;
+        if (!value) {
             this.onClearCreatingFile.emit(event);
             return;
         }
-        this.onCreateFile.emit(event.target.value);
+        this.onCreateFile.emit(value);
     }
 
     ngAfterViewInit(): void {

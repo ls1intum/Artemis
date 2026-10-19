@@ -2,13 +2,30 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Represents a Version Control System (VCS) repository URI with capabilities to manipulate and extract information from it.
  * This class supports handling both local file references and remote repository URIs.
  */
 public class VcsRepositoryUri {
+
+    /** The git suffix a repository URI may carry. */
+    private static final Pattern GIT_SUFFIX = Pattern.compile("\\.git$");
+
+    /** A trailing slash of a repository path. */
+    private static final Pattern TRAILING_SLASH = Pattern.compile("/$");
+
+    /** The scm prefix of a repository path. */
+    private static final Pattern SCM_PREFIX = Pattern.compile("^/.*scm");
+
+    /** Everything before the git path segment of a repository path. */
+    private static final Pattern PREFIX_BEFORE_GIT = Pattern.compile("^.*?/git/");
+
+    /** A leading slash of a repository path. */
+    private static final Pattern LEADING_SLASH = Pattern.compile("^/");
 
     /** The username associated with the VCS repository URI, if applicable. */
     protected String username;
@@ -109,11 +126,11 @@ public class VcsRepositoryUri {
         else { // e.g. http(s) or ssh
             String path = getURI().getPath();
             // remove .git (which might be used at the end)
-            path = path.replaceAll("\\.git$", "");
-            path = path.replaceAll("/$", "");
-            path = path.replaceAll("^/.*scm", "");
-            path = path.replaceAll("^.*?/git/", "/");
-            path = path.replaceFirst("^/", "");
+            path = GIT_SUFFIX.matcher(path).replaceAll("");
+            path = TRAILING_SLASH.matcher(path).replaceAll("");
+            path = SCM_PREFIX.matcher(path).replaceAll("");
+            path = PREFIX_BEFORE_GIT.matcher(path).replaceAll("/");
+            path = LEADING_SLASH.matcher(path).replaceFirst("");
 
             return path;
         }
@@ -140,7 +157,7 @@ public class VcsRepositoryUri {
      * @return The repository name without the project key and the practice prefix, in lowercase.
      */
     public String repositoryNameWithoutProjectKey() {
-        return repositorySlug().toLowerCase().replace(projectKey().toLowerCase() + "-", "").replace("practice-", "");
+        return repositorySlug().toLowerCase(Locale.ROOT).replace(projectKey().toLowerCase(Locale.ROOT) + "-", "").replace("practice-", "");
     }
 
     /**
@@ -175,6 +192,7 @@ public class VcsRepositoryUri {
      * @return The project key in lowercase, as found in the URI's path.
      */
     private String projectKey() {
-        return this.uri.getPath().substring(this.uri.getPath().lastIndexOf('/', this.uri.getPath().lastIndexOf('/') - 1) + 1, this.uri.getPath().lastIndexOf('/')).toLowerCase();
+        return this.uri.getPath().substring(this.uri.getPath().lastIndexOf('/', this.uri.getPath().lastIndexOf('/') - 1) + 1, this.uri.getPath().lastIndexOf('/'))
+                .toLowerCase(Locale.ROOT);
     }
 }

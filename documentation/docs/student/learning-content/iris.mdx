@@ -1,19 +1,113 @@
 ---
-title: Iris - AI Virtual Tutor
+id: iris
+title: Iris, the AI Tutor
 sidebar_label: Iris
 ---
 
-# Iris
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
 
-Iris is an AI-powered virtual tutor integrated into Artemis. It provides context-aware support for programming exercises, text exercises, and lecture content, helping students learn through guided hints and explanations rather than giving away solutions.
+import irisAiChoice from './assets/iris/iris-ai-choice.png';
+import irisChatEmpty from './assets/iris/iris-chat-empty.png';
+import irisConversation from './assets/iris/iris-conversation.png';
 
-For comprehensive documentation, visit the **[Iris documentation](https://ls1intum.github.io/edutelligence/iris/)**.
+Iris is a tutor built into Artemis that you can ask questions of while you work. It already has the exercise and
+your latest submission in front of it, so you can ask about *this* task without explaining it first.
 
-## Role-Specific Guides
+It is built to help you get there rather than to get there for you. Artemis does not allow it to give complete
+solutions or full code blocks, whatever your instructor has configured — so asking for the answer will not produce
+one, and asking why your answer is wrong usually will.
 
-| Role | Guide |
-|------|-------|
-| **Students** | [Getting Started](https://ls1intum.github.io/edutelligence/iris/docs/student/getting-started) — How to use Iris for learning |
-| **Instructors** | [Enabling Iris](https://ls1intum.github.io/edutelligence/iris/docs/instructor/enabling-iris) — Course setup and configuration |
-| **Developers** | [Local Setup](https://ls1intum.github.io/edutelligence/iris/docs/developer/local-setup) — Development environment setup |
-| **Administrators** | [Deployment](https://ls1intum.github.io/edutelligence/iris/docs/admin/deployment) — Production deployment guide |
+## Choosing Whether to Use AI
+
+The first time you open anything AI-powered in Artemis, you are asked to choose. This is your decision, not your
+instructor's, and it applies to your account.
+
+<Image src={irisAiChoice} alt="Choose Your AI Experience, offering Cloud or No AI and a long-term memory toggle" size={ImageSize.large} caption="The choice you make once" />
+
+**Cloud** uses current cloud models on Azure. Artemis states what that means: processing is GDPR-compliant, your data
+is stored on university datacenters, and your personal details — your registration number, your email address — are
+never sent to a model.
+
+**No AI** leaves the rest of Artemis working exactly as it does now. You lose Iris, the automated AI feedback on
+modeling and text exercises, and AI-powered guidance; you lose nothing else.
+
+**Enable long-term memory** is separate and can be turned off on its own. With it on, Iris remembers your learning
+preferences and past conversations so its help gets more personal over time. With it off, each conversation starts
+from nothing.
+
+<Callout variant={CalloutVariant.info}>
+
+  Choosing **No AI** is a legitimate choice with no academic penalty attached: nothing that is marked depends on
+  having used Iris.
+
+</Callout>
+
+The chat panel puts the same decision in front of you in words: accepting confirms that you are at least 18 and that
+you agree to your interactions and the context around them — including your code — being processed, with nothing
+stored in the cloud. Choosing an option settles both; **Decline** leaves the chat closed and changes nothing else
+about Artemis.
+
+## Asking a Question
+
+On an exercise, the **Iris** tab sits in the panel beside the problem statement. Opening it gives you an empty chat
+that already knows where you are.
+
+<Image src={irisChatEmpty} alt="The Iris chat ready to use, with the current exercise set as its topic" size={ImageSize.medium} caption="The chat, with the exercise as its topic" />
+
+The chip above the message box is the **topic** — the exercise Iris will answer about. The **+** button beside it
+changes that: point Iris at a different exercise, at a lecture, or at the course as a whole when your question is not
+about the task in front of you. The **×** on the chip removes the topic entirely, which is what you want for a
+general question.
+
+Type the question and send it. Iris answers in the panel, and you can keep going: it remembers the conversation, so
+a follow-up like "why does that matter here?" works.
+
+<Image src={irisConversation} alt="A question about the Observer pattern and Iris's reply" size={ImageSize.medium} caption="A question and its answer" />
+
+Under each answer are three controls: one copies the text, and the thumbs up and down rate it. Those ratings feed an
+aggregate that administrators can see, so they are how the people running Artemis find out that Iris is unhelpful.
+They are worth using for that reason, and they do not reach your instructors as individual conversations.
+
+<Callout variant={CalloutVariant.warning}>
+
+  The panel says it plainly: Iris can make mistakes. It is confident whether or not it is right, so check anything
+  that matters against the lecture, the problem statement or a tutor. Treat it as a well-read fellow student rather
+  than as the marking scheme.
+
+</Callout>
+
+## Where Else Iris Appears
+
+The exercise chat is offered on **programming** and **text** exercises. On other types — modeling, quiz, file
+upload — there is no Iris tab, and in an **exam** there is none either, whatever the course settings say.
+
+Beyond an exercise, Iris can answer about a **lecture** you have open, and about the **course** as a whole — which is
+the one to use for "where do I find" and "what is due when" questions. Your instructor switches Iris on or off for the
+whole course rather than place by place, so the difference between one exercise and another is its type, not a
+setting.
+
+Your conversations are yours: they are part of the
+[data export](/student/tools-reference/exports#export-user-data-gdpr-data-export) you can request of everything
+Artemis holds about you.
+
+## Getting Better Answers
+
+Iris is as good as the question. Three things help.
+
+**Say what you tried.** "I expected the list to be sorted after the first pass but it is unchanged" gets you further
+than "my code does not work", because the first tells Iris where to look.
+
+**Set the right topic.** A question about last week's lecture asked with this week's exercise as the topic gets an
+answer about the wrong thing. Change the chip first.
+
+**Ask about the reasoning, not the answer.** Iris cannot give you the solution, so a request for one wastes a turn.
+"Why is a list of observers better than calling each display directly?" is a question it can answer completely.
+
+## Related
+
+- [Iris for instructors](/instructor/communication-support/iris) — the settings behind the tutor you are talking to,
+  including the support level that decides how much it gives away.
+- [Artemis Intelligence](/admin/artemis-intelligence) — where Iris sits among the other AI services and what each is
+  responsible for.

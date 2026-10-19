@@ -16,5 +16,6 @@ export class OrderedListAction extends ListAction {
         return `${lineNumber}.${space}`;
     }
 
-    protected readonly PREFIX: string;
+    // Numbered lists derive each prefix from the line number in getPrefix(); the base class's abstract PREFIX is unused here.
+    protected readonly PREFIX = '';
 }

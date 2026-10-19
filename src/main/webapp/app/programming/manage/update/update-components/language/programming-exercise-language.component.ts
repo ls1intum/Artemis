@@ -1,20 +1,19 @@
-import { AfterViewChecked, AfterViewInit, Component, EventEmitter, OnDestroy, input, viewChild } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, EventEmitter, OnDestroy, input, model, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { PROFILE_LOCALCI } from 'app/app.constants';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { Subject, Subscription } from 'rxjs';
-import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { APP_NAME_PATTERN_FOR_SWIFT } from 'app/foundation/constants/input.constants';
+import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PACKAGE_NAME_LENGTH } from 'app/foundation/constants/input.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
@@ -27,31 +26,29 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
         HelpIconComponent,
         FaIconComponent,
         ProgrammingExerciseTheiaComponent,
-        ProgrammingExerciseCustomBuildPlanComponent,
         KeyValuePipe,
         RemoveKeysPipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, AfterViewInit, OnDestroy {
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
 
-    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly programmingExercise = model.required<ProgrammingExercise>();
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
     readonly selectLanguageField = viewChild<NgModel>('select');
     readonly packageNameField = viewChild<NgModel>('packageName');
-    readonly programmingExerciseCustomBuildPlanComponent = viewChild(ProgrammingExerciseCustomBuildPlanComponent);
     readonly programmingExerciseTheiaComponent = viewChild(ProgrammingExerciseTheiaComponent);
 
-    formValid: boolean;
+    formValid!: boolean; // assigned in calculateFormValid() (run after view init / field changes); parent reads it via `?? false`
     formValidChanges = new Subject<boolean>();
 
     fieldSubscriptions: (Subscription | undefined)[] = [];
 
     faExclamationTriangle = faExclamationTriangle;
-    protected readonly PROFILE_LOCALCI = PROFILE_LOCALCI;
 
     readonly DOCKER_REGISTRY_LINKS = {
         ghcrLink: 'https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry',
@@ -60,6 +57,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     readonly DOCUMENTATION_LINK = 'https://docs.artemis.tum.de/instructor/exercises/programming-exercise';
 
     protected readonly APP_NAME_PATTERN_FOR_SWIFT = APP_NAME_PATTERN_FOR_SWIFT;
+    protected readonly MAX_PACKAGE_NAME_LENGTH = MAX_PACKAGE_NAME_LENGTH;
 
     ngAfterViewInit() {
         this.fieldSubscriptions.push(this.selectLanguageField()?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));
@@ -69,16 +67,6 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         const packageNameField = this.packageNameField();
         if (!(packageNameField?.valueChanges as EventEmitter<string>)?.observed) {
             this.fieldSubscriptions.push(packageNameField?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));
-        }
-
-        const dockerImageField = this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent()?.dockerImageField();
-        if (!(dockerImageField?.valueChanges as EventEmitter<string>)?.observed) {
-            this.fieldSubscriptions.push(dockerImageField?.valueChanges?.subscribe(() => this.calculateFormValid()));
-        }
-
-        const timeoutField = this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent()?.timeoutField();
-        if (!(timeoutField?.valueChanges as EventEmitter<number>)?.observed) {
-            this.fieldSubscriptions.push(timeoutField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
     }
 
@@ -91,8 +79,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     calculateFormValid() {
         const selectLanguageField = this.selectLanguageField();
         const isPackageNameValid = this.isPackageNameValid();
-        const isCustomBuildPlanValid = this.isCustomBuildPlanValid();
-        this.formValid = Boolean((selectLanguageField?.isDisabled || selectLanguageField?.valid) && isPackageNameValid && isCustomBuildPlanValid);
+        this.formValid = Boolean((selectLanguageField?.isDisabled || selectLanguageField?.valid) && isPackageNameValid);
         this.formValidChanges.next(this.formValid);
     }
 
@@ -101,20 +88,5 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         const languageOrPackageExempt = !this.programmingExercise().programmingLanguage || !this.programmingExerciseCreationConfig().packageNameRequired;
         const fieldValidOrExempt = this.programmingExercise().projectType === ProjectType.XCODE || packageNameField?.isDisabled || packageNameField?.valid;
         return Boolean(languageOrPackageExempt || fieldValidOrExempt);
-    }
-
-    isCustomBuildPlanValid(): boolean {
-        if (!this.programmingExercise().customizeBuildPlan) {
-            return true;
-        }
-
-        if (this.programmingExerciseCreationConfig().customBuildPlansSupported === PROFILE_LOCALCI) {
-            return (
-                (this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent()?.dockerImageField()?.valid ?? false) &&
-                (this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent()?.timeoutField()?.valid ?? false)
-            );
-        }
-
-        return true;
     }
 }

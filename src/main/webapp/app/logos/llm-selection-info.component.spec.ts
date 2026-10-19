@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LlmSelectionInfoComponent } from './llm-selection-info.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -8,8 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('LlmSelectionInfoComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LlmSelectionInfoComponent;
     let fixture: ComponentFixture<LlmSelectionInfoComponent>;
 
@@ -34,7 +31,9 @@ describe('LlmSelectionInfoComponent', () => {
     });
 
     it('should have the correct selector', () => {
-        const componentMetadata = (component.constructor as any).__annotations__?.[0];
-        expect(componentMetadata?.selector).toBe('jhi-llm-selection-info');
+        // Angular's Ivy compiler no longer populates the legacy `__annotations__` reflection metadata;
+        // the component's selector is exposed via the compiled `ɵcmp` definition instead.
+        const componentDef = (component.constructor as any)['ɵcmp'];
+        expect(componentDef?.selectors?.[0]?.[0]).toBe('jhi-llm-selection-info');
     });
 });

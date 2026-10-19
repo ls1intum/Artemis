@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/exercise/statistics-graph/average-score-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,11 +10,9 @@ import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 import { vi } from 'vitest';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
     let component: StatisticsAverageScoreGraphComponent;
     let routingStub: ReturnType<typeof vi.spyOn>;
@@ -82,7 +79,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [StatisticsAverageScoreGraphComponent],
-            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }, provideNoopAnimationsForTests()],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
         component = fixture.componentInstance;
@@ -136,10 +133,10 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             'StrategyPattern',
         ]);
         for (let i = 0; i < averageExerciseScores.length; i++) {
-            expect(component.ngxData[i].value).toBe(averageExerciseScores[i]);
-            expect(component.ngxData[i].exerciseType).toBe(expectedTypes[i]);
-            expect(component.ngxData[i].exerciseId).toBe(i + 1);
-            expect(component.ngxColor.domain[i]).toBe(expectedColors[i]);
+            expect(component.chartEntries()[i].value).toBe(averageExerciseScores[i]);
+            expect(component.chartEntries()[i].exerciseType).toBe(expectedTypes[i]);
+            expect(component.chartEntries()[i].exerciseId).toBe(i + 1);
+            expect(component.barColors()[i]).toBe(expectedColors[i]);
         }
     });
 
@@ -152,10 +149,10 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     it('should delegate the user to the correct pages', () => {
         fixture.componentRef.setInput('courseId', 42);
 
-        let event: any;
         let path: any[];
+        const series = component.chartData().series[0];
         for (let i = 0; i < 10; i++) {
-            event = { name: sortedScores[i].exerciseName, value: sortedScores[i].averageScore };
+            const event = { seriesIndex: 0, index: i, meta: series.meta?.[i] };
             path = ['course-management', 42, exerciseTypeStrings[i] + '-exercises', sortedScores[i].exerciseId, 'exercise-statistics'];
             if (sortedScores[i].exerciseType === ExerciseType.QUIZ) {
                 path[4] = 'quiz-point-statistic';
@@ -197,7 +194,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expect(applyCategoryFilterMock).toHaveBeenCalledWith(sortedScores);
             expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
 
-            expect(component.currentPeriod).toBe(0);
+            expect(component.currentPeriod()).toBe(0);
         });
 
         it.each(categories)('should filter for category correctly if only one category is selected', (category: string) => {
@@ -211,7 +208,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expect(applyTypeFilterMock).toHaveBeenCalledWith(sortedScores);
 
             expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
-            expect(component.currentPeriod).toBe(0);
+            expect(component.currentPeriod()).toBe(0);
         });
 
         it('should filter all categories', () => {
@@ -225,7 +222,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expect(applyTypeFilterMock).toHaveBeenCalledWith(sortedScores);
 
             expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
-            expect(component.currentPeriod).toBe(0);
+            expect(component.currentPeriod()).toBe(0);
         });
 
         it('should filter exercises with no category', () => {
@@ -239,7 +236,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expect(applyTypeFilterMock).toHaveBeenCalledWith(sortedScores);
 
             expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
-            expect(component.currentPeriod).toBe(0);
+            expect(component.currentPeriod()).toBe(0);
         });
 
         it('should filter correctly if lowest third is selected', () => {

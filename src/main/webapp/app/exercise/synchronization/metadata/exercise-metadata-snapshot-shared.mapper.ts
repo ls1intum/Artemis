@@ -4,6 +4,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
+import { parseJson } from 'app/foundation/util/json.util';
 import {
     CompetencyExerciseLinkSnapshotDTO,
     GradingCriterionSnapshotDTO,
@@ -40,7 +41,7 @@ export const normalizeCategoryEntry = (value: unknown): ExerciseCategory | undef
             return undefined;
         }
         try {
-            const parsed = JSON.parse(trimmed);
+            const parsed = parseJson(trimmed);
             if (parsed && typeof parsed === 'object' && 'category' in parsed) {
                 const category = (parsed as { category?: string }).category?.trim();
                 if (!category) {

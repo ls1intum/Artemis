@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
@@ -16,7 +16,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackHighlightColor, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
@@ -27,15 +27,31 @@ import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entitie
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
+import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { parseJson } from 'app/foundation/util/json.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
+import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import {
+    FeedbackSuggestionsBannerComponent,
+    feedbackSuggestionsNotice as resolveFeedbackSuggestionsNotice,
+} from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
+import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
+import { ModelingAssessmentLegendComponent, ModelingAssessmentLegendHighlight } from 'app/modeling/manage/assess/modeling-assessment-legend/modeling-assessment-legend.component';
+import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
+import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -43,16 +59,26 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
     styleUrls: ['./modeling-assessment-editor.component.scss'],
     imports: [
         AssessmentLayoutComponent,
+        ComplaintsForTutorComponent,
         TranslateDirective,
         ModelingAssessmentComponent,
-        CollapsableAssessmentInstructionsComponent,
+        AssessmentWorkspaceComponent,
+        AssessmentInstructionsComponent,
+        AssessmentNoteComponent,
         UnreferencedFeedbackComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
+        ModelingAssessmentTopLeftDirective,
+        ModelingAssessmentTopRightDirective,
+        ModelingAssessmentLegendComponent,
+        AssessmentNotPossibleYetComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
     private alertService = inject(AlertService);
+    private datePipe = inject(ArtemisDatePipe);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private modelingSubmissionService = inject(ModelingSubmissionService);
@@ -66,43 +92,61 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private athenaService = inject(AthenaService);
 
-    totalScore = 0;
-    submission?: ModelingSubmission;
-    model?: UMLModel;
-    modelingExercise?: ModelingExercise;
-    course?: Course;
-    result?: Result;
+    readonly totalScore = signal(0);
+    readonly submission = signal<ModelingSubmission | undefined>(undefined);
+    readonly model = signal<UMLModel | undefined>(undefined);
+    readonly modelingExercise = signal<ModelingExercise | undefined>(undefined);
+    readonly course = signal<Course | undefined>(undefined);
+    /** Feedback is mutated in place, so equal references must still notify consumers. */
+    readonly result = signal<Result | undefined>(undefined, { equal: () => false });
     referencedFeedback: Feedback[] = [];
-    unreferencedFeedback: Feedback[] = [];
+    readonly unreferencedFeedback = signal<Feedback[]>([]);
     automaticFeedback: Feedback[] = [];
-    feedbackSuggestions: Feedback[] = []; // all pending Athena feedback suggestions (neither accepted nor rejected yet)
-    highlightedElements: Map<string, string>; // map elementId -> highlight color
-    highlightMissingFeedback = false;
+    readonly highlightedElements = signal<Map<string, string>>(undefined!);
+    readonly highlightMissingFeedback = signal(false);
 
-    assessmentsAreValid = false;
-    nextSubmissionBusy: boolean;
-    courseId: number;
+    readonly legendHighlights = computed<ModelingAssessmentLegendHighlight[]>(() => {
+        const highlights: ModelingAssessmentLegendHighlight[] = [];
+        if (this.hasAutomaticFeedback() && !this.result()?.completionDate) {
+            highlights.push({
+                color: FeedbackHighlightColor.CYAN,
+                text: this.isFeedbackSuggestionsEnabled ? 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions' : 'artemisApp.modelingAssessment.legend.automaticAssessment',
+                info: this.isFeedbackSuggestionsEnabled
+                    ? 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo'
+                    : 'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable',
+            });
+        }
+        if (this.highlightMissingFeedback()) {
+            highlights.push({ color: FeedbackHighlightColor.RED, text: 'artemisApp.modelingAssessment.legend.missingAssessment' });
+        }
+        return highlights;
+    });
+
+    readonly assessmentsAreValid = signal(false);
+    readonly nextSubmissionBusy = signal<boolean>(false);
+    courseId!: number;
     examId = 0;
-    exerciseId: number;
-    exerciseGroupId: number;
-    exerciseDashboardLink: string[];
-    userId: number;
-    isAssessor = false;
-    complaint: Complaint;
+    exerciseId!: number;
+    exerciseGroupId!: number;
+    readonly exerciseDashboardLink = signal<string[]>([]);
+    userId!: number;
+    readonly isAssessor = signal(false);
+    readonly complaint = signal<Complaint>(undefined!);
     ComplaintType = ComplaintType;
-    isLoading = true;
-    loadingFeedbackSuggestions = false;
-    isTestRun = false;
-    hasAutomaticFeedback = false;
-    hasAssessmentDueDatePassed: boolean;
-    correctionRound = 0;
-    resultId: number;
-    loadingInitialSubmission = true;
+    readonly isLoading = signal(true);
+    readonly loadingFeedbackSuggestions = signal(false);
+    readonly isTestRun = signal(false);
+    readonly hasAutomaticFeedback = signal(false);
+    readonly hasAssessmentDueDatePassed = signal<boolean>(false);
+    readonly correctionRound = signal(0);
+    private correctionRoundFromUrl = 0;
+    readonly resultId = signal<number>(0);
+    readonly loadingInitialSubmission = signal(true);
+    readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     highlightDifferences = false;
-    resizeOptions = { verticalResize: true };
     isApollonModelLoaded = false;
 
-    private cancelConfirmationText: string;
+    private cancelConfirmationText!: string;
 
     constructor() {
         const translateService = this.translateService;
@@ -110,40 +154,50 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
-    /**
-     * Retrieve all feedback for the current exercise regardless of whether it is referenced or unreferenced
-     */
     private get feedback(): Feedback[] {
-        return [...this.referencedFeedback, ...this.unreferencedFeedback];
+        return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
 
-    /**
-     * Retrieve unreferenced entries from the feedback suggestions loaded from Athena.
-     * The suggestions are displayed in cards underneath the modeling editor canvas.
-     */
-    get unreferencedFeedbackSuggestions(): Feedback[] {
-        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.feedback;
     }
 
-    /**
-     * Retrieve whether feedback suggestions are enabled based on whether a feedback suggestions module is set on the
-     * current modeling exercise.
-     */
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
+    onAssessmentNoteChange(assessmentNote: AssessmentNote): void {
+        const result = this.result();
+        if (result) {
+            result.assessmentNote = assessmentNote;
+        }
+    }
+
     get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.modelingExercise?.feedbackSuggestionModule);
+        return Boolean(getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled);
     }
+
+    readonly feedbackSuggestionsNotice = computed(() =>
+        resolveFeedbackSuggestionsNotice({
+            isLoading: this.loadingFeedbackSuggestions(),
+            hasAutomaticFeedback: this.hasAutomaticFeedback(),
+            isAssessor: this.isAssessor(),
+            resultCompletionDate: this.result()?.completionDate,
+            isFeedbackSuggestionsEnabled: this.isFeedbackSuggestionsEnabled,
+        }),
+    );
 
     ngOnInit() {
-        // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
 
         this.route.queryParamMap.subscribe((queryParams) => {
-            this.isTestRun = queryParams.get('testRun') === 'true';
-            this.correctionRound = Number(queryParams.get('correction-round'));
+            this.isTestRun.set(queryParams.get('testRun') === 'true');
+            // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
+            // Number() alone will not do. Only remembered here, not shown yet; see correctionRoundFromUrl.
+            this.correctionRoundFromUrl = parseCorrectionRound(queryParams.get('correction-round'));
         });
         this.route.paramMap.subscribe((params) => {
+            this.assessmentNotPossibleYet.set(undefined);
             this.courseId = Number(params.get('courseId'));
             this.exerciseId = Number(params.get('exerciseId'));
             if (params.has('examId')) {
@@ -151,10 +205,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.exerciseGroupId = Number(params.get('exerciseGroupId'));
             }
 
-            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+            this.exerciseDashboardLink.set(getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun()));
 
             const submissionId = params.get('submissionId');
-            this.resultId = Number(params.get('resultId')) || 0;
+            this.resultId.set(Number(params.get('resultId')) || 0);
+            this.correctionRound.set(this.correctionRoundFromUrl);
             if (submissionId === 'new') {
                 this.loadRandomSubmission(this.exerciseId);
             } else {
@@ -163,11 +218,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    /**
-     * Load the feedback suggestions for the current submission from Athena.
-     * @param exercise The current exercise
-     * @param submission The current submission
-     */
     private async loadFeedbackSuggestions(exercise: ModelingExercise, submission: Submission): Promise<Feedback[]> {
         try {
             return (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(exercise, submission))) ?? [];
@@ -177,12 +227,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
     }
 
-    /**
-     * Load the modeling submission for a given ID
-     * @param submissionId The ID of the modeling submission that should be loaded
-     */
     private loadSubmission(submissionId: number): void {
-        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound, this.resultId).subscribe({
+        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound(), this.resultId()).subscribe({
             next: (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
                 this.validateFeedback();
@@ -194,11 +240,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadRandomSubmission(exerciseId: number): void {
-        this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
+        this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: ModelingSubmission) => {
                 if (!submission) {
-                    // there are no unassessed submissions
-                    this.submission = undefined;
+                    this.submission.set(undefined);
+                    this.loadingInitialSubmission.set(false);
+                    this.isLoading.set(false);
                     return;
                 }
 
@@ -206,7 +253,22 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.validateFeedback();
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
+                // Build the path through the router. Artemis uses path-based routing, so window.location.hash is empty
+                // and using it here rewrites the address to the application root once the submission has loaded.
+                const newUrl = this.router
+                    .createUrlTree(
+                        getLinkToSubmissionAssessment(
+                            ExerciseType.MODELING,
+                            this.courseId,
+                            this.exerciseId,
+                            submission.participation?.id,
+                            submission.id!,
+                            this.examId,
+                            this.exerciseGroupId,
+                        ),
+                        { queryParams: this.route.snapshot.queryParams },
+                    )
+                    .toString();
                 this.location.go(newUrl);
             },
             error: (error: HttpErrorResponse) => {
@@ -216,22 +278,26 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
-        this.loadingInitialSubmission = false;
-        this.submission = submission;
-        const studentParticipation = this.submission.participation as StudentParticipation;
-        this.modelingExercise = studentParticipation.exercise as ModelingExercise;
-        this.course = getCourseFromExercise(this.modelingExercise);
-        if (this.resultId > 0) {
-            this.result = getSubmissionResultById(submission, this.resultId);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId)!;
+        this.loadingInitialSubmission.set(false);
+        this.referencedFeedback = [];
+        this.unreferencedFeedback.set([]);
+        this.hasAutomaticFeedback.set(false);
+        this.loadingFeedbackSuggestions.set(false);
+        this.highlightedElements.set(undefined!);
+        this.submission.set(submission);
+        const studentParticipation = this.submission()!.participation as StudentParticipation;
+        this.modelingExercise.set(studentParticipation.exercise);
+        this.course.set(getCourseFromExercise(this.modelingExercise()));
+        if (this.resultId() > 0) {
+            this.result.set(getSubmissionResultById(submission, this.resultId()));
+            this.correctionRound.set(this.result()?.correctionRound ?? 0);
         } else {
-            this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+            this.result.set(getSubmissionResultByCorrectionRound(this.submission(), this.correctionRound()));
         }
-        this.hasAssessmentDueDatePassed = !!this.modelingExercise?.assessmentDueDate && dayjs(this.modelingExercise.assessmentDueDate).isBefore(dayjs());
+        this.hasAssessmentDueDatePassed.set(!!this.modelingExercise()?.assessmentDueDate && dayjs(this.modelingExercise()!.assessmentDueDate).isBefore(dayjs()));
 
-        if (this.submission.model) {
-            this.model = importDiagram(JSON.parse(this.submission.model));
+        if (this.submission()!.model) {
+            this.model.set(importDiagram(parseJson(this.submission()!.model!)));
         } else {
             this.alertService.closeAll();
             this.alertService.warning('artemisApp.modelingAssessmentEditor.messages.noModel');
@@ -240,88 +306,102 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.checkPermissions();
         this.getComplaint();
 
-        if (this.result && this.submission) {
-            this.submission.results = [this.result];
-            this.result.submission = this.submission;
+        if (this.result() && this.submission()) {
+            this.submission()!.results = [this.result()!];
+            this.result()!.submission = this.submission();
         }
 
-        if (!this.modelingExercise.diagramType) {
-            this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
+        if (!this.modelingExercise()!.diagramType) {
+            this.modelingExercise()!.diagramType = UMLDiagramType.ClassDiagram;
         }
 
-        if (this.result?.feedbacks) {
-            this.result = this.modelingAssessmentService.convertResult(this.result);
-        } else if (this.result) {
-            this.result.feedbacks = [];
+        if (this.result()?.feedbacks) {
+            this.result.set(this.modelingAssessmentService.convertResult(this.result()!));
+        } else if (this.result()) {
+            this.result()!.feedbacks = [];
+            this.result.set(this.result());
         }
 
-        this.handleFeedback(this.result?.feedbacks);
+        this.handleFeedback(this.result()?.feedbacks);
 
-        if ((!this.result?.assessor || this.result.assessor.id === this.userId) && !this.result?.completionDate) {
+        if ((!this.result()?.assessor || this.result()?.assessor?.id === this.userId) && !this.result()?.completionDate) {
             this.alertService.closeAll();
             this.alertService.info('artemisApp.modelingAssessmentEditor.messages.lock');
         }
 
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission()!);
 
-        this.isLoading = false;
+        this.isLoading.set(false);
 
-        // Only load suggestions for new assessments, they don't make sense later.
-        // The assessment is new if it only contains automatic feedback.
-        // Load after isLoading=false so the page is interactive while AI suggestions fetch.
-        const automaticFeedbackCount = this.result?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
-        if (this.modelingExercise.feedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
+        const feedbacks = this.result()?.feedbacks ?? [];
+        const automaticFeedbackCount = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length;
+        // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL), so an
+        // adapted suggestion still counts toward automaticFeedbackCount above even though it is no longer a fresh
+        // assessment. Excluding any feedback that already carries a suggestion marker keeps this a genuine
+        // "nothing assessed yet" check instead of re-fetching (and re-appending) suggestions on every reload.
+        const hasPersistedSuggestions = feedbacks.some((feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION);
+        if (getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled && !hasPersistedSuggestions && feedbacks.length === automaticFeedbackCount) {
             void this.fetchAndApplyFeedbackSuggestions();
         }
     }
 
     private async fetchAndApplyFeedbackSuggestions(): Promise<void> {
-        const submissionAtStart = this.submission;
-        const resultAtStart = this.result;
-        this.loadingFeedbackSuggestions = true;
+        const submissionAtStart = this.submission();
+        const resultAtStart = this.result();
+        this.loadingFeedbackSuggestions.set(true);
         try {
-            const suggestions = await this.loadFeedbackSuggestions(this.modelingExercise!, submissionAtStart!);
-            if (this.submission !== submissionAtStart || this.result !== resultAtStart) {
+            const suggestions = await this.loadFeedbackSuggestions(this.modelingExercise()!, submissionAtStart!);
+            if (this.submission() !== submissionAtStart || this.result() !== resultAtStart) {
                 return;
             }
-            this.feedbackSuggestions = suggestions;
-            if (this.result) {
-                this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
+            // Feedback suggestions are automatically accepted: add them directly to the editable feedback list.
+            if (this.result()) {
+                // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL),
+                // so an assessment containing only already-persisted suggestions still satisfies the "automatic
+                // feedback only" reload gate above and fetches Athena again. Skip anything already present so a
+                // reload cannot append the same suggestion twice.
+                const existingFeedback = this.result()?.feedbacks ?? [];
+                const newSuggestions = suggestions.filter((suggestion) =>
+                    existingFeedback.every(
+                        (feedback) =>
+                            feedback.reference !== suggestion.reference ||
+                            Feedback.stripSuggestionPrefix(feedback.text ?? '') !== Feedback.stripSuggestionPrefix(suggestion.text ?? '') ||
+                            feedback.detailText !== suggestion.detailText,
+                    ),
+                );
+                this.result()!.feedbacks = [...existingFeedback, ...newSuggestions];
+                this.result.set(this.result());
             }
-            this.handleFeedback(this.result?.feedbacks);
+            this.handleFeedback(this.result()?.feedbacks);
         } finally {
-            if (this.submission === submissionAtStart) {
-                this.loadingFeedbackSuggestions = false;
+            if (this.submission() == submissionAtStart) {
+                this.loadingFeedbackSuggestions.set(false);
             }
         }
     }
 
-    /**
-     * Show a set of feedbacks and feedback suggestions in the Apollon modeling editor
-     * @param feedbacks The feedbacks to show in the editor
-     */
     private updateApollonEditorWithFeedback(feedbacks: Feedback[]): void {
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference);
 
         if (!this.isApollonModelLoaded) {
             this.isApollonModelLoaded = true;
             this.calculateTotalScore();
-            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
+            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission()!);
         }
 
         this.validateFeedback();
     }
 
     private getComplaint(): void {
-        if (!this.submission) {
+        if (!this.submission()) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
+        this.complaintService.findBySubmissionId(this.submission()!.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;
                 }
-                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result);
+                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.result()));
             },
             error: () => {
                 this.onError();
@@ -329,24 +409,24 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    /**
-     * Checks the given feedback list for unreferenced feedback. The remaining list is then assigned to the
-     * referencedFeedback variable containing only feedback elements with a reference and valid score.
-     * Additionally, it checks if the feedback list contains any automatic feedback elements and sets the hasAutomaticFeedback flag accordingly.
-     * Afterward, it triggers the highlighting of feedback elements, if necessary.
-     */
     private handleFeedback(feedback?: Feedback[]): void {
         if (!feedback || feedback.length === 0) {
             return;
         }
 
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
-        this.unreferencedFeedback = feedback.filter((feedbackElement) => !feedbackElement.reference);
+        this.unreferencedFeedback.set(feedback.filter((feedbackElement) => !feedbackElement.reference));
 
-        this.hasAutomaticFeedback = feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC);
+        // Accepted/adapted suggestions persist as manual feedback with a suggestion-state text marker, so a plain
+        // AUTOMATIC type check alone misses them on reload - it only ever sees suggestions merged in this session.
+        this.hasAutomaticFeedback.set(
+            feedback.some(
+                (feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC || Feedback.getFeedbackSuggestionType(feedbackItem) !== FeedbackSuggestionType.NO_SUGGESTION,
+            ),
+        );
         this.highlightAutomaticFeedback();
 
-        if (this.highlightMissingFeedback) {
+        if (this.highlightMissingFeedback()) {
             this.highlightElementsWithMissingFeedback();
         }
 
@@ -354,66 +434,56 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private checkPermissions(): void {
-        this.isAssessor = this.result?.assessor?.id === this.userId;
+        this.isAssessor.set(this.result()?.assessor?.id === this.userId);
     }
 
-    /**
-     * Boolean which determines whether the user can override a result.
-     * If no exercise is loaded, for example during loading between exercises, we return false.
-     * Instructors can always override a result.
-     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
-     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
-     */
     get canOverride(): boolean {
-        if (this.modelingExercise) {
-            if (this.modelingExercise.isAtLeastInstructor) {
-                // Instructors can override any assessment at any time.
+        if (this.modelingExercise()) {
+            if (this.modelingExercise()!.isAtLeastInstructor) {
                 return true;
             }
-            if (this.complaint && this.isAssessor) {
-                // If there is a complaint, the original assessor cannot override the result anymore.
+            if (this.complaint() && this.isAssessor()) {
                 return false;
             }
             let isBeforeAssessmentDueDate = true;
-            // Add check as the assessmentDueDate must not be set for exercises
-            if (this.modelingExercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = dayjs().isBefore(this.modelingExercise.assessmentDueDate!);
+            if (this.modelingExercise()!.assessmentDueDate) {
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.modelingExercise()!.assessmentDueDate);
             }
-            // tutors are allowed to override one of their assessments before the assessment due date.
-            return this.isAssessor && isBeforeAssessmentDueDate;
+            return this.isAssessor() && isBeforeAssessmentDueDate;
         }
         return false;
     }
 
-    /**
-     * Remove a feedback suggestion because it was accepted or discarded.
-     * @param feedback Feedback suggestion to remove
-     */
-    removeSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
-    }
-
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.modelingExercise);
+        return !isAllowedToModifyFeedback(this.isTestRun(), this.isAssessor(), this.hasAssessmentDueDatePassed(), this.result(), this.complaint(), this.modelingExercise());
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
-        this.loadingInitialSubmission = false;
-        this.submission = undefined;
+        this.loadingInitialSubmission.set(false);
+        this.submission.set(undefined);
 
-        this.isLoading = false;
+        this.isLoading.set(false);
+        const assessmentNotPossibleYet = getAssessmentNotPossibleYetState(error);
         if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
             this.navigateBack();
+        } else if (assessmentNotPossibleYet) {
+            this.resetAssessmentState();
+            this.assessmentNotPossibleYet.set(assessmentNotPossibleYet);
+            this.alertService.closeAll();
         } else {
             this.onError();
         }
     }
 
+    private resetAssessmentState(): void {
+        this.submission.set(undefined);
+        this.modelingExercise.set(undefined);
+        this.result.set(undefined);
+        this.model.set(undefined);
+    }
+
     onError(): void {
-        this.submission = undefined;
-        this.modelingExercise = undefined;
-        this.result = undefined;
-        this.model = undefined;
+        this.resetAssessmentState();
         this.alertService.closeAll();
         this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
@@ -424,14 +494,17 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, this.result!.assessmentNote?.note).subscribe({
+        this.modelingAssessmentService.saveAssessment(this.result()!.id!, this.feedback, this.submission()!.id!, this.result()!.assessmentNote?.note).subscribe({
             next: (result: Result) => {
-                this.result = result;
-                this.handleFeedback(this.result.feedbacks);
+                this.result.set(result);
+                this.handleFeedback(this.result()!.feedbacks);
                 this.alertService.closeAll();
                 this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
             },
-            error: () => {
+            error: (error: HttpErrorResponse) => {
+                if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    return;
+                }
                 this.alertService.closeAll();
                 this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
@@ -439,12 +512,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onSubmitAssessment() {
-        const totalNumberOfElements = (this.model?.nodes.length ?? 0) + (this.model?.edges.length ?? 0);
-        if ((this.model && this.referencedFeedback.length < totalNumberOfElements) || !this.assessmentsAreValid) {
+        const totalNumberOfElements = (this.model()?.nodes.length ?? 0) + (this.model()?.edges.length ?? 0);
+        if ((this.model() && this.referencedFeedback.length < totalNumberOfElements) || !this.assessmentsAreValid()) {
             const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
-            // if the assessment is before the assessment due date, don't show the confirm submission button
-            const isBeforeAssessmentDueDate = this.modelingExercise?.assessmentDueDate && dayjs().isBefore(this.modelingExercise.assessmentDueDate);
+            const isBeforeAssessmentDueDate = this.modelingExercise()?.assessmentDueDate && dayjs().isBefore(this.modelingExercise()!.assessmentDueDate);
             if (isBeforeAssessmentDueDate) {
                 this.submitAssessment();
             } else {
@@ -452,7 +524,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (confirm) {
                     this.submitAssessment();
                 } else {
-                    this.highlightMissingFeedback = true;
+                    this.highlightMissingFeedback.set(true);
                     this.highlightElementsWithMissingFeedback();
                 }
             }
@@ -467,16 +539,19 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, this.result!.assessmentNote?.note, true).subscribe({
+        this.modelingAssessmentService.saveAssessment(this.result()!.id!, this.feedback, this.submission()!.id!, this.result()!.assessmentNote?.note, true).subscribe({
             next: (result: Result) => {
-                this.result = result;
+                this.result.set(result);
 
                 this.alertService.closeAll();
                 this.alertService.success('artemisApp.modelingAssessmentEditor.messages.submitSuccessful');
 
-                this.highlightMissingFeedback = false;
+                this.highlightMissingFeedback.set(false);
             },
             error: (error: HttpErrorResponse) => {
+                if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    return;
+                }
                 let errorMessage = 'artemisApp.modelingAssessmentEditor.messages.submitFailed';
                 if (error.error && error.error.entityName && error.error.message) {
                     errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
@@ -487,15 +562,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    /**
-     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
-     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
-     *
-     * @param assessmentAfterComplaint the response to the complaint that is sent to the server along with the assessment update along with onSuccess and onError callbacks
-     */
     onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
         this.validateFeedback();
-        if (!this.assessmentsAreValid) {
+        if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             assessmentAfterComplaint.onError();
             return;
@@ -504,10 +573,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.feedback);
         const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
 
-        this.modelingAssessmentService.updateAssessmentAfterComplaint(feedbacks, complaintResponse, this.submission!.id!, this.result?.assessmentNote?.note).subscribe({
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(feedbacks, complaintResponse, this.submission()!.id!, this.result()?.assessmentNote?.note).subscribe({
             next: (response) => {
                 assessmentAfterComplaint.onSuccess();
-                this.result = response.body!;
+                this.result.set(response.body!);
                 this.alertService.closeAll();
                 this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
@@ -524,143 +593,108 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    /**
-     * Cancel the current assessment and navigate back to the exercise dashboard.
-     */
     onCancelAssessment() {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.modelingAssessmentService.cancelAssessment(this.submission!.id!).subscribe(() => {
+            this.modelingAssessmentService.cancelAssessment(this.submission()!.id!, this.result()?.id).subscribe(() => {
                 this.navigateBack();
             });
         }
     }
 
-    /**
-     * On change handler for feedback changes coming from the Apollon modeling editor. Whenever an assessment is altered
-     * in the editor, this method is invoked and the assessment component updated to show the new entries.
-     * @param feedback The feedback present in the editor.
-     */
     onFeedbackChanged(feedback: Feedback[]) {
         this.updateApollonEditorWithFeedback(feedback);
     }
 
     assessNext() {
-        this.isLoading = true;
-        this.nextSubmissionBusy = true;
-        this.modelingSubmissionService.getSubmissionWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe({
+        this.isLoading.set(true);
+        this.nextSubmissionBusy.set(true);
+        this.modelingSubmissionService.getSubmissionWithoutAssessment(this.modelingExercise()!.id!, true, this.correctionRound()).subscribe({
             next: (submission?: ModelingSubmission) => {
                 if (!submission) {
-                    // there are no unassessed submissions
-                    this.submission = undefined;
+                    this.submission.set(undefined);
                     return;
                 }
 
-                this.nextSubmissionBusy = false;
-                this.isLoading = false;
+                this.nextSubmissionBusy.set(false);
+                this.isLoading.set(false);
 
                 const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);
-                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
+                // Merge rather than replace: a supplied queryParams object drops every other parameter, testRun among them.
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
             },
             error: (error: HttpErrorResponse) => {
-                this.nextSubmissionBusy = false;
+                this.nextSubmissionBusy.set(false);
                 this.handleErrorResponse(error);
             },
         });
     }
 
-    /**
-     * Validates the feedback:
-     *   - There must be any form of feedback, either unreferencing feedback or feedback referencing a model element or both
-     *   - Each reference feedback must have a score that is a valid number
-     */
     validateFeedback() {
         this.calculateTotalScore();
         const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
-        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
-        // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
+        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
+        this.assessmentsAreValid.set((hasReferencedFeedback && this.unreferencedFeedback().length === 0) || hasUnreferencedFeedback);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission()!);
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.modelingExercise, this.submission, this.isTestRun);
+        assessmentNavigateBack(this.location, this.router, this.modelingExercise(), this.submission(), this.isTestRun());
     }
 
-    /**
-     * Add all elements for which no corresponding feedback element exist to the map of highlighted elements. To make sure that we do not have outdated elements in the map, all
-     * elements with the corresponding "missing feedback color" get removed first.
-     */
     private highlightElementsWithMissingFeedback() {
-        if (!this.model) {
+        if (!this.model()) {
             return;
         }
 
-        this.highlightedElements = this.highlightedElements
-            ? this.removeHighlightedFeedbackOfColor(this.highlightedElements, FeedbackHighlightColor.RED)
+        const updatedHighlights = this.highlightedElements()
+            ? this.removeHighlightedFeedbackOfColor(this.highlightedElements(), FeedbackHighlightColor.RED)
             : new Map<string, string>();
 
         const referenceIds = this.referencedFeedback.map((feedback) => feedback.referenceId);
-        for (const element of Object.values(this.model.nodes)) {
+        for (const element of Object.values(this.model()!.nodes)) {
             if (!referenceIds.includes(element.id)) {
-                this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
+                updatedHighlights.set(element.id, FeedbackHighlightColor.RED);
             }
         }
-        for (const element of Object.values(this.model.edges)) {
+        for (const element of Object.values(this.model()!.edges)) {
             if (!referenceIds.includes(element.id)) {
-                this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
+                updatedHighlights.set(element.id, FeedbackHighlightColor.RED);
             }
         }
+        this.highlightedElements.set(updatedHighlights);
     }
 
-    /**
-     * Add all automatic feedback elements to the map of highlighted elements. To make sure that we do not have outdated elements in the map, all elements with the corresponding
-     * "automatic feedback color" get removed first. The automatic feedback will not be highlighted anymore after the assessment has been completed.
-     */
     private highlightAutomaticFeedback() {
-        if (this.result && this.result.completionDate) {
+        if (this.result() && this.result()!.completionDate) {
             return;
         }
 
-        this.highlightedElements = this.highlightedElements
-            ? this.removeHighlightedFeedbackOfColor(this.highlightedElements, FeedbackHighlightColor.CYAN)
+        const updatedHighlights = this.highlightedElements()
+            ? this.removeHighlightedFeedbackOfColor(this.highlightedElements(), FeedbackHighlightColor.CYAN)
             : new Map<string, string>();
 
         for (const feedbackItem of this.referencedFeedback) {
             if (feedbackItem.type === FeedbackType.AUTOMATIC && feedbackItem.referenceId) {
-                this.highlightedElements.set(feedbackItem.referenceId, FeedbackHighlightColor.CYAN);
+                updatedHighlights.set(feedbackItem.referenceId, FeedbackHighlightColor.CYAN);
             }
         }
+        this.highlightedElements.set(updatedHighlights);
     }
 
-    /**
-     * Remove all elements with the given highlight color from the map of highlighted feedback elements.
-     *
-     * @param highlightedElements the map of highlighted feedback elements
-     * @param color the color of the elements that should be removed
-     */
     private removeHighlightedFeedbackOfColor(highlightedElements: Map<string, string>, color: string) {
         return new Map<string, string>([...highlightedElements].filter(([, value]) => value !== color));
     }
 
-    /**
-     * Calculates the total score of the current assessment.
-     * This function originally checked whether the total score is negative
-     * or greater than the max. score, but we decided to remove the restriction
-     * and instead set the score boundaries on the server.
-     */
     calculateTotalScore() {
-        const maxPoints = getTotalMaxPoints(this.modelingExercise!);
+        const maxPoints = getTotalMaxPoints(this.modelingExercise());
         const creditsTotalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
-        this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
+        this.totalScore.set(getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints));
     }
 
-    /**
-     * Invokes exampleSubmissionService when useAsExampleSubmission is emitted in assessment-layout
-     */
     useStudentSubmissionAsExampleSubmission(): void {
-        if (this.submission && this.modelingExercise) {
-            this.exampleSubmissionService.import(this.submission.id!, this.modelingExercise.id!).subscribe({
+        if (this.submission() && this.modelingExercise()) {
+            this.exampleSubmissionService.import(this.submission()!.id!, this.modelingExercise()!.id!).subscribe({
                 next: () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });

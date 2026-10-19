@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TextAssessmentEvent, TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -12,21 +12,21 @@ import { captureException } from '@sentry/angular';
 /**
  * A service used to manage sending TextAssessmentEvent's to the server
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TextAssessmentAnalytics {
     private assessmentsService = inject(TextAssessmentService);
     private accountService = inject(AccountService);
     private location = inject(Location);
     private profileService = inject(ProfileService);
 
-    private userId: number;
-    private courseId: number;
-    private textExerciseId: number;
-    private participationId: number;
-    private submissionId: number;
+    private userId = 0;
+    private courseId = 0;
+    private textExerciseId = 0;
+    private participationId = 0;
+    private submissionId = 0;
     private eventToSend: TextAssessmentEvent = new TextAssessmentEvent();
     private INVALID_VALUE = -1;
-    private route: ActivatedRoute;
+    private route!: ActivatedRoute; // set in setComponentRoute() before subscribeToRouteParameters() reads it
     public analyticsEnabled = false;
 
     constructor() {

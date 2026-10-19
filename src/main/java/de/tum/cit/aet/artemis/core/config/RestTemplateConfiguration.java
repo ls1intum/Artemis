@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
+import java.time.Duration;
 import java.util.ArrayList;
 
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +18,7 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
+import org.springframework.http.converter.xml.JacksonXmlHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
@@ -43,6 +45,12 @@ public class RestTemplateConfiguration {
     private static final int VERY_SHORT_CONNECTION_TIMEOUT = 1000;
 
     private static final int VERY_SHORT_READ_TIMEOUT = 1000;
+
+    // The Hermes health check pings /api/health, which must fail fast: it blocks the Actuator /health endpoint
+    // and every metrics scrape, so a hung relay must not tie up those threads for the full short timeout.
+    private static final int HERMES_HEALTH_CONNECTION_TIMEOUT = 3 * 1000;
+
+    private static final int HERMES_HEALTH_READ_TIMEOUT = 3 * 1000;
 
     @Bean
     @Profile(PROFILE_JENKINS)
@@ -78,7 +86,23 @@ public class RestTemplateConfiguration {
     @Bean
     @Conditional(IrisEnabled.class)
     public RestTemplate pyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createRestTemplate());
+        return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    /**
+     * The Pyris ingestion census aggregates the index state of a whole course, which takes longer than the short timeout allows for large
+     * courses, so it gets its own read timeout.
+     *
+     * @param pyrisAuthorizationInterceptor adds the Pyris secret
+     * @param censusTimeout                 the read timeout for one census request
+     * @return the rest template for census requests
+     */
+    @Bean
+    @Conditional(IrisEnabled.class)
+    public RestTemplate censusPyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor,
+            @Value("${artemis.iris.ingestion.census-timeout:PT60S}") Duration censusTimeout) {
+        var requestFactory = getSimpleClientHttpRequestFactory((int) censusTimeout.toMillis(), SHORT_CONNECTION_TIMEOUT);
+        return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, new RestTemplate(requestFactory));
     }
 
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because
@@ -104,7 +128,8 @@ public class RestTemplateConfiguration {
 
     @Bean
     public RestTemplate shortTimeoutHermesRestTemplate() {
-        return createShortTimeoutRestTemplate();
+        final var requestFactory = getSimpleClientHttpRequestFactory(HERMES_HEALTH_READ_TIMEOUT, HERMES_HEALTH_CONNECTION_TIMEOUT);
+        return new RestTemplate(requestFactory);
     }
 
     // Note: for certain requests, e.g. the Athena submission selection, we would like to have even shorter timeouts.
@@ -130,10 +155,10 @@ public class RestTemplateConfiguration {
         interceptors.add(interceptor);
         restTemplate.setInterceptors(interceptors);
 
-        // we do not want to use MappingJackson2XmlHttpMessageConverter here because it would lead to problems with the tests
+        // we do not want to use JacksonXmlHttpMessageConverter here because it would lead to problems with the tests
         HttpMessageConverter<?> messageConverterToRemove = null;
         for (HttpMessageConverter<?> messageConverter : restTemplate.getMessageConverters()) {
-            if (messageConverter instanceof MappingJackson2XmlHttpMessageConverter) {
+            if (messageConverter instanceof JacksonXmlHttpMessageConverter) {
                 messageConverterToRemove = messageConverter;
             }
         }

@@ -35,7 +35,6 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -44,6 +43,8 @@ import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
@@ -159,7 +160,7 @@ class Lti13TokenRetrieverTest {
     }
 
     @Test
-    void getToken() throws NoSuchAlgorithmException, JsonProcessingException {
+    void getToken() throws NoSuchAlgorithmException, JacksonException {
         JWK jwk = generateKey();
         when(oAuth2JWKSService.getJWK(any())).thenReturn(jwk);
 

@@ -1,17 +1,17 @@
-import { Directive, HostListener, Input, Optional } from '@angular/core';
+import { Directive, HostListener, Optional, input } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Directive({
     selector: '[routerLink]',
 })
 export class MockRouterLinkDirective {
-    @Input('routerLink') data: any;
+    data = input<any>(undefined, { alias: 'routerLink' });
 
     constructor(@Optional() private router: Router) {}
 
     @HostListener('click')
     onClick() {
-        this.router.navigateByUrl(this.data);
+        this.router.navigateByUrl(this.data());
     }
 }
 
@@ -19,12 +19,12 @@ export class MockRouterLinkDirective {
     selector: '[routerLinkActiveOptions]',
 })
 export class MockRouterLinkActiveOptionsDirective {
-    @Input('routerLinkActiveOptions') data: any;
+    data = input<any>(undefined, { alias: 'routerLinkActiveOptions' });
 }
 
 @Directive({
     selector: '[queryParams]',
 })
 export class MockQueryParamsDirective {
-    @Input('queryParams') data: any;
+    data = input<any>(undefined, { alias: 'queryParams' });
 }

@@ -1,16 +1,16 @@
-import { DatePipe, NgClass } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { WebsocketAdminService } from 'app/admin/websocket/websocket-admin.service';
 import { WebsocketNode } from 'app/admin/websocket/websocket-node.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPlug, faPowerOff, faSync } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, forkJoin, interval } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiMessageComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 /**
  * Admin view to monitor and control websocket broker connectivity across Hazelcast nodes.
  * <p>
@@ -22,10 +22,24 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-websocket-admin',
     templateUrl: './websocket-admin.component.html',
-    standalone: true,
-    imports: [TranslateDirective, FormsModule, FaIconComponent, NgClass, DatePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        DatePipe,
+        AdminTitleBarTitleDirective,
+        TumAetUiButtonComponent,
+        TumAetUiButtonGroupComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
+    ],
 })
 export class WebsocketAdminComponent implements OnInit, OnDestroy {
+    private websocketAdminService = inject(WebsocketAdminService);
+    private alertService = inject(AlertService);
+
     protected readonly faPlug = faPlug;
     protected readonly faSync = faSync;
     protected readonly faPowerOff = faPowerOff;
@@ -33,13 +47,10 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
     nodes = signal<WebsocketNode[]>([]);
     loading = signal(false);
     reconnecting = signal(false);
-    coreNodes = computed(() => this.nodes().filter((node) => !node.liteMember));
+    coreNodes = computed(() => this.nodes());
     sortedNodes = computed(() => {
         const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
         return [...this.nodes()].sort((a, b) => {
-            if (a.liteMember !== b.liteMember) {
-                return a.liteMember ? 1 : -1; // core nodes first
-            }
             const nameA = (a.instanceId ?? a.host ?? a.memberId).trim();
             const nameB = (b.instanceId ?? b.host ?? b.memberId).trim();
             return collator.compare(nameA, nameB);
@@ -48,8 +59,6 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
     lastUpdated = signal<Date | undefined>(undefined);
     lastUpdateFailed = signal(false);
 
-    private websocketAdminService = inject(WebsocketAdminService);
-    private alertService = inject(AlertService);
     private refreshSubscription?: Subscription;
 
     ngOnInit(): void {

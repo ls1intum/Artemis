@@ -15,11 +15,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
     course = signal<Course | undefined>(undefined);
 
-    isInitialized = false;
-    selectedUsers: UserPublicInfoDTO[] = [];
+    override isInitialized = false;
+    readonly selectedUsers = signal<UserPublicInfoDTO[]>([]);
     userToChatWith?: UserPublicInfoDTO;
 
-    initialize() {
+    override initialize() {
         super.initialize(['course']);
     }
 
@@ -33,8 +33,8 @@ export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
 
     onSelectedUsersChange(selectedUsers: UserPublicInfoDTO[]) {
         if (selectedUsers && selectedUsers.length > 0) {
-            this.selectedUsers = selectedUsers;
-            this.userToChatWith = this.selectedUsers[0];
+            this.selectedUsers.set(selectedUsers);
+            this.userToChatWith = this.selectedUsers()[0];
             this.onUserSelected();
         }
     }

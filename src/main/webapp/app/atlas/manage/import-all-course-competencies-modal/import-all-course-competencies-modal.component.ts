@@ -14,6 +14,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
 import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 const tableColumns: Column<Course>[] = [
     {
@@ -51,17 +53,20 @@ export interface ImportAllCourseCompetenciesModalData {
     templateUrl: './import-all-course-competencies-modal.component.html',
 })
 export class ImportAllCourseCompetenciesModalComponent {
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
+    private readonly alertService = inject(AlertService);
+
     protected readonly tableColumns = tableColumns;
 
     protected readonly closeIcon = faXmark;
-
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
     readonly courseId = signal<number>(0);
     readonly disabledIds = computed(() => [+this.courseId()]);
 
     importSettings = signal<CourseCompetencyImportSettings>(new CourseCompetencyImportSettings());
+    /** False while the reference date field holds text that is not a date; the settings keep the last valid date then. */
+    readonly referenceDateTextValid = signal(true);
 
     constructor() {
         const data = this.dialogConfig?.data as ImportAllCourseCompetenciesModalData | undefined;
@@ -71,11 +76,14 @@ export class ImportAllCourseCompetenciesModalComponent {
     }
 
     public selectCourse(course: Course): void {
-        const courseCompetencyImportOptions = <CourseCompetencyImportOptionsDTO>{
-            sourceCourseId: course.id,
-            ...this.importSettings(),
-        };
-        this.dialogRef.close(<ImportAllCourseCompetenciesResult>{
+        if (!this.referenceDateTextValid()) {
+            // The server shifts the dates of the imported resources by this reference date, so a stale one must not be sent.
+            this.alertService.error('artemisApp.courseCompetency.importSettings.referenceDateTextInvalid');
+            return;
+        }
+        const importOptions = cloneWith(this.importSettings(), { sourceCourseId: course.id });
+        const courseCompetencyImportOptions = importOptions as CourseCompetencyImportOptionsDTO;
+        this.dialogRef.close({
             course,
             courseCompetencyImportOptions,
         });

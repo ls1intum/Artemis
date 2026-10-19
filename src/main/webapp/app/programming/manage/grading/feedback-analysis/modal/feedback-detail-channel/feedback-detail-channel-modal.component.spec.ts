@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel/feedback-detail-channel-modal.component';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 describe('FeedbackDetailChannelModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FeedbackDetailChannelModalComponent>;
     let component: FeedbackDetailChannelModalComponent;
     let activeModal: NgbActiveModal;
@@ -16,8 +13,8 @@ describe('FeedbackDetailChannelModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ReactiveFormsModule, FeedbackDetailChannelModalComponent],
-            providers: [NgbActiveModal, NgbModal, FormBuilder],
+            imports: [ReactiveFormsModule, FeedbackDetailChannelModalComponent],
+            providers: [NgbActiveModal, NgbModal, FormBuilder, provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackDetailChannelModalComponent);

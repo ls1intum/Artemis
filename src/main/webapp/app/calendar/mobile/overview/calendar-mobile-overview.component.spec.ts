@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { CalendarMobileOverviewComponent } from './calendar-mobile-overview.component';
 import { CalendarMobileMonthPresentationComponent } from 'app/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
 import { CalendarMobileDayPresentationComponent } from 'app/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-view-state.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -21,8 +21,6 @@ import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-uti
 import * as calendarUtils from 'app/foundation/util/global.utils';
 
 describe('CalendarMobileOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CalendarMobileOverviewComponent>;
     let component: CalendarMobileOverviewComponent;
 
@@ -71,6 +69,8 @@ describe('CalendarMobileOverviewComponent', () => {
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
+                // Normally provided by the calendar container, which holds the displayed period across a resize.
+                CalendarViewStateService,
             ],
         }).compileComponents();
 

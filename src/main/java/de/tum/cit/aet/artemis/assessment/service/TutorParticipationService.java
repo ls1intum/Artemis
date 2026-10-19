@@ -17,24 +17,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionRequestDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
 /**
  * Service Implementation for managing TutorParticipation.
@@ -52,8 +52,6 @@ public class TutorParticipationService {
     }
 
     private static final String ENTITY_NAME = "TutorParticipation";
-
-    private static final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
@@ -153,15 +151,15 @@ public class TutorParticipationService {
      * MANUAL_UNREFERENCED branch below removes already-matched instructor feedbacks so they can't match a second tutor feedback. Callers therefore
      * pass a mutable defensive copy (typically built from {@code result.getFeedbacks()} / the example-submission feedback set) once and reuse it.
      */
-    private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, List<Feedback> remainingInstructorFeedback) {
+    private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, List<Feedback> remainingInstructorFeedback, boolean modelingExercise) {
         List<Feedback> matchingInstructorFeedback = remainingInstructorFeedback.stream().filter(feedback -> {
             // If tutor feedback is unreferenced, then instructor feedback is a potential match if it is also unreferenced
             if (tutorFeedback.getType() == MANUAL_UNREFERENCED) {
                 return feedback.getType() == MANUAL_UNREFERENCED;
             }
 
-            // For other feedback, both feedback have to reference the same element
-            return Objects.equals(tutorFeedback.getReference(), feedback.getReference());
+            return modelingExercise ? Objects.equals(referenceElementId(tutorFeedback), referenceElementId(feedback))
+                    : Objects.equals(tutorFeedback.getReference(), feedback.getReference());
         }).toList();
 
         // If there are no potential matches, then the feedback is unnecessary
@@ -197,16 +195,23 @@ public class TutorParticipationService {
         }
     }
 
+    private static String referenceElementId(Feedback feedback) {
+        var reference = feedback.getReference();
+        if (reference == null) {
+            return null;
+        }
+        int separator = reference.indexOf(':');
+        return separator < 0 ? reference : reference.substring(separator + 1);
+    }
+
     /**
      * Validates the tutor example submission. If invalid, throw bad request exception with information which feedback are incorrect.
      */
-    private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
-        var latestResult = tutorExampleSubmission.getSubmission().getLatestResult();
-        if (latestResult == null) {
+    private void validateTutorialExampleSubmission(long exampleSubmissionId, @Nullable List<Feedback> tutorFeedback, boolean modelingExercise) {
+        if (tutorFeedback == null) {
             throw new BadRequestAlertException("The training does not contain an assessment", ENTITY_NAME, "invalid_assessment");
         }
-        var tutorFeedback = latestResult.getFeedbacks();
-        var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
+        var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(exampleSubmissionId);
         boolean equalFeedbackCount = instructorFeedback.size() == tutorFeedback.size();
 
         var unreferencedInstructorFeedbackCount = instructorFeedback.stream().filter(feedback -> feedback.getType() == MANUAL_UNREFERENCED).toList().size();
@@ -215,35 +220,24 @@ public class TutorParticipationService {
         // Build a single mutable defensive copy that checkTutorFeedbackForErrors can prune as it consumes MANUAL_UNREFERENCED matches across tutor feedbacks.
         // Mutating the original (a Hibernate-managed PersistentSet from result.getFeedbacks() or an immutable Set.of()) would be unsafe.
         var remainingInstructorFeedback = new ArrayList<>(instructorFeedback);
-
-        // If invalid, get all incorrect feedback and send an array of the corresponding `FeedbackCorrectionError`s to the client.
         var wrongFeedback = tutorFeedback.stream().flatMap(feedback -> {
             // If current tutor feedback is unreferenced and there are already more than enough unreferenced feedback provided, mark this feedback as unnecessary.
             var unreferencedTutorFeedbackCount = unreferencedTutorFeedback.indexOf(feedback) + 1;
             var validationError = unreferencedTutorFeedbackCount > unreferencedInstructorFeedbackCount ? Optional.of(UNNECESSARY_FEEDBACK)
-                    : checkTutorFeedbackForErrors(feedback, remainingInstructorFeedback);
+                    : checkTutorFeedbackForErrors(feedback, remainingInstructorFeedback, modelingExercise);
             if (validationError.isEmpty()) {
                 return Stream.empty();
             }
 
-            var objectWriter = JsonObjectMapper.get().writer().withDefaultPrettyPrinter();
-            try {
-                // Build JSON string for the corresponding `FeedbackCorrectionError` object.
-                // TODO: I think we should let Spring automatically convert it to Json
-                var feedbackCorrectionErrorJSON = objectWriter.writeValueAsString(new FeedbackCorrectionError(feedback.getReference(), validationError.get()));
-                return Stream.of(feedbackCorrectionErrorJSON);
-            }
-            catch (JsonProcessingException e) {
-                log.warn("JsonProcessingException in validateTutorialExampleSubmission: {}", e.getMessage());
-                return Stream.empty();
-            }
-        }).collect(Collectors.joining(","));
-        if (wrongFeedback.isBlank() && equalFeedbackCount) {
+            return Stream.of(new FeedbackCorrectionError(feedback.getReference(), validationError.get()));
+        }).toList();
+        if (wrongFeedback.isEmpty() && equalFeedbackCount) {
             return;
         }
 
-        // Pack this information into bad request exception.
-        throw new BadRequestAlertException("{\"errors\": [" + wrongFeedback + "]}", ENTITY_NAME, "invalid_assessment", true);
+        var exception = new BadRequestAlertException("Invalid assessment", ENTITY_NAME, "invalid_assessment", true);
+        exception.getBody().setProperty("errors", wrongFeedback);
+        throw exception;
     }
 
     /**
@@ -257,11 +251,12 @@ public class TutorParticipationService {
      * @throws EntityNotFoundException  if example submission or tutor participation is not found
      * @throws BadRequestAlertException if tutor didn't review the instructions before assessing example submissions
      */
-    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission tutorExampleSubmission, User user)
+    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmissionRequestDTO tutorExampleSubmission, User user)
             throws EntityNotFoundException, BadRequestAlertException {
         TutorParticipation existingTutorParticipation = this.findByExerciseAndTutor(exercise, user);
         // Do not trust the user input
-        Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(tutorExampleSubmission.getId());
+        Optional<ExampleSubmission> exampleSubmissionFromDatabase = tutorExampleSubmission.id() == null ? Optional.empty()
+                : exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(tutorExampleSubmission.id());
 
         if (existingTutorParticipation == null || exampleSubmissionFromDatabase.isEmpty()) {
             throw new EntityNotFoundException("There isn't such example submission, or there isn't any tutor participation for this exercise");
@@ -279,13 +274,13 @@ public class TutorParticipationService {
 
         // If it is a tutorial we check the assessment
         if (isTutorial) {
-            validateTutorialExampleSubmission(tutorExampleSubmission);
+            validateTutorialExampleSubmission(originalExampleSubmission.getId(), tutorFeedbackFrom(tutorExampleSubmission), exercise instanceof ModelingExercise);
         }
 
         Set<ExampleSubmission> alreadyAssessedSubmissions = new HashSet<>(existingTutorParticipation.getTrainedExampleSubmissions());
 
         // If the example submission was already assessed, we do not assess it again, we just return the current participation
-        if (alreadyAssessedSubmissions.contains(tutorExampleSubmission)) {
+        if (alreadyAssessedSubmissions.contains(originalExampleSubmission)) {
             return existingTutorParticipation;
         }
 
@@ -317,6 +312,41 @@ public class TutorParticipationService {
         existingTutorParticipation.getTrainedExampleSubmissions().add(originalExampleSubmission);
 
         return existingTutorParticipation;
+    }
+
+    /**
+     * Reads the tutor's assessment off the request: the feedback of the last result the client attached to the
+     * submission, mapped to transient feedback carrying only what the comparison against the instructor's assessment
+     * reads (credits, reference, type, text, grading instruction id).
+     *
+     * @param request the tutor's example submission request
+     * @return the tutor feedback, or null when the client attached no result
+     */
+    @Nullable
+    private static List<Feedback> tutorFeedbackFrom(ExampleSubmissionRequestDTO request) {
+        if (request.submission() == null || request.submission().results() == null || request.submission().results().isEmpty()) {
+            return null;
+        }
+        List<FeedbackDTO> feedbackDTOs = request.submission().results().getLast().feedbacks();
+        if (feedbackDTOs == null) {
+            return new ArrayList<>();
+        }
+        return feedbackDTOs.stream().map(TutorParticipationService::feedbackFrom).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private static Feedback feedbackFrom(FeedbackDTO dto) {
+        Feedback feedback = new Feedback();
+        feedback.setCredits(dto.credits());
+        feedback.setReference(dto.reference());
+        feedback.setType(dto.type());
+        feedback.setText(dto.text());
+        feedback.setDetailText(dto.detailText());
+        if (dto.gradingInstruction() != null && dto.gradingInstruction().id() != null) {
+            GradingInstruction gradingInstruction = new GradingInstruction();
+            gradingInstruction.setId(dto.gradingInstruction().id());
+            feedback.setGradingInstruction(gradingInstruction);
+        }
+        return feedback;
     }
 
     /**

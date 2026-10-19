@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.core.security.allowedTools;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Collections;
+import java.util.List;
 
 import jakarta.servlet.http.Cookie;
 
@@ -34,7 +34,7 @@ class AllowedToolsTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testAllowedToolsRouteWithToolToken() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
-                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
 
         String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, ToolTokenType.SCORPIO);
         Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, jwt);
@@ -46,7 +46,7 @@ class AllowedToolsTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAllowedToolsRouteWithGeneralToken() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
-                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
 
         String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, null);
         Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, jwt);
@@ -58,7 +58,7 @@ class AllowedToolsTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAllowedToolsRouteWithDifferentToolToken() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
-                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
 
         String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, ToolTokenType.SCORPIO);
         Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, jwt);

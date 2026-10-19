@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -27,8 +26,6 @@ import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entit
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 
 describe('ModelingExercise Management Detail Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ModelingExerciseDetailComponent;
     let fixture: ComponentFixture<ModelingExerciseDetailComponent>;
     let modelingExerciseService: ModelingExerciseService;
@@ -37,7 +34,7 @@ describe('ModelingExercise Management Detail Component', () => {
 
     const model = {
         id: 'test-diagram-id',
-        version: '4.0.0',
+        version: '4.2.0',
         title: 'Test Diagram',
         type: 'ClassDiagram',
         nodes: [],
@@ -89,7 +86,6 @@ describe('ModelingExercise Management Detail Component', () => {
     });
 
     it('should load exercise on init', async () => {
-        // GIVEN
         const subscribeSpy = vi.spyOn(eventManager, 'subscribe');
         const headers = new HttpHeaders().append('link', 'link;link');
         const findStub = vi.spyOn(modelingExerciseService, 'find').mockReturnValue(
@@ -102,16 +98,14 @@ describe('ModelingExercise Management Detail Component', () => {
         );
         const statisticsServiceStub = vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(modelingExerciseStatistics));
 
-        // WHEN
         comp.ngOnInit();
 
-        // THEN
         expect(findStub).toHaveBeenCalledOnce();
         expect(statisticsServiceStub).toHaveBeenCalledOnce();
-        expect(comp.modelingExercise).toEqual(modelingExercise);
-        expect(comp.doughnutStats.participationsInPercent).toBe(100);
-        expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
-        expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
+        expect(comp.modelingExercise()).toEqual(modelingExercise);
+        expect(comp.doughnutStats().participationsInPercent).toBe(100);
+        expect(comp.doughnutStats().resolvedPostsInPercent).toBe(50);
+        expect(comp.doughnutStats().absoluteAveragePoints).toBe(5);
         expect(subscribeSpy).toHaveBeenCalledWith('modelingExerciseListModification', expect.anything());
         await fixture.whenStable();
         expect(comp.exampleSolutionUML).toEqual(model);
@@ -146,8 +140,8 @@ describe('ModelingExercise Management Detail Component', () => {
             comp.ngOnInit();
             await fixture.whenStable();
 
-            expect(comp.detailOverviewSections).toBeDefined();
-            const problemSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(comp.detailOverviewSections()).toBeDefined();
+            const problemSection = comp.detailOverviewSections().find((section) => section.headline === 'artemisApp.exercise.sections.problem');
             expect(problemSection).toBeDefined();
             const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
             expect(competencyDetail).toBeDefined();
@@ -170,8 +164,8 @@ describe('ModelingExercise Management Detail Component', () => {
             comp.ngOnInit();
             await fixture.whenStable();
 
-            expect(comp.detailOverviewSections).toBeDefined();
-            const problemSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(comp.detailOverviewSections()).toBeDefined();
+            const problemSection = comp.detailOverviewSections().find((section) => section.headline === 'artemisApp.exercise.sections.problem');
             expect(problemSection).toBeDefined();
             const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
             expect(competencyDetail).toBeUndefined();

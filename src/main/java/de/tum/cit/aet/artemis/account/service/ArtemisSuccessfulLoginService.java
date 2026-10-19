@@ -25,7 +25,8 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 /**
@@ -50,15 +51,14 @@ public class ArtemisSuccessfulLoginService {
 
     private final MailSendingService mailSendingService;
 
-    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+    private final GlobalNotificationSettingService globalNotificationSettingService;
 
-    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository, @Value("${server.url}") URL artemisServerUrl,
-            @Value("${artemis.user-management.password-reset.links.en:#{null}}") Optional<String> passwordResetLinkEnUrl,
+    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService, GlobalNotificationSettingService globalNotificationSettingService,
+            @Value("${server.url}") URL artemisServerUrl, @Value("${artemis.user-management.password-reset.links.en:#{null}}") Optional<String> passwordResetLinkEnUrl,
             @Value("${artemis.user-management.password-reset.links.de:#{null}}") Optional<String> passwordResetLinkDeUrl) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
-        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.globalNotificationSettingService = globalNotificationSettingService;
         this.artemisServerUrl = artemisServerUrl;
 
         this.passwordResetLinkEnUrl = getResetLinkOrDefault(passwordResetLinkEnUrl);
@@ -134,7 +134,7 @@ public class ArtemisSuccessfulLoginService {
                 recipient = userRepository.getUserByLoginElseThrow(loginOrEmail);
             }
 
-            if (!globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_LOGIN)) {
+            if (!globalNotificationSettingService.isNotificationEnabled(recipient, GlobalNotificationType.NEW_LOGIN)) {
                 return;
             }
 
@@ -166,7 +166,7 @@ public class ArtemisSuccessfulLoginService {
                 }
             }
 
-            mailSendingService.buildAndSendSync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
+            mailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
         }
         catch (EntityNotFoundException ignored) {
             log.error("User with login {} not found when trying to send newLoginEmail", loginOrEmail);

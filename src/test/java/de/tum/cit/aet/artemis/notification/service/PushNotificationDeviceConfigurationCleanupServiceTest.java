@@ -52,7 +52,7 @@ class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpri
 
         cleanupService.performCleanup();
 
-        List<PushNotificationDeviceConfiguration> result = deviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
+        List<PushNotificationDeviceConfiguration> result = deviceConfigurationRepository.findByUserIdIn(Set.of(user.getId()), PushNotificationDeviceType.FIREBASE);
 
         assertThat(result).contains(valid);
         assertThat(result).doesNotContain(expired);

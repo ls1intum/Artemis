@@ -29,8 +29,8 @@ import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
@@ -41,9 +41,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecu
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionPipelineExecutionDTO;
 
 @Component
 @Conditional(IrisEnabled.class)
@@ -89,7 +92,7 @@ public class IrisRequestMockProvider {
     private String serverUrl;
 
     @Autowired
-    private ObjectMapper mapper;
+    private JsonMapper mapper;
 
     private AutoCloseable closeable;
 
@@ -168,20 +171,37 @@ public class IrisRequestMockProvider {
         mockPostRequest("/autonomous-tutor/run", PyrisAutonomousTutorPipelineExecutionDTO.class, responseConsumer);
     }
 
+    public void mockStruggleInterventionResponse(Consumer<PyrisStruggleInterventionPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/struggle-intervention/run", PyrisStruggleInterventionPipelineExecutionDTO.class, responseConsumer);
+    }
+
     public void mockRunCompetencyExtractionResponseAnd(Consumer<PyrisCompetencyExtractionPipelineExecutionDTO> responseConsumer) {
         mockPostRequest("/competency-extraction/run", PyrisCompetencyExtractionPipelineExecutionDTO.class, responseConsumer);
     }
 
-    public void mockIngestionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {
-        mockWebhookPost("/lectures/ingest", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer);
-    }
-
-    public void mockIngestionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
-        mockWebhookPost("/lectures/ingest", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
+    public void mockFaqIngestionWebhookError(HttpStatus status) {
+        mockPostError(webhooksApiURL.toString(), "/faqs/ingest", status.value());
     }
 
     public void mockFaqIngestionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/faqs/ingest", PyrisWebhookFaqIngestionExecutionDTO.class, responseConsumer);
+    }
+
+    /** Verifies that disabled FAQ synchronization sends no ingestion request. */
+    public void expectNoFaqIngestionWebhook() {
+        mockServer.expect(ExpectedCount.never(), requestTo(webhooksApiURL + "/faqs/ingest")).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+    }
+
+    /** FAQ ingestion fails before Iris accepts a job, as during an outage. */
+    public void mockFaqIngestionWebhookFailure() {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/faqs/ingest")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+    }
+
+    /** FAQ deletion fails before Iris accepts a job, as during an outage. */
+    public void mockFaqDeletionWebhookFailure() {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/faqs/delete")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
     }
 
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {
@@ -190,6 +210,20 @@ public class IrisRequestMockProvider {
 
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
         mockWebhookPost("/lectures/delete", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
+    }
+
+    /** The lecture deletion webhook fails once, as when Pyris is temporarily unavailable. */
+    public void mockDeletionWebhookFailure() {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/delete")).andExpect(method(HttpMethod.POST))
+                .andRespond(withRawStatus(HttpStatus.SERVICE_UNAVAILABLE.value()));
+    }
+
+    public void mockLectureUnitMetadataWebhookRunResponse(Consumer<PyrisLectureUnitMetadataWebhookDTO> responseConsumer, ExpectedCount count) {
+        mockWebhookPost("/lectures/metadata", PyrisLectureUnitMetadataWebhookDTO.class, responseConsumer, count);
+    }
+
+    public void mockLectureUnitVisibilityWebhookRunResponse(Consumer<PyrisLectureUnitVisibilityWebhookDTO> responseConsumer, ExpectedCount count) {
+        mockWebhookPost("/lectures/visibility", PyrisLectureUnitVisibilityWebhookDTO.class, responseConsumer, count);
     }
 
     public void mockFaqDeletionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
@@ -212,15 +246,23 @@ public class IrisRequestMockProvider {
         mockPostError(pipelinesApiURL.toString(), "/programming-exercise-chat/run", httpStatus);
     }
 
-    public void mockIngestionWebhookRunError(int httpStatus) {
-        mockPostError(webhooksApiURL.toString(), "/lectures/ingest", httpStatus);
+    /**
+     * Answers the lecture unit visibility webhook with an error and a body, so that a caller which distinguishes
+     * Pyris's own "not ingested" answer from any other 404 can be exercised.
+     *
+     * @param httpStatus the status to answer with
+     * @param body       the response body
+     */
+    public void mockLectureVisibilityWebhookError(int httpStatus, String body) {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/visibility")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.valueOf(httpStatus)).body(body).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockDeletionWebhookRunError(int httpStatus) {
         mockPostError(webhooksApiURL.toString(), "/lectures/delete", httpStatus);
     }
 
-    public void mockStatusResponses() throws JsonProcessingException {
+    public void mockStatusResponses() throws JacksonException {
         // @formatter:off
         PyrisHealthStatusDTO activeIrisStatusDTO = new PyrisHealthStatusDTO(
             true,
@@ -231,7 +273,8 @@ public class IrisRequestMockProvider {
                     null,
                     null
                 )
-            )
+            ),
+            null
         );
 
         shortTimeoutMockServer
@@ -276,10 +319,10 @@ public class IrisRequestMockProvider {
     }
 
     /** Healthy response with configurable module statuses. */
-    public void mockHealthStatusSuccess(boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ServiceStatus> moduleStatuses) throws JsonProcessingException {
+    public void mockHealthStatusSuccess(boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ServiceStatus> moduleStatuses) throws JacksonException {
         var modules = moduleStatuses.entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, e -> new PyrisHealthStatusDTO.ModuleStatusDTO(e.getValue(), null, null)));
-        var dto = new PyrisHealthStatusDTO(overallHealthy, modules);
+        var dto = new PyrisHealthStatusDTO(overallHealthy, modules, null);
         shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
     }
@@ -309,13 +352,13 @@ public class IrisRequestMockProvider {
     }
 
     /** Full control over modules, including null, error, and metaData. */
-    public void mockHealthWithModules(Boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) throws JsonProcessingException {
-        var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules); // allow null → false
+    public void mockHealthWithModules(Boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) throws JacksonException {
+        var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules, null); // allow null → false
         shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
     }
 
-    public void mockLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId, IngestionState state) throws JsonProcessingException {
+    public void mockLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId, IngestionState state) throws JacksonException {
         var responseBody = new IngestionStateResponseDTO(state);
         mockServer
                 .expect(ExpectedCount.once(),
@@ -332,7 +375,7 @@ public class IrisRequestMockProvider {
                 .andRespond(withRawStatus(status.value()));
     }
 
-    public void mockFaqIngestionState(long courseId, long faqId, IngestionState state) throws JsonProcessingException {
+    public void mockFaqIngestionState(long courseId, long faqId, IngestionState state) throws JacksonException {
         var responseBody = new IngestionStateResponseDTO(state);
         mockServer.expect(ExpectedCount.once(), request -> assertThat(request.getURI().getPath()).isEqualTo("/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state"))
                 .andRespond(withSuccess(mapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
@@ -370,6 +413,22 @@ public class IrisRequestMockProvider {
             assertThat(body).isNotNull();
             var dto = mapper.readValue(body, PyrisLectureSearchRequestDTO.class);
             assertThat(dto.courseIds()).containsExactlyInAnyOrderElementsOf(expectedCourseIds);
+            return withSuccess(write(responseBody), MediaType.APPLICATION_JSON).createResponse(request);
+        });
+    }
+
+    /**
+     * Mocks the Pyris lecture-search endpoint and exposes the full deserialized request to the given consumer,
+     * so tests can assert on the forwarded access context (and any other request fields).
+     *
+     * @param responseBody    the mocked Pyris response
+     * @param requestConsumer receives the deserialized {@link PyrisLectureSearchRequestDTO}
+     */
+    public void mockSearchLectures(Object responseBody, Consumer<PyrisLectureSearchRequestDTO> requestConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisLectureSearchRequestDTO.class);
+            requestConsumer.accept(dto);
             return withSuccess(write(responseBody), MediaType.APPLICATION_JSON).createResponse(request);
         });
     }
@@ -479,7 +538,7 @@ public class IrisRequestMockProvider {
         try {
             return mapper.writeValueAsString(responseBody);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

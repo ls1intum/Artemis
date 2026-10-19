@@ -2,32 +2,32 @@ import { BaseEntity } from 'app/foundation/model/base-entity';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStepDTO } from 'app/assessment/manage/grading/grading-service';
 
-export class GradeStep implements BaseEntity {
-    public id?: number;
-    public gradeName: string;
-    public numericValue?: number;
-    public lowerBoundPercentage: number;
-    public lowerBoundPoints?: number;
-    public upperBoundPercentage: number;
-    public upperBoundPoints?: number;
-    public lowerBoundInclusive = true;
-    public upperBoundInclusive = false;
-    public isPassingGrade = false;
+export interface GradeStep extends BaseEntity {
+    id?: number;
+    gradeName: string;
+    numericValue?: number;
+    lowerBoundPercentage: number;
+    lowerBoundPoints?: number;
+    upperBoundPercentage: number;
+    upperBoundPoints?: number;
+    lowerBoundInclusive: boolean;
+    upperBoundInclusive: boolean;
+    isPassingGrade: boolean;
 }
 
-export class GradeDTO {
-    public gradeName: string;
-    public isPassingGrade = false;
-    public gradeType: GradeType;
+export interface GradeDTO {
+    gradeName: string;
+    isPassingGrade: boolean;
+    gradeType: GradeType;
 }
 
-export class GradeStepsDTO {
-    public title: string;
-    public gradeType: GradeType;
-    public gradeSteps: GradeStepDTO[];
-    public maxPoints?: number;
-    public plagiarismGrade: string;
-    public noParticipationGrade: string;
-    public presentationsNumber?: number;
-    public presentationsWeight?: number;
+export interface GradeStepsDTO {
+    title: string;
+    gradeType: GradeType;
+    gradeSteps: GradeStepDTO[];
+    maxPoints?: number;
+    plagiarismGrade: string;
+    noParticipationGrade: string;
+    presentationsNumber?: number;
+    presentationsWeight?: number;
 }

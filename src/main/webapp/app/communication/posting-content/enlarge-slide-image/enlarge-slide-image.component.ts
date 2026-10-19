@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 
 export interface DialogData {
     slideToReference: string;
+    imageAlt: string;
 }
 
 @Component({ templateUrl: './enlarge-slide-image.component.html' })
 export class EnlargeSlideImageComponent {
-    data = inject<DialogData>(MAT_DIALOG_DATA);
+    data = inject<DynamicDialogConfig<DialogData>>(DynamicDialogConfig).data!;
 }

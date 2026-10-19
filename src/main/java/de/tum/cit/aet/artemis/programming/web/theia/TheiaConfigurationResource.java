@@ -12,11 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.theia.TheiaEnabled;
 
 @Conditional(TheiaEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.PROGRAMMING_ONLINE_IDE)
 @RestController
 @RequestMapping("api/programming/theia/")
 public class TheiaConfigurationResource {

@@ -43,6 +43,36 @@ export class FinishedBuildJob implements StringBaseEntity {
     public submissionResult?: Result;
 }
 
+/**
+ * Combined shape of a build job as consumed by the build job detail view, which handles both a
+ * {@link BuildJob} (queued/running) and a {@link FinishedBuildJob}. The two entities have overlapping
+ * but non-identical structures, so every field is optional and property presence is checked at runtime.
+ */
+export type BuildJobDetail = {
+    id?: string;
+    name?: string;
+    buildAgent?: BuildAgent;
+    buildAgentAddress?: string;
+    participationId?: number;
+    courseId?: number;
+    exerciseId?: number;
+    retryCount?: number;
+    priority?: number;
+    status?: string;
+    repositoryInfo?: RepositoryInfo;
+    repositoryName?: string;
+    repositoryType?: string;
+    triggeredByPushTo?: TriggeredByPushTo;
+    jobTimingInfo?: JobTimingInfo;
+    buildConfig?: BuildConfig;
+    buildSubmissionDate?: dayjs.Dayjs;
+    buildStartDate?: dayjs.Dayjs;
+    buildCompletionDate?: dayjs.Dayjs;
+    buildDuration?: string | number;
+    commitHash?: string;
+    submissionResult?: Result;
+};
+
 export class BuildJobStatistics {
     public totalBuilds: number = 0;
     public successfulBuilds: number = 0;

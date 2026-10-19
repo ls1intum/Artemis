@@ -1,7 +1,5 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgStyle } from '@angular/common';
 import { ExerciseCategoriesDetailComponent } from 'app/shared-ui/detail-overview-list/components/exercise-categories-detail/exercise-categories-detail.component';
 import { ExerciseCategoriesDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
@@ -10,7 +8,6 @@ import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-compon
 import { MockComponent } from 'ng-mocks';
 
 describe('ExerciseCategoriesDetailComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ExerciseCategoriesDetailComponent;
     let fixture: ComponentFixture<ExerciseCategoriesDetailComponent>;
 
@@ -20,7 +17,7 @@ describe('ExerciseCategoriesDetailComponent', () => {
         })
             .overrideComponent(ExerciseCategoriesDetailComponent, {
                 set: {
-                    imports: [NgStyle, MockComponent(NoDataComponent)],
+                    imports: [MockComponent(NoDataComponent)],
                 },
             })
             .compileComponents();

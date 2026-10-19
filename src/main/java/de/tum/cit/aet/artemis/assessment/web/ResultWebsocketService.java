@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.assessment.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_TOPIC;
+import static de.tum.cit.aet.artemis.assessment.web.AssessmentWebsocketTopics.EXERCISE_RESULTS;
+import static de.tum.cit.aet.artemis.assessment.web.AssessmentWebsocketTopics.NEW_RESULTS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Lazy;
@@ -26,6 +24,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 /**
  * This service is responsible for sending websocket notifications when a new result got created.
@@ -37,6 +36,8 @@ public class ResultWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     private final Optional<ExamDateApi> examDateApi;
 
     private final ExerciseDateService exerciseDateService;
@@ -46,12 +47,13 @@ public class ResultWebsocketService {
     private final TeamRepository teamRepository;
 
     public ResultWebsocketService(WebsocketMessagingService websocketMessagingService, Optional<ExamDateApi> examDateApi, ExerciseDateService exerciseDateService,
-            AuthorizationCheckService authCheckService, TeamRepository teamRepository) {
+            AuthorizationCheckService authCheckService, TeamRepository teamRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.websocketMessagingService = websocketMessagingService;
         this.examDateApi = examDateApi;
         this.exerciseDateService = exerciseDateService;
         this.authCheckService = authCheckService;
         this.teamRepository = teamRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -63,6 +65,10 @@ public class ResultWebsocketService {
      *                          problem statement and the course with all potential attributes
      */
     public void broadcastNewResult(Participation participation, Result result) {
+        // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy views,
+        // so the websocket DTO keeps its established shape
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result);
+
         if (participation instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
                 studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
@@ -71,7 +77,7 @@ public class ResultWebsocketService {
         }
 
         // Send to tutors, instructors and admins
-        websocketMessagingService.sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), ResultDTO.of(result));
+        websocketMessagingService.sendMessage(EXERCISE_RESULTS.at(participation.getExercise().getId()), ResultDTO.of(result));
     }
 
     private void broadcastNewResultToParticipants(StudentParticipation studentParticipation, Result result) {
@@ -94,45 +100,16 @@ public class ResultWebsocketService {
             var students = studentParticipation.getStudents();
 
             var resultDTO = ResultDTO.of(result);
-            students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                    .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, resultDTO));
+            // An instructor conducting an exam test run simulates a student and must see what the student exam shows, see ResultService#filterSensitiveInformationIfNecessary
+            boolean isExamTestRun = studentParticipation.isTestRun() && exercise.isExamExercise();
+            students.stream().filter(student -> !isExamTestRun && authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                    .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULTS.at(), resultDTO));
 
             var filteredFeedback = result.createFilteredFeedbacks(!isWorkingPeriodOver, exercise);
             var filteredFeedbackResultDTO = ResultDTO.of(result, filteredFeedback);
 
-            students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                    .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, filteredFeedbackResultDTO));
+            students.stream().filter(student -> isExamTestRun || !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                    .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULTS.at(), filteredFeedbackResultDTO));
         }
-    }
-
-    /**
-     * Returns true if the given destination is a 'non-personal' exercise result subscription.
-     * Only teaching assistants, instructors and admins should be allowed to subscribe to this topic.
-     *
-     * @param destination Websocket destination topic which to check
-     * @return flag whether the destination is a 'non-personal' exercise result subscription
-     */
-    public static boolean isNonPersonalExerciseResultDestination(String destination) {
-        return getExerciseIdFromNonPersonalExerciseResultDestination(destination).isPresent();
-    }
-
-    /**
-     * Returns the exercise id from the destination route
-     *
-     * @param destination Websocket destination topic from which to extract the exercise id
-     * @return optional containing the exercise id was found, empty otherwise
-     */
-    public static Optional<Long> getExerciseIdFromNonPersonalExerciseResultDestination(String destination) {
-        Pattern pattern = Pattern.compile("^" + getNonPersonalExerciseResultDestination("(\\d*)"));
-        Matcher matcher = pattern.matcher(destination);
-        return matcher.find() ? Optional.of(Long.parseLong(matcher.group(1))) : Optional.empty();
-    }
-
-    private static String getNonPersonalExerciseResultDestination(long exerciseId) {
-        return getNonPersonalExerciseResultDestination(String.valueOf(exerciseId));
-    }
-
-    private static String getNonPersonalExerciseResultDestination(String exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + "/newResults";
     }
 }

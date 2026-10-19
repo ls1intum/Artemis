@@ -8,7 +8,7 @@ export const routes: Routes = [
         loadComponent: () => import('./participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [],
-            pageTitle: 'artemisApp.quizExercise.home.title',
+            pageTitle: 'overview.exercises',
             mode: 'live',
         },
         canActivate: [UserRouteAccessService],
@@ -18,7 +18,7 @@ export const routes: Routes = [
         loadComponent: () => import('./participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [],
-            pageTitle: 'artemisApp.quizExercise.home.title',
+            pageTitle: 'overview.exercises',
             mode: 'practice',
         },
         canActivate: [UserRouteAccessService],
@@ -28,7 +28,7 @@ export const routes: Routes = [
         loadComponent: () => import('./participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [],
-            pageTitle: 'artemisApp.quizExercise.home.title',
+            pageTitle: 'overview.exercises',
             mode: 'practice',
         },
         canActivate: [UserRouteAccessService],
@@ -38,7 +38,7 @@ export const routes: Routes = [
         loadComponent: () => import('./participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [],
-            pageTitle: 'artemisApp.quizExercise.home.title',
+            pageTitle: 'overview.exercises',
             mode: 'practice',
         },
         canActivate: [UserRouteAccessService],

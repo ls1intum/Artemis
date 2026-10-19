@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -65,6 +66,9 @@ public class TextExerciseUtilService {
     private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -124,6 +128,7 @@ public class TextExerciseUtilService {
         textExercise.setGradingInstructions("Grading instructions");
         textExercise.setProblemStatement("Problem statement");
         textExercise = textExerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(textExercise);
         return textExercise;
     }
 
@@ -179,7 +184,9 @@ public class TextExerciseUtilService {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        return exerciseRepository.save(textExercise);
+        var savedExercise = exerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -196,7 +203,9 @@ public class TextExerciseUtilService {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, startDate, dueDate, assessmentDueDate, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        return exerciseRepository.save(textExercise);
+        var savedExercise = exerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -213,7 +222,22 @@ public class TextExerciseUtilService {
         teamTextExercise.setMaxPoints(10.0);
         teamTextExercise.setBonusPoints(0.0);
         teamTextExercise.setMode(ExerciseMode.TEAM);
-        return exerciseRepository.save(teamTextExercise);
+        var savedExercise = exerciseRepository.save(teamTextExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
+    }
+
+    /**
+     * Creates and saves a Course with one TextExercise.
+     *
+     * @param title      The title of the created TextExercise
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The newly created Course
+     */
+    public Course addEnrolledCourseWithOneReleasedTextExercise(String title, String userPrefix) {
+        Course course = addCourseWithOneReleasedTextExercise(title);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**
@@ -223,12 +247,13 @@ public class TextExerciseUtilService {
      * @return The newly created Course
      */
     public Course addCourseWithOneReleasedTextExercise(String title) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setTitle(title);
         course.addExercises(textExercise);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         textExercise = exerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(textExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(textExercise);
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
@@ -244,6 +269,7 @@ public class TextExerciseUtilService {
     public void renameTextExercise(TextExercise textExercise, String title) {
         textExercise.setTitle(title);
         textExerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(textExercise);
 
     }
 
@@ -409,11 +435,9 @@ public class TextExerciseUtilService {
         for (Feedback feedback : feedbacks) {
             // Important note to prevent 'JpaSystemException: null index column for collection':
             // 1) save the child entity (without connection to the parent entity) and make sure to re-assign the return value
-            feedback = feedbackRepo.save(feedback);
-            // this also invokes feedback.setResult(result)
-            // Important note to prevent 'JpaSystemException: null index column for collection':
-            // 2) connect child and parent entity
+            // The feedback names its result, so it is connected to the parent before it is written.
             result.addFeedback(feedback);
+            feedback = feedbackRepo.save(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation
         // Important note to prevent 'JpaSystemException: null index column for collection':
@@ -500,17 +524,30 @@ public class TextExerciseUtilService {
     }
 
     /**
+     * Creates and saves a Course with one finished TextExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithOneFinishedTextExercise(String userPrefix) {
+        Course course = addCourseWithOneFinishedTextExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a Course with one finished TextExercise (release, due, and assessment due date in the past).
      *
      * @return The created Course
      */
     public Course addCourseWithOneFinishedTextExercise() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         TextExercise finishedTextExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         exerciseRepository.save(finishedTextExercise);
+        exerciseConfigurationService.initialize(finishedTextExercise);
         return course;
     }
 
@@ -523,6 +560,7 @@ public class TextExerciseUtilService {
     public TextExercise createTextExerciseForExam(ExerciseGroup exerciseGroup) {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(textExercise);
         return textExercise;
     }
 

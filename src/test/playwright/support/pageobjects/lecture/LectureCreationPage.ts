@@ -1,7 +1,7 @@
-import { Page } from 'playwright';
+import { Locator, Page } from '@playwright/test';
 import dayjs from 'dayjs';
 import { BASE_API } from '../../constants';
-import { setMonacoEditorContentByLocator } from '../../utils';
+import { fillDateTimePicker, setMonacoEditorContentByLocator } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Lecture Creation Page.
@@ -42,19 +42,11 @@ export class LectureCreationPage {
     }
 
     /**
-     * Sets the visibility date of the lecture to the provided date.
-     * @param date - The date when the lecture should become visible.
-     */
-    async setVisibleDate(date: dayjs.Dayjs) {
-        await this.page.fill('#visible-date #date-input-field', date.toString());
-    }
-
-    /**
      * Sets the start date of the lecture to the provided date.
      * @param date - The start date for the lecture.
      */
     async setStartDate(date: dayjs.Dayjs) {
-        await this.page.fill('#start-date #date-input-field', date.toString());
+        await fillDateTimePicker(this.page.getByTestId('lecture-start-date').getByRole('combobox'), date);
     }
 
     /**
@@ -62,9 +54,20 @@ export class LectureCreationPage {
      * @param date - The end date for the lecture.
      */
     async setEndDate(date: dayjs.Dayjs) {
-        const endDateField = this.page.locator('#end-date #date-input-field');
-        await endDateField.fill(' ');
-        await endDateField.clear();
-        await endDateField.fill(date.toString());
+        await fillDateTimePicker(this.page.getByTestId('lecture-end-date').getByRole('combobox'), date);
+    }
+
+    /**
+     * The footer status, which names unsaved sections or confirms the last save.
+     */
+    getSaveStatus(): Locator {
+        return this.page.getByTestId('lecture-edit-footer-status');
+    }
+
+    /**
+     * The footer button that leaves the editor: Close while nothing needs saving, Cancel otherwise.
+     */
+    getLeaveButton(): Locator {
+        return this.page.getByTestId('lecture-edit-leave');
     }
 }

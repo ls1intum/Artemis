@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of } from 'rxjs';
@@ -13,8 +12,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CourseRegistrationButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseRegistrationButtonComponent>;
     let component: CourseRegistrationButtonComponent;
     let courseService: CourseManagementService;
@@ -37,7 +34,7 @@ describe('CourseRegistrationButtonComponent', () => {
         profileService = TestBed.inject(ProfileService);
         onRegistrationSpy = vi.spyOn(component.onRegistration, 'emit');
 
-        registerForCourseStub = vi.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: ['student-group-name'] })));
+        registerForCourseStub = vi.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse<void>()));
         identityStub = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'ga12tes' } as User));
         getProfileInfoStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ allowedCourseRegistrationUsernamePattern: '^([a-z]{2}\\d{2}[a-z]{3})' } as ProfileInfo);
     });

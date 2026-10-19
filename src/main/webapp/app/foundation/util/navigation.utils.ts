@@ -1,11 +1,11 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ArtemisNavigationUtilService {
     private router = inject(Router);
     private location = inject(Location);
@@ -34,7 +34,7 @@ export class ArtemisNavigationUtilService {
         if (!this.onFirstPage) {
             this.location.back();
         } else if (fallbackUrl) {
-            this.router.navigate(fallbackUrl);
+            void this.router.navigate(fallbackUrl);
         }
     }
 
@@ -57,7 +57,7 @@ export class ArtemisNavigationUtilService {
     navigateForwardFromExerciseUpdateOrCreation(exercise?: Exercise) {
         if (exercise?.exerciseGroup?.exam?.course?.id) {
             // If an exercise group is set we are in exam mode
-            this.router.navigate([
+            void this.router.navigate([
                 'course-management',
                 exercise.exerciseGroup.exam.course.id,
                 'exams',
@@ -68,7 +68,7 @@ export class ArtemisNavigationUtilService {
                 exercise.id,
             ]);
         } else if (exercise?.course?.id) {
-            this.router.navigate(['course-management', exercise.course.id, exercise.type! + '-exercises', exercise.id]);
+            void this.router.navigate(['course-management', exercise.course.id, exercise.type! + '-exercises', exercise.id]);
         } else {
             // Fallback
             this.navigateBack();
@@ -111,7 +111,7 @@ export class ArtemisNavigationUtilService {
      * @param route the target route
      * @param params the query params of the target route
      */
-    routeInNewTab(route: any[], params?: Params): void {
+    routeInNewTab(route: unknown[], params?: Params): void {
         const url = this.router.serializeUrl(this.router.createUrlTree(route, params));
         window.open(url, '_blank');
     }

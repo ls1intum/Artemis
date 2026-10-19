@@ -1,8 +1,8 @@
-import { Directive, OnInit, effect, inject, model, output, untracked } from '@angular/core';
+import { Directive, OnInit, effect, inject, model, output, signal, untracked } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { MetisService } from 'app/communication/service/metis.service';
-import { PostingEditType } from 'app/communication/metis.util';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { PostingEditType } from 'app/communication/communication.util';
 
 import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 
@@ -11,18 +11,18 @@ export const MAX_CONTENT_LENGTH = 5000;
 
 @Directive()
 export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit {
-    protected metisService = inject(MetisService);
+    protected communicationService = inject(CommunicationService);
     protected formBuilder = inject(FormBuilder);
 
     readonly posting = model<T>();
     readonly onCreate = output<T>();
     readonly isModalOpen = output<void>();
 
-    isLoading = false;
+    readonly isLoading = signal(false);
     maxContentLength = MAX_CONTENT_LENGTH;
     editorHeight = MarkdownEditorHeight.INLINE;
-    content: string;
-    formGroup: FormGroup;
+    content = '';
+    formGroup!: FormGroup; // set by resetFormGroup() (implemented in subclasses)
 
     readonly EditType = PostingEditType;
 
@@ -61,9 +61,9 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
      * set the input content (updated or new; of post and answer post) delegates to the corresponding method
      */
     confirm(): void {
-        if (this.isLoading) return;
+        if (this.isLoading()) return;
         if (this.formGroup.valid) {
-            this.isLoading = true;
+            this.isLoading.set(true);
             if (this.editType === PostingEditType.UPDATE) {
                 this.updatePosting();
             } else if (this.editType === PostingEditType.CREATE) {

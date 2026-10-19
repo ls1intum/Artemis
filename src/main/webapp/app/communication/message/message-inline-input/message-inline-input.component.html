@@ -2,11 +2,12 @@
     <div class="message-inline-input-form__wrapper">
         <jhi-posting-markdown-editor
             formControlName="content"
+            [activeConversation]="activeConversation()"
             [editorHeight]="editorHeight"
             [maxContentLength]="maxContentLength"
             [isInputLengthDisplayed]="false"
             (keydown.enter)="confirm()"
-            [isButtonLoading]="isLoading"
+            [isButtonLoading]="isLoading()"
             [isFormGroupValid]="formGroup.valid"
             [editType]="editType"
             [course]="course()"
@@ -14,15 +15,16 @@
         <div class="col mt-1 text-end">
             @if (editType === EditType.UPDATE) {
                 <button
+                    type="button"
                     jhi-posting-button
-                    [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
+                    [buttonLabel]="'artemisApp.communication.cancel' | artemisTranslate"
                     class="btn btn-sm btn-outline-secondary"
                     (click)="isModalOpen.emit()"
                 ></button>
                 <button
                     jhi-posting-button
-                    [buttonLoading]="isLoading"
-                    [disabled]="isLoading || !formGroup.valid"
+                    [buttonLoading]="isLoading()"
+                    [disabled]="isLoading() || !formGroup.valid"
                     [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
                     class="btn btn-sm btn-outline-primary"
                     id="save"

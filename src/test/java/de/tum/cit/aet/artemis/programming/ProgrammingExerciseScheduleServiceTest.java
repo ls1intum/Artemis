@@ -84,7 +84,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @BeforeEach
     void init() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
@@ -310,7 +310,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         setupProgrammingExerciseDates(frozenNow, 5000L, null);
         var login = TEST_PREFIX + "student3";
         setupParticipationWithIndividualDueDate(frozenNow, 15000L, login);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -330,7 +330,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         setupProgrammingExerciseDates(frozenNow, 5000L, 20000L);
         // individual due date between regular due date and build and test date
         var participationIndividualDueDate = setupParticipationWithIndividualDueDate(frozenNow, 10000L, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -351,7 +351,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         setupProgrammingExerciseDates(frozenNow, 10000L, 15000L);
         // individual due date after build and test date
         var participationIndividualDueDate = setupParticipationWithIndividualDueDate(frozenNow, 30000L, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -373,7 +373,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         programmingExerciseTestCaseRepository.saveAllAndFlush(testCases);
 
         var participationIndividualDueDate = setupParticipationWithIndividualDueDate(frozenNow, 10000L, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -395,7 +395,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         programmingExerciseTestCaseRepository.saveAll(testCases);
 
         var participationIndividualDueDate = setupParticipationWithIndividualDueDate(frozenNow, 10000L, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -432,7 +432,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         setupProgrammingExerciseDates(frozenNow, 5000L, null);
 
         var participationIndividualDueDate = setupParticipationWithIndividualDueDate(frozenNow, 10000L, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -459,7 +459,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         setupProgrammingExerciseDates(frozenNow, 5000L, null);
 
         var participationIndividualDueDate = setupParticipationWithIndividualDueDate(frozenNow, 10000L, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -488,7 +488,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         programmingExerciseTestCaseRepository.saveAllAndFlush(testCases);
 
         var participationIndividualDueDate = setupParticipationWithIndividualDueDate(frozenNow, 10000L, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -520,7 +520,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         var participationIndividualDueDate = setupParticipationWithIndividualDueDate(frozenNow, 5000L, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -551,7 +551,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testStudentExamIndividualWorkingTimeChangeDuringConduction() {
-        ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         Exam exam = examExercise.getExam();
         exam.setStartDate(TimeUtil.now().minusMinutes(1));
         exam = examRepository.saveAndFlush(exam);
@@ -566,7 +566,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRescheduleExamDuringConduction() {
-        ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         Exam exam = examExercise.getExam();
         exam.setStartDate(TimeUtil.now().minusMinutes(1));
         exam = examRepository.saveAndFlush(exam);

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -21,8 +20,6 @@ import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-que
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 describe('QuizExercise Re-evaluate Warning Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizReEvaluateWarningComponent;
     let fixture: ComponentFixture<QuizReEvaluateWarningComponent>;
     let quizService: QuizExerciseService;
@@ -123,7 +120,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         comp.quizExercise.quizQuestions = comp.quizExercise.quizQuestions!.slice(0, 2);
         comp.loadQuizSuccess();
 
-        expect(comp.questionDeleted).toBe(true);
+        expect(comp.questionDeleted()).toBe(true);
     });
 
     it('should detect question invalid change', () => {
@@ -133,7 +130,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         comp.quizExercise.quizQuestions![0].invalid = true;
         comp.loadQuizSuccess();
 
-        expect(comp.questionInvalid).toBe(true);
+        expect(comp.questionInvalid()).toBe(true);
     });
 
     it('should detect scoring type change', () => {
@@ -143,7 +140,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         comp.quizExercise.quizQuestions![0].scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY;
         comp.loadQuizSuccess();
 
-        expect(comp.scoringChanged).toBe(true);
+        expect(comp.scoringChanged()).toBe(true);
     });
 
     it('should detect MC answer option deleted', () => {
@@ -154,7 +151,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         mcQuestion.answerOptions = [{ id: 1, isCorrect: true, invalid: false }];
         comp.loadQuizSuccess();
 
-        expect(comp.questionElementDeleted).toBe(true);
+        expect(comp.questionElementDeleted()).toBe(true);
     });
 
     it('should detect MC answer correctness changed', () => {
@@ -165,7 +162,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         mcQuestion.answerOptions![0].isCorrect = false;
         comp.loadQuizSuccess();
 
-        expect(comp.questionCorrectness).toBe(true);
+        expect(comp.questionCorrectness()).toBe(true);
     });
 
     it('should detect MC answer invalid change', () => {
@@ -176,7 +173,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         mcQuestion.answerOptions![0].invalid = true;
         comp.loadQuizSuccess();
 
-        expect(comp.questionElementInvalid).toBe(true);
+        expect(comp.questionElementInvalid()).toBe(true);
     });
 
     it('should detect DnD drag item deleted', () => {
@@ -187,7 +184,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         dndQuestion.dragItems = [];
         comp.loadQuizSuccess();
 
-        expect(comp.questionElementDeleted).toBe(true);
+        expect(comp.questionElementDeleted()).toBe(true);
     });
 
     it('should detect DnD drop location deleted', () => {
@@ -198,7 +195,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         dndQuestion.dropLocations = [];
         comp.loadQuizSuccess();
 
-        expect(comp.questionElementDeleted).toBe(true);
+        expect(comp.questionElementDeleted()).toBe(true);
     });
 
     it('should detect DnD correct mappings changed', () => {
@@ -209,7 +206,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         dndQuestion.correctMappings = [{ dragItem: { id: 2, invalid: false }, dropLocation: { id: 2, invalid: false }, invalid: false }];
         comp.loadQuizSuccess();
 
-        expect(comp.questionCorrectness).toBe(true);
+        expect(comp.questionCorrectness()).toBe(true);
     });
 
     it('should detect DnD drag item invalid change', () => {
@@ -220,7 +217,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         dndQuestion.dragItems![0].invalid = true;
         comp.loadQuizSuccess();
 
-        expect(comp.questionElementInvalid).toBe(true);
+        expect(comp.questionElementInvalid()).toBe(true);
     });
 
     it('should detect DnD drop location invalid change', () => {
@@ -231,7 +228,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         dndQuestion.dropLocations![0].invalid = true;
         comp.loadQuizSuccess();
 
-        expect(comp.questionElementInvalid).toBe(true);
+        expect(comp.questionElementInvalid()).toBe(true);
     });
 
     it('should detect SA solution deleted', () => {
@@ -242,7 +239,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         saQuestion.solutions = [];
         comp.loadQuizSuccess();
 
-        expect(comp.questionElementDeleted).toBe(true);
+        expect(comp.questionElementDeleted()).toBe(true);
     });
 
     it('should detect SA spot deleted', () => {
@@ -253,7 +250,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         saQuestion.spots = [];
         comp.loadQuizSuccess();
 
-        expect(comp.questionElementDeleted).toBe(true);
+        expect(comp.questionElementDeleted()).toBe(true);
     });
 
     it('should detect SA solution added', () => {
@@ -267,7 +264,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         ];
         comp.loadQuizSuccess();
 
-        expect(comp.solutionAdded).toBe(true);
+        expect(comp.solutionAdded()).toBe(true);
     });
 
     it('should detect SA spot added', () => {
@@ -281,7 +278,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         ];
         comp.loadQuizSuccess();
 
-        expect(comp.solutionAdded).toBe(true);
+        expect(comp.solutionAdded()).toBe(true);
     });
 
     it('should detect SA correct mappings changed', () => {
@@ -292,7 +289,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         saQuestion.correctMappings = [{ solution: { id: 2, invalid: false }, spot: { id: 2, invalid: false }, invalid: false }];
         comp.loadQuizSuccess();
 
-        expect(comp.questionCorrectness).toBe(true);
+        expect(comp.questionCorrectness()).toBe(true);
     });
 
     it('should detect SA solution invalid change', () => {
@@ -303,7 +300,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         saQuestion.solutions![0].invalid = true;
         comp.loadQuizSuccess();
 
-        expect(comp.questionElementInvalid).toBe(true);
+        expect(comp.questionElementInvalid()).toBe(true);
     });
 
     it('should detect SA spot invalid change', () => {
@@ -314,7 +311,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         saQuestion.spots![0].invalid = true;
         comp.loadQuizSuccess();
 
-        expect(comp.questionElementInvalid).toBe(true);
+        expect(comp.questionElementInvalid()).toBe(true);
     });
 
     it('should confirm change successfully', () => {
@@ -323,9 +320,9 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
 
         comp.confirmChange();
 
-        expect(comp.busy).toBe(false);
-        expect(comp.successful).toBe(true);
-        expect(comp.failed).toBe(false);
+        expect(comp.busy()).toBe(false);
+        expect(comp.successful()).toBe(true);
+        expect(comp.failed()).toBe(false);
     });
 
     it('should handle confirm change error', () => {
@@ -334,9 +331,9 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
 
         comp.confirmChange();
 
-        expect(comp.busy).toBe(false);
-        expect(comp.successful).toBe(false);
-        expect(comp.failed).toBe(true);
+        expect(comp.busy()).toBe(false);
+        expect(comp.successful()).toBe(false);
+        expect(comp.failed()).toBe(true);
     });
 
     it('should close and navigate', () => {

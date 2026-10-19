@@ -4,11 +4,8 @@ import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('StudentExamWorkingTimeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<StudentExamWorkingTimeComponent>;
     let comp: StudentExamWorkingTimeComponent;
 
@@ -46,22 +43,22 @@ describe('StudentExamWorkingTimeComponent', () => {
 
     it('should have a difference of zero if the student working time is the regular working time', () => {
         setExamWithWorkingTime(regularWorkingTime);
-        expect(comp.percentDifference).toBe(0);
+        expect(comp.percentDifference()).toBe(0);
     });
 
     it('should have a positive difference if the student is allowed to work longer', () => {
         setExamWithWorkingTime(regularWorkingTime + 3600);
-        expect(comp.percentDifference).toBe(50);
+        expect(comp.percentDifference()).toBe(50);
     });
 
     it('should have a negative difference if the student has a shorter working time', () => {
         setExamWithWorkingTime(regularWorkingTime - 1800);
-        expect(comp.percentDifference).toBe(-25);
+        expect(comp.percentDifference()).toBe(-25);
     });
 
     it('should correctly calculate working time extensions over double the time', () => {
         setExamWithWorkingTime(regularWorkingTime * 3);
-        expect(comp.percentDifference).toBe(200);
+        expect(comp.percentDifference()).toBe(200);
     });
 
     it('should only count exams as test runs if they explicitly are', () => {
@@ -69,14 +66,14 @@ describe('StudentExamWorkingTimeComponent', () => {
 
         studentExam.testRun = undefined;
         comp.ngOnInit();
-        expect(comp.isTestRun).toBe(false);
+        expect(comp.isTestRun()).toBe(false);
 
         studentExam.testRun = false;
         comp.ngOnInit();
-        expect(comp.isTestRun).toBe(false);
+        expect(comp.isTestRun()).toBe(false);
 
         studentExam.testRun = true;
         comp.ngOnInit();
-        expect(comp.isTestRun).toBe(true);
+        expect(comp.isTestRun()).toBe(true);
     });
 });

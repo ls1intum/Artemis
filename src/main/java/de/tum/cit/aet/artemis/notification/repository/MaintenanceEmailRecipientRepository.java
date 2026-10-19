@@ -24,19 +24,21 @@ import de.tum.cit.aet.artemis.notification.dto.MaintenanceEmailRecipientDTO;
 @Lazy
 public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepository<User, Long> {
 
-    // Note: these two queries share identical WHERE logic; keep them in sync when modifying.
+    // Note: these two queries share identical WHERE logic; keep them in sync when modifying. A test user (see TestAccountEmailService) counts as having the
+    // notification switched off until it switched it on, which is why it needs a setting that is enabled where everybody else only needs none that is disabled.
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.notification.dto.MaintenanceEmailRecipientDTO(
-                u.id, u.email, u.langKey, u.firstName, u.lastName)
+                u.id, u.login, u.email, u.langKey, u.firstName, u.lastName, u.isTestUser)
             FROM User u
             WHERE u.deleted = FALSE
                 AND u.activated = TRUE
                 AND u.email IS NOT NULL
                 AND EXISTS (
-                    SELECT 1 FROM Course c
-                    WHERE c.instructorGroupName MEMBER OF u.groups
-                        AND (c.startDate IS NULL OR c.startDate <= :now)
-                        AND (c.endDate IS NULL OR c.endDate >= :now)
+                    SELECT ucr FROM UserCourseRole ucr
+                    WHERE ucr.user = u
+                        AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                        AND ucr.course.startDate <= :now
+                        AND ucr.course.endDate >= :now
                 )
                 AND NOT EXISTS (
                     SELECT 1 FROM GlobalNotificationSetting s
@@ -44,6 +46,12 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                         AND s.notificationType = de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType.MAINTENANCE
                         AND s.enabled = FALSE
                 )
+                AND (u.isTestUser = FALSE OR EXISTS (
+                    SELECT 1 FROM GlobalNotificationSetting e
+                    WHERE e.userId = u.id
+                        AND e.notificationType = de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType.MAINTENANCE
+                        AND e.enabled = TRUE
+                ))
             """)
     Set<MaintenanceEmailRecipientDTO> findInstructorRecipientsForMaintenanceEmail(@Param("now") ZonedDateTime now);
 
@@ -54,10 +62,11 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                 AND u.activated = TRUE
                 AND u.email IS NOT NULL
                 AND EXISTS (
-                    SELECT 1 FROM Course c
-                    WHERE c.instructorGroupName MEMBER OF u.groups
-                        AND (c.startDate IS NULL OR c.startDate <= :now)
-                        AND (c.endDate IS NULL OR c.endDate >= :now)
+                    SELECT ucr FROM UserCourseRole ucr
+                    WHERE ucr.user = u
+                        AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                        AND ucr.course.startDate <= :now
+                        AND ucr.course.endDate >= :now
                 )
                 AND NOT EXISTS (
                     SELECT 1 FROM GlobalNotificationSetting s
@@ -65,6 +74,12 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                         AND s.notificationType = de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType.MAINTENANCE
                         AND s.enabled = FALSE
                 )
+                AND (u.isTestUser = FALSE OR EXISTS (
+                    SELECT 1 FROM GlobalNotificationSetting e
+                    WHERE e.userId = u.id
+                        AND e.notificationType = de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType.MAINTENANCE
+                        AND e.enabled = TRUE
+                ))
             """)
     long countInstructorRecipientsForMaintenanceEmail(@Param("now") ZonedDateTime now);
 }

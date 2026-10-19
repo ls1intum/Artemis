@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -29,9 +29,13 @@ import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exerc
 export interface ExerciseMetadataSyncContext<T extends Exercise> {
     exerciseId: number;
     exerciseType: ExerciseType;
-    getCurrentExercise: () => T;
-    getBaselineExercise: () => T;
-    setBaselineExercise: (exercise: T) => void;
+    // Method syntax (not `prop: (…) => …`) makes these members bivariant, so a subtype-specific context
+    // (e.g. <ProgrammingExercise>) stays assignable to the erased <Exercise> context the service stores.
+    // Safe by construction: setBaselineExercise only ever receives values read from this same context's
+    // getters (see applySnapshotToBaseline). Without this, strictFunctionTypes rejects the assignment.
+    getCurrentExercise(): T;
+    getBaselineExercise(): T;
+    setBaselineExercise(exercise: T): void;
 }
 
 interface ConflictCandidate {
@@ -150,7 +154,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
             // Both absent/invalid → equal; one valid and one not → not equal
             return leftValid === rightValid;
         }
-        return normalizedLeft!.isSame(normalizedRight!);
+        return normalizedLeft!.isSame(normalizedRight);
     }
     return isEqual(value, otherValue);
 };
@@ -159,7 +163,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
  * Synchronizes exercise metadata changes from other editors into the current
  * exercise editor session.
  *
- * This service is intentionally `providedIn: 'root'` (singleton) because it
+ * This service is intentionally a root `@Service()` (singleton) because it
  * shares the WebSocket subscription managed by {@link ExerciseEditorSyncService},
  * which is also root-scoped. Only one exercise can be edited at a time, so the
  * singleton holds mutable state for the active exercise. Calling {@link initialize}
@@ -168,7 +172,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
  * Consumers MUST call {@link destroy} in their `ngOnDestroy` to clean up
  * the WebSocket subscription and reset internal state before navigating away.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseMetadataSyncService {
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly http = inject(HttpClient);
@@ -192,7 +196,9 @@ export class ExerciseMetadataSyncService {
         if (this.subscriptionActive && this.context?.exerciseId !== context.exerciseId) {
             this.destroy();
         }
-        this.context = context as ExerciseMetadataSyncContext<Exercise>;
+        // The generic <T> lets callers pass a subtype-specific context; the interface's method-syntax members
+        // (see its note) keep that assignable to the erased <Exercise> context stored here — no cast needed.
+        this.context = context;
         this.cachedHandlers = this.buildHandlers(this.context);
         if (this.subscriptionActive) {
             return;

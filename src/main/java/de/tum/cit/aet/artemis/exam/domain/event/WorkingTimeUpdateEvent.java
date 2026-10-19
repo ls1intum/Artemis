@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.domain.event;
 
+import java.time.Instant;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -32,6 +34,19 @@ public class WorkingTimeUpdateEvent extends ExamLiveEvent {
     @Column(name = "courseWide")
     private boolean courseWide;
 
+    /**
+     * The new start date of the exam. Included on every working time update so a conducting student can update the
+     * pre-start countdown and the start-based visibility when the exam schedule changes.
+     */
+    @Column(name = "newStartDate")
+    private Instant newStartDate;
+
+    /**
+     * The new end date of the exam. Included on every working time update alongside {@link #newStartDate}.
+     */
+    @Column(name = "newEndDate")
+    private Instant newEndDate;
+
     public int getNewWorkingTime() {
         return newWorkingTime;
     }
@@ -56,8 +71,24 @@ public class WorkingTimeUpdateEvent extends ExamLiveEvent {
         this.courseWide = courseWide;
     }
 
+    public Instant getNewStartDate() {
+        return newStartDate;
+    }
+
+    public void setNewStartDate(Instant newStartDate) {
+        this.newStartDate = newStartDate;
+    }
+
+    public Instant getNewEndDate() {
+        return newEndDate;
+    }
+
+    public void setNewEndDate(Instant newEndDate) {
+        this.newEndDate = newEndDate;
+    }
+
     @Override
     public WorkingTimeUpdateEventDTO asDTO() {
-        return new WorkingTimeUpdateEventDTO(this.getId(), this.getCreatedDate(), newWorkingTime, oldWorkingTime, courseWide);
+        return new WorkingTimeUpdateEventDTO(this.getId(), this.getCreatedDate(), newWorkingTime, oldWorkingTime, courseWide, newStartDate, newEndDate);
     }
 }

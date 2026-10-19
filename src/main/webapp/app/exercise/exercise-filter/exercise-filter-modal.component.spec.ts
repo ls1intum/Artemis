@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseCategoryFilterOption } from 'app/foundation/types/exercise-filter';
 import { MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { RangeFilter } from 'app/foundation/types/exercise-filter';
@@ -68,7 +68,6 @@ const POINTS_FILTER: RangeFilter = {
 };
 
 describe('ExerciseFilterModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ExerciseFilterModalComponent;
     let fixture: ComponentFixture<ExerciseFilterModalComponent>;
     let activeModal: NgbActiveModal;
@@ -124,8 +123,8 @@ describe('ExerciseFilterModalComponent', () => {
 
     it('should initialize filters properly', () => {
         expect(component.categoryFilter).toEqual(component.exerciseFilters?.categoryFilter);
-        expect(component.typeFilter).toEqual(component.exerciseFilters?.exerciseTypesFilter);
-        expect(component.difficultyFilter).toEqual(component.exerciseFilters?.difficultyFilter);
+        expect(component.typeFilter()).toEqual(component.exerciseFilters?.exerciseTypesFilter);
+        expect(component.difficultyFilter()).toEqual(component.exerciseFilters?.difficultyFilter);
         expect(component.achievedScore).toEqual(component.exerciseFilters?.achievedScore);
         expect(component.achievablePoints).toEqual(component.exerciseFilters?.achievablePoints);
     });
@@ -164,7 +163,7 @@ describe('ExerciseFilterModalComponent', () => {
             component.model = 'category1';
             // Simulate selecting an item
             const event = {
-                item: component.selectableCategoryOptions[0],
+                item: component.selectableCategoryOptions()[0],
                 preventDefault: vi.fn(),
             };
             component.onSelectItem(event);
@@ -184,7 +183,7 @@ describe('ExerciseFilterModalComponent', () => {
                 item: undefined,
                 preventDefault: vi.fn(),
                 stopPropagation: vi.fn(),
-            };
+            } as unknown as NgbTypeaheadSelectItemEvent<ExerciseCategoryFilterOption>;
             component.onSelectItem(event);
             fixture.changeDetectorRef.detectChanges();
 
@@ -197,10 +196,10 @@ describe('ExerciseFilterModalComponent', () => {
     it('should reset all filters when button is clicked', () => {
         component.categoryFilter!.options[0].searched = true;
         component.categoryFilter!.options[1].searched = true;
-        component.typeFilter!.options[0].checked = true;
-        component.typeFilter!.options[1].checked = true;
-        component.difficultyFilter!.options[0].checked = true;
-        component.difficultyFilter!.options[1].checked = false;
+        component.typeFilter()!.options[0].checked = true;
+        component.typeFilter()!.options[1].checked = true;
+        component.difficultyFilter()!.options[0].checked = true;
+        component.difficultyFilter()!.options[1].checked = false;
         component.achievablePoints!.filter.selectedMax = 10;
         component.achievedScore!.filter.selectedMin = 10;
         const resetFilterSpy = vi.spyOn(component, 'clearFilter');
@@ -212,10 +211,10 @@ describe('ExerciseFilterModalComponent', () => {
         expect(resetFilterSpy).toHaveBeenCalledOnce();
         expect(component.categoryFilter!.options[0].searched).toBe(false);
         expect(component.categoryFilter!.options[1].searched).toBe(false);
-        expect(component.typeFilter!.options[0].checked).toBe(false);
-        expect(component.typeFilter!.options[1].checked).toBe(false);
-        expect(component.difficultyFilter!.options[0].checked).toBe(false);
-        expect(component.difficultyFilter!.options[1].checked).toBe(false);
+        expect(component.typeFilter()!.options[0].checked).toBe(false);
+        expect(component.typeFilter()!.options[1].checked).toBe(false);
+        expect(component.difficultyFilter()!.options[0].checked).toBe(false);
+        expect(component.difficultyFilter()!.options[1].checked).toBe(false);
         expect(component.achievablePoints!.filter.selectedMax).toBe(component.achievablePoints?.filter.generalMax);
         expect(component.achievedScore!.filter.selectedMin).toBe(component.achievedScore?.filter.generalMin);
     });
@@ -230,8 +229,8 @@ describe('ExerciseFilterModalComponent', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_3],
         };
         component.categoryFilter!.options[0].searched = true; // must have 'category1'
-        component.typeFilter!.options[0].checked = true; // must be a programming exercise
-        component.difficultyFilter!.options[0].checked = true; // must be easy
+        component.typeFilter()!.options[0].checked = true; // must be a programming exercise
+        component.difficultyFilter()!.options[0].checked = true; // must be easy
         component.achievablePoints!.filter.selectedMax = 10;
         component.achievedScore!.filter.selectedMin = 10;
 

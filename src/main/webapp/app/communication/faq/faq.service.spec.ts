@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -14,8 +13,6 @@ import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 
 describe('Faq Service', () => {
-    setupTestBed({ zoneless: true });
-
     let httpMock: HttpTestingController;
     let service: FaqService;
     let expectedResult: any;
@@ -252,22 +249,6 @@ describe('Faq Service', () => {
             expect(service.hasSearchTokens(faq1, 'title answer')).toBe(true);
             expect(service.hasSearchTokens(faq1, 'title answer missing')).toBe(false);
         });
-
-        it('should send a POST request to ingest faqs and return an OK response', () => {
-            const courseId = 123;
-            const expectedUrl = `api/communication/courses/${courseId}/faqs/ingest`;
-            const expectedStatus = 200;
-
-            service.ingestFaqsInPyris(courseId).subscribe((response) => {
-                expect(response.status).toBe(expectedStatus);
-            });
-
-            const req = httpMock.expectOne({
-                url: expectedUrl,
-                method: 'POST',
-            });
-            expect(req.request.method).toBe('POST');
-        });
     });
     it('should stringify categories without mutating the original createFaqDTO', () => {
         const original = createFaqDTODefault;
@@ -318,5 +299,56 @@ describe('Faq Service', () => {
         f.id = 99;
         f.questionTitle = 'Title';
         expect(() => UpdateFaqDTO.toUpdateDto(f)).toThrow('The state should be present to update FAQ');
+    });
+    it('searches importable FAQs with the target course and page', () => {
+        service.searchForImport(42, 'exam dates', 2).subscribe((result) => {
+            expect(result.resultsOnPage).toEqual([]);
+            expect(result.numberOfPages).toBe(0);
+            expect(result.totalElements).toBe(0);
+        });
+        const req = httpMock.expectOne((request) => request.url === 'api/communication/courses/42/faqs/for-import');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('searchTerm')).toBe('exam dates');
+        expect(req.request.params.get('page')).toBe('2');
+        req.flush({});
+    });
+
+    it('imports selected IDs and decodes the copied FAQ categories', () => {
+        service.importFaqs(42, [10, 20]).subscribe((result) => {
+            expect(result.body?.[0].categories).toEqual([{ category: 'Exams', color: '#123456' }]);
+        });
+        const req = httpMock.expectOne('api/communication/courses/42/faqs/import');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({ faqIds: [10, 20] });
+        req.flush([{ id: 31, categories: ['{"category":"Exams","color":"#123456"}'] }]);
+    });
+    it('preserves source-course metadata and exact totals in import search results', () => {
+        const result = {
+            resultsOnPage: [
+                {
+                    id: 10,
+                    questionTitle: 'Exam registration',
+                    questionAnswer: 'Register online',
+                    faqState: FaqState.ACCEPTED,
+                    courseId: 5,
+                    courseTitle: 'Previous course',
+                    courseSemester: 'WS25',
+                },
+            ],
+            numberOfPages: 3,
+            totalElements: 24,
+        };
+        let received: unknown;
+        service.searchForImport(42, 'exam', 1).subscribe((response) => (received = response));
+        httpMock.expectOne((request) => request.url.endsWith('/42/faqs/for-import')).flush(result);
+        expect(received).toEqual(result);
+    });
+    it('does not match missing FAQ content as the word undefined', () => {
+        expect(service.hasSearchTokens({ questionTitle: 'Exam date' }, 'undefined')).toBe(false);
+        expect(service.hasSearchTokens({}, 'exam')).toBe(false);
+    });
+
+    it('excludes FAQs without categories when a category filter is active', () => {
+        expect(service.applyFilters(new Set(['Exams']), [{ id: 31 }])).toEqual([]);
     });
 });

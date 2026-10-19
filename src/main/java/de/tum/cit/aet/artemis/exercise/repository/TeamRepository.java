@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTeamAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.exception.StudentsAlreadyAssignedException;
 
 /**
@@ -73,14 +74,41 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
             """)
     Optional<Team> findOneByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
+    /**
+     * The student's team for an exercise, with its members.
+     * <p>
+     * Joined twice on purpose: the first join finds the team the student belongs to, the second fetches all of its members.
+     * Filtering on the fetched alias would return the team carrying only the student that matched.
+     *
+     * @param exerciseId the id of the exercise
+     * @param userId     the id of the student
+     * @return the team with its students, or empty when the student is in none
+     */
     @Query("""
             SELECT team
             FROM Team team
-                LEFT JOIN team.students student
+                JOIN team.students teamMember
+                LEFT JOIN FETCH team.students
             WHERE team.exercise.id = :exerciseId
-                AND student.login = :userLogin
+                AND teamMember.id = :userId
             """)
-    Optional<Team> findOneByExerciseIdAndUserLogin(@Param("exerciseId") Long exerciseId, @Param("userLogin") String userLogin);
+    Optional<Team> findOneWithStudentsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
+
+    /**
+     * Finds the requesting student's team for every given team exercise in one projection query.
+     *
+     * @param exerciseIds the team exercises shown in the course overview
+     * @param userId      the requesting student
+     * @return one assignment per exercise in which the student has a team
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ExerciseTeamAssignmentDTO(team.exercise.id, team.id)
+            FROM Team team
+                JOIN team.students student
+            WHERE team.exercise.id IN :exerciseIds
+                AND student.id = :userId
+            """)
+    List<ExerciseTeamAssignmentDTO> findAssignmentsForCourseOverview(@Param("exerciseIds") Collection<Long> exerciseIds, @Param("userId") long userId);
 
     @Query("""
             SELECT student.id, team.id

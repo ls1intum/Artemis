@@ -9,6 +9,9 @@
                     [smallButtons]="true"
                     [repositoryUri]="auxiliaryRepository.repositoryUri"
                     [routerLinkForRepositoryView]="['.', 'repository', RepositoryType.AUXILIARY, auxiliaryRepository.id]"
+                    [repositoryType]="RepositoryType.AUXILIARY"
+                    [auxiliaryRepositoryId]="auxiliaryRepository.id"
+                    [exerciseId]="data.exerciseId"
                 />
                 <jhi-programming-exercise-instructor-repo-download
                     class="ms-2"

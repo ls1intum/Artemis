@@ -43,7 +43,7 @@ public class OAuth2JWKSInitialisationService {
     }
 
     /**
-     * Generates a new JWK for each OAuth2 ClientRegistration, if it is not present in the Hazelcast map and stores it.
+     * Generates a new JWK for each OAuth2 ClientRegistration, if it is not present in the distributed map and stores it.
      * This method is called once during initialization to ensure all existing ClientRegistrations have a key.
      */
     private void generateOAuth2ClientKeys() {

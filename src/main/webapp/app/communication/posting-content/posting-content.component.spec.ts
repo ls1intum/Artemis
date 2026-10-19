@@ -1,18 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { PatternMatch, PostingContentPart, ReferenceType } from 'app/communication/metis.util';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
+import { PatternMatch, PostingContentPart, ReferenceType } from 'app/communication/communication.util';
 import { Observable, of } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWidePosts, metisLecturePosts } from 'test/helpers/sample/metis-sample-data';
+import {
+    communicationCourse,
+    communicationCoursePosts,
+    communicationExercisePosts,
+    communicationGeneralCourseWidePosts,
+    communicationLecturePosts,
+} from 'test/helpers/sample/communication-sample-data';
 import { Params } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -20,11 +25,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PostingContentComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingContentComponent;
     let fixture: ComponentFixture<PostingContentComponent>;
-    let metisService: MetisService;
+    let communicationService: CommunicationService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -38,20 +41,20 @@ describe('PostingContentComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
 
         fixture = TestBed.createComponent(PostingContentComponent);
         component = fixture.componentInstance;
-        metisService = TestBed.inject(MetisService);
+        communicationService = TestBed.inject(CommunicationService);
     });
 
     it('should set course and posts for course on initialization', async () => {
         component.ngOnInit();
         await fixture.whenStable();
-        expect(component.currentlyLoadedPosts).toEqual(metisCoursePosts);
+        expect(component.currentlyLoadedPosts).toEqual(communicationCoursePosts);
     });
 
     it('should calculate correct pattern matches for content without reference', () => {
@@ -230,10 +233,10 @@ describe('PostingContentComponent', () => {
 
         it('should include content before and reference as well as a linked reference within an exercise context', async () => {
             // currently loaded posts will be set to a list of posts having an exercise context -> simulating being at an exercise page
-            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisExercisePosts) as Observable<Post[]>);
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationExercisePosts) as Observable<Post[]>);
             component.ngOnInit();
             await fixture.whenStable();
-            expect(component.currentlyLoadedPosts).toEqual(metisExercisePosts);
+            expect(component.currentlyLoadedPosts).toEqual(communicationExercisePosts);
             // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
             // i.e. being shown in the detail view of the discussion section on the current exercise page
             const idOfExercisePostToReference = component.currentlyLoadedPosts[0].id!;
@@ -243,7 +246,7 @@ describe('PostingContentComponent', () => {
             expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfExercisePostToReference}` },
                     referenceStr: `#${idOfExercisePostToReference}`,
                     referenceType: ReferenceType.POST,
@@ -254,10 +257,10 @@ describe('PostingContentComponent', () => {
 
         it('should include content before and reference as well as a linked reference within a lecture context', async () => {
             // currently loaded posts will be set to a list of posts having a lecture context -> simulating being at a lecture page
-            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationLecturePosts) as Observable<Post[]>);
             component.ngOnInit();
             await fixture.whenStable();
-            expect(component.currentlyLoadedPosts).toEqual(metisLecturePosts);
+            expect(component.currentlyLoadedPosts).toEqual(communicationLecturePosts);
             // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
             // i.e. being shown in the detail view of the discussion section on the current lecture page
             const idOfLecturePostToReference = component.currentlyLoadedPosts[0].id!;
@@ -267,7 +270,7 @@ describe('PostingContentComponent', () => {
             expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfLecturePostToReference}` },
                     referenceStr: `#${idOfLecturePostToReference}`,
                     referenceType: ReferenceType.POST,
@@ -278,10 +281,10 @@ describe('PostingContentComponent', () => {
 
         it('should include content before and reference as well as a linked reference within the course discussion overview', async () => {
             // currently loaded posts will be set to a list of posts having a course-wide context  -> simulating being at course discussion overview
-            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
             await fixture.whenStable();
-            expect(component.currentlyLoadedPosts).toEqual(metisGeneralCourseWidePosts);
+            expect(component.currentlyLoadedPosts).toEqual(communicationGeneralCourseWidePosts);
             // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
             // i.e. being shown in the detail view of the course overview
             const idOfGeneralCourseWidePost = component.currentlyLoadedPosts[0].id!;
@@ -294,7 +297,7 @@ describe('PostingContentComponent', () => {
             expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfGeneralCourseWidePost}` },
                     referenceStr: `#${idOfGeneralCourseWidePost}`,
                     referenceType: ReferenceType.POST,
@@ -305,12 +308,12 @@ describe('PostingContentComponent', () => {
 
         it('should compute parts when referencing a post from a lecture context while being at the course discussion overview.', async () => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
-            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
             await fixture.whenStable();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
-            const idOfLecturePostToReference = metisLecturePosts[0].id!;
+            const idOfLecturePostToReference = communicationLecturePosts[0].id!;
             fixture.componentRef.setInput(
                 'content',
                 `I want to reference #${idOfLecturePostToReference} with lecture context while currently being at the course discussion overview.`,
@@ -320,7 +323,7 @@ describe('PostingContentComponent', () => {
             expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfLecturePostToReference}` },
                     referenceStr: `#${idOfLecturePostToReference}`,
                     referenceType: ReferenceType.POST,
@@ -331,12 +334,12 @@ describe('PostingContentComponent', () => {
 
         it('should compute parts when referencing a post from an exercise context while being at the course discussion overview', async () => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
-            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
             await fixture.whenStable();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
-            const idOfExercisePostToReference = metisExercisePosts[0].id!;
+            const idOfExercisePostToReference = communicationExercisePosts[0].id!;
             fixture.componentRef.setInput(
                 'content',
                 `I want to reference #${idOfExercisePostToReference} with exercise context while currently being at the course discussion overview.`,
@@ -346,7 +349,7 @@ describe('PostingContentComponent', () => {
             expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfExercisePostToReference}` },
                     referenceStr: `#${idOfExercisePostToReference}`,
                     referenceType: ReferenceType.POST,
@@ -357,19 +360,19 @@ describe('PostingContentComponent', () => {
 
         it('should compute parts when referencing a post with course-wide context while being at a lecture page', async () => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at lecture page
-            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationLecturePosts) as Observable<Post[]>);
             component.ngOnInit();
             await fixture.whenStable();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
-            const idOfCourseWidePostToReference = metisGeneralCourseWidePosts[0].id!;
+            const idOfCourseWidePostToReference = communicationGeneralCourseWidePosts[0].id!;
             fixture.componentRef.setInput('content', `I want to reference #${idOfCourseWidePostToReference} with course-wide context while currently being at a lecture page.`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfCourseWidePostToReference}` },
                     referenceStr: `#${idOfCourseWidePostToReference}`,
                     referenceType: ReferenceType.POST,
@@ -380,19 +383,19 @@ describe('PostingContentComponent', () => {
 
         it('should compute parts when referencing a post with lecture context while being at a lecture page', async () => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at lecture page
-            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationLecturePosts) as Observable<Post[]>);
             component.ngOnInit();
             await fixture.whenStable();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
-            const idOfExercisePostToReference = metisExercisePosts[0].id!;
+            const idOfExercisePostToReference = communicationExercisePosts[0].id!;
             fixture.componentRef.setInput('content', `I want to reference #${idOfExercisePostToReference} with exercise context while currently being at a lecture page.`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
                     queryParams: { searchText: `#${idOfExercisePostToReference}` },
                     referenceStr: `#${idOfExercisePostToReference}`,
                     referenceType: ReferenceType.POST,

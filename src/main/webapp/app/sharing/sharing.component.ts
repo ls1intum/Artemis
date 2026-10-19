@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -15,7 +15,6 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgStyle } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { combineLatest, take } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -27,30 +26,9 @@ import { finalize } from 'rxjs/operators';
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
-    imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle],
+    imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent],
 })
 export class SharingComponent implements OnInit {
-    // Icons
-    protected readonly faPlus = faPlus;
-    protected readonly faSort = faSort;
-
-    courses: Course[] = [];
-    coursesLoading = true;
-
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    reverseSorting: boolean = false;
-    sortColumn = 'id';
-
-    shoppingBasket?: ShoppingBasket;
-    /**
-     * holder for all data needed to import the exercise
-     */
-    sharingInfo: SharingInfo = new SharingInfo();
-
-    selectedCourse: Course;
-
-    isInstructorOrEditor = false;
-
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private userRouteAccessService = inject(UserRouteAccessService);
@@ -59,9 +37,31 @@ export class SharingComponent implements OnInit {
     private programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
     private alertService = inject(AlertService);
 
+    // Icons
+    protected readonly faPlus = faPlus;
+    protected readonly faSort = faSort;
+
+    readonly courses = signal<Course[]>([]);
+    readonly coursesLoading = signal(true);
+
+    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    reverseSorting: boolean = false;
+    sortColumn = 'id';
+
+    readonly shoppingBasket = signal<ShoppingBasket | undefined>(undefined);
+    /**
+     * holder for all data needed to import the exercise
+     */
+    sharingInfo: SharingInfo = new SharingInfo();
+
+    readonly selectedCourse = signal<Course | undefined>(undefined);
+
+    readonly isInstructorOrEditor = signal(false);
+
     getBasketTokenExpiryDate(): Date {
-        if (this.shoppingBasket?.tokenValidUntil) {
-            return new Date(this.shoppingBasket.tokenValidUntil);
+        const tokenValidUntil = this.shoppingBasket()?.tokenValidUntil;
+        if (tokenValidUntil) {
+            return new Date(tokenValidUntil);
         }
         return new Date();
     }
@@ -70,28 +70,28 @@ export class SharingComponent implements OnInit {
      * loads all courses from courseService
      */
     loadAll() {
-        this.coursesLoading = true;
+        this.coursesLoading.set(true);
         this.courseService
             .getCourseOverview({})
-            .pipe(finalize(() => (this.coursesLoading = false)))
+            .pipe(finalize(() => this.coursesLoading.set(false)))
             .subscribe({
                 next: (res: HttpResponse<Course[]>) => {
-                    this.courses = res.body!;
-                    this.coursesLoading = false;
+                    this.courses.set(res.body!);
+                    this.coursesLoading.set(false);
                 },
                 error: (error: HttpErrorResponse) => {
-                    this.coursesLoading = false;
+                    this.coursesLoading.set(false);
                     this.alertService.error('artemisApp.sharing.error.loadingCourses');
                 },
             });
     }
 
     onCourseSelected(course: Course): void {
-        this.selectedCourse = course;
+        this.selectedCourse.set(course);
     }
 
     courseId(): number {
-        return this.selectedCourse?.id ?? 0;
+        return this.selectedCourse()?.id ?? 0;
     }
 
     onExerciseSelected(index: number): void {
@@ -111,7 +111,9 @@ export class SharingComponent implements OnInit {
      * sorts the course table
      */
     sortRows() {
-        this.sortService.sortByProperty(this.courses, this.sortColumn, this.reverseSorting);
+        const sortedCourses = [...this.courses()];
+        this.sortService.sortByProperty(sortedCourses, this.sortColumn, this.reverseSorting);
+        this.courses.set(sortedCourses);
     }
 
     /**
@@ -176,12 +178,12 @@ export class SharingComponent implements OnInit {
                 return;
             }
 
-            this.userRouteAccessService.checkLogin(IS_AT_LEAST_EDITOR, this.router.url).then((isLoggedIn) => {
+            void this.userRouteAccessService.checkLogin(IS_AT_LEAST_EDITOR, this.router.url).then((isLoggedIn) => {
                 if (!isLoggedIn) {
                     this.alertService.error('artemisApp.sharing.error.atLeastEditorNeeded');
                     return;
                 }
-                this.isInstructorOrEditor = true;
+                this.isInstructorOrEditor.set(true);
                 this.loadAll();
                 this.loadSharedExercises();
             });
@@ -194,7 +196,7 @@ export class SharingComponent implements OnInit {
     private loadSharedExercises(): void {
         this.programmingExerciseSharingService.getSharedExercises(this.sharingInfo).subscribe({
             next: (res: ShoppingBasket) => {
-                this.shoppingBasket = res;
+                this.shoppingBasket.set(res);
             },
             error: () => {
                 this.alertService.error('artemisApp.sharing.error.loadingBasket');

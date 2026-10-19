@@ -32,7 +32,7 @@ export class TeamStudentSearchComponent {
     readonly searchFailed = output<boolean>();
     readonly searchNoResults = output<string | undefined>();
 
-    inputDisplayValue: string;
+    inputDisplayValue = '';
 
     onAutocompleteSelect = (student: User) => {
         this.inputDisplayValue = '';

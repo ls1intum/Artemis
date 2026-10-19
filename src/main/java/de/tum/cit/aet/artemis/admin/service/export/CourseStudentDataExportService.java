@@ -16,11 +16,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -29,7 +31,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -56,6 +58,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 
@@ -85,6 +88,9 @@ public class CourseStudentDataExportService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseStudentDataExportService.class);
 
+    /** Everything an exam title may not contribute to a file name, replaced by an underscore. */
+    private static final Pattern UNSAFE_TITLE_CHARACTER = Pattern.compile("[^a-zA-Z0-9-_]");
+
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final ParticipationRepository participationRepository;
@@ -111,13 +117,15 @@ public class CourseStudentDataExportService {
 
     private final UserRepository userRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     public CourseStudentDataExportService(ParticipationRepository participationRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi,
-            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            ObjectMapper objectMapper) {
+            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, JsonMapper objectMapper,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.participationRepository = participationRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -131,6 +139,7 @@ public class CourseStudentDataExportService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -218,6 +227,13 @@ public class CourseStudentDataExportService {
                 log.info("No participations found for course {}", courseId);
                 return Optional.empty();
             }
+
+            // the automatic test-case and SCA feedback of programming results lives in JSON-ignored typed
+            // tables - attach the synthesized legacy views (two grouped queries for all results) so the
+            // exported CSV keeps containing the automatic feedback
+            List<Result> latestResults = participations.stream().map(this::getLatestSubmission).filter(Objects::nonNull).map(this::getLatestResult).filter(Objects::nonNull)
+                    .toList();
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(latestResults);
 
             List<String> lines = new ArrayList<>();
             lines.add("ExerciseId,ExerciseTitle,ParticipantLogin,ParticipantName,ParticipationType,SubmissionDate,Score,Rated,Successful,FeedbackCount,FeedbackDetails");
@@ -460,7 +476,8 @@ public class CourseStudentDataExportService {
             }
 
             List<String> lines = new ArrayList<>();
-            lines.add("TraceId,ServiceType,UserId,ExerciseId,Time,Model,Pipeline,NumInputTokens,NumOutputTokens,CostPerMillionInputTokens,CostPerMillionOutputTokens");
+            lines.add("TraceId,ServiceType,UserId,ExerciseId,Time,Model,Pipeline,NumInputTokens,NumOutputTokens,CostPerMillionInputTokens,CostPerMillionOutputTokens,"
+                    + "NumCachedInputTokens,CostPerMillionCachedInputTokens,NumCacheWriteInputTokens,CostPerMillionCacheWriteInputTokens");
 
             for (var trace : traces) {
                 String traceId = String.valueOf(trace.getId());
@@ -477,9 +494,13 @@ public class CourseStudentDataExportService {
                     String numOutputTokens = String.valueOf(request.getNumOutputTokens());
                     String costPerMillionInputTokens = String.valueOf(request.getCostPerMillionInputTokens());
                     String costPerMillionOutputTokens = String.valueOf(request.getCostPerMillionOutputTokens());
+                    String numCachedInputTokens = String.valueOf(request.getNumCachedInputTokens());
+                    String costPerMillionCachedInputTokens = String.valueOf(request.getCostPerMillionCachedInputTokens());
+                    String numCacheWriteInputTokens = String.valueOf(request.getNumCacheWriteInputTokens());
+                    String costPerMillionCacheWriteInputTokens = String.valueOf(request.getCostPerMillionCacheWriteInputTokens());
 
                     lines.add(String.join(",", traceId, serviceType, userId, exerciseId, time, model, pipeline, numInputTokens, numOutputTokens, costPerMillionInputTokens,
-                            costPerMillionOutputTokens));
+                            costPerMillionOutputTokens, numCachedInputTokens, costPerMillionCachedInputTokens, numCacheWriteInputTokens, costPerMillionCacheWriteInputTokens));
                 }
             }
 
@@ -544,8 +565,9 @@ public class CourseStudentDataExportService {
 
             // Add exercise columns
             for (Exercise exercise : exercises) {
-                headerParts.add(escapeCSV(exercise.getTitle()) + " Points");
-                headerParts.add(escapeCSV(exercise.getTitle()) + " Score");
+                String exerciseTitle = Objects.toString(exercise.getTitle(), "");
+                headerParts.add(escapeCSV(exerciseTitle + " Points"));
+                headerParts.add(escapeCSV(exerciseTitle + " Score"));
             }
 
             // Check if presentation points are configured
@@ -716,10 +738,11 @@ public class CourseStudentDataExportService {
             headerParts.add("Submitted");
 
             // Add exercise group columns
-            for (ExamScoresDTO.ExerciseGroup exerciseGroup : examScores.exerciseGroups()) {
-                headerParts.add(escapeCSV(exerciseGroup.title()) + " Exercise");
-                headerParts.add(escapeCSV(exerciseGroup.title()) + " Points");
-                headerParts.add(escapeCSV(exerciseGroup.title()) + " Score");
+            for (ExamScoresDTO.ExerciseGroupDTO exerciseGroup : examScores.exerciseGroups()) {
+                String exerciseGroupTitle = Objects.toString(exerciseGroup.title(), "");
+                headerParts.add(escapeCSV(exerciseGroupTitle + " Exercise"));
+                headerParts.add(escapeCSV(exerciseGroupTitle + " Points"));
+                headerParts.add(escapeCSV(exerciseGroupTitle + " Score"));
             }
 
             headerParts.add("Overall Points");
@@ -763,7 +786,7 @@ public class CourseStudentDataExportService {
 
             // Build data rows for each student
             final var points = examScores.maxPoints() != null ? String.valueOf(examScores.maxPoints()) : "";
-            for (ExamScoresDTO.StudentResult studentResult : examScores.studentResults()) {
+            for (ExamScoresDTO.StudentResultDTO studentResult : examScores.studentResults()) {
                 List<String> rowParts = new ArrayList<>();
                 rowParts.add(escapeCSV(studentResult.name()));
                 rowParts.add(studentResult.login() != null ? studentResult.login() : "");
@@ -772,8 +795,8 @@ public class CourseStudentDataExportService {
                 rowParts.add(studentResult.submitted() != null ? String.valueOf(studentResult.submitted()) : "false");
 
                 // Add exercise group columns
-                for (ExamScoresDTO.ExerciseGroup exerciseGroup : examScores.exerciseGroups()) {
-                    ExamScoresDTO.ExerciseResult exerciseResult = studentResult.exerciseGroupIdToExerciseResult() != null
+                for (ExamScoresDTO.ExerciseGroupDTO exerciseGroup : examScores.exerciseGroups()) {
+                    ExamScoresDTO.ExerciseResultDTO exerciseResult = studentResult.exerciseGroupIdToExerciseResult() != null
                             ? studentResult.exerciseGroupIdToExerciseResult().get(exerciseGroup.id())
                             : null;
 
@@ -859,9 +882,9 @@ public class CourseStudentDataExportService {
             }
 
             // Prepare data for statistics rows
-            List<Long> exerciseGroupIds = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroup::id).toList();
+            List<Long> exerciseGroupIds = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroupDTO::id).toList();
             Map<Long, Double> maxPointsByGroup = examScores.exerciseGroups().stream()
-                    .collect(Collectors.toMap(ExamScoresDTO.ExerciseGroup::id, eg -> eg.maxPoints() != null ? eg.maxPoints() : 0.0));
+                    .collect(Collectors.toMap(ExamScoresDTO.ExerciseGroupDTO::id, eg -> eg.maxPoints() != null ? eg.maxPoints() : 0.0));
 
             // Max row
             lines.add(String.join(",", createExamMaxRow(examScores, points, course)));
@@ -889,7 +912,7 @@ public class CourseStudentDataExportService {
             lines.add(String.join(",", createStatisticsRow("Std Dev", exerciseGroupIds, pointsByExerciseGroup, maxPointsByGroup, StatisticsUtil::calculateStandardDeviation,
                     allOverallPoints, maxPointsDouble, course)));
 
-            String sanitizedExamTitle = examScores.title() != null ? examScores.title().replaceAll("[^a-zA-Z0-9-_]", "_") : "unnamed";
+            String sanitizedExamTitle = examScores.title() != null ? UNSAFE_TITLE_CHARACTER.matcher(examScores.title()).replaceAll("_") : "unnamed";
             Path outputFile = outputDir.resolve("exam-scores-" + examId + "-" + sanitizedExamTitle + ".csv");
             exportedFiles.add(writeLinesToFile(lines, outputFile));
 
@@ -917,7 +940,7 @@ public class CourseStudentDataExportService {
         List<String> maxRow = new ArrayList<>();
         maxRow.add("Max");
         maxRow.addAll(Collections.nCopies(4, ""));
-        for (ExamScoresDTO.ExerciseGroup exerciseGroup : examScores.exerciseGroups()) {
+        for (ExamScoresDTO.ExerciseGroupDTO exerciseGroup : examScores.exerciseGroups()) {
             maxRow.add("");
             maxRow.add(exerciseGroup.maxPoints() != null ? formatValue(exerciseGroup.maxPoints(), course) : "");
             maxRow.add(formatValue(100.0, course));
@@ -1060,7 +1083,7 @@ public class CourseStudentDataExportService {
             // Count students per grade using the grade from the DTO (more accurate than recalculating)
             Map<String, Integer> gradeCountMap = new LinkedHashMap<>();
             gradingScale.getGradeSteps().forEach(step -> gradeCountMap.put(step.getGradeName(), 0));
-            for (ExamScoresDTO.StudentResult studentResult : examScores.studentResults()) {
+            for (ExamScoresDTO.StudentResultDTO studentResult : examScores.studentResults()) {
                 if (studentResult.overallGrade() != null && !studentResult.overallGrade().isEmpty()) {
                     gradeCountMap.merge(studentResult.overallGrade(), 1, Integer::sum);
                 }
@@ -1072,7 +1095,7 @@ public class CourseStudentDataExportService {
             // Score interval distribution
             writeIntervalDistributionRows(lines, overallScores, totalStudents);
 
-            String sanitizedExamTitle = examScores.title().replaceAll("[^a-zA-Z0-9-_]", "_");
+            String sanitizedExamTitle = UNSAFE_TITLE_CHARACTER.matcher(examScores.title()).replaceAll("_");
             Path outputFile = outputDir.resolve("exam-" + examId + "-" + sanitizedExamTitle + "-grade-distribution.csv");
             return Optional.of(writeLinesToFile(lines, outputFile));
         }
@@ -1250,7 +1273,7 @@ public class CourseStudentDataExportService {
             int count = gradeCountMap.getOrDefault(gradeName, 0);
             double percentage = totalStudents > 0 ? (double) count / totalStudents * 100.0 : 0.0;
             lines.add(String.join(",", "GRADE", escapeCSV(gradeName), String.valueOf(step.getLowerBoundPercentage()), String.valueOf(step.getUpperBoundPercentage()),
-                    String.valueOf(step.getIsPassingGrade()), String.valueOf(count), String.format("%.1f", percentage)));
+                    String.valueOf(step.getIsPassingGrade()), String.valueOf(count), String.format(Locale.ROOT, "%.1f", percentage)));
         }
     }
 
@@ -1275,7 +1298,7 @@ public class CourseStudentDataExportService {
             String intervalName = lowerBound + "-" + upperBound + "%";
             double percentage = totalStudents > 0 ? (double) intervalCounts[i] / totalStudents * 100.0 : 0.0;
             lines.add(String.join(",", "INTERVAL", intervalName, String.valueOf(lowerBound), String.valueOf(upperBound), "", String.valueOf(intervalCounts[i]),
-                    String.format("%.1f", percentage)));
+                    String.format(Locale.ROOT, "%.1f", percentage)));
         }
     }
 
@@ -1314,7 +1337,7 @@ public class CourseStudentDataExportService {
      * @return formatted string like "42 (84.0%)"
      */
     private String formatCountWithPercentage(int count, int total) {
-        String percentage = total > 0 ? String.format("%.1f", (double) count / total * 100.0) : "0.0";
+        String percentage = total > 0 ? String.format(Locale.ROOT, "%.1f", (double) count / total * 100.0) : "0.0";
         return count + " (" + percentage + "%)";
     }
 

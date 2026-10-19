@@ -2,14 +2,21 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.APOLLON_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATHENA_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ATLASLLM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLASML_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.DEIMOS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.OIDC_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
@@ -19,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 /**
  * Helper class for property configuration, in particular for determining conditions
@@ -69,6 +77,17 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the LLM-backed part of Atlas is enabled: the chat agent, the autonomous competency orchestrator, and the
+     * tool surfaces they call. Requires the Atlas module itself, since it operates on competencies.
+     *
+     * @param environment the Spring environment
+     * @return true if the AtlasLLM submodule is enabled, false otherwise
+     */
+    public boolean isAtlasLLMEnabled(Environment environment) {
+        return isAtlasEnabled(environment) && getPropertyOrExitArtemis(ATLASLLM_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the AtlasML submodule is enabled.
      *
      * @param environment the Spring environment
@@ -79,13 +98,32 @@ public class ArtemisConfigHelper {
     }
 
     /**
-     * Check if the Hyperion module is enabled.
+     * Check if the Hyperion module is enabled on a core node. Worker-only nodes cannot load its server services.
      *
      * @param environment the Spring environment
      * @return true if the Hyperion module is enabled, false otherwise
      */
     public boolean isHyperionEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+        return environment.acceptsProfiles(Profiles.of(PROFILE_CORE)) && getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * @param environment the Spring environment
+     * @return whether core may coordinate opt-in generation using LocalVC and LocalCI
+     */
+    public boolean isHyperionExerciseGenerationEnabled(Environment environment) {
+        return isHyperionEnabled(environment) && environment.getProperty(HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)
+                && environment.acceptsProfiles(Profiles.of(PROFILE_CORE + " & " + PROFILE_LOCALCI + " & " + PROFILE_LOCALVC));
+    }
+
+    /**
+     * Check if the Deimos malicious participation analysis module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Deimos module is enabled, false otherwise
+     */
+    public boolean isDeimosEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(DEIMOS_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -219,6 +257,16 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if OIDC-based single sign-on is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if OIDC is enabled, false otherwise
+     */
+    public boolean isOIDCEnabled(Environment environment) {
+        return environment.getProperty(OIDC_ENABLED_PROPERTY_NAME, Boolean.class, false);
+    }
+
+    /**
      * Check if the Theia module is enabled.
      *
      * @param environment the Spring environment
@@ -255,8 +303,17 @@ public class ArtemisConfigHelper {
         if (isAtlasMLEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_ATLASML);
         }
+        if (isAtlasLLMEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_ATLASLLM);
+        }
         if (isHyperionEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
+        }
+        if (isHyperionExerciseGenerationEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
+        }
+        if (isDeimosEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_DEIMOS);
         }
         if (isIrisEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_IRIS);
@@ -309,6 +366,9 @@ public class ArtemisConfigHelper {
         if (isTheiaEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);
         }
+        if (isWeaviateEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_GLOBAL_SEARCH);
+        }
 
         return enabledFeatures;
     }
@@ -317,7 +377,7 @@ public class ArtemisConfigHelper {
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {
             throw new RuntimeException(
-                    String.format("Property %s not found in Artemis configuration. Make sure to add it to your application.yml-file. Allowed values: true, false", key));
+                    "Property %s not found in Artemis configuration. Make sure to add it to your application.yml-file. Allowed values: true, false".formatted(key));
         }
         return value;
     }

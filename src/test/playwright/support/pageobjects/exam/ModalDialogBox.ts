@@ -9,30 +9,33 @@ export class ModalDialogBox {
     }
 
     getModalDialogContent() {
-        // The exam live-events overlay was migrated from NgbModal (.modal-content) to
-        // PrimeNG DynamicDialog (.p-dialog-content). Match either so this page object
-        // works for any modal-style dialog used by the exam tests.
-        return this.page.locator('.p-dialog-content, .modal-content').first();
+        return this.page.getByRole('dialog').first();
     }
 
-    async checkDialogTime(dialogTime: Dayjs) {
+    /**
+     * Checks that the event of the dialog happened between the two given moments, to the minute. The displayed minute may also be the one after
+     * the later moment, because the server stamps the event a little later than the test notes the time.
+     */
+    async checkDialogTime(from: Dayjs, to: Dayjs = from) {
         const modalDialog = this.getModalDialogContent();
         await expect(modalDialog).toBeVisible({ timeout: 30000 });
         const timeFormat = 'MMM D, YYYY HH:mm';
-        const dialogTimeFormatted = dialogTime.format(timeFormat);
-        const dialogTimeAfterMinuteFormatted = dialogTime.add(1, 'minute').format(timeFormat);
-        await expect(modalDialog.locator('.date').getByText(new RegExp(`(${dialogTimeFormatted}|${dialogTimeAfterMinuteFormatted})`))).toBeVisible({ timeout: 10000 });
+        const accepted: string[] = [];
+        for (let minute = from.startOf('minute'); !minute.isAfter(to.add(1, 'minute')); minute = minute.add(1, 'minute')) {
+            accepted.push(minute.format(timeFormat));
+        }
+        await expect(modalDialog.getByTestId('live-event-date').getByText(new RegExp(`(${accepted.join('|')})`))).toBeVisible({ timeout: 10000 });
     }
 
     async checkDialogMessage(message: string) {
-        await expect(this.getModalDialogContent().locator('.content').getByText(message)).toBeVisible({ timeout: 10000 });
+        await expect(this.getModalDialogContent().getByTestId('live-event-content').getByText(message)).toBeVisible({ timeout: 10000 });
     }
 
     async checkDialogType(type: string) {
         const modalContent = this.getModalDialogContent();
         // Wait for modal to be visible first
         await expect(modalContent).toBeVisible({ timeout: 30000 });
-        await expect(modalContent.locator('.type').getByText(type)).toBeVisible({ timeout: 10000 });
+        await expect(modalContent.getByTestId('live-event-type').getByText(type)).toBeVisible({ timeout: 10000 });
     }
 
     async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string) {
@@ -42,11 +45,11 @@ export class ModalDialogBox {
     }
 
     async closeDialog() {
-        await this.getModalDialogContent().locator('button').click({ force: true });
+        await this.getModalDialogContent().getByTestId('live-event-action-button').click({ force: true });
     }
 
     async pressModalButton(buttonText: string) {
-        let buttonLocator = this.getModalDialogContent().locator('button');
+        let buttonLocator = this.getModalDialogContent().getByTestId('live-event-action-button');
         if (buttonText) {
             buttonLocator = buttonLocator.filter({ hasText: buttonText });
         }

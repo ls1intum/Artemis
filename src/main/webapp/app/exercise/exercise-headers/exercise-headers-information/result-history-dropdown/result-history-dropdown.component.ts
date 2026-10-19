@@ -5,15 +5,25 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Popover } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { Tag } from 'primeng/tag';
-import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
+import { Tooltip } from 'primeng/tooltip';
+import { faAngleDown, faRobot } from '@fortawesome/free-solid-svg-icons';
 import { faClock, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { type AnimationProp, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
-import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
+import {
+    MissingResultInformation,
+    ResultTemplateStatus,
+    evaluateTemplateStatus,
+    getResultIconClass,
+    getTextColorClass,
+    isAIResultAndFailed,
+    isAIResultAndTimedOut,
+    isAthenaAIResult,
+} from 'app/exercise/result/result.utils';
 import { DialogService } from 'primeng/dynamicdialog';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -25,12 +35,33 @@ import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedba
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
+
+/**
+ * Where "continue to latest" goes for an exercise, or undefined for one with no participation route to return to.
+ * Exported because the page offers the same action from the title bar, where the dropdown may not be rendered at all.
+ *
+ * A quiz routes by mode rather than by participation id, so it is answered here. Everything else goes through
+ * {@link participationChildRouteSegments}, the one place that knows where a participation lives: spelling the mapping
+ * out a second time is what sent programming and file upload to the modeling route, and it cannot express that a
+ * programming exercise without the online editor has nowhere to go at all.
+ */
+export function latestSubmissionRoute(exercise: Exercise, participation: StudentParticipation): unknown[] | undefined {
+    const courseId = getCourseFromExercise(exercise)?.id;
+    if (exercise.type === ExerciseType.QUIZ) {
+        return isPracticeMode(participation)
+            ? ['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]
+            : ['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live'];
+    }
+    const segments = participationChildRouteSegments(exercise, participation);
+    return segments ? ['/courses', courseId, 'exercises', ...segments] : undefined;
+}
 
 @Component({
     selector: 'jhi-result-history-dropdown',
     templateUrl: './result-history-dropdown.component.html',
     styleUrls: ['./result-history-dropdown.component.scss'],
-    imports: [Popover, ButtonModule, Tag, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
+    imports: [Popover, ButtonModule, Tag, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, Tooltip],
 })
 export class ResultHistoryDropdownComponent {
     private resultService = inject(ResultService);
@@ -42,7 +73,9 @@ export class ResultHistoryDropdownComponent {
 
     readonly faAngleDown = faAngleDown;
     readonly faClock = faClock;
+    readonly faRobot = faRobot;
     readonly ExerciseType = ExerciseType;
+    readonly isAthenaAIResult = isAthenaAIResult;
 
     exercise = input.required<Exercise>();
     sortedHistoryResults = input.required<Result[]>();
@@ -71,6 +104,7 @@ export class ResultHistoryDropdownComponent {
     });
 
     viewingSubmissionChange = output<boolean>();
+    displayedResultChange = output<Result | undefined>();
 
     constructor() {
         effect(() => {
@@ -95,6 +129,7 @@ export class ResultHistoryDropdownComponent {
             if (matchingResult?.id) {
                 this.selectedResultId.set(matchingResult.id);
                 this.viewingSubmissionChange.emit(true);
+                this.displayedResultChange.emit(matchingResult);
                 return;
             }
         }
@@ -105,34 +140,13 @@ export class ResultHistoryDropdownComponent {
             if (matchingResult?.id) {
                 this.selectedResultId.set(matchingResult.id);
                 this.viewingSubmissionChange.emit(true);
+                this.displayedResultChange.emit(matchingResult);
                 return;
             }
         }
         this.selectedResultId.set(undefined);
         this.viewingSubmissionChange.emit(false);
-    }
-
-    continueToLatest() {
-        this.selectedResultId.set(undefined);
-        this.viewingSubmissionChange.emit(false);
-        const participation = this.studentParticipation();
-        if (!participation) {
-            return;
-        }
-        const exercise = this.exercise();
-        const courseId = getCourseFromExercise(exercise)?.id;
-
-        if (exercise.type === ExerciseType.QUIZ) {
-            if (isPracticeMode(participation)) {
-                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]);
-            } else {
-                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
-            }
-            return;
-        }
-
-        const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
-        this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id]);
+        this.displayedResultChange.emit(undefined);
     }
 
     resultsPopover = viewChild<Popover>('resultsPopover');
@@ -140,6 +154,8 @@ export class ResultHistoryDropdownComponent {
 
     toggleResultsPopover(event: Event) {
         const popover = this.resultsPopover();
+        // Popover.overlayVisible is a plain boolean field, so read it directly (do not invoke it).
+        // When the popover is already open, close it; otherwise open it anchored to the dropdown arrow.
         if (popover?.overlayVisible) {
             popover.hide();
         } else {
@@ -147,22 +163,46 @@ export class ResultHistoryDropdownComponent {
         }
     }
 
-    getResultIcon(result: Result): IconProp {
+    private getResultTemplateStatus(result: Result): ResultTemplateStatus | undefined {
         const participation = result.submission?.participation;
         if (!participation) {
+            return undefined;
+        }
+        return evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
+    }
+
+    getResultIcon(result: Result): IconProp {
+        const participation = result.submission?.participation;
+        const templateStatus = this.getResultTemplateStatus(result);
+        if (!templateStatus || !participation) {
             return faQuestionCircle;
         }
-        const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
-        return getResultIconClass(result, participation, templateStatus);
+        return getResultIconClass(result, participation, templateStatus, this.exercise());
+    }
+
+    getResultIconAnimation(result: Result): AnimationProp | undefined {
+        return this.getResultTemplateStatus(result) === ResultTemplateStatus.IS_GENERATING_FEEDBACK ? 'spin' : undefined;
     }
 
     getResultColorClass(result: Result): string {
         const participation = result.submission?.participation;
-        if (!participation) {
-            return 'text-secondary';
+        const templateStatus = this.getResultTemplateStatus(result);
+        if (!templateStatus || !participation) {
+            return 'text-muted-color';
         }
-        const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
-        return getTextColorClass(result, participation, templateStatus);
+        return getTextColorClass(result, participation, templateStatus, this.exercise());
+    }
+
+    private isUnfinishedAthenaFeedback(result: Result): boolean {
+        return isAthenaAIResult(result) && result.successful !== true;
+    }
+
+    shouldShowResultScore(result: Result): boolean {
+        return result.score !== undefined && !this.isUnfinishedAthenaFeedback(result);
+    }
+
+    shouldShowResultMetadata(result: Result): boolean {
+        return !this.isUnfinishedAthenaFeedback(result);
     }
 
     getResultText(result: Result): string {
@@ -173,7 +213,32 @@ export class ResultHistoryDropdownComponent {
         return this.resultService.getResultString(result, this.exercise(), participation, false);
     }
 
+    getAthenaFeedbackTooltip(result: Result): string {
+        if (isAIResultAndFailed(result)) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip';
+        }
+        if (isAIResultAndTimedOut(result)) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
+        }
+        if (result.successful === undefined) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
+        }
+        return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
+    }
+
     getResultFeedbackMessage(result: Result): string {
+        if (isAthenaAIResult(result)) {
+            if (isAIResultAndFailed(result)) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
+            }
+            if (isAIResultAndTimedOut(result)) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+            }
+            if (result.successful === undefined) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+            }
+        }
+
         const submission = result.submission;
         if (submission && (submission as ProgrammingSubmission).buildFailed) {
             return this.translateService.instant('artemisApp.result.progressString.buildFailed');
@@ -203,28 +268,23 @@ export class ResultHistoryDropdownComponent {
     getBadge(result: Result): Badge {
         const participation = result.submission?.participation ?? this.studentParticipation();
         if (!participation) {
-            return { class: 'bg-secondary', text: '', tooltip: '' };
+            return { severity: 'secondary', text: '', tooltip: '' };
         }
         return ResultService.evaluateBadge(participation, result);
     }
 
-    getBadgeSeverity(result: Result): 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast' | undefined {
-        const badge = this.getBadge(result);
-        switch (badge.class) {
-            case 'bg-success':
-                return 'success';
-            case 'bg-info':
-                return 'info';
-            case 'bg-secondary':
-                return 'secondary';
-            default:
-                return undefined;
-        }
+    isRowClickable(result?: Result): boolean {
+        const type = this.exercise().type;
+        const exerciseTypeSupportsNavigation = type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ;
+        return exerciseTypeSupportsNavigation && (!result || (!!result.id && !this.isUnfinishedAthenaFeedback(result)));
     }
 
-    isRowClickable(): boolean {
-        const type = this.exercise().type;
-        return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ;
+    handleRowSpaceKeydown(result: Result, event: Event) {
+        if (!this.isRowClickable(result)) {
+            return;
+        }
+        event.preventDefault();
+        this.navigateToSubmission(result, event);
     }
 
     navigateToSubmission(result: Result, event: Event) {
@@ -235,6 +295,7 @@ export class ResultHistoryDropdownComponent {
         }
         this.selectedResultId.set(result.id);
         this.viewingSubmissionChange.emit(true);
+        this.displayedResultChange.emit(result);
         this.resultsPopover()?.hide();
         const exercise = this.exercise();
         const courseId = getCourseFromExercise(exercise)?.id;
@@ -242,16 +303,28 @@ export class ResultHistoryDropdownComponent {
         if (exercise.type === ExerciseType.QUIZ) {
             if (isPracticeMode(participation)) {
                 const submissionId = result.submission?.id;
-                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id, 'submission', submissionId]);
+                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id, 'submission', submissionId]);
             } else {
-                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
+                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
             }
             return;
         }
 
         const submissionId = result.submission?.id;
         const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
-        this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id, 'submission', submissionId, 'result', result.id]);
+        void this.router.navigate([
+            '/courses',
+            courseId,
+            'exercises',
+            exerciseTypePath,
+            exercise.id,
+            'participate',
+            participation.id,
+            'submission',
+            submissionId,
+            'result',
+            result.id,
+        ]);
     }
 
     showFeedback(result: Result, event: Event) {
@@ -260,8 +333,6 @@ export class ResultHistoryDropdownComponent {
         if (!participation) {
             return;
         }
-        this.selectedResultId.set(result.id);
-
         const exercise = this.exercise();
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, false, MissingResultInformation.NONE);
         const exerciseServiceToUse = this.exerciseCacheService ?? this.exerciseService;
@@ -279,11 +350,13 @@ export class ResultHistoryDropdownComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            data: {
+            // Don't auto-focus the first focusable element on show: in a long feedback list it is often
+            // a link below the fold, which the browser scrolls into view and makes the modal open scrolled down.
+            focusOnShow: false,
+            inputValues: {
                 exercise,
                 result,
                 participation,
-                exerciseType: feedbackParams.exerciseType,
                 showScoreChart: feedbackParams.showScoreChart,
                 messageKey: feedbackParams.messageKey,
                 latestDueDate: feedbackParams.latestDueDate,

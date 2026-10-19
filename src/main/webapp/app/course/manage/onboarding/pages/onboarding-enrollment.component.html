@@ -50,7 +50,7 @@
             <div class="feature-toggle">
                 <button
                     type="button"
-                    id="onboarding_enrollmentEnabled"
+                    data-testid="onboarding_enrollmentEnabled"
                     class="toggle-btn"
                     [ngClass]="{ 'active-enabled': course().enrollmentEnabled }"
                     [attr.aria-pressed]="course().enrollmentEnabled"
@@ -78,20 +78,24 @@
         }
 
         @if (course().enrollmentEnabled) {
-            <div class="ms-4 mb-3">
+            <div class="step-indent mb-3">
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.course.enrollmentStartDate' | artemisTranslate }}"
-                            [ngModel]="course().enrollmentStartDate"
-                            (ngModelChange)="updateField('enrollmentStartDate', $event)"
+                        <tumaet-ui-date-picker
+                            inputId="onboarding-enrollmentStartDate"
+                            labelName="artemisApp.course.enrollmentStartDate"
+                            [value]="course().enrollmentStartDate"
+                            (valueChange)="updateField('enrollmentStartDate', $event)"
+                            (inputValidityChange)="setStartTextValid($event)"
                         />
                     </div>
                     <div class="col-md-6">
-                        <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.course.enrollmentEndDate' | artemisTranslate }}"
-                            [ngModel]="course().enrollmentEndDate"
-                            (ngModelChange)="updateField('enrollmentEndDate', $event)"
+                        <tumaet-ui-date-picker
+                            inputId="onboarding-enrollmentEndDate"
+                            labelName="artemisApp.course.enrollmentEndDate"
+                            [value]="course().enrollmentEndDate"
+                            (valueChange)="updateField('enrollmentEndDate', $event)"
+                            (inputValidityChange)="setEndTextValid($event)"
                         />
                     </div>
                 </div>
@@ -133,11 +137,13 @@
                 }
 
                 @if (course().unenrollmentEnabled) {
-                    <div class="ms-4 mb-3">
-                        <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.course.unenrollmentEndDate' | artemisTranslate }}"
-                            [ngModel]="course().unenrollmentEndDate"
-                            (ngModelChange)="updateField('unenrollmentEndDate', $event)"
+                    <div class="step-indent mb-3">
+                        <tumaet-ui-date-picker
+                            inputId="onboarding-unenrollmentEndDate"
+                            labelName="artemisApp.course.unenrollmentEndDate"
+                            [value]="course().unenrollmentEndDate"
+                            (valueChange)="updateField('unenrollmentEndDate', $event)"
+                            (inputValidityChange)="setUnenrollmentEndTextValid($event)"
                         />
                     </div>
                 }

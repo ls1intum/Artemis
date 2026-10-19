@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
-import { MatTree, MatTreeNestedDataSource } from '@angular/material/tree';
 import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
-import { KnowledgeAreaTreeComponent } from './knowledge-area-tree.component';
+import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from './knowledge-area-tree.component';
 
 /**
  * An abstract component that provides the logic to filter a {@link KnowledgeAreaTreeComponent} by competency title and knowledge area.
@@ -23,21 +22,14 @@ export abstract class StandardizedCompetencyFilterPageComponent {
      */
     protected knowledgeAreaMap = new Map<number, KnowledgeAreaForTree>();
 
-    // data for the tree structure
-    protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
+    // data for the tree structure. A plain mutable object so the tree picks up in-place data writes.
+    protected dataSource: KnowledgeAreaTreeDataSource = { data: [] };
 
     /**
      * Returns the KnowledgeAreaTreeComponent for programmatic tree control.
      * Subclasses must implement this to provide access to their tree component.
      */
     protected abstract get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined;
-
-    /**
-     * Returns the MatTree for programmatic control, accessed via the KnowledgeAreaTreeComponent.
-     */
-    protected get tree(): MatTree<KnowledgeAreaForTree> | undefined {
-        return this.knowledgeAreaTreeComponent?.tree();
-    }
 
     /**
      * Filters out all knowledge areas except for the one specified in the {@link knowledgeAreaFilter} and its direct ancestors.
@@ -60,6 +52,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
             this.setVisibilityOfSelfAndDescendants(filteredKnowledgeArea, true);
             this.setVisibleAndExpandSelfAndAncestors(filteredKnowledgeArea);
         }
+        this.knowledgeAreaTreeComponent?.rebuild();
     }
 
     /**
@@ -79,9 +72,10 @@ export abstract class StandardizedCompetencyFilterPageComponent {
         if (!trimmedFilter) {
             this.setVisibilityOfAllCompetencies(true);
         } else {
-            this.tree?.collapseAll();
+            this.knowledgeAreaTreeComponent?.collapseAll();
             this.dataSource.data.forEach((knowledgeArea) => this.filterCompetenciesForSelfAndChildren(knowledgeArea, trimmedFilter));
         }
+        this.knowledgeAreaTreeComponent?.rebuild();
     }
 
     /**
@@ -108,7 +102,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
             }
         }
         if (hasMatch) {
-            this.tree?.expand(knowledgeArea);
+            this.knowledgeAreaTreeComponent?.expand(knowledgeArea);
         }
         return hasMatch;
     }
@@ -142,7 +136,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
      */
     private setVisibleAndExpandSelfAndAncestors(knowledgeArea: KnowledgeAreaForTree) {
         knowledgeArea.isVisible = true;
-        this.tree?.expand(knowledgeArea);
+        this.knowledgeAreaTreeComponent?.expand(knowledgeArea);
         const parent = this.getKnowledgeAreaByIdIfExists(knowledgeArea.parentId);
         if (parent) {
             this.setVisibleAndExpandSelfAndAncestors(parent);

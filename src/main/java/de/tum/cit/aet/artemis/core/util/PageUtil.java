@@ -72,14 +72,16 @@ public class PageUtil {
         )),
         FEEDBACK_ANALYSIS(Map.of(
             "count", "COUNT(f.id)",
-            "detailTexts", "f.detailText",
-            "testCaseName", "f.testCase.testName",
+            "detailTexts", "MIN(m.text)",
+            // MIN(...) is equivalent under the query's GROUP BY tc.testName and routes the sort through
+            // JpaSort.unsafe, so Spring Data cannot prefix the join alias with the root alias
+            "testCaseName", "MIN(tc.testName)",
             "taskName", """
                     COALESCE((
                     SELECT MAX(t.taskName)
                     FROM ProgrammingExerciseTask t
                     JOIN t.testCases tct
-                    WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
+                    WHERE t.exercise.id = :exerciseId AND tct.testName = tc.testName
                 ), '')"""
         ));
         // @formatter:on
@@ -107,7 +109,7 @@ public class PageUtil {
      *
      * <p>
      * If the mapped column name contains a "COUNT(" expression, this method treats it as an unsafe sort expression
-     * and uses {@link JpaSort(String)} to apply sorting directly to the database column.
+     * and uses {@link JpaSort} to apply sorting directly to the database column.
      * </p>
      *
      * @param search        The {@link PageableSearchDTO} containing pagination and sorting parameters (e.g., page number, page size, sorted column, and sorting order).

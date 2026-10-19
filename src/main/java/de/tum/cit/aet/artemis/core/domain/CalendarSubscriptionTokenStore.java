@@ -20,6 +20,7 @@ public class CalendarSubscriptionTokenStore extends DomainObject {
     @OneToOne
     @JsonIgnore
     @JoinColumn(name = "jhi_user_id", nullable = false, unique = true)
+    @Parent
     private User user;
 
     public String getToken() {

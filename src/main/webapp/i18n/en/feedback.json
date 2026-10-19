@@ -22,6 +22,7 @@
             "downloadTruncatedFeedback": "Download feedback",
             "modal": {
                 "submitted": "Submitted",
+                "scoreChartAriaLabel": "Bar chart showing the achieved score of this submission",
                 "linkedToCommit": "linked to commit"
             },
             "group": {

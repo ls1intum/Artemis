@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { CourseSettingCategoryDirective } from 'app/course/overview/course-settings/directive/course-setting-category.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -12,6 +12,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/course-notification/course-notification-settings-map';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Component that manages notification settings for a course.
@@ -26,17 +27,18 @@ import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/
 export class NotificationSettingsComponent extends CourseSettingCategoryDirective implements OnDestroy {
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
+    private readonly accountService = inject(AccountService);
 
     // Icons
     protected readonly faBell = faBell;
     protected readonly faSpinner = faSpinner;
 
-    protected selectableSettingPresets: CourseNotificationSettingPreset[];
-    protected selectedSettingPreset?: CourseNotificationSettingPreset;
-    protected isLoading = true;
+    protected readonly selectableSettingPresets = signal<CourseNotificationSettingPreset[]>(undefined!);
+    protected readonly selectedSettingPreset = signal<CourseNotificationSettingPreset | undefined>(undefined);
+    protected readonly isLoading = signal(true);
     protected settingInfo?: CourseNotificationSettingInfo;
     protected info?: CourseNotificationInfo;
-    protected notificationSpecifications: CourseNotificationSettingSpecification[] = [];
+    protected readonly notificationSpecifications = signal<CourseNotificationSettingSpecification[]>([]);
 
     constructor() {
         super();
@@ -47,18 +49,19 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      * Sets up selectable presets, current preset, and notification specifications.
      */
     initializeValues() {
-        this.selectableSettingPresets = this.info!.presets;
+        this.selectableSettingPresets.set(this.info!.presets);
 
-        this.selectedSettingPreset =
-            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!;
+        this.selectedSettingPreset.set(
+            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets().find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!,
+        );
 
         if (this.settingInfo!.selectedPreset === 0) {
-            this.updateSpecificationArrayByNotificationMap(this.settingInfo!.notificationTypeChannels!, this.settingInfo!.notificationTypeChannels![1] === undefined);
+            this.updateSpecificationArrayByNotificationMap(this.settingInfo!.notificationTypeChannels, this.settingInfo!.notificationTypeChannels[1] === undefined);
         } else if (this.settingInfo!.selectedPreset !== 0) {
-            this.updateSpecificationArrayByNotificationMap(this.selectedSettingPreset!.presetMap!, true);
+            this.updateSpecificationArrayByNotificationMap(this.selectedSettingPreset()!.presetMap, true);
         }
 
-        this.isLoading = false;
+        this.isLoading.set(false);
     }
 
     /**
@@ -68,9 +71,9 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      * @param presetTypeId - The ID of the selected preset (0 for custom settings)
      */
     presetSelected(presetTypeId: number) {
-        this.selectedSettingPreset = presetTypeId === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === presetTypeId)!;
+        this.selectedSettingPreset.set(presetTypeId === 0 ? undefined : this.selectableSettingPresets().find((preset) => preset.typeId === presetTypeId)!);
 
-        this.courseNotificationSettingService.setSettingPreset(this.courseId, presetTypeId, this.selectedSettingPreset);
+        this.courseNotificationSettingService.setSettingPreset(this.courseId, presetTypeId, this.selectedSettingPreset());
     }
 
     /**
@@ -80,9 +83,9 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      * @param specification - The notification specification that was changed
      */
     optionChanged(specification: CourseNotificationSettingSpecification) {
-        this.courseNotificationSettingService.setSettingSpecification(this.courseId, specification, this.selectedSettingPreset);
+        this.courseNotificationSettingService.setSettingSpecification(this.courseId, specification, this.selectedSettingPreset());
 
-        this.selectedSettingPreset = undefined;
+        this.selectedSettingPreset.set(undefined);
     }
 
     /**
@@ -119,21 +122,27 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         });
     }
 
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
     }
 
     /**
      * Creates notification specifications from a notification map.
      * Used to update the UI based on either user selections or preset values.
+     * Instructor-only notification types are left out for users below instructor in this course.
      *
      * @param notificationMap - Map of notification types to channel settings
      * @param useValue - Whether to use the value (true) or key (false) as the lookup in the map
      */
     private updateSpecificationArrayByNotificationMap(notificationMap: CourseNotificationSettingsMap, useValue: boolean) {
-        this.notificationSpecifications = [];
-        Object.entries(this.info!.notificationTypes!).forEach(([key, value]) => {
-            this.notificationSpecifications.push(new CourseNotificationSettingSpecification(value, Number(key), notificationMap[useValue ? value : key]));
+        const notificationSpecifications: CourseNotificationSettingSpecification[] = [];
+        const isInstructor = this.accountService.isAtLeastInstructorInCourseWithId(this.courseId);
+        Object.entries(this.info!.notificationTypes).forEach(([key, value]) => {
+            if (!isInstructor && CourseNotificationService.INSTRUCTOR_ONLY_NOTIFICATION_TYPES.includes(value)) {
+                return;
+            }
+            notificationSpecifications.push(new CourseNotificationSettingSpecification(value, Number(key), notificationMap[useValue ? value : key]));
         });
+        this.notificationSpecifications.set(notificationSpecifications);
     }
 }

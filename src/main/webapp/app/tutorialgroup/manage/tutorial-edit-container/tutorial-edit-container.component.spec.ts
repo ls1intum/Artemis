@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialEditContainerComponent } from 'app/tutorialgroup/manage/tutorial-edit-container/tutorial-edit-container.component';
 import { TutorialCreateOrEditComponent, UpdateTutorialGroupEvent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
@@ -17,11 +17,9 @@ import { LoadingIndicatorOverlayStubComponent } from 'test/helpers/stubs/tutoria
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
 
 describe('TutorialEditContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TutorialEditContainerComponent>;
     let component: TutorialEditContainerComponent;
 
@@ -41,6 +39,7 @@ describe('TutorialEditContainerComponent', () => {
     };
     let alertService: MockAlertService;
     let activatedRoute: ActivatedRoute;
+    const entityTitleService = { setTitle: vi.fn() };
 
     beforeEach(async () => {
         tutorialGroupApiService = {
@@ -65,7 +64,8 @@ describe('TutorialEditContainerComponent', () => {
             providers: [
                 mockedActivatedRoute({ tutorialGroupId: '17' }, {}, {}, { courseId: '2' }),
                 { provide: Router, useClass: MockRouter },
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiService },
+                { provide: EntityTitleService, useValue: entityTitleService },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiService },
                 { provide: TutorialGroupCourseAndGroupService, useValue: tutorialGroupCourseAndGroupService },
                 { provide: TutorialGroupTutorsService, useValue: tutorialGroupTutorsService },
                 { provide: AlertService, useValue: alertService },
@@ -174,6 +174,34 @@ describe('TutorialEditContainerComponent', () => {
         expect(component.schedule()).toEqual(createSchedule());
     });
 
+    it('loads the requested group instead of reusing a different cached group', () => {
+        const cached = createTutorialGroup();
+        cached.id = 18;
+        tutorialGroupCourseAndGroupService.tutorialGroup.set(cached);
+        tutorialGroupApiService.getTutorialGroupSchedule.mockReturnValue(of(createSchedule()));
+
+        createComponent();
+
+        expect(tutorialGroupCourseAndGroupService.fetchTutorialGroup).toHaveBeenCalledWith(2, 17);
+        expect(component.tutorialGroup()).toBeUndefined();
+    });
+
+    it('cancels a previous schedule request when the route switches groups', () => {
+        const first = new Subject<TutorialGroupSchedule>();
+        const second = new Subject<TutorialGroupSchedule>();
+        tutorialGroupApiService.getTutorialGroupSchedule.mockReturnValueOnce(first).mockReturnValueOnce(second);
+        createComponent();
+        const params = activatedRoute.paramMap as BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+        params.next(convertToParamMap({ tutorialGroupId: '18' }));
+        fixture.detectChanges();
+        const latest = createSchedule();
+        latest.location = 'Second group';
+        second.next(latest);
+        first.next(createSchedule());
+
+        expect(component.schedule()?.location).toBe('Second group');
+    });
+
     it('should show an error alert when loading the schedule fails on init', () => {
         const schedule$ = new Subject<TutorialGroupSchedule>();
         tutorialGroupApiService.getTutorialGroupSchedule.mockReturnValue(schedule$.asObservable());
@@ -189,7 +217,7 @@ describe('TutorialEditContainerComponent', () => {
         expect(component.isScheduleLoading()).toBe(false);
     });
 
-    it('should update the tutorial group, refresh it, and navigate back on success', async () => {
+    it('should update the tutorial group, refresh it, and return to the tutorial groups overview on success', async () => {
         const update$ = new Subject<void>();
         const updateEvent = createUpdateEvent();
         const router = TestBed.inject(Router);
@@ -213,7 +241,8 @@ describe('TutorialEditContainerComponent', () => {
         expect(tutorialGroupCourseAndGroupService.isTutorialGroupLoading()).toBe(false);
         expect(tutorialGroupCourseAndGroupService.fetchTutorialGroup).toHaveBeenCalledOnce();
         expect(tutorialGroupCourseAndGroupService.fetchTutorialGroup).toHaveBeenCalledWith(2, 17);
-        expect(router.navigate).toHaveBeenCalledWith(['..'], { relativeTo: activatedRoute });
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups']);
+        expect(entityTitleService.setTitle).toHaveBeenCalledWith(EntityType.TUTORIAL_GROUP, [17], 'Updated TG 1');
         expect(alertService.addErrorAlert).not.toHaveBeenCalled();
     });
 

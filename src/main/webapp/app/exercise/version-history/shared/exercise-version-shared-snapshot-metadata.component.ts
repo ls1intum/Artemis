@@ -112,7 +112,6 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
     readonly flagFields = computed<MetadataField[]>(() => {
         const snapshot = this.snapshot();
         return [
-            this.toField('artemisApp.programmingExercise.timeline.manualFeedbackRequests', booleanLabel(this.translateService, snapshot.allowFeedbackRequests)),
             this.toField(
                 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
                 booleanLabel(this.translateService, snapshot.allowComplaintsForAutomaticAssessments),
@@ -141,6 +140,8 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
         }
         this.injectableCallbacks.length = 0;
         this.plantUmlWrapper.setExerciseId(snapshot.id);
+        // The wrapper is a singleton: clear the instance scope that a programming exercise instructions component may have left behind
+        this.plantUmlWrapper.setInstanceId(undefined);
 
         this.problemStatement.set(this.renderMarkdown(snapshot.problemStatement));
         this.gradingInstructions.set(this.renderMarkdown(snapshot.gradingInstructions));

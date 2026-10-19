@@ -2,15 +2,14 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, 
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { Subscription } from 'rxjs';
-import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
+import { PatternMatch, PostingContentPart, ReferenceType } from '../communication.util';
 import { User } from 'app/account/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgStyle } from '@angular/common';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
 import { LinkPreviewContainerComponent } from 'app/communication/link-preview/components/link-preview-container/link-preview-container.component';
 
@@ -19,10 +18,10 @@ import { LinkPreviewContainerComponent } from 'app/communication/link-preview/co
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FaIconComponent, NgStyle, PostingContentPartComponent, LinkPreviewContainerComponent],
+    imports: [TranslateDirective, FaIconComponent, PostingContentPartComponent, LinkPreviewContainerComponent],
 })
 export class PostingContentComponent implements OnInit, OnDestroy {
-    private metisService = inject(MetisService);
+    private communicationService = inject(CommunicationService);
 
     content = input<string | undefined>();
     previewMode = input<boolean | undefined>();
@@ -35,7 +34,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
     channelReferenceClicked = output<number>();
 
     isDeleted = input<boolean>(false);
-    isSubscribeToMetis = input<boolean>(true);
+    subscribesToPosts = input<boolean>(true);
     deleteTimerInSeconds = input<number>(0);
     onUndoDeleteEvent = output<void>();
 
@@ -43,7 +42,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
     currentlyLoadedPosts: Post[] = [];
     postingContentParts = signal<PostingContentPart[]>([]);
 
-    private postsSubscription: Subscription;
+    private postsSubscription?: Subscription;
 
     // Directory for attachments. If the endpoint of the file service changes, this needs to be adapted
     private readonly ATTACHMENT_DIR = 'api/core/files/attachments/';
@@ -60,7 +59,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
             // Track signal inputs that were monitored in ngOnChanges
             this.content();
             this.posting();
-            this.isSubscribeToMetis();
+            this.subscribesToPosts();
             this.isEdited();
             this.isDeleted();
             this.deleteTimerInSeconds();
@@ -77,7 +76,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
      * on initialization: calculate posting parts to be displayed
      */
     ngOnInit(): void {
-        if (!this.isSubscribeToMetis()) {
+        if (!this.subscribesToPosts()) {
             const patternMatches: PatternMatch[] = this.getPatternMatches();
             this.computePostingContentParts(patternMatches);
         } else {
@@ -91,7 +90,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
      * computes the PostingContentParts for rendering
      */
     private computeContentPartsOfPosts() {
-        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+        this.postsSubscription = this.communicationService.posts.subscribe((posts: Post[]) => {
             this.currentlyLoadedPosts = posts;
             const patternMatches: PatternMatch[] = this.getPatternMatches();
             this.computePostingContentParts(patternMatches);
@@ -127,13 +126,15 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                 let imageToReference;
                 if (ReferenceType.POST === referenceType) {
                     // if the referenced Id is within the currently loaded posts, we can create the context-specific link to that post
-                    // by invoking the respective metis service methods for link and query params and passing the post object;
+                    // by invoking the respective communication service methods for link and query params and passing the post object;
                     // if not, we do not want to fetch the post from the DB and rather always navigate to the course discussion page with the referenceStr as search text
                     const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);
                     referenceStr = this.content()!.substring(patternMatch.startIndex, patternMatch.endIndex);
-                    if (isCommunicationEnabled(this.metisService.getCourse())) {
-                        linkToReference = this.metisService.getLinkForPost();
-                        queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
+                    if (isCommunicationEnabled(this.communicationService.getCourse())) {
+                        linkToReference = this.communicationService.getLinkForPost();
+                        queryParams = referencedPostInLoadedPosts
+                            ? this.communicationService.getQueryParamsForPost(referencedPostInLoadedPosts)
+                            : ({ searchText: referenceStr } satisfies Params);
                     }
                 } else if (
                     ReferenceType.LECTURE === referenceType ||
@@ -147,35 +148,33 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                     // reference closing tag: [/referenceType] (wrapped between 3 characters)
                     // referenceStr: string to be displayed for the reference
                     // linkToReference: link to be navigated to on reference click
-                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
-                    linkToReference = [
-                        this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex)),
-                    ];
+                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex) + 1, this.content()!.indexOf('(', patternMatch.startIndex));
+                    linkToReference = [this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex) + 1, this.content()!.indexOf(')', patternMatch.startIndex))];
                 } else if (ReferenceType.FAQ === referenceType) {
                     referenceStr = this.content()!.substring(
-                        this.content()!.indexOf(']', patternMatch.startIndex)! + 1,
-                        this.content()!.indexOf('(/courses', patternMatch.startIndex)!,
+                        this.content()!.indexOf(']', patternMatch.startIndex) + 1,
+                        this.content()!.indexOf('(/courses', patternMatch.startIndex),
                     );
                     linkToReference = [
-                        this.content()!.substring(this.content()!.indexOf('(/courses', patternMatch.startIndex)! + 1, this.content()!.indexOf('?faqId', patternMatch.startIndex)),
+                        this.content()!.substring(this.content()!.indexOf('(/courses', patternMatch.startIndex) + 1, this.content()!.indexOf('?faqId', patternMatch.startIndex)),
                     ];
-                    queryParams = { faqId: this.content()!.substring(this.content()!.indexOf('=') + 1, this.content()!.indexOf(')')) } as Params;
+                    queryParams = { faqId: this.content()!.substring(this.content()!.indexOf('=') + 1, this.content()!.indexOf(')')) } satisfies Params;
                 } else if (ReferenceType.ATTACHMENT === referenceType || ReferenceType.ATTACHMENT_UNITS === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click
                     // attachmentRefDir: directory of the attachment
-                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
+                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex) + 1, this.content()!.indexOf('(', patternMatch.startIndex));
                     const attachmentRefDir = this.ATTACHMENT_DIR;
                     attachmentToReference =
                         attachmentRefDir +
-                        this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex));
+                        this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex) + 1, this.content()!.indexOf(')', patternMatch.startIndex));
                 } else if (ReferenceType.SLIDE === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // slideToReference: location of attachment to be opened on reference click
-                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
+                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex) + 1, this.content()!.indexOf('(', patternMatch.startIndex));
 
                     // Get the full path from within the parentheses
-                    const fullPath = this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex));
+                    const fullPath = this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex) + 1, this.content()!.indexOf(')', patternMatch.startIndex));
 
                     // Two cases are created to handle both old and new version of the pattern
                     if (fullPath.startsWith('#')) {
@@ -189,26 +188,26 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                     }
                 } else if (ReferenceType.USER === referenceType) {
                     // referenceStr: string to be displayed for the reference
-                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
+                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex) + 1, this.content()!.indexOf('(', patternMatch.startIndex));
                     queryParams = {
                         referenceUserLogin: this.content()!.substring(
-                            this.content()!.indexOf('(', patternMatch.startIndex)! + 1,
+                            this.content()!.indexOf('(', patternMatch.startIndex) + 1,
                             this.content()!.indexOf(')', patternMatch.startIndex),
                         ),
-                    } as Params;
+                    } satisfies Params;
                 } else if (ReferenceType.CHANNEL === referenceType) {
                     // referenceStr: string to be displayed for the reference
-                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
+                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex) + 1, this.content()!.indexOf('(', patternMatch.startIndex));
                     const channelId = parseInt(
-                        this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex)),
+                        this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex) + 1, this.content()!.indexOf(')', patternMatch.startIndex)),
                     );
                     queryParams = {
                         channelId: isNaN(channelId) ? undefined : channelId,
-                    } as Params;
+                    } satisfies Params;
                 } else if (ReferenceType.IMAGE === referenceType) {
                     // get filename of the image
                     referenceStr = this.content()!.substring(this.content()!.indexOf('![') + 2, this.content()!.indexOf('](', patternMatch.startIndex));
-                    imageToReference = this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex));
+                    imageToReference = this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex) + 1, this.content()!.indexOf(')', patternMatch.startIndex));
                 }
 
                 // determining the endIndex of the content after the reference
@@ -288,8 +287,8 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                 patternMatches.push({
                     startIndex: match.index,
                     endIndex: pattern.lastIndex,
-                    referenceType: group!,
-                } as PatternMatch);
+                    referenceType: group,
+                });
             }
 
             match = pattern.exec(this.content()!);

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -12,8 +11,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('GenericConfirmationDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: GenericConfirmationDialogComponent;
     let fixture: ComponentFixture<GenericConfirmationDialogComponent>;
 
@@ -37,7 +34,6 @@ describe('GenericConfirmationDialogComponent', () => {
             descriptionKey: 'description',
             confirmButtonKey: 'confirm',
         };
-        fixture.changeDetectorRef.detectChanges();
         initializeDialog(component, fixture, { translationKeys, canBeUndone: true, isDangerousAction: false, translationParameters: {} });
     });
 

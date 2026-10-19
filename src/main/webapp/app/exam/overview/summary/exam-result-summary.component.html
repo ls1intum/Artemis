@@ -1,90 +1,117 @@
-@if (isTestRun) {
-    <jhi-test-run-ribbon id="testRunRibbon" />
-}
-<div id="exam-results-title">
-    <h2>
-        <ng-container>
-            {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
-        </ng-container>
-        <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
-            <fa-icon [icon]="faPrint" />
-            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
-        </button>
-        @if (studentExam()) {
-            <jhi-exam-request-ai-feedback-button [courseId]="courseId" [studentExam]="studentExam()" [testExamConduction]="testExamConduction" />
-        }
-    </h2>
-</div>
-@if (studentExam() && !studentExam().submitted) {
-    <div class="alert alert-danger text-center">
-        <strong jhiTranslate="artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam"></strong>
+@if (!instructorView()) {
+    <div id="exam-results-title">
+        <jhi-exam-exercise-header class="block" titleKey="artemisApp.exam.examSummary.examResults">
+            <!-- An ng-container carries the slot attribute: with preserved whitespace the @if inside it would have more than one node at its root and nothing would be projected into the slot. -->
+            <ng-container headerLeading>
+                @if (isSidebarCollapsed()) {
+                    <jhi-course-sidebar-toggle-button class="shrink-0" [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+                }
+            </ng-container>
+            <ng-container headerTitleSuffix>
+                @if (isTestRun()) {
+                    <tumaet-ui-tag id="testRunRibbon" severity="danger" class="shrink-0">
+                        <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
+                    </tumaet-ui-tag>
+                }
+            </ng-container>
+            @if (studentExam()) {
+                <!-- display: contents, so a button that is not shown leaves no empty flex item (and no extra gap) next to the export button -->
+                <jhi-exam-request-ai-feedback-button class="contents" [courseId]="courseId()" [studentExam]="studentExam()" [testExamConduction]="testExamConduction()" />
+            }
+            <button type="button" id="exportToPDFButton" data-testid="exam-summary-export-button" tumAetUiButton size="small" (click)="printPDF()">
+                <fa-icon [icon]="faPrint" />
+                <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
+            </button>
+        </jhi-exam-exercise-header>
     </div>
+} @else if (isTestRun() && studentExam()) {
+    <!-- The instructor test run summary has its own title bar, so only the AI feedback button is repeated here. -->
+    <div class="mb-2 flex justify-end">
+        <jhi-exam-request-ai-feedback-button [courseId]="courseId()" [studentExam]="studentExam()" />
+    </div>
+}
+@if (studentExam() && !studentExam().submitted) {
+    <tumaet-ui-message severity="error" class="mb-6! text-center [&_.tumaet-ui-message-content]:justify-center">
+        <strong jhiTranslate="artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam"></strong>
+    </tumaet-ui-message>
 }
 @if (studentExam()?.exam) {
     <div>
         <jhi-exam-general-information
             [exam]="studentExam().exam!"
             [studentExam]="studentExam()"
-            [reviewIsOpen]="(studentExam()?.exam || false) && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
+            [reviewIsOpen]="(studentExam()?.exam || false) && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun()"
         />
     </div>
 }
-@if (studentExam() && studentExam().exercises && studentExam().exam?.course && studentExamGradeInfoDTO) {
-    <div class="mb-4" id="exam-summary-result-overview">
+@if (studentExam() && studentExam().exercises && studentExam().exam?.course && studentExamGradeInfoDTO()) {
+    <div class="mb-6!" data-testid="exam-summary-result-overview">
         <jhi-exam-result-overview
-            [studentExamWithGrade]="studentExamGradeInfoDTO!"
-            [isGradingKeyCollapsed]="isGradingKeyCollapsed"
-            [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed"
-            [exerciseInfos]="exerciseInfos"
-            [isTestRun]="isTestRun"
+            [studentExamWithGrade]="studentExamGradeInfoDTO()!"
+            [isGradingKeyCollapsed]="isGradingKeyCollapsed()"
+            [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed()"
+            [exerciseInfos]="exerciseInfos()"
+            [isTestRun]="isTestRun()"
         />
     </div>
 }
 @if (!resultsArePublished) {
-    <div class="mb-0">
+    <div class="mb-6!">
         <fa-icon [icon]="faInfoCircle" class="info-icon" />
         {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
     </div>
 }
-<h3 jhiTranslate="artemisApp.exam.exercises"></h3>
+<h3 class="mb-3! text-base! font-semibold!" data-testid="exam-summary-heading" jhiTranslate="artemisApp.exam.exercises"></h3>
 @for (exercise of studentExam()?.exercises; track exercise; let i = $index) {
     <div [id]="'exercise-' + exercise.id">
-        <jhi-collapsible-card [isCardContentCollapsed]="exerciseInfos[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos[exercise.id!])">
+        <jhi-collapsible-card [isCardContentCollapsed]="exerciseInfos()[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos()[exercise.id!])">
             <div class="header">
-                <jhi-result-summary-exercise-card-header [index]="i" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsArePublished" />
+                <jhi-result-summary-exercise-card-header
+                    [index]="i"
+                    [exercise]="exercise"
+                    [exerciseInfo]="exerciseInfos()[exercise.id!]"
+                    [resultsPublished]="resultsArePublished"
+                />
             </div>
-            <div class="collapsible-content">
-                <div class="clearfix">
+            <div class="collapsible-content" [style.--resizeable-container-right-max-width]="isPrinting() ? 'none' : '45%'">
+                <div class="flow-root">
                     <span class="exercise-buttons">
-                        @if (plagiarismCaseInfos[exercise.id!]) {
+                        @if (plagiarismCaseInfos()[exercise.id!]) {
                             <a
-                                class="btn ms-2 float-end"
-                                [ngClass]="plagiarismCaseInfos[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'btn-info' : 'btn-danger'"
-                                [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfos[exercise.id!]!.id]"
+                                tumAetUiButton
+                                size="small"
+                                class="float-right ml-2"
+                                [severity]="plagiarismCaseInfos()[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'info' : 'danger'"
+                                [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfos()[exercise.id!]!.id]"
                             >
                                 <span
                                     [jhiTranslate]="
                                         'artemisApp.plagiarism.plagiarismCases.' +
-                                        (plagiarismCaseInfos[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'resolvedPlagiarismCase' : 'plagiarismCase')
+                                        (plagiarismCaseInfos()[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'resolvedPlagiarismCase' : 'plagiarismCase')
                                     "
                                 >
                                     Plagiarism Case
                                 </span>
                             </a>
                         }
-                        @if (exampleSolutionPublished) {
-                            @if (exerciseInfos[exercise.id!].displayExampleSolution) {
-                                <span class="alert alert-info p-1" jhiTranslate="artemisApp.exam.examSummary.youAreViewingTheExampleSolution"></span>
+                        @if (exampleSolutionPublished()) {
+                            @if (exerciseInfos()[exercise.id!].displayExampleSolution) {
+                                <tumaet-ui-message severity="info" class="inline-grid!">
+                                    <span jhiTranslate="artemisApp.exam.examSummary.youAreViewingTheExampleSolution"></span>
+                                </tumaet-ui-message>
                             }
                             @if (exercise.type !== QUIZ && exercise.type !== PROGRAMMING) {
                                 <button
+                                    type="button"
                                     [id]="'show-sample-solution-button-' + exercise.id"
-                                    class="btn float-end"
-                                    [class]="exerciseInfos[exercise.id!].displayExampleSolution ? 'btn-primary' : 'btn-outline-primary'"
+                                    tumAetUiButton
+                                    size="small"
+                                    class="float-right"
+                                    [variant]="exerciseInfos()[exercise.id!].displayExampleSolution ? 'solid' : 'outlined'"
                                     (click)="toggleShowSampleSolution(exercise.id)"
                                 >
-                                    <fa-icon [icon]="!exerciseInfos[exercise.id!].displayExampleSolution ? faEye : faEyeSlash" class="info-icon" />
-                                    @if (!exerciseInfos[exercise.id!].displayExampleSolution) {
+                                    <fa-icon [icon]="!exerciseInfos()[exercise.id!].displayExampleSolution ? faEye : faEyeSlash" class="info-icon" />
+                                    @if (!exerciseInfos()[exercise.id!].displayExampleSolution) {
                                         <span>&nbsp;{{ 'artemisApp.exam.examSummary.showExampleSolution' | artemisTranslate }}&nbsp;</span>
                                     } @else {
                                         {{ 'artemisApp.exam.examSummary.hideExampleSolution' | artemisTranslate }}
@@ -93,19 +120,19 @@
                             }
                             @if (exercise.type === PROGRAMMING) {
                                 <jhi-programming-exercise-example-solution-repo-download
-                                    class="ms-2 float-end"
+                                    class="float-right ml-2"
                                     [exerciseId]="exercise.id!"
                                     [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
                                     [displayedOnExamSummary]="true"
                                 />
-                                @if (exerciseInfos[exercise.id!].releaseTestsWithExampleSolution) {
+                                @if (exerciseInfos()[exercise.id!].releaseTestsWithExampleSolution) {
                                     <jhi-programming-exercise-example-solution-repo-download
-                                        class="ms-2 float-end"
+                                        class="float-right ml-2"
                                         [exerciseId]="exercise.id!"
                                         [includeTests]="true"
                                         [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
                                         [displayedOnExamSummary]="true"
-                                        ngbTooltip="{{ 'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate }}"
+                                        [tumAetUiTooltip]="'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate"
                                     />
                                 }
                             }
@@ -113,33 +140,33 @@
                     </span>
                 </div>
                 @if (exercise.type !== PROGRAMMING) {
-                    <ng-container class="pt-2">
-                        @if (exerciseInfos[exercise.id!].displayExampleSolution) {
+                    <ng-container>
+                        @if (exerciseInfos()[exercise.id!].displayExampleSolution) {
                             <div>
                                 @if (exercise.id !== undefined) {
                                     <jhi-example-solution [exerciseId]="exercise.id" [displayHeader]="false" />
                                 }
                             </div>
                         } @else {
-                            @if (exerciseInfos[exercise.id!]?.participation) {
-                                @if (!exerciseInfos[exercise.id!]?.submission?.submitted) {
-                                    <div class="mb-3" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
+                            @if (exerciseInfos()[exercise.id!]?.participation) {
+                                @if (!exerciseInfos()[exercise.id!]?.submission?.submitted) {
+                                    <div class="mb-6!" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
                                 }
                                 @switch (exercise.type) {
                                     @case (TEXT) {
                                         <jhi-text-exam-summary
                                             [exercise]="exercise"
-                                            [submission]="exerciseInfos[exercise.id!]!.submission!"
-                                            [expandProblemStatement]="expandProblemStatement"
+                                            [submission]="exerciseInfos()[exercise.id!]!.submission!"
+                                            [expandProblemStatement]="expandProblemStatement()"
                                             [isAfterResultsArePublished]="resultsArePublished"
                                         />
                                     }
                                     @case (MODELING) {
                                         <jhi-modeling-exam-summary
                                             [exercise]="exercise"
-                                            [submission]="exerciseInfos[exercise.id!]!.submission!"
-                                            [isPrinting]="isPrinting"
-                                            [expandProblemStatement]="expandProblemStatement"
+                                            [submission]="exerciseInfos()[exercise.id!]!.submission!"
+                                            [isPrinting]="isPrinting()"
+                                            [expandProblemStatement]="expandProblemStatement()"
                                             [isAfterResultsArePublished]="resultsArePublished"
                                         />
                                     }
@@ -147,32 +174,32 @@
                                         <jhi-quiz-exam-summary
                                             [quizParticipation]="exercise"
                                             [exam]="studentExam().exam!"
-                                            [submission]="exerciseInfos[exercise.id!]!.submission!"
+                                            [submission]="exerciseInfos()[exercise.id!]!.submission!"
                                             [resultsPublished]="resultsArePublished"
                                         />
                                     }
                                     @case (FILE_UPLOAD) {
                                         <jhi-file-upload-exam-summary
-                                            [submission]="exerciseInfos[exercise.id!]!.submission!"
+                                            [submission]="exerciseInfos()[exercise.id!]!.submission!"
                                             [exercise]="exercise"
-                                            [expandProblemStatement]="expandProblemStatement"
+                                            [expandProblemStatement]="expandProblemStatement()"
                                             [isAfterResultsArePublished]="resultsArePublished"
                                         />
                                     }
+                                    @default {}
                                 }
                                 @if (
-                                    exerciseInfos[exercise.id!]?.submission &&
+                                    exerciseInfos()[exercise.id!]?.submission &&
                                     exercise.type !== QUIZ &&
-                                    isAfterStudentReviewStart &&
-                                    exerciseInfos[exercise.id!]?.submission?.submitted
+                                    isAfterStudentReviewStart() &&
+                                    exerciseInfos()[exercise.id!]?.submission?.submitted
                                 ) {
                                     <jhi-complaint-student-view
-                                        class="mb-2 mt-2 ms-3"
                                         [exercise]="exercise"
-                                        [participation]="exerciseInfos[exercise.id!]!.participation!"
-                                        [result]="exerciseInfos[exercise.id!]!.participation!.submissions![0].results?.[0]"
-                                        [exam]="examWithOnlyIdAndStudentReviewPeriod"
-                                        [testRun]="isTestRun"
+                                        [participation]="exerciseInfos()[exercise.id!]!.participation!"
+                                        [result]="exerciseInfos()[exercise.id!]!.participation!.submissions![0].results?.[0]"
+                                        [exam]="examWithOnlyIdAndStudentReviewPeriod()"
+                                        [testRun]="isTestRun()"
                                     />
                                 }
                             }
@@ -182,18 +209,18 @@
                 }
                 @if (exercise.type === PROGRAMMING) {
                     <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
-                    @if (!exerciseInfos[exercise.id!]?.submission) {
-                        <div class="mb-3" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
+                    @if (!exerciseInfos()[exercise.id!]?.submission) {
+                        <div class="mb-6!" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
                     }
-                    @if (exerciseInfos[exercise.id!]?.participation) {
+                    @if (exerciseInfos()[exercise.id!]?.participation) {
                         <jhi-programming-exam-summary
                             [exercise]="exercise"
-                            [participation]="exerciseInfos[exercise.id!]!.participation!"
-                            [isTestRun]="isTestRun"
-                            [exam]="examWithOnlyIdAndStudentReviewPeriod"
-                            [isAfterStudentReviewStart]="isAfterStudentReviewStart"
+                            [participation]="exerciseInfos()[exercise.id!]!.participation!"
+                            [isTestRun]="isTestRun()"
+                            [exam]="examWithOnlyIdAndStudentReviewPeriod()"
+                            [isAfterStudentReviewStart]="isAfterStudentReviewStart()"
                             [resultsPublished]="resultsArePublished"
-                            [isPrinting]="isPrinting"
+                            [isPrinting]="isPrinting()"
                             [isAfterResultsArePublished]="resultsArePublished"
                             [instructorView]="instructorView()"
                         />
@@ -203,7 +230,18 @@
         </jhi-collapsible-card>
     </div>
 }
-<button class="btn btn-light mx-auto d-block" (click)="scrollToOverviewOrTop()" id="back-to-overview-button">
-    <fa-icon [icon]="faArrowUp" />
-    <span>&nbsp; {{ 'artemisApp.exam.examSummary.backToOverview' | artemisTranslate }}&nbsp; </span>
-</button>
+<div class="flex justify-center">
+    <button
+        type="button"
+        tumAetUiButton
+        size="small"
+        severity="secondary"
+        variant="outlined"
+        (click)="scrollToOverviewOrTop()"
+        id="back-to-overview-button"
+        data-testid="exam-summary-back-button"
+    >
+        <fa-icon [icon]="faArrowUp" />
+        <span>&nbsp; {{ 'artemisApp.exam.examSummary.backToOverview' | artemisTranslate }}&nbsp; </span>
+    </button>
+</div>

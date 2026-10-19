@@ -26,10 +26,14 @@ public class MarkdownCustomReferenceRendererService implements MarkdownCustomRen
 
     private final Set<String> supportedTags;
 
+    /** The tags this renderer supports, as one expression. Assembled once: {@code render} is called for every rendered text. */
+    private final Pattern tagExpression;
+
     private final HashMap<String, String> startingCharacters;
 
     public MarkdownCustomReferenceRendererService() {
         supportedTags = Set.of("user", "channel");
+        this.tagExpression = Pattern.compile("\\[(" + String.join("|", supportedTags) + ")\\](.*?)\\((.*?)\\)(.*?)\\[/\\1]");
         startingCharacters = new HashMap<>();
         startingCharacters.put("user", "@");
         startingCharacters.put("channel", "#");
@@ -45,9 +49,7 @@ public class MarkdownCustomReferenceRendererService implements MarkdownCustomRen
      */
     @Override
     public String render(String content) {
-        String tagPattern = String.join("|", supportedTags);
-        Pattern pattern = Pattern.compile("\\[(" + tagPattern + ")\\](.*?)\\((.*?)\\)(.*?)\\[/\\1\\]");
-        Matcher matcher = pattern.matcher(content);
+        Matcher matcher = tagExpression.matcher(content);
         String parsedContent = content;
 
         while (matcher.find()) {
@@ -66,7 +68,7 @@ public class MarkdownCustomReferenceRendererService implements MarkdownCustomRen
                 parsedContent = parsedContent.substring(0, matcher.start()) + parsedContent.substring(matcher.end());
             }
 
-            matcher = pattern.matcher(parsedContent);
+            matcher = tagExpression.matcher(parsedContent);
         }
 
         return parsedContent;

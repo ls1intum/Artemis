@@ -13,9 +13,9 @@
                             fontSizeInRem="0.8"
                             imageId="user-profile-picture"
                             defaultPictureId="user-default-profile-picture"
-                            [authorId]="otherUser?.id"
-                            [authorName]="otherUser?.name"
-                            [imageUrl]="addPublicFilePrefix(otherUser?.imageUrl)"
+                            [authorId]="otherUser()?.id"
+                            [authorName]="otherUser()?.name"
+                            [imageUrl]="addPublicFilePrefix(otherUser()?.imageUrl)"
                         />
                     }
                     {{ conversationService.getConversationName(activeConversation(), true) }}
@@ -26,14 +26,13 @@
                             (click)="clear()"
                             class="btn btn-info btn-sm ms-2"
                             [routerLink]="['/courses', course()?.id, 'tutorial-groups', channel.tutorialGroupId]"
-                            role="button"
                             jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
                             [translateValues]="{ title: channel.tutorialGroupTitle }"
                         ></a>
                     }
                 }
             </h4>
-            <button type="button" class="btn-close" (click)="clear()"></button>
+            <button type="button" class="btn-close" data-testid="conversation-detail-close-button" (click)="clear()"></button>
         </div>
         <div>
             <ul class="nav nav-tabs">
@@ -44,9 +43,14 @@
                         role="button"
                         (click)="selectedTab = Tabs.INFO"
                         jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.info"
+                        #keyboardAction41
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction41.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction41.click() : undefined"
                     ></a>
                 </li>
-                @if (!isOneToOneChat) {
+                @if (!isOneToOneChat()) {
                     <li class="nav-item members-tab">
                         <a
                             class="nav-link"
@@ -54,15 +58,26 @@
                             role="button"
                             (click)="selectedTab = Tabs.MEMBERS"
                             jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.members"
+                            #keyboardAction51
+                            tabindex="0"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
                         ></a>
                     </li>
                     <li class="nav-item settings-tab">
                         <a
+                            data-testid="conversation-settings-tab"
                             class="nav-link"
                             [class.active]="selectedTab === Tabs.SETTINGS"
                             role="button"
                             (click)="selectedTab = Tabs.SETTINGS"
                             jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.settings"
+                            #keyboardAction60
+                            tabindex="0"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
                         ></a>
                     </li>
                 }
@@ -74,12 +89,12 @@
                     <jhi-conversation-members
                         [course]="course()!"
                         [activeConversationInput]="activeConversation()!"
-                        (changesPerformed)="changesWerePerformed = true"
+                        (changesPerformed)="changesWerePerformed.set(true)"
                         (userNameClicked)="onUserNameClicked($event)"
                     />
                 }
                 @case (Tabs.INFO) {
-                    <jhi-conversation-info [activeConversation]="activeConversation()!" [course]="course()" (changesPerformed)="changesWerePerformed = true" />
+                    <jhi-conversation-info [activeConversation]="activeConversation()!" [course]="course()" (changesPerformed)="changesWerePerformed.set(true)" />
                 }
                 @case (Tabs.SETTINGS) {
                     <jhi-conversation-settings
@@ -91,6 +106,7 @@
                         (conversationLeave)="onConversationLeave()"
                     />
                 }
+                @default never;
             }
         </div>
     </div>

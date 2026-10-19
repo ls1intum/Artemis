@@ -3,12 +3,37 @@
     <head>
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Artemis</title>
-        <meta name="description" content="Artemis: Interactive Learning with Individual Feedback" />
+        <title>Artemis: Interactive Learning with Individual Feedback</title>
+        <meta
+            name="description"
+            content="Artemis is an open-source platform for interactive learning with individual feedback. It enables universities to provide scalable, interactive learning with authentic assessment, adaptive learning, and responsible AI support, deployed on their own infrastructure."
+        />
         <meta name="google" content="notranslate" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="theme-color" content="#000000" />
         <meta name="color-scheme" content="light dark" />
+        <!-- Social preview metadata. index.html is served for every route, so no per-page og:url or
+             canonical link is set here; a single hard-coded value would be wrong on every subroute.
+             The absolute image URLs and the JSON-LD `url` below name the TUM instance, because this
+             file ships unchanged in the WAR that every institution deploys and there is nowhere to
+             template them per deployment. Self-hosted instances that care about their own link
+             previews should override these tags when serving index.html. -->
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Artemis" />
+        <meta property="og:title" content="Artemis: Interactive Learning with Individual Feedback" />
+        <meta
+            property="og:description"
+            content="An open-source platform that enables universities to provide scalable, interactive learning with individual feedback, authentic assessment, adaptive learning, and responsible AI support."
+        />
+        <meta property="og:image" content="https://artemis.tum.de/logo/android-chrome-512x512.png" />
+        <meta property="og:image:alt" content="Artemis logo" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Artemis: Interactive Learning with Individual Feedback" />
+        <meta
+            name="twitter:description"
+            content="An open-source platform that enables universities to provide scalable, interactive learning with individual feedback, authentic assessment, adaptive learning, and responsible AI support."
+        />
+        <meta name="twitter:image" content="https://artemis.tum.de/logo/android-chrome-512x512.png" />
         <base href="/" />
         <!-- Preload the spotlight LCP poster so the browser can start fetching it before Angular
              bootstraps (eliminates ~6.9 s resource-load delay flagged by Lighthouse).
@@ -30,17 +55,25 @@
         <script type="application/ld+json">
             {
                 "@context": "https://schema.org",
-                "@type": "EducationalOrganization",
+                "@type": "SoftwareApplication",
                 "name": "Artemis",
+                "applicationCategory": "EducationalApplication",
                 "url": "https://artemis.tum.de",
-                "logo": "https://artemis.tum.de/public/images/logo.svg",
-                "description": "Artemis: Interactive Learning with Individual Feedback",
-                "parentOrganization": {
-                    "@type": "CollegeOrUniversity",
-                    "name": "Technical University of Munich",
-                    "url": "https://www.tum.de"
+                "image": "https://artemis.tum.de/logo/android-chrome-512x512.png",
+                "description": "Artemis is an open-source platform for interactive learning with individual feedback.",
+                "license": "https://github.com/ls1intum/Artemis/blob/develop/LICENSE",
+                "isAccessibleForFree": true,
+                "author": {
+                    "@type": "Organization",
+                    "name": "Applied Education Technologies, Technical University of Munich",
+                    "url": "https://aet.cit.tum.de",
+                    "parentOrganization": {
+                        "@type": "CollegeOrUniversity",
+                        "name": "Technical University of Munich",
+                        "url": "https://www.tum.de"
+                    }
                 },
-                "sameAs": ["https://github.com/ls1intum/Artemis"]
+                "sameAs": ["https://github.com/ls1intum/Artemis", "https://docs.artemis.tum.de"]
             }
         </script>
         <!-- Inline bootstrap skeleton + loading spinner. Paints under 1s so FCP fires before any

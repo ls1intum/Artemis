@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 
@@ -29,6 +30,7 @@ public class CommentThread extends DomainObject {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "exercise_id", nullable = false)
+    @Parent
     private Exercise exercise;
 
     @Enumerated(EnumType.STRING)

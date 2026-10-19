@@ -180,11 +180,10 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
                             && (previous.equals(expectedCollection) || previous.endsWith(expectedCollection));
                     if (!pairedWithCollection && !PATH_VARIABLE_COLLECTION_BASELINE.contains(canonicalPath)) {
                         events.add(violated(method,
-                                String.format(
-                                        "REST path \"%s\" uses the entity id {%s} without its collection: it must be preceded by the plural collection \"%s\" (e.g. .../%s/{%s}). "
-                                                + "Use api/<module>/<plural-collection>/{<collection-singular>Id}, or a query parameter when the entity is only a filter. "
-                                                + "See https://docs.artemis.tum.de/developer/guidelines/rest-api",
-                                        canonicalPath, idName, expectedCollection, expectedCollection, idName)));
+                                ("REST path \"%s\" uses the entity id {%s} without its collection: it must be preceded by the plural collection \"%s\" (e.g. .../%s/{%s}). "
+                                        + "Use api/<module>/<plural-collection>/{<collection-singular>Id}, or a query parameter when the entity is only a filter. "
+                                        + "See https://docs.artemis.tum.de/developer/guidelines/rest-api")
+                                        .formatted(canonicalPath, idName, expectedCollection, expectedCollection, idName)));
                         return;
                     }
                 }
@@ -230,7 +229,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
                 if (restMappingAnnotation.isPresent()) {
                     String restURL = ((String[]) restMappingAnnotation.get().tryGetExplicitlyDeclaredProperty("value").get())[0];
                     if (!KEBAB_CASE_PATH_PATTERN.matcher(restURL).matches()) {
-                        events.add(violated(item, String.format("\"%s\" violates rule to only use kebab case for REST annotations in %s", restURL, item.getFullName())));
+                        events.add(violated(item, "\"%s\" violates rule to only use kebab case for REST annotations in %s".formatted(restURL, item.getFullName())));
                     }
                 }
             }

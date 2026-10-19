@@ -1,5 +1,6 @@
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export class StatsForDashboard {
     public numberOfStudents = 0;
@@ -27,9 +28,9 @@ export class StatsForDashboard {
      * @returns The class instance
      */
     static from(statsForDashboard: StatsForDashboard): StatsForDashboard {
-        const stats = Object.assign(new StatsForDashboard(), statsForDashboard);
-        stats.numberOfSubmissions = Object.assign(new DueDateStat(), stats.numberOfSubmissions);
-        stats.numberOfAutomaticAssistedAssessments = Object.assign(new DueDateStat(), stats.numberOfAutomaticAssistedAssessments);
+        const stats = hydrate(new StatsForDashboard(), statsForDashboard);
+        stats.numberOfSubmissions = hydrate(new DueDateStat(), stats.numberOfSubmissions);
+        stats.numberOfAutomaticAssistedAssessments = hydrate(new DueDateStat(), stats.numberOfAutomaticAssistedAssessments);
         return stats;
     }
 }

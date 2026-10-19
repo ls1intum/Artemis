@@ -38,6 +38,15 @@ public interface HyperionCodeGenerationEventPublisher {
     void newFile(String path, RepositoryType repositoryType, int iteration);
 
     /**
+     * Publishes deleted file event.
+     *
+     * @param path           file path
+     * @param repositoryType repository type
+     * @param iteration      generation iteration that removed the file
+     */
+    void fileDeleted(String path, RepositoryType repositoryType, int iteration);
+
+    /**
      * Publishes job completion event.
      *
      * @param completionStatus       terminal completion outcome

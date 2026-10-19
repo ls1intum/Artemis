@@ -26,3 +26,16 @@ $details-image-height: 3rem;
     height: $details-image-height;
     object-fit: cover;
 }
+
+// Reserves vertical space for a detail row whose content sits behind a @defer block, so the list does
+// not jump once the deferred chunk arrives. Deliberately carries no id: keeping the real
+// `#detail-value-…` anchor out of the placeholder lets Playwright's auto-waiting locators wait for the
+// actual content to appear instead of resolving against an empty element.
+.detail-defer-placeholder {
+    min-height: 4rem;
+}
+
+// The read-only modeling editor is substantially taller than the other deferred rows.
+.detail-defer-placeholder-editor {
+    min-height: 25rem;
+}

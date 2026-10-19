@@ -17,6 +17,8 @@ public class ManagedUserVM extends UserDTO {
     @Size(min = Constants.PASSWORD_MIN_LENGTH, max = Constants.PASSWORD_MAX_LENGTH)
     private String password;
 
+    private boolean revokeCredentials;
+
     public ManagedUserVM() {
         // Empty constructor needed for Jackson.
     }
@@ -36,6 +38,14 @@ public class ManagedUserVM extends UserDTO {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public boolean isRevokeCredentials() {
+        return revokeCredentials;
+    }
+
+    public void setRevokeCredentials(boolean revokeCredentials) {
+        this.revokeCredentials = revokeCredentials;
     }
 
     @Override

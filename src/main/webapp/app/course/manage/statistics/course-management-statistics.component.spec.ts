@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -13,11 +12,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClient } from '@angular/common/http';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('CourseManagementStatisticsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
     let component: CourseManagementStatisticsComponent;
     let service: StatisticsService;
@@ -39,7 +35,6 @@ describe('CourseManagementStatisticsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 123 }) },
                 provideHttpClient(),
-                provideNoopAnimationsForTests(),
             ],
         });
         await TestBed.compileComponents();

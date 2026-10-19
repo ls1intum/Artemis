@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialEditLanguagesInputComponent } from './tutorial-edit-languages-input.component';
@@ -13,8 +12,6 @@ function assertNonNullable<T>(value: T): asserts value is NonNullable<T> {
 }
 
 describe('TutorialEditLanguagesInputComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialEditLanguagesInputComponent;
     let fixture: ComponentFixture<TutorialEditLanguagesInputComponent>;
     let overlayContainer: OverlayContainer;
@@ -47,6 +44,31 @@ describe('TutorialEditLanguagesInputComponent', () => {
             Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
         }
         overlayContainer.getContainerElement().innerHTML = '';
+    });
+
+    it('should report an empty language as invalid before the field is ever touched', () => {
+        // The required check used to be skipped until the field was touched, so a form the reader never
+        // visited counted as valid, the save button stayed enabled, and the server rejected the request.
+        expect(component.languageInputTouched()).toBe(false);
+        expect(component.languageValidationResult().status).toBe(ValidationStatus.INVALID);
+    });
+
+    it('should keep the error hidden until the field is touched, then show it', () => {
+        const errorAddon = () => fixture.nativeElement.querySelector('tumaet-ui-input-group-addon[tumuitooltip], .danger');
+        expect(errorAddon()).toBeNull();
+
+        component.onBlur();
+        fixture.detectChanges();
+
+        expect(component.languageInputTouched()).toBe(true);
+        expect(errorAddon()).not.toBeNull();
+    });
+
+    it('should become valid as soon as a language is entered', () => {
+        component.language.set('English');
+        fixture.detectChanges();
+
+        expect(component.languageValidationResult().status).toBe(ValidationStatus.VALID);
     });
 
     it('should open the suggestion panel on focus and close it on blur', async () => {

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -6,10 +6,11 @@ import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entiti
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Bonus>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BonusService {
     private http = inject(HttpClient);
     private gradingService = inject(GradingService);
@@ -84,11 +85,7 @@ export class BonusService {
      * @param bonus to be sent to the server
      */
     private filterBonusForRequest(bonus: Bonus) {
-        return {
-            ...bonus,
-            sourceGradingScale: bonus.sourceGradingScale ? { id: bonus.sourceGradingScale.id } : undefined,
-            bonusToGradingScale: undefined,
-        };
+        return cloneWith(bonus, { sourceGradingScale: bonus.sourceGradingScale ? { id: bonus.sourceGradingScale.id } : undefined, bonusToGradingScale: undefined });
     }
 
     /**
@@ -118,7 +115,7 @@ export class BonusService {
             const sourceGradeStep = source.gradeSteps[sourceGradeStepIndex];
             const studentPointsOfBonusSource = this.getIncludedBoundaryPoints(sourceGradeStep, sourceMaxPoints) ?? this.findMiddlePoint(sourceGradeStep);
 
-            examples.push(new BonusExample(studentPointsOfBonusTo!, studentPointsOfBonusSource!));
+            examples.push(new BonusExample(studentPointsOfBonusTo, studentPointsOfBonusSource));
 
             // Source grade steps descend and bonusTo grade steps ascend to provide somewhat more balanced examples
             // although this is not a hard rule.
@@ -144,7 +141,7 @@ export class BonusService {
         }
         const lastStudentPointsOfBonusSource = this.getIncludedBoundaryPoints(lastSourceGradeStep, sourceMaxPoints) ?? this.findMiddlePoint(lastSourceGradeStep);
 
-        examples.push(new BonusExample(lastStudentPointsOfBonusTo!, lastStudentPointsOfBonusSource!));
+        examples.push(new BonusExample(lastStudentPointsOfBonusTo, lastStudentPointsOfBonusSource));
 
         return examples;
     }
@@ -226,7 +223,7 @@ export class BonusService {
      * @param calculationSign a negative or positive number to indicate decreasing or increasing direction, respectively
      */
     doesBonusExceedMax(valueWithBonus: number, maxValue: number, calculationSign: number) {
-        return (valueWithBonus - maxValue) * calculationSign! > 0;
+        return (valueWithBonus - maxValue) * calculationSign > 0;
     }
 
     /**

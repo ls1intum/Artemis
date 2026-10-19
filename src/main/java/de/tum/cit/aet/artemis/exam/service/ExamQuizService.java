@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,7 +25,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
+import de.tum.cit.aet.artemis.quiz.service.QuizStatisticsService;
 
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -33,7 +36,7 @@ public class ExamQuizService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final QuizStatisticService quizStatisticService;
+    private final QuizStatisticsService quizStatisticsService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -46,13 +49,13 @@ public class ExamQuizService {
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
     public ExamQuizService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService, QuizSubmissionRepository quizSubmissionRepository,
+            QuizExerciseRepository quizExerciseRepository, QuizStatisticsService quizStatisticsService, QuizSubmissionRepository quizSubmissionRepository,
             SubmittedAnswerRepository submittedAnswerRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.quizStatisticService = quizStatisticService;
+        this.quizStatisticsService = quizStatisticsService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
     }
@@ -65,10 +68,15 @@ public class ExamQuizService {
      */
     public void evaluateQuizParticipationsForTestRunAndTestExam(StudentExam studentExam) {
         log.debug("Evaluating quiz participations for test run/test exam for student exam with id {}", studentExam.getId());
-        final var participations = studentExam.getExercises().stream()
+        // StudentExam.exercises is an @OrderColumn list, so Hibernate materializes a null for every gap in
+        // exercise_order. This runs after the student exam was already marked submitted, and it is not wrapped in the
+        // caller's try/catch, so dereferencing such a gap would answer the hand-in with a 500 on an exam the student
+        // can no longer resubmit.
+        final var participations = studentExam.getExercises().stream().filter(Objects::nonNull)
                 .flatMap(exercise -> exercise.getStudentParticipations().stream().filter(participation -> participation.getExercise() instanceof QuizExercise))
                 .collect(Collectors.toSet());
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+        Set<Long> changedQuizIds = new HashSet<>();
         for (final var participation : participations) {
             var quizExercise = (QuizExercise) participation.getExercise();
             final var optionalExistingSubmission = participation.findLatestSubmission();
@@ -87,14 +95,21 @@ public class ExamQuizService {
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
                     result.setExerciseId(quizExercise.getId());
-                    // remove submission to follow save order for ordered collections
-                    result.setSubmission(null);
+                    result.setCompletionDate(ZonedDateTime.now());
                     if (studentExam.isTestExam()) {
                         result.rated(true);
                     }
                     result = resultRepository.save(result);
-                    studentParticipationRepository.save(participation);
-                    result.setSubmission(quizSubmission);
+                    // The participation reaching this method is reconstructed at the controller boundary from the slim
+                    // submit body (see StudentExamSubmitMapper): it carries only what the submit path needs — id,
+                    // participant, exercise, testRun and INITIALIZED. Saving that id-bearing partial entity merges it
+                    // over the persisted row, which nulls initializationDate, individualDueDate and presentationScore,
+                    // resets attempt to 0 (so repeated test-exam attempts lose their number) and can regress a
+                    // FINISHED participation to INITIALIZED. The row already exists and this evaluation changes nothing
+                    // on it, so only persist a participation that is not stored yet.
+                    if (participation.getId() == null) {
+                        studentParticipationRepository.save(participation);
+                    }
                     quizSubmission.addResult(result);
                 }
                 else {
@@ -104,18 +119,18 @@ public class ExamQuizService {
                     // calculate scores and update result and submission accordingly
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
+                    result.setCompletionDate(ZonedDateTime.now());
                     if (studentExam.isTestExam()) {
                         result.rated(true);
                     }
                     resultRepository.save(result);
                 }
                 if (studentExam.isTestExam()) {
-                    // In case of an test exam, the quiz statistic should also be updated
-                    var quizExercise1 = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-                    quizStatisticService.updateStatistics(Set.of(result), quizExercise1);
+                    changedQuizIds.add(quizExercise.getId());
                 }
                 submissionRepository.save(quizSubmission);
             }
         }
+        changedQuizIds.forEach(quizStatisticsService::notifyStatisticsChanged);
     }
 }

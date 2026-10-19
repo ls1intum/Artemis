@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
@@ -25,8 +24,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Exercise detail common actions Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;
     let fixture: ComponentFixture<NonProgrammingExerciseDetailCommonActionsComponent>;
 
@@ -65,21 +62,21 @@ describe('Exercise detail common actions Component', () => {
         fixture.componentRef.setInput('exercise', textExercise);
         fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
-        expect(comp.baseResource).toBe('/course-management/123/text-exercises/123/');
+        expect(comp.baseResource()).toBe('/course-management/123/text-exercises/123/');
 
         const fileUploadExercise: FileUploadExercise = new FileUploadExercise(course, undefined);
         fileUploadExercise.id = 123;
 
         fixture.componentRef.setInput('exercise', fileUploadExercise);
         comp.ngOnInit();
-        expect(comp.baseResource).toBe('/course-management/123/file-upload-exercises/123/');
+        expect(comp.baseResource()).toBe('/course-management/123/file-upload-exercises/123/');
 
         const modelingExercise: ModelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         modelingExercise.id = 123;
 
         fixture.componentRef.setInput('exercise', modelingExercise);
         comp.ngOnInit();
-        expect(comp.baseResource).toBe('/course-management/123/modeling-exercises/123/');
+        expect(comp.baseResource()).toBe('/course-management/123/modeling-exercises/123/');
     });
 
     it('should get the correct edit routes for exam exercise', () => {
@@ -92,21 +89,21 @@ describe('Exercise detail common actions Component', () => {
         fixture.componentRef.setInput('exercise', textExercise);
         fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
-        expect(comp.baseResource).toBe('/course-management/123/exams/2/exercise-groups/3/text-exercises/4/');
+        expect(comp.baseResource()).toBe('/course-management/123/exams/2/exercise-groups/3/text-exercises/4/');
 
         const fileUploadExercise: FileUploadExercise = new FileUploadExercise(course, exerciseGroup);
         fileUploadExercise.id = 5;
 
         fixture.componentRef.setInput('exercise', fileUploadExercise);
         comp.ngOnInit();
-        expect(comp.baseResource).toBe('/course-management/123/exams/2/exercise-groups/3/file-upload-exercises/5/');
+        expect(comp.baseResource()).toBe('/course-management/123/exams/2/exercise-groups/3/file-upload-exercises/5/');
 
         const modelingExercise: ModelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, exerciseGroup);
         modelingExercise.id = 6;
 
         fixture.componentRef.setInput('exercise', modelingExercise);
         comp.ngOnInit();
-        expect(comp.baseResource).toBe('/course-management/123/exams/2/exercise-groups/3/modeling-exercises/6/');
+        expect(comp.baseResource()).toBe('/course-management/123/exams/2/exercise-groups/3/modeling-exercises/6/');
     });
 
     describe('canAccessParticipationsAndScores', () => {

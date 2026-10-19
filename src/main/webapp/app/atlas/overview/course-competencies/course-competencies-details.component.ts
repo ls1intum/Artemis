@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
     Competency,
@@ -15,7 +15,7 @@ import {
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
@@ -37,10 +37,11 @@ import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.componen
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-competencies-details',
@@ -62,7 +63,7 @@ import { ScienceService } from 'app/foundation/science/science.service';
         HelpIconComponent,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
     ],
 })
 export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
@@ -75,12 +76,12 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     competencyId?: number;
     course?: Course;
-    courseId?: number;
-    isLoading = false;
-    competency: Competency;
-    competencyProgress: CompetencyProgress;
-    showFireworks = false;
-    paramsSubscription: Subscription;
+    readonly courseId = signal<number | undefined>(undefined);
+    readonly isLoading = signal(false);
+    readonly competency = signal<Competency | undefined>(undefined);
+    readonly competencyProgress = signal<CompetencyProgress | undefined>(undefined);
+    readonly showFireworks = signal(false);
+    paramsSubscription?: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
     protected readonly ConfidenceReason = ConfidenceReason;
@@ -96,9 +97,9 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
         if (courseIdParams$) {
             this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$]).subscribe(([courseIdParams, competencyIdParams]) => {
                 this.competencyId = Number(competencyIdParams.competencyId);
-                this.courseId = Number(courseIdParams.courseId);
-                this.course = this.courseStorageService.getCourse(this.courseId);
-                if (this.competencyId && this.courseId) {
+                this.courseId.set(Number(courseIdParams.courseId));
+                this.course = this.courseStorageService.getCourse(this.courseId()!);
+                if (this.competencyId && this.courseId()) {
                     this.loadData();
                 }
 
@@ -112,18 +113,21 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     }
 
     private loadData() {
-        this.isLoading = true;
+        this.isLoading.set(true);
 
-        this.courseCompetencyService.findById(this.competencyId!, this.courseId!).subscribe({
+        this.courseCompetencyService.findById(this.competencyId!, this.courseId()!).subscribe({
             next: (competencyResp) => {
-                this.competency = competencyResp.body!;
-                this.competencyProgress = this.getUserProgress();
+                this.competency.set(competencyResp.body!);
+                this.competencyProgress.set(this.getUserProgress());
 
                 this.handleExerciseLinks();
 
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
-            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            error: (errorResponse: HttpErrorResponse) => {
+                this.isLoading.set(false);
+                onError(this.alertService, errorResponse);
+            },
         });
     }
 
@@ -132,43 +136,45 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
      * @private
      */
     private handleExerciseLinks() {
-        if (this.competency.exerciseLinks) {
-            this.competency.lectureUnitLinks = this.competency.lectureUnitLinks ?? [];
-            this.competency.lectureUnitLinks.push(
-                ...this.competency.exerciseLinks.map((exerciseLink) => {
+        const competency = this.competency();
+        if (competency?.exerciseLinks) {
+            competency.lectureUnitLinks = competency.lectureUnitLinks ?? [];
+            competency.lectureUnitLinks.push(
+                ...competency.exerciseLinks.map((exerciseLink) => {
                     const exerciseUnit = new ExerciseUnit();
                     exerciseUnit.id = exerciseLink.exercise?.id;
                     exerciseUnit.exercise = exerciseLink.exercise;
-                    return new CompetencyLectureUnitLink(this.competency, exerciseUnit as LectureUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
+                    return new CompetencyLectureUnitLink(competency, exerciseUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
                 }),
             );
         }
     }
 
     showFireworksIfMastered() {
-        if (this.mastery >= 100 && !this.showFireworks) {
-            setTimeout(() => (this.showFireworks = true), 1000);
-            setTimeout(() => (this.showFireworks = false), 6000);
+        if (this.mastery >= 100 && !this.showFireworks()) {
+            setTimeout(() => this.showFireworks.set(true), 1000);
+            setTimeout(() => this.showFireworks.set(false), 6000);
         }
     }
 
     getUserProgress(): CompetencyProgress {
-        if (this.competency.userProgress?.length) {
-            return this.competency.userProgress.first()!;
+        const userProgress = this.competency()?.userProgress;
+        if (userProgress?.length) {
+            return userProgress.first()!;
         }
-        return { progress: 0, confidence: 1 } as CompetencyProgress;
+        return { progress: 0, confidence: 1 };
     }
 
     get progress(): number {
-        return getProgress(this.competencyProgress);
+        return getProgress(this.competencyProgress());
     }
 
     get confidence(): number {
-        return getConfidence(this.competencyProgress);
+        return getConfidence(this.competencyProgress());
     }
 
     get mastery(): number {
-        return getMastery(this.competencyProgress);
+        return getMastery(this.competencyProgress());
     }
 
     get isMastered(): boolean {
@@ -180,22 +186,43 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.lectureUnitService.setCompletion(event.lectureUnit.id!, event.lectureUnit.lecture!.id!, event.completed).subscribe({
-            next: () => {
-                event.lectureUnit.completed = event.completed;
+        // Route through the shared helper so the completion request and the (zoneless) reactivity handling stay consistent.
+        this.lectureUnitService.completeLectureUnit(event.lectureUnit.lecture, event, () => {
+            // Publish a fresh lecture-unit reference so the unit card's signal input updates.
+            this.publishLectureUnitCompletion(event.lectureUnit.id!, event.completed);
 
-                this.courseCompetencyService.getProgress(this.competencyId!, this.courseId!, true).subscribe({
-                    next: (resp) => {
-                        this.competency.userProgress = [resp.body!];
-                        this.showFireworksIfMastered();
-                    },
-                });
-            },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            this.courseCompetencyService.getProgress(this.competencyId!, this.courseId()!, true).subscribe({
+                next: (resp) => {
+                    this.competencyProgress.set(resp.body!);
+                    // Publish a new competency reference (a same-reference update would not notify zoneless change detection).
+                    this.competency.update((competency) =>
+                        competency ? hydrate(Object.create(Object.getPrototypeOf(competency)), competency, { userProgress: [resp.body!] }) : competency,
+                    );
+                    this.showFireworksIfMastered();
+                },
+            });
+        });
+    }
+
+    /**
+     * Replaces the matching lecture unit inside the competency with a fresh reference carrying the new completion state,
+     * so the unit card reacts. A plain in-place mutation would keep the same object reference and not notify change detection.
+     */
+    private publishLectureUnitCompletion(lectureUnitId: number, completed: boolean): void {
+        this.competency.update((competency) => {
+            if (!competency?.lectureUnitLinks) {
+                return competency;
+            }
+            const lectureUnitLinks = competency.lectureUnitLinks.map((link) =>
+                link.lectureUnit?.id === lectureUnitId
+                    ? hydrate(Object.create(Object.getPrototypeOf(link)), link, { lectureUnit: cloneWith(link.lectureUnit, { completed }) })
+                    : link,
+            );
+            return hydrate(Object.create(Object.getPrototypeOf(competency)), competency, { lectureUnitLinks });
         });
     }
 
     get softDueDatePassed(): boolean {
-        return dayjs().isAfter(this.competency.softDueDate);
+        return dayjs().isAfter(this.competency()?.softDueDate);
     }
 }

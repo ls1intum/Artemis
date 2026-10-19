@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
+import static de.tum.cit.aet.artemis.core.config.Constants.REDIS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -48,7 +49,7 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testInitializesHazelcastClusterManagerWhenConfigured() {
         // Setup
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn(HAZELCAST);
+        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(HAZELCAST);
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
 
         HazelcastClusterManager mockHazelcast = mock(HazelcastClusterManager.class);
@@ -64,8 +65,8 @@ class DeferredEagerBeanInitializerTest {
 
     @Test
     void testSkipsHazelcastClusterManagerWhenNotConfigured() {
-        // Setup - use a different data store
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("other-datastore");
+        // Setup - use a different, supported provider
+        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
 
         // Execute
@@ -79,7 +80,7 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testInitializesLazySingletonBeans() {
         // Setup
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("other-datastore");
+        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
 
         String beanName = "testBean";
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[] { beanName });
@@ -103,7 +104,7 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testSkipsNonSingletonBeans() {
         // Setup
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("other-datastore");
+        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
 
         String beanName = "prototypeScopedBean";
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[] { beanName });
@@ -124,7 +125,7 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testSkipsNonLazyBeans() {
         // Setup
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("other-datastore");
+        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
 
         String beanName = "eagerBean";
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[] { beanName });
@@ -145,7 +146,7 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testInitializesMultipleLazySingletonBeans() {
         // Setup
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("other-datastore");
+        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
 
         String bean1 = "lazyBean1";
         String bean2 = "lazyBean2";
@@ -185,7 +186,7 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testPublishesDeferredEagerBeanInitializationCompletedEvent() {
         // Setup
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("other-datastore");
+        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
 
         // Execute
@@ -201,7 +202,7 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testHazelcastCaseInsensitiveComparison() {
         // Setup - use uppercase HAZELCAST
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("HAZELCAST");
+        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn("HAZELCAST");
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
 
         HazelcastClusterManager mockHazelcast = mock(HazelcastClusterManager.class);
@@ -217,7 +218,7 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testHazelcastMixedCaseComparison() {
         // Setup - use mixed case to verify case-insensitive comparison
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("HaZeLcAsT");
+        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn("HaZeLcAsT");
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
 
         HazelcastClusterManager mockHazelcast = mock(HazelcastClusterManager.class);
@@ -233,7 +234,7 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testBeansAreInitializedBeforeEventIsPublished() {
         // Setup
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("other-datastore");
+        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
 
         String beanName = "testBean";
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[] { beanName });

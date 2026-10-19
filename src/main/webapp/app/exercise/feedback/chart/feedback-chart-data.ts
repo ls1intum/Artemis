@@ -1,8 +1,8 @@
-import { Color } from '@swimlane/ngx-charts';
-import { NgxChartsMultiSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 
-export interface ChartData {
+export interface FeedbackChartData {
     xScaleMax: number;
-    scheme: Color;
-    results: NgxChartsMultiSeriesDataEntry[];
+    /** Raw segment colors, possibly CSS variable references like 'var(--bs-success)' — resolve before rendering. */
+    colors: string[];
+    results: ChartMultiSeriesEntry[];
 }

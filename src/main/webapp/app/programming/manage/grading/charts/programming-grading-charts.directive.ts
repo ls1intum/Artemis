@@ -1,17 +1,12 @@
-import { Directive } from '@angular/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Directive, signal } from '@angular/core';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 
 @Directive()
 export class ProgrammingGradingChartsDirective {
     tableFiltered = false;
 
-    ngxColors = {
-        name: 'programming grading',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
+    /** Raw colors of the chart segments (one per test case / category), in segment order. */
+    readonly chartColors = signal<string[]>([]);
 
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
     static RESET_TABLE = -5; // we use the number -5 in order to indicate programming-exercise-configure-grading.component.ts to reset the corresponding table

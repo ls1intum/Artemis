@@ -1,7 +1,11 @@
+---
+id: access-rights
+title: Access Rights
+sidebar_label: Access Rights
+---
+
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-
-# Access Rights
 
 Artemis distinguishes between seven different roles: **SUPER_ADMIN**, **ADMIN**, **INSTRUCTOR**, **EDITOR**, **TA** (Teaching Assistant), **USER** (Student) and **ANONYMOUS**.
 The roles are sorted in descending order. An INSTRUCTOR has at least all the permissions that an EDITOR has.
@@ -175,6 +179,26 @@ The following permissions apply to all exercise types. Exercise-type-specific se
     **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
 </Callout>
 
+For **course programming exercises**, tutors and editors can see student names and team identities in the
+participation and score lists to help students with questions. The **Code** button opens a read-only repository view
+and provides clone URLs. Tutors can clone and pull student repositories, but cannot push or reset them.
+
+When **manual or semi-automatic assessment** is enabled, this support access ends at the **exercise due date**:
+non-instructors see anonymous participation IDs, and student names, identity search and sorting, and direct
+repository links are hidden. Tutors can no longer read or clone another student's live repository, including with
+previously issued tokens or SSH keys. They can still view submitted code and download anonymized submissions through
+the **Assessment Dashboard**. The restriction uses the exercise due date for the whole list, including participations
+with individual extensions and practice participations, so that those cannot expose identities during assessment.
+
+For automatically assessed course programming exercises, support access remains available after the due date.
+A manually assessed course programming exercise without a due date also keeps support access; anonymity starts if
+a due date is subsequently set and reached. The participation and score pages explain the current access and any
+upcoming restriction.
+
+Other exercise types and exam exercises retain anonymous participation views for non-instructors. Instructors retain
+named views, and participation owners retain access to their own details. Exports selected by student login or team
+name and identity exports continue to require instructor access.
+
 ### Shared Submission and Assessment Features
 
 The following features are shared across **File Upload, Modeling, and Text** exercises. Programming and Quiz exercises have different submission and assessment models — see their dedicated sections.
@@ -257,6 +281,11 @@ In addition to the [General Functionality](#general-functionality) above, Progra
 |-----------------------------|--------------------|------------|
 | *READ*, *WRITE*, *RESET*    | *READ*             | restricted |
 
+For another student's assignment repository, tutor _READ_ access is subject to the support window described above:
+it ends at the exercise due date when manual or semi-automatic assessment is enabled. Tutors cannot directly access
+student assignment repositories of exam exercises. Read access to template, solution, test and auxiliary repositories
+is unaffected; anonymous assessment snapshots remain available.
+
 **Access on own repositories (graded participation):**
 
 | Context                                        | Instructor / Editor      | Teaching Assistant       | Student                  |
@@ -270,7 +299,7 @@ In addition to the [General Functionality](#general-functionality) above, Progra
     **Practice** repositories also allow *WRITE* and *RESET* access after the due date.
 </Callout>
 
-#### Additional Visibility Rules
+#### Additional Visibility Rules for Programming Exercises
 
 **Test Case Visibility:**
 - Test case visibility is controlled per test case via the `Visibility` enum: `ALWAYS`, `AFTER_DUE_DATE`, `NEVER`
@@ -286,7 +315,7 @@ In addition to the [General Functionality](#general-functionality) above, Progra
 In addition to the [General Functionality](#general-functionality) above, Quiz Exercises have these specific features:
 
 [//]: # (Refers to QuizExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizExerciseResource.java)
-[//]: # (Refers to QuizSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizSubmissionResource.java)
+[//]: # (Refers to QuizSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/openapi/QuizSubmissionResource.java)
 
 <Callout variant={CalloutVariant.info}>
   Quiz exercises use a different submission and assessment model from other exercise types.
@@ -325,7 +354,7 @@ In addition to the [General Functionality](#general-functionality) above, Quiz E
 
 Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVIDUAL**.
 
-[//]: # (Refers to QuizExerciseBatchResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizExerciseBatchResource.java)
+[//]: # (Refers to QuizExerciseBatchResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/openapi/QuizExerciseBatchResource.java)
 
 | Operation    | Mode         | Teaching Assistant                     | Student             |
 |--------------|--------------|----------------------------------------|---------------------|
@@ -337,7 +366,7 @@ Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVID
     Batch operations are not allowed for exam quiz exercises - they are only available for course quizzes.
 </Callout>
 
-#### Additional Visibility Rules
+#### Additional Visibility Rules for Quizzes
 
 **Quiz Started:**
 - All users can join batches only after the quiz has started (and not ended)

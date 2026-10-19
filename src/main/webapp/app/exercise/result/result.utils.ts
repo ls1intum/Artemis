@@ -2,21 +2,20 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercise/participation/participation.utils';
+import { isParticipationInDueTime } from 'app/exercise/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation, ParticipationType, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
-import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -101,21 +100,6 @@ export const initializedResultWithScore = (result?: Result) => {
 };
 
 /**
- * Prepare a result that contains a participation which is needed in the rating component
- */
-export const addParticipationToResult = (result: Result | undefined, participation: StudentParticipation) => {
-    // TODO should not be needed anymore
-    // const ratingResult = cloneDeep(result);
-    // if (ratingResult) {
-    //     const ratingParticipation = cloneDeep(participation);
-    //     // remove circular dependency
-    //     ratingParticipation.exercise!.studentParticipations = [];
-    //     ratingResult.participation = ratingParticipation;
-    // }
-    // return ratingResult;
-};
-
-/**
  * searches for all manual unreferenced feedback in an array of feedbacks of a result
  * @param feedbacks the feedback of a result
  * @returns an array with the unreferenced feedback of the result
@@ -162,6 +146,22 @@ export function isAthenaAIResult(result: Result): boolean {
     return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
 }
 
+const getAthenaFeedbackTemplateStatus = (result: Result | undefined): ResultTemplateStatus | undefined => {
+    if (!result || !isAthenaAIResult(result)) {
+        return undefined;
+    }
+    if (isAIResultAndTimedOut(result)) {
+        return ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT;
+    }
+    if (result.successful === undefined) {
+        return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+    }
+    if (isAIResultAndFailed(result)) {
+        return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
+    }
+    return undefined;
+};
+
 export const evaluateTemplateStatus = (
     exercise: Exercise | undefined,
     participation: Participation | undefined,
@@ -184,8 +184,15 @@ export const evaluateTemplateStatus = (
         return ResultTemplateStatus.MISSING;
     }
 
+    // Discriminate the exercise type via the explicit `exercise` argument rather than the participation's embedded
+    // exercise. Some callers (e.g. the course-overview sidebar, whose participations come from the for-dashboard
+    // endpoint) provide a participation whose `exercise` was stripped server-side; reading participation.exercise
+    // there would make both type checks below fail and wrongly fall through to NO_RESULT even when a valid result
+    // is present. (`exercise` is guaranteed defined here by the early-return guard above.)
+    const exerciseType = exercise.type;
+
     // Evaluate status for modeling, text and file-upload exercises
-    if (isModelingOrTextOrFileUpload(participation)) {
+    if (exerciseType === ExerciseType.MODELING || exerciseType === ExerciseType.TEXT || exerciseType === ExerciseType.FILE_UPLOAD) {
         // Based on its submission we test if the participation is in due time of the given exercise.
 
         const inDueTime = isParticipationInDueTime(participation, exercise);
@@ -196,10 +203,9 @@ export const evaluateTemplateStatus = (
             // Submission is in due time of exercise and has a result with score
             if (!assessmentDueDate || assessmentDueDate.isBefore(dayjs()) || !isManualResult(result)) {
                 // the assessment due date has passed (or there was none) (or it is not manual feedback)
-                if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === undefined) {
-                    return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
-                } else if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === false) {
-                    return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
+                const athenaFeedbackStatus = getAthenaFeedbackTemplateStatus(result);
+                if (athenaFeedbackStatus) {
+                    return athenaFeedbackStatus;
                 }
                 return ResultTemplateStatus.HAS_RESULT;
             } else {
@@ -219,12 +225,11 @@ export const evaluateTemplateStatus = (
                 // TODO why is this distinct from the case above? The submission can still be graded and often is.
                 return ResultTemplateStatus.NO_RESULT;
             }
-        } else if (isPracticeMode(participation as StudentParticipation)) {
+        } else if (isPracticeMode(participation)) {
             // Practice mode submissions are not in due time but should show AI feedback statuses, not LATE/LATE_NO_FEEDBACK
-            if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === undefined) {
-                return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
-            } else if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === false) {
-                return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
+            const athenaFeedbackStatus = getAthenaFeedbackTemplateStatus(result);
+            if (athenaFeedbackStatus) {
+                return athenaFeedbackStatus;
             } else if (initializedResultWithScore(result)) {
                 return ResultTemplateStatus.HAS_RESULT;
             } else {
@@ -241,7 +246,7 @@ export const evaluateTemplateStatus = (
     }
 
     // Evaluate status for programming and quiz exercises
-    if (isProgrammingOrQuiz(participation)) {
+    if (exerciseType === ExerciseType.PROGRAMMING || exerciseType === ExerciseType.QUIZ) {
         if (isQueued) {
             return ResultTemplateStatus.IS_QUEUED;
         } else if (isBuilding) {
@@ -264,18 +269,34 @@ export const evaluateTemplateStatus = (
     return ResultTemplateStatus.NO_RESULT;
 };
 
+// A result does not necessarily belong to a participation: example submissions own one directly, and the exam summary
+// and course-overview sidebar strip it server-side. The helpers below therefore take an optional participation and
+// answer "nothing participation-specific is known" rather than throwing. Do not launder one in with a `!`.
+
+/**
+ * The submission a result should be judged against: the result's own submission when present (it is the potentially
+ * newer one, so `buildFailed` is up to date), otherwise the participation's latest submission.
+ */
+const getSubmissionUnderReview = (result: Result | undefined, participation: Participation | undefined): Submission | undefined => {
+    return result?.submission ?? (participation ? getLatestSubmission(participation) : undefined);
+};
+
 /**
  * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
  * This could be because all test cases are only visible after the due date.
  */
-export const isOnlyCompilationTested = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus): boolean => {
+export const isOnlyCompilationTested = (
+    result: Result | undefined,
+    participation: Participation | undefined,
+    templateStatus: ResultTemplateStatus,
+    exercise?: Exercise,
+): boolean => {
     const zeroTests = !result?.testCaseCount;
-    const isProgrammingExercise: boolean = participation?.exercise?.type === ExerciseType.PROGRAMMING;
+    const isProgrammingExercise: boolean = (exercise ?? participation?.exercise)?.type === ExerciseType.PROGRAMMING;
     return (
         templateStatus !== ResultTemplateStatus.NO_RESULT &&
         templateStatus !== ResultTemplateStatus.IS_BUILDING &&
-        // prefer the potentially newer result.submission when available (so that buildFailed is up-to-date)
-        !isBuildFailed(result?.submission ?? getLatestSubmission(participation)) &&
+        !isBuildFailed(getSubmissionUnderReview(result, participation)) &&
         zeroTests &&
         isProgrammingExercise
     );
@@ -286,9 +307,9 @@ export const isOnlyCompilationTested = (result: Result | undefined, participatio
  *
  * @return {string} the css class
  */
-export const getTextColorClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus) => {
+export const getTextColorClass = (result: Result | undefined, participation: Participation | undefined, templateStatus: ResultTemplateStatus, exercise?: Exercise) => {
     if (!result) {
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
@@ -296,9 +317,9 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
             return 'text-primary';
         }
         if (isAIResultAndFailed(result)) {
-            return 'text-danger';
+            return 'text-state-danger';
         }
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (templateStatus === ResultTemplateStatus.LATE) {
@@ -306,42 +327,45 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
     }
 
     if (isBuildFailedAndResultIsAutomatic(result, participation)) {
-        return 'text-danger';
+        return 'text-state-danger';
     }
 
-    if (resultIsPreliminary(result, participation)) {
-        return 'text-secondary';
+    if (resultIsPreliminary(result, participation, exercise)) {
+        return 'text-muted-color';
     }
 
     if (result?.score === undefined) {
-        return result?.successful ? 'text-success' : 'text-danger';
+        return result?.successful ? 'text-state-success' : 'text-state-danger';
     }
 
-    if (isOnlyCompilationTested(result, participation, templateStatus)) {
-        return 'text-success';
+    if (isOnlyCompilationTested(result, participation, templateStatus, exercise)) {
+        return 'text-state-success';
     }
 
     if (result.score >= MIN_SCORE_GREEN) {
-        return 'text-success';
+        return 'text-state-success';
     }
 
     if (result.score >= MIN_SCORE_ORANGE) {
         return 'result-orange';
     }
 
-    return 'text-danger';
+    return 'text-state-danger';
 };
 
 /**
  * Get the icon type for the result icon as an array
  *
  */
-export const getResultIconClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus): IconProp => {
+export const getResultIconClass = (result: Result | undefined, participation: Participation | undefined, templateStatus: ResultTemplateStatus, exercise?: Exercise): IconProp => {
     if (!result) {
         return faQuestionCircle;
     }
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+        if (isAIResultAndTimedOut(result)) {
+            return faQuestionCircle;
+        }
         // result loading
         if (result.successful === undefined) {
             return faCircleNotch;
@@ -362,11 +386,11 @@ export const getResultIconClass = (result: Result | undefined, participation: Pa
         return faCircleNotch;
     }
 
-    if (resultIsPreliminary(result, participation) || isAIResultAndTimedOut(result)) {
+    if (resultIsPreliminary(result, participation, exercise) || isAIResultAndTimedOut(result)) {
         return faQuestionCircle;
     }
 
-    if (isOnlyCompilationTested(result, participation, templateStatus)) {
+    if (isOnlyCompilationTested(result, participation, templateStatus, exercise)) {
         return faCheckCircle;
     }
 
@@ -382,32 +406,32 @@ export const getResultIconClass = (result: Result | undefined, participation: Pa
 /**
  * Returns true if the specified result is preliminary.
  * @param result the result.
- * @param participation the participation
+ * @param participation the participation of the result.
+ * @param exercise the exercise the caller already knows, for participations that carry no exercise of their own.
  */
-export const resultIsPreliminary = (result: Result, participation: Participation) => {
-    const exerciseType = participation?.exercise?.type;
+export const resultIsPreliminary = (result: Result, participation: Participation | undefined, exercise?: Exercise) => {
+    const resolvedExercise = exercise ?? participation?.exercise;
+    const exerciseType = resolvedExercise?.type;
     if (exerciseType === ExerciseType.TEXT || exerciseType === ExerciseType.MODELING) {
         return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
-    } else return isProgrammingExerciseStudentParticipation(participation) && isResultPreliminary(result, participation, participation?.exercise as ProgrammingExercise);
+    }
+    return !!participation && isProgrammingExerciseStudentParticipation(participation) && isResultPreliminary(result, participation, resolvedExercise);
 };
 
 /**
- * Returns true if the specified result is a student Participation
- * @param participation the participation
+ * Returns true if the given participation is a student participation — neither the template nor the solution
+ * participation of a programming exercise.
  */
-export const isStudentParticipation = (participation: Participation) => {
-    return Boolean(participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION);
+export const isStudentParticipation = (participation: Participation | undefined) => {
+    return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
 };
 
 /**
  * Returns true if the submission of the result is of type programming, is automatic, and
  * its build has failed.
- * @param result
- * @param participation
  */
-export const isBuildFailedAndResultIsAutomatic = (result: Result, participation: Participation) => {
-    const latestSubmission = result?.submission ?? getLatestSubmission(participation);
-    return isBuildFailed(latestSubmission) && !isManualResult(result);
+export const isBuildFailedAndResultIsAutomatic = (result: Result | undefined, participation: Participation | undefined): boolean => {
+    return isBuildFailed(getSubmissionUnderReview(result, participation)) && !isManualResult(result);
 };
 
 /**
@@ -415,9 +439,9 @@ export const isBuildFailedAndResultIsAutomatic = (result: Result, participation:
  * build.
  * @param submission the submission
  */
-export const isBuildFailed = (submission?: Submission) => {
+export const isBuildFailed = (submission?: Submission): boolean => {
     const isProgrammingSubmission = submission && submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING;
-    return isProgrammingSubmission && (submission as ProgrammingSubmission).buildFailed;
+    return !!isProgrammingSubmission && !!(submission as ProgrammingSubmission).buildFailed;
 };
 
 /**
@@ -438,7 +462,7 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
     const testCasesNames: Set<string> = new Set();
     results.forEach((result) => {
         if (!result.result.feedbacks) {
-            return [];
+            return;
         }
         result.result.feedbacks.forEach((feedback) => {
             if (Feedback.isTestCaseFeedback(feedback)) {
@@ -468,7 +492,7 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
         } else {
             resultText = !!withFeedback && feedback?.detailText ? `Failed: "${feedback.detailText}"` : 'Failed';
         }
-        testCaseResults.push({ testName, testResult: resultText } as TestCaseResult);
+        testCaseResults.push({ testName, testResult: resultText });
     });
     return testCaseResults;
 }

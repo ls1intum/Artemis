@@ -1,7 +1,7 @@
 <div class="row d-flex justify-content-between">
     <jhi-doughnut-chart
         class="col-md-4"
-        [course]="course"
+        [course]="course()"
         [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
         [exerciseId]="exercise().id!"
         [exerciseType]="exerciseType()"
@@ -11,7 +11,7 @@
     />
     <jhi-doughnut-chart
         class="col-md-4"
-        [course]="course"
+        [course]="course()"
         [contentType]="DoughnutChartType.PARTICIPATIONS"
         [exerciseId]="exercise().id!"
         [exerciseType]="exerciseType()"
@@ -19,10 +19,10 @@
         [currentAbsolute]="doughnutStats()?.numberOfParticipations"
         [currentMax]="doughnutStats()?.numberOfStudentsOrTeamsInCourse"
     />
-    @if (isCommunicationEnabled(course)) {
+    @if (isCommunicationEnabled(course())) {
         <jhi-doughnut-chart
             class="col-md-4"
-            [course]="course"
+            [course]="course()"
             [contentType]="DoughnutChartType.QUESTIONS"
             [exerciseId]="exercise().id!"
             [exerciseType]="exerciseType()"

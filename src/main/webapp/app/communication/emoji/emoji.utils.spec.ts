@@ -11,7 +11,10 @@ describe('EmojiUtils', () => {
         expect(EmojiUtils.singleDarkModeEmojiUrlFn({ unified: emojiId } as EmojiData)).toBe('public/emoji/' + emojiId.toLowerCase() + '.png');
     });
 
-    it.each([{ unified: 'foo' }, { unified: '' }, { unified: undefined }, undefined])('should return nothing for emojis that are not be replaced', (emoji: EmojiData) => {
-        expect(EmojiUtils.singleDarkModeEmojiUrlFn(emoji)).toBe('');
-    });
+    it.each([{ unified: 'foo' }, { unified: '' }, { unified: undefined }, undefined])(
+        'should return nothing for emojis that are not be replaced',
+        (emoji: Partial<EmojiData> | undefined) => {
+            expect(EmojiUtils.singleDarkModeEmojiUrlFn((emoji ?? null) as EmojiData | null)).toBe('');
+        },
+    );
 });

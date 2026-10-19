@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -87,12 +88,18 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
     ExerciseRatingCountDTO averageRatingByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
-     * Count all ratings given to submissions for the given course.
+     * Count all ratings given to submissions/assessments for the given exercises. Uses the denormalized
+     * {@code result.exerciseId} column to avoid joining through submission → participation → exercise → course.
      *
-     * @param courseId the id of the course for which the ratings are counted
-     * @return number of total ratings given for the course
+     * @param exerciseIds the ids of the exercises for which the ratings are counted
+     * @return number of total ratings given for the exercises
      */
-    long countByResult_Submission_Participation_Exercise_Course_Id(long courseId);
+    @Query("""
+            SELECT COUNT(r)
+            FROM Rating r
+            WHERE r.result.exerciseId IN :exerciseIds
+            """)
+    long countByResultExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Count all ratings given to assessments for the given exercise.

@@ -21,4 +21,20 @@ export interface ParticipationScoreDTO {
     buildPlanId?: string;
     repositoryUri?: string;
     testRun: boolean;
+    testCaseCount?: number;
+    passedTestCaseCount?: number;
+    codeIssueCount?: number;
+    correctionRoundResults?: CorrectionRoundResultDTO[];
+}
+
+/**
+ * One manual result of the participation's latest submission, with the correction round it belongs to. The scores view
+ * renders assessment actions per round and needs an entry per round, not only the newest result.
+ */
+export interface CorrectionRoundResultDTO {
+    resultId: number;
+    correctionRound?: number;
+    assessmentType?: AssessmentType;
+    completionDate?: dayjs.Dayjs;
+    hasComplaint?: boolean;
 }

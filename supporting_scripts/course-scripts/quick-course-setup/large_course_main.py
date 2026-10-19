@@ -10,7 +10,6 @@ from create_course import create_course
 from create_users import create_students, user_credentials
 from add_users_to_course import add_students_to_groups_of_course
 from manage_programming_exercise import create_programming_exercise, add_participation, commit, exercise_Ids
-from randomize_results_after import run_cleanup
 
 # Load configuration and constants
 config = configparser.ConfigParser()

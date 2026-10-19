@@ -2,11 +2,13 @@ package de.tum.cit.aet.artemis.assessment.dto;
 
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record GradingInstructionDTO(Long id, double credits, String gradingScale, String instructionDescription, String feedback, int usageCount) {
 
     /**
@@ -18,6 +20,16 @@ public record GradingInstructionDTO(Long id, double credits, String gradingScale
     public static GradingInstructionDTO of(@NotNull GradingInstruction gradingInstruction) {
         return new GradingInstructionDTO(gradingInstruction.getId(), gradingInstruction.getCredits(), gradingInstruction.getGradingScale(),
                 gradingInstruction.getInstructionDescription(), gradingInstruction.getFeedback(), gradingInstruction.getUsageCount());
+    }
+
+    /**
+     * Returns the same instruction without the row id, for payloads that are written to a file and read back by
+     * another instance, whose import copies the id onto the instruction it creates.
+     *
+     * @return a copy of this DTO with a {@code null} id
+     */
+    public GradingInstructionDTO withoutId() {
+        return new GradingInstructionDTO(null, credits, gradingScale, instructionDescription, feedback, usageCount);
     }
 
     /**

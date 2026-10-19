@@ -1,9 +1,9 @@
-import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
+import { Service, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { EMPTY, Observable, catchError, map, of, throwError } from 'rxjs';
 import { ExamDistributionCapacityDTO, RoomForDistributionDTO, SeatsOfExamRoomDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class StudentsRoomDistributionService {
     private http = inject(HttpClient);
 
@@ -15,11 +15,10 @@ export class StudentsRoomDistributionService {
     readonly availableRooms: Signal<RoomForDistributionDTO[]> = computed(() => this.availableRoomsInternal() ?? []);
     readonly capacityData: Signal<ExamDistributionCapacityDTO> = computed(
         () =>
-            this.capacityDataInternal() ??
-            ({
+            this.capacityDataInternal() ?? {
                 combinedDefaultCapacity: 0,
                 combinedMaximumCapacity: 0,
-            } as ExamDistributionCapacityDTO),
+            },
     );
 
     /**

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BuildPlanEditorComponent } from 'app/programming/manage/build-plan-editor/build-plan-editor.component';
 import { BuildPlanService } from 'app/programming/manage/services/build-plan.service';
@@ -23,8 +22,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Build Plan Editor', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<BuildPlanEditorComponent>;
     let comp: BuildPlanEditorComponent;
 
@@ -78,7 +75,7 @@ describe('Build Plan Editor', () => {
     });
 
     it('should not submit a build plan if none is loaded', () => {
-        comp.buildPlan = undefined;
+        comp.buildPlan.set(undefined);
 
         comp.submit();
 
@@ -101,22 +98,22 @@ describe('Build Plan Editor', () => {
         putBuildPlanStub = putBuildPlanStub.mockReturnValue(of(new HttpResponse<BuildPlan>({ body: buildPlan })));
 
         comp.exerciseId = 3;
-        comp.buildPlan = originalBuildPlan;
+        comp.buildPlan.set(originalBuildPlan);
 
         comp.submit();
 
         expect(putBuildPlanStub).toHaveBeenCalledWith(3, originalBuildPlan);
-        expect(comp.buildPlan).toEqual(buildPlan);
+        expect(comp.buildPlan()).toEqual(buildPlan);
     });
 
     it('should update the build plan text on editor text changes', () => {
-        comp.buildPlan = {
+        comp.buildPlan.set({
             buildPlan: 'empty text',
-        } as BuildPlan;
+        } as BuildPlan);
 
         comp.onTextChanged({ text: 'new text', fileName: 'ignored' });
 
-        expect(comp.buildPlan.buildPlan).toBe('new text');
+        expect(comp.buildPlan()!.buildPlan).toBe('new text');
     });
 
     it('should load the exercise on init', () => {
@@ -152,8 +149,8 @@ describe('Build Plan Editor', () => {
         comp.ngAfterViewInit();
 
         expect(getBuildPlanStub).toHaveBeenCalledWith(3);
-        expect(comp.isLoading).toBe(false);
-        expect(comp.buildPlan).toEqual(buildPlan);
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.buildPlan()).toEqual(buildPlan);
     });
 
     it.each([
@@ -173,8 +170,8 @@ describe('Build Plan Editor', () => {
         comp.ngAfterViewInit();
 
         expect(getBuildPlanStub).toHaveBeenCalledWith(3);
-        expect(comp.isLoading).toBe(false);
-        expect(comp.buildPlan).toBeUndefined();
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.buildPlan()).toBeUndefined();
 
         expect(alertStub).toHaveBeenCalledOnce();
         expect(alertStub).toHaveBeenCalledWith(expectedError);

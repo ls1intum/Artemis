@@ -1,5 +1,5 @@
 import { Directive, input } from '@angular/core';
-import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
+import { AbstractControl, NG_VALIDATORS, ValidationErrors, Validator } from '@angular/forms';
 
 /**
  * Custom validator for an array of excluded values for an input element
@@ -13,7 +13,7 @@ import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
 export class CustomNotIncludedInValidatorDirective implements Validator {
     disallowedValues = input.required<Set<unknown>>();
 
-    validate(control: AbstractControl): { [key: string]: any } | null {
+    validate(control: AbstractControl): ValidationErrors | null {
         if (control == undefined) {
             return null;
         }

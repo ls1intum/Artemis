@@ -1,7 +1,10 @@
-import { Injectable } from '@angular/core';
-import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { Service } from '@angular/core';
+import { parseJson } from 'app/foundation/util/json.util';
 
-@Injectable({ providedIn: 'root' })
+/** Earliest date on which the setup passkey modal reminds the user again. Kept across logouts, see {@link LocalStorageService.clear}. */
+export const EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY = 'earliestSetupPasskeyReminderDate';
+
+@Service()
 export class LocalStorageService {
     /**
      * Stores a value in the local storage under the specified key.
@@ -23,7 +26,7 @@ export class LocalStorageService {
      */
     retrieve<T>(key: string): T | undefined {
         const value = localStorage.getItem(key);
-        return value ? (JSON.parse(value) as T) : undefined;
+        return value ? parseJson<T>(value) : undefined;
     }
 
     /**
@@ -34,7 +37,7 @@ export class LocalStorageService {
     retrieveDate(key: string): Date | undefined {
         const raw = localStorage.getItem(key);
         if (!raw) return undefined;
-        const isoString = JSON.parse(raw);
+        const isoString = parseJson<string>(raw);
         const date = new Date(isoString);
         // check whether a valid date could be parsed and avoid parsing dates from non-ISO-representations
         return !isNaN(date.getTime()) && isoString === date.toISOString() ? date : undefined;

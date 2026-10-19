@@ -26,6 +26,17 @@ public record AuxiliaryRepositoryDTO(Long id, String name, String repositoryUri,
     }
 
     /**
+     * Returns the same auxiliary repository without the row id, for payloads that are written to a file and read back
+     * by another instance. An importer copies the ids onto the repositories of the exercise it creates, and the
+     * creation rejects an auxiliary repository that already has one.
+     *
+     * @return a copy of this DTO with a {@code null} id
+     */
+    public AuxiliaryRepositoryDTO withoutId() {
+        return new AuxiliaryRepositoryDTO(null, name, repositoryUri, checkoutDirectory, description);
+    }
+
+    /**
      * Converts this DTO to an AuxiliaryRepository entity.
      *
      * @return a new AuxiliaryRepository entity with data from this DTO

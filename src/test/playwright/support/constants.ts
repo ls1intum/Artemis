@@ -15,8 +15,12 @@ export const TEXT_EXERCISE_BASE = `${BASE_API}/text/text-exercises`;
 export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling/modeling-exercises`;
 export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercises`;
 
-// Timeformat
+// Timeformat used when sending dates to the server (ISO-8601, UTC).
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
+
+// Format the date picker expects and displays in its date+time mode
+// in its text input. Used when typing dates into the picker through the UI.
+export const DATE_TIME_PICKER_FORMAT = 'DD.MM.YYYY HH:mm';
 
 // ExerciseType
 // Copied from app/entities/exercise.model
@@ -30,6 +34,18 @@ export enum ExerciseType {
 
 // ProgrammingLanguage
 // Copied from app/entities/programming-exercise.model
+/**
+ * Project types a programming exercise can be created with. Only the ones the tests need are listed; the server
+ * derives the build configuration from this, which is what decides whether the generated repositories carry a build
+ * wrapper such as an executable `gradlew`.
+ */
+export enum ProjectType {
+    PLAIN_MAVEN = 'PLAIN_MAVEN',
+    MAVEN_MAVEN = 'MAVEN_MAVEN',
+    PLAIN_GRADLE = 'PLAIN_GRADLE',
+    GRADLE_GRADLE = 'GRADLE_GRADLE',
+}
+
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
     PYTHON = 'PYTHON',
@@ -50,24 +66,18 @@ export enum ProgrammingExerciseAssessmentType {
     MANUAL,
 }
 
-// CourseWideContext
-// Copied from src\main\webapp\app\shared\metis\metis.util.ts
-export enum CourseWideContext {
-    TECH_SUPPORT = 'TECH_SUPPORT',
-    ORGANIZATION = 'ORGANIZATION',
-    RANDOM = 'RANDOM',
-    ANNOUNCEMENT = 'ANNOUNCEMENT',
-}
-
 // AdditionalData
 export class AdditionalData {
     quizExerciseID?: number;
     submission?: ProgrammingExerciseSubmission;
     expectedScore?: number;
     textFixture?: string;
+    fileUploadFixture?: string;
     practiceMode?: boolean;
     skipBuildResultCheck?: boolean;
     progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
+    /** Whether students may complain about an automatic result of the programming exercise, which a tutor then answers manually. */
+    allowComplaintsForAutomaticAssessments?: boolean;
     programmingLanguage?: ProgrammingLanguage;
 }
 

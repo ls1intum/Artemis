@@ -1,9 +1,10 @@
-import { ChangeDetectorRef, Component, OnInit, Renderer2, inject, input } from '@angular/core';
+import { Component, ElementRef, Injector, OnInit, afterNextRender, inject, input, signal, viewChild } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -21,109 +22,128 @@ import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-req
 import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-complaint-student-view',
     templateUrl: './complaints-student-view.component.html',
     styleUrls: ['../complaints.scss'],
-    imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe, TumAetUiButtonDirective],
+    // A custom element is inline by default; its block child then splits it, so margins on the host are ignored and an empty line box appears above the area.
+    host: { class: 'block', 'data-testid': 'complaint-student-view' },
 })
 export class ComplaintsStudentViewComponent implements OnInit {
-    private cdr = inject(ChangeDetectorRef);
+    private injector = inject(Injector);
     private complaintService = inject(ComplaintService);
     private serverDateService = inject(ArtemisServerDateService);
     private accountService = inject(AccountService);
     private courseService = inject(CourseManagementService);
-    private renderer = inject(Renderer2);
+
+    // Every complaint view renders its own anchor, and the exam summary shows one view per exercise, so the anchor of this view
+    // must not be looked up by id: a document-wide lookup finds the anchor of the first view and scrolls the page to that exercise.
+    private readonly complaintScrollpoint = viewChild<ElementRef<HTMLElement>>('complaintScrollpoint');
 
     readonly exercise = input.required<Exercise>();
     readonly participation = input.required<StudentParticipation>();
     readonly result = input<Result>();
     readonly exam = input<Exam>();
-    // flag to indicate exam test run. Default set to false.
+    readonly isCurrentUserSubmissionAuthor = input<boolean>();
     readonly testRun = input(false);
 
-    submission: Submission;
-    complaint: Complaint;
-    course?: Course;
-    // Indicates what type of complaint is currently created by the student. Undefined if the student didn't click on a button yet.
-    formComplaintType?: ComplaintType;
-    // The number of complaints that the student is still allowed to submit in the course.
-    remainingNumberOfComplaints = 0;
-    isCorrectUserToFileAction = false;
-    isExamMode: boolean;
-    showSection = false;
-    timeOfFeedbackRequestValid = false;
-    timeOfComplaintValid = false;
+    submission!: Submission; // set in ngOnInit() from the participation's submissions before loadPotentialComplaint() reads it
+    readonly complaint = signal<Complaint | undefined>(undefined);
+    readonly course = signal<Course | undefined>(undefined);
+    readonly formComplaintType = signal<ComplaintType | undefined>(undefined);
+    readonly remainingNumberOfComplaints = signal(0);
+    readonly isCorrectUserToFileAction = signal(false);
+    readonly isExamMode = signal<boolean>(undefined!);
+    readonly showSection = signal(false);
+    readonly timeOfFeedbackRequestValid = signal(false);
+    readonly timeOfComplaintValid = signal(false);
 
     ComplaintType = ComplaintType;
 
-    // Icons
     faInfoCircle = faInfoCircle;
 
     ngOnInit(): void {
-        this.course = getCourseFromExercise(this.exercise());
-        this.isExamMode = this.exam() != undefined;
+        this.course.set(getCourseFromExercise(this.exercise()));
+        this.isExamMode.set(this.exam() != undefined);
         const participation = this.participation();
         const result = this.result();
         if (participation && result?.completionDate) {
             if (participation.submissions && participation.submissions.length > 0) {
                 this.submission = participation.submissions.sort((a, b) => b.id! - a.id!)[0];
             }
-            // for course exercises we track the number of allowed complaints
-            if (this.course?.complaintsEnabled) {
-                this.courseService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise().teamMode).subscribe((allowedComplaints: number) => {
-                    this.remainingNumberOfComplaints = allowedComplaints;
+            if (this.course()?.complaintsEnabled) {
+                this.courseService.getNumberOfAllowedComplaintsInCourse(this.course()!.id!, this.exercise().teamMode).subscribe((allowedComplaints: number) => {
+                    this.remainingNumberOfComplaints.set(allowedComplaints);
                 });
             }
             this.loadPotentialComplaint();
-            this.accountService.identity().then((user) => {
-                if (user?.id) {
-                    const participationValue = this.participation();
-                    if (participationValue?.student) {
-                        this.isCorrectUserToFileAction = participationValue.student.id === user.id;
-                    } else if (participationValue.team?.students) {
-                        this.isCorrectUserToFileAction = !!participationValue.team.students.find((student) => student.id === user.id);
+            const isCurrentUserSubmissionAuthor = this.isCurrentUserSubmissionAuthor();
+            if (isCurrentUserSubmissionAuthor !== undefined) {
+                this.isCorrectUserToFileAction.set(isCurrentUserSubmissionAuthor);
+            } else {
+                void this.accountService.identity().then((user) => {
+                    if (user?.id) {
+                        const participationValue = this.participation();
+                        if (participationValue?.student) {
+                            this.isCorrectUserToFileAction.set(participationValue.student.id === user.id);
+                        } else if (participationValue.team?.students) {
+                            this.isCorrectUserToFileAction.set(!!participationValue.team.students.find((student) => student.id === user.id));
+                        }
                     }
-                }
-            });
+                });
+            }
 
-            this.timeOfFeedbackRequestValid = this.isTimeOfFeedbackRequestValid();
-            this.timeOfComplaintValid = this.isTimeOfComplaintValid();
-            this.showSection = this.getSectionVisibility();
+            this.timeOfFeedbackRequestValid.set(this.isTimeOfFeedbackRequestValid());
+            this.timeOfComplaintValid.set(this.isTimeOfComplaintValid());
+            this.showSection.set(this.getSectionVisibility());
         }
     }
 
-    /**
-     * Sets the complaint if complaint and a valid result exist
-     */
     loadPotentialComplaint(): void {
         this.complaintService
             .findBySubmissionId(this.submission.id!)
             .pipe(filter((res) => !!res.body))
             .subscribe((res: HttpResponse<ComplaintDTO>) => {
-                this.complaint = this.complaintService.convertComplaintFromServer(res.body!, this.result()!);
+                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body!, this.result()));
             });
     }
 
-    /**
-     * Determines whether to show the section
-     */
     private getSectionVisibility(): boolean {
-        if (this.isExamMode) {
+        if (!this.isAboutAnAssessment()) {
+            return false;
+        }
+        if (this.isExamMode()) {
             return this.isWithinExamReviewPeriod();
         } else {
-            return !!(this.course?.complaintsEnabled || this.course?.requestMoreFeedbackEnabled);
+            return !!(this.course()?.complaintsEnabled || this.course()?.requestMoreFeedbackEnabled);
         }
     }
 
     /**
-     * Checks whether the student is allowed to submit a complaint or not for exam and course exercises.
+     * Whether there is a tutor assessment to complain about at all.
+     *
+     * Practice participations are not graded, so there is nothing to review, and the server rejects a complaint on one.
+     * Preliminary Athena feedback is a suggestion the student requested rather than an assessment: it carries no
+     * assessor, so a complaint about it would go to a tutor who has not looked at the submission yet.
+     *
+     * `testRun` on the participation means practice mode for a course exercise; the component's own `testRun` input is
+     * the unrelated exam test run, which does allow complaints.
      */
+    private isAboutAnAssessment(): boolean {
+        if (!this.isExamMode() && isPracticeMode(this.participation())) {
+            return false;
+        }
+        return this.result()?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA;
+    }
+
     private isTimeOfComplaintValid(): boolean {
-        if (!this.isExamMode) {
-            if (this.course?.maxComplaintTimeDays) {
-                const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise(), this.course.maxComplaintTimeDays, this.result(), this.participation());
+        if (!this.isExamMode()) {
+            const course = this.course();
+            if (course?.maxComplaintTimeDays) {
+                const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise(), course.maxComplaintTimeDays, this.result(), this.participation());
                 return !!dueDate && dayjs().isBefore(dueDate);
             }
             return false;
@@ -131,21 +151,15 @@ export class ComplaintsStudentViewComponent implements OnInit {
         return this.isWithinExamReviewPeriod();
     }
 
-    /**
-     * Checks whether the student is allowed to submit a more feedback request. This is only possible for course exercises.
-     */
     private isTimeOfFeedbackRequestValid(): boolean {
-        if (!this.isExamMode && this.course?.maxRequestMoreFeedbackTimeDays) {
-            const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise(), this.course.maxRequestMoreFeedbackTimeDays, this.result(), this.participation());
+        const course = this.course();
+        if (!this.isExamMode() && course?.maxRequestMoreFeedbackTimeDays) {
+            const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise(), course.maxRequestMoreFeedbackTimeDays, this.result(), this.participation());
             return !!dueDate && dayjs().isBefore(dueDate);
         }
         return false;
     }
 
-    /**
-     * A guard function used to indicate whether complaint submissions are valid.
-     * These are only allowed if they are submitted within the student review period.
-     */
     private isWithinExamReviewPeriod(): boolean {
         if (this.testRun()) {
             return true;
@@ -155,19 +169,14 @@ export class ComplaintsStudentViewComponent implements OnInit {
         return false;
     }
 
-    /**
-     * Function to set the complaint type (which opens the complaint form) and scrolls to the complaint form
-     */
     openComplaintForm(complainType: ComplaintType): void {
-        this.formComplaintType = complainType;
-        this.cdr.detectChanges(); // Wait for the view to update
-        this.scrollToComplaint();
+        this.formComplaintType.set(complainType);
+        // Scroll once the complaint form has rendered (signal write schedules CD; afterNextRender runs after that render).
+        afterNextRender(() => this.scrollToComplaint(), { injector: this.injector });
     }
 
-    /**
-     * Function to scroll to the complaint form
-     */
     private scrollToComplaint(): void {
-        this.renderer.selectRootElement('#complaintScrollpoint', true).scrollIntoView({ behavior: 'smooth', block: 'end' });
+        // `nearest` moves the page only when the form would otherwise open below the visible area.
+        this.complaintScrollpoint()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }

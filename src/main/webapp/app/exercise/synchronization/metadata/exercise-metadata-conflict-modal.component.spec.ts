@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,7 +18,6 @@ import {
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseMetadataConflictModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExerciseMetadataConflictModalComponent>;
     let component: ExerciseMetadataConflictModalComponent;
     let dialogRef: DynamicDialogRef;
@@ -50,6 +48,24 @@ describe('ExerciseMetadataConflictModalComponent', () => {
 
         fixture = TestBed.createComponent(ExerciseMetadataConflictModalComponent);
         component = fixture.componentInstance;
+    });
+
+    it.each(['programmingData.buildConfig', 'categories', 'competencyLinks', 'gradingCriteria', 'title'])('exposes complementary pressed states for %s choices', (field) => {
+        component.setConflicts([createConflict(field)]);
+        fixture.detectChanges();
+        const [local, incoming] = Array.from(fixture.nativeElement.querySelectorAll('.conflict-tile')) as HTMLElement[];
+        expect(local.getAttribute('aria-pressed')).toBe('true');
+        expect(incoming.getAttribute('aria-pressed')).toBe('false');
+        incoming.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        fixture.detectChanges();
+        expect(component.decisions()[field]).toBe(true);
+        expect(local.getAttribute('aria-pressed')).toBe('false');
+        expect(incoming.getAttribute('aria-pressed')).toBe('true');
+        local.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        fixture.detectChanges();
+        expect(component.decisions()[field]).toBe(false);
+        expect(local.getAttribute('aria-pressed')).toBe('true');
+        expect(incoming.getAttribute('aria-pressed')).toBe('false');
     });
 
     it('initializes decisions to false for all conflicts', () => {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -8,7 +7,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
-import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,8 +18,6 @@ import { SystemNotificationService } from 'app/core/notification/system-notifica
 import * as navbarUtil from 'app/foundation/util/navbar.util';
 
 describe('System Notification Component', () => {
-    setupTestBed({ zoneless: true });
-
     let systemNotificationComponent: SystemNotificationComponent;
     let systemNotificationComponentFixture: ComponentFixture<SystemNotificationComponent>;
     let systemNotificationService: SystemNotificationService;
@@ -69,6 +66,8 @@ describe('System Notification Component', () => {
         systemNotificationComponent = systemNotificationComponentFixture.componentInstance;
         systemNotificationService = TestBed.inject(SystemNotificationService);
         websocketService = TestBed.inject(WebsocketService);
+        // connected for the first time after the login
+        (websocketService as unknown as MockWebsocketService).setConnectionState(new ConnectionState(true, false));
         localStorageService = TestBed.inject(LocalStorageService);
     });
 
@@ -90,12 +89,12 @@ describe('System Notification Component', () => {
         vi.advanceTimersByTime(500);
         expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
         expect(systemNotificationComponent.notifications).toEqual(notifications);
-        expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[0], notifications[1]]);
+        expect(systemNotificationComponent.notificationsToDisplay()).toEqual([notifications[0], notifications[1]]);
 
         vi.advanceTimersByTime(60 * 60 * 1000); // one hour
 
         expect(systemNotificationComponent.notifications).toEqual(notifications);
-        expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[2], notifications[3]]);
+        expect(systemNotificationComponent.notificationsToDisplay()).toEqual([notifications[2], notifications[3]]);
 
         vi.useRealTimers();
     });
@@ -110,15 +109,106 @@ describe('System Notification Component', () => {
 
         systemNotificationComponent.ngOnInit();
         expect(systemNotificationComponent.notifications).toEqual(originalNotifications);
-        expect(systemNotificationComponent.notificationsToDisplay).toEqual([originalNotifications[0]]);
+        expect(systemNotificationComponent.notificationsToDisplay()).toEqual([originalNotifications[0]]);
 
         vi.advanceTimersByTime(500);
 
         expect(systemNotificationComponent.notifications).toEqual(newNotifications);
-        expect(systemNotificationComponent.notificationsToDisplay).toEqual([newNotifications[0]]);
+        expect(systemNotificationComponent.notificationsToDisplay()).toEqual([newNotifications[0]]);
         expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(WEBSOCKET_CHANNEL);
         expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+        vi.useRealTimers();
+    });
+
+    it('should keep the websocket subscription on reconnect and reload the notifications instead', () => {
+        vi.useFakeTimers();
+        const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1)];
+        const subscribeSpy = vi.spyOn(websocketService, 'subscribe');
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+
+        const mockWebsocketService = websocketService as unknown as MockWebsocketService;
+        mockWebsocketService.setConnectionState(new ConnectionState(false, true));
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+
+        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('should reload the notifications if the connection was re-established before subscribing', () => {
+        vi.useFakeTimers();
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+        systemNotificationComponent.ngOnInit();
+        expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+
+        (websocketService as unknown as MockWebsocketService).setConnectionState(new ConnectionState(true, true));
+        vi.advanceTimersByTime(500);
+
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('should ignore a reloaded notification list that is older than one received over the websocket', () => {
+        vi.useFakeTimers();
+        const restResponse = new Subject<SystemNotification[]>();
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValueOnce(of([])).mockReturnValue(restResponse);
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+
+        const mockWebsocketService = websocketService as unknown as MockWebsocketService;
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
+        const newerNotifications = [createActiveNotification(SystemNotificationType.WARNING, 5)];
+        mockWebsocketService.emit(WEBSOCKET_CHANNEL, newerNotifications);
+        restResponse.next([]);
+
+        expect(systemNotificationComponent.notifications).toEqual(newerNotifications);
+        vi.useRealTimers();
+    });
+
+    it('should ignore the response of a reload that a newer reload superseded', () => {
+        vi.useFakeTimers();
+        const olderResponse = new Subject<SystemNotification[]>();
+        const newerResponse = new Subject<SystemNotification[]>();
+        const getActiveNotificationSpy = vi
+            .spyOn(systemNotificationService, 'getActiveNotifications')
+            .mockReturnValueOnce(of([]))
+            .mockReturnValueOnce(olderResponse)
+            .mockReturnValueOnce(newerResponse);
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+
+        const mockWebsocketService = websocketService as unknown as MockWebsocketService;
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(3);
+
+        const newerNotifications = [createActiveNotification(SystemNotificationType.WARNING, 7)];
+        newerResponse.next(newerNotifications);
+        olderResponse.next([]);
+
+        expect(olderResponse.observed).toBe(false);
+        expect(systemNotificationComponent.notifications).toEqual(newerNotifications);
+        vi.useRealTimers();
+    });
+
+    it('should reload the notifications after a short interruption that emits no disconnected state', () => {
+        vi.useFakeTimers();
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+        expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+
+        (websocketService as unknown as MockWebsocketService).setConnectionState(new ConnectionState(true, true));
+
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
         vi.useRealTimers();
     });
 
@@ -135,7 +225,7 @@ describe('System Notification Component', () => {
             systemNotificationComponent.close(notifications[0]);
 
             expect(storeSpy).toHaveBeenCalledWith(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
-            expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[1]]);
+            expect(systemNotificationComponent.notificationsToDisplay()).toEqual([notifications[1]]);
             vi.useRealTimers();
         });
 
@@ -149,7 +239,7 @@ describe('System Notification Component', () => {
             vi.advanceTimersByTime(500);
 
             expect(systemNotificationComponent.closedIds).toEqual([1]);
-            expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[1]]);
+            expect(systemNotificationComponent.notificationsToDisplay()).toEqual([notifications[1]]);
             vi.useRealTimers();
         });
 
@@ -167,7 +257,7 @@ describe('System Notification Component', () => {
 
             // After websocket update, notification 1 should still be closed
             expect(systemNotificationComponent.closedIds).toEqual([1]);
-            expect(systemNotificationComponent.notificationsToDisplay).toEqual([updatedNotifications[1]]);
+            expect(systemNotificationComponent.notificationsToDisplay()).toEqual([updatedNotifications[1]]);
             vi.useRealTimers();
         });
 
@@ -215,11 +305,11 @@ describe('System Notification Component', () => {
 
             systemNotificationComponent.close(notifications[0]);
             expect(localStorageService.retrieve(CLOSED_NOTIFICATION_IDS_STORAGE_KEY)).toEqual([1]);
-            expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[1], notifications[2]]);
+            expect(systemNotificationComponent.notificationsToDisplay()).toEqual([notifications[1], notifications[2]]);
 
             systemNotificationComponent.close(notifications[2]);
             expect(localStorageService.retrieve(CLOSED_NOTIFICATION_IDS_STORAGE_KEY)).toEqual([1, 3]);
-            expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[1]]);
+            expect(systemNotificationComponent.notificationsToDisplay()).toEqual([notifications[1]]);
 
             vi.useRealTimers();
         });
@@ -246,7 +336,7 @@ describe('System Notification Component', () => {
             expect(systemNotificationComponent.closedIds).toEqual([2]);
             expect(localStorageService.retrieve(CLOSED_NOTIFICATION_IDS_STORAGE_KEY)).toEqual([2]);
             // Only notification 3 should be displayed (2 is closed, 1 was removed)
-            expect(systemNotificationComponent.notificationsToDisplay).toEqual([updatedNotifications[1]]);
+            expect(systemNotificationComponent.notificationsToDisplay()).toEqual([updatedNotifications[1]]);
             vi.useRealTimers();
         });
 
@@ -269,8 +359,8 @@ describe('System Notification Component', () => {
             wsSubject.next([createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)]);
 
             expect(systemNotificationComponent.closedIds).toEqual([1]);
-            expect(systemNotificationComponent.notificationsToDisplay).toHaveLength(1);
-            expect(systemNotificationComponent.notificationsToDisplay[0].id).toBe(2);
+            expect(systemNotificationComponent.notificationsToDisplay()).toHaveLength(1);
+            expect(systemNotificationComponent.notificationsToDisplay()[0].id).toBe(2);
 
             vi.useRealTimers();
         });
@@ -465,7 +555,7 @@ describe('System Notification Component', () => {
             expect(systemNotificationComponent.closedIds).toEqual([]);
             expect(storeSpy).not.toHaveBeenCalled();
             // Original notification should still be displayed
-            expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[0]]);
+            expect(systemNotificationComponent.notificationsToDisplay()).toEqual([notifications[0]]);
             vi.useRealTimers();
         });
 

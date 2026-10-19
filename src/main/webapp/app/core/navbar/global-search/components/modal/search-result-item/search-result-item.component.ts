@@ -2,9 +2,10 @@ import { Component, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faCalendarAlt, faGraduationCap, faHashtag, faLevelDownAlt, faReply, faTrophy } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
+import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
+import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import dayjs from 'dayjs/esm';
 
 /** Format for displaying dates in search results, e.g. "Apr 19, 14:30" */
@@ -88,7 +89,7 @@ function truncateDescription(description: string, maxLength: number = DESCRIPTIO
 @Component({
     selector: 'jhi-global-search-result-item',
     standalone: true,
-    imports: [FaIconComponent, ArtemisTranslatePipe, HtmlForMarkdownPipe],
+    imports: [FaIconComponent, ArtemisTranslatePipe, MarkdownDirective],
     templateUrl: './search-result-item.component.html',
     styleUrls: ['./search-result-item.component.scss'],
 })
@@ -134,6 +135,8 @@ export class SearchResultItemComponent {
     result = input.required<GlobalSearchResult>();
     icon = input.required<IconDefinition>();
     isSelected = input.required<boolean>();
+    /** DOM id of the option, so the search input can point at the selected row. */
+    optionId = input<string | undefined>(undefined);
 
     resultClick = output<GlobalSearchResult>();
 
@@ -145,8 +148,16 @@ export class SearchResultItemComponent {
     protected channelName = computed(() => this.result().metadata?.['channelName']);
     protected isReply = computed(() => !!this.result().metadata?.['isReply']);
 
+    /** i18n key for the entity-type badge: the server sends a stable key (e.g. "programming"), resolved here to a localised label. */
+    protected badgeLabelKey = computed(() => 'global.search.results.badge.' + this.result().badgeKey);
+
     protected isExamExercise = computed(() => this.result().type === 'exercise' && !!this.result().metadata?.['examId']);
     protected isMessage = computed(() => this.result().type === 'post' || this.result().type === 'answer_post');
+
+    protected readonly isLectureContent = computed(() => this.result().type === LECTURE_CONTENT_TYPE);
+    protected readonly lectureName = computed(() => this.result().metadata?.['lectureName']);
+    protected readonly pageNumber = computed(() => this.result().metadata?.['pageNumber']);
+    protected readonly displayMeta = computed(() => this.result().metadata?.['displayMeta']);
 
     protected hasAnyMetadata = computed(() => !!(this.courseName() || this.dueDate() || this.startDate() || this.points() || this.difficulty() || this.channelName()));
     protected showCourseSeparator = computed(() => !!(this.courseName() && (this.dueDate() || this.startDate() || this.points() || this.difficulty())));

@@ -1,13 +1,14 @@
 package de.tum.cit.aet.artemis.localci.service.scaparser.strategy;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.dataformat.xml.XmlMapper;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
@@ -42,11 +43,11 @@ public class CheckstyleParser implements ParserStrategy {
     @Override
     public StaticCodeAnalysisReportDTO parse(String reportContent) {
         try {
-            List<CheckstyleFile> files = xmlMapper.readValue(reportContent, new com.fasterxml.jackson.core.type.TypeReference<>() {
+            List<CheckstyleFile> files = xmlMapper.readValue(reportContent, new tools.jackson.core.type.TypeReference<>() {
             });
             return createReportFromFiles(files);
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             throw new RuntimeException("Failed to parse XML", e);
         }
     }

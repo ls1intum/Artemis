@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import type { Route, UrlMatchResult, UrlMatcher } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/service/tutorial-group-management-course-resolver.service';
@@ -7,25 +8,54 @@ import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
-import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { presentationAssessmentFeatureGuard } from 'app/presentation/manage/presentation-assessment-feature.guard';
 
-export const courseManagementRoutes: Routes = [
-    {
-        path: '',
-        loadComponent: () => import('app/course/manage/course-management/course-management.component').then((m) => m.CourseManagementComponent),
+/**
+ * Matches `presentations`, `presentations/:presentationId` and `presentations/:presentationId/exercises/:exerciseId`.
+ * One route config for all three shapes lets Angular reuse the management component and its sidebar when the selected presentation
+ * changes. With one config per shape, moving between the overview, a presentation and an exercise-linked presentation would destroy
+ * and recreate the component, reload everything and reset the search, filters and paging.
+ */
+export const presentationAssessmentUrlMatcher: UrlMatcher = (segments): UrlMatchResult | null => {
+    if (segments[0]?.path !== 'presentations') {
+        return null;
+    }
+    switch (segments.length) {
+        case 1:
+            return { consumed: segments };
+        case 2:
+            return { consumed: segments, posParams: { presentationId: segments[1] } };
+        case 4:
+            return segments[2].path === 'exercises' ? { consumed: segments, posParams: { presentationId: segments[1], exerciseId: segments[3] } } : null;
+        default:
+            return null;
+    }
+};
+
+function presentationAssessmentManagementRoute(): Route {
+    return {
+        matcher: presentationAssessmentUrlMatcher,
+        loadComponent: () => import('app/presentation/manage/presentation-assessment-management.component').then((m) => m.PresentationAssessmentManagementComponent),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
-            pageTitle: 'artemisApp.course.home.title',
+            pageTitle: 'artemisApp.presentationAssessment.home.title',
+            transparentCourseBody: true,
         },
-        canActivate: [UserRouteAccessService],
-    },
+        canActivate: [UserRouteAccessService, presentationAssessmentFeatureGuard],
+    };
+}
+
+export const courseManagementRoutes: Routes = [
     {
         path: 'new',
         loadComponent: () => import('./update/course-update.component').then((m) => m.CourseUpdateComponent),
         data: {
             authorities: IS_AT_LEAST_ADMIN,
             pageTitle: 'global.generic.create',
+            // The page renders its own shell (title bar above a scrolling card), like the course management container
+            // below, so it must not be wrapped in the app-level card as well.
+            usesModuleBackground: false,
         },
         canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
     },
@@ -44,7 +74,22 @@ export const courseManagementRoutes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/course/manage/course-management-container/course-management-container.component').then((m) => m.CourseManagementContainerComponent),
+        // The container renders a full-bleed layout (its own sidebar, title bar, and module-bg content box), so it must
+        // NOT be wrapped in the app-level module-background card (see app.component.html). Declare this explicitly so it
+        // overrides the parent `course-management` route's `usesModuleBackground: true`. Angular 22 inherits parent
+        // route data down to the deepest activated child, so relying on the flag's
+        // absence — as this did before — no longer keeps the container full-bleed and left it shifted/cropped (#13189).
+        data: {
+            usesModuleBackground: false,
+        },
         children: [
+            {
+                path: ':courseId/exercises/:exerciseId/teams',
+                loadChildren: () => import('app/exercise/team/team.route').then((m) => m.teamManagementRoute),
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                },
+            },
             {
                 path: ':courseId',
                 loadComponent: () => import('./detail/course-detail.component').then((m) => m.CourseDetailComponent),
@@ -79,6 +124,10 @@ export const courseManagementRoutes: Routes = [
             {
                 path: ':courseId/lectures',
                 loadChildren: () => import('app/lecture/manage/lecture.route').then((m) => m.lectureRoutes),
+                // Preload-only authorities (no canActivate): least-privileged authority the lecture routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                data: {
+                    authorities: IS_AT_LEAST_EDITOR,
+                },
             },
             {
                 path: ':courseId/tutorial-groups',
@@ -86,10 +135,17 @@ export const courseManagementRoutes: Routes = [
                     course: TutorialGroupManagementCourseResolver,
                 },
                 loadChildren: () => import('app/tutorialgroup/manage/tutorial-groups-management.route').then((m) => m.tutorialGroupManagementRoutes),
+                // Preload-only authorities (no canActivate): least-privileged authority the tutorial-group routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                },
             },
             {
                 path: ':courseId/assessment-dashboard/:exerciseId',
-                loadComponent: () => ExerciseAssessmentDashboardComponent,
+                loadComponent: () =>
+                    import('app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component').then(
+                        (m) => m.ExerciseAssessmentDashboardComponent,
+                    ),
                 data: {
                     authorities: IS_AT_LEAST_TUTOR,
                     pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
@@ -123,14 +179,18 @@ export const courseManagementRoutes: Routes = [
             {
                 path: ':courseId/plagiarism-cases',
                 loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
-            },
-            {
-                path: ':courseId/exams/:examId/plagiarism-cases',
-                loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
+                // Preload-only authorities (no canActivate): least-privileged authority the plagiarism routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                },
             },
             {
                 path: ':courseId/exams',
                 loadChildren: () => import('app/exam/manage/exam-management.route').then((m) => m.examManagementRoutes),
+                // Preload-only authorities (no canActivate): least-privileged authority the exam management routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                },
             },
             {
                 path: ':courseId/tutorial-groups-checklist',
@@ -227,7 +287,13 @@ export const courseManagementRoutes: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
+                        // Legacy redirect: keep old "groups/..." bookmarks working
                         path: 'groups/:courseGroup',
+                        redirectTo: 'members/:courseGroup',
+                        pathMatch: 'full',
+                    },
+                    {
+                        path: 'members/:courseRoleSlug',
                         loadComponent: () => import('app/course/manage/course-group-membership/course-group-membership.component').then((m) => m.CourseGroupMembershipComponent),
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
@@ -244,6 +310,7 @@ export const courseManagementRoutes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                     },
+                    presentationAssessmentManagementRoute(),
                     {
                         path: 'competency-management',
                         loadComponent: () => import('app/atlas/manage/competency-management/competency-management.component').then((m) => m.CompetencyManagementComponent),
@@ -256,59 +323,100 @@ export const courseManagementRoutes: Routes = [
                     {
                         path: '',
                         loadChildren: () => import('app/assessment/manage/list-of-complaints/list-of-complaints.route').then((m) => m.listOfComplaintsRoute),
+                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                        },
                     },
                     {
                         path: '',
                         loadChildren: () => import('app/assessment/manage/assessment-locks/assessment-locks.route').then((m) => m.assessmentLocksRoute),
+                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                        },
                     },
-                    // we have to define the redirects here. When we define them in the child routes, the redirect doesn't work
+                    // we have to define the redirects here. When we define them in the child routes, the redirect doesn't work.
                     {
                         path: 'text-exercises',
+                        pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
                     {
                         path: 'modeling-exercises',
+                        pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
                     {
                         path: 'file-upload-exercises',
+                        pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
                     {
                         path: 'quiz-exercises',
+                        pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
                     {
                         path: 'programming-exercises',
+                        pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
                     {
                         path: '',
                         loadChildren: () => import('app/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute),
+                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                        },
                     },
                     {
                         path: '',
                         loadChildren: () => import('app/programming/manage/programming-exercise-management.route').then((m) => m.routes),
+                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                        },
                     },
                     {
                         path: '',
                         loadChildren: () => import('app/quiz/manage/quiz-management.route').then((m) => m.quizManagementRoute),
+                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                        },
                     },
                     {
                         path: '',
                         loadChildren: () => import('app/fileupload/manage/file-upload-exercise-management.route').then((m) => m.routes),
+                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                        },
                     },
                     {
                         path: '',
                         loadChildren: () => import('app/modeling/manage/modeling-exercise.route').then((m) => m.routes),
+                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                        },
                     },
                     {
                         path: '',
                         loadChildren: () => import('app/exercise/exercise-scores/exercise-scores.route').then((m) => m.routes),
+                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                        },
                     },
                     {
                         path: '',
                         loadChildren: () => import('app/exercise/participation/participation.route').then((m) => m.routes),
+                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                        },
                     },
                     {
                         // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered

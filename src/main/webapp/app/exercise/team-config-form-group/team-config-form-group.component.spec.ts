@@ -3,7 +3,6 @@ import { NgModel } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
@@ -13,8 +12,6 @@ import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-grou
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Team Config Form Group Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TeamConfigFormGroupComponent>;
     let component: TeamConfigFormGroupComponent;
     let exercise: Exercise;
@@ -91,6 +88,23 @@ describe('Team Config Form Group Component', () => {
         // check for object equality and not reference equality
         expect(exercise.teamAssignmentConfig).toEqual(teamAssignmentConfig);
         expect(exercise.teamAssignmentConfig).not.toBe(teamAssignmentConfig);
+    });
+
+    it('should hand the exercise back after every change it writes onto it, so that the host notices', () => {
+        component.ngOnInit();
+        const emitted: Exercise[] = [];
+        component.exerciseChange.subscribe((changed) => emitted.push(changed));
+
+        component.onExerciseModeChange(ExerciseMode.TEAM);
+        component.updateMinTeamSize(3);
+        component.updateMaxTeamSize(4);
+        component.onExerciseModeChange(ExerciseMode.INDIVIDUAL);
+
+        // The same object every time: the host's exercise is edited in place, not replaced.
+        expect(emitted).toHaveLength(4);
+        expect(emitted.every((changed) => changed === exercise)).toBe(true);
+        expect(exercise.mode).toBe(ExerciseMode.INDIVIDUAL);
+        expect(exercise.teamAssignmentConfig).toBeUndefined();
     });
 
     it('should not change maxTeamSize if the new value for minTeamSize is lower', () => {

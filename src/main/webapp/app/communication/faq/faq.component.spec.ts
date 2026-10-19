@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { NEVER, Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaqService } from 'app/communication/faq/faq.service';
@@ -16,14 +15,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { SortService } from 'app/foundation/service/sort.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 
 function createFaq(id: number, category: string, color: string): Faq {
@@ -37,8 +32,6 @@ function createFaq(id: number, category: string, color: string): Faq {
 }
 
 describe('FaqComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let faqComponentFixture: ComponentFixture<FaqComponent>;
     let faqComponent: FaqComponent;
 
@@ -46,8 +39,6 @@ describe('FaqComponent', () => {
     let alertServiceStub: ReturnType<typeof vi.spyOn>;
     let alertService: AlertService;
     let sortService: SortService;
-    let profileService: ProfileService;
-    let irisSettingsService: IrisSettingsService;
 
     let faq1: Faq;
     let faq2: Faq;
@@ -67,10 +58,6 @@ describe('FaqComponent', () => {
 
         courseId = 1;
 
-        const profileInfo = {
-            activeProfiles: [],
-        } as unknown as ProfileInfo;
-
         TestBed.configureTestingModule({
             imports: [FaqComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
             providers: [
@@ -88,7 +75,6 @@ describe('FaqComponent', () => {
                         },
                     },
                 },
-                { provide: ProfileService, useValue: new MockProfileService() },
 
                 MockProvider(FaqService, {
                     findAllByCourseId: () => {
@@ -119,6 +105,7 @@ describe('FaqComponent', () => {
                     },
                 }),
                 provideHttpClient(),
+                DialogService,
             ],
         });
 
@@ -128,9 +115,6 @@ describe('FaqComponent', () => {
         faqService = TestBed.inject(FaqService);
         alertService = TestBed.inject(AlertService);
         sortService = TestBed.inject(SortService);
-        irisSettingsService = TestBed.inject(IrisSettingsService);
-        profileService = TestBed.inject(ProfileService);
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
     });
 
     it('should fetch faqs when initialized', () => {
@@ -157,7 +141,7 @@ describe('FaqComponent', () => {
         expect(deleteSpy).toHaveBeenCalledExactlyOnceWith(courseId, faq1.id!);
         expect(faqComponent.faqs).toHaveLength(2);
         expect(faqComponent.faqs).not.toContain(faq1);
-        expect(faqComponent.faqs).toEqual(faqComponent.filteredFaqs);
+        expect(faqComponent.faqs).toEqual(faqComponent.filteredFaqs());
     });
 
     it('should not delete faq on error', () => {
@@ -175,9 +159,19 @@ describe('FaqComponent', () => {
         faqComponentFixture.detectChanges();
         faqComponent.toggleFilters('category2');
         expect(toggleFilterSpy).toHaveBeenCalledOnce();
-        expect(faqComponent.filteredFaqs).toHaveLength(2);
-        expect(faqComponent.filteredFaqs).not.toContain(faq1);
-        expect(faqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(faqComponent.filteredFaqs()).toHaveLength(2);
+        expect(faqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(faqComponent.filteredFaqs()).toEqual([faq2, faq3]);
+    });
+
+    it('should refresh the filtered faqs immediately after deletion', () => {
+        vi.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(NEVER);
+        faqComponentFixture.detectChanges();
+        faqComponent.filteredFaqs.set([faq1, faq2, faq3]);
+
+        faqComponent.deleteFaq(courseId, faq1.id!);
+
+        expect(faqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 
     it('should catch error if no categories are found', () => {
@@ -197,9 +191,9 @@ describe('FaqComponent', () => {
         expect(searchSpy).toHaveBeenCalledTimes(2);
         expect(searchSpy).toHaveBeenCalledWith(faq2, 'questionTitle');
         expect(searchSpy).toHaveBeenCalledWith(faq3, 'questionTitle');
-        expect(faqComponent.filteredFaqs).toHaveLength(2);
-        expect(faqComponent.filteredFaqs).not.toContain(faq1);
-        expect(faqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(faqComponent.filteredFaqs()).toHaveLength(2);
+        expect(faqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(faqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 
     it('should call sortService when sortRows is called', () => {
@@ -266,43 +260,53 @@ describe('FaqComponent', () => {
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
     });
 
-    it('should call the service to ingest faqs when ingestFaqsInPyris is called', () => {
-        faqComponent.faqs = [faq1];
-        const ingestSpy = vi.spyOn(faqService, 'ingestFaqsInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
-        faqComponent.ingestFaqsInPyris();
-        expect(ingestSpy).toHaveBeenCalledWith(faq1.course?.id);
-        expect(ingestSpy).toHaveBeenCalledOnce();
+    it('reloads FAQs and categories after import', () => {
+        faqComponentFixture.detectChanges();
+        const faqsSpy = vi.spyOn(faqService, 'findAllByCourseId');
+        const categoriesSpy = vi.spyOn(faqService, 'findAllCategoriesByCourseId');
+        faqComponent.onFaqsImported(2);
+        expect(faqsSpy).toHaveBeenCalledExactlyOnceWith(1);
+        expect(categoriesSpy).toHaveBeenCalledExactlyOnceWith(1);
+        expect(faqComponent.faqs).toHaveLength(3);
     });
 
-    it('should log error when error occurs', () => {
-        alertServiceStub = vi.spyOn(alertService, 'error');
-        faqComponent.faqs = [faq1];
-        vi.spyOn(faqService, 'ingestFaqsInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
-        faqComponent.ingestFaqsInPyris();
-        expect(alertServiceStub).toHaveBeenCalledOnce();
+    it.each([true, false])('preserves the active search after import when FAQs reload first: %s', (faqsFirst) => {
+        faqComponentFixture.detectChanges();
+        faq2.questionTitle = 'matching question';
+        faq3.questionTitle = 'unrelated question';
+        vi.spyOn(faqService, 'hasSearchTokens').mockImplementation(FaqService.prototype.hasSearchTokens);
+        faqComponent.setSearchValue('matching');
+        faqComponent.refreshFaqList('matching');
+        expect(faqComponent.filteredFaqs()).toEqual([faq2]);
+        const faqsResponse = new Subject<HttpResponse<Faq[]>>();
+        const categoriesResponse = new Subject<HttpResponse<string[]>>();
+        vi.spyOn(faqService, 'findAllByCourseId').mockReturnValue(faqsResponse);
+        vi.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(categoriesResponse);
+
+        faqComponent.onFaqsImported(1);
+        const reloadFaqs = () => faqsResponse.next(new HttpResponse({ body: [faq1, faq2, faq3] }));
+        const reloadCategories = () => categoriesResponse.next(new HttpResponse({ body: [] }));
+        (faqsFirst ? reloadFaqs : reloadCategories)();
+        expect(faqComponent.filteredFaqs()).toEqual([faq2]);
+        (faqsFirst ? reloadCategories : reloadFaqs)();
+        expect(faqComponent.filteredFaqs()).toEqual([faq2]);
+        expect(faqComponent.searchInput.getValue()).toBe('matching');
+        faqsResponse.complete();
+        categoriesResponse.complete();
     });
 
-    it('should set irisEnabled based on service response', () => {
-        faqComponent.faqs = [faq1];
-        const profileInfoResponse = {
-            activeModuleFeatures: [MODULE_FEATURE_IRIS],
-        } as ProfileInfo;
-        const irisSettingsResponse = {
-            courseId: faqComponent.courseId,
-            settings: {
-                enabled: true,
-                customInstructions: '',
-                variant: 'default',
-                rateLimit: { requests: 100, timeframeHours: 24 },
-            },
-            effectiveRateLimit: { requests: 100, timeframeHours: 24 },
-            applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
-        } as IrisCourseSettingsWithRateLimitDTO;
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockImplementation(() => of(irisSettingsResponse));
-        faqComponent.ngOnInit();
-        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(faqComponent.courseId);
-        expect(faqComponent.irisEnabled).toBe(true);
+    it('offers FAQ import to instructors and hides it from tutors', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(true);
+        faqComponentFixture.detectChanges();
+        const view = TestBed.inject(CourseTitleBarService).actionsTemplate()!.createEmbeddedView({});
+        view.detectChanges();
+        const actions = view.rootNodes[0] as HTMLElement;
+        expect(actions.querySelector('[data-testid="import-faqs"]')).not.toBeNull();
+        faqComponent.isAtLeastInstructor.set(false);
+        faqComponentFixture.detectChanges();
+        view.detectChanges();
+        expect(actions.querySelector('[data-testid="import-faqs"]')).toBeNull();
+        view.destroy();
     });
 });

@@ -26,7 +26,23 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
 
     void setBuildPlanId(String buildPlanId);
 
+    @Nullable
     ProgrammingExercise getProgrammingExercise();
+
+    /**
+     * Resolves the exercise for operations that require a fully loaded programming participation.
+     *
+     * @return the programming exercise
+     * @throws IllegalStateException if the participation has no programming exercise
+     */
+    @JsonIgnore
+    default ProgrammingExercise getProgrammingExerciseElseThrow() {
+        ProgrammingExercise exercise = getProgrammingExercise();
+        if (exercise == null) {
+            throw new IllegalStateException("The programming exercise of the participation cannot be resolved");
+        }
+        return exercise;
+    }
 
     void setProgrammingExercise(ProgrammingExercise programmingExercise);
 
@@ -55,6 +71,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
     /**
      * @return the repository uri of the programming exercise participation wrapped in an object
      */
+    @Nullable
     @JsonIgnore
     default LocalVCRepositoryUri getVcsRepositoryUri() {
         var repoUri = getRepositoryUri();

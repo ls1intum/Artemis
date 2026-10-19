@@ -12,10 +12,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportCompetenciesComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<ImportCompetenciesComponent>;
     let component: ImportCompetenciesComponent;
     let competencyService: CompetencyService;

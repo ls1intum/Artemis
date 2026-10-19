@@ -1,13 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 
 describe('ApollonDiagramImportDialog Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ApollonDiagramImportDialogComponent>;
     let dialogRef: DynamicDialogRef;
     const apollonDiagramId = 5;

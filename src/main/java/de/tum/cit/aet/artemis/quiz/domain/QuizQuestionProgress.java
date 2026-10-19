@@ -9,17 +9,21 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 public class QuizQuestionProgress extends DomainObject {
 
     @Column(name = "user_id")
+    @Parent
     private long userId;
 
     @Column(name = "course_id")
+    @Parent
     private long courseId;
 
     @Column(name = "quiz_question_id")
+    @Parent
     private long quizQuestionId;
 
     @JdbcTypeCode(SqlTypes.JSON)

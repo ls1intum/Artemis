@@ -20,6 +20,8 @@ import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.COURSE_STATISTICS)
 @RestController
 @RequestMapping("api/core/")
 public class StatisticsResource {
@@ -69,7 +72,7 @@ public class StatisticsResource {
         var courseId = 0L;
         switch (view) {
             case COURSE -> courseId = entityId;
-            case EXERCISE -> courseId = exerciseRepository.findByIdElseThrow(entityId).getCourseViaExerciseGroupOrCourseMember().getId();
+            case EXERCISE -> courseId = exerciseRepository.findByIdElseThrow(entityId).getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
             case ARTEMIS -> throw new UnsupportedOperationException("Unsupported view: " + view);
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -97,6 +100,7 @@ public class StatisticsResource {
      * @param exerciseId the id of the exercise for which the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXERCISE_SCORES)
     @GetMapping("management/statistics/exercise-statistics")
     @EnforceAtLeastTutor
     public ResponseEntity<ExerciseManagementStatisticsDTO> getExerciseStatistics(@RequestParam Long exerciseId) {

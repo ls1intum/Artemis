@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
@@ -15,8 +14,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 
 describe('CalendarDesktopWeekPresentationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CalendarDesktopWeekPresentationComponent>;
 
     const startOfMonday = dayjs('2025-05-05');

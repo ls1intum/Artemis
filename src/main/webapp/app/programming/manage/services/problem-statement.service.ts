@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/foundation/service/file.service';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import {
     InlineRefinementEvent,
@@ -28,10 +28,10 @@ export interface OperationResult {
  * Service that centralizes problem statement generation, refinement, and template loading operations.
  * Eliminates duplicate API subscription logic across components.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProblemStatementService {
     private readonly fileService = inject(FileService);
-    private readonly hyperionApiService = inject(HyperionProblemStatementApiService);
+    private readonly hyperionApiService = inject(HyperionProblemStatementApi);
     private readonly alertService = inject(AlertService);
 
     /** Loads the template problem statement for the given exercise. */

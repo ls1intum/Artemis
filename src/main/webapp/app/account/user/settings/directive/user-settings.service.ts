@@ -1,12 +1,13 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { User } from 'app/account/user/user.model';
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
 import { ScienceSetting, scienceSettingsStructure } from 'app/account/user/settings/science-settings/science-settings-structure';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class UserSettingsService {
     private http = inject(HttpClient);
 
@@ -117,7 +118,7 @@ export class UserSettingsService {
                 const currentSetting = settingsStructureToUpdate.groups[i].settings[j];
                 const matchingSetting = newSettings.find((newSetting) => newSetting.settingId === currentSetting.settingId);
                 if (matchingSetting != undefined) {
-                    Object.assign(settingsStructureToUpdate.groups[i].settings[j], matchingSetting);
+                    hydrate(settingsStructureToUpdate.groups[i].settings[j], matchingSetting);
                 }
             }
         }

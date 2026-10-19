@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.exercise.domain.Submission_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
@@ -45,14 +46,14 @@ public class ProgrammingSubmissionWithoutResultScheduleService {
      */
     @Scheduled(cron = "${artemis.scheduling.programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * *}")
     public void retriggerSubmissionsWithoutResults() {
-        checkSecurityUtils();
+        SecurityUtils.setSystemAuthorizationObject();
         log.info("Retriggering latest submission per participation without results that are older than two hours but not older than 2 days.");
 
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime twoHoursAgo = now.minusHours(2);
         ZonedDateTime twoDaysAgo = now.minusDays(2);
 
-        Pageable pageable = PageRequest.of(0, 50, Sort.by("submissionDate").ascending());
+        Pageable pageable = PageRequest.of(0, 50, Sort.by(Submission_.SUBMISSION_DATE).ascending());
         int processedCount = 0;
         Slice<ProgrammingSubmission> slice;
         do {
@@ -74,12 +75,6 @@ public class ProgrammingSubmissionWithoutResultScheduleService {
         while (slice.hasNext());
 
         log.info("Retriggered builds for {} programming submissions without results.", processedCount);
-    }
-
-    private void checkSecurityUtils() {
-        if (!SecurityUtils.isAuthenticated()) {
-            SecurityUtils.setAuthorizationObject();
-        }
     }
 
 }

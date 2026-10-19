@@ -18,6 +18,7 @@ war {
     webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
     enabled = true
     archiveExtension = "war.original"
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 jar {

@@ -17,9 +17,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.tool.ToolCallbackProvider;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 
@@ -36,19 +38,30 @@ class AtlasAgentToolsServiceTest {
     private AtlasAgentDelegationService delegationService;
 
     @Mock
-    private AtlasAgentToolCallbackService toolCallbackFactory;
+    private ToolCallbackProvider competencyExpertToolCallbackProvider;
+
+    @Mock
+    private ToolCallbackProvider competencyMapperToolCallbackProvider;
+
+    @Mock
+    private ToolCallbackProvider exerciseMapperToolCallbackProvider;
 
     private AtlasAgentToolsService toolsService;
 
     @BeforeEach
     void setUp() {
-        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService, toolCallbackFactory);
+        toolsService = new AtlasAgentToolsService(new JsonMapper(), courseRepository, exerciseRepository, delegationService,
+                new AtlasToolSurface(competencyExpertToolCallbackProvider), new AtlasToolSurface(competencyMapperToolCallbackProvider),
+                new AtlasToolSurface(exerciseMapperToolCallbackProvider));
     }
 
     @AfterEach
     void tearDown() {
         AtlasAgentToolsService.clearCurrentCourseId();
         AtlasAgentToolsService.clearCurrentSessionId();
+        CompetencyExpertToolsService.clearCurrentSessionId();
+        CompetencyMappingToolsService.clearCurrentSessionId();
+        ExerciseMappingToolsService.clearCurrentSessionId();
     }
 
     @Nested
@@ -118,7 +131,8 @@ class AtlasAgentToolsServiceTest {
             toolsService.delegateToCompetencyExpert("Recursion", "Create competency", "None", "Algorithms course");
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_EXPERT)),
-                    eq("TOPIC: Recursion\nREQUIREMENTS: Create competency\nCONSTRAINTS: None\nCONTEXT: Algorithms course"), eq(42L), eq("test-session"), eq(false), any());
+                    eq("TOPIC: Recursion\nREQUIREMENTS: Create competency\nCONSTRAINTS: None\nCONTEXT: Algorithms course"), eq(42L), eq("test-session"), eq(false),
+                    eq(competencyExpertToolCallbackProvider));
         }
 
         @Test
@@ -128,7 +142,8 @@ class AtlasAgentToolsServiceTest {
             toolsService.delegateToCompetencyMapper("A extends B", "Create EXTENDS relation", "None", "A builds on B");
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_MAPPER)),
-                    eq("TOPIC: A extends B\nREQUIREMENTS: Create EXTENDS relation\nCONSTRAINTS: None\nCONTEXT: A builds on B"), eq(42L), eq("test-session"), eq(false), any());
+                    eq("TOPIC: A extends B\nREQUIREMENTS: Create EXTENDS relation\nCONSTRAINTS: None\nCONTEXT: A builds on B"), eq(42L), eq("test-session"), eq(false),
+                    eq(competencyMapperToolCallbackProvider));
         }
 
         @Test
@@ -138,7 +153,8 @@ class AtlasAgentToolsServiceTest {
             toolsService.delegateToExerciseMapper(5L, "Bubble Sort", "Map to competencies", "Student selected");
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER)),
-                    eq("EXERCISE_ID: 5\nEXERCISE_TITLE: Bubble Sort\nREQUIREMENTS: Map to competencies\nCONTEXT: Student selected"), eq(42L), eq("test-session"), eq(false), any());
+                    eq("EXERCISE_ID: 5\nEXERCISE_TITLE: Bubble Sort\nREQUIREMENTS: Map to competencies\nCONTEXT: Student selected"), eq(42L), eq("test-session"), eq(false),
+                    eq(exerciseMapperToolCallbackProvider));
         }
     }
 
@@ -160,4 +176,51 @@ class AtlasAgentToolsServiceTest {
             assertThat(result).isEqualTo("Clean response");
         }
     }
+
+    @Test
+    void exerciseListingDistinguishesMissingCoursesAndOptionalDates() {
+        when(courseRepository.findById(9L)).thenReturn(java.util.Optional.empty());
+        var mapper = new JsonMapper();
+        assertThat(mapper.readTree(toolsService.getExercisesListed(9L)).get("error").asString()).isEqualTo("Course not found with ID: 9");
+        var course = new de.tum.cit.aet.artemis.course.domain.Course();
+        course.setId(1L);
+        course.setDescription("Algorithms");
+        when(courseRepository.findById(1L)).thenReturn(java.util.Optional.of(course));
+        var dated = new de.tum.cit.aet.artemis.text.domain.TextExercise();
+        dated.setId(2L);
+        dated.setTitle("Sorting");
+        dated.setMaxPoints(10.0);
+        var release = java.time.ZonedDateTime.parse("2026-01-01T12:00:00Z");
+        dated.setReleaseDate(release);
+        dated.setDueDate(release.plusDays(1));
+        var undated = new de.tum.cit.aet.artemis.text.domain.TextExercise();
+        undated.setId(3L);
+        undated.setTitle("Optional reading");
+        undated.setMaxPoints(5.0);
+        when(exerciseRepository.findByCourseIds(java.util.Set.of(1L))).thenReturn(new java.util.LinkedHashSet<>(java.util.List.of(dated, undated)));
+        var listing = mapper.readTree(toolsService.getExercisesListed(1L));
+        assertThat(listing.get("courseId").asLong()).isEqualTo(1L);
+        assertThat(listing.get("exercises")).hasSize(2);
+        var first = listing.get("exercises").get(0);
+        assertThat(first.get("id").asLong()).isEqualTo(2L);
+        assertThat(first.get("title").asString()).isEqualTo("Sorting");
+        assertThat(first.get("type").asString()).isEqualTo("text");
+        assertThat(first.get("maxPoints").asDouble()).isEqualTo(10.0);
+        assertThat(first.get("releaseDate").asString()).isEqualTo(release.toString());
+        assertThat(first.get("dueDate").asString()).isEqualTo(release.plusDays(1).toString());
+        var second = listing.get("exercises").get(1);
+        assertThat(second.has("releaseDate")).isFalse();
+        assertThat(second.has("dueDate")).isFalse();
+        assertThat(toolsService.getCourseDescription(1L)).isEqualTo("Algorithms");
+        assertThat(toolsService.getCourseDescription(9L)).isEmpty();
+    }
+
+    @Test
+    void mapperDelegationsRejectCourseWithoutSession() {
+        AtlasAgentToolsService.setCurrentCourseId(1L);
+        assertThat(toolsService.delegateToCompetencyMapper("topic", "requirements", "constraints", "context")).contains("missing request context");
+        assertThat(toolsService.delegateToExerciseMapper(2L, "exercise", "requirements", "context")).contains("missing request context");
+        org.mockito.Mockito.verifyNoInteractions(delegationService);
+    }
+
 }

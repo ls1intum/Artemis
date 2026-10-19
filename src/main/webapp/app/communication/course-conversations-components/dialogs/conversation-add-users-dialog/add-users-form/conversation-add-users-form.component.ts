@@ -8,6 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];
@@ -33,7 +34,7 @@ export class ConversationAddUsersFormComponent implements OnInit {
 
     isLoading = input<boolean>(false);
 
-    form: FormGroup;
+    form!: FormGroup; // set in initializeForm() from ngOnInit()
 
     // Icons
     protected readonly faSpinner = faSpinner;
@@ -74,6 +75,6 @@ export class ConversationAddUsersFormComponent implements OnInit {
     }
 
     submitForm() {
-        this.formSubmitted.emit({ ...this.form.value });
+        this.formSubmitted.emit(deepClone(this.form.value));
     }
 }

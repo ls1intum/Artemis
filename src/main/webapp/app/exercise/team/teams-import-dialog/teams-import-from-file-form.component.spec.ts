@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -19,8 +18,6 @@ import { TranslateService } from '@ngx-translate/core';
  * preserves the DOM-state assertions while letting tests exercise the component end-to-end.
  */
 describe('TeamsImportFromFileFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TeamsImportFromFileFormComponent;
     let fixture: ComponentFixture<TeamsImportFromFileFormComponent>;
 
@@ -134,7 +131,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(fixture.debugElement.query(By.css('.loading-spinner'))).toBeNull();
 
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
-            const ev = { target: { files: [file] } };
+            const ev = { target: { files: [file] } } as unknown as Event;
             comp.setImportFile(ev);
             expect(comp.importFile).toStrictEqual(file);
             expect(comp.importFileName).toBe('testFileName');
@@ -149,7 +146,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             fixture.detectChanges(false);
             expect(fixture.debugElement.query(By.css('.loading-spinner'))).toBeNull();
 
-            const ev = { target: { files: [] } };
+            const ev = { target: { files: [] } } as unknown as Event;
             comp.setImportFile(ev);
             expect(comp.importFile).toBeUndefined();
             expect(comp.importFileName).toBe('');

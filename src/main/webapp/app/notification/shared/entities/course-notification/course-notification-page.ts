@@ -1,6 +1,6 @@
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 
-export class CourseNotificationPage {
+export interface CourseNotificationPage {
     content: CourseNotification[];
     pageNumber: number;
     pageSize: number;

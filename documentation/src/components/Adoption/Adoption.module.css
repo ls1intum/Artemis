@@ -1,0 +1,72 @@
+.adopterList {
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.adopter {
+    padding: 0 0 1.1rem;
+    border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.adopter + .adopter {
+    padding-top: 1.1rem;
+}
+
+.adopter:last-child {
+    border-bottom: 0;
+}
+
+.adopterHeader {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    align-items: baseline;
+}
+
+.adopterName {
+    font-size: 1.05rem;
+}
+
+.adopterCountry,
+.adopterConfirmed {
+    padding: 0.1rem 0.55rem;
+    border: 1px solid var(--ifm-color-emphasis-300);
+    border-radius: 2rem;
+    color: var(--ifm-color-emphasis-800);
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.adopterDetails {
+    display: grid;
+    margin: 0.5rem 0 0;
+    gap: 0.15rem 0.75rem;
+    grid-template-columns: max-content minmax(0, 1fr);
+    font-size: 0.95rem;
+}
+
+.adopterDetails dt {
+    color: var(--ifm-color-emphasis-700);
+    font-weight: 500;
+}
+
+.adopterDetails dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.adopterNote {
+    color: var(--ifm-color-emphasis-700);
+}
+
+@media screen and (max-width: 576px) {
+    .adopterDetails {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .adopterDetails dt {
+        margin-top: 0.35rem;
+    }
+}

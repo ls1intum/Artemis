@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 /** Escapes regex meta-characters in `value` so it can be used as a literal pattern. */
@@ -44,8 +44,8 @@ export class ExerciseTeamsPage {
                 }
             }
         }
-        await this.page.locator('#owner-search-input').waitFor({ state: 'visible', timeout: 30_000 });
-        await this.page.locator('#student-search-input').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.locator('[data-testid="owner-search-input"]').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.locator('[data-testid="student-search-input"]').waitFor({ state: 'visible', timeout: 30_000 });
     }
 
     /**
@@ -251,29 +251,48 @@ export class ExerciseTeamsPage {
      */
     private async searchStudent(inputLocator: ReturnType<Page['locator']>, username: string) {
         const listbox = this.page.getByRole('listbox');
+        // A deadline for the search as a whole, not only for its individual actions, and it starts here rather than
+        // after the first wait: four attempts of bounded steps still add up to minutes, an attempt starting just
+        // before the deadline would run past it, and a 30 s wait left outside made the advertised 90 s budget 120 s.
+        // The caller adds several students in sequence inside one test budget, which is what all of that has to fit.
+        const startedAt = Date.now();
+        const deadline = startedAt + 90_000;
+        const remaining = (maximum: number) => Math.max(1, Math.min(maximum, deadline - Date.now()));
         // Ensure the input is mounted before we start typing — under parallel CI load the dialog
         // body can render late and pressSequentially against an absent element silently no-ops.
-        await inputLocator.waitFor({ state: 'visible', timeout: 30_000 });
-        for (let attempt = 0; attempt < 4; attempt++) {
+        await inputLocator.waitFor({ state: 'visible', timeout: remaining(30_000) });
+        for (let attempt = 0; attempt < 4 && Date.now() < deadline; attempt++) {
             if (attempt > 0) {
-                await this.page.waitForTimeout(500);
+                await this.page.waitForTimeout(Math.min(500, remaining(500)));
+                // The delay can be what exhausts the budget, and `remaining` clamps to 1 ms rather than to zero, so
+                // without this the next attempt would still start its actions past the deadline.
+                if (Date.now() >= deadline) {
+                    break;
+                }
             }
-
-            await inputLocator.click();
-            await inputLocator.fill('');
-            await this.page.waitForTimeout(300);
-            await inputLocator.pressSequentially(username, { delay: 100 });
 
             try {
-                await listbox.waitFor({ state: 'visible', timeout: 15000 });
+                // Typing into the field belongs inside the retry. Without a timeout these actions inherit the test's
+                // whole budget, so an input that never becomes actionable - the dialog re-renders under load and
+                // detaches it - hung the entire test instead of failing this attempt, and the run reported a 10 minute
+                // timeout rather than the clear message below.
+                await inputLocator.click({ timeout: remaining(10_000) });
+                await inputLocator.fill('', { timeout: remaining(10_000) });
+                await this.page.waitForTimeout(Math.min(300, remaining(300)));
+                await inputLocator.pressSequentially(username, { delay: 100, timeout: remaining(20_000) });
+
+                await listbox.waitFor({ state: 'visible', timeout: remaining(15_000) });
                 const option = listbox.getByText(new RegExp(escapeRegExp(username), 'i')).first();
-                await option.waitFor({ state: 'visible', timeout: 5000 });
-                await option.click();
+                await option.waitFor({ state: 'visible', timeout: remaining(5_000) });
+                await option.click({ timeout: remaining(10_000) });
                 return;
             } catch {
-                if (attempt === 3) throw new Error(`Student search autocomplete did not appear after 4 attempts for '${username}'`);
+                if (attempt === 3 || Date.now() >= deadline) {
+                    break;
+                }
             }
         }
+        throw new Error(`Student search autocomplete did not appear for '${username}' within ${Math.round((Date.now() - startedAt) / 1000)}s`);
     }
 
     /**
@@ -281,7 +300,7 @@ export class ExerciseTeamsPage {
      * @param username - the tutor username.
      */
     async setTeamTutor(username: string) {
-        await this.searchTutor(this.page.locator('#owner-search-input'), username);
+        await this.searchTutor(this.page.locator('[data-testid="owner-search-input"]'), username);
     }
 
     /**
@@ -289,7 +308,7 @@ export class ExerciseTeamsPage {
      * @param username - the student username.
      */
     async addStudentToTeam(username: string) {
-        await this.searchStudent(this.page.locator('#student-search-input'), username);
+        await this.searchStudent(this.page.locator('[data-testid="student-search-input"]'), username);
     }
 
     /**

@@ -37,12 +37,31 @@ export class FeedbackFilterModalComponent {
     readonly taskArray = signal<string[]>([]);
     readonly errorCategories = signal<string[]>([]);
 
-    filters: FilterData = {
-        tasks: [],
-        testCases: [],
-        occurrence: [this.minCount(), this.maxCount() || 1],
-        errorCategories: [],
-    };
+    // filters is a deep two-way binding target (jhi-range-slider writes back to filters.occurrence[0]/[1]) and is
+    // mutated in place by onCheckboxChange, so it is backed by a signal via a getter/setter facade. Reads stay
+    // reactive; commitFilters() rebuilds the reference after in-place mutations the template depends on.
+    // `equal: () => false` so re-setting the same reference emits after the template mutates the filter arrays
+    // in place; copying them would detach what the two-way bindings write into.
+    private readonly _filters = signal<FilterData>(
+        {
+            tasks: [],
+            testCases: [],
+            occurrence: [this.minCount(), this.maxCount() || 1],
+            errorCategories: [],
+        },
+        { equal: () => false },
+    );
+    get filters(): FilterData {
+        return this._filters();
+    }
+    set filters(value: FilterData) {
+        this._filters.set(value);
+    }
+    private commitFilters(): void {
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits. The
+        // template two-way binds into the filter arrays, which must stay the same instances.
+        this._filters.set(this._filters());
+    }
 
     applyFilter(): void {
         this.localStorageService.store(this.FILTER_TASKS_KEY, this.filters.tasks);
@@ -78,6 +97,8 @@ export class FeedbackFilterModalComponent {
         } else {
             this.pushValue(checkbox, values as string[], checkbox.value);
         }
+        // The checkbox [checked] bindings read filters.*; rebuild the reference so the signal fires after the in-place mutation.
+        this.commitFilters();
     }
 
     private pushValue<T>(checkbox: HTMLInputElement, values: T[], valueToAddOrRemove: T): void {

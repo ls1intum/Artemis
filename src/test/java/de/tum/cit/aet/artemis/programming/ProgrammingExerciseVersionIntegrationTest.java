@@ -7,7 +7,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +26,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -42,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -82,20 +87,22 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         // Arrange: Create a new programming exercise
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
         AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
         auxiliaryRepository.setName("extra");
         auxiliaryRepository.setCheckoutDirectory("extra");
-        newExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        newExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliaryRepository)));
         // Set valid build plan phases so that subsequent update requests pass the noBuildPhases validation
         var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
-        newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
+        var newBuildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        newBuildConfig.setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
         // Act: Create the exercise via setup endpoint
-        this.programmingExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        this.programmingExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, newBuildConfig),
+                ProgrammingExercise.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(programmingExercise).isNotNull();
@@ -176,7 +183,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     void testImportExercise_createsExerciseVersion() throws Exception {
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
 
         // Create request parameters
         var params = new LinkedMultiValueMap<String, String>();
@@ -194,7 +201,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExerciseFromFile_createsExerciseVersion() throws Exception {
 
-        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
+        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase(Locale.ROOT);
         String newTitle = "TITLE" + uniqueSuffix;
         String newShortName = "SHORT" + uniqueSuffix;
 
@@ -206,8 +213,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
                     return oldTitle;
                 }, course);
 
-        ProgrammingExercise importedExercise = importResult.importedExercise();
-        exerciseVersionUtilService.verifyExerciseVersionCreated(importedExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        var importedExercise = importResult.importedExercise();
+        exerciseVersionUtilService.verifyExerciseVersionCreated(importedExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
     }
 
     @Test
@@ -263,13 +270,50 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
 
-        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
                 ProgrammingExercise.class, HttpStatus.OK);
 
         ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(newVersion.getId()).isNotEqualTo(originalVersion.getId());
         assertThat(newVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)
                 .isNotEqualTo(originalVersion.getExerciseSnapshot());
+    }
+
+    /**
+     * Regression test for issue #13046: a metadata-only update (e.g. editing just the categories) must never delete the problem statement. The problem statement is owned by the
+     * collaborative (Yjs) editor and its dedicated PATCH endpoint, so a blank or absent value in the metadata update reflects an editor whose initial sync has not finished yet and
+     * must be treated as "unchanged" rather than wiping the persisted statement. During the race the client sends the field present-but-empty ("problemStatement": ""); the cases
+     * below therefore cover the empty string (the real payload), a whitespace-only value, and a completely absent attribute.
+     *
+     * @param problemStatementValue the value sent for {@code problemStatement} in the request body, or {@code null} to omit the attribute entirely
+     */
+    @ParameterizedTest(name = "problemStatement=[{0}]")
+    @CsvSource(value = { "''", "'   '", "MISSING" }, nullValues = "MISSING")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_blankOrMissingProblemStatement_keepsExistingProblemStatement(String problemStatementValue) throws Exception {
+        // Arrange: persist a known, non-empty problem statement via the dedicated endpoint, as the collaborative editor would.
+        final String existingStatement = "This problem statement must survive a metadata-only update";
+        final var problemStatementEndpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+        request.patchWithResponseBody(problemStatementEndpoint, existingStatement, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
+
+        // Act: perform a metadata update (title, points, ...) whose problem statement arrives blank or absent because the editor has not populated it yet (the #13046 race).
+        // The body is built as a JSON tree so the problem statement can be sent exactly as the client sends it: present-but-empty (""), whitespace-only, or a missing attribute.
+        // Serializing the DTO directly could not express the empty string because @JsonInclude(NON_EMPTY) would drop it.
+        ExerciseVersionUtilService.updateExercise(programmingExercise);
+        ObjectNode body = (ObjectNode) request.getObjectMapper().valueToTree(
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)));
+        if (problemStatementValue == null) {
+            body.remove("problemStatement");
+        }
+        else {
+            body.put("problemStatement", problemStatementValue);
+        }
+        request.put("/api/programming/programming-exercises", body, HttpStatus.OK);
+
+        // Assert: the metadata update must not have wiped the persisted problem statement.
+        ProgrammingExercise reloaded = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(reloaded.getProblemStatement()).as("a metadata-only update must not delete the problem statement (#13046)").isEqualTo(existingStatement);
     }
 
     @Test
@@ -281,8 +325,9 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false";
-        request.putWithResponseBody(endpoint, de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
-                HttpStatus.OK);
+        request.putWithResponseBody(endpoint,
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExercise.class, HttpStatus.OK);
 
         ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(newVersion.getId()).isNotEqualTo(originalVersion.getId());
@@ -317,9 +362,9 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
                 ExerciseType.PROGRAMMING);
-        // set up test cases
+        // set up test cases; the helper saves them itself, and this exercise came back from the creation response, so
+        // saving it here would merge a graph whose auxiliary repositories no longer name the exercise they belong to
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        programmingExerciseRepository.save(programmingExercise);
         exerciseVersionService.createExerciseVersion(programmingExercise);
 
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
@@ -338,9 +383,9 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
                 ExerciseType.PROGRAMMING);
-        // set up test cases
+        // set up test cases; the helper saves them itself, and this exercise came back from the creation response, so
+        // saving it here would merge a graph whose auxiliary repositories no longer name the exercise they belong to
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        programmingExerciseRepository.save(programmingExercise);
         exerciseVersionService.createExerciseVersion(programmingExercise);
 
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -409,9 +454,9 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
                 ExerciseType.PROGRAMMING);
 
-        List<AuxiliaryRepository> auxiliaryRepositories = programmingExercise.getAuxiliaryRepositories();
+        Collection<AuxiliaryRepository> auxiliaryRepositories = programmingExercise.getAuxiliaryRepositories();
         assertThat(auxiliaryRepositories).isNotEmpty();
-        Long auxiliaryRepositoryId = auxiliaryRepositories.getFirst().getId();
+        Long auxiliaryRepositoryId = auxiliaryRepositories.iterator().next().getId();
         assertThat(auxiliaryRepositoryId).isNotNull();
 
         request.postWithoutLocation("/api/programming/auxiliary-repositories/" + auxiliaryRepositoryId + "/file?file=Template.java", null, HttpStatus.OK, null);
@@ -434,7 +479,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         ExerciseVersion version1 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
-        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
                 ProgrammingExercise.class, HttpStatus.OK);
 
         ExerciseVersion version2 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
@@ -478,7 +524,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     void testGetExerciseVersions_forbidden_forInstructorNotInExercise() throws Exception {
         // `beforeEach` requires instructor access to run;
         // Switch to instructor user and attempt to get snapshot
-        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
+        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor");
         userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.FORBIDDEN, ArrayList.class);
     }
@@ -487,7 +533,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExerciseVersions_includesPaginationHeaders() throws Exception {
         ExerciseVersionUtilService.updateExercise(programmingExercise);
-        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
                 ProgrammingExercise.class, HttpStatus.OK);
         exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
 
@@ -562,7 +609,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         Long versionId = version.getId();
 
         // Switch to instructor user and attempt to get snapshot
-        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
+        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor");
         userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
     }
@@ -578,7 +625,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
                 ExerciseSnapshotDTO.class);
         assertThat(tutorSnapshot).isNotNull();
 
-        userUtilService.addTeachingAssistant(TEST_PREFIX + "isolated-tutor-group", TEST_PREFIX + "external_tutor");
+        userUtilService.addTeachingAssistant(TEST_PREFIX + "external_tutor");
         userUtilService.changeUser(TEST_PREFIX + "external_tutor");
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
     }
@@ -600,7 +647,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         Long versionId = version.getId();
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        newExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        newExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
         // attempt to get snapshot with wrong exercise id
         request.get("/api/exercise/exercises/" + newExercise.getId() + "/versions/" + versionId, HttpStatus.BAD_REQUEST, ExerciseSnapshotDTO.class);

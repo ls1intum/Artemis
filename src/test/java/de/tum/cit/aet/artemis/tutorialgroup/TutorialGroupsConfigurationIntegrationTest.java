@@ -17,15 +17,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
@@ -34,6 +29,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO;
 class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     private static final String TEST_PREFIX = "tutorialgroupconfiguration";
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     Long exampleTutorialGroupId;
 
@@ -44,8 +41,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);
-        if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
-            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
+        if (userRepository.findOneByLogin(OTHER_PREFIX + "instructor42").isEmpty()) {
+            userRepository.save(UserFactory.generateActivatedUser(OTHER_PREFIX + "instructor42"));
         }
         this.exampleTutorialGroupId = tutorialGroupUtilService
                 .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
@@ -59,7 +56,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void request_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         this.testJustForInstructorEndpoints();
     }
@@ -82,23 +79,34 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         this.testJustForInstructorEndpoints();
     }
 
+    @Test
+    void deletingTheCourse_deletesItsConfigurationAndFreePeriods() {
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(configuration.getId(), FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
+
+        // the configuration holds the key to its course, so the database removes it, and the free periods below it, with the course
+        courseRepository.deleteById(courseId);
+
+        assertThat(tutorialGroupsConfigurationRepository.findById(configuration.getId())).isEmpty();
+        assertThat(tutorialGroupFreePeriodRepository.findById(freePeriod.getId())).isEmpty();
+    }
+
     @BeforeEach
     void deleteExistingConfiguration() {
-        var course = courseUtilService.createCourse();
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course.setTimeZone(exampleTimeZone);
         courseRepository.save(course);
         courseId = course.getId();
 
     }
 
+    /** Puts the course back into the state of a course whose tutorial groups are not set up: the permanent row stays, without tutorial period dates. */
     private void deleteExampleConfiguration() {
-        Course course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
-        TutorialGroupsConfiguration configuration = course.getTutorialGroupsConfiguration();
+        TutorialGroupsConfiguration configuration = tutorialGroupsConfigurationRepository.findByCourseId(courseId).orElse(null);
         if (configuration != null) {
-            course.setTutorialGroupsConfiguration(null);
-            configuration.setCourse(null);
-            courseRepository.save(course);
-            tutorialGroupsConfigurationRepository.delete(configuration);
+            configuration.setTutorialPeriodStartInclusive(null);
+            configuration.setTutorialPeriodEndInclusive(null);
+            tutorialGroupsConfigurationRepository.save(configuration);
         }
     }
 
@@ -216,32 +224,6 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId() + 5), dto, TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * Note: With this test we want to ensure that jackson can deserialize the tutorial group configuration if it is indirectly sent with another entity.
-     * There was a bug that caused the deserialization to fail, as the date format checkers were put directly into the setter of date and time.
-     * The problem was that jackson tried to deserialize the date and time with the date and time format checkers active, which failed. These checkers
-     * should only be active in a direct creation / update case to ensure uuuu-MM-dd format in the database.
-     *
-     * @throws Exception if the request fails
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void persistEntityWithIndirectConnectionToConfiguration_dateAsFullIsoString_shouldNotThrowDeserializationException() throws Exception {
-        // given
-        tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
-        var course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
-        var configuration = course.getTutorialGroupsConfiguration();
-        // this date format should not throw an error here, even though it is not the uuuu-MM-dd format we use in the database as it neither updates nor creates the configuration
-        configuration.setTutorialPeriodStartInclusive("2022-11-25T23:00:00.000Z");
-        configuration.setTutorialPeriodEndInclusive("2022-11-25T23:00:00.000Z");
-
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course);
-        // the exercise is now indirectly connected to the configuration, and jackson will try to deserialize the configuration
-        textExercise.setCourse(course);
-        textExercise.setChannelName("testchannelname");
-        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCourse_switchUseTutorialGroupSetting_shouldCreateAndThenDeleteTutorialGroupChannels() throws Exception {
@@ -302,13 +284,11 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // change time zone to berlin and change the end period
         var course = courseRepository.findByIdForUpdateElseThrow(courseId);
         course.setTimeZone("Europe/Berlin");
-        course.setTutorialGroupsConfiguration(null);
 
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
-        course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
-        assertThat(course.getTutorialGroupsConfiguration()).isNotNull();
+        assertThat(tutorialGroupsConfigurationRepository.findByCourseId(courseId)).isPresent();
 
         sessions = this.getTutorialGroupSessionsAscending(tutorialGroupWithSchedule.getId());
         assertThat(sessions).hasSize(2);
@@ -328,64 +308,6 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     @Nested
     class TutorialGroupConfigurationDTOTests {
-
-        @Nested
-        class FromTests {
-
-            @Test
-            void shouldThrowNullPointerExceptionWhenDtoIsNull() {
-                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.from(null)).isInstanceOf(NullPointerException.class);
-            }
-
-            @Test
-            void shouldReturnEntityWithoutFreePeriodsWhenDtoHasNoFreePeriods() {
-                var dto = new TutorialGroupConfigurationDTO(14L, "2024-01-01", "2024-02-01", true, false, null);
-
-                var actual = TutorialGroupConfigurationDTO.from(dto);
-
-                assertThat(actual.getTutorialPeriodStartInclusive()).isEqualTo("2024-01-01");
-                assertThat(actual.getTutorialPeriodEndInclusive()).isEqualTo("2024-02-01");
-                assertThat(actual.getUseTutorialGroupChannels()).isTrue();
-                assertThat(actual.getUsePublicTutorialGroupChannels()).isFalse();
-                assertThat(actual.getTutorialGroupFreePeriods()).isEmpty();
-            }
-
-            @Test
-            void shouldReturnEntityWithFreePeriodsWhenDtoContainsFreePeriods() {
-                var freePeriodDTO = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(18L, "2024-01-10T10:00:00Z", "2024-01-10T12:00:00Z", "Holiday");
-
-                var dto = new TutorialGroupConfigurationDTO(1L, "2024-01-01", "2024-02-01", true, true, Set.of(freePeriodDTO));
-
-                var actual = TutorialGroupConfigurationDTO.from(dto);
-
-                assertThat(actual.getTutorialGroupFreePeriods()).hasSize(1);
-            }
-        }
-
-        @Nested
-        class FreePeriodFromTests {
-
-            @Test
-            void shouldThrowNullPointerExceptionWhenFreePeriodDtoIsNull() {
-                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.from(null)).isInstanceOf(NullPointerException.class);
-            }
-
-            @Test
-            void shouldThrowBadRequestWhenStartDateIsInvalid() {
-                var invalid = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(1L, "invalid-date", null, "");
-
-                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.from(invalid)).as("free period start date should be ISO 8601")
-                        .isInstanceOf(BadRequestAlertException.class);
-            }
-
-            @Test
-            void shouldThrowBadRequestWhenEndDateIsInvalid() {
-                var invalid = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(1L, "2024-01-10T10:00:00Z", "invalid-date", "");
-
-                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.from(invalid)).as("free period end date should be ISO 8601")
-                        .isInstanceOf(BadRequestAlertException.class);
-            }
-        }
 
         @Nested
         class OfTests {
@@ -439,7 +361,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
             @Test
             void shouldSerializeAndDeserializeCorrectly() throws Exception {
-                ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+                JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
 
                 var dto = new TutorialGroupConfigurationDTO(1L, "2024-01-01", "2024-02-01", true, false, Set.of());
 

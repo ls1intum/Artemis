@@ -1,5 +1,23 @@
-<div class="d-flex gap-2">
-    <jhi-button [btnType]="buttonType" [btnSize]="buttonSize" [icon]="faChevronLeft" [disabled]="previousDisabled()" (onClick)="previousPage()" />
+<div class="flex gap-2">
+    <p-button
+        icon="pi pi-chevron-left"
+        severity="secondary"
+        [text]="true"
+        size="small"
+        [disabled]="previousDisabled()"
+        [pTooltip]="'entity.action.previous' | artemisTranslate"
+        [ariaLabel]="'entity.action.previous' | artemisTranslate"
+        (onClick)="previousPage()"
+    />
 
-    <jhi-button [btnSize]="buttonSize" [btnType]="buttonType" [icon]="faChevronRight" [disabled]="nextDisabled()" (onClick)="nextPage()" />
+    <p-button
+        icon="pi pi-chevron-right"
+        severity="secondary"
+        [text]="true"
+        size="small"
+        [disabled]="nextDisabled()"
+        [pTooltip]="'entity.action.next' | artemisTranslate"
+        [ariaLabel]="'entity.action.next' | artemisTranslate"
+        (onClick)="nextPage()"
+    />
 </div>

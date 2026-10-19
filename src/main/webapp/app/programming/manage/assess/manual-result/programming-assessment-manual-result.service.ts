@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -7,7 +7,7 @@ import { EntityResponseType, ResultService } from 'app/exercise/result/result.se
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { map } from 'rxjs/operators';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingAssessmentManualResultService {
     private http = inject(HttpClient);
     private resultService = inject(ResultService);
@@ -55,8 +55,9 @@ export class ProgrammingAssessmentManualResultService {
         return this.http.put<Result>(url, assessmentUpdate);
     }
 
-    cancelAssessment(submissionId: number): Observable<void> {
-        return this.http.put<void>(`${this.resourceUrl}/programming-submissions/${submissionId}/cancel-assessment`, null);
+    cancelAssessment(submissionId: number, resultId?: number): Observable<void> {
+        const params = resultId ? new HttpParams().set('resultId', resultId) : undefined;
+        return this.http.put<void>(`${this.resourceUrl}/programming-submissions/${submissionId}/cancel-assessment`, null, { params });
     }
 
     /**

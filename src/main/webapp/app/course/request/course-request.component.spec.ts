@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseRequest } from 'app/course/request/course-request.model';
 import dayjs from 'dayjs/esm';
@@ -16,10 +15,9 @@ import { CourseRequestFormComponent } from 'app/course/request/course-request-fo
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { getSemesterDateRange } from 'app/foundation/util/semester-utils';
 
 describe('CourseRequestComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseRequestComponent;
     let courseRequestService: {
         create: ReturnType<typeof vi.fn>;
@@ -48,12 +46,13 @@ describe('CourseRequestComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [CourseRequestComponent, TranslateModule.forRoot()],
+            imports: [CourseRequestComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: CourseRequestService, useValue: courseRequestService },
                 { provide: AlertService, useValue: alertService },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(CourseRequestComponent, {
@@ -81,7 +80,7 @@ describe('CourseRequestComponent', () => {
 
         component.submit();
 
-        expect(component.dateRangeInvalid).toBe(true);
+        expect(component.dateRangeInvalid()).toBe(true);
         expect(courseRequestService.create).not.toHaveBeenCalled();
     });
 
@@ -98,15 +97,47 @@ describe('CourseRequestComponent', () => {
 
         component.submit();
 
-        expect(component.dateRangeInvalid).toBe(false);
+        expect(component.dateRangeInvalid()).toBe(false);
         expect(courseRequestService.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 title: 'New Course',
                 shortName: 'ABC',
                 testCourse: true,
+                gradeRelevant: false,
             }),
         );
         expect(alertService.success).toHaveBeenCalled();
+    });
+
+    it('should submit a regular course as grade relevant by default', () => {
+        courseRequestService.create.mockReturnValue(of({} as CourseRequest));
+        component.form.patchValue({
+            title: 'New Course',
+            shortName: 'ABC',
+            reason: 'A valid reason for the request',
+            startDate: dayjs('2025-01-01'),
+            endDate: dayjs('2025-02-01'),
+        });
+
+        component.submit();
+
+        expect(courseRequestService.create).toHaveBeenCalledWith(expect.objectContaining({ testCourse: false, gradeRelevant: true }));
+    });
+
+    it('should submit the choice of a course that is not grade relevant', () => {
+        courseRequestService.create.mockReturnValue(of({} as CourseRequest));
+        component.form.patchValue({
+            title: 'New Course',
+            shortName: 'ABC',
+            reason: 'A valid reason for the request',
+            startDate: dayjs('2025-01-01'),
+            endDate: dayjs('2025-02-01'),
+            gradeRelevant: false,
+        });
+
+        component.submit();
+
+        expect(courseRequestService.create).toHaveBeenCalledWith(expect.objectContaining({ testCourse: false, gradeRelevant: false }));
     });
 
     it('should handle short name conflict error and apply suggested short name', () => {
@@ -129,7 +160,7 @@ describe('CourseRequestComponent', () => {
 
         expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName });
         expect(component.form.get('shortName')?.value).toBe(suggestedShortName);
-        expect(component.isSubmitting).toBe(false);
+        expect(component.isSubmitting()).toBe(false);
     });
 
     it('should handle course request short name conflict error', () => {
@@ -187,7 +218,7 @@ describe('CourseRequestComponent', () => {
         expect(component.form.get('title')?.value).toBe('');
         expect(component.form.get('shortName')?.value).toBe('');
         expect(component.form.get('reason')?.value).toBe('');
-        expect(component.isSubmitting).toBe(false);
+        expect(component.isSubmitting()).toBe(false);
     });
 
     it('should not submit when form is invalid', () => {
@@ -201,5 +232,38 @@ describe('CourseRequestComponent', () => {
 
         expect(courseRequestService.create).not.toHaveBeenCalled();
         expect(component.form.get('title')?.touched).toBe(true);
+    });
+
+    describe('required dates', () => {
+        it('prefills the dates from the default semester', () => {
+            const semester = component.form.get('semester')!.value!;
+            const range = getSemesterDateRange(semester)!;
+
+            expect(component.form.get('startDate')!.value!.isSame(range.startDate)).toBe(true);
+            expect(component.form.get('endDate')!.value!.isSame(range.endDate)).toBe(true);
+        });
+
+        it('marks the form invalid when a date is cleared', () => {
+            component.form.get('startDate')!.setValue(undefined);
+
+            expect(component.form.get('startDate')!.valid).toBe(false);
+            expect(component.form.invalid).toBe(true);
+        });
+
+        it('follows the semester while the dates are untouched', () => {
+            component.form.get('semester')!.setValue('WS25/26');
+            component.form.get('semester')!.setValue('SS26');
+
+            expect(component.form.get('startDate')!.value!.format('YYYY-MM-DD')).toBe('2026-04-01');
+            expect(component.form.get('endDate')!.value!.format('YYYY-MM-DD')).toBe('2026-09-30');
+        });
+
+        it('keeps a hand-picked date when the semester changes', () => {
+            component.form.get('semester')!.setValue('WS25/26');
+            component.form.get('startDate')!.setValue(dayjs('2025-11-05'));
+            component.form.get('semester')!.setValue('SS26');
+
+            expect(component.form.get('startDate')!.value!.format('YYYY-MM-DD')).toBe('2025-11-05');
+        });
     });
 });

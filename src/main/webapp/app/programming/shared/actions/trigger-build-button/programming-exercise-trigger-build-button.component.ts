@@ -22,11 +22,11 @@ import { isManualResult } from 'app/exercise/result/result.utils';
     template: '',
 })
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnDestroy {
-    FeatureToggle = FeatureToggle;
-    ButtonType = ButtonType;
-
     private submissionService = inject(ProgrammingSubmissionService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
+
+    FeatureToggle = FeatureToggle;
+    ButtonType = ButtonType;
 
     readonly exercise = input.required<ProgrammingExercise>();
     // Optional: the button is rendered for repositories that may have no participation (e.g. an auxiliary
@@ -44,11 +44,11 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     // If true, the trigger button is also displayed for successful submissions.
     readonly showForSuccessfulSubmissions = signal(false);
 
-    private submissionSubscription: Subscription;
-    private resultSubscription: Subscription;
+    private submissionSubscription?: Subscription;
+    private resultSubscription?: Subscription;
 
     // True if the student triggers. false if an instructor triggers it
-    protected personalParticipation: boolean;
+    protected personalParticipation!: boolean; // set in the concrete subclass constructor (student/instructor) right after super()
 
     private previousParticipationId: number | undefined;
 

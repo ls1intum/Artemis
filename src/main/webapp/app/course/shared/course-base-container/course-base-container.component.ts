@@ -14,26 +14,32 @@ import {
     viewChildren,
 } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 
-import { BarControlConfiguration } from 'app/shared-ui/tab-bar/tab-bar';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LtiService } from 'app/foundation/service/lti.service';
-import { sortCourses } from 'app/foundation/util/course.util';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, MODULE_FEATURE_TUTORIALGROUP, PROFILE_LOCALCI } from 'app/app.constants';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { CourseAccessStorageService } from '../services/course-access-storage.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+
+/**
+ * Type guard that checks whether a route-activated component provides a bar control configuration
+ * (i.e. implements {@link BarControlConfigurationProvider}) so its controls can be rendered in the top bar.
+ */
+function providesBarControlConfiguration(componentRef: unknown): componentRef is BarControlConfigurationProvider {
+    return typeof componentRef === 'object' && !!componentRef && 'controlConfiguration' in componentRef && !!(componentRef as BarControlConfigurationProvider).controlConfiguration;
+}
 
 /**
  * Base class that contains common functionality for course container components.
@@ -46,7 +52,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected courseManagementService = inject(CourseManagementService);
     protected courseStorageService = inject(CourseStorageService);
     protected route = inject(ActivatedRoute);
-    protected metisConversationService = inject(MetisConversationService);
+    protected courseConversationsService = inject(CourseConversationsService);
     protected router = inject(Router);
     protected courseAccessStorageService = inject(CourseAccessStorageService);
     protected profileService = inject(ProfileService);
@@ -55,17 +61,14 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected localStorageService = inject(LocalStorageService);
 
     ngUnsubscribe = new Subject<void>();
-    protected closeSidebarEventSubscription: Subscription;
-    protected openSidebarEventSubscription: Subscription;
+    protected closeSidebarEventSubscription?: Subscription;
+    protected openSidebarEventSubscription?: Subscription;
     protected subscription?: Subscription;
-    protected ltiSubscription: Subscription;
+    protected ltiSubscription?: Subscription;
     protected loadCourseSubscription?: Subscription;
-    dashboardSubscription: Subscription;
 
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
-    courses = signal<Course[] | undefined>(undefined);
-    refreshingCourse = signal<boolean>(false);
     hasUnreadMessages = signal<boolean>(false);
     communicationRouteLoaded = signal<boolean>(false);
 
@@ -91,13 +94,11 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     readonly navigationEnd = toSignal(this.navigationEnd$);
 
     sidebarItems = signal<SidebarItem[]>([]);
-    readonly MIN_DISPLAYED_COURSES: number = 6;
-
     conversationServiceInstantiated = signal<boolean>(false);
     checkedForUnreadMessages = signal<boolean>(false);
 
-    protected controlsEmbeddedView?: EmbeddedViewRef<any>;
-    controls = signal<TemplateRef<any> | undefined>(undefined);
+    protected controlsEmbeddedView?: EmbeddedViewRef<unknown>;
+    controls = signal<TemplateRef<unknown> | undefined>(undefined);
     public controlConfiguration = signal<BarControlConfiguration | undefined>(undefined);
     protected controlsSubscription?: Subscription;
     protected vcSubscription?: Subscription;
@@ -125,9 +126,20 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                 this.disableConversationService();
             }
         });
+
+        effect(() => {
+            const courseId = this.course()?.id;
+            if (courseId) {
+                this.courseStorageService.setCurrentCourse(courseId);
+            }
+        });
     }
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeBaseCourseContainerComponent();
+    }
+
+    protected async initializeBaseCourseContainerComponent(): Promise<void> {
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.isSidebarCollapsed.set(true);
         });
@@ -157,15 +169,9 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                 CourseAccessStorageService.STORAGE_KEY,
                 CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
             );
-            this.courseAccessStorageService.onCourseAccessed(
-                this.courseId(),
-                CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-                CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
-            );
         }
 
         await firstValueFrom(this.loadCourse());
-        await this.updateRecentlyAccessedCourses();
 
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti: boolean) => {
             this.isShownViaLti.set(isShownViaLti);
@@ -174,18 +180,17 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     abstract handleCourseIdChange(courseId: number): void;
 
-    protected abstract handleNavigationEndActions(): void;
+    protected handleNavigationEndActions(): void {}
 
     protected abstract getSidebarItems(): SidebarItem[];
 
     protected abstract getHasSidebar(): boolean;
 
-    protected abstract handleComponentActivation(componentRef: any): void;
+    protected abstract handleComponentActivation(componentRef: unknown): void;
 
     abstract handleToggleSidebar(): void;
 
-    abstract loadCourse(refresh?: boolean): Observable<void>;
-    abstract switchCourse(course: Course): void;
+    abstract loadCourse(): Observable<void>;
 
     ngAfterViewInit() {
         if (this.controlsViewContainer()) {
@@ -203,52 +208,31 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.openSidebarEventSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
         this.loadCourseSubscription?.unsubscribe();
-        this.dashboardSubscription?.unsubscribe();
+        this.courseStorageService.clearCurrentCourse();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
 
     private disableConversationService() {
         this.conversationServiceInstantiated.set(false);
-        this.metisConversationService.disableConversationService();
-    }
-
-    /** Initialize courses attribute by retrieving all courses from the server */
-    async updateRecentlyAccessedCourses() {
-        this.dashboardSubscription = this.courseManagementService.findAllForDropdown().subscribe({
-            next: (res: HttpResponse<Course[]>) => {
-                if (res.body) {
-                    let courses: Course[] = [];
-                    res.body?.forEach((course) => {
-                        courses.push(course);
-                    });
-                    courses = sortCourses(courses);
-                    if (courses.length > this.MIN_DISPLAYED_COURSES) {
-                        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY_DROPDOWN);
-                        courses = courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
-                    }
-                    courses = courses.filter((course) => course.id !== this.courseId());
-                    this.courses.set(courses);
-                }
-            },
-        });
+        this.courseConversationsService.disableConversationService();
     }
 
     /**
      * Accepts a component reference of the subcomponent rendered based on the current route.
      * If it provides a controlsConfiguration, we try to render the controls component
      */
-    onSubRouteActivate(componentRef: any) {
+    onSubRouteActivate(componentRef: unknown) {
         this.getPageTitle();
         const urlSegments = this.router.url.split('?')[0].split('/');
         this.communicationRouteLoaded.set(urlSegments.length > 3 && urlSegments[3] === 'communication');
 
         this.hasSidebar.set(this.getHasSidebar());
-        if (componentRef.controlConfiguration) {
+        if (providesBarControlConfiguration(componentRef)) {
             const provider = componentRef;
             this.controlConfiguration.set(provider.controlConfiguration);
 
-            this.controlsSubscription = provider.controlConfiguration?.subject?.subscribe(async (controls: TemplateRef<any>) => {
+            this.controlsSubscription = provider.controlConfiguration?.subject?.subscribe(async (controls: TemplateRef<unknown>) => {
                 this.controls.set(controls);
                 this.tryRenderControls();
                 await firstValueFrom(provider.controlsRendered);
@@ -291,7 +275,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             return;
         }
         if (!this.conversationServiceInstantiated() && this.communicationRouteLoaded()) {
-            this.metisConversationService
+            this.courseConversationsService
                 .setUpConversationService(currentCourse)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe({
@@ -300,16 +284,20 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                         // service is fully set up, now we can subscribe to the respective observables
                         this.subscribeToHasUnreadMessages();
                     },
+                    error: () => {
+                        // Leave the service marked as not instantiated so that a later attempt sets it up again. The error
+                        // itself has already been shown to the user by the service.
+                    },
                 });
         } else if (!this.checkedForUnreadMessages() && isMessagingEnabled(currentCourse)) {
-            this.metisConversationService.checkForUnreadMessages(currentCourse);
+            this.courseConversationsService.checkForUnreadMessages(currentCourse);
             this.subscribeToHasUnreadMessages();
             this.checkedForUnreadMessages.set(true);
         }
     }
 
     protected subscribeToHasUnreadMessages() {
-        this.metisConversationService.hasUnreadMessages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((hasUnreadMessages: boolean) => {
+        this.courseConversationsService.hasUnreadMessages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((hasUnreadMessages: boolean) => {
             this.hasUnreadMessages.set(hasUnreadMessages ?? false);
         });
     }

@@ -40,7 +40,7 @@ public class QuizResultService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final QuizStatisticService quizStatisticService;
+    private final QuizStatisticsService quizStatisticsService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -50,11 +50,11 @@ public class QuizResultService {
 
     private final ResultRepository resultRepository;
 
-    public QuizResultService(QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService,
+    public QuizResultService(QuizExerciseRepository quizExerciseRepository, QuizStatisticsService quizStatisticsService,
             StudentParticipationRepository studentParticipationRepository, SubmittedAnswerRepository submittedAnswerRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
-        this.quizStatisticService = quizStatisticService;
+        this.quizStatisticsService = quizStatisticsService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.submissionRepository = submissionRepository;
@@ -62,24 +62,21 @@ public class QuizResultService {
     }
 
     /**
-     * Evaluate the given quiz exercise by evaluate the submission for each participation (there is only one for each participation in exams)
-     * and update the statistics with the generated results.
+     * Evaluates every submission of the given quiz and notifies open statistics pages once after the batch.
      *
-     * @param quizExerciseId the id of the QuizExercise that should be evaluated
+     * @param quizExerciseId the id of the quiz exercise to evaluate
      */
-    public void evaluateQuizAndUpdateStatistics(@NonNull Long quizExerciseId) {
+    public void evaluateQuiz(@NonNull Long quizExerciseId) {
         long start = System.nanoTime();
         log.info("Starting quiz evaluation for quiz {}", quizExerciseId);
-        // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
-        // they can be evaluated
-        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        // Questions are required to evaluate submitted answers. Participations and submissions are loaded separately in evaluateSubmissions; persisted statistics no longer need
+        // to be fetched.
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
         Set<Result> createdResults = evaluateSubmissions(quizExercise);
         log.info("Quiz evaluation for quiz {} finished after {} with {} created results", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start), createdResults.size());
-        if (quizExercise.getQuizPointStatistic() == null) {
-            quizStatisticService.recalculateStatistics(quizExercise);
+        if (!createdResults.isEmpty()) {
+            quizStatisticsService.notifyStatisticsChanged(quizExerciseId);
         }
-        quizStatisticService.updateStatistics(createdResults, quizExercise);
-        log.info("Statistic update for quiz {} finished after {}", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start));
     }
 
     /**

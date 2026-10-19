@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
@@ -15,8 +14,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExercise Sharing Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ProgrammingExerciseSharingService;
     let httpMock: HttpTestingController;
 

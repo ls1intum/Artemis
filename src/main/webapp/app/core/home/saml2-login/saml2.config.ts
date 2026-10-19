@@ -1,7 +1,4 @@
-// NOTE: Those values are specified in application-saml2.yml and automatically mapped to the below Typescript attributes when the saml2 profile is active. Admins can override the values in application-prod.yml
-export class Saml2Config {
-    public identityProviderName?: string;
-    public buttonLabel?: string;
-    public passwordLoginDisabled: boolean;
-    public enablePassword: boolean;
+// NOTE: This value is specified in application-saml2.yml and automatically mapped to the below Typescript attribute when the saml2 profile is active. Admins can override it in application-prod.yml
+export interface Saml2Config {
+    buttonLabel?: string;
 }

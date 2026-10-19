@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_DEV, PROFILE_PROD } from 'app/app.constants';
@@ -13,8 +12,6 @@ import { BrowserFingerprintService } from 'app/account/fingerprint/browser-finge
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('ProfileService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ProfileService;
     let httpMock: HttpTestingController;
 

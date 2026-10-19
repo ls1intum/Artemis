@@ -1,4 +1,5 @@
 ---
+id: markdown-support
 title: Markdown Support
 sidebar_label: Markdown Support
 ---
@@ -10,16 +11,12 @@ import markdownLecturePreview from "../assets/markdown-support/markdown-lecture-
 import markdownPostExtensions from "../assets/markdown-support/markdown-post-extensions.png";
 import markdownPostPreview from "../assets/markdown-support/markdown-post-extensions-preview.png";
 
-# Markdown Support
-
 <a href="https://daringfireball.net/projects/markdown/" target="_blank" rel="noopener noreferrer">Markdown</a> is an easy-to-read, easy-to-write syntax for formatting plain text.
 
 A markdown playground can be found <a href="https://markdown-it.github.io/" target="_blank" rel="noopener noreferrer">here</a>.
 
 Artemis extends the basic Markdown syntax to support Artemis-specific features.
 This Artemis flavored Markdown is used to format text content across the platform using an integrated markdown editor.
-
----
 
 ## Integrated Markdown Editor
 
@@ -33,8 +30,6 @@ The user can switch to a preview of the formatted content by clicking on the Pre
 
 <Image src={markdownLecturePreview} alt={"Markdown Lecture Preview"} size={ImageSize.medium} />
 
----
-
 ## Markdown Extensions For Communication
 
 Markdown is also supported in the context of communication with other users.
@@ -44,8 +39,6 @@ Here, the Markdown syntax is extended to allow users to reference other messages
 
 <Image src={markdownPostPreview} alt={"Markdown Post Preview"} size={ImageSize.medium} />
 
----
-
 ## Supported Syntax
 
 The integrated markdown editor uses <a href="https://github.com/markdown-it/markdown-it" target="_blank" rel="noopener noreferrer">MarkdownIt</a>.
@@ -54,5 +47,5 @@ A quick description of the supported syntax can be found <a href="https://www.ma
 The following plugins are activated:
 
 - <a href="https://github.com/microsoft/vscode-markdown-it-katex" target="_blank" rel="noopener noreferrer">MarkdownIt Katex</a> (LaTeX math rendering)
-- <a href="https://github.com/valeriangalliat/markdown-it-highlightjs" target="_blank" rel="noopener noreferrer">MarkdownIt HighlightJS</a> (syntax highlighting in code blocks)
+- <a href="https://github.com/highlightjs/highlight.js" target="_blank" rel="noopener noreferrer">highlight.js</a> (syntax highlighting in code blocks)
 - <a href="https://github.com/antfu/markdown-it-github-alerts" target="_blank" rel="noopener noreferrer">MarkdownIt GitHub Alerts</a> (GitHub-style alert blocks such as `> [!NOTE]`, `> [!WARNING]`, etc.)

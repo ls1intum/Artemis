@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.ChannelSubTypeReferenceDatesDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
@@ -70,6 +71,29 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
             """)
     Long findChannelIdByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Reads the name of the channel of an exercise.
+     * <p>
+     * A projection, because the channel points back at its exercise and its course with eager associations: loading the channel as an entity to read its name reads
+     * the exercise with all its columns, and the course, as well.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the name of the channel, or null if the exercise has none
+     */
+    @Query("""
+            SELECT DISTINCT channel.name
+            FROM Channel channel
+            WHERE channel.exercise.id = :exerciseId
+            """)
+    String findChannelNameByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT channel.id
+            FROM Channel channel
+            WHERE channel.exam.id = :examId
+            """)
+    Long findChannelIdByExamId(@Param("examId") Long examId);
+
     @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
@@ -106,4 +130,28 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
             ORDER BY channel.name
             """)
     Set<Channel> findChannelByCourseIdAndNameAndIdNot(@Param("courseId") Long courseId, @Param("name") String name, @Param("channelId") Long channelId);
+
+    /**
+     * Projects the dates of the exercise, lecture or exam the given channels belong to.
+     * <p>
+     * The conversation sidebar marks a channel as current when its referenced item is happening around now. Taking the
+     * dates off {@code channel.getExercise()} and friends would resolve one lazy proxy per channel; this answers for all
+     * of them in a single query and reads three columns rather than three entity graphs.
+     *
+     * @param channelIds the channels to look up
+     * @return the reference dates, one entry per channel that references an exercise, lecture or exam
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.communication.dto.ChannelSubTypeReferenceDatesDTO(
+                channel.id,
+                COALESCE(exercise.releaseDate, lecture.startDate, exam.startDate),
+                COALESCE(exercise.dueDate, lecture.endDate, exam.endDate))
+            FROM Channel channel
+                LEFT JOIN channel.exercise exercise
+                LEFT JOIN channel.lecture lecture
+                LEFT JOIN channel.exam exam
+            WHERE channel.id IN :channelIds
+                AND (channel.exercise IS NOT NULL OR channel.lecture IS NOT NULL OR channel.exam IS NOT NULL)
+            """)
+    Set<ChannelSubTypeReferenceDatesDTO> findSubTypeReferenceDates(@Param("channelIds") Collection<Long> channelIds);
 }

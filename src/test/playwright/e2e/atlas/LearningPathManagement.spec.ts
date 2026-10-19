@@ -47,7 +47,13 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         const lpCheckbox = page.locator('#field_learningPathsEnabled');
         await expect(lpCheckbox).toBeVisible({ timeout: 15000 });
         await lpCheckbox.click();
+        // Wait for the PUT to complete before navigating — without this the next page
+        // load can race the server write and see learningPathsEnabled still false.
+        const saveResponse = page
+            .waitForResponse((resp) => resp.url().includes('/api/course/courses/') && resp.request().method() === 'PUT' && resp.ok(), { timeout: 15000 })
+            .catch(() => undefined);
         await page.locator('#save-entity').click();
+        await saveResponse;
 
         await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/learning-path-management`);
         await page.waitForLoadState('domcontentloaded');

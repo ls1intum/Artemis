@@ -30,4 +30,32 @@ export class StudentExam implements BaseEntity {
         // helper attribute (calculated by the server at the time of the last request)
         this.ended = false;
     }
+
+    /**
+     * Returns a new StudentExam holding the same values, with every nested value carried over as it is.
+     *
+     * This is deliberately not a {@link deepClone}: it exists so a consumer bound to a `studentExam` signal is
+     * notified after the object was updated in place, and the exercises and submissions a student is working on must
+     * stay the same instances. A signal's `equal` option cannot do this, because Angular compares a property binding
+     * with `Object.is` before it reaches a child's `input()`, so the same reference never arrives at the child.
+     *
+     * Keep this in sync with the fields above.
+     */
+    static withSameValues(studentExam: StudentExam): StudentExam {
+        const rebuilt = new StudentExam();
+        rebuilt.id = studentExam.id;
+        rebuilt.workingTime = studentExam.workingTime;
+        rebuilt.submitted = studentExam.submitted;
+        rebuilt.started = studentExam.started;
+        rebuilt.testRun = studentExam.testRun;
+        rebuilt.submissionDate = studentExam.submissionDate;
+        rebuilt.user = studentExam.user;
+        rebuilt.exam = studentExam.exam;
+        rebuilt.exercises = studentExam.exercises;
+        rebuilt.examSessions = studentExam.examSessions;
+        rebuilt.startedDate = studentExam.startedDate;
+        rebuilt.ended = studentExam.ended;
+        rebuilt.numberOfExamSessions = studentExam.numberOfExamSessions;
+        return rebuilt;
+    }
 }

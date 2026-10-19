@@ -12,7 +12,7 @@
     </h4>
     @if (!showResult()) {
         <div>
-            @for (textPart of textParts; track textPart; let i = $index) {
+            @for (textPart of textParts(); track textPart; let i = $index) {
                 <div class="short-answer-question-display">
                     @for (element of textPart; track element; let j = $index) {
                         <div class="short-answer-question-display__element">
@@ -43,7 +43,7 @@
     }
     @if (showResult()) {
         <div>
-            @for (textPart of textParts; track textPart) {
+            @for (textPart of textParts(); track textPart) {
                 <div class="short-answer-question-display">
                     @for (element of textPart; track element) {
                         <div class="short-answer-question-display__element">
@@ -56,6 +56,7 @@
                                     [ngbTooltip]="classifyInputField(element) === 'invalid' ? ('artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate) : undefined"
                                 >
                                     <input
+                                        [attr.aria-label]="'accessibility.shortAnswer' | artemisTranslate: { number: shortAnswerQuestionUtil.getSpotNr(element) }"
                                         class="short-answer-question-container__input {{ classifyInputField(element) }}"
                                         type="text"
                                         disabled
@@ -79,7 +80,7 @@
     @if (shortAnswerQuestion().hint || (shortAnswerQuestion().explanation && showResult())) {
         <div class="hint">
             <ng-template #renderedHint>
-                <div [innerHTML]="renderedQuestion.hint"></div>
+                <div [innerHTML]="renderedQuestion().hint"></div>
             </ng-template>
             @if (shortAnswerQuestion().hint) {
                 <span class="label label-info" [ngbPopover]="renderedHint" placement="right auto" triggers="mouseenter:mouseleave">
@@ -89,7 +90,7 @@
             }
             <br />
             <ng-template #renderedExplanation>
-                <div [innerHTML]="renderedQuestion.explanation"></div>
+                <div [innerHTML]="renderedQuestion().explanation"></div>
             </ng-template>
             @if (shortAnswerQuestion().explanation && showResult()) {
                 <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave">
@@ -119,10 +120,10 @@
     @if (showResult() && !forceSampleSolution()) {
         <div>
             @if (!showingSampleSolution()) {
-                <div class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></div>
+                <button type="button" class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></button>
             }
             @if (showingSampleSolution()) {
-                <div class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></div>
+                <button type="button" class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></button>
             }
         </div>
     }

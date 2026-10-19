@@ -5,6 +5,7 @@ import { ChannelDTO } from 'app/communication/shared/entities/conversation/chann
 import { FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/confirm-feedback-channel-creation/confirm-feedback-channel-creation-modal.component';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -15,6 +16,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackDetailChannelModalComponent {
+    private alertService = inject(AlertService);
+    private readonly formBuilder = inject(FormBuilder);
+    private readonly activeModal = inject(NgbActiveModal);
+    private readonly modalService = inject(NgbModal);
+
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';
     feedbackDetail = input.required<FeedbackDetail>();
     exerciseDueDate = input<dayjs.Dayjs | undefined>();
@@ -23,10 +29,6 @@ export class FeedbackDetailChannelModalComponent {
 
     isConfirmModalOpen = signal(false);
 
-    private alertService = inject(AlertService);
-    private readonly formBuilder = inject(FormBuilder);
-    private readonly activeModal = inject(NgbActiveModal);
-    private readonly modalService = inject(NgbModal);
     form: FormGroup = this.formBuilder.group({
         name: ['', [Validators.required, Validators.maxLength(30), Validators.pattern('^[a-z0-9-]{1}[a-z0-9-]{0,30}$')]],
         description: ['', [Validators.required, Validators.maxLength(250)]],
@@ -61,7 +63,7 @@ export class FeedbackDetailChannelModalComponent {
             modalRef.componentInstance.affectedStudentsCount = signal(this.feedbackDetail().count);
             return await modalRef.result;
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
             return false;
         }
     }

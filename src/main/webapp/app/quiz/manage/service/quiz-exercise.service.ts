@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -9,18 +9,22 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { downloadFile, downloadZipFromFilePromises } from 'app/foundation/util/download.util';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
-import JSZip from 'jszip';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { FileService } from 'app/foundation/service/file.service';
 import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { QuizPointStatisticsResponse, QuizQuestionStatisticResponse, QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 export type EntityExerciseDateResponseType = HttpResponse<QuizExerciseDates>;
+export type StatisticsOverviewResponseType = HttpResponse<QuizStatisticsOverviewResponse>;
+export type PointStatisticsResponseType = HttpResponse<QuizPointStatisticsResponse>;
+export type QuestionStatisticResponseType = HttpResponse<QuizQuestionStatisticResponse>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class QuizExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
@@ -35,7 +39,7 @@ export class QuizExerciseService {
      */
     create(quizExercise: QuizExercise, files: Map<string, Blob>): Observable<EntityResponseType> {
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
 
         const exerciseDTO = convertQuizExerciseToCreationDTO(copy);
 
@@ -71,7 +75,7 @@ export class QuizExerciseService {
     import(adaptedSourceQuizExercise: QuizExercise, files: Map<string, Blob>) {
         let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceQuizExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
 
         const formData = new FormData();
         formData.append('exercise', objectToJsonBlob(copy));
@@ -91,10 +95,10 @@ export class QuizExerciseService {
      * @param files the files that should be uploaded
      * @param req Additional parameters that should be passed to the server when updating the exercise
      */
-    update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, req?: any): Observable<EntityResponseType> {
+    update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, req?: { notificationText?: string }): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
 
         const exerciseDTO = toQuizExerciseUpdateDTO(copy);
         const formData = new FormData();
@@ -119,13 +123,50 @@ export class QuizExerciseService {
     }
 
     /**
-     * Recalculate the statistics for a given quiz exercise
-     * @param quizExerciseId the id of the quiz exercise for which the statistics should be recalculated
+     * Loads the calculated overview statistics for a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @return the quiz exercise overview and its calculated statistics
      */
-    recalculate(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/recalculate-statistics`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    findStatisticsOverview(quizExerciseId: number): Observable<StatisticsOverviewResponseType> {
+        return this.getStatistics<QuizStatisticsOverviewResponse>(quizExerciseId, 'overview');
+    }
+
+    /**
+     * Loads the calculated point distribution for a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @return the quiz exercise and its calculated point distribution
+     */
+    findPointStatistic(quizExerciseId: number): Observable<PointStatisticsResponseType> {
+        return this.getStatistics<QuizPointStatisticsResponse>(quizExerciseId, 'points');
+    }
+
+    /**
+     * Loads the calculated statistic for one question in a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @param questionId the ID of the quiz question
+     * @return the quiz exercise, question, and calculated question statistic
+     */
+    findQuestionStatistic(quizExerciseId: number, questionId: number): Observable<QuestionStatisticResponseType> {
+        return this.getStatistics<QuizQuestionStatisticResponse>(quizExerciseId, `questions/${questionId}`);
+    }
+
+    /**
+     * Loads a page-specific statistics response and converts its quiz exercise dates.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @param path the statistics endpoint path relative to the quiz exercise
+     * @return the converted statistics response
+     */
+    private getStatistics<T extends QuizExercise>(quizExerciseId: number, path: string): Observable<HttpResponse<T>> {
+        return this.http.get<T>(`${this.resourceUrl}/${quizExerciseId}/statistics/${path}`, { observe: 'response' }).pipe(
+            map((res) => {
+                this.exerciseService.processExerciseEntityResponse(res);
+                return res;
+            }),
+        );
     }
 
     /**
@@ -241,7 +282,6 @@ export class QuizExerciseService {
 
         quizQuestions!.forEach((question) => {
             if (exportAll === true || question.exportQuiz) {
-                question.quizQuestionStatistic = undefined;
                 question.exercise = undefined;
                 questions.push(question);
             }
@@ -258,7 +298,7 @@ export class QuizExerciseService {
      * @param fileName name of the output zip file
      */
     exportAssetsFromAllQuestions(questions: QuizQuestion[], fileName: string) {
-        const zip: JSZip = new JSZip();
+        const zip: ZipBuilder = new ZipBuilder();
         const filePromises: Promise<void | File>[] = [];
         const quizJson = JSON.stringify(questions);
         const blob = new Blob([quizJson], { type: 'application/json' });
@@ -272,9 +312,14 @@ export class QuizExerciseService {
                 if ((question as DragAndDropQuestion).dragItems) {
                     (question as DragAndDropQuestion).dragItems?.forEach((dragItem, drag_index) => {
                         if (dragItem.pictureFilePath) {
-                            const filePath = dragItem.pictureFilePath!;
+                            const filePath = dragItem.pictureFilePath;
                             const fileNameExtension = filePath.split('.').last();
-                            filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.${fileNameExtension}`, zip, filePath));
+                            // A drag item picture is stored under its filename alone, so the question-scoped path it is served under has to be assembled from the two ids.
+                            const downloadPath =
+                                question.id !== undefined && dragItem.id !== undefined
+                                    ? `drag-and-drop/questions/${question.id}/drag-items/${dragItem.id}/${filePath.substring(filePath.lastIndexOf('/') + 1)}`
+                                    : filePath;
+                            filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.${fileNameExtension}`, zip, downloadPath));
                         }
                     });
                 }
@@ -300,10 +345,10 @@ export class QuizExerciseService {
     /**
      * This method fetches a file through the file Service, zips it and pushes it to the provided list of file Promises
      * @param fileName the name of the file to be zipped
-     * @param zip a JSZip instance
+     * @param zip a ZipBuilder instance
      * @param filePath the internal path of the file to be fetched
      */
-    async fetchFilePromise(fileName: string, zip: JSZip, filePath: string) {
+    async fetchFilePromise(fileName: string, zip: ZipBuilder, filePath: string) {
         return this.fileService
             .getFile(filePath)
             .then((fileResult) => {

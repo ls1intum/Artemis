@@ -1,0 +1,29 @@
+name: 'Verify image build'
+description: >-
+  Fail unless the Docker image for an exact commit SHA exists in the registry.
+  Uses the immutable `sha-<commit>` tag as the source of truth, replacing the
+  fragile per-run `docker-tag` artifact check.
+
+inputs:
+  image:
+    description: 'Fully-qualified image name, e.g. ghcr.io/ls1intum/artemis'
+    required: true
+  sha:
+    description: 'The exact commit SHA whose image must exist (tagged sha-<sha>)'
+    required: true
+  token:
+    description: 'Token with packages:read for the registry (e.g. GITHUB_TOKEN)'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Verify deployable image exists for the commit
+      shell: bash
+      env:
+        IMAGE: ${{ inputs.image }}
+        SHA: ${{ inputs.sha }}
+        GH_TOKEN: ${{ inputs.token }}
+        REGISTRY_USER: ${{ github.actor }}
+      run: "${GITHUB_ACTION_PATH}/verify-image-build.sh"

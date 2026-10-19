@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
+import { parseJson } from 'app/foundation/util/json.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SessionStorageService {
     /**
      * Stores a value in the session storage under the specified key.
@@ -22,7 +23,7 @@ export class SessionStorageService {
      */
     retrieve<T>(key: string): T | undefined {
         const value = sessionStorage.getItem(key);
-        return value ? (JSON.parse(value) as T) : undefined;
+        return value ? parseJson<T>(value) : undefined;
     }
 
     /**
@@ -33,7 +34,7 @@ export class SessionStorageService {
     retrieveDate(key: string): Date | undefined {
         const raw = sessionStorage.getItem(key);
         if (!raw) return undefined;
-        const isoString = JSON.parse(raw);
+        const isoString = parseJson<string>(raw);
         const date = new Date(isoString);
         // check whether a valid date could be parsed and avoid parsing dates from non-ISO-representations
         return !isNaN(date.getTime()) && isoString === date.toISOString() ? date : undefined;

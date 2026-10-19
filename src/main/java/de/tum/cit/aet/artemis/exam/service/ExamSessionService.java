@@ -43,6 +43,12 @@ public class ExamSessionService {
 
     private static final Logger log = LoggerFactory.getLogger(ExamSessionService.class);
 
+    /**
+     * Shared deliberately: {@link SecureRandom} is thread-safe, and constructing one re-seeds from the system
+     * entropy source on every call.
+     */
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     private final ExamSessionRepository examSessionRepository;
 
     private final StudentExamRepository studentExamRepository;
@@ -94,9 +100,8 @@ public class ExamSessionService {
     }
 
     private String generateSafeToken() {
-        SecureRandom random = new SecureRandom();
         byte[] bytes = new byte[16];
-        random.nextBytes(bytes);
+        SECURE_RANDOM.nextBytes(bytes);
         Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
         String token = encoder.encodeToString(bytes);
         return token.substring(0, 16);

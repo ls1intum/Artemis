@@ -1,10 +1,11 @@
-import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import {
     faBan,
     faBuildingColumns,
@@ -16,6 +17,7 @@ import {
     faFlag,
     faMapPin,
     faPenToSquare,
+    faPlus,
     faQuestion,
     faTag,
     faTrash,
@@ -23,18 +25,16 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { SelectButton } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
-import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { Color, PieChartComponent, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
-import { SelectModule } from 'primeng/select';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-detail-session-status-indicator/tutorial-group-detail-session-status-indicator.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ButtonModule } from 'primeng/button';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ConfirmationService } from 'primeng/api';
@@ -44,7 +44,7 @@ import {
     UpdateTutorialGroupSessionData,
 } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 import { TooltipModule } from 'primeng/tooltip';
-import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/create-or-update-tutorial-group-session-request';
 
 interface TutorialGroupDetailSession {
     id: number;
@@ -108,23 +108,31 @@ export enum TutorialGroupDetailAccessLevel {
         ProfilePictureComponent,
         FaIconComponent,
         TranslateDirective,
-        SelectButton,
         FormsModule,
-        PieChartModule,
-        SelectModule,
+        TumAetUiButtonDirective,
+        TumAetUiDoughnutChartComponent,
+        TumAetUiSelectButtonComponent,
         TutorialGroupDetailSessionStatusIndicatorComponent,
         NgClass,
         RouterLink,
-        ButtonModule,
         ConfirmDialogModule,
         TutorialSessionCreateOrEditModalComponent,
         TooltipModule,
+        CourseSidebarToggleButtonComponent,
     ],
     providers: [ConfirmationService],
     templateUrl: './tutorial-group-detail.component.html',
     styleUrl: './tutorial-group-detail.component.scss',
 })
 export class TutorialGroupDetailComponent {
+    protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;
+    private translateService = inject(TranslateService);
+    private oneToOneChatService = inject(OneToOneChatService);
+    private alertService = inject(AlertService);
+    private confirmationService = inject(ConfirmationService);
+    private router = inject(Router);
+    activatedRoute = inject(ActivatedRoute);
+
     protected readonly faFlag = faFlag;
     protected readonly faUsers = faUsers;
     protected readonly faTag = faTag;
@@ -136,27 +144,22 @@ export class TutorialGroupDetailComponent {
     protected readonly faQuestion = faQuestion;
     protected readonly faCheck = faCheck;
     protected readonly faPenToSquare = faPenToSquare;
+    protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
     protected readonly faBan = faBan;
     protected readonly faCirclePlay = faCirclePlay;
-    protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;
     protected readonly TutorialGroupDetailManagementAccessLevel = TutorialGroupDetailAccessLevel;
 
-    private translateService = inject(TranslateService);
-    private oneToOneChatService = inject(OneToOneChatService);
-    private alertService = inject(AlertService);
-    private confirmationService = inject(ConfirmationService);
-    private router = inject(Router);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private averageAttendanceRatio = computed<number | undefined>(() => this.computeAverageAttendanceRatio(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
     private sessionModal = viewChild.required<TutorialSessionCreateOrEditModalComponent>('sessionModal');
 
-    activatedRoute = inject(ActivatedRoute);
-    pieChart = viewChild(PieChartComponent);
     tutorialGroup = input.required<TutorialGroupDetailData>();
     courseId = input.required<number>();
     isMessagingEnabled = input.required<boolean>();
     loggedInUserAccessLevel = input.required<TutorialGroupDetailAccessLevel>();
+    readonly isSidebarCollapsed = input(false);
+    readonly toggleSidebar = output<void>();
     userIsNotTutor = computed(() => this.loggedInUserAccessLevel() !== TutorialGroupDetailAccessLevel.TUTOR_OF_GROUP);
     tutorChatLink = computed(() => this.computeTutorChatLink());
     groupChannelLink = computed(() => this.computeGroupChannelLink());
@@ -168,8 +171,12 @@ export class TutorialGroupDetailComponent {
     tutorialGroupMode = computed<string>(() => (this.tutorialGroup().isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline'));
     tutorialGroupCampus = computed<string>(() => this.tutorialGroup().campus ?? '-');
     averageAttendancePercentage = computed<string | undefined>(() => this.computeAverageAttendancePercentage());
-    pieChartData = computed<NgxChartsSingleSeriesDataEntry[]>(() => this.computePieChartData());
-    pieChartColors = computed<Color>(() => this.computePieChartColor());
+    pieChartData = computed<ChartSeriesEntry[]>(() => this.computePieChartData());
+    /** The raw slice colors (CSS variable references), index-aligned with {@link pieChartData}. */
+    pieChartColors = computed<string[]>(() => this.computePieChartColors());
+    readonly chartData = computed(() => singleSeriesChart(this.pieChartData(), this.pieChartColors()));
+    // the chart is rendered edge-to-edge inside its fixed-size container, hence no padding
+    readonly chartConfig: TumAetUiDoughnutChartConfig = { arcWidth: 0.3, legend: false, padding: 0 };
     sessionListOptions = computed(() => this.computeSessionListOptions());
     selectedSessionListOption = signal<ListOption>('all-sessions');
     tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
@@ -183,15 +190,6 @@ export class TutorialGroupDetailComponent {
     onCreateSession = output<CreateTutorialGroupSessionEvent>();
     onActivateSession = output<ModifyTutorialGroupSessionEvent>();
 
-    constructor() {
-        effect(() => {
-            const pieChart = this.pieChart();
-            if (!pieChart) return;
-            pieChart.margins = [0, 0, 0, 0];
-            pieChart.update();
-        });
-    }
-
     createTutorChat() {
         const courseId = this.courseId();
         const tutorLogin = this.tutorialGroup().tutorLogin;
@@ -200,7 +198,7 @@ export class TutorialGroupDetailComponent {
                 next: (response) => {
                     const chatId = response.body?.id;
                     if (chatId) {
-                        this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
+                        void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
                     } else {
                         this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.createOneToOneChat');
                     }
@@ -361,7 +359,7 @@ export class TutorialGroupDetailComponent {
         return `Ø ${percentage.toFixed(0)}%`;
     }
 
-    private computePieChartData(): NgxChartsSingleSeriesDataEntry[] {
+    private computePieChartData(): ChartSeriesEntry[] {
         const averageAttendanceRatio = this.averageAttendanceRatio();
         if (!averageAttendanceRatio) {
             return [{ name: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.notAttended'), value: 100 }];
@@ -374,13 +372,10 @@ export class TutorialGroupDetailComponent {
         ];
     }
 
-    private computePieChartColor(): Color {
+    private computePieChartColors(): string[] {
         const averageAttendanceRatio = this.averageAttendanceRatio();
         if (averageAttendanceRatio === undefined) {
-            return {
-                group: ScaleType.Ordinal,
-                domain: [GraphColors.LIGHT_GREY],
-            } as Color;
+            return [GraphColors.LIGHT_GREY];
         } else {
             let color: string;
             if (averageAttendanceRatio >= 0.9) {
@@ -392,10 +387,7 @@ export class TutorialGroupDetailComponent {
             } else {
                 color = 'var(--green)';
             }
-            return {
-                group: ScaleType.Ordinal,
-                domain: [color, GraphColors.LIGHT_GREY],
-            } as Color;
+            return [color, GraphColors.LIGHT_GREY];
         }
     }
 

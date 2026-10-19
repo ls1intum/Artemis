@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { EmojiData, EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { EmojiUtils } from 'app/communication/emoji/emoji.utils';
@@ -14,7 +14,7 @@ export class EmojiPickerComponent {
     private themeService = inject(ThemeService);
 
     recent = input<string[]>();
-    emojiSelect = output<any>();
+    emojiSelect = output<EmojiEvent>();
     emojisToShowFilter = input<(emoji: string | EmojiData) => boolean>();
     categoriesIcons = input<{ [key: string]: string }>({});
 
@@ -22,7 +22,7 @@ export class EmojiPickerComponent {
     dark = computed(() => this.themeService.currentTheme() === Theme.DARK);
     singleImageFunction = computed(() => (this.dark() ? EmojiUtils.singleDarkModeEmojiUrlFn : () => ''));
 
-    onEmojiSelect(event: any) {
+    onEmojiSelect(event: EmojiEvent) {
         this.emojiSelect.emit(event);
     }
 }

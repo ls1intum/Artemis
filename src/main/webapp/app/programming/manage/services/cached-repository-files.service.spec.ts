@@ -1,12 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 
 import { CachedRepositoryFilesService } from 'app/programming/manage/services/cached-repository-files.service';
 
 describe('CachedRepositoryFilesServiceService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CachedRepositoryFilesService;
 
     beforeEach(() => {

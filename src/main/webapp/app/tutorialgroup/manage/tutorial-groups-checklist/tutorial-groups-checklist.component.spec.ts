@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -17,8 +16,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorialGroupsChecklistComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TutorialGroupsChecklistComponent>;
     let component: TutorialGroupsChecklistComponent;
     let courseManagementService: CourseManagementService;
@@ -67,6 +64,20 @@ describe('TutorialGroupsChecklistComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should keep the configuration action out of reach until the time zone is set', () => {
+        fixture.detectChanges();
+
+        // The example course carries no time zone, so the prerequisite is unmet.
+        expect(component.isTimeZoneConfigured()).toBe(false);
+
+        const action: HTMLButtonElement | null = fixture.nativeElement.querySelector('[data-testid="configuration-action"]');
+        expect(action).not.toBeNull();
+        // A disabled button, not a styled anchor: pointer-events-none and aria-disabled leave a link focusable,
+        // so a keyboard user could still activate it and skip the time zone.
+        expect(action!.tagName).toBe('BUTTON');
+        expect(action!.disabled).toBe(true);
     });
 
     it('should initialize', () => {

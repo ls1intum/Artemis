@@ -19,7 +19,9 @@ import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Component for managing exam rooms.
@@ -28,17 +30,27 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 @Component({
     selector: 'jhi-exam-rooms',
     templateUrl: './exam-rooms.component.html',
-    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe, HelpIconComponent],
+    imports: [
+        TranslateDirective,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        HelpIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCardComponent,
+        TumAetUiTableDirective,
+    ],
 })
 export class ExamRoomsComponent implements OnInit {
-    private readonly baseTranslationPath = 'artemisApp.examRooms.management';
-
-    protected readonly faSort = faSort;
-
     private readonly examRoomsService = inject(ExamRoomsService);
     private readonly sortService = inject(SortService);
     private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
+
+    private readonly baseTranslationPath = 'artemisApp.examRooms.management';
+
+    protected readonly faSort = faSort;
 
     private selectedFile: WritableSignal<File | undefined> = signal(undefined);
     private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);
@@ -70,7 +82,7 @@ export class ExamRoomsComponent implements OnInit {
         return {
             examRooms: this.numberOfUniqueExamRooms(),
             examSeats: this.numberOfUniqueExamSeats(),
-        } as ExamRoomOverviewNumberOfAvailable;
+        };
     });
     readonly hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
     readonly examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
@@ -184,7 +196,12 @@ export class ExamRoomsComponent implements OnInit {
         this.sortService.sortByProperty(this.examRoomData()!, this.sortAttribute(), this.ascending());
     }
 
-    private showErrorNotification(translationKey: string, interpolationValues?: any, trailingText?: string, translatePath: string = this.baseTranslationPath): void {
+    private showErrorNotification(
+        translationKey: string,
+        interpolationValues?: Record<string, unknown>,
+        trailingText?: string,
+        translatePath: string = this.baseTranslationPath,
+    ): void {
         const errorMessage = this.translateService.instant(`${translatePath}.${translationKey}`, interpolationValues);
         this.alertService.error(trailingText ? `${errorMessage}: "${trailingText}"` : errorMessage);
     }
@@ -203,13 +220,8 @@ export class ExamRoomsComponent implements OnInit {
     }
 
     private calculateExamRoomData() {
-        return this.overview()?.newestUniqueExamRooms?.map(
-            (examRoomDTO) =>
-                ({
-                    ...examRoomDTO,
-                    defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
-                    maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
-                }) as ExamRoomDTOExtended,
+        return this.overview()?.newestUniqueExamRooms?.map((examRoomDTO) =>
+            cloneWith(examRoomDTO, { defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO), maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO) }),
         );
     }
 }

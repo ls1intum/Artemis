@@ -28,3 +28,12 @@ export class ExerciseCategory {
         return displayText < otherCategoryDisplayText ? -1 : 1;
     }
 }
+
+/**
+ * The wire shape of a serialized {@link ExerciseCategory}: the JSON-string payload stored in the DB
+ * (server `Set<String>`) or a DTO object. Derived from the class via `Pick`, so it carries only the data
+ * fields — no methods — and stays in sync with the class: renaming a field breaks this at compile time
+ * instead of silently drifting. Use it to type the result of parsing a category, then build a real
+ * {@link ExerciseCategory} instance from it.
+ */
+export type SerializedExerciseCategory = Pick<ExerciseCategory, 'category' | 'color'>;

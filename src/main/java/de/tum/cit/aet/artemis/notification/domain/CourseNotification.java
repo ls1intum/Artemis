@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
@@ -27,7 +28,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 public class CourseNotification extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
+    @Parent
     private Course course;
 
     @Column(name = "type", nullable = false)

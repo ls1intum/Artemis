@@ -1,0 +1,14 @@
+<ng-template #panel>
+    <div
+        class="tumaet-ui-popover-panel tumaet:rounded-md tumaet:border tumaet:border-border tumaet:bg-overlay-background tumaet:p-3 tumaet:text-text tumaet:shadow-lg"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="ariaLabel()"
+        [attr.data-placement]="appliedPlacement()"
+        tabindex="0"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+    >
+        <ng-content />
+    </div>
+</ng-template>

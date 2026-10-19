@@ -5,6 +5,7 @@ import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dy
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ScienceEventType } from 'app/foundation/science/science.model';
@@ -23,13 +24,13 @@ export interface CompetencyGraphModalData {
     styleUrl: './competency-graph-modal.component.scss',
 })
 export class CompetencyGraphModalComponent {
-    protected readonly closeIcon = faXmark;
-
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
     private readonly scienceService = inject(ScienceService);
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly dialogConfig = inject(DynamicDialogConfig);
+
+    protected readonly closeIcon = faXmark;
 
     readonly name = signal<string | undefined>((this.dialogConfig.data as CompetencyGraphModalData).name);
     readonly learningPathId = signal<number>((this.dialogConfig.data as CompetencyGraphModalData).learningPathId);
@@ -43,7 +44,7 @@ export class CompetencyGraphModalComponent {
 
             this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN_GRAPH, learningPathId);
 
-            untracked(() => this.loadCompetencyGraph(learningPathId));
+            untracked(() => void this.loadCompetencyGraph(learningPathId));
         });
     }
 
@@ -53,7 +54,7 @@ export class CompetencyGraphModalComponent {
             const competencyGraph = await this.learningPathApiService.getLearningPathCompetencyGraph(learningPathId);
             this.competencyGraph.set(competencyGraph);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
         }
@@ -74,7 +75,7 @@ export class CompetencyGraphModalComponent {
             resizable: false,
             showHeader: false,
             styleClass: 'competency-graph-modal',
-            data: <CompetencyGraphModalData>{ learningPathId, name },
+            data: { learningPathId, name },
         });
     }
 }

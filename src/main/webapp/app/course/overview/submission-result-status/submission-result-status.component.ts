@@ -7,6 +7,8 @@ import dayjs from 'dayjs/esm';
 
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
@@ -14,7 +16,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
 @Component({
     selector: 'jhi-submission-result-status',
     templateUrl: './submission-result-status.component.html',
-    imports: [UpdatingResultComponent, TranslateDirective, ProgrammingExerciseStudentTriggerBuildButtonComponent],
+    imports: [UpdatingResultComponent, ResultComponent, TranslateDirective, ProgrammingExerciseStudentTriggerBuildButtonComponent],
 })
 export class SubmissionResultStatusComponent {
     private readonly initializationStatesToShowProgrammingResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
@@ -33,6 +35,7 @@ export class SubmissionResultStatusComponent {
      */
     readonly exercise = input.required<Exercise>();
     readonly studentParticipation = input<StudentParticipation>();
+    readonly result = input<Result>();
     readonly updatingResultClass = input<string>('');
     readonly showBadge = input(false);
     readonly showUngradedResults = input(false);
@@ -41,9 +44,11 @@ export class SubmissionResultStatusComponent {
     readonly showCompletion = input(true);
     readonly short = input(true);
     readonly triggerLastGraded = input(true);
+    readonly showTriggerBuildButton = input(true);
     readonly showProgressBar = input(false);
     readonly quizLiveStatusOverride = input<LiveQuizParticipationStatus>();
     readonly isPractice = input(false);
+    readonly quizPracticeInProgress = input(false);
 
     // Computed signal for whether due date has passed
     private readonly afterDueDate = computed(() => {
@@ -56,7 +61,7 @@ export class SubmissionResultStatusComponent {
         if (exercise?.type !== ExerciseType.QUIZ) {
             return false;
         }
-        return ArtemisQuizService.notStarted(exercise as QuizExercise);
+        return ArtemisQuizService.notStarted(exercise);
     });
 
     readonly quizBatchStarted = computed(() => {
@@ -81,7 +86,7 @@ export class SubmissionResultStatusComponent {
         const studentParticipation = this.studentParticipation();
 
         if (exercise?.type === ExerciseType.QUIZ) {
-            return ArtemisQuizService.isUninitialized(exercise as QuizExercise);
+            return ArtemisQuizService.isUninitialized(exercise);
         }
         return !this.afterDueDate() && !studentParticipation;
     });
@@ -110,11 +115,20 @@ export class SubmissionResultStatusComponent {
         const exercise = this.exercise();
         const studentParticipation = this.studentParticipation();
 
+        // While a fresh practice attempt is in progress, the previous attempt's result must not be shown — fall through
+        // to the in-progress "participating" status instead.
+        if (this.quizPracticeInProgress()) {
+            return false;
+        }
+
         if (exercise?.type === ExerciseType.QUIZ) {
             return !!getAllResultsOfAllSubmissions(studentParticipation?.submissions).length;
         } else if (exercise?.type === ExerciseType.PROGRAMMING) {
+            // A practice participation is not bound by the due date — submissions are always possible — so the
+            // live result (queued / building / result) must be shown just like before the due date. Otherwise a
+            // student submitting in practice mode would get no feedback until the first build result arrives.
             return (
-                (!!getAllResultsOfAllSubmissions(studentParticipation?.submissions).length || !this.afterDueDate()) &&
+                (!!getAllResultsOfAllSubmissions(studentParticipation?.submissions).length || !this.afterDueDate() || this.isPractice()) &&
                 !!studentParticipation?.initializationState &&
                 this.initializationStatesToShowProgrammingResult.includes(studentParticipation.initializationState)
             );

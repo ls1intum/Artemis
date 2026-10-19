@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -10,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
@@ -36,9 +33,6 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     void setup() {
         participantScoreScheduleService.shutdown();
         userUtilService.addUsers(TEST_PREFIX, 2, NUMBER_OF_TUTORS, 0, 0);
-        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student.setGroups(Set.of(TEST_PREFIX + "tumuser"));
-        userTestRepository.save(student);
     }
 
     @Test
@@ -47,7 +41,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         // TODO: add team exercises, do not make all quizzes active
         // TODO: add 1. tutorial groups with a 2. tutorial group configuration, 3. competencies and 4. prerequisites and make sure those are not loaded in the database
-        var courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, true, true, NUMBER_OF_TUTORS);
+        var courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, true, true, NUMBER_OF_TUTORS);
 
         assertThatDb(() -> {
             log.info("Start courses for dashboard call for multiple courses");
@@ -55,7 +49,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
         }).hasBeenCalledAtMostTimes(8);
-        // TODO: Hibernate 7 increased query count from 6 to 7-8 — investigate remaining extra queries in a follow-up
+        // TODO: Hibernate 7 increased query count from 6 to 7-8 - investigate remaining extra queries in a follow-up
         // 1 DB call to get the user from the DB
         // 1 DB call to get all active courses
         // 1 DB call to load all exercises
@@ -65,37 +59,17 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 optional DB call to get the amount of notifications inside the course.
         // + additional queries from Hibernate 7 entity/collection loading changes
 
-        var course = courses.getFirst();
-        assertThatDb(() -> {
-            log.info("Start course for dashboard call for one course");
-            var userCourse = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
-            log.info("Finish courses for dashboard call for one course");
-            return userCourse;
-        }).hasBeenCalledAtMostTimes(19);
-        // TODO: Hibernate 7 increased query count from 15 to 18-19 — investigate remaining extra queries in a follow-up
-        // 1 DB call to get the user from the DB
-        // 1 DB call to get the course with lectures
-        // 1 DB call to load all exercises with categories
-        // 1 DB call to load all exams
-        // 3 DB calls to load the numbers of competencies, prerequisites and tutorial groups
-        // 1 DB call to get all individual student participations with submissions and results
-        // 1 DB call to get all team student participations with submissions and results
-        // 1 DB call to get all plagiarism cases
-        // 1 DB call to get the grading scale
-        // 1 DB call to get the batch of a live quiz. No Batches of other quizzes are retrieved
-        // 1 DB call to get the faqs, if they are enabled
-        // 1 DB call to check if Iris is enabled in the course
-        // 1 DB call to determine if the quiz training mode is enabled for the course
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamQueryCount() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(course, TEST_PREFIX + "student1");
 
-        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(7);
-        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(3);
+        // Measured, and pinned at the measured value so a new query fails the build rather than being absorbed by slack.
+        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(6);
+        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(2);
     }
 
     private StudentExam startWorkingOnExam(StudentExam studentExam) throws Exception {

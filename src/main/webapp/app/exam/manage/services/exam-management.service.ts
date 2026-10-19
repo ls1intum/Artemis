@@ -1,13 +1,13 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
+import { ExamUsersNotFoundDTO } from 'app/exam/shared/entities/exam-users-not-found-dto.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -28,15 +28,22 @@ import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model'
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
+import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamManagementService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
+    private websocketService = inject(WebsocketService);
 
     public resourceUrl = 'api/exam/courses';
     public adminResourceUrl = 'api/exam/admin/courses';
@@ -88,25 +95,64 @@ export class ExamManagementService {
     }
 
     /**
-     * Imports an exam on the server using a POST request.
-     * @param courseId The course id into which the exam should be imported
-     * @param exam The exam with exercises to import.
+     * Imports an exam together with its exercises on the server using a POST request.
+     * <p>
+     * The returned response carries the full {@link ExamImportResultDTO}: the created exam plus the titles of any
+     * exercises that were skipped or only incompletely imported. The import progress dialog renders these (and the live
+     * websocket progress for the given {@code importId}) instead of a transient toast.
+     *
+     * @param courseId the course id into which the exam should be imported
+     * @param exam the exam with exercises to import
+     * @param importId a client-generated id correlating this import with its websocket progress channel
      */
-    import(courseId: number, exam: Exam): Observable<EntityResponseType> {
+    import(courseId: number, exam: Exam, importId: string): Observable<HttpResponse<ExamImportResultDTO>> {
         const dto = ExamManagementService.convertExamToImportDTO(exam, courseId);
-        return this.http
-            .post<Exam>(`${this.resourceUrl}/${courseId}/exam-import`, dto, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+        return this.http.post<ExamImportResultDTO>(`${this.resourceUrl}/${courseId}/exam-import`, dto, { params: { importId }, observe: 'response' }).pipe(
+            // Apply the same post-processing the (non-DTO) endpoints do for a returned exam: convert server dates, set course
+            // access rights and prime the title cache for the imported exam.
+            tap((res) => {
+                if (res.body?.exam) {
+                    this.convertExamFromServerAndSendTitles(res.body.exam);
+                }
+            }),
+        );
     }
 
     /**
-     * Imports an exam on the server using a PUT request.
-     * @param courseId The course id into which the exercise groups should be imported
-     * @param examId The exam id to which the exercise groups should be added
+     * Imports exercise groups into an existing exam on the server using a POST request.
+     * <p>
+     * The response carries the full {@link ExerciseGroupImportResultDTO} (the exam's exercise groups plus the skipped /
+     * incomplete exercise titles) so the import progress dialog can show the outcome.
+     *
+     * @param courseId the course id into which the exercise groups should be imported
+     * @param examId the exam id to which the exercise groups should be added
      * @param exerciseGroups the exercise groups to be added to the exam
+     * @param importId a client-generated id correlating this import with its websocket progress channel
      */
-    importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
-        return this.http.post<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, exerciseGroups, { observe: 'response' });
+    importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[], importId: string): Observable<HttpResponse<ExerciseGroupImportResultDTO>> {
+        const dtos = ExamManagementService.convertExerciseGroupsToImportDTOs(exerciseGroups);
+        return this.http.post<ExerciseGroupImportResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, dtos, {
+            params: { importId },
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Generates a unique id for an import operation. The same id is sent to the server (so it emits progress on a matching
+     * channel) and used to subscribe to that channel via {@link subscribeToImportProgress}.
+     */
+    generateImportId(): string {
+        return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    /**
+     * Subscribes to the live progress of the import identified by {@code importId}. The server sends one
+     * {@link ExamImportProgress} message per exercise transition and a terminal message when the import finishes.
+     *
+     * @param importId the id returned by {@link generateImportId} and passed to the import request
+     */
+    subscribeToImportProgress(importId: string): Observable<ExamImportProgress> {
+        return this.websocketService.subscribe<ExamImportProgress>(`/user/topic/exam-import/${importId}`);
     }
 
     /**
@@ -231,24 +277,14 @@ export class ExamManagementService {
     }
 
     /**
-     * Add a student to the registered users for an exam
-     * @param courseId The course id.
-     * @param examId The id of the exam to which to add the student
-     * @param studentLogin Login of the student
-     */
-    addStudentToExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<StudentDTO>> {
-        return this.http.post<StudentDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, undefined, { observe: 'response' });
-    }
-
-    /**
      * Add students to the registered users for an exam
      * @param courseId The course id.
      * @param examId The id of the exam to which to add the student
      * @param studentDtos Student DTOs of student to add to the exam
      * @return studentDtos of students that were not found in the system
      */
-    addStudentsToExam(courseId: number, examId: number, studentDtos: ExamUserDTO[]): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
+    addStudentsToExam(courseId: number, examId: number, studentDtos: ExamUserDTO[]): Observable<HttpResponse<ExamRegistrationResultDTO>> {
+        return this.http.post<ExamRegistrationResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
     }
 
     /**
@@ -268,8 +304,8 @@ export class ExamManagementService {
      * @param formData
      * @return matriculation number of students that were not found in the system
      */
-    saveImages(courseId: number, examId: number, formData: FormData): Observable<HttpResponse<any[]>> {
-        return this.http.post<any[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-save-images`, formData, { observe: 'response' });
+    saveImages(courseId: number, examId: number, formData: FormData): Observable<HttpResponse<ExamUsersNotFoundDTO>> {
+        return this.http.post<ExamUsersNotFoundDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-save-images`, formData, { observe: 'response' });
     }
 
     /**
@@ -297,11 +333,9 @@ export class ExamManagementService {
             })
             .pipe(
                 map((res) => ({
-                    content: (res.body ?? []).map((row) => ({
-                        ...row,
-                        startedDate: convertDateFromServer(row.startedDate),
-                        submissionDate: convertDateFromServer(row.submissionDate),
-                    })),
+                    content: (res.body ?? []).map((row) =>
+                        cloneWith(row, { startedDate: convertDateFromServer(row.startedDate), submissionDate: convertDateFromServer(row.submissionDate) }),
+                    ),
                     totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
                 })),
             );
@@ -388,18 +422,18 @@ export class ExamManagementService {
      * @returns The list of generated student exams.
      */
     generateStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, {}, { observe: 'response' });
+        return this.http.post<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, {}, { observe: 'response' });
     }
 
     /**
      * Generate a test run student exam based on the testRunConfiguration.
      * @param courseId the id of the course
      * @param examId the id of the exam
-     * @param testRunConfiguration the desired configuration
-     * @returns the created test run
+     * @param testRunConfiguration the desired exam id, exercise ids (in persistence order) and working time
+     * @returns the created test run. The response body no longer includes `exercises`; it includes the nested `user`.
      */
-    createTestRun(courseId: number, examId: number, testRunConfiguration: StudentExam): Observable<HttpResponse<StudentExam>> {
-        return this.http.post<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, testRunConfiguration, { observe: 'response' });
+    createTestRun(courseId: number, examId: number, testRunConfiguration: CreateTestRunDTO): Observable<HttpResponse<StudentExamDTO>> {
+        return this.http.post<StudentExamDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, testRunConfiguration, { observe: 'response' });
     }
 
     /**
@@ -416,9 +450,10 @@ export class ExamManagementService {
      * Find all the test runs for the exam
      * @param courseId the id of the course
      * @param examId the id of the exam
+     * @returns the test runs, each including the nested `user` (no `exercises`, no `exam`)
      */
-    findAllTestRunsForExam(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
-        return this.http.get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, { observe: 'response' });
+    findAllTestRunsForExam(courseId: number, examId: number): Observable<HttpResponse<StudentExamDTO[]>> {
+        return this.http.get<StudentExamDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, { observe: 'response' });
     }
 
     /**
@@ -428,7 +463,7 @@ export class ExamManagementService {
      * @returns The list of newly generated student exams.
      */
     generateMissingStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-missing-student-exams`, {}, { observe: 'response' });
+        return this.http.post<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-missing-student-exams`, {}, { observe: 'response' });
     }
 
     /**
@@ -465,7 +500,7 @@ export class ExamManagementService {
      * @returns number of evaluated exercises
      */
     evaluateQuizExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/evaluate-quiz-exercises`, {}, { observe: 'response' });
+        return this.http.post<number>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/evaluate-quiz-exercises`, {}, { observe: 'response' });
     }
 
     /**
@@ -475,7 +510,7 @@ export class ExamManagementService {
      * @returns number of evaluated participations
      */
     assessUnsubmittedExamModelingAndTextParticipations(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/assess-unsubmitted-and-empty-student-exams`, {}, { observe: 'response' });
+        return this.http.post<number>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/assess-unsubmitted-and-empty-student-exams`, {}, { observe: 'response' });
     }
 
     /**
@@ -484,12 +519,15 @@ export class ExamManagementService {
      * @param examId The exam id.
      * @param exerciseGroups List of exercise groups.
      */
-    updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
-        return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, exerciseGroups, { observe: 'response' });
+    updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<void>> {
+        // Only the group ids in the desired order are sent. The server persists the order and returns no body — the
+        // caller already holds the fully-detailed groups in exactly this order.
+        const orderedGroupIds = exerciseGroups.map((group) => group.id!);
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, orderedGroupIds, { observe: 'response' });
     }
 
     /**
-     * Resets an Exam with examId by deleting all its studentExams and participations.
+     * Resets an Exam with examId by deleting all its studentExams and participations and unregistering all its students.
      * @param courseId The course id.
      * @param examId The exam id.
      */
@@ -529,21 +567,31 @@ export class ExamManagementService {
             moduleNumber: exam.moduleNumber,
             courseName: exam.courseName,
             exampleSolutionPublicationDate: convertDateFromClient(exam.exampleSolutionPublicationDate),
+            examSummaryPublicationDate: convertDateFromClient(exam.examSummaryPublicationDate),
             channelName: exam.channelName,
             courseId: courseId,
-            exerciseGroups: exam.exerciseGroups?.map((group) => ({
-                title: group.title,
-                isMandatory: group.isMandatory ?? true,
-                exercises: group.exercises?.map((exercise) => ({
-                    id: exercise.id,
-                    exerciseType: exercise.type,
-                    title: exercise.title,
-                    shortName: exercise.shortName,
-                    maxPoints: exercise.maxPoints,
-                    bonusPoints: exercise.bonusPoints,
-                })),
-            })),
+            exerciseGroups: exam.exerciseGroups && ExamManagementService.convertExerciseGroupsToImportDTOs(exam.exerciseGroups),
         };
+    }
+
+    /**
+     * Converts exercise groups (as loaded for the import dialogs) to the import DTO shape the server expects: the group
+     * title and mandatory flag plus, per exercise, the source exercise id, type and the overrides the dialog can edit.
+     * @param exerciseGroups The exercise groups to convert
+     */
+    public static convertExerciseGroupsToImportDTOs(exerciseGroups: ExerciseGroup[]): ExerciseGroupImportDTO[] {
+        return exerciseGroups.map((group) => ({
+            title: group.title,
+            isMandatory: group.isMandatory ?? true,
+            exercises: group.exercises?.map((exercise) => ({
+                id: exercise.id,
+                exerciseType: exercise.type,
+                title: exercise.title,
+                shortName: exercise.shortName,
+                maxPoints: exercise.maxPoints,
+                bonusPoints: exercise.bonusPoints,
+            })),
+        }));
     }
 
     private processExamResponseFromServer(res: EntityResponseType): EntityResponseType {
@@ -567,6 +615,7 @@ export class ExamManagementService {
         exam.publishResultsDate = convertDateFromServer(exam.publishResultsDate);
         exam.examStudentReviewStart = convertDateFromServer(exam.examStudentReviewStart);
         exam.examStudentReviewEnd = convertDateFromServer(exam.examStudentReviewEnd);
+        exam.examSummaryPublicationDate = convertDateFromServer(exam.examSummaryPublicationDate);
 
         if (exam.course) {
             this.accountService.setAccessRightsForCourse(exam.course);
@@ -678,7 +727,13 @@ interface ExamImportDTO {
     moduleNumber?: string;
     courseName?: string;
     exampleSolutionPublicationDate?: string;
+    examSummaryPublicationDate?: string;
     channelName?: string;
     courseId: number;
     exerciseGroups?: ExerciseGroupImportDTO[];
+}
+
+export interface ExamRegistrationResultDTO {
+    notFoundStudents?: ExamUserDTO[];
+    rejectedStaffUsers?: ExamUserDTO[];
 }

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdminPasskeyManagementComponent } from './admin-passkey-management.component';
@@ -11,8 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('AdminPasskeyManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AdminPasskeyManagementComponent;
     let fixture: ComponentFixture<AdminPasskeyManagementComponent>;
     let adminPasskeyManagementService: AdminPasskeyManagementService;
@@ -145,8 +142,6 @@ describe('AdminPasskeyManagementComponent', () => {
 
         expect(component.passkeys()).toEqual([]);
         expect(component.passkeys()).toHaveLength(0);
-
-        const emptyStateElement = fixture.nativeElement.querySelector('div.alert.alert-info[jhiTranslate="artemisApp.adminPasskeyManagement.noPasskeys"]');
-        expect(emptyStateElement).toBeTruthy();
+        expect(component.isLoading()).toBe(false);
     });
 });

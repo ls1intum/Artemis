@@ -1,0 +1,1063 @@
+name: CI
+# Single CI entry point. See .github/workflows/README.md for the contract.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - develop
+      - main
+      - release/*
+  release:
+    # `published` covers draft promotion. No `push: tags:` trigger — UI release publish
+    # would otherwise double-fire.
+    types: [published]
+  merge_group:
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Bypass change detection and run every job'
+        type: boolean
+        default: false
+
+# One run per pull request, superseding the previous one, and one run per distinct commit everywhere
+# else. A pull request is the only case where a newer event replaces an older one: the head moves and
+# the old run is about a revision nobody will merge. A push, a merge group and a release each describe
+# a commit of their own, so they are keyed by that commit and never wait for one another — keying
+# pushes by `github.ref` alone put every push to a branch in one group, and since `cancel-in-progress`
+# is false for them, a push to develop could not start a single job until the previous push's run had
+# finished all of its server test shards and both E2E phases. That held back the `.war` and the Docker
+# image, which are what a deployment of that commit needs, for the better part of an hour.
+concurrency:
+  group: >-
+    ${{ github.event_name == 'pull_request' && format('ci-pr-{0}', github.event.pull_request.number)
+     || github.event_name == 'merge_group'  && format('ci-mq-{0}', github.event.merge_group.head_sha)
+     || github.event_name == 'release'      && format('ci-release-{0}', github.event.release.tag_name)
+     || format('ci-{0}-{1}', github.ref, github.sha) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
+
+jobs:
+
+  detect-changes:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    name: Detect Changed Areas
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      build_relevant: ${{ steps.decide.outputs.build_relevant }}
+      has_java: ${{ steps.decide.outputs.has_java }}
+      has_docs: ${{ steps.decide.outputs.has_docs }}
+      has_i18n: ${{ steps.decide.outputs.has_i18n }}
+      has_gradle: ${{ steps.decide.outputs.has_gradle }}
+      has_workflows: ${{ steps.decide.outputs.has_workflows }}
+      has_version: ${{ steps.decide.outputs.has_version }}
+      has_beans: ${{ steps.decide.outputs.has_beans }}
+      has_liquibase: ${{ steps.decide.outputs.has_liquibase }}
+      has_skills: ${{ steps.decide.outputs.has_skills }}
+      has_tum_aet_ui: ${{ steps.decide.outputs.has_tum_aet_ui }}
+      codeql_relevant: ${{ steps.decide.outputs.codeql_relevant }}
+      run_server_tests: ${{ steps.decide.outputs.run_server_tests }}
+      run_client_tests: ${{ steps.decide.outputs.run_client_tests }}
+      server_test_inputs: ${{ steps.decide.outputs.server_test_inputs }}
+      run_e2e: ${{ steps.decide.outputs.run_e2e }}
+      build_pr_image: ${{ steps.decide.outputs.build_pr_image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+
+      # dorny/paths-filter handles the edge cases hand-rolled `git diff` does not:
+      # initial commits, force-pushes, missing merge-base, and `merge_group` events.
+      # Two passes, because `predicate-quantifier` is per-step. The `relevant` pass uses
+      # `every` so the negations actually subtract — under the default `some` they are inert
+      # (every file matches via `**`), which would make build/test always-run. Result:
+      # build/test run unless every changed file is markdown, LICENSE, or under documentation/.
+      - id: relevant
+        if: github.event_name != 'workflow_dispatch' || !inputs.force_build
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
+        with:
+          # On push/merge_group: diff against the previous commit. On PR: against base.ref.
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
+          predicate-quantifier: every
+          filters: |
+            build:
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+            # CodeQL scans what ships: server and client sources. Tests, translations, the generated
+            # OpenAPI client, workflows and skills are not analysed (see .github/codeql/codeql-config.yml),
+            # so a change that touches only those has nothing new for CodeQL to look at. A deny-list,
+            # so a new top-level directory is scanned until someone decides it is not worth it.
+            codeql:
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+              - '!src/test/**'
+              - '!**/*.spec.ts'
+              - '!src/main/webapp/i18n/**'
+              - '!src/main/webapp/app/openapi/**'
+              - '!skills/**'
+              - '!.github/**'
+            # Which test suites a pull request has to run. Each is a deny-list of what cannot change the
+            # outcome of that suite, so a path nobody has classified runs both (see `decide` below, and
+            # `has_server_test_inputs` for the inputs of the server suite that live in client, doc or
+            # markdown paths). The server suite also needs Docker-backed shards, so it is the expensive one.
+            server_tests:
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+              - '!src/main/webapp/**'
+              - '!src/test/javascript/**'
+              - '!src/test/vitest/**'
+              - '!src/test/playwright/**'
+              - '!packages/**'
+              - '!skills/**'
+            # `build.gradle` and `gradle/` are deliberately absent: supporting_scripts/client/prebuild.mjs
+            # reads the app version from build.gradle, and prebuild runs in front of every client test;
+            # config/eslint/rules/tum-aet-ui-package.spec.mjs reads gradle/profile_{dev,prod}.gradle.
+            client_tests:
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+              - '!src/main/java/**'
+              - '!src/test/java/**'
+              - '!src/test/resources/**'
+              - '!src/main/resources/**'
+            # E2E runs against the built Docker image, so only what ships in it, or the Playwright tests
+            # themselves, can change its outcome. A change confined to server tests, client tests or
+            # documentation cannot. Playwright specs are named `*.spec.ts` as well, which is why the client
+            # specs are listed by location (src/main/webapp, packages) and not by suffix alone.
+            e2e_tests:
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+              - '!src/test/java/**'
+              - '!src/test/resources/**'
+              - '!src/test/javascript/**'
+              - '!src/test/vitest/**'
+              - '!src/main/webapp/**/*.spec.ts'
+              - '!packages/**/*.spec.ts'
+      #   area (default `some`): positive allow-lists (OR logic) gating the per-area jobs.
+      #   Each area includes its own workflow/helper files so edited checks run themselves.
+      - id: area
+        if: github.event_name != 'workflow_dispatch' || !inputs.force_build
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
+        with:
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
+          filters: |
+            has_java:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-quality.yml'
+              - 'src/main/java/**'
+              - 'src/test/java/**'
+              - 'build.gradle'
+              - 'gradle/**'
+              - 'config/checkstyle/**'
+              - 'config/spotless/**'
+              - 'config/pmd/**'
+              - 'supporting_scripts/analyze_java_files.py'
+              - 'supporting_scripts/find_slow_queries.py'
+            # bean-instantiations boots the *production* context (gradle test is skipped), so it
+            # only cares about main sources + the build graph — not test sources or the analysis
+            # helpers that has_java carries for the quality jobs.
+            has_beans:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-bean-instantiations.yml'
+              - 'src/main/java/**'
+              - 'src/main/resources/**'
+              - 'build.gradle'
+              - 'gradle/**'
+            # ci-liquibase.yml reads the changelogs and the seed data (src/main/resources/config/liquibase), the
+            # oldest supported release from DatabaseMigration.java, the database versions from gradle.properties,
+            # the JDBC drivers that Gradle resolves, and the contexts an end-to-end stack starts with
+            # (playwright.env). A change to none of them cannot change what it concludes.
+            has_liquibase:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-liquibase.yml'
+              - 'src/main/resources/config/liquibase/**'
+              - 'src/main/java/de/tum/cit/aet/artemis/core/config/migration/DatabaseMigration.java'
+              - 'supporting_scripts/liquibase/**'
+              - 'deployment/docker/artemis/config/playwright.env'
+              - 'build.gradle'
+              - 'gradle.properties'
+              - 'gradle/**'
+            has_skills:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-skills.yml'
+              - 'skills/**'
+              - 'supporting_scripts/check_skill_references.py'
+              - 'AGENTS.md'
+              - 'documentation/docs/developer/work-with-ai.mdx'
+              - '.claude-plugin/**'
+            has_docs:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-docs.yml'
+              - 'documentation/**'
+              - 'packages/tum-aet-ui/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'config/pnpm/**'
+              - 'supporting_scripts/generate-tum-aet-ui-reference-page.mjs'
+            has_tum_aet_ui:
+              - '.github/workflows/release-tum-aet-ui.yml'
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-quality.yml'
+              - 'angular.json'
+              - 'build.gradle'
+              - 'gradle/profile_dev.gradle'
+              - 'gradle/profile_prod.gradle'
+              - 'package.json'
+              - 'packages/tum-aet-ui/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'supporting_scripts/client/prebuild.mjs'
+              - 'config/client/**'
+              - 'config/eslint/**'
+              - 'config/stylelint/**'
+              - 'config/testing/**'
+              - 'config/pnpm/**'
+              - 'config/eslint/rules/tum-aet-ui-package.spec.mjs'
+              - 'config/eslint/rules/tum-aet-ui-release.spec.mjs'
+              - 'src/main/webapp/app/shared-ui/tum-aet-ui-integration/**'
+              - 'src/main/webapp/tailwind.css'
+              - 'tsconfig.json'
+              - 'config/client/tsconfig.app.json'
+              - 'config/client/tsconfig.serve.json'
+            has_i18n:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-translation.yml'
+              - 'supporting_scripts/ci/translation-file-checker/**'
+              - 'src/main/webapp/i18n/**'
+            has_gradle:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-gradle-wrapper.yml'
+              - 'gradle/wrapper/**'
+              - 'gradlew'
+              - 'gradlew.bat'
+            has_workflows:
+              - '.github/workflows/**'
+              - '.github/actions/**'
+              - '.github/actionlint.yaml'
+              - 'deployment/kubernetes/install-localci-kubernetes-ubuntu.sh'
+              - 'supporting_scripts/test_verified_installers.py'
+              - 'supporting_scripts/check_action_pinning.py'
+              - 'supporting_scripts/test_check_action_pinning.py'
+              - 'supporting_scripts/update_python_dependency_locks.sh'
+              - 'supporting_scripts/test_template_test_requirements.py'
+              - 'supporting_scripts/badges/**'
+              - 'src/main/resources/templates/c/gcc/test/testUtils/**'
+              - 'src/main/resources/templates/c_plus_plus/test/testUtils/**'
+            # Files that server tests read from disk but that the deny-lists above (and `build`) treat as
+            # irrelevant: the translations (GlobalSearchResultDTOTest, FeatureUsageAnnotationTest), the
+            # feature usage catalogue (FeatureUsageAnnotationTest compares it byte for byte) and the
+            # markdown templates under src/main/resources (served by FileResource and copied by
+            # DataExportCreationService, asserted on by FileIntegrationTest and DataExportCreationServiceTest).
+            # A change to any of them runs the server suite, even when `build` would skip the whole run.
+            has_server_test_inputs:
+              - 'src/main/webapp/i18n/**'
+              - 'documentation/docs/developer/feature-usage-catalogue.mdx'
+              - 'src/main/resources/**/*.md'
+            # The `codeql` deny-list above excludes `.github/**`; edits to the scan itself must still run it.
+            has_codeql_config:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-codeql.yml'
+              - '.github/codeql/**'
+            has_version:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-version-consistency.yml'
+              - 'build.gradle'
+              - 'config/openapi/openapi.yaml'
+              - 'README.md'
+              - 'supporting_scripts/update_version.sh'
+
+      - id: decide
+        env:
+          # Events with no diff baseline (release, merge_group root commit) or an explicit
+          # opt-in (workflow_dispatch + force_build) run everything.
+          FORCE: >-
+            ${{ (github.event_name == 'workflow_dispatch' && inputs.force_build)
+             || github.event_name == 'release'
+             || github.event_name == 'merge_group' }}
+          F_BUILD: ${{ steps.relevant.outputs.build }}
+          F_JAVA: ${{ steps.area.outputs.has_java }}
+          F_DOCS: ${{ steps.area.outputs.has_docs }}
+          F_I18N: ${{ steps.area.outputs.has_i18n }}
+          F_GRADLE: ${{ steps.area.outputs.has_gradle }}
+          F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
+          F_VERSION: ${{ steps.area.outputs.has_version }}
+          F_BEANS: ${{ steps.area.outputs.has_beans }}
+          F_LIQUIBASE: ${{ steps.area.outputs.has_liquibase }}
+          F_SKILLS: ${{ steps.area.outputs.has_skills }}
+          F_TUM_AET_UI: ${{ steps.area.outputs.has_tum_aet_ui }}
+          F_CODEQL: ${{ steps.relevant.outputs.codeql }}
+          F_CODEQL_CONFIG: ${{ steps.area.outputs.has_codeql_config }}
+          F_SERVER_TESTS: ${{ steps.relevant.outputs.server_tests }}
+          F_SERVER_TEST_INPUTS: ${{ steps.area.outputs.has_server_test_inputs }}
+          F_CLIENT_TESTS: ${{ steps.relevant.outputs.client_tests }}
+          F_E2E: ${{ steps.relevant.outputs.e2e_tests }}
+          EVENT_NAME: ${{ github.event_name }}
+          IS_DRAFT: ${{ github.event.pull_request.draft || false }}
+          CHANGED_FILES: ${{ github.event.pull_request.changed_files || 0 }}
+        run: |
+          set -Eeuo pipefail
+          if [ "$FORCE" = "true" ]; then
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
+              echo "$k=true" >> "$GITHUB_OUTPUT"
+            done
+          else
+            {
+              echo "build_relevant=${F_BUILD:-false}"
+              echo "has_java=${F_JAVA:-false}"
+              echo "has_docs=${F_DOCS:-false}"
+              echo "has_i18n=${F_I18N:-false}"
+              echo "has_gradle=${F_GRADLE:-false}"
+              echo "has_workflows=${F_WORKFLOWS:-false}"
+              echo "has_version=${F_VERSION:-false}"
+              echo "has_beans=${F_BEANS:-false}"
+              # The Liquibase checks follow the path filter, so a pull request with 3000 changed files or more
+              # always runs them: the pulls API stops at 3000, and a changelog beyond that limit would
+              # otherwise leave this output false, and all-required-ci-passed accepts a skipped check.
+              if [ "${F_LIQUIBASE:-false}" = "true" ] || { [ "$EVENT_NAME" = "pull_request" ] && [ "${CHANGED_FILES:-0}" -ge 3000 ]; }; then
+                echo "has_liquibase=true"
+              else
+                echo "has_liquibase=false"
+              fi
+              echo "has_skills=${F_SKILLS:-false}"
+              echo "has_tum_aet_ui=${F_TUM_AET_UI:-false}"
+              if [ "${F_CODEQL:-false}" = "true" ] || [ "${F_CODEQL_CONFIG:-false}" = "true" ]; then
+                echo "codeql_relevant=true"
+              else
+                echo "codeql_relevant=false"
+              fi
+              echo "server_test_inputs=${F_SERVER_TEST_INPUTS:-false}"
+              # Only a pull request may skip a suite or E2E. A push to develop, a merge group and a manual run
+              # still run both: the coverage badge and Sonar read both suites' coverage on develop, and
+              # develop is where a change that slipped past the pull request's own run would show up.
+              # A pull request that large is also never trusted with a skip: for a pull request the
+              # changed files come from the pulls API, which stops at 3000 files, so the filters may
+              # not have seen all of them.
+              if [ "$EVENT_NAME" != "pull_request" ] || [ "${CHANGED_FILES:-0}" -ge 3000 ]; then
+                echo "run_server_tests=true"
+                echo "run_client_tests=true"
+                echo "run_e2e=true"
+                echo "build_pr_image=true"
+              else
+                # E2E is the slowest stage, so a draft does not start it; `ready_for_review` starts a
+                # run that does. The image stays for a draft, because a test server deploys the image of
+                # an open pull request, drafts included. A pull request that only changes tests builds none.
+                echo "build_pr_image=${F_E2E:-false}"
+                if [ "${F_E2E:-false}" = "true" ] && [ "$IS_DRAFT" != "true" ]; then
+                  echo "run_e2e=true"
+                else
+                  echo "run_e2e=false"
+                fi
+                if [ "${F_SERVER_TESTS:-false}" = "true" ] || [ "${F_SERVER_TEST_INPUTS:-false}" = "true" ]; then
+                  echo "run_server_tests=true"
+                else
+                  echo "run_server_tests=false"
+                fi
+                if [ "${F_CLIENT_TESTS:-false}" = "true" ]; then
+                  echo "run_client_tests=true"
+                else
+                  echo "run_client_tests=false"
+                fi
+              fi
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build_relevant == 'true'
+    uses: ./.github/workflows/ci-build.yml
+    permissions:
+      # These are the CEILING for ci-build.yml, not a grant to its jobs: a called workflow can only
+      # narrow what the caller holds, and an unlisted scope is `none`. GitHub validates this when it
+      # builds the run graph, before any job starts and regardless of per-job `if:` conditions, so a
+      # scope missing here fails EVERY run of this workflow rather than only the release path.
+      #
+      # `contents: write` is for ci-build.yml's `upload-release` job (`gh release upload`);
+      # `packages: write` is for the GHCR push and for pushing image attestations/signatures;
+      # `id-token: write` and `attestations: write` are for the Sigstore provenance attestations in
+      # `upload-release` and `sign-release-image`. `build-war` still declares `contents: read` for
+      # itself, so the every-PR build keeps a read-only token.
+      contents: write
+      packages: write
+      id-token: write
+      attestations: write
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      # The PR image only feeds E2E and test-server deploys; a pull request that only changes tests needs neither.
+      # `!= 'false'`, so an output that went missing builds it.
+      build_pr_image: ${{ needs.detect-changes.outputs.build_pr_image != 'false' }}
+      is_pr: ${{ github.event_name == 'pull_request' }}
+      is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+      is_release: ${{ github.event_name == 'release' }}
+      # Release-eligible build (gates -Psbom). Tag pushes don't trigger ci.yml, so the
+      # tag case is covered by the `release` event rather than a `push: refs/tags/*` arm.
+      is_release_build: ${{ github.event_name == 'release' || (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/'))) }}
+      release_tag: ${{ github.event.release.tag_name || '' }}
+
+  test:
+    name: Test
+    needs: detect-changes
+    # `server_test_inputs` keeps a change that `build` ignores but a server test reads (the feature usage
+    # catalogue, the markdown templates) from merging unchecked; only the server suite runs for it.
+    if: >-
+      needs.detect-changes.outputs.build_relevant == 'true' ||
+      needs.detect-changes.outputs.server_test_inputs == 'true'
+    uses: ./.github/workflows/ci-test.yml
+    permissions:
+      contents: read
+      checks: write
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+      # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
+      run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+      # A pull request that cannot affect one suite does not run it (see `detect-changes`). Always true
+      # for anything but a pull request.
+      # `!= 'false'`, so that an output that went missing runs the suite instead of silently skipping it.
+      run_server_tests: ${{ needs.detect-changes.outputs.run_server_tests != 'false' }}
+      run_client_tests: ${{ needs.detect-changes.outputs.run_client_tests != 'false' }}
+      is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+      pr_author: ${{ github.event.pull_request.user.login || '' }}
+    secrets:
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
+  # In-run coverage table for INTERNAL PRs — posts as soon as `test` finishes (~28 min) instead of
+  # waiting for the whole run, which the slow e2e tail delays to ~120 min (and with it the
+  # workflow_run reporter). Trust model: runs on `pull_request` (NOT pull_request_target) in the PR's
+  # OWN context, so the token is the PR's own — write only on internal PRs (author is already a
+  # collaborator), force-read-only on forks. Hence the internal-PR `if` gate IS the security boundary,
+  # and checking out the PR head to read its source for accurate per-file columns is safe (no overlay,
+  # no API-derived-file dance the fork path needs). Fork PRs fall through to the hardened, fork-only
+  # pullrequest-coverage-reporter.yml. ADVISORY: deliberately NOT in all-required-ci-passed's needs.
+  # Minimum permissions are an invariant here (PR-author code runs): never add secrets or any write
+  # scope beyond pull-requests.
+  coverage-report:
+    name: Report PR Coverage
+    needs: [detect-changes, test]
+    if: >-
+      !cancelled() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      needs.detect-changes.outputs.build_relevant == 'true' &&
+      needs.test.result != 'skipped' && needs.test.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    # Serialize coverage writers for this PR; superseded workflow runs remain cancellable.
+    concurrency:
+      group: coverage-inrun-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Detect changed files
+        id: changes
+        # Advisory poster: a transient listFiles blip must not red this job. On failure the outputs
+        # are empty, the generate/update steps below skip, and the next push retries.
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
+      - name: Download server JaCoCo XML
+        if: steps.changes.outputs.has_server_changes == 'true'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          name: Server JaCoCo XML
+          path: build/reports/jacoco/
+      - name: Download client coverage summaries
+        if: steps.changes.outputs.has_client_changes == 'true'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          name: Client Coverage Summaries
+          # Nested path is deliberate: the single-file artifact unpacks flat, and it must land where
+          # local-pr-coverage.mjs reads it (VITEST_COVERAGE_SUMMARY). Don't shorten to build/test-results/.
+          path: build/test-results/vitest/coverage/
+      - name: Setup Node.js
+        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - name: Generate coverage table
+        id: coverage
+        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        env:
+          CLIENT_MODULES: ${{ steps.changes.outputs.client_modules }}
+          SERVER_MODULES: ${{ steps.changes.outputs.server_modules }}
+          CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
+          HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
+          HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
+        # PR head is checked out, so the shared script reads the PR's own source for accurate
+        # per-file columns natively (no overlay — that's the fork path's problem, not this one).
+        run: .github/scripts/generate-coverage-table.sh
+      - name: Update PR description with coverage
+        # Skip when detection failed (don't post a misleading "no changes"); a transient write blip
+        # must not red this advisory job either.
+        if: steps.changes.outcome == 'success'
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
+          HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
+          COVERAGE_TABLE: ${{ steps.coverage.outputs.coverage_table }}
+          COVERAGE_SUCCESS: ${{ steps.coverage.outputs.success }}
+          # The TEST job result, not the whole-run conclusion (which e2e pollutes on internal PRs).
+          TEST_CONCLUSION: ${{ needs.test.result }}
+          TEST_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          POST_AUTHOR_COMMENT: 'false'
+        with:
+          script: await require('./.github/scripts/update-pr-coverage.js')({ github, context, core })
+
+  quality:
+    name: Quality
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build_relevant == 'true'
+    uses: ./.github/workflows/ci-quality.yml
+    permissions:
+      contents: read
+      checks: write  # server-style's architecture-test reporter posts a check-run
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+      has_java: ${{ needs.detect-changes.outputs.has_java == 'true' }}
+      has_tum_aet_ui: ${{ needs.detect-changes.outputs.has_tum_aet_ui == 'true' }}
+
+  gradle-wrapper:
+    name: Validate Gradle Wrapper
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_gradle == 'true'
+    uses: ./.github/workflows/ci-gradle-wrapper.yml
+    permissions:
+      contents: read
+
+  workflows:
+    name: Lint Workflows
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_workflows == 'true'
+    uses: ./.github/workflows/ci-workflows.yml
+    permissions:
+      contents: read
+
+  docs:
+    name: Build Documentation
+    needs: detect-changes
+    # Every develop push builds the current tree, even when its immediate diff has no docs changes.
+    # GitHub concurrency keeps only one pending run: a newer push can evict a queued docs-changing
+    # run, so relying only on the per-commit path filter can otherwise leave Pages permanently stale.
+    if: >-
+      needs.detect-changes.outputs.has_docs == 'true'
+      || (github.event_name == 'push' && github.ref == 'refs/heads/develop')
+    uses: ./.github/workflows/ci-docs.yml
+    permissions:
+      contents: read
+    with:
+      # On a develop push, also upload the Pages artifact for the deploy-docs job to publish.
+      upload_pages_artifact: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+
+  # Publishes the docs to GitHub Pages on develop — folded in from the old deploy-documentation.yml
+  # so the entire CI/CD trigger surface lives in this one file. It consumes the Pages artifact the
+  # `docs` job uploaded (no second build) and gates on that build passing. Job-level
+  # `concurrency: pages` serializes Pages deploys across runs and against the manual redeploy in
+  # deploy-documentation.yml. PRs skip it, so `pages`/`id-token` write scope is never granted on a PR.
+  deploy-docs:
+    name: Deploy Documentation
+    needs: [detect-changes, docs]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  # Publishes the combined server + client line-coverage figure that the README badge renders,
+  # replacing the Codacy coverage badge (Codacy stopped reporting a value and the badge read 0%).
+  #
+  # Develop-push only, and gated on `test` having SUCCEEDED — that gate is the stability property.
+  # Coverage from a partially failed run is artificially low (tests that never ran cover nothing), so
+  # republishing it would make the badge dip on ambient flakiness. Skipping instead leaves the last
+  # published value in place, which is what we want a flaky run to do.
+  #
+  # The value lands on the orphan `badges` branch, never on develop, so this adds no commits to the
+  # mainline history. Two independent reasons it cannot loop: no workflow triggers on `badges` (every
+  # push trigger in this repo filters to develop/main/release/*), and GitHub does not fire workflows
+  # for pushes made with GITHUB_TOKEN.
+  #
+  # ADVISORY: never in another job's `needs:` and never gating. Scripted failure paths warn and exit
+  # 0; job-level `continue-on-error` is the final safety net for action/runner failures, because a
+  # badge that could not be recomputed must not turn develop red.
+  coverage-badge:
+    name: Publish Coverage Badge
+    needs: test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.test.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    permissions:
+      # Sole purpose: pushing coverage.json and coverage.svg to the orphan `badges` branch. Nothing here runs
+      # PR-author code — the job only reads artifacts the trusted `test` job produced.
+      contents: write
+    # No job-level `concurrency:` here, deliberately. The umbrella's own `ci-${{ github.ref }}` group
+    # (cancel-in-progress false for push) already serializes develop runs end to end, so two of these
+    # can never be in flight at once. The shared publisher retries a non-force push over concurrent
+    # metadata updates from publish-badges.yml; no second pending-job cancellation group is needed.
+    steps:
+      - name: Check out the badge tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            supporting_scripts/code-coverage/coverage-badge
+            supporting_scripts/badges
+          # This checkout only supplies the script; the push happens from the `badges` checkout below.
+          persist-credentials: false
+
+      - name: Check out the badges branch
+        id: badges-checkout
+        # `continue-on-error` keeps the job advisory: if the orphan branch is missing or unreadable,
+        # the guard step below warns and every later step no-ops.
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: badges
+          path: badges-branch
+          fetch-depth: 1
+
+      - name: Warn when the badges branch is unavailable
+        if: steps.badges-checkout.outcome != 'success'
+        run: |
+          echo "::warning::Could not check out the 'badges' branch, so the published coverage badge stands." \
+               "If the branch was deleted, re-seed it as described in" \
+               "supporting_scripts/code-coverage/coverage-badge/README.md."
+
+      - name: Download the server JaCoCo report
+        if: steps.badges-checkout.outcome == 'success'
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: Server JaCoCo XML
+          path: server-coverage
+
+      - name: Download the client coverage summary
+        if: steps.badges-checkout.outcome == 'success'
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: Client Coverage Summaries
+          path: client-coverage
+
+      # Pinned rather than relying on the runner image's Node, matching the `coverage-report` job
+      # above: without it a runner-image change degrades to exit 127, which this job would swallow as
+      # a warning and the badge would silently stop updating.
+      - name: Setup Node.js
+        if: steps.badges-checkout.outcome == 'success'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Compute and publish the coverage badge
+        if: steps.badges-checkout.outcome == 'success'
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -Eeuo pipefail
+
+          # Exit 0 publishes, 3 deliberately keeps the previous value, anything else is unexpected.
+          # `set +e` around the call so a non-zero status is inspected rather than killing the step.
+          set +e
+          node supporting_scripts/code-coverage/coverage-badge/compute-coverage-badge.mjs \
+            --jacoco server-coverage/aggregated/jacocoTestReport.xml \
+            --vitest client-coverage/coverage-summary.json \
+            --previous badges-branch/coverage.json \
+            --out badges-branch/coverage.json \
+            --sha "$COMMIT_SHA"
+          status=$?
+          set -e
+
+          # 3 is the healthy no-op (nothing moved). 4 means a guard rejected the value, which
+          # warrants a warning: the collapse guard latches on the last published total, so a
+          # legitimate halving of the codebase would otherwise freeze the badge invisibly.
+          if [ "$status" -eq 3 ]; then
+            echo "::notice::Coverage badge unchanged; the published value stands."
+          fi
+          if [ "$status" -eq 4 ]; then
+            echo "::warning::Coverage badge guard rejected the computed value (reason logged above);" \
+                 "the published value stands. If this repeats on every push, re-seed the branch as" \
+                 "described in supporting_scripts/code-coverage/coverage-badge/README.md."
+            exit 0
+          fi
+          if [ "$status" -ne 0 ] && [ "$status" -ne 3 ]; then
+            echo "::warning::Coverage badge computation failed (exit ${status}); keeping the published value."
+            exit 0
+          fi
+
+          # Render even when the percentage is unchanged, so existing JSON gains its SVG
+          # on the first successful run after migrating away from the hosted badge API.
+          if ! node supporting_scripts/badges/render-badges.mjs coverage badges-branch; then
+            echo "::warning::Could not render the coverage badge; the published value stands."
+            exit 0
+          fi
+          if ! node supporting_scripts/badges/publish-badges.mjs badges-branch coverage.json coverage.svg; then
+            echo "::warning::Could not publish the coverage badge; the published value stands."
+          fi
+          exit 0
+
+  # SonarQube Cloud analysis, running alongside Codacy so the two code-quality grades can be compared
+  # on the same code before either is trusted with a README badge. Scope is pinned to Codacy's in
+  # `gradle/sonar.gradle`; see README.md ("The code quality analyses").
+  #
+  # Develop-push only, and gated on `test` having SUCCEEDED, for the same reason `coverage-badge`
+  # above is: coverage imported from a partially failed run is artificially low, and unlike a badge
+  # this would persist into Sonar's own history as a real dip. Skipping instead leaves the last
+  # analysis standing. `ci-sonar.yml` is separately dispatchable for an on-demand grade.
+  #
+  # ADVISORY: never in another job's `needs:` and never gating — the called job is
+  # `continue-on-error`, so a Sonar outage or an expired token cannot turn develop red.
+  sonar:
+    name: Sonar
+    needs: test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.test.result == 'success' }}
+    uses: ./.github/workflows/ci-sonar.yml
+    permissions:
+      contents: read
+      actions: read  # ci-sonar.yml lists runs and downloads artifacts when it is dispatched on its own
+    with:
+      commit_sha: ${{ github.sha }}
+      with_coverage: true
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  translation:
+    name: Check Translation Keys
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_i18n == 'true'
+    uses: ./.github/workflows/ci-translation.yml
+    permissions:
+      contents: read
+
+  version-consistency:
+    name: Version Consistency
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_version == 'true'
+    uses: ./.github/workflows/ci-version-consistency.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  bean-instantiations:
+    name: Bean Instantiations
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_beans == 'true'
+    uses: ./.github/workflows/ci-bean-instantiations.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Not folded into `quality`: that job is gated on `build_relevant`, which is false when every
+  # changed file is markdown. A PR editing only skills/ would then skip the check that guards it.
+  skills:
+    name: Agent Skills
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_skills == 'true'
+    uses: ./.github/workflows/ci-skills.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Prose changes need terminology checks regardless of which area changed.
+  terminology:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    name: Terminology
+    uses: ./.github/workflows/ci-terminology.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Deleting the last caller can orphan code in any area of the repository.
+  dead-code:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    name: Dead Code
+    uses: ./.github/workflows/ci-dead-code.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Check baseline consistency and misplaced migrations. Two jobs start a container and replay every
+  # changelog, so it runs only when something it reads changed (`has_liquibase` in `detect-changes`).
+  # `detect-changes` is skipped for `@tumaet/*` releases, and so is this job with it.
+  liquibase:
+    name: Liquibase Schema
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_liquibase == 'true'
+    uses: ./.github/workflows/ci-liquibase.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Required for internal PRs — part of the `all-required-ci-passed` gate (a test that fails all
+  # its retries blocks the merge; flaky-recovered runs stay green). Depends on `build` for the
+  # Docker image, not on `test`, so a flaky unit-test run never blocks it; runs only when `build`
+  # succeeded (enforced implicitly by `needs:` without `always()`). Fork PRs are excluded: they
+  # cannot push the image to GHCR (ci-build.yml's docker-pr is internal-PR-only), so E2E would only
+  # fail at setup with no image to pull — the gate accepts that skip as a pass on forks.
+  e2e:
+    name: E2E
+    needs: [detect-changes, build]
+    # A pull request that only changes tests (server, client) or documentation cannot change the outcome of
+    # E2E, the slowest stage, and neither can a draft be merged, so neither starts it (`run_e2e`, see
+    # `detect-changes`). `!= 'false'`, so an output that went missing runs E2E instead of skipping it.
+    if: >-
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository) &&
+      needs.detect-changes.outputs.run_e2e != 'false'
+    uses: ./.github/workflows/ci-e2e.yml
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    with:
+      branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+      is_pr: ${{ github.event_name == 'pull_request' }}
+      pr_number: ${{ github.event.pull_request.number || 0 }}
+    secrets:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+      HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+
+  # Advisory — not in the required gate. CodeQL builds the code itself (its tracer must observe
+  # compilation), so it runs independently of `build`, in parallel, on the abundant GitHub-hosted
+  # pool — it never touches the self-hosted runners and adds no merge latency. Fork PRs are
+  # excluded: `security-events: write` (the SARIF upload) is downgraded to read-only on fork
+  # tokens, so CodeQL would only fail at upload. Forks are still covered post-merge by the push
+  # scan on `develop`/`main` and the weekly scheduled scan (codeql-analysis.yml).
+  #
+  # The hosted pool is shared with the required jobs and a scan holds a slot for ~12 minutes, so it
+  # is not run when it cannot tell us anything new: not for a change confined to tests, translations,
+  # generated code or docs (`codeql_relevant`), and not for a draft PR. `ready_for_review` is one of
+  # the pull_request types above, so promoting a draft starts the scan.
+  codeql:
+    name: CodeQL
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.codeql_relevant == 'true' &&
+      (github.event_name != 'pull_request' ||
+       (github.event.pull_request.head.repo.full_name == github.repository &&
+        !github.event.pull_request.draft))
+    uses: ./.github/workflows/ci-codeql.yml
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # The single required status check. Depends on every deterministic job — build, test, and
+  # the quality gates — plus `e2e`. `e2e` is required, but with a flakiness-aware verdict: an E2E
+  # result of `failure` includes test, infrastructure and unclassified failures. Helios history
+  # (classify-failures.js) can exonerate known flakes; when history is unavailable, the ordinary
+  # Playwright verdict applies and failures after retries remain blocking. A run whose only
+  # failures are known-flaky is exonerated and reports success (flaky-recovered runs, where
+  # Playwright exits 0, also stay green). This does add merge latency — the gate waits for the full E2E
+  # run — the accepted trade-off for not merging over a reproducible regression. `e2e` reflects its
+  # honest outcome via ci-e2e's report-results job (continue-on-error test steps, then a final step
+  # that fails the job only on a real / infra / unclassified verdict).
+  # `detect-changes` is included so a change-detection failure fails the gate closed. Path-skipped
+  # jobs report `skipped`, which the gate accepts as a pass.
+  #
+  # INVARIANT (load-bearing): a required job's `skipped` is accepted as a pass, so the gate is
+  # only safe while every job whose skip could hide a failure has its failure-producing
+  # dependency ALSO listed here. This holds for `e2e` too: it `needs: [detect-changes, build]`,
+  # both of which are required here, so an `e2e` skip caused by an upstream failure is still
+  # caught. If a future required job is made to `needs:` another required job's output, add that
+  # producer here too, or a cascading skip could pass the gate green over broken code.
+  all-required-ci-passed:
+    name: All required CI Passed
+    if: ${{ !cancelled() }}
+    needs:
+      - detect-changes
+      - build
+      - test
+      - quality
+      - gradle-wrapper
+      - translation
+      - docs
+      - workflows
+      - version-consistency
+      - bean-instantiations
+      - skills
+      - terminology
+      - dead-code
+      - liquibase
+      - e2e
+    runs-on: ubuntu-latest
+    permissions: {}  # reads only the `needs` context; no checkout, no token scope
+    timeout-minutes: 5
+    steps:
+      # Renders an actionable report to the job summary on failure and fails closed on any
+      # non-`success`/non-`skipped` result. `cancelled` is never waved through, preserving the
+      # skipped==pass invariant above. Kept inline (like `ci-summary`) so the required gate needs no
+      # checkout and no token scope.
+      - name: Evaluate gate
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          set -Eeuo pipefail
+          # Fail closed: malformed/empty NEEDS must abort red, never pass green. `jq -e` on a
+          # non-object exits non-zero (aborting under set -e); command substitution (not `< <(jq)`)
+          # makes a parse error abort here too, instead of the loop reading nothing and passing.
+          jq -e 'type == "object" and length > 0' <<< "$NEEDS" > /dev/null
+          parsed=$(jq -r 'to_entries[] | "\(.key)\t\(.value.result)"' <<< "$NEEDS")
+
+          declare -a failed=() cancelled=()
+          while IFS=$'\t' read -r job result; do
+            case "$result" in
+              success | skipped) ;;
+              cancelled) cancelled+=("$job") ;;
+              *) failed+=("$job") ;;  # failure or any unrecognised result -> fail closed
+            esac
+          done <<< "$parsed"
+
+          if [ "$(( ${#failed[@]} + ${#cancelled[@]} ))" -eq 0 ]; then
+            echo "::notice::All required CI checks passed."
+            exit 0
+          fi
+
+          code_list() { local out='' j; for j in "$@"; do out+="${out:+, }\`$j\`"; done; printf '%s' "$out"; }
+          {
+            echo "## ❌ Required CI did not pass"
+            [ "${#failed[@]}" -gt 0 ] && printf '\n### ❌ Failed — fix before merging\n\n%s — open each failed check from the **Checks** tab to see the error.\n' "$(code_list "${failed[@]}")"
+            [ "${#cancelled[@]}" -gt 0 ] && printf '\n### 🚫 Cancelled — not a test failure\n\n%s — a job hit its timeout, was preempted, or a newer push superseded this run. Re-run it if this run is still current.\n' "$(code_list "${cancelled[@]}")"
+            for j in "${failed[@]}" "${cancelled[@]}"; do
+              [ "$j" = test ] && { printf "\n> 💡 If \`test\` hung, a JVM thread dump is attached under **Artifacts → Server Test Thread Dumps**.\n"; break; }
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          annotation='Required CI did not pass —'
+          [ "${#failed[@]}" -gt 0 ] && annotation+=" failed: $(code_list "${failed[@]}");"
+          [ "${#cancelled[@]}" -gt 0 ] && annotation+=" cancelled: $(code_list "${cancelled[@]}");"
+          echo "::error::$annotation see the job summary for what to do."
+          exit 1
+
+  # Informational Summary-page report (timeline + per-job table); never required, never in
+  # another job's `needs:`, so it cannot block merging.
+  ci-summary:
+    name: CI Summary
+    if: ${{ !cancelled() }}
+    needs:
+      - detect-changes
+      - build
+      - test
+      - quality
+      - gradle-wrapper
+      - workflows
+      - docs
+      - translation
+      - version-consistency
+      - bean-instantiations
+      - skills
+      - terminology
+      - dead-code
+      - liquibase
+      - e2e
+      - codeql
+      - coverage-report
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read  # actions-timeline reads the run's jobs API
+    timeout-minutes: 5
+    steps:
+      - name: Render run timeline
+        uses: Kesin11/actions-timeline@57fc93f20c6da7fbc14063c6d24a2a5627c799ad  # v3.2.0
+        with:
+          show-waiting-runner: true
+      - name: Render summary
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          # Everything except these is required (i.e. in all-required-ci-passed's needs).
+          # `e2e` is now required (blocks merge on a real, non-flaky regression; known-flaky-only
+          # runs are exonerated); only codeql and coverage-report remain advisory.
+          ADVISORY: codeql coverage-report
+        run: |
+          set -Eeuo pipefail
+          icon() {
+            case "$1" in
+              success)   printf '✅' ;;
+              failure)   printf '❌' ;;
+              skipped)   printf '⏭️' ;;
+              cancelled) printf '🚫' ;;
+              error)     printf '⚠️' ;;  # e2e_result aggregate (infra error)
+              *)         printf '❔' ;;
+            esac
+          }
+          # Only a REQUIRED check's failure is locally fixable + merge-blocking; advisory
+          # (e2e/codeql) failures are not, and detect-changes has no table row, so none of them
+          # should trigger the local-fix hints.
+          required_failure=$(jq -r --arg adv "$ADVISORY" '
+            ($adv | split(" ") + ["detect-changes"]) as $a
+            | any(to_entries[]; .value.result == "failure" and (.key as $k | $a | index($k) | not))
+          ' <<< "$NEEDS")
+          {
+            echo "## CI Summary"
+            echo
+            echo "| Job | Role | Result |"
+            echo "|-----|------|--------|"
+            while IFS=$'\t' read -r job result; do
+              if [ "$job" = "detect-changes" ]; then continue; fi
+              case " $ADVISORY " in
+                *" $job "*) role='advisory' ;;
+                *)          role='**required**' ;;
+              esac
+              printf '| `%s` | %s | %s %s |\n' "$job" "$role" "$(icon "$result")" "$result"
+            done < <(jq -r 'to_entries[] | "\(.key)\t\((.value.outputs.e2e_result // "") as $o | if $o == "" then .value.result else $o end)"' <<< "$NEEDS")
+
+            # Local-fix hints, shown only when a required job failed; commands mirror CLAUDE.md.
+            if [ "$required_failure" = "true" ]; then
+              echo
+              echo "<details><summary>💡 Common local fixes</summary>"
+              echo
+              echo "| Symptom | Command |"
+              echo "|---------|---------|"
+              echo "| Server formatting (Spotless) | \`./gradlew spotlessApply\` |"
+              echo "| Client lint / formatting | \`pnpm run lint:fix && pnpm run prettier:write\` |"
+              echo "| Java checkstyle | \`./gradlew checkstyleMain checkstyleTest\` |"
+              echo
+              echo "Failed test details are in the **Test** and **E2E** checks above."
+              echo "</details>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

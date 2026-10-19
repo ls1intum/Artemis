@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDetailLineChartComponent, SwitchTimeSpanDirection } from 'app/course/manage/detail/course-detail-line-chart.component';
@@ -10,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ComponentRef } from '@angular/core';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 class MockCourseManagementService {
     getStatisticsData = vi.fn().mockReturnValue(of([]));
@@ -18,8 +17,6 @@ class MockCourseManagementService {
 }
 
 describe('CourseDetailLineChartComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseDetailLineChartComponent>;
     let component: CourseDetailLineChartComponent;
     let componentRef: ComponentRef<CourseDetailLineChartComponent>;
@@ -35,7 +32,6 @@ describe('CourseDetailLineChartComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 
@@ -189,5 +185,22 @@ describe('CourseDetailLineChartComponent', () => {
         for (let week = 0; week < 5; week++) {
             expect(component.data()[0].series[week].value).toBe(0);
         }
+    });
+
+    it('should keep the week label in the tooltip title and not repeat it in the body', () => {
+        component.absoluteSeries = [{ name: '42', absoluteValue: 11 }];
+        const tooltip = component.chartConfig().tooltip as TumAetUiChartTooltipConfig;
+
+        expect(tooltip.label!({ seriesIndex: 0, index: 0, label: '42', seriesLabel: 'Students', value: 22 })).toBe('Students: 11 (22%)');
+    });
+
+    it('should label the x axis with the calendar weeks and stretch the average line across all of them', () => {
+        fixture.detectChanges();
+
+        const { labels, series } = component.chartData();
+        expect(labels).toEqual(component.data()[0].series.map((point) => point.name));
+
+        const average = series.find((entry) => entry.referenceLine);
+        expect(average?.data).toHaveLength(labels.length);
     });
 });

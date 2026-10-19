@@ -17,57 +17,51 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
-import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.notification.dto.GlobalNotificationSettingDTO;
 import de.tum.cit.aet.artemis.notification.dto.UpdateGlobalNotificationSettingDTO;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 
 @Profile(PROFILE_CORE)
+@FeatureUsage(UserFeature.NOTIFICATION_SETTINGS)
 @RestController
-// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/" prefix.
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_PREFIX })
+@RequestMapping("api/notification/")
 @Lazy
 public class GlobalNotificationSettingResource {
 
     private final GlobalNotificationSettingService globalNotificationSettingService;
-
-    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
     private final UserRepository userRepository;
 
     /**
      * Creates a new {@code GlobalNotificationSettingResource}.
      *
-     * @param globalNotificationSettingService    business service used to create, update and read settings
-     * @param globalNotificationSettingRepository repository used to fetch global notification settings
-     * @param userRepository                      repository used to fetch the currently authenticated {@link User}
+     * @param globalNotificationSettingService business service used to create, update and read settings
+     * @param userRepository                   repository used to fetch the currently authenticated {@link User}
      */
-    public GlobalNotificationSettingResource(GlobalNotificationSettingService globalNotificationSettingService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository, UserRepository userRepository) {
+    public GlobalNotificationSettingResource(GlobalNotificationSettingService globalNotificationSettingService, UserRepository userRepository) {
         this.globalNotificationSettingService = globalNotificationSettingService;
-        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
         this.userRepository = userRepository;
     }
 
     /**
      * {@code PUT /global-notification-settings/{notificationType}} : Update (or create) the
-     * {@link GlobalNotificationSetting} for the given {@code notificationType}.
+     * global notification setting for the given {@code notificationType}.
      *
      * @param notificationType the name of the {@link GlobalNotificationType};
      * @param request          the JSON request body, e.g. {@code {"enabled":true}}
-     * @return {@link ResponseEntity} containing the persisted setting and HTTP 200 on success;
+     * @return {@link ResponseEntity} containing the persisted setting DTO and HTTP 200 on success;
      *         HTTP 400 if the body is missing the {@code enabled} property or if {@code notificationType} is unknown
      */
     @PutMapping("global-notification-settings/{notificationType}")
     @EnforceAtLeastStudent
-    public ResponseEntity<GlobalNotificationSetting> updateSetting(@PathVariable GlobalNotificationType notificationType, @RequestBody UpdateGlobalNotificationSettingDTO request) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+    public ResponseEntity<GlobalNotificationSettingDTO> updateSetting(@PathVariable GlobalNotificationType notificationType,
+            @RequestBody UpdateGlobalNotificationSettingDTO request) {
+        User user = userRepository.getUserWithAuthorities();
         boolean enabled = request.enabled();
-        return ResponseEntity.ok(globalNotificationSettingService.createOrUpdateSetting(user, notificationType, enabled));
+        return ResponseEntity.ok(GlobalNotificationSettingDTO.from(globalNotificationSettingService.createOrUpdateSetting(user, notificationType, enabled)));
     }
 
     /**
@@ -75,13 +69,13 @@ public class GlobalNotificationSettingResource {
      *
      * @return {@link ResponseEntity} with HTTP status 200 (OK) and a map containing each {@link GlobalNotificationType}
      *         as a key (using {@code name()}) and a boolean value indicating whether notifications of that type are enabled.
-     *         If a specific type has no stored setting, it defaults to {@code true}.
+     *         If a specific type has no stored setting, it defaults to {@code true}, except for test accounts, where it defaults to {@code false}.
      */
     @GetMapping("global-notification-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, Boolean>> getAllSettings() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Map<String, Boolean> result = globalNotificationSettingRepository.getAllSettingsAsMap(user.getId());
+        // Not getUserWithAuthorities: it additionally joins the authorities collection, and only the id and the login are used.
+        Map<String, Boolean> result = globalNotificationSettingService.getAllSettingsAsMap(userRepository.getUser());
         return ResponseEntity.ok(result);
     }
 }

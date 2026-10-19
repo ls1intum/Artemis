@@ -19,6 +19,7 @@ import { SearchTermPageableSearch, SortingOrder } from 'app/foundation/paginatio
 import { AlertService } from 'app/foundation/service/alert.service';
 import { lastValueFrom } from 'rxjs';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type DialogStep = 'selectCourse' | 'selectOptions';
 
@@ -115,7 +116,7 @@ export class CourseMaterialImportDialogComponent {
         // Load courses when dialog opens
         effect(() => {
             if (this.show()) {
-                untracked(() => this.loadCourses());
+                void untracked(() => this.loadCourses());
             }
         });
     }
@@ -193,7 +194,7 @@ export class CourseMaterialImportDialogComponent {
      */
     onSearchChange(): void {
         this.first.set(0);
-        this.loadCourses();
+        void this.loadCourses();
     }
 
     /**
@@ -202,7 +203,7 @@ export class CourseMaterialImportDialogComponent {
     onPageChange(event: PaginatorState): void {
         this.first.set(event.first ?? 0);
         this.rows.set(event.rows ?? 10);
-        this.loadCourses();
+        void this.loadCourses();
     }
 
     /**
@@ -262,16 +263,18 @@ export class CourseMaterialImportDialogComponent {
         const course = this.selectedCourse();
         if (!course?.id || !this.canImport()) return;
 
-        const options: CourseMaterialImportOptionsDTO = {
-            sourceCourseId: course.id,
-            ...this.getImportOptions(),
-        };
+        const options: CourseMaterialImportOptionsDTO = cloneWith(this.getImportOptions(), { sourceCourseId: course.id });
 
         try {
             this.isImporting.set(true);
-            await lastValueFrom(this.importService.importMaterial(this.targetCourseId(), options));
+            const result = await lastValueFrom(this.importService.importMaterial(this.targetCourseId(), options));
             this.importStarted.emit(options);
-            this.alertService.success('artemisApp.course.import.success');
+            if (result.errors?.length) {
+                // The server imports what it can and reports each failed item, so a partial import must not read as a success.
+                this.alertService.warning('artemisApp.course.import.partialSuccess', { errors: result.errors.join('; ') });
+            } else {
+                this.alertService.success('artemisApp.course.import.success');
+            }
             this.close();
         } catch (error) {
             onError(this.alertService, error);

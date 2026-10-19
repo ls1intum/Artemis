@@ -31,6 +31,12 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
@@ -38,6 +44,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -120,6 +127,25 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void overview_listsProactiveOnlySession() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        // A session whose only message is a proactive (PROACTIVE_STRUGGLE) LLM nudge - no USER message - must still be listed.
+        var session = IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(programmingExercise, user);
+        var msg = new IrisMessage();
+        msg.addContent(new IrisTextMessageContent("Have you considered the empty input?"));
+        msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        msg.setSender(IrisMessageSender.LLM);
+        msg.setSession(session);
+        session.getMessages().add(msg);
+        saveChatSessionWithMessages(session);
+
+        List<IrisChatSessionDTO> result = request.getList(overviewUrl(), HttpStatus.OK, IrisChatSessionDTO.class);
+
+        assertThat(findByEntityId(result, programmingExercise.getId()).id()).isEqualTo(session.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void overview_returnsEmptyWhenIrisDisabledForCourse() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
@@ -135,7 +161,7 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
 
-        user.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
         userTestRepository.save(user);
 
         assertThat(request.getList(overviewUrl(), HttpStatus.OK, IrisChatSessionDTO.class)).isEmpty();
@@ -155,6 +181,23 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
 
         assertThat(response.id()).isEqualTo(session.getId());
         verify(irisCitationService).resolveCitationInfoFromMessages(any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getSessionById_leavesOutConversationSummaries() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        IrisChatSession session = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+        addMessage(session, IrisMessageSender.USER, new IrisTextMessageContent("What is a hash table?"));
+        addMessage(session, IrisMessageSender.LLM, new IrisTextMessageContent("A hash table maps keys to values."));
+        var summary = new IrisJsonMessageContent();
+        summary.setJsonContent("{\"summary\":\"The student asked what a hash table is.\",\"coversThroughMessageId\":1}");
+        addMessage(session, IrisMessageSender.SUMMARY, summary);
+        saveChatSessionWithMessages(session);
+
+        IrisChatSessionResponseDTO response = request.get(sessionUrl(session.getId()), HttpStatus.OK, IrisChatSessionResponseDTO.class);
+
+        assertThat(response.messages()).extracting(IrisMessageResponseDTO::sender).containsExactly(IrisMessageSender.USER, IrisMessageSender.LLM);
     }
 
     @Test
@@ -275,15 +318,17 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
     @ParameterizedTest
     @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getCurrent_returns200AndPersistsSession(IrisChatMode mode) throws Exception {
+    void getCurrent_returns200AndPersistsCourseSession(IrisChatMode mode) throws Exception {
         long entityId = entityIdFor(mode);
 
         var response = request.postWithResponseBody(currentUrl(mode, entityId), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
+        // A fresh entry always resolves to an (empty) course session regardless of the requested mode: no
+        // exercise/lecture session is created up front, the context is layered on later via a context switch.
         assertThat(response.id()).isNotNull();
-        assertThat(response.mode()).isEqualTo(mode);
+        assertThat(response.mode()).isEqualTo(IrisChatMode.COURSE_CHAT);
         IrisChatSession persisted = irisChatSessionRepository.findById(response.id()).orElseThrow();
-        assertThat(persisted.getMode()).isEqualTo(mode);
+        assertThat(persisted.getMode()).isEqualTo(IrisChatMode.COURSE_CHAT);
         assertThat(persisted.getCourseId()).isEqualTo(course.getId());
     }
 
@@ -295,26 +340,24 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
 
-    @ParameterizedTest
-    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void createSession_returns201WithLocationHeader(IrisChatMode mode) throws Exception {
-        long entityId = entityIdFor(mode);
-
-        URI location = request.post(createUrl(mode, entityId), null, HttpStatus.CREATED, MediaType.APPLICATION_JSON, true, null);
+    void createSession_returns201WithLocationHeader() throws Exception {
+        // "New Chat" always creates an empty course session, so the endpoint takes only a courseId.
+        URI location = request.post(createUrl(course.getId()), null, HttpStatus.CREATED, MediaType.APPLICATION_JSON, true, null);
 
         assertThat(location).isNotNull();
         String path = location.getPath();
         assertThat(path).matches("/api/iris/chat/courses/" + course.getId() + "/sessions/\\d+");
         long createdId = Long.parseLong(path.substring(path.lastIndexOf('/') + 1));
         IrisChatSession persisted = irisChatSessionRepository.findById(createdId).orElseThrow();
-        assertThat(persisted.getMode()).isEqualTo(mode);
+        assertThat(persisted.getMode()).isEqualTo(IrisChatMode.COURSE_CHAT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSession_doesNotInvokeCitationService() throws Exception {
-        request.postWithResponseBody(createUrl(IrisChatMode.COURSE_CHAT, course.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        request.postWithResponseBody(createUrl(course.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
 
         verify(irisCitationService, never()).enrichSessionWithCitationInfo(any());
     }
@@ -333,14 +376,14 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createSession_instructorCanCreate() throws Exception {
-        var response = request.postWithResponseBody(createUrl(IrisChatMode.COURSE_CHAT, course.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(createUrl(course.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         assertThat(response.id()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCurrent_forbiddenWhenStudentNotEnrolledInCourse() throws Exception {
-        Course otherCourse = courseUtilService.createCourseWithCustomStudentGroupName("iris-resource-restricted", "restricted-students");
+        Course otherCourse = courseUtilService.createCourse();
         activateIrisFor(otherCourse);
 
         request.postWithResponseBody(currentUrl(IrisChatMode.COURSE_CHAT, otherCourse.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);
@@ -380,13 +423,6 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
             request.postWithResponseBody(currentUrl(IrisChatMode.TEXT_EXERCISE_CHAT, examExerciseId), null, IrisChatSessionResponseDTO.class, HttpStatus.CONFLICT);
         }
 
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void createSession_conflictForExamExercise() throws Exception {
-            long examExerciseId = createExamTextExerciseId();
-            request.postWithResponseBody(createUrl(IrisChatMode.TEXT_EXERCISE_CHAT, examExerciseId), null, IrisChatSessionResponseDTO.class, HttpStatus.CONFLICT);
-        }
-
         private long createExamTextExerciseId() {
             var exam = examUtilService.addExamWithExerciseGroup(course, true);
             exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, false);
@@ -412,8 +448,16 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         return "/api/iris/chat/sessions/current?mode=" + mode.name() + "&entityId=" + entityId;
     }
 
-    private String createUrl(IrisChatMode mode, long entityId) {
-        return "/api/iris/chat/sessions?mode=" + mode.name() + "&entityId=" + entityId;
+    private String createUrl(long courseId) {
+        return "/api/iris/chat/sessions?courseId=" + courseId;
+    }
+
+    private static void addMessage(IrisSession session, IrisMessageSender sender, IrisMessageContent content) {
+        var message = new IrisMessage();
+        message.addContent(content);
+        message.setSender(sender);
+        message.setSession(session);
+        session.getMessages().add(message);
     }
 
     private void saveChatSessionWithMessages(IrisSession session) {

@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
-
 /**
  * Transfers information about plagiarism checks result and its statistics
  *
@@ -11,5 +9,5 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
  * @param plagiarismResultStats the statistics regarding the plagiarism result
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismResultDTO(PlagiarismResult plagiarismResult, PlagiarismResultStats plagiarismResultStats) {
+public record PlagiarismResultDTO(PlagiarismResultDetailsDTO plagiarismResult, PlagiarismResultStatsDTO plagiarismResultStats) {
 }

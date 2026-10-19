@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
@@ -31,7 +30,6 @@ const sections: DetailOverviewSection[] = [
 ];
 
 describe('DetailOverviewList', () => {
-    setupTestBed({ zoneless: true });
     let component: DetailOverviewListComponent;
     let fixture: ComponentFixture<DetailOverviewListComponent>;
     let modelingService: ModelingExerciseService;
@@ -60,8 +58,8 @@ describe('DetailOverviewList', () => {
     it('should initialize and destroy', () => {
         fixture.componentRef.setInput('sections', sections);
         fixture.detectChanges();
-        expect(component.headlines).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
-        expect(component.headlinesRecord).toStrictEqual({ 'headline.1': 'headline-1' });
+        expect(component.headlines()).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
+        expect(component.headlinesRecord()).toStrictEqual({ 'headline.1': 'headline-1' });
         expect(DetailOverviewListComponent).not.toBeNull();
     });
 

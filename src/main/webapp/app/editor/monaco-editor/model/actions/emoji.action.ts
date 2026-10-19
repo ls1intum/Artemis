@@ -54,25 +54,32 @@ export class EmojiAction extends TextEditorAction {
      */
     private createEmojiPicker(editor: TextEditor, position: { x: number; y: number }): void {
         const positionStrategy = this.positionBuilder
-            .global()
-            .left(`${position.x - 15}px`)
-            .top(`${position.y - 15}px`);
+            .flexibleConnectedTo(position)
+            .withPositions([
+                { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -8 },
+                { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 8 },
+                { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -8 },
+                { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 },
+            ])
+            .withViewportMargin(8)
+            .withFlexibleDimensions(false)
+            .withPush(true);
 
         this.overlayRef = this.overlay.create({
             positionStrategy,
             hasBackdrop: true,
             backdropClass: 'cdk-overlay-transparent-backdrop',
             scrollStrategy: this.overlay.scrollStrategies.reposition(),
-            width: '0',
+            maxHeight: 'calc(100dvh - 16px)',
+            maxWidth: 'calc(100vw - 16px)',
         });
 
         const emojiPickerPortal = new ComponentPortal(EmojiPickerComponent, this.viewContainerRef);
         const componentRef = this.overlayRef.attach(emojiPickerPortal);
-        const pickerElement = componentRef.location.nativeElement;
-        pickerElement.style.transform = 'translate(-100%, -100%)';
+        this.overlayRef.overlayElement.style.overflow = 'auto';
 
-        componentRef.instance.emojiSelect.subscribe((selection: { emoji: any; event: PointerEvent }) => {
-            this.insertEmojiAtCursor(editor, selection.emoji.native);
+        componentRef.instance.emojiSelect.subscribe((selection) => {
+            this.insertEmojiAtCursor(editor, selection.emoji.native ?? '');
             this.destroyEmojiPicker();
         });
 
@@ -105,7 +112,7 @@ export class EmojiAction extends TextEditorAction {
      * @param position The current cursor position.
      * @param emoji The emoji text to insert.
      */
-    insertTextAtPosition(editor: TextEditor, position: TextEditorPosition, emoji: string): void {
+    override insertTextAtPosition(editor: TextEditor, position: TextEditorPosition, emoji: string): void {
         this.replaceTextAtRange(editor, new TextEditorRange(position, position), emoji);
     }
 

@@ -1,40 +1,21 @@
 package de.tum.cit.aet.artemis.plagiarism.domain;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.ContinuousPlagiarismControlService;
 
 /**
- * A config class containing logic for filling missing PlagiarismDetectionConfig for exercises created before deployment of the cpc.
+ * Applies and validates settings of permanent plagiarism detection configurations.
  *
  * @see ContinuousPlagiarismControlService
  * @see PlagiarismDetectionConfig
  */
 public final class PlagiarismDetectionConfigHelper {
 
-    private static final Logger log = LoggerFactory.getLogger(PlagiarismDetectionConfigHelper.class);
-
     private PlagiarismDetectionConfigHelper() {
-    }
-
-    /**
-     * Ads missing plagiarism checks config for course exercises.
-     *
-     * @param <T>        type of Exercise
-     * @param exercise   exercise without plagiarism checks config
-     * @param repository repository used for saving exercises of type T
-     */
-    public static <T extends Exercise> void createAndSaveDefaultIfNullAndCourseExercise(T exercise, JpaRepository<T, Long> repository) {
-        if (exercise.isCourseExercise() && exercise.getPlagiarismDetectionConfig() == null) {
-            log.info("Filling missing plagiarisms checks config: exerciseId={}, type={}.", exercise.getId(), exercise.getExerciseType());
-            var config = PlagiarismDetectionConfig.createDefault();
-            exercise.setPlagiarismDetectionConfig(config);
-            repository.save(exercise);
-        }
     }
 
     /**
@@ -51,6 +32,34 @@ public final class PlagiarismDetectionConfigHelper {
         config.setMinimumScore(minimumScore);
         config.setMinimumSize(minimumSize);
         exercise.setPlagiarismDetectionConfig(config);
+    }
+
+    /**
+     * Applies the submitted plagiarism detection config to the given managed exercise before validation and persistence.
+     *
+     * Semantics:
+     * - a null DTO leaves the existing config untouched (an omitted field preserves the current value);
+     * - an existing config is updated in place, preserving its identity and avoiding orphan-removal DELETE/INSERT churn;
+     * - a missing config is created from the DTO and attached to the exercise's slot.
+     *
+     * Nothing is stored here: the configuration holds the key to its exercise and is not part of it, so after saving the
+     * exercise the caller applies the slot's configuration with {@code PlagiarismDetectionConfigRepository.applyTo}, which
+     * updates the permanent row of that exercise in place.
+     *
+     * @param exercise  the managed exercise to update
+     * @param configDto the submitted plagiarism detection config (or {@code null})
+     */
+    public static void applyToExercise(Exercise exercise, @Nullable PlagiarismDetectionConfigDTO configDto) {
+        if (configDto == null) {
+            return;
+        }
+        PlagiarismDetectionConfig existingConfig = exercise.getPlagiarismDetectionConfig();
+        if (existingConfig != null) {
+            configDto.applyTo(existingConfig);
+        }
+        else {
+            exercise.setPlagiarismDetectionConfig(configDto.toEntity());
+        }
     }
 
     /**

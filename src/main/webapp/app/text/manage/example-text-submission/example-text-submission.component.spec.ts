@@ -3,8 +3,7 @@
  * Verifies the component's behavior for creating, editing, and assessing example text submissions.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -49,7 +48,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExampleTextSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
     let debugElement: DebugElement;
     let comp: ExampleTextSubmissionComponent;
@@ -171,7 +169,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
@@ -207,7 +205,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
         await fixture.whenStable();
 
         // THEN
@@ -237,11 +235,11 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(null));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         // THEN
-        expect(comp.result).not.toBeNull();
-        expect(comp.result!.submission).toBe(comp.submission);
+        expect(comp.result()).not.toBeNull();
+        expect(comp.result()!.submission).toBe(comp.submission);
     });
 
     it('should only fetch exercise for new example submission and stay in new state', async () => {
@@ -253,7 +251,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
@@ -272,7 +270,7 @@ describe('ExampleTextSubmissionComponent', () => {
             exerciseId: EXERCISE_ID,
             exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
         };
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.exercise = exercise;
         comp.exercise!.isAtLeastInstructor = true;
@@ -293,7 +291,7 @@ describe('ExampleTextSubmissionComponent', () => {
             exerciseId: EXERCISE_ID,
             exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
         };
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.exercise = exercise;
         comp.exercise!.isAtLeastEditor = true;
@@ -309,7 +307,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         submission.blocks = [textBlock1, textBlock2];
         submission.text = '123456789';
-        comp.result = result;
+        comp.result.set(result);
         const feedback = Feedback.forText(textBlock1, 0, 'Test');
         result.feedbacks = [feedback];
         comp.state.edit();
@@ -349,7 +347,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         submission.blocks = [textBlock1, textBlock2];
         submission.text = '123456789';
-        comp.result = result;
+        comp.result.set(result);
         const feedback = Feedback.forText(textBlock1, 0, 'Test');
         result.feedbacks = [feedback];
         comp.state = State.forExistingAssessmentWithContext(comp);
@@ -369,7 +367,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.submission?.blocks).toBeUndefined();
         expect(comp.submission?.results).toBeUndefined();
         expect(comp.submission?.latestResult).toBeUndefined();
-        expect(comp.result).toBeUndefined();
+        expect(comp.result()).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     });
@@ -397,7 +395,7 @@ describe('ExampleTextSubmissionComponent', () => {
         submission.text = '123456789';
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.textBlockRefs[0].initFeedback();
         comp.textBlockRefs[0].feedback!.credits = 2;
@@ -448,15 +446,14 @@ describe('ExampleTextSubmissionComponent', () => {
             type: FeedbackCorrectionErrorType.INCORRECT_SCORE,
         };
         const errorResponse = new HttpErrorResponse({
-            error: { title: JSON.stringify({ errors: [feedbackError] }) },
-            headers: new HttpHeaders().append('x-artemisapp-error', 'error.invalid_assessment'),
+            error: { errorKey: 'invalid_assessment', skipAlert: true, errors: [feedbackError] },
             status: 400,
         });
 
         vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => errorResponse));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
         await fixture.whenStable();
 
         comp.checkAssessment();
@@ -540,13 +537,13 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.exercise = examExercise;
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
-        comp.toComplete = true;
+        comp.toComplete.set(true);
 
         await comp.back();
 
-        comp.toComplete = false;
+        comp.toComplete.set(false);
 
         await comp.back();
 
@@ -572,7 +569,7 @@ describe('ExampleTextSubmissionComponent', () => {
         const alertSuccessSpy = vi.spyOn(alertService, 'success');
         const exampleSubmissionServiceSpy = vi.spyOn(exampleSubmissionService, 'update');
         exampleSubmissionServiceSpy.mockReturnValue(httpResponse(exampleSubmission));
-        comp.unsavedSubmissionChanges = true;
+        comp.unsavedSubmissionChanges.set(true);
 
         // WHEN
         comp.updateExampleTextSubmission();
@@ -580,7 +577,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // THEN
         expect(exampleSubmissionServiceSpy).toHaveBeenCalledOnce();
         expect(comp.exampleSubmission).toEqual(exampleSubmission);
-        expect(comp.unsavedSubmissionChanges).toBe(false);
+        expect(comp.unsavedSubmissionChanges()).toBe(false);
         expect(alertSuccessSpy).toHaveBeenCalledOnce();
         expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.saveSuccessful');
     });

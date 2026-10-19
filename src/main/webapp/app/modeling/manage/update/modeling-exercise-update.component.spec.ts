@@ -1,9 +1,6 @@
-/**
- * Vitest tests for ModelingExerciseUpdateComponent.
- */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -17,11 +14,11 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { UMLDiagramType } from '@tumaet/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -29,32 +26,35 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
-import { Component, input, output, signal, viewChild } from '@angular/core';
+import { Component, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
-// Mock ResizeObserver globally
 class MockResizeObserverClass {
     observe = vi.fn();
     unobserve = vi.fn();
@@ -63,17 +63,19 @@ class MockResizeObserverClass {
 }
 global.ResizeObserver = MockResizeObserverClass as unknown as typeof ResizeObserver;
 
-// Stub for TitleChannelNameComponent to satisfy viewChild.required
 @Component({ selector: 'jhi-title-channel-name', template: '' })
 class StubTitleChannelNameComponent {
     isValid = signal(true);
+    isChannelFieldDisplayed = signal(true);
+    isTitleDisallowed = signal(false);
 }
 
-// Stub for ExerciseTitleChannelNameComponent - must match the actual component's interface
+// Provided under the real class, so that the host's viewChild(ExerciseTitleChannelNameComponent) finds it.
 @Component({
     selector: 'jhi-exercise-title-channel-name',
     template: '<jhi-title-channel-name />',
     imports: [StubTitleChannelNameComponent],
+    providers: [{ provide: ExerciseTitleChannelNameComponent, useExisting: forwardRef(() => StubExerciseTitleChannelNameComponent) }],
 })
 class StubExerciseTitleChannelNameComponent {
     exercise = input<ModelingExercise>();
@@ -87,41 +89,61 @@ class StubExerciseTitleChannelNameComponent {
     courseId = input<number>();
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();
+    exerciseChange = output<ModelingExercise>();
     readonly titleChannelNameComponent = viewChild.required(StubTitleChannelNameComponent);
 }
 
-// Stub for ModelingEditorComponent
-@Component({ selector: 'jhi-modeling-editor', template: '' })
+@Component({ selector: 'jhi-modeling-editor', template: '<ng-content />' })
 class StubModelingEditorComponent {
     umlModel = input<unknown>();
     diagramType = input<unknown>();
     readOnly = input<boolean>(false);
     scrollLock = input<boolean>(false);
-    resizeOptions = input<unknown>();
     withExplanation = input<boolean>(false);
-    onModelChanged = output<unknown>();
+    problemStatement = input<string>();
+    showProjectedBottomCenter = input<boolean>(true);
+    onModelChanged = output<UMLModel>();
     apollonEditor = { nextRender: Promise.resolve() };
+    currentModel = { elements: {}, relationships: {}, version: '3.0.0' } as unknown as UMLModel;
 
-    getCurrentModel() {
-        return { elements: {}, relationships: {}, version: '3.0.0' };
+    getCurrentModel(): UMLModel {
+        return this.currentModel;
     }
 }
 
-// Stub for MarkdownEditorMonacoComponent
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class StubMarkdownEditorMonacoComponent {
     markdown = input<string>('');
     domainActions = input<unknown[]>([]);
+    initialEditorHeight = input<number>();
+    resizableMinHeight = input<number>();
+    externalHeight = input(false);
+    enableResize = input(true);
+    showMarkdownInfoText = input(true);
     markdownChange = output<string>();
 }
 
-describe('ModelingExerciseUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
+@Component({ selector: 'jhi-modeling-markdown-explanation-editor', template: '<div class="modeling-markdown-explanation-editor__editor"></div>' })
+class StubModelingMarkdownExplanationEditorComponent {
+    markdown = model<string>();
+    labelKey = input('artemisApp.modelingExercise.exampleSolutionExplanation');
+    domainActions = input<unknown[]>([]);
+}
 
+describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
     let fixture: ComponentFixture<ModelingExerciseUpdateComponent>;
     let service: ModelingExerciseService;
     let courseService: CourseManagementService;
+
+    const selectDiagramTypeOption = (index: number): void => {
+        const trigger = fixture.nativeElement.querySelector('#field_diagramType') as HTMLButtonElement;
+        trigger.click();
+        fixture.detectChanges();
+        const options = Array.from(document.querySelectorAll<HTMLElement>('[role="listbox"] [role="option"]'));
+        options[index].click();
+        fixture.detectChanges();
+    };
     let exerciseService: ExerciseService;
     let calendarService: CalendarService;
     let alertService: AlertService;
@@ -151,12 +173,12 @@ describe('ModelingExerciseUpdateComponent', () => {
         const modelingExercise = createModelingExercise(course);
         modelingExercise.id = 123;
 
-        routeData$ = new BehaviorSubject({ modelingExercise });
+        routeData$ = new BehaviorSubject<Data>({ modelingExercise });
         routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
-        routeParams$ = new BehaviorSubject({ courseId: 1 });
+        routeParams$ = new BehaviorSubject<Params>({ courseId: 1 });
 
         await TestBed.configureTestingModule({
-            imports: [ModelingExerciseUpdateComponent, TranslateModule.forRoot()],
+            imports: [ModelingExerciseUpdateComponent],
             providers: [
                 LocalStorageService,
                 SessionStorageService,
@@ -224,6 +246,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         })
             .overrideComponent(ModelingExerciseUpdateComponent, {
@@ -234,7 +257,6 @@ describe('ModelingExerciseUpdateComponent', () => {
                         FaIconComponent,
                         NgbTooltip,
                         ArtemisTranslatePipe,
-                        MockComponent(FormDateTimePickerComponent),
                         StubExerciseTitleChannelNameComponent,
                         MockComponent(TeamConfigFormGroupComponent),
                         MockComponent(IncludedInOverallScorePickerComponent),
@@ -243,13 +265,18 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorComponent),
+                        MockComponent(CategorySelectorPrimengComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
-                        ModelingExerciseTimelineComponent,
+                        ExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,
+                        MockComponent(TumAetUiConfirmDialogComponent),
+                        TumAetUiSelectComponent,
+                        StubModelingMarkdownExplanationEditorComponent,
+                        ExerciseGroupTimelineLockStubComponent,
+                        MockComponent(ExerciseGroupDateNoticeComponent),
                     ],
                 },
             })
@@ -270,6 +297,205 @@ describe('ModelingExerciseUpdateComponent', () => {
         }
     });
 
+    it('enables editor scroll snap only while the modeling exercise form is mounted', () => {
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+
+        expect(document.documentElement.classList.contains('modeling-exercise-editor-scroll-snap')).toBe(true);
+        expect(fixture.nativeElement.querySelector('.modeling-exercise-editor-snap-target jhi-modeling-editor')).not.toBeNull();
+
+        fixture.destroy();
+        expect(document.documentElement.classList.contains('modeling-exercise-editor-scroll-snap')).toBe(false);
+    });
+
+    it('places the editable diagram type selector inside the editor top-left control', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        routeData$.next({ modelingExercise });
+        routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const selector = fixture.nativeElement.querySelector('[modelingEditorTopLeft] #field_diagramType') as HTMLButtonElement;
+        const selectComponent = fixture.debugElement.query(By.directive(TumAetUiSelectComponent)).componentInstance as TumAetUiSelectComponent;
+
+        expect(selector).not.toBeNull();
+        expect(selector.closest('jhi-modeling-editor')).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('#field_diagramType')).toHaveLength(1);
+        expect(selector.disabled).toBe(false);
+        expect(selectComponent.options()).toHaveLength(12);
+
+        selectDiagramTypeOption(1);
+
+        expect(comp.modelingExercise.diagramType).toBe(UMLDiagramType.ActivityDiagram);
+    });
+
+    it('keeps the diagram type selector available when editing an existing exercise', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        modelingExercise.id = 42;
+        routeData$.next({ modelingExercise });
+        routeUrl$.next([{ path: '42' }] as UrlSegment[]);
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const selector = fixture.nativeElement.querySelector('[modelingEditorTopLeft] #field_diagramType') as HTMLButtonElement;
+        expect(selector).not.toBeNull();
+        expect(selector.disabled).toBe(false);
+    });
+
+    it('requires explicit confirmation before a diagram type change clears a populated model', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        routeData$.next({ modelingExercise });
+        routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const editor = fixture.debugElement.query(By.directive(StubModelingEditorComponent)).componentInstance as StubModelingEditorComponent;
+        Object.defineProperty(comp, 'modelingEditor', { value: () => editor });
+        editor.currentModel = {
+            version: '3.0.0',
+            elements: { class1: { id: 'class1', type: 'Class', name: 'Class' } },
+            relationships: {},
+        } as unknown as UMLModel;
+
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        let request: TumAetUiConfirmationRequest | undefined;
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((nextRequest) => {
+            request = nextRequest;
+        });
+
+        const selector = fixture.nativeElement.querySelector('#field_diagramType') as HTMLButtonElement;
+        selectDiagramTypeOption(1);
+
+        expect(request).toBeDefined();
+        expect(request?.acceptSeverity).toBe('danger');
+        expect(comp.modelingExercise.diagramType).toBe(UMLDiagramType.ClassDiagram);
+
+        request?.reject?.();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(selector.textContent).toContain('ClassDiagram');
+        expect(comp.modelingExercise.diagramType).toBe(UMLDiagramType.ClassDiagram);
+
+        selectDiagramTypeOption(1);
+        request?.accept();
+        fixture.detectChanges();
+
+        expect(comp.modelingExercise.diagramType).toBe(UMLDiagramType.ActivityDiagram);
+        expect(comp.exampleSolution()).toBeUndefined();
+    });
+
+    it('changes the diagram type immediately when the model is empty', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        routeData$.next({ modelingExercise });
+        routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const confirmationSpy = vi.spyOn(confirmationService, 'confirm');
+
+        selectDiagramTypeOption(1);
+
+        expect(confirmationSpy).not.toHaveBeenCalled();
+        expect(comp.modelingExercise.diagramType).toBe(UMLDiagramType.ActivityDiagram);
+    });
+
+    it('keeps the Markdown example-solution explanation persistently integrated in the editor', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        routeData$.next({ modelingExercise });
+        routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const explanationEditor = fixture.debugElement.query(By.directive(StubModelingMarkdownExplanationEditorComponent));
+        expect(explanationEditor).not.toBeNull();
+        expect(explanationEditor.nativeElement.hasAttribute('modelingEditorBottomCenter')).toBe(true);
+        expect(fixture.nativeElement.querySelector('.modeling-markdown-explanation-editor__editor')).not.toBeNull();
+        expect(explanationEditor.componentInstance.labelKey()).toBe('artemisApp.modelingExercise.exampleSolutionExplanation');
+    });
+
+    it('binds an existing Markdown example-solution explanation into the persistent surface', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        modelingExercise.exampleSolutionExplanation = 'Instructor context';
+        routeData$.next({ modelingExercise });
+        routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const explanationEditor = fixture.debugElement.query(By.directive(StubModelingMarkdownExplanationEditorComponent));
+        expect(explanationEditor.componentInstance.markdown()).toBe('Instructor context');
+    });
+
+    it('should render one timeline containing all exercise dates', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        modelingExercise.releaseDate = dayjs().add(1, 'hour');
+        modelingExercise.startDate = dayjs().add(2, 'hours');
+        modelingExercise.dueDate = dayjs().add(1, 'day');
+        modelingExercise.assessmentDueDate = dayjs().add(2, 'days');
+        modelingExercise.exampleSolutionPublicationDate = dayjs().add(3, 'days');
+        routeData$.next({ modelingExercise });
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const timelines = fixture.debugElement.queryAll(By.directive(ExerciseTimelineComponent));
+        const timeline = timelines[0].componentInstance as ExerciseTimelineComponent;
+
+        expect(timelines).toHaveLength(1);
+        expect(timeline.releaseDate()).toBe(modelingExercise.releaseDate);
+        expect(timeline.startDate()).toBe(modelingExercise.startDate);
+        expect(timeline.dueDate()).toBe(modelingExercise.dueDate);
+        expect(timeline.assessmentDueDate()).toBe(modelingExercise.assessmentDueDate);
+        expect(timeline.exampleSolutionPublicationDate()).toBe(modelingExercise.exampleSolutionPublicationDate);
+        expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBe('artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution');
+
+        fixture.debugElement.query(By.directive(StubModelingMarkdownExplanationEditorComponent)).triggerEventHandler('markdownChange', 'Example solution explanation');
+        fixture.detectChanges();
+        expect(modelingExercise.exampleSolutionExplanation).toBe('Example solution explanation');
+        expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBeUndefined();
+    });
+
+    it('should render the group date notice first in the grading controls', async () => {
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const variantLock = fixture.debugElement.query(By.directive(ExerciseGroupTimelineLockStubComponent)).componentInstance as ExerciseGroupTimelineLockStubComponent;
+        variantLock.locked = () => true;
+        const openModalSpy = vi.spyOn(variantLock, 'openModal');
+        fixture.detectChanges();
+
+        const gradingOptions = fixture.debugElement.query(By.css('.col-12.col-md'));
+        const notice = gradingOptions.query(By.directive(ExerciseGroupDateNoticeComponent));
+
+        expect(gradingOptions.nativeElement.firstElementChild).toBe(notice.nativeElement);
+        expect((notice.nativeElement as HTMLElement).classList).toContain('mb-3');
+
+        (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
+
+        expect(openModalSpy).toHaveBeenCalledOnce();
+    });
+
     describe('save', () => {
         describe('new exercise', () => {
             beforeEach(async () => {
@@ -286,19 +512,16 @@ describe('ModelingExerciseUpdateComponent', () => {
             });
 
             it('should call create service on save for new entity and refresh calendar events', async () => {
-                // GIVEN
                 const createdExercise = { ...comp.modelingExercise, id: 789 };
                 vi.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
                 const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
-                // WHEN
                 comp.save();
                 await fixture.whenStable();
 
-                // THEN
                 expect(service.create).toHaveBeenCalledWith(expect.objectContaining({ channelName: 'test' }));
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
         });
 
@@ -318,22 +541,51 @@ describe('ModelingExerciseUpdateComponent', () => {
             });
 
             it('should call update service on save for existing entity and refresh calendar events', async () => {
-                // GIVEN
                 const updatedExercise = { ...comp.modelingExercise };
                 vi.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: updatedExercise })));
                 const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
-                // WHEN
                 comp.save();
                 await fixture.whenStable();
 
-                // THEN
                 expect(service.update).toHaveBeenCalledWith(expect.objectContaining({ id: 123 }), {});
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
 
-            it('should show backend error alert and reset saving state on save error', async () => {
+            it('should synchronize the current unsaved model for assessment criteria generation', () => {
+                const currentModel = { elements: { unsaved: true }, relationships: {}, version: '3.0.0' };
+                Object.defineProperty(comp, 'modelingEditor', { value: () => ({ getCurrentModel: () => currentModel }) });
+
+                comp.synchronizeForAssessmentCriteriaGeneration();
+
+                expect(comp.modelingExercise.exampleSolutionModel).toBe(JSON.stringify(currentModel));
+            });
+
+            it('should synchronize live diagram changes for assessment criteria context', () => {
+                const changedModel = { nodes: [{ id: 'class' }], edges: [], version: '4.0.0' } as unknown as UMLModel;
+                comp.exerciseState.patch('exampleSolutionExplanation', 'Explained');
+                const solutionSection = () => comp.formSectionStatus().find((section) => section.title === 'artemisApp.exercise.sections.solution');
+                expect(solutionSection()?.empty).toBe(true);
+
+                comp.onModelChanged(changedModel);
+
+                expect(comp.modelingExercise.exampleSolutionModel).toBe(JSON.stringify(changedModel));
+                expect(solutionSection()?.empty).toBe(false);
+            });
+
+            it('should provide all modeling-specific assessment criteria context', () => {
+                comp.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
+                comp.modelingExercise.exampleSolutionModel = '{"elements":{"class":{}}}';
+                comp.modelingExercise.exampleSolutionExplanation = 'The classes use inheritance.';
+
+                const context = comp.assessmentCriteriaAdditionalContext();
+                expect(context).toContain('Diagram type:\nClassDiagram');
+                expect(context).toContain('Serialized example solution model:\n{"elements":{"class":{}}}');
+                expect(context).toContain('Example solution explanation:\nThe classes use inheritance.');
+            });
+
+            it('should show server error alert and reset saving state on save error', async () => {
                 const error = new HttpErrorResponse({
                     error: {
                         title: 'modelingExercise.update.error',
@@ -348,10 +600,10 @@ describe('ModelingExerciseUpdateComponent', () => {
                 await fixture.whenStable();
 
                 expect(alertSpy).toHaveBeenCalledWith('modelingExercise.update.error', 'modelingExercise.update.error.message', { exerciseId: 123 });
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
 
-            it('should show generic error alert when save error has no backend title', async () => {
+            it('should show generic error alert when save error has no server title', async () => {
                 vi.spyOn(service, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
                 const alertSpy = vi.spyOn(alertService, 'error').mockReturnValue({} as ReturnType<AlertService['error']>);
 
@@ -359,7 +611,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 await fixture.whenStable();
 
                 expect(alertSpy).toHaveBeenCalledWith('error.http.400');
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
         });
     });
@@ -372,8 +624,10 @@ describe('ModelingExerciseUpdateComponent', () => {
             const modelingExercise = createModelingExercise(course);
             modelingExercise.id = 1;
             modelingExercise.releaseDate = dayjs();
+            modelingExercise.startDate = dayjs();
             modelingExercise.dueDate = dayjs();
             modelingExercise.assessmentDueDate = dayjs();
+            modelingExercise.exampleSolutionPublicationDate = dayjs();
 
             routeData$.next({ modelingExercise });
             routeUrl$.next([{ path: 'import' } as UrlSegment]);
@@ -389,13 +643,15 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
+            expect(comp.modelingExercise.startDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
+            expect(comp.modelingExercise.exampleSolutionPublicationDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
-            expect(comp.existingCategories).toEqual(categories);
+            expect(comp.existingCategories()).toEqual(categories);
         });
 
         it('should load exercise categories', async () => {
@@ -437,13 +693,13 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseId);
-            expect(comp.existingCategories).toEqual(categories);
+            expect(comp.existingCategories()).toEqual(categories);
         });
     });
 
@@ -468,8 +724,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.modelingExercise.course).toBeUndefined();
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
@@ -499,8 +755,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
@@ -517,18 +773,6 @@ describe('ModelingExerciseUpdateComponent', () => {
         comp.updateCategories(newCategories);
 
         expect(comp.modelingExercise.categories).toEqual(newCategories);
-    });
-
-    it('should call exercise service to validate date', async () => {
-        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        vi.spyOn(exerciseService, 'validateDate');
-        comp.validateDate();
-
-        expect(exerciseService.validateDate).toHaveBeenCalledWith(comp.modelingExercise);
     });
 
     it('should navigate back from the exercise update form', async () => {
@@ -549,27 +793,12 @@ describe('ModelingExerciseUpdateComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        comp.exerciseCategories = [];
+        comp.exerciseCategories.set([]);
         const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
         comp.updateCategories(newCategories);
 
         expect(comp.modelingExercise.categories).toEqual(newCategories);
-        expect(comp.exerciseCategories).toEqual(newCategories);
-    });
-
-    it('should properly clean up subscriptions on destroy', async () => {
-        vi.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors
-
-        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        // Call ngOnDestroy and verify subscriptions are cleaned up
-        comp.ngOnDestroy();
-
-        expect(comp.bonusPointsSubscription?.closed ?? true).toBe(true);
-        expect(comp.pointsSubscription?.closed ?? true).toBe(true);
+        expect(comp.exerciseCategories()).toEqual(newCategories);
     });
 
     describe('handleEnterKeyNavigation', () => {
@@ -628,43 +857,224 @@ describe('ModelingExerciseUpdateComponent', () => {
         });
     });
 
-    describe('onMarkdownEditorKeydown', () => {
-        beforeEach(async () => {
+    describe('invalidReasons', () => {
+        let course: Course;
+        let titleChannelName: StubTitleChannelNameComponent;
+
+        const filledInExercise = (title = 'Valid title') => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            exercise.title = title;
+            exercise.channelName = 'valid-title';
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            return exercise;
+        };
+        const reasonKeys = () => comp.invalidReasons().map((reason) => reason.translateKey);
+        const sectionOf = (title: string) => comp.formSectionStatus().find((section) => section.title === `artemisApp.exercise.sections.${title}`);
+
+        async function render(exercise: ModelingExercise) {
+            routeData$.next({ modelingExercise: exercise });
+            routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
             fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
             comp = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
+            titleChannelName = fixture.debugElement.query(By.directive(StubTitleChannelNameComponent)).componentInstance;
+            comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            // Read once, so that every later read has to be invalidated by the change under test rather than computed fresh.
+            fixture.detectChanges();
+            comp.invalidReasons();
+            comp.formSectionStatus();
+        }
+
+        async function typeInto(selector: string, value: string) {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css(selector)).nativeElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+
+        /** Switches the score mode the way the picker does: it emits the new mode. */
+        async function switchScoreMode(mode: IncludedInOverallScore): Promise<void> {
+            fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent)).componentInstance.includedInOverallScoreChange.emit(mode);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        beforeEach(() => {
+            course = createCourse();
         });
 
-        it('should stop propagation for space key presses', () => {
-            const event = new KeyboardEvent('keydown', { code: 'Space' });
-            const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
+        it('should report the mandatory fields of an untouched creation form', async () => {
+            await render(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined));
 
-            comp.onMarkdownEditorKeydown(event);
-
-            expect(stopPropagationSpy).toHaveBeenCalledOnce();
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.undefined');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.points.undefined');
         });
 
-        it('should stop propagation for copy and paste shortcuts', () => {
-            const copyEvent = new KeyboardEvent('keydown', { code: 'KeyC', ctrlKey: true });
-            const pasteEvent = new KeyboardEvent('keydown', { code: 'KeyV', metaKey: true });
-            const copyStopPropagationSpy = vi.spyOn(copyEvent, 'stopPropagation');
-            const pasteStopPropagationSpy = vi.spyOn(pasteEvent, 'stopPropagation');
+        it('should report a title shorter than the minimum length', async () => {
+            await render(filledInExercise('ab'));
 
-            comp.onMarkdownEditorKeydown(copyEvent);
-            comp.onMarkdownEditorKeydown(pasteEvent);
-
-            expect(copyStopPropagationSpy).toHaveBeenCalledOnce();
-            expect(pasteStopPropagationSpy).toHaveBeenCalledOnce();
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.minlength');
         });
 
-        it('should not stop propagation for unrelated keys', () => {
-            const event = new KeyboardEvent('keydown', { code: 'KeyA' });
-            const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
+        it('should forward the timeline reasons', async () => {
+            await render(filledInExercise());
+            comp.timelineStatus.set({
+                valid: false,
+                empty: true,
+                invalidItems: [{ labelStringKey: 'artemisApp.exercise.dueDate', reasonKey: 'artemisApp.exercise.form.timeline.required', dateName: 'Due Date' }],
+            });
 
-            comp.onMarkdownEditorKeydown(event);
+            expect(comp.invalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.required', translateValues: { dateName: 'Due Date' } }]);
+        });
 
-            expect(stopPropagationSpy).not.toHaveBeenCalled();
+        it('should follow the title field when it reports a title as already used', async () => {
+            await render(filledInExercise());
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.title.disallowedValue');
+
+            titleChannelName.isTitleDisallowed.set(true);
+
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.disallowedValue');
+            expect(sectionOf('general')?.valid).toBe(false);
+        });
+
+        it('should require a channel name only while the channel field is displayed', async () => {
+            const exercise = filledInExercise();
+            exercise.channelName = undefined;
+            await render(exercise);
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.channelName.empty');
+
+            titleChannelName.isChannelFieldDisplayed.set(false);
+
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.channelName.empty');
+        });
+
+        // The bug class a computed() can introduce: a reason that stays after the user fixed the field, or does not come back.
+        it('should drop the points reason once points are typed and bring it back when they are cleared', async () => {
+            const exercise = filledInExercise();
+            exercise.maxPoints = undefined;
+            await render(exercise);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+
+            await typeInto('#field_points', '10');
+            expect(comp.invalidReasons()).toEqual([]);
+            expect(sectionOf('grading')?.valid).toBe(true);
+
+            await typeInto('#field_points', '');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+        });
+
+        it('should take the verdict on the bonus points with the field when the score mode changes', async () => {
+            await render(filledInExercise());
+            await typeInto('#field_bonusPoints', '-1');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.bonusPoints.customMin']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+
+            // The field goes with the score mode, and so does what it said: the grading section used to stay invalid here.
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+            expect(fixture.debugElement.query(By.css('#field_bonusPoints'))).toBeNull();
+            expect(comp.invalidReasons()).toEqual([]);
+            expect(sectionOf('grading')?.valid).toBe(true);
+
+            // Back again, the value it still holds is out of range, which the grading section used to call valid.
+            await switchScoreMode(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.bonusPoints.customMin']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+        });
+
+        it('should follow the team config component when it changes the mode and the team size', async () => {
+            await render(filledInExercise());
+            const teamConfig = fixture.debugElement.query(By.directive(TeamConfigFormGroupComponent)).componentInstance as TeamConfigFormGroupComponent;
+            const exercise = comp.modelingExercise;
+
+            exercise.mode = ExerciseMode.TEAM;
+            exercise.teamAssignmentConfig = undefined;
+            teamConfig.exerciseChange.emit(exercise);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.minTeamSize.required', 'artemisApp.exercise.form.maxTeamSize.required']);
+            expect(sectionOf('mode')?.valid).toBe(false);
+
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            teamConfig.exerciseChange.emit(exercise);
+            expect(comp.invalidReasons()).toEqual([]);
+            expect(sectionOf('mode')?.valid).toBe(true);
+        });
+
+        it('should follow the title component when it writes a new title', async () => {
+            await render(filledInExercise());
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
+
+            comp.modelingExercise.title = 'ab';
+            titleComponent.exerciseChange.emit(comp.modelingExercise);
+
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.title.minlength']);
+            expect(sectionOf('general')?.valid).toBe(false);
+        });
+
+        it('should report an example solution publication date before the due date, and stop once it is moved', async () => {
+            await render(filledInExercise());
+            const timeline: ExerciseTimelineComponent = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance;
+            const dueDate = dayjs().add(2, 'days');
+
+            timeline.dueDate.set(dueDate);
+            timeline.exampleSolutionPublicationDate.set(dueDate.subtract(1, 'day'));
+            expect(reasonKeys()).toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+
+            timeline.exampleSolutionPublicationDate.set(dueDate.add(1, 'day'));
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+        });
+
+        it('should mark the problem and solution sections empty until they are written', async () => {
+            await render(filledInExercise());
+            expect(sectionOf('problem')?.empty).toBe(true);
+            expect(sectionOf('solution')?.empty).toBe(true);
+
+            fixture.debugElement.query(By.directive(StubMarkdownEditorMonacoComponent)).triggerEventHandler('markdownChange', 'A problem');
+            fixture.debugElement.query(By.directive(StubModelingMarkdownExplanationEditorComponent)).triggerEventHandler('markdownChange', 'An explanation');
+            expect(sectionOf('problem')?.empty).toBe(false);
+            // The explanation alone does not make a solution; the diagram is missing.
+            expect(sectionOf('solution')?.empty).toBe(true);
+
+            fixture.debugElement
+                .query(By.directive(StubModelingEditorComponent))
+                .triggerEventHandler('onModelChanged', { nodes: [{ id: 'class' }], edges: [], version: '4.0.0' } as unknown as UMLModel);
+            expect(sectionOf('solution')?.empty).toBe(false);
+        });
+
+        it('should forget the drawn example solution when the diagram type changes', async () => {
+            const exercise = filledInExercise();
+            exercise.exampleSolutionExplanation = 'An explanation';
+            await render(exercise);
+            fixture.debugElement
+                .query(By.directive(StubModelingEditorComponent))
+                .triggerEventHandler('onModelChanged', { nodes: [{ id: 'class' }], edges: [], version: '4.0.0' } as unknown as UMLModel);
+            expect(sectionOf('solution')?.empty).toBe(false);
+
+            // The model is empty as far as the editor stub reports it, so the type changes without a confirmation.
+            selectDiagramTypeOption(1);
+
+            expect(comp.modelingExercise.diagramType).toBe(UMLDiagramType.ActivityDiagram);
+            expect(sectionOf('solution')?.empty).toBe(true);
+        });
+
+        it('should edit the exercise in place, so that the child components keep the object they were given', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
+
+            await typeInto('#field_points', '7');
+            selectDiagramTypeOption(1);
+
+            expect(comp.modelingExercise).toBe(exercise);
+            expect(titleComponent.exercise()).toBe(exercise);
+            expect(exercise.maxPoints).toBe(7);
+            expect(exercise.diagramType).toBe(UMLDiagramType.ActivityDiagram);
         });
     });
 });

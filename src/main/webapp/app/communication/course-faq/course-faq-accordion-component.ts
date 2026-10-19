@@ -1,14 +1,14 @@
 import { Component, OnDestroy, input } from '@angular/core';
 import { Faq } from 'app/communication/shared/entities/faq.model';
 import { Subject } from 'rxjs/internal/Subject';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
 @Component({
     selector: 'jhi-course-faq-accordion',
     templateUrl: './course-faq-accordion.component.html',
     styleUrl: './course-faq-accordion.component.scss',
-    imports: [CustomExerciseCategoryBadgeComponent, HtmlForMarkdownPipe],
+    imports: [CustomExerciseCategoryBadgeComponent, MarkdownDirective],
 })
 export class CourseFaqAccordionComponent implements OnDestroy {
     private ngUnsubscribe = new Subject<void>();

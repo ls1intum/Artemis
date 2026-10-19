@@ -1,15 +1,15 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { CurveFactory } from 'd3-shape';
 import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../services/course-management.service';
-import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import * as shape from 'd3-shape';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { mean } from 'simple-statistics';
+import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { multiSeriesLineChart, referenceLineSeries } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiLineChartComponent, TumAetUiLineChartConfig } from '@tumaet/ui-angular';
+import { mean } from 'app/foundation/util/statistics.util';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -28,7 +28,7 @@ export enum SwitchTimeSpanDirection {
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
-    imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, LineChartModule, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, TumAetUiLineChartComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     private courseManagementService = inject(CourseManagementService);
@@ -51,16 +51,9 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
 
-    // NGX variables
-    chartColor: Color = {
-        name: 'vivid',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.DARK_BLUE],
-    };
     readonly xAxisLabel = signal('');
 
-    readonly data = signal<any[]>([]);
+    readonly data = signal<{ name: string; series: { name?: string; value?: number }[] }[]>([]);
     // Data changes will be stored in the copy first, to trigger change detection when ready
     dataCopy: { name: string; series: { name?: string; value?: number }[] }[] = [
         {
@@ -70,9 +63,23 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     ];
     // Used for storing absolute values to display in tooltip
     absoluteSeries: { absoluteValue?: number; name?: string }[] = [{}];
-    curve: CurveFactory = shape.curveMonotoneX;
     readonly average = signal({ name: 'Mean', value: 0 });
     readonly startDateDisplayed = signal(false);
+
+    readonly chartData = computed(() => {
+        const lineData = multiSeriesLineChart(this.data() as ChartMultiSeriesEntry[], [GraphColors.DARK_BLUE]);
+        const average = this.average();
+        lineData.series.push(referenceLineSeries(average.name, average.value, lineData.labels.length, GraphColors.GREY));
+        return lineData;
+    });
+    readonly chartConfig = computed<TumAetUiLineChartConfig>(() => ({
+        monotone: true,
+        xAxis: { label: this.xAxisLabel(), tickFormatter: (value) => `${value}` },
+        yAxis: { min: 0, max: 100, tickFormatter: this.formatYAxis },
+        tooltip: {
+            label: (item) => `${item.seriesLabel}: ${this.findAbsoluteValue({ name: item.label })} (${item.value}%)`,
+        },
+    }));
 
     // Icons
     faSpinner = faSpinner;
@@ -204,15 +211,15 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
         this.reloadChart();
     }
 
-    formatYAxis(value: any) {
+    formatYAxis(value: number | string): string {
         return value.toLocaleString() + ' %';
     }
 
     /**
      * Using the model, we look for the entry with the same title (CW XX) and return the absolute value for this entry
      */
-    findAbsoluteValue(model: any) {
-        const result: any = this.absoluteSeries.find((entry: any) => entry.name === model.name);
+    findAbsoluteValue(model: { name: string }): number | string | undefined {
+        const result = this.absoluteSeries.find((entry) => entry.name === model.name);
         return result ? result.absoluteValue : '/';
     }
 

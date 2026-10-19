@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, ViewEncapsulation, effect, inject, input, signal, untracked } from '@angular/core';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
@@ -18,6 +18,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass } from '@angular/common';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { PlagiarismCaseExercise } from 'app/plagiarism/shared/entities/PlagiarismCase';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -28,11 +29,11 @@ type FilesWithType = { [p: string]: FileType };
     encapsulation: ViewEncapsulation.None,
     imports: [SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass],
 })
-export class TextSubmissionViewerComponent implements OnChanges {
+export class TextSubmissionViewerComponent {
     private repositoryService = inject(CodeEditorRepositoryFileService);
     private textSubmissionService = inject(TextSubmissionService);
 
-    exercise = input<ProgrammingExercise | TextExercise>();
+    exercise = input<ProgrammingExercise | TextExercise | PlagiarismCaseExercise>();
     matches = input<Map<string, FromToElement[]>>();
     plagiarismSubmission = input<PlagiarismSubmission>();
     hideContent = input<boolean>();
@@ -44,28 +45,28 @@ export class TextSubmissionViewerComponent implements OnChanges {
     /**
      * Name of the currently selected file.
      */
-    public currentFile: string;
+    readonly currentFile = signal<string | undefined>(undefined);
 
     /**
      * Content of the currently selected file.
      */
-    public fileContent: string;
+    readonly fileContent = signal<string | undefined>(undefined);
 
     /**
      * List of files the given submission consists of.
      * `null` for text exercises.
      */
-    public files: FileWithHasMatch[];
+    readonly files = signal<FileWithHasMatch[]>([]);
 
     /**
      * True, if the given exercise is of type 'programming'.
      */
-    public isProgrammingExercise: boolean;
+    readonly isProgrammingExercise = signal(false);
 
     /**
      * True, if the file content for the given submission is being loaded.
      */
-    public loading: boolean;
+    readonly loading = signal(false);
 
     /**
      * Token that marks the beginning of a highlighted match.
@@ -80,28 +81,33 @@ export class TextSubmissionViewerComponent implements OnChanges {
     /**
      * True if currently selected file is not a text file.
      */
-    binaryFile?: boolean;
+    readonly binaryFile = signal<boolean | undefined>(undefined);
 
     /**
      * True if fetching submission files resulted in an error.
      */
-    cannotLoadFiles = false;
+    readonly cannotLoadFiles = signal(false);
 
     faExclamationTriangle = faExclamationTriangle;
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.plagiarismSubmission) {
-            const currentPlagiarismSubmission: PlagiarismSubmission = changes.plagiarismSubmission.currentValue;
-            if (!this.hideContent()) {
-                this.loading = true;
+    constructor() {
+        // Replaces ngOnChanges: (re)load the submission's files/content whenever the plagiarism submission changes.
+        // The load runs untracked so only plagiarismSubmission() retriggers it (hideContent()/exercise() are read at
+        // load time, not as triggers, mirroring the former `if (changes.plagiarismSubmission)` guard).
+        effect(() => {
+            const plagiarismSubmission = this.plagiarismSubmission();
+            untracked(() => {
+                if (plagiarismSubmission && !this.hideContent()) {
+                    this.loading.set(true);
 
-                if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
-                    this.loadProgrammingExercise(currentPlagiarismSubmission);
-                } else {
-                    this.loadTextExercise(currentPlagiarismSubmission);
+                    if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
+                        this.loadProgrammingExercise(plagiarismSubmission);
+                    } else {
+                        this.loadTextExercise(plagiarismSubmission);
+                    }
                 }
-            }
-        }
+            });
+        });
     }
 
     /**
@@ -113,14 +119,14 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const domain: DomainChange = [DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }];
         this.repositoryService.getRepositoryContentForPlagiarismView(domain).subscribe({
             next: (files: FilesWithType) => {
-                this.cannotLoadFiles = false;
-                this.isProgrammingExercise = true;
-                this.loading = false;
-                this.files = this.programmingExerciseFilesWithMatches(files);
+                this.cannotLoadFiles.set(false);
+                this.isProgrammingExercise.set(true);
+                this.loading.set(false);
+                this.files.set(this.programmingExerciseFilesWithMatches(files));
             },
             error: () => {
-                this.cannotLoadFiles = true;
-                this.loading = false;
+                this.cannotLoadFiles.set(true);
+                this.loading.set(false);
             },
         });
     }
@@ -163,15 +169,15 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * @param currentPlagiarismSubmission The submission to load the plagiarism information for.
      */
     private loadTextExercise(currentPlagiarismSubmission: PlagiarismSubmission) {
-        this.isProgrammingExercise = false;
+        this.isProgrammingExercise.set(false);
 
         this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe({
             next: (submission: TextSubmission) => {
-                this.loading = false;
-                this.fileContent = this.insertMatchTokens(submission.text || '');
+                this.loading.set(false);
+                this.fileContent.set(this.insertMatchTokens(submission.text || ''));
             },
             error: () => {
-                this.loading = false;
+                this.loading.set(false);
             },
         });
     }
@@ -181,26 +187,26 @@ export class TextSubmissionViewerComponent implements OnChanges {
     }
 
     handleFileSelect(file: string) {
-        this.currentFile = file;
-        this.loading = true;
+        this.currentFile.set(file);
+        this.loading.set(true);
 
         const fileExtension = file.split('.').last()!;
         if (TEXT_FILE_EXTENSIONS.includes(fileExtension)) {
-            this.binaryFile = false;
+            this.binaryFile.set(false);
 
             const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission()?.submissionId }];
             this.repositoryService.getFileForPlagiarismView(file, domain).subscribe({
                 next: ({ fileContent }) => {
-                    this.loading = false;
-                    this.fileContent = this.insertMatchTokens(fileContent);
+                    this.loading.set(false);
+                    this.fileContent.set(this.insertMatchTokens(fileContent));
                 },
                 error: () => {
-                    this.loading = false;
+                    this.loading.set(false);
                 },
             });
         } else {
-            this.binaryFile = true;
-            this.loading = false;
+            this.binaryFile.set(true);
+            this.loading.set(false);
         }
     }
 
@@ -208,11 +214,14 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * Downloads the currently selected file with a friendly name consisting of the exercises short name, the student login and the filename.
      */
     downloadCurrentFile() {
-        this.repositoryService.downloadFile(this.currentFile, this.exercise()?.shortName + '_' + this.plagiarismSubmission()?.studentLogin + '_' + this.currentFile);
+        const currentFile = this.currentFile();
+        const exercise = this.exercise();
+        const exerciseName = exercise && 'shortName' in exercise ? exercise.shortName : (exercise?.id ?? 'exercise');
+        this.repositoryService.downloadFile(currentFile!, exerciseName + '_' + this.plagiarismSubmission()?.studentLogin + '_' + currentFile);
     }
 
     getMatchesForCurrentFile() {
-        return this.matches()?.get(this.currentFile || 'none') || [];
+        return this.matches()?.get(this.currentFile() || 'none') || [];
     }
 
     private hasMatch(file: string): boolean {
@@ -255,7 +264,9 @@ export class TextSubmissionViewerComponent implements OnChanges {
 
         const linesWithMatches = new Set<number>();
         for (const match of matches) {
-            for (let i = match.from.line - 1; i < match.to.line; i++) {
+            // As below: the last token of a match can end on a later line than it starts on, so the whole-line
+            // highlighting has to run to the reported end line rather than to the line the token begins on.
+            for (let i = match.from.line - 1; i < (match.to.endLine ?? match.to.line); i++) {
                 linesWithMatches.add(i);
             }
         }
@@ -312,10 +323,15 @@ export class TextSubmissionViewerComponent implements OnChanges {
     private buildFileContentPartForMatch(matches: FromToElement[], match_index: number, fileLines: string[]): string {
         const match = matches[match_index];
         const idxLineFrom = match.from.line - 1;
-        const idxLineTo = match.to.line - 1;
+        // Where the last token of the match ends. JPlag reports this explicitly; `length` excludes line breaks, so
+        // deriving the end from it only holds while the token stays on one line. Results computed before the end
+        // position was recorded have no value here, and for those the old derivation is still the best available: it
+        // is what JPlag itself used to compute (`endColumn = column + length`).
+        const lineTo = match.to.endLine ?? match.to.line;
+        const idxLineTo = lineTo - 1;
 
         const idxColumnFrom = match.from.column > 0 ? match.from.column - 1 : 0;
-        const idxColumnTo = match.to.column + match.to.length;
+        const idxColumnTo = match.to.endColumn ?? match.to.column + match.to.length;
 
         let result = this.tokenStart;
 
@@ -345,7 +361,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
             for (let j = idxLineTo + 1; j < fileLines.length; j++) {
                 result += '\n' + escape(fileLines[j]);
             }
-        } else if (matches[match_index + 1].from.line === match.to.line) {
+        } else if (matches[match_index + 1].from.line === lineTo) {
             result += escape(fileLines[idxLineTo].slice(idxColumnTo, matches[match_index + 1].from.column - 1));
         } else {
             result += escape(fileLines[idxLineTo].slice(idxColumnTo)) + '\n';

@@ -332,7 +332,7 @@ export class IrisOnboardingModalComponent {
                 };
             default: {
                 const exhaustive: never = step;
-                throw new Error(`Unhandled onboarding step: ${exhaustive}`);
+                throw new Error(`Unhandled onboarding step: ${String(exhaustive)}`);
             }
         }
     }

@@ -94,7 +94,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByLearningObjectForParticipantAsync(LearningObject learningObject, @NonNull Participant participant) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
         updateProgressByLearningObjectSync(learningObject, participant.getParticipants());
     }
 
@@ -105,7 +105,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
         Set<Long> competencyIds = courseCompetencyRepository.findAllIdsByLearningObject(learningObject);
 
         for (long competencyId : competencyIds) {
@@ -129,7 +129,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByCompetencyAsync(CourseCompetency competency) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
         Long competencyId;
         try {
             competencyId = competency.getId();
@@ -166,7 +166,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(Set<Long> originalCompetencyIds, @Nullable LearningObject updatedLearningObject) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
 
         Set<CourseCompetency> updatedCompetencies = updatedLearningObject != null
                 ? updatedLearningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).collect(Collectors.toSet())
@@ -265,8 +265,33 @@ public class CompetencyProgressService {
             competencyProgressRepository.save(studentProgress);
         }
         catch (DataIntegrityViolationException e) {
-            // In rare instances of initially creating a progress entity, async updates might run in parallel.
-            // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
+            // Root cause: updateCompetencyProgress does a non-atomic find-then-insert. Multiple @Async progress
+            // updates for the SAME (competency, user) can run in parallel (e.g. two quick lecture-unit
+            // completions, or a completion racing an exercise submission). Each finds no existing row, so each
+            // inserts one, and the second insert violates the competency_user primary key.
+            //
+            // Previously this exception was swallowed, which silently DROPPED this thread's freshly computed
+            // progress/confidence. Instead, reconcile the row the winning thread created via a single targeted,
+            // idempotent UPDATE. Two properties matter:
+            // - RECOMPUTE first from the current DB state: the concurrent winner may have based its insert on
+            // newer data than this thread saw before the race, so re-applying our pre-race values could
+            // overwrite the row with a staler result.
+            // - The UPDATE touches the existing row, or affects zero rows if it is already gone — so, unlike a
+            // merge/save on a detached entity, it can never resurrect a concurrently deleted row.
+            // DB-portable: relies only on the unique constraint + the standard DataIntegrityViolationException,
+            // not on a vendor-specific upsert.
+            Set<CompetencyExerciseMasteryCalculationDTO> latestExerciseInfos = courseCompetencyRepository.findAllExerciseInfoByCompetencyIdAndUser(competencyId, user);
+            Set<CompetencyLectureUnitMasteryCalculationDTO> latestLectureUnitInfos = courseCompetencyRepository.findAllLectureUnitInfoByCompetencyIdAndUser(competencyId, user);
+            calculateProgress(latestExerciseInfos, latestLectureUnitInfos, studentProgress);
+            calculateConfidence(latestExerciseInfos, latestLectureUnitInfos, studentProgress);
+            int updatedRows = competencyProgressRepository.updateProgressAndConfidence(competencyId, user.getId(), studentProgress.getProgress(), studentProgress.getConfidence(),
+                    studentProgress.getConfidenceReason(), Instant.now());
+            if (updatedRows == 0) {
+                // The concurrently created row was deleted again (competency/user cleanup) before we could
+                // reconcile. Nothing to persist; return the in-memory values without learning-path propagation.
+                log.debug("Competency progress row vanished during concurrent creation, skipping persistence.");
+                return studentProgress;
+            }
         }
         catch (org.hibernate.ObjectNotFoundException e) {
             // The competency was deleted between the findById above and the flush triggered by save (or
@@ -295,7 +320,7 @@ public class CompetencyProgressService {
      */
     private void calculateProgress(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, Set<CompetencyLectureUnitMasteryCalculationDTO> lectureUnitInfos,
             CompetencyProgress competencyProgress) {
-        double numberOfLearningObjects = lectureUnitInfos.size() + exerciseInfos.size();
+        double numberOfLearningObjects = (double) lectureUnitInfos.size() + exerciseInfos.size();
         if (numberOfLearningObjects == 0) {
             // If nothing is linked to the competency, the competency is considered completed
             competencyProgress.setProgress(100.0);
@@ -462,7 +487,7 @@ public class CompetencyProgressService {
      */
     private double calculateCompetencyLinkWeightConfidenceHeuristic(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos,
             Set<CompetencyLectureUnitMasteryCalculationDTO> lectureUnitInfos, double progress) {
-        double numberOfLearningObjects = lectureUnitInfos.size() + exerciseInfos.size();
+        double numberOfLearningObjects = (double) lectureUnitInfos.size() + exerciseInfos.size();
         if (numberOfLearningObjects == 0) {
             return 0;
         }
@@ -512,7 +537,7 @@ public class CompetencyProgressService {
 
     private void setConfidenceReasonLow(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence,
             double competencyLinkWeightConfidenceHeuristic) {
-        double minConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, competencyLinkWeightConfidenceHeuristic).min().getAsDouble();
+        double minConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, competencyLinkWeightConfidenceHeuristic).min().orElseThrow();
         if (recencyConfidence == minConfidenceHeuristic) {
             competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_LOWER);
         }
@@ -526,7 +551,7 @@ public class CompetencyProgressService {
 
     private void setConfidenceReasonHigh(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence, double quickSolveConfidence,
             double competencyLinkWeightConfidenceHeuristic) {
-        double maxConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, quickSolveConfidence, competencyLinkWeightConfidenceHeuristic).max().getAsDouble();
+        double maxConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, quickSolveConfidence, competencyLinkWeightConfidenceHeuristic).max().orElseThrow();
         if (recencyConfidence == maxConfidenceHeuristic) {
             competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_HIGHER);
         }

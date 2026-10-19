@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config.modules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,6 +10,7 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -43,6 +45,29 @@ class ArtemisConfigHelperTest {
         mockProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, false);
         mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, true);
         assertThat(artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isFalse();
+    }
+
+    /**
+     * The last case is the one that matters in production: a build agent runs with the Atlas module off and never
+     * defines the AtlasLLM property, so the short-circuit on the module flag is what keeps it from throwing.
+     */
+    @Test
+    void testAtlasLLMProperty() {
+        mockProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, true);
+
+        mockProperty(Constants.ATLASLLM_ENABLED_PROPERTY_NAME, true);
+        assertThat(artemisConfigHelper.isAtlasLLMEnabled(mockEnv)).isTrue();
+
+        mockProperty(Constants.ATLASLLM_ENABLED_PROPERTY_NAME, false);
+        assertThat(artemisConfigHelper.isAtlasLLMEnabled(mockEnv)).isFalse();
+
+        mockProperty(Constants.ATLASLLM_ENABLED_PROPERTY_NAME, null);
+        assertThatThrownBy(() -> artemisConfigHelper.isAtlasLLMEnabled(mockEnv)).isInstanceOf(RuntimeException.class)
+                .hasMessageContaining(Constants.ATLASLLM_ENABLED_PROPERTY_NAME);
+
+        mockProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, false);
+        mockProperty(Constants.ATLASLLM_ENABLED_PROPERTY_NAME, null);
+        assertThat(artemisConfigHelper.isAtlasLLMEnabled(mockEnv)).isFalse();
     }
 
     @Test
@@ -83,6 +108,30 @@ class ArtemisConfigHelperTest {
     @Test
     void testIrisProperty() {
         testProperty(artemisConfigHelper::isIrisEnabled, Constants.IRIS_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
+    void testDeimosProperty() {
+        testProperty(artemisConfigHelper::isDeimosEnabled, Constants.DEIMOS_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
+    void testHyperionExerciseGenerationRequiresHyperionPropertyAndProfiles() {
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, true);
+        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isTrue();
+
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(false);
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
+
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(false);
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
+
+        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, false);
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
     }
 
     private void testProperty(Function<Environment, Boolean> propertyTest, String propertyName) {

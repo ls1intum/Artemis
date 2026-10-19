@@ -29,7 +29,7 @@ public record TestCaseDTO(String name, String classname, double time, @JsonPrope
 
     @Override
     public List<String> testMessages() {
-        return extractMessage().map(Collections::singletonList).orElse(Collections.emptyList());
+        return extractMessage().map(Collections::singletonList).orElse(List.of());
     }
 
     /**
@@ -53,10 +53,10 @@ public record TestCaseDTO(String name, String classname, double time, @JsonPrope
             return Optional.of(failures().getFirst().getMostInformativeMessage());
         }
         else if (hasErrors && errors().getFirst().type() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", errors().getFirst().type()));
+            return Optional.of("Unsuccessful due to an error of type: %s".formatted(errors().getFirst().type()));
         }
         else if (hasFailures && failures().getFirst().type() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", failures().getFirst().type()));
+            return Optional.of("Unsuccessful due to an error of type: %s".formatted(failures().getFirst().type()));
         }
         else if (!successful) {
             // this is an edge case which typically does not happen

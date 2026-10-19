@@ -21,6 +21,9 @@ export default defineConfig({
     timeout: (parseNumber(process.env.TEST_TIMEOUT_SECONDS) ?? 3 * 60) * 1000,
     retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
     workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 5,
+    /* Playwright empties its output directory when a run starts. run-tests.sh starts one run per project type, so a shared directory
+     * would lose the traces and error contexts of the parallel run to the multi-node run that follows it. */
+    outputDir: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-results/${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-results',
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [
         ['list'],
@@ -57,12 +60,42 @@ export default defineConfig({
         baseURL: process.env.BASE_URL || 'http://localhost:9000',
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry',
-        /* Record video for all tests (passed and failed). Videos are saved in test-results folder. */
+        /* Record video only when a test is retried (mirrors `trace` above). Recording full-HD video for
+         * every one of the ~300 passing tests in the single "run all" CI job added significant browser-
+         * process memory, disk, and encoding time (a large part of the >1h wall-clock) for footage that
+         * is only ever looked at for failures. `on-first-retry` keeps the video for retried/failing tests
+         * — where it is actually useful — while eliminating that overhead for the passing majority.
+         * Override via PLAYWRIGHT_VIDEO_MODE (e.g. 'on' locally) when debugging a passing test. */
         video: {
-            mode: (process.env.PLAYWRIGHT_VIDEO_MODE as 'on' | 'off' | 'on-first-retry' | 'retain-on-failure') || 'on',
+            mode: (process.env.PLAYWRIGHT_VIDEO_MODE as 'on' | 'off' | 'on-first-retry' | 'retain-on-failure') || 'on-first-retry',
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
+        /* Block the Angular service worker (ngsw-worker.js) in every test context. The production WAR
+         * registers it unconditionally, and once it controls a page it handles the app's /api fetches.
+         * That breaks E2E in two ways: Chromium's DevTools protocol frequently cannot return bodies of
+         * SW-served responses (`Network.getResponseBody: No data found for resource` — the source of the
+         * deferred `response.json()` flake), and Playwright's `page.route()` never sees SW-handled
+         * requests, so route-based interception (e.g. injecting a failed save) is silently bypassed.
+         * The SW only adds caching/update checks the tests don't exercise, so blocking it makes runs
+         * deterministic without changing what is tested. */
+        serviceWorkers: 'block',
+        launchOptions: {
+            args: [
+                '--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator',
+                // When the app is served over HTTPS with a self-signed cert (multi-node runner), bypass
+                // certificate validation at the browser-process level. The context-level `ignoreHTTPSErrors`
+                // does not reliably cover ES-module / lazy-chunk script fetches, which intermittently failed
+                // with "An SSL certificate error occurred when fetching the script", aborting route bootstraps
+                // (Angular NG05604). No-op when the app is served over plain HTTP (single-node fast runner).
+                ...((process.env.BASE_URL || '').startsWith('https') ? ['--ignore-certificate-errors'] : []),
+                // Optional browser-level host resolver override (e.g. "MAP localhost 127.0.0.1"). The multi-node
+                // runner sets this so the browser reaches the nginx LB over IPv4 (avoiding the historical ::1
+                // ECONNREFUSED cascade) while still using a domain origin (https://localhost) — an IP literal such
+                // as 127.0.0.1 is not a valid WebAuthn Relying Party ID and breaks every passkey test.
+                ...(process.env.PW_BROWSER_HOST_RESOLVER_RULES ? [`--host-resolver-rules=${process.env.PW_BROWSER_HOST_RESOLVER_RULES}`] : []),
+            ],
+        },
     },
 
     /* Configure projects for fast, slow, and multi-node tests */
@@ -90,9 +123,24 @@ export default defineConfig({
         },
         // Tests with @multi-node tag. These exercise the clustered Hazelcast / ActiveMQ stack and
         // are skipped by the single-node fast pipeline. The multi-node runner opts in explicitly.
+        // grepInvert excludes @kubernetes, because those tests need a Kubernetes cluster rather than
+        // the Docker-based multi-node stack and would fail there on the configured build runner.
         {
             name: 'multi-node-tests',
             grep: /@multi-node/,
+            grepInvert: /@kubernetes/,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+            },
+        },
+        // Tests with @kubernetes tag. These need an Artemis installation whose build agents use the
+        // Kubernetes build runner, which only deployment/kubernetes/run-localci-kubernetes.sh sets up. No other pipeline
+        // selects this project.
+        {
+            name: 'kubernetes-tests',
+            grep: /@kubernetes/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',

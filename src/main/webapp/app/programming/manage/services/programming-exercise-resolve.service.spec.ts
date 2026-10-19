@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { of } from 'rxjs';
@@ -10,8 +9,6 @@ import { HttpResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 describe('ProgrammingExerciseResolve', () => {
-    setupTestBed({ zoneless: true });
-
     let resolver: ProgrammingExerciseResolve;
     let findSpy: ReturnType<typeof vi.fn>;
 

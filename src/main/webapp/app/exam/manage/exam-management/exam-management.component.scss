@@ -1,3 +1,81 @@
-.exam-management-button-section {
-    min-width: 150px;
+@import 'src/main/webapp/content/scss/artemis-mixins';
+
+$breakpoint-md: 48rem; // Tailwind 'md' breakpoint (768px)
+
+.exam-management-layout {
+    display: grid;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    min-height: 0;
+    grid-template-areas:
+        'header header'
+        'sidebar content';
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto 1fr;
+
+    @media (min-width: $breakpoint-md) {
+        grid-template-areas:
+            'sidebar header'
+            'sidebar content';
+    }
+}
+
+.exam-management-sidebar {
+    grid-area: sidebar;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+}
+
+.exam-management-content {
+    grid-area: content;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+}
+
+.exam-management-header {
+    grid-area: header;
+    min-width: 0;
+    margin-bottom: var(--spacing-divider);
+
+    @include title-bar-frame;
+    @include title-bar-size-container;
+
+    height: auto;
+    flex-wrap: wrap;
+}
+
+.exam-management-title-wrapper {
+    flex: 0 1 auto;
+}
+
+.exam-title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.title-bar-actions {
+    flex: 0 0 auto;
+}
+
+.title-bar-actions-wrapper ::ng-deep {
+    @include title-bar-compact-controls;
+}
+
+a.exam-title-link {
+    color: inherit !important;
+    text-decoration: none !important;
+    transition:
+        background-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
+
+    &:hover,
+    &:focus,
+    &:active {
+        background-color: var(--link-item-bg);
+        box-shadow: 0 0 0 4px var(--link-item-bg);
+    }
 }

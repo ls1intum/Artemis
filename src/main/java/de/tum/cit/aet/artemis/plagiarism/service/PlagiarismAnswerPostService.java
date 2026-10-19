@@ -11,8 +11,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -34,7 +33,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostUpdateRequestDT
 @Service
 public class PlagiarismAnswerPostService extends PostingService {
 
-    private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
+    private static final String ANSWER_POST_ENTITY_NAME = "messages.answerPost";
 
     private final AnswerPostRepository answerPostRepository;
 
@@ -58,7 +57,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      * @return created answer post that was persisted
      */
     public AnswerPost createAnswerPost(Long courseId, PlagiarismAnswerPostCreateRequestDTO request) {
-        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final User user = this.userRepository.getUserWithAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
 
         Post post = postRepository.findPostByIdElseThrow(request.post().id());
@@ -74,7 +73,12 @@ public class PlagiarismAnswerPostService extends PostingService {
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
-        postRepository.save(post);
+        // Do not re-save the parent post here. The answer is already persisted on its owning side (answerPost.post).
+        // Post.answers is @OneToMany(orphanRemoval = true, fetch = EAGER); with open-in-view off and no surrounding
+        // transaction, the parent post is detached and its answers collection does not contain the just-created
+        // answer. Merging it back (postRepository.save(post)) lets Hibernate treat the new answer as an orphan and
+        // delete it, intermittently losing the answer that was just created (see AnswerMessageService, which also
+        // does not re-save the parent post on answer creation).
 
         preparePostAndBroadcast(savedAnswerPost, course);
 
@@ -92,7 +96,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      * @return updated answer post that was persisted
      */
     public AnswerPost updateAnswerPost(Long courseId, Long answerPostId, PlagiarismAnswerPostUpdateRequestDTO request) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
@@ -107,7 +111,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         // instructor can toggle resolve on someone else's answer without being allowed to rewrite its
         // content.
         // * If the resolve flag is actually changing, the request is treated primarily as a resolve
-        // operation. Sending the existing content alongside (a common frontend pattern) does not trigger
+        // operation. Sending the existing content alongside (a common client pattern) does not trigger
         // the content-edit authorization. If the request additionally carries *different* content, the
         // content edit is independently authorized — this closes the CodeRabbit-flagged corner case where
         // a single PUT that changed both fields silently dropped the content because only the resolve
@@ -154,7 +158,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      * @param answerPostId id of the answer post to delete
      */
     public void deleteAnswerPostById(Long courseId, Long answerPostId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         // checks
         final Course course = courseRepository.findByIdElseThrow(courseId);
@@ -176,7 +180,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         // delete
         answerPostRepository.deleteById(answerPostId);
         preparePostForBroadcast(post);
-        broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(post, CommunicationCrudAction.UPDATE, course.getId(), null);
     }
 
     /**
@@ -184,7 +188,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      */
     @Override
     public String getEntityName() {
-        return METIS_ANSWER_POST_ENTITY_NAME;
+        return ANSWER_POST_ENTITY_NAME;
     }
 
     /**

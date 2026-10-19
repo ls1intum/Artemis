@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, viewChild } from '@angular/core';
 
-import { TranslateModule } from '@ngx-translate/core';
-import { NgbModule, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Placement } from '@ng-bootstrap/ng-bootstrap';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { fromEvent } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.
@@ -18,13 +18,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
     styleUrls: ['theme-switch.component.scss'],
-    imports: [TranslateModule, NgbModule, FontAwesomeModule, TranslateDirective],
+    imports: [NgbPopover, FontAwesomeModule, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThemeSwitchComponent implements OnInit {
-    protected readonly faSync = faSync;
-
     private readonly themeService = inject(ThemeService);
+
+    protected readonly faSync = faSync;
 
     popoverPlacement = input.required<Placement>();
     popover = viewChild.required<NgbPopover>('popover');
@@ -32,7 +32,7 @@ export class ThemeSwitchComponent implements OnInit {
     isDarkTheme = computed(() => this.themeService.currentTheme() === Theme.DARK);
     isSyncedWithOS = computed(() => this.themeService.userPreference() === undefined);
 
-    closeTimeout: any;
+    closeTimeout: ReturnType<typeof setTimeout> | undefined;
 
     ngOnInit() {
         // Workaround as we can't dynamically change the "autoClose" property on popovers

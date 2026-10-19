@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 
-export const teamRoute: Routes = [
+export const teamManagementRoute: Routes = [
     {
         path: '',
         loadComponent: () => import('./teams/teams.component').then((m) => m.TeamsComponent),
@@ -17,7 +17,7 @@ export const teamRoute: Routes = [
         path: ':teamId',
         loadComponent: () => import('app/exercise/team/team.component').then((m) => m.TeamComponent),
         data: {
-            authorities: IS_AT_LEAST_STUDENT,
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.team.detail.title',
         },
         canActivate: [UserRouteAccessService],

@@ -35,23 +35,26 @@
             @if (exercise()!.isAtLeastInstructor && !exercise()!.teamMode) {
                 <jhi-external-submission class="d-inline-block" [exercise]="exercise()!" />
             }
-            <button
-                jhi-exercise-action-button
-                [buttonIcon]="faDownload"
-                class="btn btn-info btn-sm"
-                [buttonLabel]="'entity.action.export' | artemisTranslate"
-                [hideLabelMobile]="true"
-                [hideLabelBreakpoint]="'md'"
-                [ngbPopover]="popContent"
-                [autoClose]="'outside'"
-                placement="bottom-right auto"
-                container="body"
-                #exportPopover="ngbPopover"
-            ></button>
+            @if (exercise()!.isAtLeastInstructor) {
+                <button
+                    type="button"
+                    jhi-exercise-action-button
+                    [buttonIcon]="faDownload"
+                    class="btn btn-info btn-sm"
+                    [buttonLabel]="'entity.action.export' | artemisTranslate"
+                    [hideLabelMobile]="true"
+                    [hideLabelBreakpoint]="'md'"
+                    [ngbPopover]="popContent"
+                    [autoClose]="'outside'"
+                    placement="bottom-right auto"
+                    container="body"
+                    #exportPopover="ngbPopover"
+                ></button>
+            }
             <ng-template #popContent>
                 <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
                 @if (exercise()!.isAtLeastInstructor) {
-                    <button class="btn btn-info btn-sm me-1" (click)="exportNames()">
+                    <button type="button" class="btn btn-info btn-sm me-1" (click)="exportNames()">
                         <fa-icon [icon]="faDownload" />
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.names"></span>
                     </button>
@@ -59,7 +62,7 @@
                 @if (exercise()!.isAtLeastInstructor) {
                     <jhi-exercise-scores-export-button [exercise]="exercise()!" />
                 }
-                @if (exercise()!.type === ExerciseType.PROGRAMMING) {
+                @if (exercise()!.isAtLeastInstructor && exercise()!.type === ExerciseType.PROGRAMMING) {
                     <jhi-programming-assessment-repo-export [programmingExercises]="[exercise()!]" class="me-1" (buttonPressed)="closeExportPopover()" />
                 }
                 @if (
@@ -69,7 +72,7 @@
                     <jhi-exercise-submission-export [exerciseId]="exercise()!.id!" [exerciseType]="exercise()!.type!" class="me-1" />
                 }
             </ng-template>
-            <button class="btn btn-primary btn-sm" (click)="refresh()">
+            <button type="button" class="btn btn-primary btn-sm" (click)="refresh()">
                 <fa-icon [icon]="faSync" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh"></span>
             </button>
@@ -87,6 +90,7 @@
             </h4>
         }
         <div style="flex: 1; min-height: 0">
+            <jhi-participation-access-notice [exercise]="exercise()!" />
             <jhi-table-view
                 [cols]="columns()"
                 [vals]="participations()"
@@ -128,7 +132,7 @@
 
 <ng-template #lastResultTemplate let-cell>
     @if (toResult(cell.data); as result) {
-        <jhi-result [exercise]="exercise()!" [result]="result" [participation]="toParticipation(cell.data)" />
+        <jhi-result [exercise]="exercise()!" [result]="result" [participation]="toParticipation(cell.data)" [isOwnParticipation]="false" />
     }
 </ng-template>
 
@@ -163,30 +167,35 @@
 <ng-template #actionsTemplate let-dto>
     <div class="btn-group gap-1">
         @if (exercise()!.type === ExerciseType.PROGRAMMING) {
-            @if (dto.repositoryUri) {
-                <jhi-code-button
-                    [smallButtons]="true"
-                    [hideLabelMobile]="true"
-                    [hideLabelBreakpoint]="'xl'"
-                    [repositoryUri]="dto.repositoryUri"
-                    [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, dto.participationId]"
-                />
-            }
             @if (dto.buildPlanId && !localCIEnabled()) {
                 <a [href]="getBuildPlanUrl(dto)" target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
                     <fa-icon [icon]="farFileCode" />
                     <span class="d-none d-xl-inline ms-1">Build plan</span>
                 </a>
             }
-            <a
-                [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
-                class="btn btn-info btn-sm"
-                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-            >
-                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                <span class="d-none d-xl-inline ms-1">Online editor</span>
-            </a>
+            @if (canAccessLiveRepository()) {
+                <a
+                    [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
+                    class="btn btn-info btn-sm"
+                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                >
+                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                    <span class="d-none d-xl-inline ms-1">Online editor</span>
+                </a>
+            }
         }
         <jhi-manage-assessment-buttons [course]="course()!" [exercise]="exercise()!" [participation]="toParticipation(dto)" [isLoading]="isLoading()" (refresh)="refresh()" />
     </div>
+</ng-template>
+
+<ng-template #repositoryCellTemplate let-cell>
+    @if (cell.data.repositoryUri) {
+        <jhi-code-button
+            [smallButtons]="true"
+            [exerciseId]="exercise()?.id"
+            [participationId]="cell.data.participationId"
+            [repositoryUri]="cell.data.repositoryUri"
+            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
+        />
+    }
 </ng-template>

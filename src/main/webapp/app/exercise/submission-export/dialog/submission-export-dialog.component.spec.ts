@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionExportDialogComponent } from 'app/exercise/submission-export/dialog/submission-export-dialog.component';
@@ -11,10 +10,9 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import * as DownloadUtil from 'app/foundation/util/download.util';
 import { Subject, of } from 'rxjs';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import dayjs from 'dayjs/esm';
 
 describe('Submission Export Dialog Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<SubmissionExportDialogComponent>;
     let component: SubmissionExportDialogComponent;
 
@@ -93,6 +91,29 @@ describe('Submission Export Dialog Component', () => {
         expect(component.exportInProgress()).toBe(false);
         expect(downloadSpy).toHaveBeenCalledOnce();
         expect(downloadSpy).toHaveBeenCalledWith(response);
+    });
+
+    describe('late submissions date', () => {
+        it('should take over the date of the picker and map no date to null', () => {
+            const date = dayjs('2030-06-01T12:00:00');
+
+            component.onFilterLateSubmissionsDateChange(date);
+            expect(component.submissionExportOptions().filterLateSubmissionsDate).toBe(date);
+
+            component.onFilterLateSubmissionsDateChange(undefined);
+            expect(component.submissionExportOptions().filterLateSubmissionsDate).toBeNull();
+        });
+
+        it('should only block the export for text that is not a date while the late submissions filter is on', () => {
+            component.isFilterDateTextValid.set(false);
+            expect(component.hasInvalidFilterDate()).toBe(false);
+
+            component.filterLateSubmissions.set(true);
+            expect(component.hasInvalidFilterDate()).toBe(true);
+
+            component.isFilterDateTextValid.set(true);
+            expect(component.hasInvalidFilterDate()).toBe(false);
+        });
     });
 
     it('should clear dialog', () => {

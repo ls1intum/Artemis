@@ -3,12 +3,12 @@ import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResul
 /**
  * Result of the automatic plagiarism detection for exercises.
  */
-export class PlagiarismResultDTO {
+export interface PlagiarismResultDTO {
     plagiarismResult: PlagiarismResult;
-    plagiarismResultStats: PlagiarismResultStats;
+    plagiarismResultStats: PlagiarismResultStatsDTO;
 }
 
-export class PlagiarismResultStats {
+export interface PlagiarismResultStatsDTO {
     numberOfDetectedSubmissions: number;
     averageSimilarity: number;
     maximalSimilarity: number;

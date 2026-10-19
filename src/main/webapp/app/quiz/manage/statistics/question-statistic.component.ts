@@ -1,15 +1,17 @@
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-statistic.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { Subscription } from 'rxjs';
+import { EMPTY, map, startWith, switchMap } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
+import { TumAetUiChartDatumContext } from '@tumaet/ui-angular';
+import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 export const redColor = '#d9534f';
 export const greenColor = '#5cb85c';
@@ -20,33 +22,34 @@ export const greyColor = '#838383';
 @Component({
     template: '',
 })
-export abstract class QuestionStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
+export abstract class QuestionStatisticComponent extends AbstractQuizStatisticComponent implements OnInit {
     protected route = inject(ActivatedRoute);
     protected router = inject(Router);
     protected accountService = inject(AccountService);
     protected quizExerciseService = inject(QuizExerciseService);
     protected websocketService = inject(WebsocketService);
-    protected changeDetector = inject(ChangeDetectorRef);
+    private readonly destroyRef = inject(DestroyRef);
 
-    question: QuizQuestion;
-    questionStatistic: QuizQuestionStatistic;
+    question!: QuizQuestion; // set in loadQuizCommon() before the chart is rendered
+    questionStatistic!: QuizQuestionStatistic; // set in loadQuizCommon() before the chart is rendered
 
-    quizExercise: QuizExercise;
-    questionIdParam: number;
-    sub: Subscription;
+    // A signal so that setting it after the (async) quiz load schedules zoneless change detection.
+    // As a plain field the initial load would not render until an unrelated event (e.g. a click),
+    // because the `@if (quizExercise())` guard keeps the chart (the only other signal consumer) out of the DOM.
+    readonly quizExercise = signal<QuizQuestionStatisticResponse>(undefined!); // set in loadQuizCommon() before it is read
+    questionIdParam!: number; // set in ngOnInit() from the route params
 
     // TODO: why do we have a second variable for labels?
     labels: string[] = [];
     // solutionLabels is currently only used for multiple choice questions
     solutionLabels: string[] = [];
 
-    ratedCorrectData: number;
-    unratedCorrectData: number;
+    ratedCorrectData = 0;
+    unratedCorrectData = 0;
 
-    maxScore: number;
+    maxScore = 0;
     showSolution = false;
-    websocketChannelForData: string;
-    private statisticSubscription?: Subscription;
+    websocketChannelForData!: string; // set in ngOnInit() from the route params before use
 
     questionTextRendered?: SafeHtml;
 
@@ -54,29 +57,33 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     backgroundSolutionColors: string[] = [];
 
     ngOnInit() {
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.setAxisLabels('showStatistic.questionStatistic.xAxes', 'showStatistic.questionStatistic.yAxes');
         });
-        this.sub = this.route.params.subscribe((params) => {
-            this.questionIdParam = +params['questionId'];
-            // use different REST-call if the User is a Student
-            if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
-                    this.loadQuiz(res.body!, false);
-                });
-            }
+        this.route.params
+            .pipe(
+                switchMap((params) => {
+                    const exerciseId = Number(params['exerciseId']);
+                    const questionId = Number(params['questionId']);
+                    this.questionIdParam = questionId;
+                    this.websocketChannelForData = `/topic/statistic/${exerciseId}`;
 
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            // ask for new Data if the websocket for new statistical data was notified
-            this.statisticSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe((quiz: QuizExercise) => {
-                this.loadQuiz(quiz, true);
+                    if (!this.accountService.isAtLeastTutor()) {
+                        return EMPTY;
+                    }
+
+                    return this.websocketService.subscribe<number>(this.websocketChannelForData).pipe(
+                        map(() => true),
+                        startWith(false),
+                        switchMap((refresh) => this.quizExerciseService.findQuestionStatistic(exerciseId, questionId).pipe(map((response) => ({ response, questionId, refresh })))),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(({ response, questionId, refresh }) => {
+                this.questionIdParam = questionId;
+                this.loadQuiz(response.body!, refresh);
             });
-        });
-    }
-
-    ngOnDestroy() {
-        this.statisticSubscription?.unsubscribe();
     }
 
     /**
@@ -132,24 +139,24 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
      * @param quiz the quizExercise, which the selected question is part of.
      * @param refresh true if method is called from Websocket
      */
-    abstract loadQuiz(quiz: QuizExercise, refresh: boolean): void;
+    abstract loadQuiz(quiz: QuizQuestionStatisticResponse, refresh: boolean): void;
 
-    loadQuizCommon(quiz: QuizExercise) {
+    loadQuizCommon(quiz: QuizQuestionStatisticResponse) {
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigateByUrl('courses');
+            void this.router.navigateByUrl('courses');
         }
-        // search selected question in quizExercise based on questionId
-        this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
+        // Use the page-specific question response instead of loading every question in the quiz.
+        this.quizExercise.set(quiz);
+        const updatedQuestion = quiz.quizQuestion;
         // if anyone finds a way to the Website, with a wrong combination of QuizId and QuestionId, go back to Courses
-        if (!updatedQuestion) {
-            this.router.navigateByUrl('courses');
+        if (this.questionIdParam !== updatedQuestion.id) {
+            void this.router.navigateByUrl('courses');
             return undefined;
         }
         this.question = updatedQuestion;
-        this.questionStatistic = updatedQuestion.quizQuestionStatistic!;
+        this.questionStatistic = quiz.quizQuestionStatistic;
         return updatedQuestion;
     }
 
@@ -188,11 +195,10 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
      * check if the rated or unrated, then load the rated or unrated data into the diagram
      */
     loadDataInDiagram() {
-        this.ngxColor.domain = [];
         // if show Solution is true use the label, backgroundColor and Data, which show the solution
         if (this.showSolution) {
             // show Solution: use the backgroundColor which shows the solution
-            this.ngxColor.domain = this.backgroundSolutionColors;
+            this.chartColors.set([...this.backgroundSolutionColors]);
 
             this.setData(this.questionStatistic);
             const additionalData = this.rated ? this.ratedCorrectData : this.unratedCorrectData;
@@ -201,14 +207,23 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             this.chartLabels = this.solutionLabels;
         } else {
             // don't show Solution: use the backgroundColor which doesn't show the solution
-            this.ngxColor.domain = this.backgroundColors;
+            this.chartColors.set([...this.backgroundColors]);
 
             this.setData(this.questionStatistic);
             // don't show Solution
             this.chartLabels = this.labels;
         }
 
-        this.pushDataToNgxEntry(this.changeDetector);
+        this.updateChartData();
         this.setAxisLabels('artemisApp.showStatistic.questionStatistic.xAxes', 'artemisApp.showStatistic.questionStatistic.yAxes');
+    }
+
+    protected override formatTooltipLabel(item: TumAetUiChartDatumContext): string {
+        // The extra "correct solutions" bar (participants who answered the whole question correctly) is only
+        // appended to the data in the show-solution view (see loadDataInDiagram). In the default view the last
+        // bar is just the last answer option/element, so only treat it as the summary bar while the solution is shown.
+        const isCorrectSolutionBar = this.showSolution && item.index === this.data.length - 1;
+        const key = isCorrectSolutionBar ? 'artemisApp.showStatistic.tooltip.correctOverall' : 'artemisApp.showStatistic.tooltip.participantShare';
+        return this.tooltipLine(key, item.value);
     }
 }

@@ -5,6 +5,7 @@ import { ActivateService } from './activate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { mergeMap } from 'rxjs/operators';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Component that handles user account activation via email confirmation link.
@@ -14,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-activate',
     templateUrl: './activate.component.html',
-    imports: [TranslateDirective, RouterLink],
+    imports: [TranslateDirective, RouterLink, TumAetUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActivateComponent implements OnInit {
@@ -28,11 +29,11 @@ export class ActivateComponent implements OnInit {
     /** Indicates whether the account was successfully activated */
     readonly success = signal(false);
     /** Whether user registration is enabled on this Artemis instance */
-    readonly isRegistrationEnabled: boolean;
+    readonly isRegistrationEnabled = signal<boolean>(false);
 
     constructor() {
         const profileInfo = this.profileService.getProfileInfo();
-        this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+        this.isRegistrationEnabled.set(profileInfo.registrationEnabled || false);
     }
 
     /**
@@ -40,7 +41,7 @@ export class ActivateComponent implements OnInit {
      * Only attempts activation if registration is enabled on the server.
      */
     ngOnInit() {
-        if (this.isRegistrationEnabled) {
+        if (this.isRegistrationEnabled()) {
             this.activateAccount();
         }
     }

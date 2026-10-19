@@ -11,7 +11,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.commons.io.IOUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -72,13 +71,13 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
      */
     private String loadPipelineScript(final ProgrammingExercise exercise, final Optional<ProjectType> projectType) {
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        final boolean isSequentialTestRuns = exercise.getBuildConfig().hasSequentialTestRuns();
+        final boolean isSequentialTestRuns = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).hasSequentialTestRuns();
 
         final Path pipelinePath = buildResourcePath(programmingLanguage, projectType, isSequentialTestRuns);
         final Resource resource = resourceLoaderService.getResource(pipelinePath);
 
         try (InputStream inputStream = resource.getInputStream()) {
-            return IOUtils.toString(inputStream, Charset.defaultCharset());
+            return new String(inputStream.readAllBytes(), Charset.defaultCharset());
         }
         catch (IOException e) {
             throw new JenkinsException("Could not load pipeline script definition.", e);
@@ -102,7 +101,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
 
         final var pipelineScriptFilename = "pipeline.groovy";
         final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
-        final var programmingLanguageName = programmingLanguage.name().toLowerCase();
+        final var programmingLanguageName = programmingLanguage.name().toLowerCase(Locale.ROOT);
         final Optional<String> projectTypeName = getProjectTypeName(programmingLanguage, projectType);
 
         Path resourcePath = Path.of("templates", "jenkins", programmingLanguageName);

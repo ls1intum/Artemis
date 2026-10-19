@@ -3,19 +3,19 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { Dialog } from 'primeng/dialog';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { onError } from 'app/foundation/util/global.utils';
-import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { EXAM_TEXT_MAX_LENGTH, EXAM_TITLE_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
@@ -26,56 +26,89 @@ import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiDialogComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
+import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
     imports: [
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        TumAetUiButtonDirective,
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,
         TitleChannelNameComponent,
         HelpIconComponent,
         ExamModePickerComponent,
-        NgbTooltip,
         FaIconComponent,
         WorkingTimeChangeComponent,
-        FormDateTimePickerComponent,
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
-        ButtonComponent,
         ConfirmEntityNameComponent,
-        Dialog,
+        TumAetUiCheckboxComponent,
+        TumAetUiDatePickerComponent,
+        TumAetUiDialogComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        ExamImportProgressDialogComponent,
+        ExamTimelineComponent,
     ],
 })
-export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ExamUpdateComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
     private calendarService = inject(CalendarService);
     private router = inject(Router);
+    private eventManager = inject(EventManager);
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly documentationType: DocumentationType = 'Exams';
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
+    protected readonly EXAM_TEXT_MAX_LENGTH = EXAM_TEXT_MAX_LENGTH;
+    protected readonly EXAM_TITLE_MAX_LENGTH = EXAM_TITLE_MAX_LENGTH;
 
-    exam: Exam;
-    course: Course;
-    isSaving: boolean;
-    isImport = false;
-    isImportInSameCourse = false;
+    // exam is template-bound (directly and through many getters) and populated asynchronously from the route
+    // resolver, so it is backed by a signal to schedule change detection. The getter/setter facade keeps the
+    // many synchronous reads/writes (getters, [(ngModel)] bindings) unchanged.
+    private readonly _exam = signal<Exam>(undefined!);
+    get exam(): Exam {
+        return this._exam();
+    }
+    set exam(value: Exam) {
+        this._exam.set(value);
+    }
+    course!: Course; // set in ngOnInit() from route data
+    readonly isSaving = signal(false);
+    readonly isImport = signal(false);
+    readonly isImportInSameCourse = signal(false);
+    readonly timelineStatus = signal<TimelineStatus>({ valid: false, empty: true, invalidItems: [] });
 
-    hideChannelNameInput = false;
+    readonly hideChannelNameInput = signal(false);
     private originalStartDate?: dayjs.Dayjs;
 
     private originalEndDate?: dayjs.Dayjs;
@@ -91,10 +124,12 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
-
-    readonly datePickers = viewChildren(FormDateTimePickerComponent);
-
-    private viewInitialized = false;
+    examImportProgressDialog = viewChild.required(ExamImportProgressDialogComponent);
+    /**
+     * The date fields of the review, publication and example solution dates. A date field keeps its last committed date while the
+     * typed text is not a date and flags itself, but it is no form control, so the save button has to ask the fields.
+     */
+    private readonly datePickers = viewChildren(TumAetUiDatePickerComponent);
 
     ngOnInit(): void {
         combineLatest([this.route.url, this.route.data])
@@ -115,8 +150,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
 
                 this.exam = exam;
-                this.isImport = isImport;
-                this.isImportInSameCourse = isImport && exam.course?.id === data.course.id;
+                this.isImport.set(isImport);
+                this.isImportInSameCourse.set(isImport && exam.course?.id === data.course.id);
                 this.originalStartDate = exam.startDate?.clone();
                 this.originalEndDate = exam.endDate?.clone();
 
@@ -131,14 +166,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 if (!this.exam.startText) {
                     this.exam.startText = this.examDefaultStartText;
                 }
-                this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course);
-                this.refreshDatePickerValidation();
+                this.hideChannelNameInput.set((!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course));
             });
-    }
-
-    ngAfterViewInit() {
-        this.viewInitialized = true;
-        this.refreshDatePickerValidation();
     }
 
     ngOnDestroy() {
@@ -176,21 +205,16 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         return this.exam.workingTime;
     }
 
-    private refreshDatePickerValidation() {
-        if (!this.viewInitialized) {
-            return;
-        }
-        // Delay until the current change detection cycle completed so the pickers have the latest ngModel values.
-        setTimeout(() => this.datePickers().forEach((picker) => picker.updateSignals()), 0);
-    }
-
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state, and we edited an existing exam
-     * Returns to the overview page if there is no previous state, and we created a new exam
+     * Returns to the detail page if we edited an existing exam
+     * Returns to the overview page if we created a new exam
      */
     resetToPreviousState() {
-        this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());
+        if (this.exam.id) {
+            void this.router.navigate(['course-management', this.course.id, 'exams', this.exam.id]);
+        } else {
+            void this.router.navigate(['course-management', this.course.id, 'exams']);
+        }
     }
 
     /**
@@ -221,28 +245,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
-     * Checks if the exam visibility date is set too early relative to the exam start date.
-     * If the visibility date is more than 4 hours (240 minutes) before the start date.
-     * it indicates that the visibility date is set too early.
-     *
-     * @returns {boolean} true if the visibility date is more than 4 hours before the start date, false otherwise.
-     */
-    get checkExamVisibilityTime(): boolean {
-        if (!this.isVisibleDateSet || !this.isStartDateSet) {
-            return false;
-        }
-
-        const visibleDate = dayjs(this.exam.visibleDate);
-        const startDate = dayjs(this.exam.startDate);
-
-        // Calculate the difference in minutes
-        const differenceInMinutes = startDate.diff(visibleDate, 'minute');
-
-        // Check if the difference is more than 4 hours (240 minutes)
-        return differenceInMinutes > 240;
-    }
-
-    /**
      * Returns the maximum working time in minutes for test exams.
      */
     get maxWorkingTimeInMinutes(): number {
@@ -253,7 +255,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             return dayjs(this.exam.endDate).diff(this.exam.startDate, 'm', true);
         } else {
             // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
-            return this.isImport ? this.workingTimeInMinutes : 0;
+            return this.isImport() ? this.workingTimeInMinutes : 0;
         }
     }
 
@@ -262,6 +264,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * If either the user confirms the modal, the exam is not ongoing or the dates have not changed, the exam is saved.
      */
     handleSubmit() {
+        // The save button is disabled for an invalid configuration, but a submit can also come from the form itself (for example Enter in a field).
+        if (!this.isValidConfiguration) {
+            return;
+        }
         const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
 
         if (datesChanged && this.isOngoingExam) {
@@ -296,10 +302,24 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * If the save was not successful, an error is shown to the user.
      */
     save() {
-        this.isSaving = true;
+        // Guard against re-entry (e.g. pressing Enter in the form while a save/import is already running): the save button is
+        // disabled while saving, but ngSubmit can still fire. A second import would reset the in-flight progress dialog.
+        if (this.isSaving()) {
+            return;
+        }
+        this.isSaving.set(true);
 
-        this.createOrUpdateOrImportExam()
-            ?.pipe(
+        // Importing an exam can fail per exercise and take a while (programming repository copies). It therefore runs behind
+        // a progress dialog that shows live websocket progress and a persistent, must-dismiss summary of skipped/incomplete
+        // exercises, after which we navigate to the imported exam.
+        if (this.isImport() && this.exam?.exerciseGroups) {
+            this.importExam();
+            return;
+        }
+
+        const request$ = this.exam.id ? this.examManagementService.update(this.course.id!, this.exam) : this.examManagementService.create(this.course.id!, this.exam);
+        request$
+            .pipe(
                 map((response: HttpResponse<Exam>) => response.body!),
                 takeWhile(() => this.componentActive),
             )
@@ -310,24 +330,31 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
-     * Creates, updates or imports the exam depending on the current state of the component.
+     * Imports the exam behind a progress dialog and navigates to the imported exam once the user dismisses the dialog.
      * @private
      */
-    private createOrUpdateOrImportExam() {
-        if (this.isImport && this.exam?.exerciseGroups) {
-            // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
-            if (!this.examExerciseImportComponent().validateUserInput()) {
-                this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
-                this.isSaving = false;
-                return;
-            }
-            this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
-            return this.examManagementService.import(this.course.id!, this.exam);
-        } else if (this.exam.id) {
-            return this.examManagementService.update(this.course.id!, this.exam);
-        } else {
-            return this.examManagementService.create(this.course.id!, this.exam);
+    private importExam() {
+        // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
+        if (!this.examExerciseImportComponent().validateUserInput()) {
+            this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
+            this.isSaving.set(false);
+            return;
         }
+        this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
+        const totalExercises = (this.exam.exerciseGroups ?? []).reduce((sum, group) => sum + (group.exercises?.length ?? 0), 0);
+        const importId = this.examManagementService.generateImportId();
+        const request$ = this.examManagementService.import(this.course.id!, this.exam, importId);
+        this.examImportProgressDialog()
+            .runImport(importId, totalExercises, request$)
+            .then((response) => {
+                const importedExam = response.body?.exam;
+                if (importedExam) {
+                    void this.onSaveSuccess(importedExam);
+                } else {
+                    this.isSaving.set(false);
+                }
+            })
+            .catch((httpErrorResponse: HttpErrorResponse) => this.onSaveError(httpErrorResponse));
     }
 
     /**
@@ -336,7 +363,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * @private
      */
     private async onSaveSuccess(exam: Exam) {
-        this.isSaving = false;
+        this.isSaving.set(false);
+        this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
         this.calendarService.reloadEvents();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
@@ -356,7 +384,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
         } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
-            this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+            this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
             this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
         } else {
@@ -366,7 +394,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 onError(this.alertService, httpErrorResponse);
             }
         }
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 
     /**
@@ -376,26 +404,54 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         return !!(this.exam.id && this.originalStartDate && this.originalEndDate && dayjs().isBetween(this.originalStartDate, this.originalEndDate));
     }
 
+    /**
+     * Returns whether the exam title is present after trimming. The title input is required, but Angular's required validator
+     * accepts a whitespace-only value, so the trimmed check is needed to keep the save button in sync with the title validation message.
+     */
+    get isValidTitle(): boolean {
+        return !!this.exam.title?.trim();
+    }
+
     get isValidConfiguration(): boolean {
-        const examConductionDatesValid =
-            this.isVisibleDateSet && this.isStartDateSet && this.isValidStartDate && this.isEndDateSet && this.isValidEndDate && this.isValidVisibleDateValue;
+        const examTitleValid = this.isValidTitle;
+        const examConductionDatesValid = this.timelineStatus().valid;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
         const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
+        const examValidSummaryPublicationDate = this.isValidExamSummaryPublicationDate;
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
         const examValidGracePeriod = this.isValidGracePeriod;
         return (
+            examTitleValid &&
             examConductionDatesValid &&
             examReviewDatesValid &&
             examNumberOfCorrectionsValid &&
             examMaxPointsValid &&
             examValidWorkingTime &&
             examValidExampleSolutionPublicationDate &&
+            examValidSummaryPublicationDate &&
             examValidNumberOfExercises &&
-            examValidGracePeriod
+            examValidGracePeriod &&
+            this.areExamTextsValid &&
+            this.datePickers().every((picker) => picker.isValid())
         );
+    }
+
+    /**
+     * Returns true when a single exam text (start / end / confirmation) is within the allowed length.
+     */
+    isExamTextTooLong(text?: string): boolean {
+        return (text?.length ?? 0) > EXAM_TEXT_MAX_LENGTH;
+    }
+
+    /**
+     * Returns true when all exam start / end / confirmation texts are within the allowed length.
+     */
+    // Getter (not a computed) on purpose: the texts are mutated in place via [(ngModel)] without changing the exam signal reference, so a computed would go stale.
+    get areExamTextsValid(): boolean {
+        return ![this.exam.startText, this.exam.endText, this.exam.confirmationStartText, this.exam.confirmationEndText].some((text) => this.isExamTextTooLong(text));
     }
 
     /**
@@ -409,24 +465,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             return true;
         }
         return this.exam.numberOfExercisesInExam >= 1 && this.exam.numberOfExercisesInExam <= 100;
-    }
-
-    /**
-     * Returns a boolean indicating whether the exam's visible date is set.
-     *
-     * @returns {boolean} `true` if the exam's visible date is set, `false` otherwise.
-     */
-    get isVisibleDateSet(): boolean {
-        return !!this.exam.visibleDate;
-    }
-
-    /**
-     * Checks if the visible date of the exam is valid.
-     *
-     * @returns {boolean} `true` if the visible date is valid, `false` otherwise.
-     */
-    get isValidVisibleDateValue(): boolean {
-        return dayjs(this.exam.visibleDate).isValid();
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
@@ -456,65 +494,31 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
-     * Returns a boolean indicating whether the exam's start date is set.
-     *
-     * @returns {boolean} `true` if the exam's start date is set, `false` otherwise.
+     * Returns true when the grace period is set to a negative value, which the minimum of 0 seconds rules out.
      */
-    get isStartDateSet(): boolean {
-        return !!this.exam.startDate;
+    get isGracePeriodNegative(): boolean {
+        return this.exam.gracePeriod !== undefined && this.exam.gracePeriod !== null && this.exam.gracePeriod < 0;
     }
 
     /**
-     * Checks if the start date of the exam is valid.
-     *
-     * @returns {boolean} `true` if the start date is valid, `false` otherwise.
+     * Returns true when the maximum points are missing or below the minimum of 1. Values above the maximum have their own explanation.
      */
-    get isValidStartDateValue(): boolean {
-        return dayjs(this.exam.startDate).isValid();
+    get isMaxPointsMissingOrTooLow(): boolean {
+        return !((this.exam.examMaxPoints ?? 0) >= 1);
     }
 
     /**
-     * Validates the given StartDate.
-     * For real exams, the visibleDate has to be strictly prior the startDate.
-     * For test exams, the visibleDate has to be prior or equal to the startDate.
+     * Returns true when the number of exercises is set below the minimum of 1. An empty number of exercises is valid.
      */
-    get isValidStartDate(): boolean {
-        if (this.isVisibleDateSet && this.isValidVisibleDateValue) {
-            if (this.exam.testExam) {
-                return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
-            } else {
-                return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
-            }
-        }
-        return true;
+    get isNumberOfExercisesTooLow(): boolean {
+        return this.exam.numberOfExercisesInExam !== undefined && this.exam.numberOfExercisesInExam !== null && this.exam.numberOfExercisesInExam < 1;
     }
 
     /**
-     * Returns a boolean indicating whether the exam's end date is set.
-     *
-     * @returns {boolean} `true` if the exam's end date is set, `false` otherwise.
+     * Returns true when the channel name field is shown but was emptied. The title fills it initially, so it is only empty after the user cleared it.
      */
-    get isEndDateSet(): boolean {
-        return !!this.exam.endDate;
-    }
-
-    /**
-     * Checks if the end date of the exam is valid.
-     *
-     * @returns {boolean} `true` if the end date is valid, `false` otherwise.
-     */
-    get isValidEndDateValue(): boolean {
-        return dayjs(this.exam.endDate).isValid();
-    }
-
-    /**
-     * Validates the EndDate inputted by the user.
-     */
-    get isValidEndDate(): boolean {
-        if (this.isStartDateSet && this.isValidStartDateValue) {
-            return dayjs(this.exam.endDate).isAfter(this.exam.startDate);
-        }
-        return true;
+    get isChannelNameMissing(): boolean {
+        return !this.hideChannelNameInput() && this.exam.channelName === '';
     }
 
     /**
@@ -603,6 +607,70 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
+     * Validates the optional submission-overview publication date.
+     * It is valid when unset (summary shown immediately after submission) or, when set, strictly after the end date and no later than the publish results date
+     * (so the overview never becomes visible after the grades). Mirrors the server-side check in ExamResource#checkExamForDatesConflictsElseThrow.
+     *
+     * @returns true if the configured examSummaryPublicationDate is valid
+     */
+    get isValidExamSummaryPublicationDate(): boolean {
+        // allow instructors to leave examSummaryPublicationDate unset (summary shown immediately after submission)
+        if (!this.exam.examSummaryPublicationDate) {
+            return true;
+        }
+        const summaryDate = dayjs(this.exam.examSummaryPublicationDate);
+        // must be after the end date and, if a publish results date is set, no later than it (the overview must not lag behind the grades)
+        const afterEndDate = !!this.exam.endDate && summaryDate.isAfter(this.exam.endDate);
+        const notAfterPublishResults = !this.exam.publishResultsDate || !summaryDate.isAfter(this.exam.publishResultsDate);
+        return afterEndDate && notAfterPublishResults;
+    }
+
+    /**
+     * Returns the translation key explaining why the release date of results is invalid, or undefined if it is valid.
+     */
+    get publishResultsDateErrorKey(): string | undefined {
+        if (this.isValidPublishResultsDate) {
+            return undefined;
+        }
+        return this.exam.endDate ? 'error.examPublishResultsDateAfterEnd' : 'error.examPublishResultsDateEndMissing';
+    }
+
+    /**
+     * Returns the translation key explaining why the begin of the student review is invalid, or undefined if it is valid.
+     */
+    get examStudentReviewStartErrorKey(): string | undefined {
+        if (this.isValidExamStudentReviewStart) {
+            return undefined;
+        }
+        return this.exam.publishResultsDate ? 'error.examStudentReviewStartAfterRelease' : 'error.examStudentReviewStartReleaseMissing';
+    }
+
+    /**
+     * Returns the translation key explaining why the submission overview date is invalid, or undefined if it is valid.
+     */
+    get examSummaryPublicationDateErrorKey(): string | undefined {
+        if (this.isValidExamSummaryPublicationDate) {
+            return undefined;
+        }
+        if (!this.exam.endDate) {
+            return 'error.examSummaryPublicationDateEndMissing';
+        }
+        const afterEndDate = dayjs(this.exam.examSummaryPublicationDate).isAfter(this.exam.endDate);
+        return afterEndDate ? 'error.examSummaryPublicationDateBeforeRelease' : 'error.examSummaryPublicationDateAfterEnd';
+    }
+
+    /**
+     * Returns the translation key explaining why the example solution publication date is invalid, or undefined if it is valid.
+     */
+    get exampleSolutionPublicationDateErrorKey(): string | undefined {
+        if (this.isValidExampleSolutionPublicationDate) {
+            return undefined;
+        }
+        const beforeEndDate = dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null);
+        return beforeEndDate ? 'error.examExampleSolutionPublicationDateAfterEnd' : 'error.examExampleSolutionPublicationDateAfterVisible';
+    }
+
+    /**
      * Default exam start text, which can be edited by instructors in the text editor
      */
     get examDefaultStartText(): string {
@@ -638,14 +706,26 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * @returns {string} The translation key for the save button title.
      */
     get saveTitle(): string {
-        return this.isImport ? 'entity.action.import' : 'entity.action.save';
+        return this.isImport() ? 'entity.action.import' : 'entity.action.save';
     }
 }
 
 /**
  * Prepares the exam for import by omitting all properties that should not be imported.
  */
-export const prepareExamForImport = (exam: Exam): Exam => ({
-    ...omit(exam, ['id', 'visibleDate', 'startDate', 'endDate', 'publishResultsDate', 'examStudentReviewStart', 'examStudentReviewEnd', 'examUsers', 'studentExams']),
-    workingTime: 0,
-});
+export const prepareExamForImport = (exam: Exam): Exam =>
+    cloneWith(
+        omit(exam, [
+            'id',
+            'visibleDate',
+            'startDate',
+            'endDate',
+            'publishResultsDate',
+            'examStudentReviewStart',
+            'examStudentReviewEnd',
+            'examSummaryPublicationDate',
+            'examUsers',
+            'studentExams',
+        ]),
+        { workingTime: 0 },
+    );

@@ -4,15 +4,12 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentRef } from '@angular/core';
 
 import { MetricsEndpointsRequestsComponent } from 'app/admin/metrics/blocks/metrics-endpoints-requests/metrics-endpoints-requests.component';
 import { HttpMethod, Services } from 'app/admin/metrics/metrics.model';
 
 describe('MetricsEndpointsRequestsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: MetricsEndpointsRequestsComponent;
     let componentRef: ComponentRef<MetricsEndpointsRequestsComponent>;
     let fixture: ComponentFixture<MetricsEndpointsRequestsComponent>;

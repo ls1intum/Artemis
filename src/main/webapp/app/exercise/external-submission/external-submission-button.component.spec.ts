@@ -8,11 +8,8 @@ import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submiss
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExternalSubmissionButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExternalSubmissionButtonComponent>;
     let dialogServiceOpenSpy: ReturnType<typeof vi.fn>;
 

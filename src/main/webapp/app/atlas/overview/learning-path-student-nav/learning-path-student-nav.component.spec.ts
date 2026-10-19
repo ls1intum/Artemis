@@ -9,10 +9,8 @@ import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathStudentNavComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathNavComponent;
     let fixture: ComponentFixture<LearningPathNavComponent>;
     let learningPathNavigationService: LearningPathNavigationService;

@@ -16,8 +16,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 @Profile(PROFILE_CORE_AND_SCHEDULING)
@@ -31,13 +33,16 @@ public class UserTokenExpiryNotificationService {
 
     private final MailSendingService mailSendingService;
 
-    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+    private final GlobalNotificationSettingService globalNotificationSettingService;
+
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
 
     public UserTokenExpiryNotificationService(UserRepository userRepository, MailSendingService mailSendingService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
+            GlobalNotificationSettingService globalNotificationSettingService, UserVcsAccessTokenService userVcsAccessTokenService) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
-        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.globalNotificationSettingService = globalNotificationSettingService;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
     }
 
     /**
@@ -65,7 +70,8 @@ public class UserTokenExpiryNotificationService {
      * @param notifyFunction a function to handle user notification
      */
     private void notifyUsersForKeyExpiryWindow(ZonedDateTime fromDate, ZonedDateTime toDate, Consumer<User> notifyFunction) {
-        userRepository.findByVcsAccessTokenExpiryDateBetween(fromDate, toDate).forEach(notifyFunction);
+        var userIds = userVcsAccessTokenService.findUserIdsWithTokenExpiringBetween(fromDate, toDate);
+        userRepository.findAllById(userIds).forEach(notifyFunction);
     }
 
     /**
@@ -74,8 +80,9 @@ public class UserTokenExpiryNotificationService {
      * @param recipient the user to whose account the VCS access token was added
      */
     private void notifyUserAboutExpiredVcsAccessToken(User recipient) {
-        if (globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.VCS_TOKEN_EXPIRED)) {
-            mailSendingService.buildAndSendSync(recipient, "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail", new HashMap<>());
+        if (globalNotificationSettingService.isNotificationEnabled(recipient, GlobalNotificationType.VCS_TOKEN_EXPIRED)) {
+            mailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail",
+                    new HashMap<>());
         }
     }
 }

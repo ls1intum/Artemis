@@ -29,7 +29,7 @@ export class CodeAnalysisGradingPage {
 
     async saveChanges() {
         const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/*/static-code-analysis-categories`);
-        await this.page.locator('#save-table-button').click();
+        await this.page.locator('[data-testid="save-table-button"]').click();
         await responsePromise;
     }
 }

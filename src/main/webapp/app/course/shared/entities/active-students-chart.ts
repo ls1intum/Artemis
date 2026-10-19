@@ -1,10 +1,11 @@
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 
+/** Abstract base for active-students charts; extended by concrete chart directives, with fields populated after construction, hence the definite-assignment (!) marker. */
 export abstract class ActiveStudentsChart {
     startDateAlreadyPassed = true;
     currentOffsetToEndDate = 0; // the number of weeks between the end date of the course and the current date
-    currentSpanSize: number;
+    currentSpanSize!: number; // set in determineDisplayedPeriod() before it is read
 
     /**
      * sets values for the offset attributes of this directive

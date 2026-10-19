@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
@@ -8,15 +7,15 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,13 +24,12 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 
 /**
  * A QuizQuestion.
  */
-// No @Cache here on purpose: parent entity of the question hierarchy loaded during quiz-submission merge cascade.
-// Clustered NONSTRICT_READ_WRITE produced the stale-collection behaviour tracked in #12574 / #12584.
 @Entity
 @Table(name = "quiz_question")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -74,18 +72,32 @@ public abstract class QuizQuestion extends DomainObject {
     @Column(name = "invalid")
     private Boolean invalid = false;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JoinColumn(unique = true)
-    private QuizQuestionStatistic quizQuestionStatistic;
-
-    @ManyToOne
-    @JoinColumn(name = "exercise_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "exercise_id", nullable = false)
     @JsonIgnore
+    @Parent
     private QuizExercise exercise;
+
+    // The question type-specific "correct answer" content (drop locations / drag items / correct mappings for DnD, answer options for MC, spots / solutions / correct mappings for
+    // SA), stored as JSON instead of separate relational child tables. All three question types use it.
+    // @JsonIgnore because this is an internal storage representation: subclasses expose the content through their existing getters (e.g. getDropLocations()), preserving the
+    // REST/websocket wire format.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content")
+    @JsonIgnore
+    private QuizQuestionContent content;
 
     @JsonProperty("exerciseId")
     public Long getExerciseId() {
         return exercise != null ? exercise.getId() : null;
+    }
+
+    protected QuizQuestionContent getContent() {
+        return content;
+    }
+
+    protected void setContent(QuizQuestionContent content) {
+        this.content = content;
     }
 
     public String getTitle() {
@@ -167,14 +179,6 @@ public abstract class QuizQuestion extends DomainObject {
         this.invalid = invalid;
     }
 
-    public QuizQuestionStatistic getQuizQuestionStatistic() {
-        return quizQuestionStatistic;
-    }
-
-    public void setQuizQuestionStatistic(QuizQuestionStatistic quizQuestionStatistic) {
-        this.quizQuestionStatistic = quizQuestionStatistic;
-    }
-
     public QuizExercise getExercise() {
         return exercise;
     }
@@ -210,14 +214,6 @@ public abstract class QuizQuestion extends DomainObject {
      */
     public void filterForStudentsDuringQuiz() {
         setExplanation(null);
-        setQuizQuestionStatistic(null);
-    }
-
-    /**
-     * filter out information about correct answers
-     */
-    public void filterForStatisticWebsocket() {
-        setExplanation(null);
     }
 
     /**
@@ -239,25 +235,5 @@ public abstract class QuizQuestion extends DomainObject {
      * @return an empty question just including the id of the object
      */
     public abstract QuizQuestion copyQuestionId();
-
-    /**
-     * undo all changes which are not allowed
-     *
-     * @param originalQuizQuestion the original not changed QuizQuestion, to detect the changes
-     */
-    public abstract void undoUnallowedChanges(QuizQuestion originalQuizQuestion);
-
-    /**
-     * check if an update of the Results and Statistics is necessary
-     *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
-     * @return a boolean which is true if the question-changes make an update necessary and false if not
-     */
-    public abstract boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion);
-
-    /**
-     * Initialize QuizQuestionStatistic of the implementor
-     */
-    public abstract void initializeStatistic();
 
 }

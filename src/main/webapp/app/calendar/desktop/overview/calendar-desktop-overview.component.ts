@@ -1,19 +1,27 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import 'dayjs/esm/locale/en';
 import 'dayjs/esm/locale/de';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faArrowUpFromBracket, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CalendarDesktopMonthPresentationComponent } from 'app/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
 import { CalendarDesktopWeekPresentationComponent } from 'app/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarOverviewComponent } from 'app/calendar/shared/calendar-overview/calendar-overview-component.directive';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { ButtonGroupModule } from 'primeng/buttongroup';
-import { MultiSelectModule } from 'primeng/multiselect';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiMultiSelectComponent,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiSelectButtonComponent,
+} from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-view-state.service';
 
 type Presentation = 'week' | 'month';
 
@@ -26,21 +34,31 @@ interface FilterOptionAndMetadata {
 @Component({
     selector: 'jhi-calendar-desktop-overview',
     imports: [
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
         CalendarDesktopMonthPresentationComponent,
         CalendarDesktopWeekPresentationComponent,
         FaIconComponent,
         TranslateDirective,
         CalendarSubscriptionPopoverComponent,
-        SelectButtonModule,
         FormsModule,
-        ButtonModule,
-        ButtonGroupModule,
-        MultiSelectModule,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiMultiSelectComponent,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiSelectButtonComponent,
+        ArtemisTranslatePipe,
     ],
     templateUrl: './calendar-desktop-overview.component.html',
     styleUrl: './calendar-desktop-overview.component.scss',
 })
 export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent {
+    private readonly viewState = inject(CalendarViewStateService);
+
+    protected readonly faFilter = faFilter;
+    /* Same icon the mobile overview uses for its subscribe action. */
+    protected readonly faArrowUpFromBracket = faArrowUpFromBracket;
+
     private static readonly FILTER_OPTION_NAME_KEY_MAP: Record<CalendarEventFilterOption, string> = {
         exerciseEvents: 'artemisApp.calendar.filterOption.exercises',
         lectureEvents: 'artemisApp.calendar.filterOption.lectures',
@@ -54,13 +72,15 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
         examEvents: 'exam-chip',
     };
 
-    firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
-    firstDateOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
+    /* Shared with the mobile overview, so a resize past the breakpoint keeps showing the same period. */
+    firstDateOfCurrentMonth = this.viewState.firstDateOfDisplayedMonth;
+    firstDateOfCurrentWeek = this.viewState.firstDateOfDisplayedWeek;
     monthDescription = computed<string>(() => this.computeMonthDescription(this.locale(), this.presentation(), this.firstDateOfCurrentMonth(), this.firstDateOfCurrentWeek()));
     presentation = signal<Presentation>('month');
     presentationOptions = computed<{ label: string; value: Presentation }[]>(() => this.computePresentationOptions());
     filterComponentPlaceholder = computed<string>(() => this.computeFilterComponentPlaceholder());
     selectedFilterOptions = computed<FilterOptionAndMetadata[]>(() => this.computeSelectedFilterOptions(this.calendarService.includedEventFilterOptions()));
+    selectedFilterValues = computed<CalendarEventFilterOption[]>(() => this.calendarService.includedEventFilterOptions());
     filterOptions = computed<FilterOptionAndMetadata[]>(() => this.computeFilterOptions());
 
     goToPrevious(): void {
@@ -99,9 +119,8 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
         this.loadEventsForCurrentMonth();
     }
 
-    onSelectedFilterOptionsChange(newSelectedOptionsAndMetadata: FilterOptionAndMetadata[]): void {
-        const options = newSelectedOptionsAndMetadata.map((optionAndMetadata) => optionAndMetadata.option);
-        this.calendarService.includedEventFilterOptions.set(options);
+    onSelectedFilterOptionsChange(newSelectedOptions: CalendarEventFilterOption[]): void {
+        this.calendarService.includedEventFilterOptions.set(newSelectedOptions);
     }
 
     removeFilterOption(option: CalendarEventFilterOption): void {

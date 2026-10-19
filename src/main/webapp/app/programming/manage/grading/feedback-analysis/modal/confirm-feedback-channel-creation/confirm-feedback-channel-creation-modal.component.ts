@@ -8,9 +8,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     imports: [TranslateDirective],
 })
 export class ConfirmFeedbackChannelCreationModalComponent {
+    private activeModal = inject(NgbActiveModal);
+
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel.confirmationModal';
     affectedStudentsCount = input.required<number>();
-    private activeModal = inject(NgbActiveModal);
 
     confirm(): void {
         this.activeModal.close(true);

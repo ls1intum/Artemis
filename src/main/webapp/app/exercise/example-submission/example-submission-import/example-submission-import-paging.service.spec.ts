@@ -11,11 +11,8 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Example Submission Import Paging Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExampleSubmissionImportPagingService;
     let httpMock: HttpTestingController;
 

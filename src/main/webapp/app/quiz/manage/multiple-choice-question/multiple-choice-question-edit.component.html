@@ -2,16 +2,18 @@
     @if (!reEvaluationInProgress()) {
         <div class="question-options question-card-header" [hidden]="showPreview()">
             <button
+                type="button"
                 class="btn question-collapse"
                 (click)="toggleCollapse()"
-                [attr.aria-expanded]="!isQuestionCollapsed"
+                [attr.aria-expanded]="!isQuestionCollapsed()"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex()"
             >
-                <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
+                <fa-icon size="3x" [icon]="isQuestionCollapsed() ? faAngleRight : faAngleDown" />
             </button>
             <div class="question-title">
                 <input
-                    id="mc-question-title"
+                    [attr.aria-label]="'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate"
+                    data-testid="mc-question-title"
                     pInputText
                     [(ngModel)]="question().title"
                     (ngModelChange)="questionUpdated.emit()"
@@ -58,17 +60,19 @@
     } @else {
         <div class="question-card-header-reevaluation">
             <button
+                type="button"
                 class="btn question-collapse"
                 (click)="toggleCollapse()"
-                [attr.aria-expanded]="!isQuestionCollapsed"
+                [attr.aria-expanded]="!isQuestionCollapsed()"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex()"
             >
-                <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
+                <fa-icon size="3x" [icon]="isQuestionCollapsed() ? faAngleRight : faAngleDown" />
             </button>
             <div class="question-reevaluation-title">
                 <input
                     pInputText
                     [(ngModel)]="question().title"
+                    (ngModelChange)="questionUpdated.emit()"
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                     attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                 />
@@ -116,7 +120,7 @@
         </div>
     }
 
-    <div class="question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
+    <div class="question-card-body" [ngbCollapse]="isQuestionCollapsed()" id="collapseQuestion{{ questionIndex() }}">
         <div [ngClass]="reEvaluationInProgress() ? 'question-options row align-items-center' : 'question-options'" [hidden]="showPreview()">
             <div [ngClass]="reEvaluationInProgress() ? 'col-12 col-md-4' : ''">
                 <div class="form-group">
@@ -137,7 +141,15 @@
                 <div class="col-12 col-md-2">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                        <input class="form-control point-input" title="score" type="number" [value]="question().points" disabled style="width: 100%" />
+                        <input
+                            [attr.aria-label]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                            class="form-control point-input"
+                            title="score"
+                            type="number"
+                            [value]="question().points"
+                            disabled
+                            style="width: 100%"
+                        />
                     </div>
                 </div>
             }
@@ -171,18 +183,31 @@
             @if (reEvaluationInProgress()) {
                 <div class="col-12 col-md-3 d-flex align-items-center gap-2">
                     <button
+                        type="button"
                         class="btn btn-outline-secondary invalid-button w-auto ms-auto"
                         [hidden]="question().invalid"
                         (click)="question().invalid = true"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                     ></button>
                     <button
+                        type="button"
                         class="btn btn-outline-secondary invalid-button w-auto ms-auto"
                         [hidden]="!question().invalid"
                         [disabled]="question().invalid"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
                     ></button>
-                    <div id="delete-button" class="delete-button flex-shrink-0" (click)="deleteQuestion()">
+                    <div
+                        id="delete-button"
+                        [attr.aria-label]="'global.action.delete' | artemisTranslate"
+                        class="delete-button flex-shrink-0"
+                        (click)="deleteQuestion()"
+                        #keyboardAction186
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction186.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction186.click() : undefined"
+                    >
                         <fa-icon [icon]="faTrash" size="2x" />
                     </div>
                 </div>
@@ -193,7 +218,7 @@
                 @if (!reEvaluationInProgress()) {
                     <jhi-markdown-editor-monaco
                         #markdownEditor
-                        [markdown]="questionEditorText"
+                        [markdown]="questionEditorText()"
                         [showPreviewButton]="true"
                         [showVisualButton]="true"
                         [domainActions]="multipleChoiceActions"
@@ -205,7 +230,7 @@
                     >
                         <!-- Preview -->
                         <ng-container id="previewMonaco">
-                            @if (showMultipleChoiceQuestionPreview) {
+                            @if (showMultipleChoiceQuestionPreview()) {
                                 <jhi-multiple-choice-question [question]="question()" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex()" />
                             }
                             <hr />
@@ -213,7 +238,7 @@
                         <!-- End of Preview-->
                         <!-- Visual -->
                         <ng-container id="visual">
-                            @if (showMultipleChoiceQuestionVisual) {
+                            @if (showMultipleChoiceQuestionVisual()) {
                                 <jhi-multiple-choice-visual-question #visual [question]="question()" (questionChanged)="changesInVisualMode()" />
                             }
                         </ng-container>

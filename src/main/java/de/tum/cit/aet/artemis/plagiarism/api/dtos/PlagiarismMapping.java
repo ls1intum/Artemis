@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.api.dtos;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +32,7 @@ public record PlagiarismMapping(Map<Long, Map<Long, PlagiarismCase>> studentIdTo
      * Returns an empty PlagiarismMapping.
      */
     public static PlagiarismMapping empty() {
-        return new PlagiarismMapping(Collections.emptyMap());
+        return new PlagiarismMapping(Map.of());
     }
 
     public PlagiarismCase getPlagiarismCase(Long studentId, Long exerciseId) {
@@ -42,7 +41,7 @@ public record PlagiarismMapping(Map<Long, Map<Long, PlagiarismCase>> studentIdTo
     }
 
     public Map<Long, PlagiarismCase> getPlagiarismCasesForStudent(Long studentId) {
-        return studentIdToExerciseIdToPlagiarismCaseMap.getOrDefault(studentId, Collections.emptyMap());
+        return studentIdToExerciseIdToPlagiarismCaseMap.getOrDefault(studentId, Map.of());
     }
 
     public boolean studentHasVerdict(Long studentId, PlagiarismVerdict plagiarismVerdict) {

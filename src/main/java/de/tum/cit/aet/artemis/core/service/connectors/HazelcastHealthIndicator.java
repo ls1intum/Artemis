@@ -13,12 +13,16 @@ import org.springframework.stereotype.Component;
 import com.hazelcast.client.impl.clientside.HazelcastClientProxy;
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.cit.aet.artemis.core.config.CoreOrHazelcastBuildAgent;
+import de.tum.cit.aet.artemis.core.config.HazelcastDistributedDataCondition;
 
-@Conditional(CoreOrHazelcastBuildAgent.class)
+@Conditional(HazelcastDistributedDataCondition.class)
 @Component
 @Lazy(false)
 public class HazelcastHealthIndicator implements HealthIndicator {
+
+    // Intentionally Hazelcast-specific and reports Hazelcast-specific details (members, split-brain state). The Redis
+    // provider is covered by RedisHealthIndicator, which is conditioned on Redis being the configured provider, so
+    // exactly one of the two contributes on any given node.
 
     private final HazelcastInstance hazelcastInstance;
 

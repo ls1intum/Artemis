@@ -26,18 +26,14 @@ public class UserCourseNotificationStatusService {
 
     private final UserCourseNotificationStatusRepository userCourseNotificationStatusRepository;
 
-    private final CourseNotificationCacheService courseNotificationCacheService;
-
-    public UserCourseNotificationStatusService(UserCourseNotificationStatusRepository userCourseNotificationStatusRepository,
-            CourseNotificationCacheService courseNotificationCacheService) {
+    public UserCourseNotificationStatusService(UserCourseNotificationStatusRepository userCourseNotificationStatusRepository) {
         this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
-        this.courseNotificationCacheService = courseNotificationCacheService;
     }
 
     /**
      * Creates notification status entries for multiple users for a specific course notification.
      * This method creates a {@link UserCourseNotificationStatus} entry with UNSEEN status for each user
-     * in the provided set and invalidates their notification caches.
+     * in the provided set.
      *
      * @param users                Set of users to create notification status entries for
      * @param courseNotificationId The ID of the course notification
@@ -53,15 +49,13 @@ public class UserCourseNotificationStatusService {
             status.add(new UserCourseNotificationStatus(courseNotification, user, UserCourseNotificationStatusType.UNSEEN));
         }
 
-        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(users, courseId);
-
         userCourseNotificationStatusRepository.saveAll(status);
     }
 
     /**
      * Updates the status of multiple course notifications for a specific user.
      * This method changes the status of all specified course notifications to the provided
-     * new status for the given user and invalidates their notification cache.
+     * new status for the given user.
      *
      * @param user                  The user whose notification statuses will be updated
      * @param courseNotificationIds List of course notification IDs to update
@@ -70,8 +64,6 @@ public class UserCourseNotificationStatusService {
      */
     public void updateUserCourseNotificationStatus(User user, List<Long> courseNotificationIds, UserCourseNotificationStatusType newStatus, long courseId) {
         userCourseNotificationStatusRepository.updateUserCourseNotificationStatusForUserIdAndCourseNotificationIds(courseNotificationIds, user.getId(), newStatus);
-
-        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(user), courseId);
     }
 
     /**
@@ -82,8 +74,6 @@ public class UserCourseNotificationStatusService {
      */
     public void archiveUserCourseNotificationStatus(long courseId, long userId) {
         userCourseNotificationStatusRepository.updateUserCourseNotificationStatusForUserIdCourseId(userId, courseId, UserCourseNotificationStatusType.ARCHIVED);
-
-        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(new User(userId)), courseId);
     }
 
     /**

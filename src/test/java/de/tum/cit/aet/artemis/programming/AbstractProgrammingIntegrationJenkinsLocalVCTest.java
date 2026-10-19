@@ -6,10 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
@@ -52,7 +53,7 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends A
     protected RestTemplate restTemplate;
 
     @Autowired
-    protected ObjectMapper objectMapper;
+    protected JsonMapper objectMapper;
 
     // Repositories
     @Autowired
@@ -66,6 +67,9 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends A
 
     @Autowired
     protected ProgrammingExerciseTestCaseTestRepository testCaseRepository;
+
+    @Autowired
+    protected TestCaseFeedbackRepository testCaseFeedbackRepository;
 
     @Autowired
     protected ProgrammingExerciseTestRepository programmingExerciseRepository;

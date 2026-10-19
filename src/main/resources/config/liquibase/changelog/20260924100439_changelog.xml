@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    The feature usage inventory learns two things about each endpoint: how its calls count (a user action, a view, an
+    automatic call by the client, or a call by another system) and which controller serves it. Both are re-derived from
+    the annotations on every startup, so live endpoints are reclassified as soon as the server starts.
+
+    The backfill is for the rows that never re-register: endpoints that no longer exist, and git and background features
+    that nobody has used since the upgrade. It applies the same default the server derives, by verb and path, so their
+    history counts under the same rules as everything else.
+
+    The interaction is NOT NULL with a default rather than without one, so that the previous version, which does not know
+    the column, can still insert inventory rows after a rollback to it.
+    -->
+
+    <changeSet id="20260924100439-01-tracked-feature-interaction-and-resource" author="krusche">
+        <comment>Add how calls to a tracked feature count, and the controller serving it.</comment>
+        <addColumn tableName="tracked_feature">
+            <column name="interaction" type="varchar(16)" defaultValue="ACTION">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resource" type="varchar(128)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260924100439-02-tracked-feature-interaction-backfill" author="krusche">
+        <comment>Derive the interaction of rows that were written before the column existed.</comment>
+        <update tableName="tracked_feature">
+            <column name="interaction" value="VIEW"/>
+            <where>feature_kind = 'REST' AND (identifier LIKE 'GET %' OR identifier LIKE 'HEAD %')</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="interaction" value="SYSTEM"/>
+            <where>feature_kind = 'REST' AND identifier LIKE '% api/%/internal/%'</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="interaction" value="VIEW"/>
+            <where>feature_kind = 'GIT' AND identifier LIKE 'fetch/%'</where>
+        </update>
+        <!-- nothing to undo: rolling back the previous changeset drops the column -->
+        <rollback/>
+    </changeSet>
+
+    <!--
+    Git and background rows written before this change carry no feature label, and a row is only relabelled when the
+    operation happens again after the upgrade. Their identifiers say which feature they belong to, so their history is
+    attributed right away rather than after the next clone, and for an identifier that never recurs, not at all.
+    Athena's calls count as system calls: the request that triggers them was already counted as use.
+    -->
+    <changeSet id="20260924100439-03-tracked-feature-label-backfill" author="krusche">
+        <comment>Attribute git and background rows written before the feature catalogue to their feature.</comment>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="PROGRAMMING_REPOSITORY_EDITING"/>
+            <where>feature_kind = 'GIT' AND feature_label IS NULL AND (identifier LIKE '%/template' OR identifier LIKE '%/solution' OR identifier LIKE '%/tests')</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="PROGRAMMING_LOCAL_IDE"/>
+            <where>feature_kind = 'GIT' AND feature_label IS NULL AND (identifier LIKE '%/assignment' OR identifier LIKE '%/unknown')</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="ATHENA_FEEDBACK_SUGGESTIONS"/>
+            <column name="interaction" value="SYSTEM"/>
+            <where>feature_kind = 'BACKGROUND' AND feature_label IS NULL AND identifier LIKE 'feedback-suggestions/%/graded'</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="AI_FEEDBACK_REQUEST"/>
+            <column name="interaction" value="SYSTEM"/>
+            <where>feature_kind = 'BACKGROUND' AND feature_label IS NULL AND identifier LIKE 'feedback-suggestions/%/non-graded'</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="CONTINUOUS_PLAGIARISM_CONTROL"/>
+            <where>feature_kind = 'BACKGROUND' AND feature_label IS NULL AND identifier LIKE 'continuous-plagiarism-control/%'</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="NOTIFICATION_DELIVERY"/>
+            <where>feature_kind = 'BACKGROUND' AND feature_label IS NULL AND identifier LIKE 'course-notification/%'</where>
+        </update>
+        <!-- the previous version wrote no label for git and background rows, so rolling back restores exactly that -->
+        <rollback>
+            <update tableName="tracked_feature">
+                <column name="feature_label" valueComputed="NULL"/>
+                <where>feature_kind IN ('GIT', 'BACKGROUND')</where>
+            </update>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

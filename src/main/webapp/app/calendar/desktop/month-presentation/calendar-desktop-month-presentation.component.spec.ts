@@ -1,8 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -16,47 +15,22 @@ import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calenda
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PopoverModule } from 'primeng/popover';
-import { CalendarEvent } from 'app/openapi/model/calendarEvent';
-
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 describe('CalendarDesktopMonthPresentationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CalendarDesktopMonthPresentationComponent>;
     let component: CalendarDesktopMonthPresentationComponent;
     let mockMap: Map<string, IdentifiableCalendarEvent[]>;
 
     const referenceDate = dayjs('2025-05-15 10:30');
     const events = [
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Exam, 'Exam', referenceDate, referenceDate.add(1, 'hour'), undefined, 'Marlon Nienaber'),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Lecture, 'Object Design', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour'), undefined, undefined),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Lecture, 'Object Design 2', referenceDate.subtract(2), referenceDate, undefined, undefined),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Lecture, 'Object Design 3', referenceDate, referenceDate.add(2, 'hour'), undefined, undefined),
-        new IdentifiableCalendarEvent(
-            CalendarEvent.TypeEnum.Tutorial,
-            'Tutorial 1',
-            referenceDate.add(1, 'day'),
-            referenceDate.add(1, 'day').add(1, 'hour'),
-            'Zoom',
-            'Marlon Nienaber',
-        ),
-        new IdentifiableCalendarEvent(
-            CalendarEvent.TypeEnum.Tutorial,
-            'Tutorial 2',
-            referenceDate.add(1, 'day').add(2, 'hour'),
-            referenceDate.add(1, 'day').add(3, 'hour'),
-            'Zoom',
-            'Marlon Nienaber',
-        ),
-        new IdentifiableCalendarEvent(
-            CalendarEvent.TypeEnum.Tutorial,
-            'Tutorial 3',
-            referenceDate.add(1, 'day').add(3, 'hour'),
-            referenceDate.add(1, 'day').add(4, 'hour'),
-            'Zoom',
-            'Marlon Nienaber',
-        ),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.TextExercise, 'Start: Your aspirations as a programmer', referenceDate.add(2, 'day'), undefined, undefined, undefined),
+        new IdentifiableCalendarEvent('EXAM', 'Exam', referenceDate, referenceDate.add(1, 'hour'), undefined, 'Marlon Nienaber'),
+        new IdentifiableCalendarEvent('LECTURE', 'Object Design', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour'), undefined, undefined),
+        new IdentifiableCalendarEvent('LECTURE', 'Object Design 2', referenceDate.subtract(2), referenceDate, undefined, undefined),
+        new IdentifiableCalendarEvent('LECTURE', 'Object Design 3', referenceDate, referenceDate.add(2, 'hour'), undefined, undefined),
+        new IdentifiableCalendarEvent('TUTORIAL', 'Tutorial 1', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour'), 'Zoom', 'Marlon Nienaber'),
+        new IdentifiableCalendarEvent('TUTORIAL', 'Tutorial 2', referenceDate.add(1, 'day').add(2, 'hour'), referenceDate.add(1, 'day').add(3, 'hour'), 'Zoom', 'Marlon Nienaber'),
+        new IdentifiableCalendarEvent('TUTORIAL', 'Tutorial 3', referenceDate.add(1, 'day').add(3, 'hour'), referenceDate.add(1, 'day').add(4, 'hour'), 'Zoom', 'Marlon Nienaber'),
+        new IdentifiableCalendarEvent('TEXT_EXERCISE', 'Start: Your aspirations as a programmer', referenceDate.add(2, 'day'), undefined, undefined, undefined),
     ];
 
     afterEach(() => {
@@ -103,7 +77,13 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
             })
             .overrideComponent(CalendarEventDetailPopoverComponent, {
                 set: {
-                    imports: [MockModule(PopoverModule), MockDirective(TranslateDirective), MockComponent(FaIconComponent)],
+                    imports: [
+                        MockComponent(TumAetUiPopoverComponent),
+                        MockComponent(TumAetUiButtonDirective),
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockComponent(FaIconComponent),
+                    ],
                 },
             })
             .compileComponents();
@@ -152,9 +132,9 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
     it('should open popover', async () => {
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
-        // Spy on the component's open method to verify it's called and manually trigger onShow
+        // Spy on the component's open method to verify it's called and manually trigger onOpenChange
         const openSpy = vi.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
-            popoverComponent.onShow();
+            popoverComponent.onOpenChange(true);
         });
 
         const eventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
@@ -170,10 +150,10 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
         const closeSpy = vi.spyOn(popoverComponent, 'close');
-        // Mock the PrimeNG popover to avoid animation timing issues in tests
+        // Open without the overlay, so that the test does not depend on animation timing.
         vi.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
             popoverComponent['event'].set(event);
-            popoverComponent.onShow();
+            popoverComponent.onOpenChange(true);
         });
 
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
@@ -184,8 +164,8 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         expect(popoverComponent.isOpen()).toBe(true);
 
         // Since popover is mocked, manually call close
-        popoverComponent.onHide();
-        closeSpy.mockImplementation(() => popoverComponent.onHide());
+        popoverComponent.onOpenChange(false);
+        closeSpy.mockImplementation(() => popoverComponent.onOpenChange(false));
         popoverComponent.close();
         fixture.detectChanges();
         await fixture.whenStable();

@@ -12,7 +12,7 @@ export type TutorialGroupCategory = 'allGroups' | 'registeredGroups' | 'furtherG
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
 export type AccordionGroups = Record<
     TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string,
-    { entityData: SidebarCardElement[]; isHideCount?: boolean }
+    { entityData: SidebarCardElement[]; isHideCount?: boolean; translationKey?: string }
 >;
 export type ChannelGroupCategory =
     | 'unreadMessages'
@@ -40,6 +40,8 @@ export interface SidebarData {
     sidebarType?: SidebarTypes;
     groupedData?: AccordionGroups;
     ungroupedData?: SidebarCardElement[];
+    /** Items rendered above accordion groups, e.g. an overview entry. */
+    pinnedData?: SidebarCardElement[];
     storageId?: string;
     showAccordionLeadingIcon?: boolean;
     messagingEnabled?: boolean;
@@ -61,6 +63,8 @@ export interface SidebarCardElement {
      * Defines the item's id that will be used to search for selected
      */
     id: string | number;
+    /** `@for` tracking key, type-prefixed so exercises and variant groups can share a numeric {@link id}. */
+    trackId?: string | number;
     /**
      * The subroute under which the component should be rendered that is opened once this sidebar card element is clicked
      */
@@ -68,7 +72,7 @@ export interface SidebarCardElement {
     /**
      * If set to true, the icons for quick actions will be displayed on the top right
      */
-    quickActionIcons?: any;
+    quickActionIcons?: unknown;
     /**
      * If set to true, a subtitle will be displayed on left side
      */
@@ -171,4 +175,20 @@ export interface SidebarCardElement {
     attendanceText?: string;
 
     attendanceChipColor?: string;
+
+    /**
+     * The cards this one groups together. They are not rendered themselves — this card is the group's only card. The
+     * members make the group searchable by a member's title or type and keep the card highlighted while the detail
+     * route shows one of them.
+     */
+    groupedItems?: SidebarCardElement[];
+
+    /** Optional icon shown before {@link subtitleLeft}, e.g. a warning triangle. */
+    subtitleLeftIcon?: IconProp;
+
+    /** Optional CSS class(es) applied to {@link subtitleLeft}, e.g. 'text-warning'. */
+    subtitleLeftClass?: string;
+
+    /** Optional tooltip (native title) for {@link subtitleLeft}. */
+    subtitleLeftTooltip?: string;
 }

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -13,7 +12,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 
 describe('ComplaintResponseComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ComplaintResponseComponent;
     let fixture: ComponentFixture<ComplaintResponseComponent>;
 
@@ -128,6 +126,65 @@ describe('ComplaintResponseComponent', () => {
 
             const textarea = fixture.nativeElement.querySelector('textarea');
             expect(textarea.maxLength).toBe(3000);
+        });
+    });
+
+    describe('card', () => {
+        it('should show the response text in the text area that the end-to-end tests read', () => {
+            fixture.componentRef.setInput('complaint', createComplaint(ComplaintType.COMPLAINT, true));
+            fixture.componentRef.setInput('maxComplaintResponseTextLimit', 2000);
+            fixture.detectChanges();
+
+            const textarea = fixture.nativeElement.querySelector('[data-testid="complainResponseTextArea"]') as HTMLTextAreaElement;
+            expect(textarea.value).toBe('Test response text');
+            expect(textarea.readOnly).toBe(true);
+            // A disabled text area can be neither focused nor selected.
+            expect(textarea.disabled).toBe(false);
+        });
+
+        it('should present the response in a bordered, rounded and padded card with the semantic border and surface', () => {
+            fixture.componentRef.setInput('complaint', createComplaint(ComplaintType.COMPLAINT, true));
+            fixture.componentRef.setInput('maxComplaintResponseTextLimit', 2000);
+            fixture.detectChanges();
+
+            const card = fixture.nativeElement.querySelector('[data-testid="complaint-response-card"]') as HTMLElement;
+            expect(card).toBeTruthy();
+            // The same card language as the complaint next to it and the feedback cards on the page.
+            for (const utility of ['rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4!']) {
+                expect(card.classList.contains(utility), utility).toBe(true);
+            }
+        });
+
+        it('should be a cell of the grid of the complaint area that spans the rows of the header and of the text', () => {
+            fixture.componentRef.setInput('complaint', createComplaint(ComplaintType.COMPLAINT, true));
+            fixture.componentRef.setInput('maxComplaintResponseTextLimit', 2000);
+            fixture.detectChanges();
+
+            const card = fixture.nativeElement.querySelector('[data-testid="complaint-response-card"]') as HTMLElement;
+            // The host has no box of its own, so the card is a direct cell of the grid, and the complaint card shares its rows (subgrid).
+            expect(fixture.nativeElement.classList.contains('contents')).toBe(true);
+            for (const utility of ['row-span-2', 'grid', 'grid-rows-subgrid']) {
+                expect(card.classList.contains(utility), utility).toBe(true);
+            }
+        });
+
+        it('should put the answer time in the header above the text', () => {
+            fixture.componentRef.setInput('complaint', createComplaint(ComplaintType.COMPLAINT, true));
+            fixture.componentRef.setInput('maxComplaintResponseTextLimit', 2000);
+            fixture.detectChanges();
+
+            const card = fixture.nativeElement.querySelector('[data-testid="complaint-response-card"]') as HTMLElement;
+            const header = card.firstElementChild as HTMLElement;
+            expect(header.querySelector('span')).toBeTruthy();
+            expect(header.nextElementSibling).toBe(card.querySelector('textarea'));
+        });
+
+        it('should render no card when complaint has no response', () => {
+            fixture.componentRef.setInput('complaint', createComplaint(ComplaintType.COMPLAINT, false));
+            fixture.componentRef.setInput('maxComplaintResponseTextLimit', 2000);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="complaint-response-card"]')).toBeNull();
         });
     });
 

@@ -1,28 +1,33 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
-import { InputTextModule } from 'primeng/inputtext';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { SelectModule } from 'primeng/select';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { DatePickerModule } from 'primeng/datepicker';
-import { TooltipModule } from 'primeng/tooltip';
-import { ButtonModule } from 'primeng/button';
 import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faBuilding, faCircleInfo, faCompass, faHashtag, faLanguage, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import dayjs from 'dayjs/esm';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiDatePickerComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputGroupAddonComponent,
+    TumAetUiInputGroupComponent,
+    TumAetUiInputNumberComponent,
+    TumAetUiSelectComponent,
+    TumAetUiToggleSwitchComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Validation, ValidationStatus } from 'app/foundation/util/validation';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/model/createOrUpdateTutorialGroupRequest';
-import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/model/create-or-update-tutorial-group-request';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
 
 enum Mode {
     ONLINE = 'Online',
@@ -43,33 +48,43 @@ export interface UpdateTutorialGroupEvent {
 @Component({
     selector: 'jhi-tutorial-edit',
     imports: [
-        InputGroupModule,
-        InputGroupAddonModule,
-        InputTextModule,
         FormsModule,
-        ToggleSwitchModule,
+        // Contained PrimeNG fallback: a filterable tutor select. See the note at the top of the template.
         SelectModule,
-        InputNumberModule,
-        DatePickerModule,
-        TooltipModule,
-        ButtonModule,
         RouterLink,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiTooltipDirective,
+        FaIconComponent,
         TutorialEditLanguagesInputComponent,
-        ConfirmDialogModule,
+        TumAetUiInputNumberComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiDatePickerComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
-    providers: [ConfirmationService],
+    providers: [TumAetUiConfirmationService],
     templateUrl: './tutorial-create-or-edit.component.html',
     styleUrl: './tutorial-create-or-edit.component.scss',
 })
 export class TutorialCreateOrEditComponent {
-    private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
-    protected readonly ValidationStatus = ValidationStatus;
-    private confirmationService = inject(ConfirmationService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private confirmationService = inject(TumAetUiConfirmationService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
+
+    private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
+    protected readonly ValidationStatus = ValidationStatus;
+    protected readonly faHashtag = faHashtag;
+    protected readonly faLanguage = faLanguage;
+    protected readonly faUser = faUser;
+    protected readonly faCompass = faCompass;
+    protected readonly faBuilding = faBuilding;
+    protected readonly faCircleInfo = faCircleInfo;
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
 
     courseId = input.required<number>();
@@ -95,15 +110,19 @@ export class TutorialCreateOrEditComponent {
     additionalInformationValidationResult = computed<Validation>(() => this.computeAdditionalInformationValidation());
 
     configureSessionPlan = signal(false);
-    firstSessionStart = signal<Date | undefined>(undefined);
+    firstSessionStart = signal<dayjs.Dayjs | undefined>(undefined);
     firstSessionStartInputTouched = signal(false);
+    // A picker keeps its last committed value while its text is not a date; a save must wait for the text to parse.
+    firstSessionStartTextValid = signal(true);
     firstSessionStartValidationResult = computed<Validation>(() => this.computeFirstSessionStartValidation());
-    firstSessionEnd = signal<Date | undefined>(undefined);
+    firstSessionEnd = signal<dayjs.Dayjs | undefined>(undefined);
     firstSessionEndInputTouched = signal(false);
+    firstSessionEndTextValid = signal(true);
     firstSessionEndValidationResult = computed<Validation>(() => this.computeFirstSessionEndValidation());
     repetitionFrequency = signal<number>(1);
-    tutorialPeriodEnd = signal<Date | undefined>(undefined);
+    tutorialPeriodEnd = signal<dayjs.Dayjs | undefined>(undefined);
     tutorialPeriodEndInputTouched = signal(false);
+    tutorialPeriodEndTextValid = signal(true);
     tutorialPeriodEndValidationResult = computed<Validation>(() => this.computeTeachingPeriodEndValidation());
     location = signal('');
     locationInputTouched = signal(false);
@@ -118,35 +137,34 @@ export class TutorialCreateOrEditComponent {
     constructor() {
         effect(() => {
             const tutorialGroup = this.tutorialGroup();
-            if (tutorialGroup) {
-                this.title.set(tutorialGroup.title);
-                this.selectedTutorId.set(tutorialGroup.tutorId);
-                this.selectedLanguage.set(tutorialGroup.language);
-                this.selectedMode.set(tutorialGroup.isOnline ? Mode.ONLINE : Mode.OFFLINE);
-                if (tutorialGroup.campus) {
-                    this.campus.set(tutorialGroup.campus);
-                }
-                if (tutorialGroup.capacity) {
-                    this.capacity.set(tutorialGroup.capacity);
-                }
-                if (tutorialGroup.additionalInformation) {
-                    this.additionalInformation.set(tutorialGroup.additionalInformation);
-                }
-            }
+            this.title.set(tutorialGroup?.title ?? '');
+            this.selectedTutorId.set(tutorialGroup?.tutorId);
+            this.selectedLanguage.set(tutorialGroup?.language ?? '');
+            this.selectedMode.set(tutorialGroup?.isOnline ? Mode.ONLINE : Mode.OFFLINE);
+            this.campus.set(tutorialGroup?.campus ?? '');
+            this.capacity.set(tutorialGroup?.capacity);
+            this.additionalInformation.set(tutorialGroup?.additionalInformation ?? '');
+            this.titleInputTouched.set(false);
+            this.tutorInputTouched.set(false);
         });
         effect(() => {
             const schedule = this.schedule();
-            if (schedule) {
-                this.firstSessionStart.set(dayjs(schedule.firstSessionStart).toDate());
-                this.firstSessionEnd.set(dayjs(schedule.firstSessionEnd).toDate());
-                this.repetitionFrequency.set(schedule.repetitionFrequency);
-                this.tutorialPeriodEnd.set(dayjs(schedule.tutorialPeriodEnd).toDate());
-                this.location.set(schedule.location);
-                this.configureSessionPlan.set(true);
-            }
+            this.firstSessionStart.set(schedule ? dayjs(schedule.firstSessionStart) : undefined);
+            this.firstSessionEnd.set(schedule ? dayjs(schedule.firstSessionEnd) : undefined);
+            this.repetitionFrequency.set(schedule?.repetitionFrequency ?? 1);
+            this.tutorialPeriodEnd.set(schedule ? dayjs(schedule.tutorialPeriodEnd) : undefined);
+            this.location.set(schedule?.location ?? '');
+            this.configureSessionPlan.set(!!schedule);
+            this.firstSessionStartInputTouched.set(false);
+            this.firstSessionEndInputTouched.set(false);
+            this.tutorialPeriodEndInputTouched.set(false);
+            this.locationInputTouched.set(false);
+            this.firstSessionStartTextValid.set(true);
+            this.firstSessionEndTextValid.set(true);
+            this.tutorialPeriodEndTextValid.set(true);
         });
         effect(() => {
-            this.tutorialGroupApiService.getUniqueLanguageValues(this.courseId(), 'body').subscribe({
+            this.tutorialGroupApiService.getUniqueLanguageValues(this.courseId()).subscribe({
                 next: (languages) => {
                     this.alreadyUsedLanguages.set(languages);
                 },
@@ -180,8 +198,8 @@ export class TutorialCreateOrEditComponent {
             message: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.message'),
             acceptLabel: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.acceptButtonLabel'),
             rejectLabel: this.translateService.instant('entity.action.cancel'),
-            acceptButtonStyleClass: 'p-button-danger',
-            rejectButtonStyleClass: 'p-button-secondary',
+            acceptSeverity: 'danger',
+            rejectSeverity: 'secondary',
             accept: () => this.onUpdate.emit({ courseId, tutorialGroupId, updateTutorialGroupDTO: updateTutorialGroupRequest }),
         });
     }
@@ -277,18 +295,13 @@ export class TutorialCreateOrEditComponent {
             };
         }
         const firstSessionStart = this.firstSessionStart();
-        if (firstSessionStart && firstSessionEnd <= firstSessionStart) {
+        if (firstSessionStart && !firstSessionEnd.isAfter(firstSessionStart)) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndNotAfterStart',
             };
         }
-        if (
-            firstSessionStart &&
-            (firstSessionStart.getFullYear() !== firstSessionEnd.getFullYear() ||
-                firstSessionStart.getMonth() !== firstSessionEnd.getMonth() ||
-                firstSessionStart.getDate() !== firstSessionEnd.getDate())
-        ) {
+        if (firstSessionStart && !firstSessionStart.isSame(firstSessionEnd, 'day')) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndNotOnSameDayAsStart',
@@ -306,20 +319,20 @@ export class TutorialCreateOrEditComponent {
             };
         }
         const firstSessionStart = this.firstSessionStart();
-        if (firstSessionStart && teachingPeriodEnd <= firstSessionStart) {
+        if (firstSessionStart && !teachingPeriodEnd.isAfter(firstSessionStart)) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionStart',
             };
         }
-        if (firstSessionStart && teachingPeriodEnd > dayjs(firstSessionStart).add(2, 'year').toDate()) {
+        if (firstSessionStart && teachingPeriodEnd.isAfter(firstSessionStart.add(2, 'year'))) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodMoreThanTwoYearsAfterFirstSessionStart',
             };
         }
         const firstSessionEnd = this.firstSessionEnd();
-        if (firstSessionEnd && teachingPeriodEnd <= firstSessionEnd) {
+        if (firstSessionEnd && !teachingPeriodEnd.isAfter(firstSessionEnd)) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionEnd',
@@ -381,12 +394,12 @@ export class TutorialCreateOrEditComponent {
         const tutorialGroupChanged = titleChanged || tutorChanged || languageChanged || modeChanged || campusChanged || capacityChanged || additionalInformationChanged;
         if (schedule) {
             const firstSessionStart = this.firstSessionStart();
-            const firstSessionStartChanged = firstSessionStart ? firstSessionStart.getTime() !== dayjs(schedule.firstSessionStart).toDate().getTime() : true;
+            const firstSessionStartChanged = firstSessionStart ? firstSessionStart.valueOf() !== dayjs(schedule.firstSessionStart).valueOf() : true;
             const firstSessionEnd = this.firstSessionEnd();
-            const firstSessionEndChanged = firstSessionEnd ? firstSessionEnd.getTime() !== dayjs(schedule.firstSessionEnd).toDate().getTime() : true;
+            const firstSessionEndChanged = firstSessionEnd ? firstSessionEnd.valueOf() !== dayjs(schedule.firstSessionEnd).valueOf() : true;
             const repetitionFrequencyChanged = this.repetitionFrequency() !== schedule.repetitionFrequency;
             const tutorialPeriodEnd = this.tutorialPeriodEnd();
-            const tutorialPeriodEndChanged = tutorialPeriodEnd ? tutorialPeriodEnd.getTime() !== dayjs(schedule.tutorialPeriodEnd).toDate().getTime() : true;
+            const tutorialPeriodEndChanged = tutorialPeriodEnd ? tutorialPeriodEnd.valueOf() !== dayjs(schedule.tutorialPeriodEnd).valueOf() : true;
             const locationChanged = this.location() !== schedule.location;
             const scheduleChanged =
                 !this.configureSessionPlan() || firstSessionStartChanged || firstSessionEndChanged || repetitionFrequencyChanged || tutorialPeriodEndChanged || locationChanged;
@@ -407,7 +420,8 @@ export class TutorialCreateOrEditComponent {
         const firstSessionEndInvalid = this.firstSessionEndValidationResult().status === ValidationStatus.INVALID;
         const tutorialPeriodEndInvalid = this.tutorialPeriodEndValidationResult().status === ValidationStatus.INVALID;
         const locationInvalid = this.locationValidationResult().status === ValidationStatus.INVALID;
-        const scheduleInvalid = firstSessionStartInvalid || firstSessionEndInvalid || tutorialPeriodEndInvalid || locationInvalid;
+        const dateTextInvalid = !this.firstSessionStartTextValid() || !this.firstSessionEndTextValid() || !this.tutorialPeriodEndTextValid();
+        const scheduleInvalid = firstSessionStartInvalid || firstSessionEndInvalid || tutorialPeriodEndInvalid || locationInvalid || dateTextInvalid;
 
         return generalInformationInvalid || (this.configureSessionPlan() && scheduleInvalid);
     }

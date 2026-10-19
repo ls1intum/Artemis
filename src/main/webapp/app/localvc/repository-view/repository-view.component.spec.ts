@@ -1,5 +1,4 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -33,10 +32,10 @@ import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-butto
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('RepositoryViewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: RepositoryViewComponent;
     let fixture: ComponentFixture<RepositoryViewComponent>;
     let mockDomainService: Partial<DomainService>;
@@ -145,15 +144,15 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBe(false);
+        expect(component.loadingParticipation()).toBe(false);
 
         // Expect exercise and participation to be set correctly
-        expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toEqual(mockExercise.templateParticipation);
+        expect(component.exercise()).toEqual(mockExercise);
+        expect(component.participation()).toEqual(mockExercise.templateParticipation);
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.PARTICIPATION, mockExercise.templateParticipation]);
-        expect(component.repositoryUri).toBe('template-repo-uri');
+        expect(component.repositoryUri()).toBe('template-repo-uri');
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -182,15 +181,15 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBe(false);
+        expect(component.loadingParticipation()).toBe(false);
 
         // Expect exercise and participation to be set correctly
-        expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toEqual(mockExercise.solutionParticipation);
+        expect(component.exercise()).toEqual(mockExercise);
+        expect(component.participation()).toEqual(mockExercise.solutionParticipation);
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.PARTICIPATION, mockExercise.solutionParticipation]);
-        expect(component.repositoryUri).toBe('solution-repo-uri');
+        expect(component.repositoryUri()).toBe('solution-repo-uri');
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -218,15 +217,15 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBe(false);
+        expect(component.loadingParticipation()).toBe(false);
 
         // Expect exercise and participation to be set correctly
-        expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toBeUndefined();
+        expect(component.exercise()).toEqual(mockExercise);
+        expect(component.participation()).toBeUndefined();
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, mockExercise]);
-        expect(component.repositoryUri).toBeUndefined();
+        expect(component.repositoryUri()).toBeUndefined();
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -234,6 +233,34 @@ describe('RepositoryViewComponent', () => {
         // Expect subscription to be unsubscribed
         expect(component.differentParticipationSub?.closed).toBe(true);
         expect(component.paramSub?.closed).toBe(true);
+    });
+
+    it('should clear stale participation when switching from TEMPLATE to TESTS repository type', () => {
+        const mockExercise: ProgrammingExercise = {
+            id: 1,
+            templateParticipation: { id: 2, repositoryUri: 'template-repo-uri' },
+            testRepositoryUri: 'test-repo-uri',
+            numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+            studentAssignedTeamIdComputed: true,
+            secondCorrectionEnabled: true,
+        };
+        const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+
+        activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'TEMPLATE' });
+        component.ngOnInit();
+
+        expect(component.participation()).toEqual(mockExercise.templateParticipation);
+        expect(component.repositoryUri()).toBe('template-repo-uri');
+
+        activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'TESTS' });
+
+        expect(component.participation()).toBeUndefined();
+        expect(component.repositoryUri()).toBe('test-repo-uri');
+        expect(component.auxiliaryRepositoryId()).toBeUndefined();
+        expect(component.domainService.setDomain).toHaveBeenLastCalledWith([DomainType.TEST_REPOSITORY, mockExercise]);
+
+        component.ngOnDestroy();
     });
 
     it('should load AUXILIARY repository type', () => {
@@ -257,11 +284,11 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBe(false);
+        expect(component.loadingParticipation()).toBe(false);
 
         // Expect exercise and participation to be set correctly
-        expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toBeUndefined();
+        expect(component.exercise()).toEqual(mockExercise);
+        expect(component.participation()).toBeUndefined();
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.AUXILIARY_REPOSITORY, mockAuxiliaryRepository]);
@@ -294,10 +321,10 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBe(false);
+        expect(component.loadingParticipation()).toBe(false);
 
         // Expect participationCouldNotBeFetched to be true
-        expect(component.participationCouldNotBeFetched).toBe(true);
+        expect(component.participationCouldNotBeFetched()).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -318,7 +345,6 @@ describe('RepositoryViewComponent', () => {
                 studentAssignedTeamIdComputed: true,
                 secondCorrectionEnabled: true,
                 course: {
-                    instructorGroupName: 'instructorGroup',
                     isAtLeastInstructor: true,
                 },
             },
@@ -360,15 +386,15 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBe(false);
+        expect(component.loadingParticipation()).toBe(false);
 
         // Expect exercise and participation to be set correctly
-        expect(component.exercise).toEqual(mockParticipation.exercise);
-        expect(component.participation).toEqual(mockParticipation);
+        expect(component.exercise()).toEqual(mockParticipation.exercise);
+        expect(component.participation()).toEqual(mockParticipation);
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.PARTICIPATION, mockParticipation]);
-        expect(component.repositoryUri).toBe('student-repo-uri');
+        expect(component.repositoryUri()).toBe('student-repo-uri');
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -376,6 +402,46 @@ describe('RepositoryViewComponent', () => {
         // Expect subscription to be unsubscribed
         expect(component.participationWithLatestResultSub?.closed).toBe(true);
         expect(component.paramSub?.closed).toBe(true);
+    });
+
+    it('should offer the inline feedback toggle when the only inline feedback is on the first line of a file', () => {
+        // Shape of the student-participation-with-latest-result-and-feedbacks response: the editor stores inline feedback lines 0-based
+        const participationWithFirstLineFeedback: ProgrammingExerciseStudentParticipation = {
+            id: 2,
+            repositoryUri: 'student-repo-uri',
+            exercise: { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: false },
+            submissions: [
+                {
+                    id: 5,
+                    results: [
+                        {
+                            id: 3,
+                            score: 50,
+                            rated: true,
+                            assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                            feedbacks: [
+                                {
+                                    id: 7,
+                                    type: FeedbackType.MANUAL,
+                                    reference: 'file:helloWorld.c_line:0',
+                                    text: 'File helloWorld.c at line 1',
+                                    detailText: 'first line',
+                                    credits: -1,
+                                },
+                                { id: 8, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'general', credits: 1 },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        };
+        activatedRoute.setParameters({ repositoryId: 2 });
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(participationWithFirstLineFeedback));
+
+        component.ngOnInit();
+
+        expect(component.result()?.id).toBe(3);
+        expect(component.resultHasInlineFeedback()).toBe(true);
     });
 
     it('should handle error when loading participation', () => {
@@ -393,10 +459,10 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBe(false);
+        expect(component.loadingParticipation()).toBe(false);
 
         // Expect participationCouldNotBeFetched to be true
-        expect(component.participationCouldNotBeFetched).toBe(true);
+        expect(component.participationCouldNotBeFetched()).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -421,10 +487,10 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBe(false);
+        expect(component.loadingParticipation()).toBe(false);
 
         // Expect participationCouldNotBeFetched to be true
-        expect(component.participationCouldNotBeFetched).toBe(true);
+        expect(component.participationCouldNotBeFetched()).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();

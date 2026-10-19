@@ -1,79 +1,117 @@
 <div>
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
-    <div class="row">
-        <div class="col-md-5">
-            <h4 jhiTranslate="audits.filter.title"></h4>
-            <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                    <span class="input-group-text" jhiTranslate="audits.filter.from"></span>
-                </div>
-                <input type="date" class="form-control" name="start" [ngModel]="fromDate()" (ngModelChange)="updateFromDate($event); transition()" required />
-                <div class="input-group-append">
-                    <span class="input-group-text" jhiTranslate="audits.filter.to"></span>
-                </div>
-                <input type="date" class="form-control" name="end" [ngModel]="toDate()" (ngModelChange)="updateToDate($event); transition()" required />
-            </div>
+    <!-- One tab per audit log. Each log is a separate table with its own retention period, so switching tabs queries a
+         different, much smaller table instead of filtering one large one. -->
+    <tumaet-ui-tabs class="mb-4" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
+        <tumaet-ui-tab-list>
+            @for (tab of logTypeTabs; track tab.value) {
+                <tumaet-ui-tab [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
+                    <span [jhiTranslate]="tab.labelKey"></span>
+                </tumaet-ui-tab>
+            }
+        </tumaet-ui-tab-list>
+    </tumaet-ui-tabs>
+    <h4 class="mb-3" jhiTranslate="audits.filter.title"></h4>
+    <div class="mb-4 flex flex-wrap items-start gap-4" data-testid="audits-date-filter">
+        <div class="flex flex-col gap-2">
+            <label for="audits-from-date" jhiTranslate="audits.filter.from"></label>
+            <tumaet-ui-date-picker
+                #fromPicker
+                inputId="audits-from-date"
+                data-testid="audits-from-date"
+                [hideLabelName]="true"
+                [hideValidationMessage]="true"
+                [shouldDisplayTimeZoneWarning]="false"
+                [dateOnly]="true"
+                [value]="fromDateValue()"
+                (valueChange)="onFromDateChange($event)"
+                (inputValidityChange)="onFromTextValidityChange($event, fromPicker.value())"
+            />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="audits-to-date" jhiTranslate="audits.filter.to"></label>
+            <tumaet-ui-date-picker
+                #toPicker
+                inputId="audits-to-date"
+                data-testid="audits-to-date"
+                [hideLabelName]="true"
+                [hideValidationMessage]="true"
+                [shouldDisplayTimeZoneWarning]="false"
+                [dateOnly]="true"
+                [value]="toDateValue()"
+                (valueChange)="onToDateChange($event)"
+                (inputValidityChange)="onToTextValidityChange($event, toPicker.value())"
+            />
         </div>
     </div>
     @if (audits().length) {
-        <div class="table-responsive">
-            <table class="table table-sm table-striped" aria-describedby="audits-page-heading">
+        <div class="overflow-x-auto" data-testid="audits-table-container">
+            <table tumAetUiTable size="small" [striped]="true" aria-describedby="audits-page-heading" data-testid="audits-table">
                 <thead>
-                    @if (canLoad()) {
-                        <tr
-                            jhiSort
-                            [predicate]="predicate()"
-                            [ascending]="ascending()"
-                            (predicateChange)="predicate.set($event!)"
-                            (ascendingChange)="ascending.set($event)"
-                            (sortChange)="transition()"
-                        >
-                            <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
-                        </tr>
-                    } @else {
-                        <tr>
-                            <th scope="col"><span jhiTranslate="audits.table.header.date"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.principal"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.status"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
-                        </tr>
-                    }
+                    <!-- Sorting works whether or not a date range is set, so the header is not conditional. -->
+                    <tr
+                        jhiSort
+                        [predicate]="predicate()"
+                        [ascending]="ascending()"
+                        (predicateChange)="predicate.set($event!)"
+                        (ascendingChange)="ascending.set($event)"
+                        (sortChange)="transition()"
+                    >
+                        <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" /></th>
+                        <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" /></th>
+                        <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" /></th>
+                        <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
+                    </tr>
                 </thead>
                 <tbody>
-                    @for (audit of audits(); track audit) {
+                    @for (row of auditRows(); track row.audit) {
                         <tr>
-                            <td>{{ audit.timestamp | artemisDate: 'long' : true }}</td>
+                            <td>{{ row.audit.timestamp | artemisDate: 'long' : true }}</td>
                             <td>
-                                <small>{{ audit.principal }}</small>
+                                <small>{{ row.audit.principal }}</small>
                             </td>
-                            <td>{{ audit.type }}</td>
+                            <td>{{ row.audit.type }}</td>
                             <td>
-                                @if (audit.data?.message) {
-                                    <span>{{ audit.data.message }}</span>
-                                }
-                                @if (audit.data?.remoteAddress) {
-                                    <span><span jhiTranslate="audits.table.data.remoteAddress"></span> {{ audit.data.remoteAddress }}</span>
-                                }
+                                <!-- Bounded and clipped to one line per entry: a login records its full user agent, which
+                                     would otherwise wrap over two lines on every row of the highest-volume tab. The whole
+                                     value stays available as the title. -->
+                                <div class="flex max-w-md flex-col">
+                                    @if (row.audit.data?.message) {
+                                        <span class="truncate" [title]="row.audit.data.message">{{ row.audit.data.message }}</span>
+                                    }
+                                    @if (row.audit.data?.remoteAddress) {
+                                        <span><span jhiTranslate="audits.table.data.remoteAddress"></span> {{ row.audit.data.remoteAddress }}</span>
+                                    }
+                                    <!-- Everything the server recorded that has no rendering of its own. Keys are
+                                         event-specific (`course`, `reason`, `revokedPasskeys`, ...), so they are shown verbatim. -->
+                                    @for (entry of row.otherData; track entry.key) {
+                                        <span class="truncate" [title]="entry.key + ': ' + entry.value">{{ entry.key }}: {{ entry.value }}</span>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-        <div>
-            <div class="row justify-content-center">
+        <div class="mt-3">
+            <div class="flex justify-center">
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
-            <div class="row justify-content-center">
-                <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
+            <div class="flex justify-center">
+                <tumaet-ui-paginator
+                    [page]="page() - 1"
+                    [pageSize]="itemsPerPage"
+                    [totalRecords]="totalItems()"
+                    [showCurrentPageReport]="false"
+                    [showRowsPerPage]="false"
+                    (pageChange)="onPageChange($event)"
+                />
             </div>
         </div>
     } @else {
-        <div class="alert alert-warning">
+        <tumaet-ui-message severity="warn" data-testid="audits-not-found">
             <span jhiTranslate="audits.notFound"></span>
-        </div>
+        </tumaet-ui-message>
     }
 </div>

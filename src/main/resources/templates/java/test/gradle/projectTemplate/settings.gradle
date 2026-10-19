@@ -1,3 +1,16 @@
+// %maven-central-mirror-start%
+// Plugins are not resolved through the repositories block of build.gradle, so the mirror has to be declared here as
+// well - otherwise plugin resolution falls back to Maven Central and still runs into its rate limits.
+pluginManagement {
+    repositories {
+        maven {
+            name 'artemisMavenCentralMirror'
+            url '${mavenCentralMirrorUrl}'
+        }
+        gradlePluginPortal()
+    }
+}
+// %maven-central-mirror-stop%
 rootProject.name = '${exerciseNamePomXml}-Tests'
 // includeBuild('/path/to/repository-solution')
 // includeBuild('/path/to/repository-exercise')

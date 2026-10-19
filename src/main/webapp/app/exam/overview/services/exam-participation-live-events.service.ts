@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -8,6 +8,7 @@ import { BehaviorSubject, Observable, Subject, Subscription, distinct, filter, m
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 const EVENT_ACKNOWLEDGEMENT_LOCAL_STORAGE_KEY = 'examLastAcknowledgedEvent';
 
@@ -42,6 +43,11 @@ export type WorkingTimeUpdateEvent = ExamLiveEvent & {
     oldWorkingTime: number;
     newWorkingTime: number;
     courseWide: boolean;
+    // The exam's current start and end date, sent with every working time update so a conducting student can refresh
+    // the pre-start countdown and the start-based content visibility when the schedule changes. Optional because an
+    // exam without dates has none to send; a conducting student's exam always carries them.
+    newStartDate?: dayjs.Dayjs;
+    newEndDate?: dayjs.Dayjs;
 };
 
 export type ProblemStatementUpdateEvent = ExamLiveEvent & {
@@ -72,7 +78,7 @@ export type ProblemStatementUpdateEvent = ExamLiveEvent & {
  * Acknowledgement state is persisted to localStorage so the UI can distinguish between
  * events the system has already auto-processed and events the user has explicitly dismissed.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamParticipationLiveEventsService {
     private websocketService = inject(WebsocketService);
     private examParticipationService = inject(ExamParticipationService);
@@ -206,6 +212,26 @@ export class ExamParticipationLiveEventsService {
     }
 
     /**
+     * Stops handling live events of the current student exam, e.g. when the student leaves the exam. Without this, the reconnection
+     * handler above would keep fetching the events of an exam that is no longer displayed on every websocket reconnect.
+     * Loading a student exam again initializes the service anew.
+     */
+    public reset() {
+        this.lastAcknowledgedEventStatus = undefined;
+        this.unsubscribeFromExamLiveEvents();
+        if (this.fetchEventsTimeoutHandle) {
+            clearTimeout(this.fetchEventsTimeoutHandle);
+            this.fetchEventsTimeoutHandle = undefined;
+        }
+        this.events = [];
+        this.studentExamId = undefined;
+        this.examId = undefined;
+        this.courseId = undefined;
+        this.studentExam = undefined;
+        this.allEventsSubject.next([]);
+    }
+
+    /**
      * Marks an event as acknowledged, either by the system (automatic processing) or by the user
      * (explicit dismissal in the UI). The acknowledgement is persisted to localStorage so it
      * survives page reloads. Two independent timestamps are tracked per event:
@@ -271,7 +297,7 @@ export class ExamParticipationLiveEventsService {
             return;
         }
 
-        event.createdDate = convertDateFromServer(event.createdDate)!;
+        this.convertEventDatesFromServer(event);
         event.user = this.studentExam?.user;
 
         // Add to the front of the array (newest first) and notify all observers
@@ -279,6 +305,21 @@ export class ExamParticipationLiveEventsService {
         this.newSystemEventSubject.next(event);
         this.newUserEventSubject.next(event);
         this.allEventsSubject.next(this.events);
+    }
+
+    /**
+     * Converts the server date format on an incoming event. Besides {@link ExamLiveEvent.createdDate}, working time
+     * update events also carry the exam's new start and end date, which the pre-start countdown and content visibility
+     * depend on, so those are converted here too.
+     */
+    private convertEventDatesFromServer(event: ExamLiveEvent): void {
+        event.createdDate = convertDateFromServer(event.createdDate)!;
+        if (event.eventType === ExamLiveEventType.WORKING_TIME_UPDATE) {
+            const workingTimeEvent = event as WorkingTimeUpdateEvent;
+            // The dates are optional (see the type); convert them only when present and keep undefined otherwise.
+            workingTimeEvent.newStartDate = convertDateFromServer(workingTimeEvent.newStartDate);
+            workingTimeEvent.newEndDate = convertDateFromServer(workingTimeEvent.newEndDate);
+        }
     }
 
     /**
@@ -322,7 +363,7 @@ export class ExamParticipationLiveEventsService {
             }
 
             fetchedEvents.forEach((event) => {
-                event.createdDate = convertDateFromServer(event.createdDate)!;
+                this.convertEventDatesFromServer(event);
             });
 
             // Build a set of IDs already present in the in-memory array (from WebSocket delivery)
@@ -378,7 +419,7 @@ export class ExamParticipationLiveEventsService {
      */
     private loadAcknowledgedEventsMapFromLocalStorage(): { [studentExamId: string]: StudentExamAcknowledgedEvents } {
         const fromStorage = this.localStorageService.retrieve<string>(EVENT_ACKNOWLEDGEMENT_LOCAL_STORAGE_KEY);
-        return fromStorage ? JSON.parse(fromStorage) : {};
+        return fromStorage ? parseJson<{ [studentExamId: string]: StudentExamAcknowledgedEvents }>(fromStorage) : {};
     }
 
     /**
@@ -445,6 +486,15 @@ export class ExamParticipationLiveEventsService {
     }
 
     /**
+     * A working time update whose working time did not actually change only carries a schedule (start/end date)
+     * update for the system countdown handler. It must not be surfaced to the user as a "working time changed"
+     * notification, so it is filtered out of the user-facing observers below.
+     */
+    private isScheduleOnlyWorkingTimeUpdate(event: ExamLiveEvent): boolean {
+        return event.eventType === ExamLiveEventType.WORKING_TIME_UPDATE && (event as WorkingTimeUpdateEvent).oldWorkingTime === (event as WorkingTimeUpdateEvent).newWorkingTime;
+    }
+
+    /**
      * Returns an observable that emits events intended for user-facing notification
      * (e.g., the exam live events overlay that shows announcements and attendance checks).
      *
@@ -452,19 +502,26 @@ export class ExamParticipationLiveEventsService {
      *   - Problem statement updates created before the exam start date are suppressed,
      *     because instructors may update problem statements during the preparation phase
      *     and students should not see stale pre-exam notifications.
+     *   - Schedule-only working time updates (working time unchanged) are suppressed; they only drive the countdown.
      *
      * @param eventTypes    optional filter for specific event types
-     * @param examStartDate the exam's official start date, used to suppress pre-exam events
+     * @param examStartDate the exam's official start date, used to suppress pre-exam events. Pass a getter (e.g. a
+     *                      signal) rather than a snapshot so that a live schedule change (postponed start) is honoured:
+     *                      the filter reads the current start date at emission time.
      */
-    public observeNewEventsAsUser(eventTypes: ExamLiveEventType[] = [], examStartDate: dayjs.Dayjs): Observable<ExamLiveEvent> {
+    public observeNewEventsAsUser(eventTypes: ExamLiveEventType[] = [], examStartDate: dayjs.Dayjs | (() => dayjs.Dayjs | undefined)): Observable<ExamLiveEvent> {
+        const resolveExamStartDate = () => (typeof examStartDate === 'function' ? examStartDate() : examStartDate);
         const observable = this.newUserEventSubject.asObservable().pipe(
             filter(
                 (event: ExamLiveEvent) =>
                     !this.lastAcknowledgedEventStatus?.acknowledgedEvents[String(event.id)]?.user &&
                     (eventTypes.length === 0 || eventTypes.includes(event.eventType)) &&
-                    // Suppress problem statement updates that were created before the exam started,
-                    // as these reflect instructor preparation, not live exam changes
-                    !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(examStartDate)),
+                    // Suppress problem statement updates that were created before the exam started, as these reflect
+                    // instructor preparation, not live exam changes. Resolved per emission so a postponed start keeps a
+                    // problem statement update created between the old and new start hidden until the new start.
+                    !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(resolveExamStartDate())) &&
+                    // Suppress schedule-only working time updates (working time unchanged); they only drive the countdown
+                    !this.isScheduleOnlyWorkingTimeUpdate(event),
             ),
             tap((event: ExamLiveEvent) => this.setEventAcknowledgeTimestamps(event)),
             distinct((event) => event.id),
@@ -483,7 +540,10 @@ export class ExamParticipationLiveEventsService {
      */
     public observeAllEvents(eventTypes: ExamLiveEventType[] = []): Observable<ExamLiveEvent[]> {
         return this.allEventsSubject.asObservable().pipe(
-            map((events: ExamLiveEvent[]) => (eventTypes.length === 0 ? events : events.filter((event) => eventTypes.includes(event.eventType)))),
+            map((events: ExamLiveEvent[]) =>
+                // Also drop schedule-only working time updates so the history overlay does not show a no-op "working time changed" entry.
+                events.filter((event) => (eventTypes.length === 0 || eventTypes.includes(event.eventType)) && !this.isScheduleOnlyWorkingTimeUpdate(event)),
+            ),
             tap((events: ExamLiveEvent[]) => events.forEach((event) => this.setEventAcknowledgeTimestamps(event))),
         );
     }

@@ -1,8 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject } from 'rxjs';
 import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 /**
  * Service for generating and managing browser fingerprints and instance identifiers.
@@ -14,7 +15,7 @@ import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
  * - Instance Identifier: A UUID stored in local storage to identify this specific browser instance.
  * - Session Identifier: A UUID stored in session storage to identify the current browser tab.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BrowserFingerprintService {
     private localStorageService = inject(LocalStorageService);
     private sessionStorageService = inject(SessionStorageService);
@@ -70,8 +71,8 @@ export class BrowserFingerprintService {
      * screen resolution, installed fonts, plugins, and other attributes.
      */
     private generateBrowserFingerprint(): void {
-        FingerprintJS.load().then((fingerprintAgent: { get: () => Promise<GetResult> }) => {
-            fingerprintAgent.get().then((result) => {
+        void FingerprintJS.load().then((fingerprintAgent: { get: () => Promise<GetResult> }) => {
+            void fingerprintAgent.get().then((result) => {
                 this.browserFingerprint.next(result.visitorId);
             });
         });
@@ -87,7 +88,7 @@ export class BrowserFingerprintService {
 
         if (!storedInstanceId) {
             // Generate a new UUID for this browser instance
-            storedInstanceId = window.crypto.randomUUID();
+            storedInstanceId = generateUuid();
             this.localStorageService.store<string>(this.INSTANCE_STORAGE_KEY, storedInstanceId);
         }
 
@@ -103,7 +104,7 @@ export class BrowserFingerprintService {
         let storedSessionId = this.sessionStorageService.retrieve<string>(this.SESSION_STORAGE_KEY);
 
         if (!storedSessionId) {
-            storedSessionId = window.crypto.randomUUID();
+            storedSessionId = generateUuid();
             this.sessionStorageService.store<string>(this.SESSION_STORAGE_KEY, storedSessionId);
         }
 

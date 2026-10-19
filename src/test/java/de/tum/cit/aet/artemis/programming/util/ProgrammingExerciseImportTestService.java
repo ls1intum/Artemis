@@ -10,9 +10,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -21,12 +25,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 
 /**
  * Test service for handling programming exercise imports
@@ -40,7 +47,7 @@ public class ProgrammingExerciseImportTestService {
     private RequestUtilService request;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     /**
      * Functional interface to modify the exercise before import
@@ -51,9 +58,13 @@ public class ProgrammingExerciseImportTestService {
     }
 
     /**
-     * Result record holding data related to a programming exercise import
+     * Result record holding data related to a programming exercise import.
+     * <p>
+     * {@code importedExercise} is the response record the endpoint returns, not an entity: the response omits the
+     * polymorphic type discriminator inside a nested competency, so reading it back as a {@code ProgrammingExercise}
+     * fails as soon as the imported exercise has a competency link.
      */
-    public record ImportFileResult(ClassPathResource resource, ProgrammingExercise parsedExercise, ProgrammingExercise importedExercise, Object additionalData) {
+    public record ImportFileResult(ClassPathResource resource, ProgrammingExercise parsedExercise, ProgrammingExerciseResponseDTO importedExercise, Object additionalData) {
     }
 
     /**
@@ -66,6 +77,39 @@ public class ProgrammingExerciseImportTestService {
      * @throws Exception if the import fails
      */
     public ImportFileResult prepareExerciseImport(String resourcePath, ExerciseModifier<?> modifier, Course course) throws Exception {
+        return prepareExerciseImport(resourcePath, modifier, course, Set.of());
+    }
+
+    /**
+     * Prepares and imports a programming exercise from a zip file, marking the given competencies as selected through Hyperion's checklist
+     *
+     * @param resourcePath          Path to the resource zip file
+     * @param modifier              Function to modify the exercise before import
+     * @param course                Course to import the exercise into
+     * @param hyperionCompetencyIds IDs of the submitted links inferred through Hyperion's checklist
+     * @return ImportFileResult containing the resource, parsed exercise, imported exercise and any additional data
+     * @throws Exception if the import fails
+     */
+    public ImportFileResult prepareExerciseImport(String resourcePath, ExerciseModifier<?> modifier, Course course, Set<Long> hyperionCompetencyIds) throws Exception {
+        return prepareExerciseImport(resourcePath, modifier, course, hyperionCompetencyIds, null);
+    }
+
+    /**
+     * Prepares and imports a programming exercise from a zip file, letting the caller change the JSON part of the request beyond what the request record can
+     * express, for example to send a field the server has to ignore.
+     *
+     * @param resourcePath      Path to the resource zip file
+     * @param course            Course to import the exercise into
+     * @param requestCustomizer Changes the JSON part of the request before it is sent
+     * @return ImportFileResult containing the resource, parsed exercise and imported exercise
+     * @throws Exception if the import fails
+     */
+    public ImportFileResult prepareExerciseImport(String resourcePath, Course course, UnaryOperator<ObjectNode> requestCustomizer) throws Exception {
+        return prepareExerciseImport(resourcePath, exercise -> null, course, Set.of(), requestCustomizer);
+    }
+
+    private ImportFileResult prepareExerciseImport(String resourcePath, ExerciseModifier<?> modifier, Course course, Set<Long> hyperionCompetencyIds,
+            @Nullable UnaryOperator<ObjectNode> requestCustomizer) throws Exception {
         var resource = new ClassPathResource(resourcePath);
         ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
         String detailsJsonString = null;
@@ -85,13 +129,10 @@ public class ProgrammingExerciseImportTestService {
         zipInputStream.close();
         assertThat(detailsJsonString).isNotNull();
 
-        objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.findAndRegisterModules();
         ProgrammingExercise parsedExercise = objectMapper.readValue(detailsJsonString, ProgrammingExercise.class);
-
-        if (parsedExercise.getBuildConfig() == null) {
-            parsedExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        }
+        // The build configuration is a row of its own, so the exercise does not carry it: it is read off the archive separately.
+        var parsedBuildConfigDTO = objectMapper.readValue(detailsJsonString, ImportProgrammingExerciseRequestDTO.class).buildConfig();
+        var parsedBuildConfig = parsedBuildConfigDTO == null ? new ProgrammingExerciseBuildConfig() : parsedBuildConfigDTO.toEntity();
 
         Object additionalData = modifier.modify(parsedExercise);
 
@@ -102,8 +143,12 @@ public class ProgrammingExerciseImportTestService {
 
         MockMultipartFile file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
 
-        ProgrammingExercise importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
-                parsedExercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
+        String query = hyperionCompetencyIds.stream().map(id -> "hyperionCompetencyId=" + id).collect(Collectors.joining("&", "?", ""));
+        String path = "/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file" + (hyperionCompetencyIds.isEmpty() ? "" : query);
+        var requestBody = ImportProgrammingExerciseRequestDTO.of(parsedExercise, parsedBuildConfig);
+        Object requestPart = requestCustomizer == null ? requestBody : requestCustomizer.apply(objectMapper.valueToTree(requestBody));
+        ProgrammingExerciseResponseDTO importedExercise = request.postWithMultipartFile(path, requestPart, "programmingExercise", file, ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
 
         return new ImportFileResult(resource, parsedExercise, importedExercise, additionalData);
     }

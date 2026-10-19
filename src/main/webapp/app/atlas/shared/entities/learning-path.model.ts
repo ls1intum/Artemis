@@ -2,20 +2,20 @@ import { BaseEntity } from 'app/foundation/model/base-entity';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
 import { CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
-import { NodeDimension } from '@swimlane/ngx-graph';
+import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
 
-export class LearningPath implements BaseEntity {
-    public id?: number;
-    public progress?: number;
-    public user?: User;
-    public course?: Course;
-    public competencies?: CourseCompetency[];
+export interface LearningPath extends BaseEntity {
+    id?: number;
+    progress?: number;
+    user?: User;
+    course?: Course;
+    competencies?: CourseCompetency[];
 }
 
-export class LearningPathInformationDTO {
-    public id: number;
-    public user: UserNameAndLoginDTO;
-    public progress: number;
+export interface LearningPathInformationDTO {
+    id: number;
+    user: UserNameAndLoginDTO;
+    progress: number;
 }
 
 export enum LearningObjectType {
@@ -77,7 +77,7 @@ export interface CompetencyGraphNodeDTO {
     softDueDate: Date;
     value: number;
     valueType: CompetencyGraphNodeValueType;
-    dimension?: NodeDimension;
+    dimension?: GraphNodeDimension;
 }
 
 export interface CompetencyGraphEdgeDTO {

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.competency;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Collections;
@@ -17,11 +18,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
@@ -33,11 +36,14 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
 class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
 
-    private static final String TEST_PREFIX = "competencyintegrationtest";
+    private static final String TEST_PREFIX = "competency";
+
+    /** Student/instructor not enrolled in either test course; exercises the wrong-course branches. */
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     @BeforeEach
     void setupTestScenario() {
-        super.setupTestScenario(TEST_PREFIX, competencyUtilService::createCompetency);
+        super.setupTestScenario(TEST_PREFIX, OTHER_PREFIX, competencyUtilService::createCompetency);
     }
 
     @Nested
@@ -47,8 +53,11 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             request.put("/api/atlas/courses/" + course.getId() + "/competencies", toRequestDto(courseCompetency), HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies", new CourseCompetencyRequestDTO(null, "Title", "Description", null, 1, null, false),
                     HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/competencies/generated-from-hyperion-checklist",
+                    new CourseCompetencyRequestDTO(null, "Title", "Description", null, 1, null, false), HttpStatus.FORBIDDEN);
             request.delete("/api/atlas/courses/" + course.getId() + "/competencies/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
-            request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk", List.of(), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk/generated-from-description", List.of(), HttpStatus.FORBIDDEN);
             // import
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/import-all", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
                     HttpStatus.FORBIDDEN);
@@ -56,7 +65,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
                     HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/import/bulk", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
                     HttpStatus.FORBIDDEN);
-            request.post("/api/atlas/courses/" + course.getId() + "/competencies/import-standardized", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/competencies/import-standardized", List.of(), HttpStatus.FORBIDDEN);
         }
 
         @Test
@@ -94,7 +103,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForUserNotInCourse() throws Exception {
         super.shouldReturnForbiddenForUserNotInCourse();
     }
@@ -122,7 +131,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void testShouldReturnForbiddenForStudentNotInCourse() throws Exception {
         super.testShouldReturnForbiddenForStudentNotInCourse();
     }
@@ -144,7 +153,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForDelete() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForDelete();
     }
@@ -201,6 +210,15 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldPersistHyperionChecklistProvenanceForCompetency() throws Exception {
+        Competency generatedCompetency = competencyForBulkCreation("Hyperion generated");
+        CourseCompetencyResponseDTO created = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/competencies/generated-from-hyperion-checklist",
+                toRequestDto(generatedCompetency), CourseCompetencyResponseDTO.class, HttpStatus.CREATED);
+        assertThat(created.generatedByAi()).isTrue();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void forCompetencyWithNoTitleForCreate() throws Exception {
         super.forCompetencyWithNoTitleForCreate(new Competency());
@@ -219,7 +237,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreate() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreate(new Competency());
     }
@@ -247,7 +265,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForImport() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForImport();
     }
@@ -260,6 +278,40 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldCreateCompetencies() throws Exception {
         super.shouldCreateCompetencies(new Competency(), new Competency());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldDistinguishManualAndGeneratedBulkCreation() throws Exception {
+        Competency manualCompetency = competencyForBulkCreation("Manual");
+        List<CourseCompetencyResponseDTO> manuallyCreated = request.postListWithResponseBody("/api/atlas/courses/" + course.getId() + "/competencies/bulk",
+                List.of(manualCompetency), CourseCompetencyResponseDTO.class, HttpStatus.CREATED);
+
+        Competency generatedCompetency = competencyForBulkCreation("Generated");
+        List<CourseCompetencyResponseDTO> generatedFromDescription = request.postListWithResponseBody(
+                "/api/atlas/courses/" + course.getId() + "/competencies/bulk/generated-from-description", List.of(generatedCompetency), CourseCompetencyResponseDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(manuallyCreated).singleElement().satisfies(competency -> assertThat(competency.generatedByAi()).isFalse());
+        assertThat(generatedFromDescription).singleElement().satisfies(competency -> assertThat(competency.generatedByAi()).isTrue());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldRejectNullEntriesForBulkCreation() throws Exception {
+        var requestBody = Collections.singletonList((CourseCompetencyRequestDTO) null);
+
+        request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk", requestBody, HttpStatus.BAD_REQUEST);
+        request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk/generated-from-description", requestBody, HttpStatus.BAD_REQUEST);
+    }
+
+    private static Competency competencyForBulkCreation(String title) {
+        Competency competency = new Competency();
+        competency.setTitle(title);
+        competency.setDescription(title + " competency");
+        competency.setTaxonomy(CompetencyTaxonomy.UNDERSTAND);
+        competency.setMasteryThreshold(42);
+        return competency;
     }
 
     @Test
@@ -281,7 +333,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk();
     }
@@ -315,7 +367,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorNotInCourse() throws Exception {
         super.shouldReturnForbiddenForInstructorNotInCourse();
     }
@@ -347,7 +399,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport();
     }
@@ -401,7 +453,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+        @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
         void shouldForbidAtlasMLSuggestWhenNotEditorInTargetCourse() throws Exception {
             // instructor42 is deliberately not a member of the course, so even with the general editor role the request
             // for this specific course must be rejected (the feature is enabled so the 403 comes from the course check).

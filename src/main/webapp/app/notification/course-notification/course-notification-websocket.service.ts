@@ -1,5 +1,5 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
-import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
+import { OnDestroy, Service, inject } from '@angular/core';
+import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
 import { Subject, Subscription } from 'rxjs';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
@@ -15,9 +15,7 @@ import { User } from 'app/account/user/user.model';
  * Manages websocket subscriptions for course notifications and propagates
  * received notifications to the appropriate services.
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseNotificationWebsocketService implements OnDestroy {
     private websocketService = inject(WebsocketService);
     private courseNotificationService = inject(CourseNotificationService);
@@ -34,16 +32,13 @@ export class CourseNotificationWebsocketService implements OnDestroy {
     public websocketNotification$ = this.websocketNotificationSubject.asObservable();
 
     constructor() {
-        // The PDF viewer iframe route should stay lightweight and must not establish global websocket subscriptions.
-        if (window.location.pathname.includes('/pdf-viewer-iframe')) {
-            return;
-        }
-
         this.userSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (user && (this.currentUser === undefined || this.currentUser.id !== user.id)) {
-                this.currentUser = user;
-
+            if (!user) {
                 this.cleanupSubscriptions();
+                this.currentUser = undefined;
+            } else if (this.currentUser === undefined || this.currentUser.id !== user.id) {
+                this.cleanupSubscriptions();
+                this.currentUser = user;
                 this.subscribeToUserCourses();
             }
         });
@@ -70,11 +65,15 @@ export class CourseNotificationWebsocketService implements OnDestroy {
                 return;
             }
 
-            courses.forEach((course) => {
-                if (course.id) {
-                    this.subscribeToCourseTopic(course.id);
+            const courseIds = new Set(courses.map((course) => course.id).filter((id): id is number => id !== undefined && Number.isSafeInteger(id) && id > 0));
+            for (const id of Object.keys(this.courseWebsocketSubscriptions)) {
+                const courseId = Number(id);
+                if (!courseIds.has(courseId)) {
+                    this.courseWebsocketSubscriptions[courseId].unsubscribe();
+                    delete this.courseWebsocketSubscriptions[courseId];
                 }
-            });
+            }
+            courseIds.forEach((courseId) => this.subscribeToCourseTopic(courseId));
         });
     }
 
@@ -91,14 +90,25 @@ export class CourseNotificationWebsocketService implements OnDestroy {
             return this.courseWebsocketSubscriptions[courseId];
         }
         this.courseWebsocketSubscriptions[courseId] = this.websocketService.subscribe('/user/topic/notification/' + courseId).subscribe((notification: CourseNotification) => {
+            if (!notification || notification.courseId !== courseId) {
+                return;
+            }
+            const category = courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category);
+            const status = courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status);
+            // Skip malformed or forward-incompatible payloads whose category/status do not map to a known enum value.
+            if (category === undefined || status === undefined) {
+                return;
+            }
             const courseNotification = new CourseNotification(
                 notification.notificationId!,
-                notification.courseId!,
+                notification.courseId,
                 notification.notificationType!,
-                CourseNotificationCategory[notification.category as unknown as keyof typeof CourseNotificationCategory],
-                CourseNotificationViewingStatus[notification.status as unknown as keyof typeof CourseNotificationViewingStatus],
-                convertDateFromServer(notification.creationDate!)!,
-                notification.parameters!,
+                category,
+                status,
+                convertDateFromServer(notification.creationDate)!,
+                notification.courseTitle,
+                notification.courseIconUrl,
+                notification.payload!,
                 notification.relativeWebAppUrl!,
             );
             this.courseNotificationService.addNotification(courseId, courseNotification);

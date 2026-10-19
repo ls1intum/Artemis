@@ -25,7 +25,7 @@ class HyperionFaqRewriteResourceIntegrationTest extends AbstractSpringIntegratio
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseId = course.getId();
     }
 

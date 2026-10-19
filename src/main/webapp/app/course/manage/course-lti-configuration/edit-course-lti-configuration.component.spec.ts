@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -17,7 +16,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
-import { LOGIN_PATTERN } from 'app/foundation/constants/input.constants';
+import { LOGIN_PATTERN, LTI_USER_PREFIX_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -26,10 +25,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { PaginatorState } from 'primeng/paginator';
 
 describe('Edit Course LTI Configuration Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: EditCourseLtiConfigurationComponent;
     let fixture: ComponentFixture<EditCourseLtiConfigurationComponent>;
     let courseService: CourseManagementService;
@@ -101,8 +99,8 @@ describe('Edit Course LTI Configuration Component', () => {
         it('should load course with online course configuration', () => {
             comp.ngOnInit();
 
-            expect(comp.course).toEqual(course);
-            expect(comp.onlineCourseConfiguration).toEqual(course.onlineCourseConfiguration);
+            expect(comp.course()).toEqual(course);
+            expect(comp.onlineCourseConfiguration()).toEqual(course.onlineCourseConfiguration);
             expect(comp.onlineCourseConfigurationForm.get(['id'])?.value).toBe(onlineCourseConfiguration.id);
             expect(comp.onlineCourseConfigurationForm.get(['userPrefix'])?.value).toBe(onlineCourseConfiguration.userPrefix);
             expect(comp.onlineCourseConfigurationForm.get(['requireExistingUser'])?.value).toBe(onlineCourseConfiguration.requireExistingUser);
@@ -147,7 +145,7 @@ describe('Edit Course LTI Configuration Component', () => {
 
             comp.setPlatform(platform);
 
-            expect(comp.onlineCourseConfiguration.ltiPlatformConfiguration).toEqual(platform);
+            expect(comp.onlineCourseConfiguration().ltiPlatformConfiguration).toEqual(platform);
             expect(comp.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')?.value).toEqual(platform);
         });
 
@@ -200,6 +198,18 @@ describe('Edit Course LTI Configuration Component', () => {
         });
     });
 
+    describe('onPageChange', () => {
+        it('should convert the 0-indexed paginator page to the 1-indexed page and transition', () => {
+            fixture.detectChanges();
+            const transitionSpy = vi.spyOn(comp, 'transition').mockImplementation(() => {});
+
+            comp.onPageChange({ page: 2 } as PaginatorState);
+
+            expect(comp.page()).toBe(3);
+            expect(transitionSpy).toHaveBeenCalledOnce();
+        });
+    });
+
     describe('userPrefix getter', () => {
         it('should return the userPrefix form control', () => {
             fixture.detectChanges();
@@ -208,6 +218,18 @@ describe('Edit Course LTI Configuration Component', () => {
 
             expect(userPrefixControl).toBeDefined();
             expect(userPrefixControl.value).toBe(onlineCourseConfiguration.userPrefix);
+        });
+
+        it('should accept a user prefix up to the maximum length and reject a longer one', () => {
+            fixture.detectChanges();
+            const userPrefixControl = comp.userPrefix;
+
+            userPrefixControl.setValue('p'.repeat(LTI_USER_PREFIX_MAX_LENGTH));
+            expect(userPrefixControl.errors).toBeNull();
+
+            userPrefixControl.setValue('p'.repeat(LTI_USER_PREFIX_MAX_LENGTH + 1));
+            expect(userPrefixControl.errors?.['maxlength']).toBeDefined();
+            expect(comp.onlineCourseConfigurationForm.invalid).toBe(true);
         });
     });
 });

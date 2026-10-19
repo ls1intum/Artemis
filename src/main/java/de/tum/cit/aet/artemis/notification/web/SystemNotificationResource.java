@@ -22,10 +22,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
-import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
 
 /**
@@ -33,11 +35,9 @@ import de.tum.cit.aet.artemis.notification.repository.SystemNotificationReposito
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.SYSTEM_NOTIFICATIONS)
 @RestController
-// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/" prefix.
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_PREFIX })
+@RequestMapping("api/notification/")
 public class SystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);
@@ -56,11 +56,11 @@ public class SystemNotificationResource {
      */
     @GetMapping("system-notifications")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<SystemNotification>> getAllSystemNotifications(Pageable pageable) {
-        log.debug("REST request to get all Courses the user has access to");
+    public ResponseEntity<List<SystemNotificationDTO>> getAllSystemNotifications(Pageable pageable) {
+        log.debug("REST request to get all SystemNotifications");
         final Page<SystemNotification> page = systemNotificationRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+        return new ResponseEntity<>(page.getContent().stream().map(SystemNotificationDTO::from).toList(), headers, HttpStatus.OK);
     }
 
     /**
@@ -71,9 +71,9 @@ public class SystemNotificationResource {
      */
     @GetMapping("system-notifications/{notificationId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long notificationId) {
+    public ResponseEntity<SystemNotificationDTO> getSystemNotification(@PathVariable Long notificationId) {
         log.debug("REST request to get SystemNotification : {}", notificationId);
-        Optional<SystemNotification> systemNotification = systemNotificationRepository.findById(notificationId);
+        Optional<SystemNotificationDTO> systemNotification = systemNotificationRepository.findById(notificationId).map(SystemNotificationDTO::from);
         return ResponseUtil.wrapOrNotFound(systemNotification);
     }
 }

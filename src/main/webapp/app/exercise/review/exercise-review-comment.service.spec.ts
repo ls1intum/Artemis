@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -19,7 +18,6 @@ import { CommentContentType } from 'app/exercise/shared/entities/review/comment-
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 describe('ExerciseReviewCommentService', () => {
-    setupTestBed({ zoneless: true });
     let service: ExerciseReviewCommentService;
     let httpMock: HttpTestingController;
     let alertServiceMock: { error: ReturnType<typeof vi.fn> };

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -o pipefail
 
 chmod +x ./changed-modules.sh

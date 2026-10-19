@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Component, input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -8,6 +7,7 @@ import { CourseIrisComponent } from './course-iris.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { MockProvider } from 'ng-mocks';
+import { IRIS_SESSION_QUERY_PARAM } from 'app/iris/shared/entities/iris-session.model';
 
 @Component({
     selector: 'jhi-course-chatbot',
@@ -16,21 +16,24 @@ import { MockProvider } from 'ng-mocks';
 })
 class MockCourseChatbotComponent {
     readonly courseId = input<number>();
+    readonly sessionId = input<number>();
 
     toggleChatHistory = vi.fn();
 }
 
-describe('CourseIrisComponent', () => {
-    setupTestBed({ zoneless: true });
+type CourseIrisInternals = { courseChatbot: () => { isChatHistoryOpen: () => boolean; toggleChatHistory: () => void } | undefined };
 
+describe('CourseIrisComponent', () => {
     let component: CourseIrisComponent;
     let fixture: ComponentFixture<CourseIrisComponent>;
     let paramMapSubject: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+    let queryParamMapSubject: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
     let llmOptedOutSubject: Subject<void>;
     let router: Router;
 
     beforeEach(async () => {
         paramMapSubject = new BehaviorSubject(convertToParamMap({ courseId: '123' }));
+        queryParamMapSubject = new BehaviorSubject(convertToParamMap({}));
         llmOptedOutSubject = new Subject<void>();
 
         await TestBed.configureTestingModule({
@@ -42,6 +45,7 @@ describe('CourseIrisComponent', () => {
                         parent: {
                             paramMap: paramMapSubject.asObservable(),
                         },
+                        queryParamMap: queryParamMapSubject.asObservable(),
                     },
                 },
                 MockProvider(IrisChatService, {
@@ -87,18 +91,35 @@ describe('CourseIrisComponent', () => {
         expect(component.courseId()).toBeUndefined();
     });
 
-    it('should toggle isCollapsed when toggleSidebar is called', () => {
-        expect(component.isCollapsed).toBe(false);
+    it('should parse the session to open from the irisSession query parameter', async () => {
+        expect(component.sessionId()).toBeUndefined();
 
-        component.toggleSidebar();
-        expect(component.isCollapsed).toBe(true);
+        queryParamMapSubject.next(convertToParamMap({ [IRIS_SESSION_QUERY_PARAM]: '77' }));
+        await fixture.whenStable();
+        expect(component.sessionId()).toBe(77);
 
-        component.toggleSidebar();
-        expect(component.isCollapsed).toBe(false);
+        queryParamMapSubject.next(convertToParamMap({ [IRIS_SESSION_QUERY_PARAM]: 'invalid' }));
+        await fixture.whenStable();
+        expect(component.sessionId()).toBeUndefined();
     });
 
-    it('should initialize isCollapsed to false', () => {
-        expect(component.isCollapsed).toBe(false);
+    it('should derive isCollapsed from the chatbot chat-history open state', () => {
+        const isChatHistoryOpen = signal(true);
+        vi.spyOn(component as unknown as CourseIrisInternals, 'courseChatbot').mockReturnValue({ isChatHistoryOpen, toggleChatHistory: vi.fn() });
+
+        expect(component.isCollapsed()).toBe(false);
+
+        isChatHistoryOpen.set(false);
+        expect(component.isCollapsed()).toBe(true);
+    });
+
+    it('should toggle the chatbot chat history when toggleSidebar is called', () => {
+        const toggleChatHistory = vi.fn();
+        vi.spyOn(component as unknown as CourseIrisInternals, 'courseChatbot').mockReturnValue({ isChatHistoryOpen: signal(true), toggleChatHistory });
+
+        component.toggleSidebar();
+
+        expect(toggleChatHistory).toHaveBeenCalledOnce();
     });
 
     it('should navigate to exercises when the user opts out of AI via the chat service', async () => {

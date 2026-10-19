@@ -1,79 +1,79 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
-import { Subscription } from 'rxjs';
+import { EMPTY, startWith, switchMap } from 'rxjs';
 import { round } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { BarChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiBarChartComponent, TumAetUiChartDatumContext } from '@tumaet/ui-angular';
+import { QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../exercise/chart/vertical-bar-chart.scss'],
-    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
+    imports: [TranslateDirective, TumAetUiBarChartComponent, FaIconComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
-export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
+export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
-    private changeDetector = inject(ChangeDetectorRef);
+    private destroyRef = inject(DestroyRef);
 
-    quizExercise: QuizExercise;
+    readonly quizExercise = signal<QuizStatisticsOverviewResponse | undefined>(undefined);
 
     label: string[] = [];
     backgroundColor: string[] = [];
-    ratedAverage: number;
-    unratedAverage: number;
+    ratedAverage = 0;
+    unratedAverage = 0;
 
-    maxScore: number;
-    websocketChannelForData: string;
-    private websocketSubscription?: Subscription;
+    maxScore!: number; // set in loadQuizSuccess() via calculateMaxScore() before loadData() reads it
+    websocketChannelForData!: string; // set in ngOnInit() from the route params
 
     // Icons
     faSync = faSync;
 
     ngOnInit() {
-        this.translateService.onLangChange.subscribe(() => {
-            this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
-            this.ngxData[this.ngxData.length - 1].name = this.translateService.instant('showStatistic.quizStatistic.average');
-            this.ngxData = [...this.ngxData];
-        });
-        this.route.params.subscribe((params) => {
-            // use different REST-call if the User is a Student
-            if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
-                    this.loadQuizSuccess(res.body!);
-                });
-            }
-
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-
-            // ask for new Data if the websocket for new statistical data was notified
-            this.websocketSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe(() => {
-                if (this.accountService.isAtLeastTutor()) {
-                    this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
-                        this.loadQuizSuccess(res.body!);
-                    });
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
+            this.chartEntries.update((entries) => {
+                if (!entries.length) {
+                    return entries;
                 }
+                const updated = [...entries];
+                const lastEntry = updated[updated.length - 1];
+                updated[updated.length - 1] = { name: this.translateService.instant('artemisApp.showStatistic.quizStatistic.average'), value: lastEntry.value };
+                return updated;
             });
         });
-        this.changeDetector.detectChanges();
-    }
-
-    ngOnDestroy() {
-        this.websocketSubscription?.unsubscribe();
+        this.route.params
+            .pipe(
+                switchMap((params) => {
+                    const exerciseId = params['exerciseId'];
+                    this.websocketChannelForData = '/topic/statistic/' + exerciseId;
+                    if (!this.accountService.isAtLeastTutor()) {
+                        return EMPTY;
+                    }
+                    return this.websocketService.subscribe<number>(this.websocketChannelForData).pipe(
+                        startWith(exerciseId),
+                        switchMap(() => this.quizExerciseService.findStatisticsOverview(exerciseId)),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((res) => {
+                this.loadQuizSuccess(res.body!);
+            });
     }
 
     /**
@@ -82,13 +82,13 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      *
      * @param quiz the quizExercise, which this quiz-statistic presents.
      */
-    loadQuizSuccess(quiz: QuizExercise) {
+    loadQuizSuccess(quiz: QuizStatisticsOverviewResponse) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['/courses']);
+            void this.router.navigate(['/courses']);
         }
-        this.quizExercise = quiz;
-        this.maxScore = calculateMaxScore(this.quizExercise);
+        this.quizExercise.set(quiz);
+        this.maxScore = calculateMaxScore(quiz);
         this.loadData();
     }
 
@@ -96,6 +96,11 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      * load the Data from the Json-entity to the chart: myChart
      */
     loadData() {
+        const quizExercise = this.quizExercise();
+        if (!quizExercise) {
+            return;
+        }
+        const quizQuestions = quizExercise.quizQuestions ?? [];
         // reset old data
         this.label = [];
         this.backgroundColor = [];
@@ -105,11 +110,11 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         this.unratedAverage = 0;
 
         // set data based on the CorrectCounters in the QuestionStatistics
-        for (let i = 0; i < this.quizExercise.quizQuestions!.length; i++) {
-            const question = this.quizExercise.quizQuestions![i];
-            const statistic = question.quizQuestionStatistic!;
-            const ratedCounter = statistic.ratedCorrectCounter!;
-            const unratedCounter = statistic.unRatedCorrectCounter!;
+        for (let i = 0; i < quizQuestions.length; i++) {
+            const question = quizQuestions[i];
+            const statistic = question.quizQuestionStatistic;
+            const ratedCounter = statistic?.ratedCorrectCounter ?? 0;
+            const unratedCounter = statistic?.unRatedCorrectCounter ?? 0;
             this.label.push(i + 1 + '.');
             this.backgroundColor.push('#5bc0de');
             this.ratedData.push(ratedCounter);
@@ -119,8 +124,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         }
 
         // set Background for invalid questions = grey
-        for (let i = 0; i < this.quizExercise.quizQuestions!.length; i++) {
-            if (this.quizExercise.quizQuestions![i].invalid) {
+        for (let i = 0; i < quizQuestions.length; i++) {
+            if (quizQuestions[i].invalid) {
                 this.backgroundColor[i] = '#949494';
             }
         }
@@ -138,18 +143,29 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         const lastLabel = this.translateService.instant('artemisApp.showStatistic.quizStatistic.average');
         this.label.push(lastLabel);
         this.chartLabels = this.label;
-        this.ngxColor.domain = this.backgroundColor;
+        this.chartColors.set([...this.backgroundColor]);
 
         // load data into chart
         this.loadDataInDiagram();
     }
 
     /**
-     * updates the chart by setting the data set, re-calculating the height and calling update on the chart view child
+     * updates the chart by setting the data set and re-calculating the height
      */
     loadDataInDiagram(): void {
-        this.setData(this.quizExercise.quizPointStatistic!);
-        this.pushDataToNgxEntry(this.changeDetector);
+        const quizExercise = this.quizExercise();
+        if (!quizExercise) {
+            return;
+        }
+        this.setData({ participantsRated: quizExercise.participantsRated, participantsUnrated: quizExercise.participantsUnrated });
+        this.updateChartData();
         this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
+    }
+
+    protected override formatTooltipLabel(item: TumAetUiChartDatumContext): string {
+        // the last bar aggregates the average across all questions rather than a single question
+        const isAverageBar = item.index === this.data.length - 1;
+        const key = isAverageBar ? 'artemisApp.showStatistic.tooltip.average' : 'artemisApp.showStatistic.tooltip.correctSolutions';
+        return this.tooltipLine(key, item.value);
     }
 }

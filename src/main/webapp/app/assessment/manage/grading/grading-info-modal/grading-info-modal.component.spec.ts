@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradingInfoModalComponent } from 'app/assessment/manage/grading/grading-info-modal/grading-info-modal.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -9,7 +8,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 
 describe('GradingInfoModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: GradingInfoModalComponent;
     let fixture: ComponentFixture<GradingInfoModalComponent>;
 
@@ -19,7 +17,7 @@ describe('GradingInfoModalComponent', () => {
         })
             .overrideComponent(GradingInfoModalComponent, {
                 remove: { imports: [TranslateDirective, ArtemisTranslatePipe] },
-                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)] },
+                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (key: string) => key)] },
             })
             .compileComponents()
             .then(() => {
@@ -44,6 +42,12 @@ describe('GradingInfoModalComponent', () => {
 
         it('should initialize with dialog not visible', () => {
             expect(component.visible()).toBe(false);
+        });
+
+        it('should have an accessible aria-label on the open button', () => {
+            const button = fixture.debugElement.nativeElement.querySelector('button[tumAetUiButton]');
+            expect(button).not.toBeNull();
+            expect(button.getAttribute('aria-label')).toBe('artemisApp.gradingSystem.info.title');
         });
     });
 

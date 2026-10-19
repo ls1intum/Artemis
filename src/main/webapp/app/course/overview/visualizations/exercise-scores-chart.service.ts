@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -6,12 +6,13 @@ import { map } from 'rxjs/operators';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /**
- * Corresponds to ExerciseScoresDTO.java on the server
+ * Corresponds to ExerciseScoresDTO.java on the server.
+ * Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) marker.
  */
 export class ExerciseScoresDTO {
     public exerciseId?: number;
     public exerciseTitle?: string;
-    public exerciseType: ExerciseType;
+    public exerciseType!: ExerciseType; // populated from server data after construction
     public releaseDate?: dayjs.Dayjs;
     public scoreOfStudent?: number;
     public averageScoreAchieved?: number;
@@ -21,7 +22,7 @@ export class ExerciseScoresDTO {
 /**
  * Service to request the data from the server that is necessary for the exercise-scores-chart.component.ts
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseScoresChartService {
     private http = inject(HttpClient);
 

@@ -1,13 +1,11 @@
 import { test } from '../../support/fixtures';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { expect } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import { admin, studentTwo } from '../../support/users';
 import { generateUUID } from '../../support/utils';
-import dayjs from 'dayjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingLanguage } from '../../support/constants';
-import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { SEED_COURSES } from '../../support/seedData';
 
 /**
@@ -18,7 +16,7 @@ import { SEED_COURSES } from '../../support/seedData';
  * is a root-level singleton, and all exercises shared the same container IDs (plantUml-0, plantUml-1, ...),
  * causing document.getElementById() to return the wrong container.
  *
- * The fix scopes container IDs per exercise: plantUml-{exerciseId}-{index}.
+ * The fix scopes container IDs per exercise: plantUml-{exerciseId}-{instanceId}-{index}.
  *
  * This test creates 3 programming exercises with DISTINCT PlantUML diagrams (different class names)
  * and verifies that each exercise renders its OWN diagram, not another exercise's diagram.
@@ -43,6 +41,11 @@ const IDENTIFIER_B = 'ClassBeta';
 const IDENTIFIER_C0 = 'ClassGamma';
 const IDENTIFIER_C1 = 'ClassDelta';
 
+/** Finds a diagram without assuming the renderer's dynamically assigned component instance ID. */
+function plantUmlDiagram(page: Page, exerciseId: number, index: number) {
+    return page.locator(`[id^="plantUml-${exerciseId}-"][id$="-${index}"]`);
+}
+
 const course = { id: SEED_COURSES.examManagement.id } as any;
 
 test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
@@ -57,11 +60,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
     test.beforeEach('Create exam with 3 programming exercises', async ({ login, examAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
 
-        exam = await createExam(course, examAPIRequests, {
-            title: 'PlantUML Isolation ' + generateUUID(),
-            examMaxPoints: 30,
-            numberOfExercisesInExam: 3,
-        });
+        exam = await examAPIRequests.createRunningExam({ course, title: 'PlantUML Isolation ' + generateUUID(), examMaxPoints: 30, numberOfExercisesInExam: 3 });
 
         // Create 3 exercise groups with programming exercises, each with a DIFFERENT PlantUML diagram.
         // The distinct class names in the diagrams allow us to detect cross-contamination.
@@ -108,7 +107,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
      * In exam mode, all 3 exercise components coexist in the DOM simultaneously (hidden via [hidden]).
      * They share a single PlantUML extension singleton. This test verifies:
      *
-     * 1) Container IDs are exercise-scoped: plantUml-{exerciseId}-{index}
+     * 1) Container IDs are exercise-scoped: plantUml-{exerciseId}-{instanceId}-{index}
      * 2) Each container has a rendered SVG (not empty)
      * 3) Each SVG contains ONLY its own exercise's class names (no cross-contamination)
      * 4) Exercise C has exactly 2 PlantUML diagrams (multi-diagram support)
@@ -127,18 +126,18 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         // Angular may not have time to create and initialize the component before the next
         // navigation triggers, leaving some exercises without rendered containers.
         await examNavigation.openOrSaveExerciseByTitle(groupTitleA);
-        await expect(page.locator(`#plantUml-${exerciseA.id}-0`)).toBeAttached({ timeout: 30000 });
+        await expect(plantUmlDiagram(page, exerciseA.id!, 0)).toBeAttached({ timeout: 30000 });
 
         await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
-        await expect(page.locator(`#plantUml-${exerciseB.id}-0`)).toBeAttached({ timeout: 30000 });
+        await expect(plantUmlDiagram(page, exerciseB.id!, 0)).toBeAttached({ timeout: 30000 });
 
         await examNavigation.openOrSaveExerciseByTitle(groupTitleC);
-        await expect(page.locator(`#plantUml-${exerciseC.id}-0`)).toBeAttached({ timeout: 30000 });
+        await expect(plantUmlDiagram(page, exerciseC.id!, 0)).toBeAttached({ timeout: 30000 });
 
         // All containers are now in the DOM. Verify content and cross-contamination.
 
         // --- Exercise A: 1 diagram with ClassAlpha ---
-        const containerA = page.locator(`#plantUml-${exerciseA.id}-0`);
+        const containerA = plantUmlDiagram(page, exerciseA.id!, 0);
         const svgA = containerA.locator('svg');
         await expect(svgA).toBeAttached({ timeout: 30000 });
         const svgTextA = await svgA.textContent();
@@ -148,10 +147,10 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         expect(svgTextA).not.toContain(IDENTIFIER_C0);
         expect(svgTextA).not.toContain(IDENTIFIER_C1);
         // No second diagram should exist for exercise A
-        await expect(page.locator(`#plantUml-${exerciseA.id}-1`)).not.toBeAttached();
+        await expect(plantUmlDiagram(page, exerciseA.id!, 1)).not.toBeAttached();
 
         // --- Exercise B: 1 diagram with ClassBeta ---
-        const containerB = page.locator(`#plantUml-${exerciseB.id}-0`);
+        const containerB = plantUmlDiagram(page, exerciseB.id!, 0);
         await expect(containerB).toBeAttached({ timeout: 30000 });
         const svgB = containerB.locator('svg');
         await expect(svgB).toBeAttached({ timeout: 30000 });
@@ -160,10 +159,10 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         expect(svgTextB).not.toContain(IDENTIFIER_A);
         expect(svgTextB).not.toContain(IDENTIFIER_C0);
         expect(svgTextB).not.toContain(IDENTIFIER_C1);
-        await expect(page.locator(`#plantUml-${exerciseB.id}-1`)).not.toBeAttached();
+        await expect(plantUmlDiagram(page, exerciseB.id!, 1)).not.toBeAttached();
 
         // --- Exercise C: 2 diagrams with ClassGamma and ClassDelta ---
-        const containerC0 = page.locator(`#plantUml-${exerciseC.id}-0`);
+        const containerC0 = plantUmlDiagram(page, exerciseC.id!, 0);
         await expect(containerC0).toBeAttached({ timeout: 30000 });
         const svgC0 = containerC0.locator('svg');
         await expect(svgC0).toBeAttached({ timeout: 30000 });
@@ -173,7 +172,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         expect(svgTextC0).not.toContain(IDENTIFIER_B);
         expect(svgTextC0).not.toContain(IDENTIFIER_C1);
 
-        const containerC1 = page.locator(`#plantUml-${exerciseC.id}-1`);
+        const containerC1 = plantUmlDiagram(page, exerciseC.id!, 1);
         await expect(containerC1).toBeAttached({ timeout: 30000 });
         const svgC1 = containerC1.locator('svg');
         await expect(svgC1).toBeAttached({ timeout: 30000 });
@@ -184,7 +183,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         expect(svgTextC1).not.toContain(IDENTIFIER_C0);
 
         // No third diagram should exist for exercise C
-        await expect(page.locator(`#plantUml-${exerciseC.id}-2`)).not.toBeAttached();
+        await expect(plantUmlDiagram(page, exerciseC.id!, 2)).not.toBeAttached();
 
         // --- Global uniqueness check ---
         // Verify that ALL PlantUML container IDs in the DOM are unique.
@@ -203,28 +202,53 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         // All 4 IDs must be unique
         expect(ids.size).toBe(4);
 
-        // Verify the IDs follow the expected exercise-scoped pattern
-        expect(ids).toContain(`plantUml-${exerciseA.id}-0`);
-        expect(ids).toContain(`plantUml-${exerciseB.id}-0`);
-        expect(ids).toContain(`plantUml-${exerciseC.id}-0`);
-        expect(ids).toContain(`plantUml-${exerciseC.id}-1`);
+        // Each ID must include the exercise, component instance and diagram index.
+        expect([...ids]).toEqual(
+            expect.arrayContaining([
+                expect.stringMatching(new RegExp(`^plantUml-${exerciseA.id}-\\d+-0$`)),
+                expect.stringMatching(new RegExp(`^plantUml-${exerciseB.id}-\\d+-0$`)),
+                expect.stringMatching(new RegExp(`^plantUml-${exerciseC.id}-\\d+-0$`)),
+                expect.stringMatching(new RegExp(`^plantUml-${exerciseC.id}-\\d+-1$`)),
+            ]),
+        );
     });
 
-    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+    /**
+     * Reproduction attempt for the instructor report that "switching between exercises removes the PlantUML diagram".
+     * Tries two patterns the existing isolation test does not cover:
+     *  1) navigating BACK to an already-visited exercise, and
+     *  2) rapid switching between exercises without waiting for the (async) SVG injection to settle.
+     * After the navigation, every exercise's PlantUML SVG must still be attached to the DOM.
+     */
+    test('PlantUML diagrams survive navigating back and forth and rapid switching', async ({ page, examParticipation, examNavigation }) => {
+        await examParticipation.startParticipation(studentTwo, course, exam);
+
+        // --- Part 1: forward, then BACK navigation ---
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleA);
+        await expect(plantUmlDiagram(page, exerciseA.id!, 0).locator('svg')).toBeAttached({ timeout: 30000 });
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
+        await expect(plantUmlDiagram(page, exerciseB.id!, 0).locator('svg')).toBeAttached({ timeout: 30000 });
+        // Navigate BACK to A: its diagram must still be there.
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleA);
+        await expect(plantUmlDiagram(page, exerciseA.id!, 0).locator('svg')).toBeAttached({ timeout: 30000 });
+
+        // --- Part 2: rapid switching without waiting for the SVG to render in between ---
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleC);
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleA);
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleC);
+
+        // Every diagram must still be attached (hidden exercises keep their DOM via [hidden]).
+        await expect(plantUmlDiagram(page, exerciseA.id!, 0).locator('svg')).toBeAttached({ timeout: 30000 });
+        await expect(plantUmlDiagram(page, exerciseB.id!, 0).locator('svg')).toBeAttached({ timeout: 30000 });
+        await expect(plantUmlDiagram(page, exerciseC.id!, 0).locator('svg')).toBeAttached({ timeout: 30000 });
+        await expect(plantUmlDiagram(page, exerciseC.id!, 1).locator('svg')).toBeAttached({ timeout: 30000 });
+    });
+
+    test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+        // The test ends as a student, who is not allowed to delete the exam; without the login the exam leaked.
+        await login(admin);
         await examAPIRequests.deleteExam(exam);
     });
 });
-
-async function createExam(course: any, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {
-    const defaultExamConfig = {
-        course,
-        title: 'exam' + generateUUID(),
-        visibleDate: dayjs().subtract(3, 'minutes'),
-        startDate: dayjs().subtract(2, 'minutes'),
-        endDate: dayjs().add(1, 'hour'),
-        examMaxPoints: 10,
-        numberOfExercisesInExam: 1,
-    };
-    const examConfig = { ...defaultExamConfig, ...customExamConfig };
-    return await examAPIRequests.createExam(examConfig);
-}

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisLearnerProfileComponent } from './iris-learner-profile.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -10,12 +9,9 @@ import { MockProvider } from 'ng-mocks';
 import { User } from 'app/account/user/user.model';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
 import { provideHttpClient } from '@angular/common/http';
-import { DialogService } from 'primeng/dynamicdialog';
 import { of } from 'rxjs';
 
 describe('IrisLearnerProfileComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisLearnerProfileComponent;
     let fixture: ComponentFixture<IrisLearnerProfileComponent>;
     let accountService: AccountService;
@@ -51,8 +47,6 @@ describe('IrisLearnerProfileComponent', () => {
                     deleteUserMemory: vi.fn(),
                 }),
                 { provide: AccountService, useClass: MockAccountService },
-                // Provide DialogService for the nested MemirisMemoriesListComponent (PrimeNG dialog migration)
-                MockProvider(DialogService),
             ],
         }).compileComponents();
 
@@ -75,19 +69,19 @@ describe('IrisLearnerProfileComponent', () => {
         it('should initialize memirisEnabled to true when user has memiris enabled', () => {
             accountService.userIdentity.set(mockUser);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBe(true);
+            expect(component.memirisEnabled()).toBe(true);
         });
 
         it('should initialize memirisEnabled to false when user has memiris disabled', () => {
             accountService.userIdentity.set(mockUserWithMemirisDisabled);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBe(false);
+            expect(component.memirisEnabled()).toBe(false);
         });
 
         it('should initialize memirisEnabled to false when user identity is undefined', () => {
             accountService.userIdentity.set(undefined);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBe(false);
+            expect(component.memirisEnabled()).toBe(false);
         });
 
         it('should initialize memirisEnabled to false when user memirisEnabled property is undefined', () => {
@@ -101,7 +95,7 @@ describe('IrisLearnerProfileComponent', () => {
 
             accountService.userIdentity.set(userWithoutMemiris);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBe(false);
+            expect(component.memirisEnabled()).toBe(false);
         });
 
         it('should initialize memirisEnabled to false when user memirisEnabled property is null', () => {
@@ -116,7 +110,7 @@ describe('IrisLearnerProfileComponent', () => {
 
             accountService.userIdentity.set(userWithNullMemiris);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBe(false);
+            expect(component.memirisEnabled()).toBe(false);
         });
     });
 
@@ -126,30 +120,24 @@ describe('IrisLearnerProfileComponent', () => {
         });
 
         it('should call accountService.setUserEnabledMemiris with true when memirisEnabled is true', () => {
-            component.memirisEnabled = true;
-            component.onMemirisEnabledChange();
+            component.onMemirisEnabledChange(true);
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(true);
         });
 
         it('should call accountService.setUserEnabledMemiris with false when memirisEnabled is false', () => {
-            component.memirisEnabled = false;
-            component.onMemirisEnabledChange();
+            component.onMemirisEnabledChange(false);
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(false);
         });
 
         it('should call accountService.setUserEnabledMemiris exactly once', () => {
-            component.memirisEnabled = true;
-            component.onMemirisEnabledChange();
+            component.onMemirisEnabledChange(true);
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledOnce();
         });
 
         it('should handle multiple consecutive calls correctly', () => {
-            component.memirisEnabled = true;
-            component.onMemirisEnabledChange();
-            component.memirisEnabled = false;
-            component.onMemirisEnabledChange();
-            component.memirisEnabled = true;
-            component.onMemirisEnabledChange();
+            component.onMemirisEnabledChange(true);
+            component.onMemirisEnabledChange(false);
+            component.onMemirisEnabledChange(true);
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledTimes(3);
             expect(accountService.setUserEnabledMemiris).toHaveBeenNthCalledWith(1, true);
             expect(accountService.setUserEnabledMemiris).toHaveBeenNthCalledWith(2, false);
@@ -161,19 +149,18 @@ describe('IrisLearnerProfileComponent', () => {
         it('should properly initialize and handle toggle changes', () => {
             accountService.userIdentity.set(mockUserWithMemirisDisabled);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBe(false);
-            component.memirisEnabled = true;
-            component.onMemirisEnabledChange();
+            expect(component.memirisEnabled()).toBe(false);
+            component.onMemirisEnabledChange(true);
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(true);
         });
 
         it('should handle user identity changes during component lifecycle', () => {
             accountService.userIdentity.set(mockUser);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBe(true);
+            expect(component.memirisEnabled()).toBe(true);
             accountService.userIdentity.set(mockUserWithMemirisDisabled);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBe(false);
+            expect(component.memirisEnabled()).toBe(false);
         });
     });
 
@@ -192,8 +179,7 @@ describe('IrisLearnerProfileComponent', () => {
             vi.spyOn(accountService, 'setUserEnabledMemiris').mockImplementation(() => {
                 throw new Error('Service error');
             });
-            component.memirisEnabled = true;
-            expect(() => component.onMemirisEnabledChange()).toThrow('Service error');
+            expect(() => component.onMemirisEnabledChange(true)).toThrow('Service error');
         });
 
         it('should handle truthy values correctly', () => {
@@ -208,7 +194,7 @@ describe('IrisLearnerProfileComponent', () => {
 
             accountService.userIdentity.set(userWithTruthyMemiris);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBe(1);
+            expect(component.memirisEnabled()).toBe(1);
         });
 
         it('should handle falsy values correctly', () => {
@@ -223,7 +209,7 @@ describe('IrisLearnerProfileComponent', () => {
 
             accountService.userIdentity.set(userWithFalsyMemiris);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBe(0);
+            expect(component.memirisEnabled()).toBe(0);
         });
     });
 
@@ -231,17 +217,16 @@ describe('IrisLearnerProfileComponent', () => {
         it('should maintain state consistency between ngOnInit and onMemirisEnabledChange', () => {
             accountService.userIdentity.set(mockUser);
             component.ngOnInit();
-            const initialState = component.memirisEnabled;
-            component.memirisEnabled = !initialState;
-            component.onMemirisEnabledChange();
+            const initialState = component.memirisEnabled();
+            component.onMemirisEnabledChange(!initialState);
+            expect(component.memirisEnabled()).toBe(!initialState);
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(!initialState);
         });
 
         it('should handle rapid state changes', () => {
             component.ngOnInit();
             for (let i = 0; i < 5; i++) {
-                component.memirisEnabled = i % 2 === 0;
-                component.onMemirisEnabledChange();
+                component.onMemirisEnabledChange(i % 2 === 0);
             }
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledTimes(5);
         });
@@ -252,8 +237,8 @@ describe('IrisLearnerProfileComponent', () => {
             fixture.detectChanges();
             const compiled = fixture.nativeElement;
             expect(compiled.querySelector('h4')).toBeTruthy();
-            expect(compiled.querySelector('input[type="checkbox"]')).toBeTruthy();
-            expect(compiled.querySelector('label')).toBeTruthy();
+            expect(compiled.querySelector('tumaet-ui-toggle-switch')).toBeTruthy();
+            expect(compiled.querySelector('label[for="memirisEnabled"]')).toBeTruthy();
         });
 
         it('should trigger onMemirisEnabledChange when checkbox is clicked', () => {
@@ -265,12 +250,12 @@ describe('IrisLearnerProfileComponent', () => {
         });
 
         it('should update component state when checkbox is toggled', () => {
-            component.memirisEnabled = false;
+            component.memirisEnabled.set(false);
             fixture.detectChanges();
             const checkbox = fixture.nativeElement.querySelector('input[type="checkbox"]');
             checkbox.click();
             fixture.detectChanges();
-            expect(component.memirisEnabled).toBe(true);
+            expect(component.memirisEnabled()).toBe(true);
         });
     });
 });

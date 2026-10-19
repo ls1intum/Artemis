@@ -9,7 +9,6 @@ vi.mock('@sentry/angular', () => ({
 }));
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { Subject } from 'rxjs';
 import { User } from 'app/account/user/user.model';
@@ -22,8 +21,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('TeamStudentsOnlineListComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TeamStudentsOnlineListComponent>;
     let component: TeamStudentsOnlineListComponent;
     let accountService: AccountService;
@@ -40,6 +37,7 @@ describe('TeamStudentsOnlineListComponent', () => {
     const now = dayjs('2025-01-01T12:00:00.000Z');
     const participationId = 123;
     const websocketTopic = `/topic/participations/${participationId}/team`;
+    const sendDestination = `/app/participations/${participationId}/team`;
 
     const flushIdentity = async () => {
         await Promise.resolve();
@@ -125,7 +123,7 @@ describe('TeamStudentsOnlineListComponent', () => {
 
         vi.advanceTimersByTime(1);
         expect(sendSpy).toHaveBeenCalledOnce();
-        expect(sendSpy).toHaveBeenCalledWith(`${websocketTopic}/trigger`, {});
+        expect(sendSpy).toHaveBeenCalledWith(`${sendDestination}/trigger`, {});
     });
 
     it('receives online students, converts server timestamps, computes typing students, and removes expired typing indicators', async () => {
@@ -189,13 +187,13 @@ describe('TeamStudentsOnlineListComponent', () => {
         typingSubject.next();
 
         expect(sendSpy).toHaveBeenCalledOnce();
-        expect(sendSpy).toHaveBeenCalledWith(`${websocketTopic}/typing`, {});
+        expect(sendSpy).toHaveBeenCalledWith(`${sendDestination}/typing`, {});
 
         vi.advanceTimersByTime(Math.ceil(component.SEND_TYPING_INTERVAL) + 1);
         typingSubject.next();
 
         expect(sendSpy).toHaveBeenCalledTimes(2);
-        expect(sendSpy).toHaveBeenLastCalledWith(`${websocketTopic}/typing`, {});
+        expect(sendSpy).toHaveBeenLastCalledWith(`${sendDestination}/typing`, {});
     });
 
     it('reports websocket receiver and typing stream errors to Sentry', async () => {

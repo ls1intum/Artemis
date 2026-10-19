@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
@@ -8,16 +8,18 @@ import { McqResponseData } from 'app/iris/shared/entities/iris-content-type.mode
 import dayjs from 'dayjs/esm';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { IrisGlobalSearchHandoffDTO } from 'app/iris/shared/entities/iris-global-search-handoff-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
 /**
  * Provides a set of methods to perform CRUD operations on messages
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisChatHttpService {
     protected httpClient = inject(HttpClient);
 
@@ -32,10 +34,12 @@ export class IrisChatHttpService {
         return this.httpClient.get<IrisMessageResponseDTO[]>(`${this.apiPrefix}/sessions/${sessionId}/messages`, { observe: 'response' }).pipe(
             map((response) => {
                 const dtos = response.body;
-                if (!dtos) return response as unknown as HttpResponse<IrisMessage[]>;
+                // No body to convert: re-type the empty response via clone's generic overload (clone with no
+                // body key copies the existing body verbatim), preserving the real HttpResponse instance.
+                if (!dtos) return response.clone<IrisMessage[]>({});
 
                 const messages: IrisMessage[] = dtos.map((dto) => {
-                    return Object.assign({}, dto, {
+                    return cloneWith(dto, {
                         sentAt: dto.sentAt ? dayjs(dto.sentAt) : undefined,
                     }) as IrisMessage;
                 });
@@ -48,9 +52,7 @@ export class IrisChatHttpService {
                     return 0;
                 });
 
-                return Object.assign({}, response, {
-                    body: messages,
-                }) as HttpResponse<IrisMessage[]>;
+                return response.clone<IrisMessage[]>({ body: messages });
             }),
         );
     }
@@ -58,7 +60,7 @@ export class IrisChatHttpService {
     /**
      * creates a new message in a session
      * @param sessionId of the session
-     * @param request  the message request DTO containing content and optional uncommitted files
+     * @param request   the message request DTO containing content, optional uncommitted files and optional pending context
      */
     createMessage(sessionId: number, request: IrisMessageRequestDTO): Response<IrisMessageResponseDTO> {
         return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages`, request, { observe: 'response' });
@@ -69,7 +71,7 @@ export class IrisChatHttpService {
      * @param sessionId of the session
      */
     createTutorSuggestion(sessionId: number): Response<void> {
-        return this.httpClient.post<void>(`${this.apiPrefix}/sessions/${sessionId}/tutor-suggestion`, Object.assign({}), { observe: 'response' });
+        return this.httpClient.post<void>(`${this.apiPrefix}/sessions/${sessionId}/tutor-suggestion`, {}, { observe: 'response' });
     }
 
     /**
@@ -78,15 +80,20 @@ export class IrisChatHttpService {
      * @param {IrisUserMessage} message
      * @return {Response<IrisMessage>}
      */
-    resendMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessageResponseDTO> {
+    resendMessage(sessionId: number, message: IrisUserMessage, clientId: string): Response<IrisMessageResponseDTO> {
         message.messageDifferentiator = message.messageDifferentiator ?? randomInt();
-        return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
-            tap((response) => {
-                if (response.body && response.body.id) {
-                    message.id = response.body.id;
-                }
-            }),
-        );
+        return this.httpClient
+            .post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, {
+                observe: 'response',
+                params: { clientId },
+            })
+            .pipe(
+                tap((response) => {
+                    if (response.body && response.body.id) {
+                        message.id = response.body.id;
+                    }
+                }),
+            );
     }
 
     /**
@@ -117,11 +124,21 @@ export class IrisChatHttpService {
         return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions/current`, null, { observe: 'response', params: { mode, entityId } });
     }
 
-    createSession(mode: ChatServiceMode, entityId: number): Response<IrisSession> {
-        if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
-            return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/posts/${entityId}/sessions`, null, { observe: 'response' });
-        }
-        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions`, null, { observe: 'response', params: { mode, entityId } });
+    /**
+     * Creates a new (empty) course chat session ("New Chat"). Every new session is a course session;
+     * exercise/lecture context is layered on later via a context switch.
+     */
+    createCourseSession(courseId: number): Response<IrisSession> {
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions`, null, { observe: 'response', params: { courseId } });
+    }
+
+    /**
+     * Continues a global search answer in a new course chat that already holds the question and the answer.
+     * @param handoff the course, the optional lecture or exercise, and the question and answer to carry over
+     * @return the new session, already on the requested lecture or exercise
+     */
+    createSessionFromGlobalSearch(handoff: IrisGlobalSearchHandoffDTO): Observable<IrisSession> {
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions/global-search-handoff`, handoff);
     }
 
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {

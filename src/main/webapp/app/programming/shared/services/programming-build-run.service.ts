@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -22,7 +22,7 @@ export interface IProgrammingBuildRunService {
 /**
  * Provides methods to retrieve information about running exercise builds.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingBuildRunService implements OnDestroy {
     private websocketService = inject(WebsocketService);
 
@@ -70,11 +70,11 @@ export class ProgrammingBuildRunService implements OnDestroy {
     getBuildRunUpdates(programmingExerciseId: number) {
         const subject = this.buildRunSubjects[programmingExerciseId];
         if (subject) {
-            return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<BuildRunState>;
+            return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined));
         }
         const newSubject = new BehaviorSubject<BuildRunState | undefined>(undefined);
         this.buildRunSubjects[programmingExerciseId] = newSubject;
         this.subscribeWebsocket(programmingExerciseId);
-        return newSubject.pipe(filter((stateObj) => stateObj !== undefined)) as Observable<BuildRunState>;
+        return newSubject.pipe(filter((stateObj) => stateObj !== undefined));
     }
 }

@@ -10,6 +10,7 @@ export const createBuildPlanUrl = (template: string, projectKey: string, buildPl
     if (template && projectKey && buildPlanId) {
         return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey);
     }
+    return undefined;
 };
 
 /**

@@ -29,7 +29,8 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
         const headerKey = exerciseType === ExerciseType.FILE_UPLOAD ? 'artemisApp.fileUploadExercise.home.importLabel' : `artemisApp.${exerciseType}Exercise.home.importLabel`;
 
         // For programming exercises, use tabs component (allows import from file), otherwise use direct import
-        const componentToOpen: Type<any> = exerciseType === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
+        const componentToOpen: Type<ExerciseImportComponent | ExerciseImportTabsComponent> =
+            exerciseType === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
 
         const dialogRef = this.dialogService.open(componentToOpen, {
             header: this.translateService.instant(headerKey),
@@ -47,7 +48,7 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
                 if (this.exerciseType() === ExerciseType.PROGRAMMING) {
                     this.handleProgrammingImport(result);
                 } else {
-                    this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', result.id, 'import']);
+                    void this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', result.id, 'import']);
                 }
             }
         });
@@ -56,13 +57,13 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
     handleProgrammingImport(result: Exercise) {
         //when the file is uploaded we set the id to undefined.
         if (result.id === undefined) {
-            this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import-from-file'], {
+            void this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import-from-file'], {
                 state: {
                     programmingExerciseForImportFromFile: result,
                 },
             });
         } else {
-            this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import', result.id]);
+            void this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import', result.id]);
         }
     }
 }

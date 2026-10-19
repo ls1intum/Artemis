@@ -2,14 +2,14 @@
  * Vitest tests for UserManagementComponent.
  * Tests the main user management list view with filtering, sorting, and CRUD operations.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subscription, of } from 'rxjs';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PaginatorState } from 'primeng/paginator';
+import { FormControl, FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
@@ -38,8 +38,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('UserManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: UserManagementComponent;
     let fixture: ComponentFixture<UserManagementComponent>;
     let userService: AdminUserService;
@@ -74,6 +72,7 @@ describe('UserManagementComponent', () => {
         await TestBed.configureTestingModule({
             imports: [UserManagementComponent],
             providers: [
+                { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
                 { provide: ActivatedRoute, useValue: mockRoute },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
@@ -103,10 +102,102 @@ describe('UserManagementComponent', () => {
         httpMock.verify();
     });
 
-    describe('onPageChange (PrimeNG paginator)', () => {
-        it('converts the 0-indexed paginator event to the 1-indexed page', () => {
-            component.onPageChange({ page: 2 } as PaginatorState);
+    describe('onPageChange (tumaet-ui paginator)', () => {
+        it('converts the 0-indexed paginator page to the 1-indexed page', () => {
+            component.onPageChange(2);
             expect(component.page()).toBe(3);
+        });
+    });
+
+    describe('onPageSizeChange (tumaet-ui paginator)', () => {
+        it('applies the new page size, returns to the first page and puts the size in the URL', () => {
+            const router = TestBed.inject(Router);
+            component.page.set(4);
+
+            component.onPageSizeChange(100);
+
+            expect(component.itemsPerPage()).toBe(100);
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1, size: 100 }) }));
+        });
+
+        it.each`
+            size         | expected
+            ${'20'}      | ${20}
+            ${'7'}       | ${50}
+            ${'abc'}     | ${50}
+            ${undefined} | ${50}
+        `('reads the page size $size from the URL as $expected', async ({ size, expected }) => {
+            vi.useFakeTimers();
+            const queryParams = new Map<string, string>([['page', '2']]);
+            if (size !== undefined) {
+                queryParams.set('size', size);
+            }
+            const route = mockRoute as unknown as { queryParamMap: unknown };
+            const originalQueryParamMap = route.queryParamMap;
+            route.queryParamMap = of(queryParams);
+            vi.spyOn(userService, 'query').mockReturnValue(of(new HttpResponse({ body: [new User(1)] })));
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
+
+            try {
+                fixture.detectChanges();
+                await vi.advanceTimersByTimeAsync(1000);
+
+                expect(component.itemsPerPage()).toBe(expected);
+                expect(component.page()).toBe(2);
+            } finally {
+                route.queryParamMap = originalQueryParamMap;
+                vi.useRealTimers();
+            }
+        });
+    });
+
+    describe('returning to the first page', () => {
+        let router: Router;
+        let searchSpy: MockInstance;
+
+        beforeEach(() => {
+            router = TestBed.inject(Router);
+            searchSpy = vi.spyOn(component.search, 'next');
+            component.userSearchForm = new FormGroup({ searchControl: new FormControl('') });
+        });
+
+        it('applies filters on the first page when the current page is a later one', () => {
+            component.page.set(6);
+
+            component.applyFilter();
+
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1 }) }));
+            expect(component.filterModalVisible()).toBe(false);
+        });
+
+        it('reloads directly when filters are applied on the first page', () => {
+            component.applyFilter();
+
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(router.navigate).not.toHaveBeenCalled();
+        });
+
+        it('searches from the first page when the search term changes', () => {
+            component.page.set(6);
+            component.searchControl.setValue('student');
+
+            component.loadAll();
+
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1 }) }));
+            expect(searchSpy).not.toHaveBeenCalled();
+        });
+
+        it('stays on the current page when the search term is unchanged', () => {
+            component.page.set(6);
+
+            component.loadAll();
+
+            expect(component.page()).toBe(6);
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(router.navigate).not.toHaveBeenCalled();
         });
     });
 
@@ -157,7 +248,7 @@ describe('UserManagementComponent', () => {
             await vi.advanceTimersByTimeAsync(1000);
 
             const activateSpy = vi.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
-            component.setActive(testUser, true);
+            await component.setActive(testUser, true);
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(userService.activate).toHaveBeenCalledWith(testUser.id);
@@ -171,6 +262,35 @@ describe('UserManagementComponent', () => {
     });
 
     describe('setInactive', () => {
+        it('should not deactivate a user when the credential-revocation confirmation is dismissed', async () => {
+            // Deactivating revokes every credential of the account, so a dismissal has to leave the account alone entirely.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            vi.spyOn(confirmation, 'confirm').mockResolvedValue(false);
+            const deactivateSpy = vi.spyOn(userService, 'deactivate');
+            const user = { id: 7, activated: true } as User;
+
+            await component.setActive(user, false);
+
+            expect(deactivateSpy).not.toHaveBeenCalled();
+            expect(user.activated).toBe(true);
+        });
+
+        it('should not ask for confirmation when activating a user', async () => {
+            // Activating deletes nothing.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm');
+            vi.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<User>({ body: { id: 7, activated: true } as User })));
+            // setActive reloads the list once the request answers, and the reload reads the search form. This component
+            // was never initialised here, so without stubbing the reload it throws after the test body has finished -
+            // which surfaces as an unhandled error rather than a failing assertion, and fails the whole vitest run.
+            const loadAllSpy = vi.spyOn(component, 'loadAll').mockImplementation(() => undefined);
+
+            await component.setActive({ id: 7, activated: false } as User, true);
+
+            expect(confirmSpy).not.toHaveBeenCalled();
+            expect(loadAllSpy).toHaveBeenCalledOnce();
+        });
+
         it('should deactivate user and reload list', async () => {
             vi.useFakeTimers();
 
@@ -191,7 +311,7 @@ describe('UserManagementComponent', () => {
             await vi.advanceTimersByTimeAsync(1000);
 
             const deactivateSpy = vi.spyOn(userService, 'deactivate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
-            component.setActive(testUser, false);
+            await component.setActive(testUser, false);
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(userService.deactivate).toHaveBeenCalledWith(testUser.id);
@@ -252,29 +372,198 @@ describe('UserManagementComponent', () => {
         expect(component.trackIdentity(0, { id: undefined } as User)).toBe(-1);
     });
 
-    it.each([
-        { status: 200, statusText: '' },
-        { status: 400, statusText: 'Delete Failure' },
-    ])('should broadcast after user deletion (status: $status) or show error', ({ status, statusText }) => {
-        const deleteSpy = vi.spyOn(userService, 'deleteUser');
-        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
-        let errorText: string | undefined;
-        component.dialogError.subscribe((text) => (errorText = text));
-
+    it('should load the current deletion impact before allowing permanent deletion', () => {
         component.deleteUser('test');
-        expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith('test');
 
-        const request = httpMock.expectOne('api/account/admin/users/test');
-        request.flush(null, { status, statusText });
+        const request = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toEqual({ logins: ['test'] });
+        request.flush({
+            users: [
+                {
+                    userId: 42,
+                    login: 'test',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 2,
+                    impactFingerprint: 'fingerprint',
+                    categories: [
+                        { category: 'ACCOUNT', action: 'DELETE', count: 1 },
+                        { category: 'ACCOUNT', action: 'REMOVE_MEMBERSHIP', count: 1 },
+                    ],
+                },
+            ],
+            totalAffectedObjects: 2,
+            categories: [
+                { category: 'ACCOUNT', action: 'DELETE', count: 1 },
+                { category: 'ACCOUNT', action: 'REMOVE_MEMBERSHIP', count: 1 },
+            ],
+        });
 
-        if (status === 200) {
-            expect(broadcastSpy).toHaveBeenCalledOnce();
-            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'Deleted a user' });
-        } else {
-            expect(broadcastSpy).not.toHaveBeenCalled();
-        }
-        expect(errorText).toContain(statusText);
+        expect(component.deletionImpact()?.users).toHaveLength(1);
+        expect(component.deletionImpact()?.users[0].login).toBe('test');
+        expect(component.deletionImpact()?.totalAffectedObjects).toBe(2);
+    });
+
+    it('should name every account in the deletion dialog and report the rest as a count', () => {
+        const impacted = (index: number) => ({
+            userId: index,
+            login: `student${index}`,
+            automaticEligible: true,
+            legacyDeleted: false,
+            retentionOverrideRequired: index === 0,
+            totalAffectedObjects: index,
+            impactFingerprint: `fingerprint${index}`,
+            categories: [],
+        });
+        component.deletionImpact.set({ users: Array.from({ length: 12 }, (_, index) => impacted(index)), totalAffectedObjects: 66, categories: [] });
+
+        // An administrator has to be able to see who is about to be deleted, so the dialog names them rather than
+        // only counting them. A very long selection would push the confirmation off the screen, so it is cut off.
+        expect(component.listedDeletionAccounts()).toHaveLength(10);
+        expect(component.listedDeletionAccounts()[0].login).toBe('student0');
+        expect(component.listedDeletionAccounts()[9].login).toBe('student9');
+        expect(component.unlistedDeletionAccountCount()).toBe(2);
+    });
+
+    it('should name a short selection in full', () => {
+        component.deletionImpact.set({
+            users: [
+                {
+                    userId: 1,
+                    login: 'only',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 3,
+                    impactFingerprint: 'a',
+                    categories: [],
+                },
+            ],
+            totalAffectedObjects: 3,
+            categories: [],
+        });
+
+        expect(component.listedDeletionAccounts().map((account) => account.login)).toEqual(['only']);
+        expect(component.unlistedDeletionAccountCount()).toBe(0);
+    });
+
+    it('should clear the dialog state when the deletion dialog is closed', () => {
+        component.deletionDialogVisible.set(true);
+        component.deletionImpact.set({ users: [], totalAffectedObjects: 0, categories: [] });
+        component.deletionConfirmation.set('typed');
+
+        component.closePermanentDeletionDialog();
+
+        expect(component.deletionDialogVisible()).toBeFalsy();
+        expect(component.deletionImpact()).toBeUndefined();
+        expect(component.deletionConfirmation()).toBe('');
+    });
+
+    it('should deactivate every previewed user instead of deleting them', () => {
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+        component.deletionDialogVisible.set(true);
+        component.deletionImpact.set({
+            users: [
+                {
+                    userId: 1,
+                    login: 'first',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 0,
+                    impactFingerprint: 'a',
+                    categories: [],
+                },
+                {
+                    userId: 2,
+                    login: 'second',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 0,
+                    impactFingerprint: 'b',
+                    categories: [],
+                },
+            ],
+            totalAffectedObjects: 0,
+            categories: [],
+        });
+
+        component.deactivateInstead();
+
+        // One request per previewed user, and the dialog only closes once all of them answered.
+        httpMock.expectOne({ method: 'PATCH', url: 'api/account/admin/users/1/deactivate' }).flush({});
+        httpMock.expectOne({ method: 'PATCH', url: 'api/account/admin/users/2/deactivate' }).flush({});
+
+        expect(component.deletionLoading()).toBeFalsy();
+        expect(component.deletionDialogVisible()).toBeFalsy();
+        expect(component.selectedUsers()).toEqual([]);
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'Deactivated users' });
+    });
+
+    it('should do nothing when deactivating without a previewed user', () => {
+        component.deletionImpact.set(undefined);
+
+        component.deactivateInstead();
+
+        expect(component.deletionLoading()).toBeFalsy();
+        httpMock.expectNone({ method: 'PATCH', url: 'api/account/admin/users/1/deactivate' });
+    });
+
+    it('should re-preview only users whose deletion plan changed', () => {
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+        const firstUser = new User();
+        firstUser.login = 'first';
+        const secondUser = new User();
+        secondUser.login = 'second';
+        const thirdUser = new User();
+        thirdUser.login = 'third';
+        component.selectedUsers.set([firstUser, secondUser, thirdUser]);
+
+        component.deleteAllSelectedUsers();
+        const initialImpactRequest = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        initialImpactRequest.flush({
+            users: [
+                { userId: 41, login: 'first', impactFingerprint: 'first-fingerprint', totalAffectedObjects: 2, categories: [] },
+                { userId: 42, login: 'second', impactFingerprint: 'second-fingerprint', totalAffectedObjects: 2, categories: [] },
+                { userId: 43, login: 'third', impactFingerprint: 'third-fingerprint', totalAffectedObjects: 2, categories: [] },
+            ],
+            totalAffectedObjects: 6,
+            categories: [],
+        });
+        component.deletionConfirmation.set('3');
+
+        component.confirmPermanentDeletion();
+        const deletionRequest = httpMock.expectOne('api/account/admin/users');
+        expect(deletionRequest.request.method).toBe('DELETE');
+        expect(deletionRequest.request.body).toEqual({
+            users: [
+                { login: 'first', impactFingerprint: 'first-fingerprint' },
+                { login: 'second', impactFingerprint: 'second-fingerprint' },
+                { login: 'third', impactFingerprint: 'third-fingerprint' },
+            ],
+        });
+        deletionRequest.flush([
+            { userId: 41, login: 'first', status: 'DELETED' },
+            { userId: 42, login: 'second', status: 'PLAN_CHANGED' },
+            { userId: 43, login: 'third', status: 'FAILED' },
+        ]);
+
+        const refreshedImpactRequest = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        expect(refreshedImpactRequest.request.method).toBe('POST');
+        expect(refreshedImpactRequest.request.body).toEqual({ logins: ['second'] });
+        refreshedImpactRequest.flush({
+            users: [{ userId: 42, login: 'second', impactFingerprint: 'new-fingerprint', totalAffectedObjects: 3, categories: [] }],
+            totalAffectedObjects: 3,
+            categories: [],
+        });
+
+        expect(component.deletionImpact()?.users.map((user) => user.login)).toEqual(['second']);
+        expect(component.permanentDeletionConfirmationExpected()).toBe('second');
+        expect(component.selectedUsers().map((user) => user.login)).toEqual(['second']);
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'Deleted users' });
     });
 
     it('should call initFilters on initialization', () => {
@@ -383,9 +672,7 @@ describe('UserManagementComponent', () => {
         expect(component.filters().authorityFilter).toEqual(new Set(component.authorityFilters));
     });
 
-    it('should delete all selected users', () => {
-        const deleteSpy = vi.spyOn(userService, 'deleteUsers').mockReturnValue(of());
-
+    it('should load one aggregated deletion impact for all selected users', () => {
         const users = [1, 2, 3].map((id) => {
             const user = new User();
             user.login = id.toString();
@@ -395,8 +682,11 @@ describe('UserManagementComponent', () => {
         component.selectedUsers.set([users[0], users[1]]);
 
         component.deleteAllSelectedUsers();
-        expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith([users[0].login, users[1].login]);
+
+        const request = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toEqual({ logins: ['1', '2'] });
+        request.flush({ users: [], totalAffectedObjects: 0, categories: [] });
     });
 
     it('should add and remove user from selected users', () => {

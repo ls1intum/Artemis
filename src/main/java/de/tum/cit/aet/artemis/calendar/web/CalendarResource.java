@@ -43,6 +43,8 @@ import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepo
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
@@ -57,6 +59,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Lazy
 @Profile(PROFILE_CORE)
+@FeatureUsage(UserFeature.CALENDAR)
 @RestController
 @RequestMapping("api/calendar/")
 public class CalendarResource {
@@ -130,7 +133,7 @@ public class CalendarResource {
     @GetMapping(value = "courses/{courseId}/calendar-events-ics", produces = "text/calendar")
     public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarSubscriptionFilterOption> filterOptions, @RequestParam("language") Language language) {
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
+        User user = userRepository.findOneWithAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
         Course course = courseRepository.findByIdElseThrow(courseId);
         boolean userIsStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);
         boolean userIsCourseStaff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
@@ -171,7 +174,7 @@ public class CalendarResource {
      * @return the set retrieved by the supplier if include is true, otherwise and empty set
      */
     private Set<CalendarEventDTO> getEventsIfShouldBeIncluded(boolean include, Supplier<Set<CalendarEventDTO>> supplier) {
-        return include ? supplier.get() : Collections.emptySet();
+        return include ? supplier.get() : Set.of();
     }
 
     /**
@@ -184,7 +187,7 @@ public class CalendarResource {
      */
     private <A> Set<CalendarEventDTO> getEventsIfShouldBeIncludedAndApiAvailable(boolean include, Optional<A> apiOptional, Function<A, Set<CalendarEventDTO>> supplier) {
         if (!include) {
-            return Collections.emptySet();
+            return Set.of();
         }
         return apiOptional.map(supplier).orElseGet(Collections::emptySet);
     }
@@ -211,7 +214,7 @@ public class CalendarResource {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         boolean userIsStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);
@@ -219,9 +222,9 @@ public class CalendarResource {
         ZoneId clientTimeZone = CalendarUtil.deserializeZoneIdOrElseThrow(timeZone);
         Long userId = user.getId();
 
-        Set<CalendarEventDTO> tutorialEventDTOs = tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(userId, courseId)).orElse(Collections.emptySet());
-        Set<CalendarEventDTO> examEventDTOs = examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Collections.emptySet());
-        Set<CalendarEventDTO> lectureEventDTOs = lectureApi.map(api -> api.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language)).orElse(Collections.emptySet());
+        Set<CalendarEventDTO> tutorialEventDTOs = tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(userId, courseId)).orElse(Set.of());
+        Set<CalendarEventDTO> examEventDTOs = examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Set.of());
+        Set<CalendarEventDTO> lectureEventDTOs = lectureApi.map(api -> api.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language)).orElse(Set.of());
         Set<CalendarEventDTO> quizExerciseEventDTOs = quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language);
         Set<CalendarEventDTO> otherExerciseEventDTOs = exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language);
 

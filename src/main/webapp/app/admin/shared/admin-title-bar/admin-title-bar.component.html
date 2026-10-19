@@ -1,5 +1,8 @@
-<div id="admin-title-bar" class="module-bg mb-2 px-3 py-2 rounded rounded-3 d-flex justify-content-between align-items-center" style="min-height: 44px">
-    <div class="align-self-center">
+<!-- Height, vertical padding and action-control sizing come from `title-bar-frame` /
+     `title-bar-compact-controls` in the component stylesheet, so this bar stays identical to the course title
+     bar. Only the surface, the horizontal padding and the divider below it are set here. -->
+<div id="admin-title-bar" class="module-bg rounded-lg px-3">
+    <div class="self-center">
         @if (customTitleTemplate()) {
             <ng-container *ngTemplateOutlet="customTitleTemplate()!" />
         } @else {
@@ -7,7 +10,7 @@
         }
     </div>
 
-    <div class="d-flex gap-2 align-items-center">
+    <div class="flex min-w-0 items-center gap-2" data-testid="admin-title-bar-actions">
         @if (customActionsTemplate()) {
             <ng-container *ngTemplateOutlet="customActionsTemplate()!" />
         }

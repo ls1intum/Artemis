@@ -10,6 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExternalUserPasswordResetModalComponent } from 'app/account/password-reset/external/external-user-password-reset-modal.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Component for initiating the password reset process.
@@ -19,7 +20,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-password-reset-init',
     templateUrl: './password-reset-init.component.html',
-    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, ExternalUserPasswordResetModalComponent],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ArtemisTranslatePipe,
+        ExternalUserPasswordResetModalComponent,
+        TumAetUiButtonComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PasswordResetInitComponent implements AfterViewInit {
@@ -38,20 +48,20 @@ export class PasswordResetInitComponent implements AfterViewInit {
     showExternalResetModal = signal(false);
 
     /** Whether external authentication (SSO) is enabled on this instance */
-    readonly useExternal: boolean;
+    readonly useExternal = signal<boolean>(false);
     /** Name of the external credential provider (e.g., "TUM", "university SSO") */
-    readonly externalCredentialProvider: string;
+    readonly externalCredentialProvider = signal<string>('');
     /** URL for external password reset, localized to user's language */
-    readonly externalPasswordResetLink?: string;
+    readonly externalPasswordResetLink = signal<string | undefined>(undefined);
 
     constructor() {
         const profileInfo = this.profileService.getProfileInfo();
-        this.useExternal = profileInfo.useExternal;
-        this.externalCredentialProvider = profileInfo.externalCredentialProvider;
+        this.useExternal.set(profileInfo.useExternal);
+        this.externalCredentialProvider.set(profileInfo.externalCredentialProvider);
 
         // Get password reset link in user's language, falling back to English
-        const currentLanguage = this.translateService.getCurrentLang();
-        this.externalPasswordResetLink = profileInfo.externalPasswordResetLinkMap?.[currentLanguage] ?? profileInfo.externalPasswordResetLinkMap?.['en'];
+        const currentLanguage = this.translateService.getCurrentLang() ?? 'en';
+        this.externalPasswordResetLink.set(profileInfo.externalPasswordResetLinkMap?.[currentLanguage] ?? profileInfo.externalPasswordResetLinkMap?.['en']);
     }
 
     /**
@@ -78,7 +88,7 @@ export class PasswordResetInitComponent implements AfterViewInit {
             },
             error: (errorResponse: HttpErrorResponse) => {
                 // External/SSO users cannot reset passwords through Artemis
-                if (this.useExternal && errorResponse?.error?.errorKey === 'externalUser') {
+                if (this.useExternal() && errorResponse?.error?.errorKey === 'externalUser') {
                     this.showExternalResetModal.set(true);
                 } else {
                     onError(this.alertService, errorResponse);

@@ -1,0 +1,87 @@
+package de.tum.cit.aet.artemis.notification.dto;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
+
+/**
+ * DTO carrying the user fields needed to send a mail and to render mail templates.
+ * <p>
+ * Used as the {@code user} context variable in Thymeleaf templates rendered by the
+ * {@link de.tum.cit.aet.artemis.notification.service.notifications.MailService}, so its
+ * accessor names must stay aligned with the property paths used in those templates
+ * (e.g. {@code user.login}, {@code user.activationKey}, {@code user.getName()}).
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable PasswordResetKeyDTO resetKey,
+        boolean testUser) {
+
+    /**
+     * For a recipient that is not known to be a test user, which is every recipient that is not built from a {@link User}. A test
+     * user is the one whose {@code isTestUser} flag is set; the mail layer sends it nothing unless it asked for e-mail.
+     */
+    public MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable PasswordResetKeyDTO resetKey) {
+        this(email, langKey, login, firstName, lastName, activationKey, resetKey, false);
+    }
+
+    /**
+     * Returns the user's display name in the format used by the mail templates, falling back to the login when the account has no
+     * name (see {@link User#displayName}).
+     */
+    public String getName() {
+        return User.displayName(firstName, lastName, login);
+    }
+
+    public static MailRecipientDTO forUnnamed(String email, String langKey, String login) {
+        return new MailRecipientDTO(email, langKey, login, null, null, null, null);
+    }
+
+    public static MailRecipientDTO forAdministrator(String email, String login) {
+        return new MailRecipientDTO(email, "en", login, "Administrator", null, null, null);
+    }
+
+    /**
+     * For the mails that need no recovery key, which is all of them except account activation and password reset. The keys
+     * live in {@code user_recovery_key}, so they cannot be read from the user.
+     *
+     * @param user the recipient
+     * @return the recipient without any recovery key
+     */
+    public static MailRecipientDTO from(User user) {
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null, user.isTestUser());
+    }
+
+    /**
+     * For the password-reset mails, whose templates render the key. The caller passes the key it has just
+     * issued rather than the DTO reading it back.
+     *
+     * @param user     the recipient
+     * @param resetKey the reset key to render, or null
+     * @return the recipient carrying the given key
+     */
+    public static MailRecipientDTO withResetKeyFrom(User user, PasswordResetKeyDTO resetKey) {
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, resetKey, user.isTestUser());
+    }
+
+    /**
+     * For the activation mails, whose templates render the key. The caller passes the key it has just
+     * issued rather than the DTO reading it back.
+     *
+     * @param user          the recipient
+     * @param activationKey the activation key to render, or null
+     * @return the recipient carrying the given key
+     */
+    public static MailRecipientDTO withActivationKeyFrom(User user, String activationKey) {
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), activationKey, null, user.isTestUser());
+    }
+
+    @Override
+    public @NonNull String toString() {
+        return "MailRecipientDTO[" + "email='" + email + '\'' + ", langKey='" + langKey + '\'' + ", login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='"
+                + lastName + '\'' + ", activationKey=***, resetKey=" + resetKey + ']';
+    }
+}

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,8 +15,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorLeaderboardComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TutorLeaderboardComponent;
     let fixture: ComponentFixture<TutorLeaderboardComponent>;
     let sortService: SortService;
@@ -113,6 +110,65 @@ describe('TutorLeaderboardComponent', () => {
 
             // Natural ordering keeps "Test User 10" after "Test User 9" instead of right after "Test User 1".
             expect(renderedNames()).toEqual(['Test User 8', 'Test User 9', 'Test User 10']);
+        });
+    });
+
+    describe('ranking', () => {
+        function renderedRanks(): { name: string; rank: string }[] {
+            const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+            return Array.from(rows as NodeListOf<HTMLTableRowElement>).map((row) => ({
+                name: row.cells[1].textContent!.trim(),
+                rank: row.cells[0].textContent!.trim(),
+            }));
+        }
+
+        function tutor(name: string, userId: number, points: number): TutorLeaderboardElement {
+            return { name, userId, points } as TutorLeaderboardElement;
+        }
+
+        beforeEach(() => {
+            // Use the real sort service so the DOM order reflects an actual sort.
+            sortByPropertySpy.mockRestore();
+            fixture.componentRef.setInput('tutorsData', [
+                tutor('Carla', 1, 10),
+                tutor('Anton', 2, 5),
+                tutor('Berta', 3, 10),
+                tutor('Dora', 4, 10),
+                tutor('Emil', 5, 0),
+                tutor('Fritz', 6, 0),
+            ]);
+        });
+
+        it('gives tutors with the same points the same rank using standard competition ranking', () => {
+            fixture.detectChanges();
+
+            const ranksByName = Object.fromEntries(renderedRanks().map((row) => [row.name, row.rank]));
+            expect(ranksByName).toEqual({ Carla: '1', Berta: '1', Dora: '1', Anton: '4', Emil: '5', Fritz: '5' });
+        });
+
+        it('keys the ranks by user id so that re-created tutor objects keep their rank', () => {
+            fixture.componentRef.setInput('tutorsData', [tutor('Carla', 1, 10), tutor('Anton', 2, 5), tutor('Berta', 3, 10)]);
+            fixture.detectChanges();
+            expect(Object.fromEntries(comp.ranks())).toEqual({ 1: 1, 2: 3, 3: 1 });
+
+            fixture.componentRef.setInput('tutorsData', [tutor('Carla', 1, 10), tutor('Anton', 2, 5), tutor('Berta', 3, 10)]);
+            fixture.detectChanges();
+            expect(renderedRanks().map((row) => row.rank)).toEqual(['1', '1', '3']);
+        });
+
+        it('keeps the rank of a tutor when the table is sorted by another column', () => {
+            comp.sortPredicate.set('name');
+            comp.reverseOrder.set(true); // ascending
+            fixture.detectChanges();
+
+            expect(renderedRanks()).toEqual([
+                { name: 'Anton', rank: '4' },
+                { name: 'Berta', rank: '1' },
+                { name: 'Carla', rank: '1' },
+                { name: 'Dora', rank: '1' },
+                { name: 'Emil', rank: '5' },
+                { name: 'Fritz', rank: '5' },
+            ]);
         });
     });
 });

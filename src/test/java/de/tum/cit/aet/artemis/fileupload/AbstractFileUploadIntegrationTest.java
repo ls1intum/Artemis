@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.fileupload;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
@@ -44,9 +43,6 @@ public abstract class AbstractFileUploadIntegrationTest extends AbstractSpringIn
 
     @Autowired
     protected StudentParticipationTestRepository studentParticipationRepository;
-
-    @Autowired
-    protected FeedbackRepository feedbackRepository;
 
     @Autowired
     protected GradingCriterionRepository gradingCriterionRepository;

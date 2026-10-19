@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+                   logicalFilePath="config/liquibase/changelog/20260811231613_changelog.xml">
+
+    <!--
+        Phase 2 (CS-4) of the course-groups -> user_course_role refactor started in 20260518120000_changelog.xml (#12788).
+
+        Since #12788, user_course_role is the only source of truth for course membership: the user_groups table and the
+        four course.*_group_name columns are neither read nor written by the application. They were left in place so the
+        data survived until the migration was confirmed on staging. This changelog removes them.
+
+        The e2e seed data moved over in the same step, and now lives in
+        config/liquibase/data/20260811231613_e2e_user_course_role.xml. It keeps this file's logicalFilePath, so it is
+        still changeset 20260811231613-01 of this changelog as far as every database is concerned.
+
+        All drops are DB-agnostic: dropTable and dropColumn need no MySQL/PostgreSQL split. Dropping user_groups also
+        removes its foreign key to jhi_user and its three indexes on both databases.
+    -->
+
+    <changeSet id="20260811231613-02-drop-course-student-group-name" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="course" columnName="student_group_name"/>
+        </preConditions>
+        <dropColumn tableName="course" columnName="student_group_name"/>
+    </changeSet>
+
+    <changeSet id="20260811231613-03-drop-course-teaching-assistant-group-name" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="course" columnName="teaching_assistant_group_name"/>
+        </preConditions>
+        <dropColumn tableName="course" columnName="teaching_assistant_group_name"/>
+    </changeSet>
+
+    <changeSet id="20260811231613-04-drop-course-editor-group-name" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="course" columnName="editor_group_name"/>
+        </preConditions>
+        <dropColumn tableName="course" columnName="editor_group_name"/>
+    </changeSet>
+
+    <changeSet id="20260811231613-05-drop-course-instructor-group-name" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="course" columnName="instructor_group_name"/>
+        </preConditions>
+        <dropColumn tableName="course" columnName="instructor_group_name"/>
+    </changeSet>
+
+    <changeSet id="20260811231613-06-drop-user-groups-table" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="user_groups"/>
+        </preConditions>
+        <dropTable tableName="user_groups"/>
+    </changeSet>
+</databaseChangeLog>

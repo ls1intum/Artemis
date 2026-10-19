@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CourseManagementSection, QuickActionsComponent } from './quick-actions.component';
@@ -19,8 +18,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('QuickActionsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: QuickActionsComponent;
     let fixture: ComponentFixture<QuickActionsComponent>;
     let router: Router;

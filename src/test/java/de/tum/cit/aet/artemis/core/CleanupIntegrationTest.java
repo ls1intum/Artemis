@@ -18,12 +18,18 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
+import de.tum.cit.aet.artemis.admin.dto.CleanupConfigurationDTO;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.NotEnrolledUsersCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.OldCoursesCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.OldFeedbackCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrphanCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.PlagiarismCasesCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.repository.CleanupJobExecutionRepository;
@@ -133,6 +139,9 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
 
+    @Autowired
+    private DataCleanupProperties dataCleanupProperties;
+
     private Course oldCourse;
 
     private Course newCourse;
@@ -145,7 +154,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     void initTestCase() {
         ZonedDateTime now = ZonedDateTime.now();
 
-        oldCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        oldCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         oldCourse.setStartDate(now.minusMonths(12).plusDays(2));
         oldCourse.setEndDate(now.minusMonths(6).minusDays(2));
         TextExercise finishedTextExercise1 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12),
@@ -155,7 +164,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         oldCourse = courseRepository.save(oldCourse);
         exerciseRepository.save(finishedTextExercise1);
 
-        newCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        newCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         newCourse.setStartDate(now);
         newCourse.setEndDate(now.plusMonths(6));
         TextExercise finishedTextExercise2 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12),
@@ -165,17 +174,17 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         newCourse = courseRepository.save(newCourse);
         exerciseRepository.save(finishedTextExercise2);
         userUtilService.addUsers(TEST_PREFIX, 4, 0, 0, 1);
+        // The admin endpoints resolve the authenticated login against the database, so the account the tests
+        // authenticate as has to exist there with the admin authority rather than only in the mock security context.
+        userUtilService.addAdmin(TEST_PREFIX);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteOrphans() throws Exception {
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
-
-        var orphanFeedback = createFeedbackWithLinkedLongFeedback();
-        var orphanTextBlock = createTextBlockForFeedback(orphanFeedback);
 
         StudentScore orphanStudentScore = new StudentScore();
         orphanStudentScore.setExercise(oldExercise);
@@ -185,27 +194,26 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         orphanTeamScore.setExercise(oldExercise);
         orphanTeamScore = teamScoreRepository.save(orphanTeamScore);
 
+        // A result always belongs to a submission, so an orphan result is one whose submission has no participation.
+        var submissionWithoutParticipation = submissionRepository.save(new TextSubmission());
         var orphanResult = new Result();
         orphanResult.setExerciseId(oldExercise.getId());
+        orphanResult.setSubmission(submissionWithoutParticipation);
         orphanResult = resultRepository.save(orphanResult);
 
-        orphanFeedback.setResult(orphanResult);
-        orphanFeedback = feedbackRepository.save(orphanFeedback);
+        var orphanFeedback = createFeedbackWithLinkedLongFeedback(orphanResult);
+        var orphanTextBlock = createTextBlockForFeedback(orphanFeedback);
 
         var submission = participationUtilService.addSubmission(textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst(), new ProgrammingSubmission(),
                 student.getLogin());
 
-        var nonOrphanFeedback = createFeedbackWithLinkedLongFeedback();
-        var nonOrphanTextBlock = createTextBlockForFeedback(nonOrphanFeedback);
-
         Result nonOrphanResult = new Result();
         nonOrphanResult.setSubmission(submission);
         nonOrphanResult.setExerciseId(submission.getParticipation().getExercise().getId());
-        nonOrphanFeedback.setResult(nonOrphanResult);
         nonOrphanResult = resultRepository.save(nonOrphanResult);
 
-        nonOrphanFeedback.setResult(nonOrphanResult);
-        nonOrphanFeedback = feedbackRepository.save(nonOrphanFeedback);
+        var nonOrphanFeedback = createFeedbackWithLinkedLongFeedback(nonOrphanResult);
+        var nonOrphanTextBlock = createTextBlockForFeedback(nonOrphanFeedback);
 
         StudentScore nonOrphanStudentScore = new StudentScore();
         nonOrphanStudentScore.setUser(student);
@@ -216,6 +224,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         nonOrphanTeamScore.setExercise(oldExercise);
         Team team = new Team();
         team.setShortName("team");
+        team.setExercise(oldExercise);
         nonOrphanTeamScore.setTeam(team);
         teamRepository.save(team);
         nonOrphanTeamScore = teamScoreRepository.save(nonOrphanTeamScore);
@@ -228,12 +237,9 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         orphanRating.setResult(orphanResult);
         orphanRating = ratingRepository.save(orphanRating);
 
-        var counts = request.get("/api/core/admin/cleanup/orphans/count", HttpStatus.OK, OrphanCleanupCountDTO.class);
+        var counts = request.get("/api/admin/cleanup/orphans/count", HttpStatus.OK, OrphanCleanupCountDTO.class);
 
         assertThat(counts).isNotNull();
-        assertThat(counts.orphanFeedback()).isEqualTo(0);
-        assertThat(counts.orphanLongFeedbackText()).isEqualTo(0);
-        assertThat(counts.orphanTextBlock()).isEqualTo(0);
         assertThat(counts.orphanStudentScore()).isEqualTo(1);
         assertThat(counts.orphanTeamScore()).isEqualTo(1);
         assertThat(counts.orphanFeedbackForOrphanResults()).isEqualTo(1);
@@ -241,8 +247,10 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         assertThat(counts.orphanTextBlockForOrphanResults()).isEqualTo(1);
         assertThat(counts.orphanRating()).isEqualTo(1);
         assertThat(counts.orphanResultsWithoutParticipation()).isEqualTo(1);
+        // no unreferenced message is old enough to be collected yet, see the grace period
+        assertThat(counts.orphanFeedbackMessage()).isZero();
 
-        var responseBody = request.delete("/api/core/admin/cleanup/orphans", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/admin/cleanup/orphans", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteOrphans");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -265,7 +273,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeletePlagiarismComparisons() throws Exception {
         // old course, should delete undecided plagiarism comparisons
         var textExercise1 = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
@@ -297,7 +305,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
 
-        var counts = request.get("/api/core/admin/cleanup/plagiarism-comparisons/count", HttpStatus.OK, PlagiarismComparisonCleanupCountDTO.class, params);
+        var counts = request.get("/api/admin/cleanup/plagiarism-comparisons/count", HttpStatus.OK, PlagiarismComparisonCleanupCountDTO.class, params);
 
         assertThat(counts).isNotNull();
         assertThat(counts.plagiarismComparison()).isEqualTo(1);
@@ -305,7 +313,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         assertThat(counts.plagiarismMatches()).isEqualTo(1);
         assertThat(counts.plagiarismSubmissions()).isEqualTo(2);
 
-        var responseBody = request.delete("/api/core/admin/cleanup/plagiarism-comparisons", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/admin/cleanup/plagiarism-comparisons", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deletePlagiarismComparisons");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -353,7 +361,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteNonRatedResults() throws Exception {
         // create non rated results for an old course
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
@@ -364,13 +372,13 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
         oldResult2.setRated(false);
 
-        var oldFeedback1 = createFeedbackWithLinkedLongFeedback();
-        var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
+        var oldFeedback1 = createFeedbackWithLinkedLongFeedback(oldResult1);
         participationUtilService.addFeedbackToResult(oldFeedback1, oldResult1);
+        var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
 
-        var oldFeedback2 = createFeedbackWithLinkedLongFeedback();
-        var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
+        var oldFeedback2 = createFeedbackWithLinkedLongFeedback(oldResult2);
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
+        var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
 
         StudentScore oldParticipantScore1 = new StudentScore();
         oldParticipantScore1.setExercise(oldExercise);
@@ -393,13 +401,13 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
         newResult2.setRated(false);
 
-        var newFeedback1 = createFeedbackWithLinkedLongFeedback();
-        var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
+        var newFeedback1 = createFeedbackWithLinkedLongFeedback(newResult1);
         participationUtilService.addFeedbackToResult(newFeedback1, newResult1);
+        var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
 
-        var newFeedback2 = createFeedbackWithLinkedLongFeedback();
-        var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
+        var newFeedback2 = createFeedbackWithLinkedLongFeedback(newResult2);
         participationUtilService.addFeedbackToResult(newFeedback2, newResult2);
+        var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
 
         StudentScore newParticipantScore1 = new StudentScore();
         newParticipantScore1.setUser(student);
@@ -417,14 +425,14 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
 
-        var counts = request.get("/api/core/admin/cleanup/non-rated-results/count", HttpStatus.OK, NonLatestNonRatedResultsCleanupCountDTO.class, params);
+        var counts = request.get("/api/admin/cleanup/non-rated-results/count", HttpStatus.OK, NonLatestNonRatedResultsCleanupCountDTO.class, params);
 
         assertThat(counts).isNotNull();
         assertThat(counts.longFeedbackText()).isEqualTo(1);
         assertThat(counts.textBlock()).isEqualTo(1);
         assertThat(counts.feedback()).isEqualTo(1);
 
-        var responseBody = request.delete("/api/core/admin/cleanup/non-rated-results", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/admin/cleanup/non-rated-results", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteNonRatedResults");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -448,7 +456,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteOldRatedResults() throws Exception {
         // create rated results for an old course
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
@@ -457,13 +465,13 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor); // should be deleted, with all associated entities
         var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
 
-        var oldFeedback1 = createFeedbackWithLinkedLongFeedback();
-        var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
+        var oldFeedback1 = createFeedbackWithLinkedLongFeedback(oldResult1);
         participationUtilService.addFeedbackToResult(oldFeedback1, oldResult1);
+        var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
 
-        var oldFeedback2 = createFeedbackWithLinkedLongFeedback();
-        var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
+        var oldFeedback2 = createFeedbackWithLinkedLongFeedback(oldResult2);
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
+        var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
 
         StudentScore oldParticipantScore1 = new StudentScore();
         oldParticipantScore1.setUser(student);
@@ -484,13 +492,13 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var newResult1 = participationUtilService.generateResult(newSubmission, instructor); // should not be deleted, with all associated entities
         var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
 
-        var newFeedback1 = createFeedbackWithLinkedLongFeedback();
-        var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
+        var newFeedback1 = createFeedbackWithLinkedLongFeedback(newResult1);
         participationUtilService.addFeedbackToResult(newFeedback1, newResult1);
+        var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
 
-        var newFeedback2 = createFeedbackWithLinkedLongFeedback();
-        var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
+        var newFeedback2 = createFeedbackWithLinkedLongFeedback(newResult2);
         participationUtilService.addFeedbackToResult(newFeedback2, newResult2);
+        var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
 
         StudentScore newParticipantScore1 = new StudentScore();
         newParticipantScore1.setUser(student);
@@ -508,14 +516,14 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
 
-        var counts = request.get("/api/core/admin/cleanup/old-rated-results/count", HttpStatus.OK, NonLatestRatedResultsCleanupCountDTO.class, params);
+        var counts = request.get("/api/admin/cleanup/old-rated-results/count", HttpStatus.OK, NonLatestRatedResultsCleanupCountDTO.class, params);
 
         assertThat(counts).isNotNull();
         assertThat(counts.longFeedbackText()).isEqualTo(1);
         assertThat(counts.textBlock()).isEqualTo(1);
         assertThat(counts.feedback()).isEqualTo(1);
 
-        var responseBody = request.delete("/api/core/admin/cleanup/old-rated-results", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/admin/cleanup/old-rated-results", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteRatedResults");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -542,8 +550,18 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteOldSubmissionVersions() throws Exception {
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("deleteFrom", ZonedDateTime.now().minusMonths(1).toString());
+        params.add("deleteTo", ZonedDateTime.now().plusMonths(1).toString());
+
+        // The submission version count aggregates over the whole window rather than over this test's own rows, so
+        // capture the baseline and assert the delta this test introduces, keeping it robust against versions left
+        // over by other tests in the same run.
+        int initialSubmissionVersionCount = request.get("/api/admin/cleanup/old-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class, params)
+                .submissionVersions();
 
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = submissionRepository.save(submission);
@@ -554,16 +572,12 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         SubmissionVersion submissionVersion3 = ParticipationFactory.generateSubmissionVersion("test2", submission, student);
         submissionVersion3 = submissionVersionRepository.save(submissionVersion3);
 
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("deleteFrom", ZonedDateTime.now().minusMonths(1).toString());
-        params.add("deleteTo", ZonedDateTime.now().plusMonths(1).toString());
-
-        var counts = request.get("/api/core/admin/cleanup/old-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class, params);
+        var counts = request.get("/api/admin/cleanup/old-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class, params);
 
         assertThat(counts).isNotNull();
-        assertThat(counts.submissionVersions()).isEqualTo(3);
+        assertThat(counts.submissionVersions()).isEqualTo(initialSubmissionVersionCount + 3);
 
-        var responseBody = request.delete("/api/core/admin/cleanup/old-submission-versions", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/admin/cleanup/old-submission-versions", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteSubmissionVersions");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -574,7 +588,134 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testDeleteOldFeedbackKeepsLatestRatedAndNonRatedResultFeedback() throws Exception {
+        // One participation on the (old) course with a mixed rated/non-rated result history in creation (id) order:
+        // r1 non-rated, r2 rated, r3 non-rated (latest non-rated), r4 rated (latest rated AND overall newest id).
+        // This is the case that motivated the FeedbackCleanupRepository r2.rated=FALSE fix: because r4 (rated) is the
+        // overall newest result, a MAX(id)-over-all-results "keep" would wrongly delete the latest NON-rated result's
+        // feedback (r3). The age-based cleanup must keep the latest rated (r4) AND the latest non-rated (r3) feedback.
+        // The old-feedback count aggregates across all old courses, so capture the baseline and assert the delta this
+        // test introduces, keeping it robust against data left over from other tests.
+        int initialFeedbackCount = request.get("/api/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class).feedback();
+
+        var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
+
+        var nonLatestNonRated = participationUtilService.generateResult(submission, instructor);
+        nonLatestNonRated.setRated(false);
+        var feedbackNonLatestNonRated = createFeedbackWithLinkedLongFeedback(nonLatestNonRated);
+        createTextBlockForFeedback(feedbackNonLatestNonRated);
+        participationUtilService.addFeedbackToResult(feedbackNonLatestNonRated, nonLatestNonRated);
+
+        var nonLatestRated = participationUtilService.generateResult(submission, instructor); // rated by default
+        var feedbackNonLatestRated = createFeedbackWithLinkedLongFeedback(nonLatestRated);
+        createTextBlockForFeedback(feedbackNonLatestRated);
+        participationUtilService.addFeedbackToResult(feedbackNonLatestRated, nonLatestRated);
+
+        var latestNonRated = participationUtilService.generateResult(submission, instructor);
+        latestNonRated.setRated(false);
+        var feedbackLatestNonRated = createFeedbackWithLinkedLongFeedback(latestNonRated);
+        createTextBlockForFeedback(feedbackLatestNonRated);
+        participationUtilService.addFeedbackToResult(feedbackLatestNonRated, latestNonRated);
+
+        var latestRated = participationUtilService.generateResult(submission, instructor); // rated, overall newest id
+        var feedbackLatestRated = createFeedbackWithLinkedLongFeedback(latestRated);
+        createTextBlockForFeedback(feedbackLatestRated);
+        participationUtilService.addFeedbackToResult(feedbackLatestRated, latestRated);
+
+        // Only the two non-latest results' feedback (fb of nonLatestNonRated + nonLatestRated) should be added to the count.
+        var counts = request.get("/api/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class);
+        assertThat(counts).isNotNull();
+        assertThat(counts.feedback()).isEqualTo(initialFeedbackCount + 2);
+
+        var responseBody = request.delete("/api/admin/cleanup/old-feedback", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        assertThat(responseBody.jobType()).isEqualTo("deleteFeedback");
+        assertThat(responseBody.executionDate()).isNotNull();
+
+        // Non-latest results' feedback deleted
+        assertThat(feedbackRepository.findByResult(nonLatestNonRated)).isEmpty();
+        assertThat(feedbackRepository.findByResult(nonLatestRated)).isEmpty();
+        // Latest non-rated (r3) AND latest rated (r4) feedback kept; r3 being kept proves the r2.rated=FALSE fix.
+        assertThat(feedbackRepository.findByResult(latestNonRated)).isNotEmpty();
+        assertThat(feedbackRepository.findByResult(latestRated)).isNotEmpty();
+        // Results themselves are never deleted by this operation.
+        assertThat(resultRepository.existsById(nonLatestNonRated.getId())).isTrue();
+        assertThat(resultRepository.existsById(nonLatestRated.getId())).isTrue();
+        assertThat(resultRepository.existsById(latestNonRated.getId())).isTrue();
+        assertThat(resultRepository.existsById(latestRated.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testDeleteOldCourseSubmissionVersionsByCourseEndDate() throws Exception {
+        // The automated cleanup deletes submission versions by the OWNING COURSE's end date (submission -> participation
+        // -> exercise -> course), which is a different query than the createdDate-range endpoint covered by
+        // testDeleteOldSubmissionVersions. A version whose course (oldCourse) ended well before the cutoff must be
+        // deleted; a version whose course (newCourse) has not ended must be kept.
+        // The count aggregates across all old courses, so capture the baseline before seeding and assert the delta this
+        // test introduces (exactly the one old-course version), keeping it robust against versions left by other tests.
+        int baseline = request.get("/api/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class).submissionVersions();
+
+        var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
+        var oldParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
+        var oldSubmission = participationUtilService.addSubmission(oldParticipation, ParticipationFactory.generateTextSubmission("old", Language.ENGLISH, true));
+        var oldVersion = submissionVersionRepository.save(ParticipationFactory.generateSubmissionVersion("old-content", oldSubmission, student));
+
+        var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
+        var newParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
+        var newSubmission = participationUtilService.addSubmission(newParticipation, ParticipationFactory.generateTextSubmission("new", Language.ENGLISH, true));
+        var newVersion = submissionVersionRepository.save(ParticipationFactory.generateSubmissionVersion("new-content", newSubmission, student));
+
+        // Only the old-course version is counted; the not-yet-ended course's version must not be.
+        int afterSeeding = request.get("/api/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class).submissionVersions();
+        assertThat(afterSeeding).isEqualTo(baseline + 1);
+
+        var responseBody = request.delete("/api/admin/cleanup/old-course-submission-versions", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class,
+                HttpStatus.OK);
+        assertThat(responseBody.jobType()).isEqualTo(CleanupJobType.OLD_COURSE_SUBMISSION_VERSIONS.label());
+        assertThat(responseBody.executionDate()).isNotNull();
+
+        // Only the version of the course that already ended is deleted; the ongoing course's version survives.
+        assertThat(submissionVersionRepository.findById(oldVersion.getId())).isEmpty();
+        assertThat(submissionVersionRepository.findById(newVersion.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testDeleteOldFeedbackKeepsRecentCourseFeedback() throws Exception {
+        // Cutoff-boundary guard: the age-based feedback cleanup must only touch courses that ended before the cutoff.
+        // Feedback of a non-latest result of a course that has NOT yet ended (newCourse) must neither be counted nor
+        // deleted, so ongoing/recent courses can never lose feedback by accident.
+        int baseline = request.get("/api/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class).feedback();
+
+        var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
+        // Two rated results: the first is non-latest (a deletion candidate for an OLD course), the second is latest.
+        var nonLatestRated = participationUtilService.generateResult(submission, instructor);
+        var feedbackNonLatest = createFeedbackWithLinkedLongFeedback(nonLatestRated);
+        createTextBlockForFeedback(feedbackNonLatest);
+        participationUtilService.addFeedbackToResult(feedbackNonLatest, nonLatestRated);
+        var latestRated = participationUtilService.generateResult(submission, instructor);
+        var feedbackLatest = createFeedbackWithLinkedLongFeedback(latestRated);
+        participationUtilService.addFeedbackToResult(feedbackLatest, latestRated);
+
+        // The not-yet-ended course contributes nothing to the count, even though it has a non-latest result.
+        int afterSeeding = request.get("/api/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class).feedback();
+        assertThat(afterSeeding).isEqualTo(baseline);
+
+        var responseBody = request.delete("/api/admin/cleanup/old-feedback", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        assertThat(responseBody.jobType()).isEqualTo(CleanupJobType.FEEDBACK.label());
+
+        // The recent course's feedback (both non-latest and latest) survives the cleanup.
+        assertThat(feedbackRepository.findByResult(nonLatestRated)).isNotEmpty();
+        assertThat(feedbackRepository.findByResult(latestRated)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetLastExecutions() throws Exception {
 
         var now = ZonedDateTime.now();
@@ -584,7 +725,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         jobExecution.setDeletionTimestamp(now);
         cleanupJobExecutionRepository.save(jobExecution);
 
-        var response = request.getList("/api/core/admin/cleanup/last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
+        var response = request.getList("/api/admin/cleanup/last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
 
         List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::label).toList();
 
@@ -600,22 +741,96 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     @Test
     @WithMockUser(roles = "USER")
     void testUnauthorizedAccess() throws Exception {
-        request.delete("/api/core/admin/cleanup/orphans", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
-        request.get("/api/core/admin/cleanup/orphans/count", HttpStatus.FORBIDDEN, OrphanCleanupCountDTO.class);
-        request.delete("/api/core/admin/cleanup/plagiarism-comparisons", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
-        request.get("/api/core/admin/cleanup/plagiarism-comparisons/count", HttpStatus.FORBIDDEN, PlagiarismComparisonCleanupCountDTO.class);
-        request.delete("/api/core/admin/cleanup/non-rated-results", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
-        request.get("/api/core/admin/cleanup/non-rated-results/count", HttpStatus.FORBIDDEN, NonLatestRatedResultsCleanupCountDTO.class);
-        request.delete("/api/core/admin/cleanup/old-rated-results", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
-        request.get("/api/core/admin/cleanup/old-rated-results/count", HttpStatus.FORBIDDEN, NonLatestRatedResultsCleanupCountDTO.class);
-        request.delete("/api/core/admin/cleanup/old-submission-versions", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
-        request.get("/api/core/admin/cleanup/old-submission-versions/count", HttpStatus.FORBIDDEN, SubmissionVersionsCleanupCountDTO.class);
+        request.delete("/api/admin/cleanup/orphans", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/admin/cleanup/orphans/count", HttpStatus.FORBIDDEN, OrphanCleanupCountDTO.class);
+        request.delete("/api/admin/cleanup/plagiarism-comparisons", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/admin/cleanup/plagiarism-comparisons/count", HttpStatus.FORBIDDEN, PlagiarismComparisonCleanupCountDTO.class);
+        request.delete("/api/admin/cleanup/non-rated-results", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/admin/cleanup/non-rated-results/count", HttpStatus.FORBIDDEN, NonLatestRatedResultsCleanupCountDTO.class);
+        request.delete("/api/admin/cleanup/old-rated-results", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/admin/cleanup/old-rated-results/count", HttpStatus.FORBIDDEN, NonLatestRatedResultsCleanupCountDTO.class);
+        request.delete("/api/admin/cleanup/old-submission-versions", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/admin/cleanup/old-submission-versions/count", HttpStatus.FORBIDDEN, SubmissionVersionsCleanupCountDTO.class);
 
-        request.get("/api/core/admin/cleanup/last-executions", HttpStatus.FORBIDDEN, List.class);
+        // new data-privacy cleanup endpoints
+        request.postWithoutResponseBody("/api/admin/cleanup/old-courses/warn", null, HttpStatus.FORBIDDEN);
+        request.get("/api/admin/cleanup/old-courses/warn/count", HttpStatus.FORBIDDEN, OldCoursesCleanupCountDTO.class);
+        request.delete("/api/admin/cleanup/old-courses/reset", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/admin/cleanup/old-courses/reset/count", HttpStatus.FORBIDDEN, OldCoursesCleanupCountDTO.class);
+        request.delete("/api/admin/cleanup/old-feedback", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/admin/cleanup/old-feedback/count", HttpStatus.FORBIDDEN, OldFeedbackCleanupCountDTO.class);
+        request.delete("/api/admin/cleanup/old-course-submission-versions", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/admin/cleanup/old-course-submission-versions/count", HttpStatus.FORBIDDEN, SubmissionVersionsCleanupCountDTO.class);
+        request.postWithoutResponseBody("/api/admin/cleanup/not-enrolled-users/warn", null, HttpStatus.FORBIDDEN);
+        request.get("/api/admin/cleanup/not-enrolled-users/warn/count", HttpStatus.FORBIDDEN, NotEnrolledUsersCleanupCountDTO.class);
+        request.delete("/api/admin/cleanup/not-enrolled-users", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/admin/cleanup/not-enrolled-users/count", HttpStatus.FORBIDDEN, NotEnrolledUsersCleanupCountDTO.class);
+        request.delete("/api/admin/cleanup/plagiarism-cases", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/admin/cleanup/plagiarism-cases/count", HttpStatus.FORBIDDEN, PlagiarismCasesCleanupCountDTO.class);
+
+        request.get("/api/admin/cleanup/configuration", HttpStatus.FORBIDDEN, CleanupConfigurationDTO.class);
+        request.get("/api/admin/cleanup/last-executions", HttpStatus.FORBIDDEN, List.class);
     }
 
-    private Feedback createFeedbackWithLinkedLongFeedback() {
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetCleanupConfiguration() throws Exception {
+        var before = ZonedDateTime.now();
+        var configuration = request.get("/api/admin/cleanup/configuration", HttpStatus.OK, CleanupConfigurationDTO.class);
+        var after = ZonedDateTime.now();
+
+        assertThat(configuration).isNotNull();
+        // The admin page states which data an age-based operation affects, so every configured period must be exposed.
+        assertThat(configuration.gradeRelevantRetentionYears()).isEqualTo(dataCleanupProperties.gradeRelevantRetentionYears());
+        assertThat(configuration.nonGradeRelevantRetentionYears()).isEqualTo(dataCleanupProperties.nonGradeRelevantRetentionYears());
+        assertThat(configuration.resetWarningGracePeriodDays()).isEqualTo(dataCleanupProperties.resetWarningGracePeriodDays());
+        assertThat(configuration.oldFeedbackCutoffWeeks()).isEqualTo(dataCleanupProperties.oldFeedbackCutoffWeeks());
+        assertThat(configuration.oldSubmissionVersionsCutoffWeeks()).isEqualTo(dataCleanupProperties.oldSubmissionVersionsCutoffWeeks());
+        assertThat(configuration.notEnrolledUsersInactivityMonths()).isEqualTo(dataCleanupProperties.notEnrolledUsersInactivityMonths());
+        assertThat(configuration.notEnrolledUsersWarningGracePeriodDays()).isEqualTo(dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays());
+
+        // Each cutoff must be the configured period back from the moment the request was served, which is exactly what
+        // the corresponding cleanup job computes; a client-side re-derivation could drift from it.
+        assertCutoff(configuration.gradeRelevantCoursesEndedBefore(), before.minusYears(configuration.gradeRelevantRetentionYears()),
+                after.minusYears(configuration.gradeRelevantRetentionYears()));
+        assertCutoff(configuration.nonGradeRelevantCoursesEndedBefore(), before.minusYears(configuration.nonGradeRelevantRetentionYears()),
+                after.minusYears(configuration.nonGradeRelevantRetentionYears()));
+        assertCutoff(configuration.coursesWarnedBefore(), before.minusDays(configuration.resetWarningGracePeriodDays()),
+                after.minusDays(configuration.resetWarningGracePeriodDays()));
+        assertCutoff(configuration.oldFeedbackCoursesEndedBefore(), before.minusWeeks(configuration.oldFeedbackCutoffWeeks()),
+                after.minusWeeks(configuration.oldFeedbackCutoffWeeks()));
+        assertCutoff(configuration.oldSubmissionVersionsCoursesEndedBefore(), before.minusWeeks(configuration.oldSubmissionVersionsCutoffWeeks()),
+                after.minusWeeks(configuration.oldSubmissionVersionsCutoffWeeks()));
+        assertCutoff(configuration.usersInactiveBefore(), before.minusMonths(configuration.notEnrolledUsersInactivityMonths()),
+                after.minusMonths(configuration.notEnrolledUsersInactivityMonths()));
+        assertCutoff(configuration.usersWarnedBefore(), before.minusDays(configuration.notEnrolledUsersWarningGracePeriodDays()),
+                after.minusDays(configuration.notEnrolledUsersWarningGracePeriodDays()));
+    }
+
+    /**
+     * Asserts that a cutoff lies in the window the request was served in. Compared as instants, since PostgreSQL and
+     * the JSON round trip do not preserve the offset.
+     */
+    private void assertCutoff(ZonedDateTime actual, ZonedDateTime lowerBound, ZonedDateTime upperBound) {
+        assertThat(actual.toInstant()).isBetween(lowerBound.toInstant(), upperBound.toInstant());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCountNewDataPrivacyOperationsAsAdmin() throws Exception {
+        // the count (preview) endpoints are read-only and must be wired, authorized for admins, and serialize correctly
+        assertThat(request.get("/api/admin/cleanup/old-courses/warn/count", HttpStatus.OK, OldCoursesCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/admin/cleanup/old-courses/reset/count", HttpStatus.OK, OldCoursesCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/admin/cleanup/not-enrolled-users/warn/count", HttpStatus.OK, NotEnrolledUsersCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/admin/cleanup/not-enrolled-users/count", HttpStatus.OK, NotEnrolledUsersCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/admin/cleanup/plagiarism-cases/count", HttpStatus.OK, PlagiarismCasesCleanupCountDTO.class)).isNotNull();
+    }
+
+    private Feedback createFeedbackWithLinkedLongFeedback(Result result) {
         Feedback feedback = new Feedback();
+        result.addFeedback(feedback);
         feedback = feedbackRepository.save(feedback);
 
         LongFeedbackText longFeedback = new LongFeedbackText();
@@ -631,6 +846,9 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     private TextBlock createTextBlockForFeedback(Feedback feedback) {
         TextBlock textBlock = new TextBlock();
         textBlock.setFeedback(feedback);
+        // A text block is a range of some submission's text, and the row names which. These blocks are only ever read
+        // through their feedback, so the block gets a submission of its own rather than the one behind the result.
+        textBlock.setSubmission(submissionRepository.save(new TextSubmission()));
         // Use the persisted feedback id (not feedback.hashCode(), which is now a constant for HashSet stability)
         // so each TextBlock has a unique text → unique computeId() → no PK collisions on save.
         textBlock.setText("text" + feedback.getId());

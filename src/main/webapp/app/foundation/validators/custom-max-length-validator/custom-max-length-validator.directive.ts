@@ -1,5 +1,5 @@
 import { Directive, input } from '@angular/core';
-import { FormControl, NG_VALIDATORS, Validator } from '@angular/forms';
+import { FormControl, NG_VALIDATORS, ValidationErrors, Validator } from '@angular/forms';
 
 /**
  * Custom max length validator for template-driven forms.
@@ -11,7 +11,7 @@ import { FormControl, NG_VALIDATORS, Validator } from '@angular/forms';
 export class CustomMaxLengthDirective implements Validator {
     customMaxLength = input.required<number>();
 
-    validate(c: FormControl<string | undefined | null>): { [key: string]: any } | null {
+    validate(c: FormControl<string | undefined | null>): ValidationErrors | null {
         const value = c.value;
         if (value === undefined || value === null) {
             return null;

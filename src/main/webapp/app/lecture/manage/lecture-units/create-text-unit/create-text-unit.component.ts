@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,9 +23,9 @@ export class CreateTextUnitComponent implements OnInit {
     private alertService = inject(AlertService);
 
     textUnitToCreate: TextUnit = new TextUnit();
-    isLoading: boolean;
-    lectureId: number;
-    courseId: number;
+    readonly isLoading = signal<boolean>(undefined!);
+    lectureId!: number; // set in ngOnInit() from route params
+    courseId!: number; // set in ngOnInit() from route params
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;
@@ -48,18 +48,18 @@ export class CreateTextUnitComponent implements OnInit {
         this.textUnitToCreate.content = content;
         this.textUnitToCreate.competencyLinks = competencyLinks || [];
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.textUnitService
-            .create(this.textUnitToCreate!, this.lectureId)
+            .create(this.textUnitToCreate, this.lectureId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

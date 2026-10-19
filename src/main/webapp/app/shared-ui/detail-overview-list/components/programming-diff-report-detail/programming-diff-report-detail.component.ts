@@ -18,6 +18,9 @@ import { TranslateService } from '@ngx-translate/core';
     imports: [GitDiffLineStatComponent, ArtemisTranslatePipe, NgbTooltipModule, ButtonComponent, TranslateDirective, FaIconComponent],
 })
 export class ProgrammingDiffReportDetailComponent implements OnDestroy {
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
+
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
     protected readonly TooltipPlacement = TooltipPlacement;
@@ -26,32 +29,21 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly faCodeCompare = faCodeCompare;
     protected readonly faSpinner = faSpinner;
 
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private dialogRef?: DynamicDialogRef;
 
     detail = input.required<ProgrammingDiffReportDetail>();
 
-    private readonly detailData = computed(() => this.detail().data);
-
-    get addedLineCount(): number {
-        return this.detailData().repositoryDiffInformation?.totalLineChange?.addedLineCount ?? 0;
-    }
-
-    get removedLineCount(): number {
-        return this.detailData().repositoryDiffInformation?.totalLineChange?.removedLineCount ?? 0;
-    }
-
-    get lineChangesLoading(): boolean {
-        return this.detailData().lineChangesLoading ?? false;
-    }
+    private readonly repositoryDiffInformation = computed(() => this.detail().data.repositoryDiffInformation());
+    readonly addedLineCount = computed(() => this.repositoryDiffInformation()?.totalLineChange?.addedLineCount ?? 0);
+    readonly removedLineCount = computed(() => this.repositoryDiffInformation()?.totalLineChange?.removedLineCount ?? 0);
+    readonly lineChangesLoading = computed(() => this.detail().data.lineChangesLoading());
 
     ngOnDestroy() {
         this.dialogRef?.close();
     }
 
     showGitDiff() {
-        const repositoryDiffInformation = this.detailData().repositoryDiffInformation;
+        const repositoryDiffInformation = this.repositoryDiffInformation();
         if (!repositoryDiffInformation) {
             return;
         }

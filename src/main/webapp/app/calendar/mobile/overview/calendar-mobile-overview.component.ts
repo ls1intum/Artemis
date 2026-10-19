@@ -1,6 +1,7 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/calendar/shared/util/calendar-util';
+import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-view-state.service';
 import { CalendarMobileMonthPresentationComponent } from 'app/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
@@ -8,11 +9,16 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpFromBracket, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarOverviewComponent } from 'app/calendar/shared/calendar-overview/calendar-overview-component.directive';
-import { PopoverModule } from 'primeng/popover';
-import { CheckboxModule } from 'primeng/checkbox';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiProgressSpinnerComponent,
+} from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-calendar-mobile-overview',
@@ -22,20 +28,26 @@ import { ButtonModule } from 'primeng/button';
         TranslateDirective,
         FaIconComponent,
         CalendarSubscriptionPopoverComponent,
-        PopoverModule,
-        CheckboxModule,
         FormsModule,
-        ButtonModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiProgressSpinnerComponent,
+        ArtemisTranslatePipe,
     ],
     templateUrl: './calendar-mobile-overview.component.html',
     styleUrl: './calendar-mobile-overview.component.scss',
 })
 export class CalendarMobileOverviewComponent extends CalendarOverviewComponent {
+    private readonly viewState = inject(CalendarViewStateService);
+
     readonly faArrowUpFromBracket = faArrowUpFromBracket;
     readonly faFilter = faFilter;
     readonly CalendarEventFilterOption = CalendarEventFilterOption;
 
-    firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
+    /* Shared with the desktop overview, so a resize past the breakpoint keeps showing the same month. */
+    firstDateOfCurrentMonth = this.viewState.firstDateOfDisplayedMonth;
     selectedDate = signal<Dayjs | undefined>(undefined);
     weekdayNameKeys = utils.getWeekdayNameKeys();
     monthDescription = computed<string>(() => this.firstDateOfCurrentMonth().locale(this.locale()).format('MMMM YYYY'));

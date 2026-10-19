@@ -18,14 +18,16 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
@@ -50,7 +52,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class ExerciseMappingToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseMappingToolsService.class);
@@ -107,12 +109,12 @@ public class ExerciseMappingToolsService {
 
     /**
      * ThreadLocal storage for exercise mapping preview data.
-     * Used to pass preview data from tool methods to the service layer for frontend rendering.
+     * Used to pass preview data from tool methods to the service layer for rendering in the client.
      */
     private static final ThreadLocal<ExerciseCompetencyMappingDTO> exerciseMappingPreview = new ThreadLocal<>();
 
     /**
-     * ThreadLocal storage for user-selected exercise mappings (from the frontend approval payload).
+     * ThreadLocal storage for user-selected exercise mappings (from the client approval payload).
      * When set, {@link #saveExerciseCompetencyMappings} uses these instead of the LLM-provided mappings,
      * ensuring the user's checkbox selections and weight choices are respected.
      */
@@ -121,7 +123,7 @@ public class ExerciseMappingToolsService {
     /**
      * Set the user-selected mappings before delegating to the exercise mapper agent for saving.
      *
-     * @param mappings the competency mappings selected by the user in the frontend
+     * @param mappings the competency mappings selected by the user in the client
      */
     public static void setUserSelectedMappings(List<ExerciseCompetencyMappingOperation> mappings) {
         userSelectedMappings.set(mappings);
@@ -167,11 +169,13 @@ public class ExerciseMappingToolsService {
 
     private final AtlasAgentSessionCacheService sessionCacheService;
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final ContentExtractionService contentExtractionService;
+
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     public ExerciseMappingToolsService(ExerciseRepository exerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, Optional<AtlasMLApi> atlasMLApi, AtlasAgentSessionCacheService sessionCacheService) {
+            UserRepository userRepository, Optional<AtlasMLApi> atlasMLApi, AtlasAgentSessionCacheService sessionCacheService, ContentExtractionService contentExtractionService) {
         this.exerciseRepository = exerciseRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
@@ -180,6 +184,7 @@ public class ExerciseMappingToolsService {
         this.userRepository = userRepository;
         this.atlasMLApi = atlasMLApi;
         this.sessionCacheService = sessionCacheService;
+        this.contentExtractionService = contentExtractionService;
     }
 
     /**
@@ -212,7 +217,7 @@ public class ExerciseMappingToolsService {
     /**
      * Generates a preview of exercise-to-competency mappings before saving.
      * Shows which competencies will be mapped to the exercise with their weights.
-     * Existing mappings are marked as alreadyMapped for frontend styling.
+     * Existing mappings are marked as alreadyMapped for styling in the client.
      *
      * @param courseId   The course ID
      * @param exerciseId The exercise ID to map
@@ -245,9 +250,20 @@ public class ExerciseMappingToolsService {
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
             Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
-            // Fetch AtlasML suggestions using the exercise description (same logic as the exercise edit lightbulb).
+            // Extract learning-relevant content with flavor text stripping so the suggestion query matches
+            // the cleaned text the orchestrator reasons over. Falls back to the raw problem statement for
+            // unsupported exercise types.
+            String description;
+            try {
+                ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise, true);
+                description = extracted.extractedLearningText().isBlank() ? exercise.getTitle() : extracted.extractedLearningText();
+            }
+            catch (IllegalArgumentException e) {
+                description = exercise.getProblemStatement() != null && !exercise.getProblemStatement().isBlank() ? exercise.getProblemStatement() : exercise.getTitle();
+            }
+
+            // Fetch AtlasML suggestions using the (cleaned) exercise description.
             // Returns null when AtlasML is unavailable — in that case fall back to the LLM's own suggested flags.
-            String description = exercise.getProblemStatement() != null && !exercise.getProblemStatement().isBlank() ? exercise.getProblemStatement() : exercise.getTitle();
             Set<Long> suggestedIds = fetchSuggestedCompetencyIds(courseId, description);
             boolean useAtlasML = suggestedIds != null;
 
@@ -312,7 +328,7 @@ public class ExerciseMappingToolsService {
 
             Exercise exercise = loadAndValidateExercise(exerciseId, courseId);
 
-            // If the user explicitly selected mappings via the frontend approval, use those
+            // If the user explicitly selected mappings via the client approval, use those
             // instead of the LLM-provided ones to honour checkbox and weight choices.
             List<ExerciseCompetencyMappingOperation> selected = userSelectedMappings.get();
             if (selected != null) {
@@ -352,6 +368,7 @@ public class ExerciseMappingToolsService {
                         link.setCompetency(competency);
                         link.setExercise(exercise);
                         link.setWeight(mapping.getWeight());
+                        link.setGeneratedByAi(true);
                         linksToCreate.add(link);
                     }
                     else {
@@ -381,7 +398,7 @@ public class ExerciseMappingToolsService {
 
             exerciseMappingPreview.remove();
 
-            return success(String.format("Successfully updated exercise-competency mappings. Created %d, updated %d, deleted %d.", linksToCreate.size(), linksToUpdate.size(),
+            return success("Successfully updated exercise-competency mappings. Created %d, updated %d, deleted %d.".formatted(linksToCreate.size(), linksToUpdate.size(),
                     linksToDelete.size()));
 
         }
@@ -394,7 +411,7 @@ public class ExerciseMappingToolsService {
 
     /**
      * Get the preview data stored in ThreadLocal.
-     * Called by the service layer to retrieve preview for frontend rendering.
+     * Called by the service layer to retrieve preview for rendering in the client.
      *
      * @return The exercise mapping preview DTO or null
      */
@@ -404,7 +421,7 @@ public class ExerciseMappingToolsService {
 
     /**
      * Clear the ThreadLocal preview data.
-     * Should be called after preview has been consumed by frontend.
+     * Should be called after preview has been consumed by the client.
      */
     public static void clearExerciseMappingPreview() {
         exerciseMappingPreview.remove();
@@ -422,7 +439,7 @@ public class ExerciseMappingToolsService {
     private Exercise loadAndValidateExercise(Long exerciseId, Long courseId) {
         Exercise exercise = exerciseRepository.findWithCompetenciesById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise not found with ID: " + exerciseId));
 
-        if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+        if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId())) {
             throw new IllegalArgumentException("Exercise " + exerciseId + " does not belong to course " + courseId);
         }
 
@@ -465,7 +482,7 @@ public class ExerciseMappingToolsService {
         try {
             return objectMapper.writeValueAsString(Map.of("success", true, "message", message));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return "{\"success\": true, \"message\": \"Operation completed\"}";
         }
     }
@@ -480,19 +497,19 @@ public class ExerciseMappingToolsService {
         try {
             return objectMapper.writeValueAsString(Map.of("success", false, "error", message));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return "{\"success\": false, \"error\": \"Operation failed\"}";
         }
     }
 
     /**
-     * Convert object to JSON using Jackson ObjectMapper.
+     * Convert object to JSON using Jackson JsonMapper.
      */
     private String toJson(Object object) {
         try {
             return objectMapper.writeValueAsString(object);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return "{\"error\": \"Failed to serialize response\"}";
         }
     }

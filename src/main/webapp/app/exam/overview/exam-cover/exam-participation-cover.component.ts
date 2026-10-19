@@ -13,12 +13,13 @@ import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { faArrowLeft, faCircleExclamation, faDoorClosed, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
-import { NgClass } from '@angular/common';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { ExamLiveEventsButtonComponent } from '../events/button/exam-live-events-button.component';
 import { ExamStartInformationComponent } from '../exam-start-information/exam-start-information.component';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -26,7 +27,20 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-exam-participation-cover',
     templateUrl: './exam-participation-cover.component.html',
     styleUrls: ['./exam-participation-cover.scss'],
-    imports: [NgClass, ExamLiveEventsButtonComponent, ExamStartInformationComponent, FormsModule, TranslateDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        ExamLiveEventsButtonComponent,
+        ExamStartInformationComponent,
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        CourseSidebarToggleButtonComponent,
+    ],
 })
 export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
@@ -50,10 +64,19 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     readonly onExamStarted = output<StudentExam>();
     readonly onExamEnded = output<StudentExam>();
     readonly onExamContinueAfterHandInEarly = output<void>();
+    readonly isSidebarCollapsed = input(false);
+    readonly toggleSidebar = output<void>();
     course?: Course;
     readonly startEnabled = signal(false);
     readonly endEnabled = signal(false);
-    confirmed = false;
+    private readonly confirmedState = signal(false);
+    /** Whether the student ticked the confirmation checkbox. Backed by a signal, so that changes made outside of a template event reach the view. */
+    get confirmed(): boolean {
+        return this.confirmedState();
+    }
+    set confirmed(value: boolean) {
+        this.confirmedState.set(value);
+    }
     readonly isAttendanceChecked = signal(false);
 
     readonly testRun = computed(() => this.studentExam()?.testRun);
@@ -62,7 +85,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     readonly formattedGeneralInformation = signal<SafeHtml | undefined>(undefined);
     readonly formattedConfirmationText = signal<SafeHtml | undefined>(undefined);
 
-    interval: number;
+    interval?: number;
     readonly waitingForExamStart = signal(false);
     readonly isFetching = signal(false);
     loadExamSubscription?: Subscription;
@@ -85,8 +108,13 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             if (!exam || !studentExam) {
                 return;
             }
-            this.confirmed = false;
-            this.startEnabled.set(false);
+            // Do not reset the confirmation once the student is already waiting for the exam start: a live schedule
+            // update (start/end date change) replaces the exam object and would otherwise un-confirm the student
+            // mid-countdown. The confirm/start controls are disabled during the wait anyway.
+            if (!this.waitingForExamStart()) {
+                this.confirmed = false;
+                this.startEnabled.set(false);
+            }
 
             if (this.startView()) {
                 this.examParticipationService.setEndView(false);
@@ -98,7 +126,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                 this.formattedConfirmationText.set(this.artemisMarkdown.safeHtmlForMarkdown(exam.confirmationEndText));
             }
 
-            this.accountService.identity().then((user) => {
+            void this.accountService.identity().then((user) => {
                 if (user && user.name) {
                     this.accountName.set(user.name);
                 }
@@ -154,8 +182,13 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             this.isFetching.set(true);
             this.loadExamSubscription = this.examParticipationService
                 .loadStudentExamWithExercisesForConduction(this.exam().course!.id!, this.exam().id!, this.studentExam().id!)
-                .subscribe((studentExam: StudentExam) => {
+                .subscribe((studentExam: StudentExam | undefined) => {
+                    // Always clear the loading state so the start action recovers even when the load falls back to
+                    // local storage and yields no exam — otherwise `isFetching` would stay true and the button spins.
                     this.isFetching.set(false);
+                    if (!studentExam) {
+                        return;
+                    }
                     this.examParticipationService.saveStudentExamToLocalStorage(this.exam().course!.id!, this.exam().id!, studentExam);
                     if (this.hasStarted()) {
                         this.onExamStarted.emit(studentExam);
@@ -234,7 +267,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             exam &&
             exam.visibleDate &&
             exam.visibleDate.isBefore(now) &&
-            now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(exam.startDate!)
+            now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(exam.startDate)
         );
     }
 

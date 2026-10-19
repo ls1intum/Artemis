@@ -28,7 +28,7 @@ class EnforceRoleInResourceArchitectureTest extends AbstractArchitectureTest {
                 var enforceRoleInCourseAnnotation = getAnnotation(EnforceRoleInCourse.class, method);
                 var courseIdFieldName = enforceRoleInCourseAnnotation.resourceIdFieldName();
                 if (hasNoParameterWithName(method, courseIdFieldName)) {
-                    events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), courseIdFieldName)));
+                    events.add(violated(method, "Method %s does not have a parameter named %s".formatted(method.getFullName(), courseIdFieldName)));
                 }
             }
         };
@@ -49,7 +49,7 @@ class EnforceRoleInResourceArchitectureTest extends AbstractArchitectureTest {
                 var enforceRoleInExerciseAnnotation = getAnnotation(EnforceRoleInExercise.class, method);
                 var exerciseIdFieldName = enforceRoleInExerciseAnnotation.resourceIdFieldName();
                 if (hasNoParameterWithName(method, exerciseIdFieldName)) {
-                    events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), exerciseIdFieldName)));
+                    events.add(violated(method, "Method %s does not have a parameter named %s".formatted(method.getFullName(), exerciseIdFieldName)));
                 }
             }
         };
@@ -70,7 +70,7 @@ class EnforceRoleInResourceArchitectureTest extends AbstractArchitectureTest {
                 var enforceRoleInLectureUnitAnnotation = getAnnotation(EnforceRoleInLectureUnit.class, method);
                 var lectureUnitIdFieldName = enforceRoleInLectureUnitAnnotation.resourceIdFieldName();
                 if (hasNoParameterWithName(method, lectureUnitIdFieldName)) {
-                    events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), lectureUnitIdFieldName)));
+                    events.add(violated(method, "Method %s does not have a parameter named %s".formatted(method.getFullName(), lectureUnitIdFieldName)));
                 }
             }
         };

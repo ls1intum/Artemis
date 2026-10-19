@@ -1,0 +1,22 @@
+# Kubernetes-specific settings shared by Artemis core and build-agent pods.
+artemis:
+    continuous-integration:
+        build-runner: kubernetes
+        kubernetes:
+            namespace: artemis-builds
+            helper-image: artemis-localci-helper:local
+            image-pull-policy: IfNotPresent
+            workload-service-account: artemis-localci-workload
+            pod-start-timeout-seconds: 120
+            result-collection-timeout-seconds: 60
+            job-ttl-seconds: 300
+            active-deadline-grace-seconds: 60
+            orphan-cleanup-interval-seconds: 30
+            workspace-size-limit: 4Gi
+            default-resources:
+                cpu: "2"
+                memory: 2Gi
+                ephemeral-storage: 4Gi
+            node-selector: {}
+            tolerations: []
+            image-pull-secrets: []

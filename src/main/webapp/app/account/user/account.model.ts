@@ -1,10 +1,11 @@
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class Account {
     public activated?: boolean;
     public authorities?: string[];
     public login?: string;
     public email?: string;
     public name?: string;
-    public internal: boolean;
+    public internal!: boolean;
     public firstName?: string;
     public lastName?: string;
     public langKey?: string;

@@ -45,7 +45,7 @@ public class IrisChatSession extends IrisSession {
         }
         setUserId(user.getId());
         this.entityId = exercise.getId();
-        this.courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        this.courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
         this.chatMode = chatMode;
     }
 
@@ -80,5 +80,9 @@ public class IrisChatSession extends IrisSession {
 
     public IrisChatMode getMode() {
         return chatMode;
+    }
+
+    public void setMode(IrisChatMode chatMode) {
+        this.chatMode = chatMode;
     }
 }

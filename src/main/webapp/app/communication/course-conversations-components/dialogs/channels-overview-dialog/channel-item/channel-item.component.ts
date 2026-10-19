@@ -24,6 +24,6 @@ export class ChannelItemComponent {
         this.channelAction.emit({
             action,
             channel: this.channel(),
-        } as ChannelAction);
+        });
     }
 }

@@ -1,15 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TutorialRegistrationsStudentsTableComponent } from './tutorial-registrations-students-table.component';
 import { TutorialRegistrationsStudentsTableRemoveActionColumnInfo } from './tutorial-registrations-students-table.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 describe('TutorialRegistrationsStudentsTable', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialRegistrationsStudentsTableComponent;
     let fixture: ComponentFixture<TutorialRegistrationsStudentsTableComponent>;
 
@@ -43,6 +40,16 @@ describe('TutorialRegistrationsStudentsTable', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should associate column headers and data rows in the same table', () => {
+        fixture.componentRef.setInput('students', [firstStudent]);
+        fixture.detectChanges();
+
+        const tables = fixture.nativeElement.querySelectorAll('table');
+        expect(tables).toHaveLength(1);
+        expect(tables[0].querySelectorAll('thead th[scope="col"]')).toHaveLength(4);
+        expect(tables[0].querySelectorAll('tbody tr')).toHaveLength(1);
     });
 
     it('should render one table row per input student', () => {

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.dto.review;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -46,7 +45,7 @@ public record CommentDTO(@Schema(description = "Comment identifier.") @NotNull L
             return List.of();
         }
         return thread.getComments().stream().sorted(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId,
-                Comparator.nullsLast(Comparator.naturalOrder()))).map(CommentDTO::new).collect(Collectors.toUnmodifiableList());
+                Comparator.nullsLast(Comparator.naturalOrder()))).map(CommentDTO::new).toList();
     }
 
     private static String extractAuthorName(User author) {

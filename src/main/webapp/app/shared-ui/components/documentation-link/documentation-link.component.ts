@@ -5,7 +5,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 // Therefore, it's important that they exactly match the url to the subpage of the documentation.
 // Additionally, the case names must match the keys in documentationLinks.json for the tooltip.
 const DocumentationLinks: { [key: string]: string } = {
-    SshSetup: 'student/integrated-code-lifecycle',
+    SshSetup: 'student/tools-reference/integrated-code-lifecycle',
 };
 
 export type DocumentationType = keyof typeof DocumentationLinks;

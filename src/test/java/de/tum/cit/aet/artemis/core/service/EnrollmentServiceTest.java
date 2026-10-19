@@ -60,7 +60,6 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
             course.setEnrollmentEnabled(true);
             course.setEnrollmentStartDate(ZonedDateTime.now().minusDays(2));
             course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
-            course.setStudentGroupName("test-students");
             return course;
         }
 
@@ -123,7 +122,7 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
             var courseWithOrganizations = courseUtilService.createCourseWithOrganizations();
             // load the user with organizations, otherwise the following check would lead to
             // JpaSystemException: failed to lazily initialize a collection of role: de.tum.cit.aet.artemis.domain.User.organizations
-            this.student1 = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(this.student1.getId());
+            this.student1 = userRepository.findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(this.student1.getId());
             assertThatExceptionOfType(AccessForbiddenException.class)
                     .isThrownBy(() -> enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(this.student1, courseWithOrganizations))
                     .withMessage("User is not member of any organization of this course.");
@@ -151,7 +150,6 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
             course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
             course.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(4));
             course.setEndDate(ZonedDateTime.now().plusDays(6));
-            course.setStudentGroupName("test-students");
             return course;
         }
 

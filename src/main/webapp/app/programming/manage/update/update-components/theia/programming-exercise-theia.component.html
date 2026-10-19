@@ -1,5 +1,6 @@
 <div class="form-group">
     <select
+        [attr.aria-label]="'accessibility.theiaImage' | artemisTranslate"
         #select="ngModel"
         required
         class="form-select"
@@ -8,7 +9,7 @@
         name="theiaImage"
         id="field_theiaImage"
     >
-        @for (item of theiaImages! | keyvalue; track item) {
+        @for (item of theiaImages() | keyvalue; track item) {
             <option [value]="item.value">
                 {{ item.key }}
             </option>

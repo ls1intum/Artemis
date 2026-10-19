@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/exam/shared/entities/exam-session.model';
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
@@ -14,11 +15,24 @@ import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-beh
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-suspicious-behavior',
     templateUrl: './suspicious-behavior.component.html',
-    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, PlagiarismCasesOverviewComponent, ButtonComponent, HelpIconComponent, DocumentationButtonComponent],
+    imports: [
+        FormsModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        PlagiarismCasesOverviewComponent,
+        ButtonComponent,
+        HelpIconComponent,
+        DocumentationButtonComponent,
+        CourseTitleBarTitleDirective,
+    ],
 })
 export class SuspiciousBehaviorComponent implements OnInit {
     private suspiciousSessionsService = inject(SuspiciousSessionsService);
@@ -79,17 +93,23 @@ export class SuspiciousBehaviorComponent implements OnInit {
     private retrievePlagiarismCases = () => {
         this.exercises().forEach((exercise) => {
             this.plagiarismCasesService.getNumberOfPlagiarismCasesForExercise(exercise).subscribe((res) => {
-                this.plagiarismCasesPerExercise().computeIfAbsent(exercise, () => res);
+                // Rebuild the Map so the signal notifies and the (zoneless) view re-renders; computeIfAbsent only adds when the key is absent.
+                const updated = new Map(this.plagiarismCasesPerExercise());
+                updated.computeIfAbsent(exercise, () => res);
+                this.plagiarismCasesPerExercise.set(updated);
                 if (res > 0) this.anyPlagiarismCases.set(true);
             });
             this.plagiarismResultsService.getNumberOfPlagiarismResultsForExercise(exercise.id!).subscribe((res) => {
-                this.plagiarismResultsPerExercise().computeIfAbsent(exercise, () => res);
+                // Rebuild the Map so the signal notifies and the (zoneless) view re-renders; computeIfAbsent only adds when the key is absent.
+                const updated = new Map(this.plagiarismResultsPerExercise());
+                updated.computeIfAbsent(exercise, () => res);
+                this.plagiarismResultsPerExercise.set(updated);
             });
         });
     };
 
     goToSuspiciousSessions() {
-        this.router.navigate(['/course-management', this.courseId(), 'exams', this.examId(), 'suspicious-behavior', 'suspicious-sessions'], {
+        void this.router.navigate(['/course-management', this.courseId(), 'exams', this.examId(), 'suspicious-behavior', 'suspicious-sessions'], {
             state: { suspiciousSessions: this.suspiciousSessions(), ipSubnet: this.ipSubnet() },
         });
     }

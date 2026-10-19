@@ -1,11 +1,22 @@
-import { NgClass } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { DialogModule } from 'primeng/dialog';
-import { faCheck, faEdit, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiTableDirective,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { faCheck, faChevronDown, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import dayjs from 'dayjs/esm';
 
 import { BaseCourseRequest, CourseRequest, CourseRequestStatus } from 'app/course/request/course-request.model';
 import { CourseRequestService } from 'app/course/request/course-request.service';
@@ -14,11 +25,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { onError } from 'app/foundation/util/global.utils';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
-import { getCurrentAndFutureSemesters } from 'app/foundation/util/semester-utils';
+import { applySemesterToDates, getCurrentAndFutureSemesters } from 'app/foundation/util/semester-utils';
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
@@ -30,21 +40,28 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 @Component({
     selector: 'jhi-course-requests-admin',
     templateUrl: './course-requests.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        NgClass,
         TranslateDirective,
         ArtemisTranslatePipe,
         ArtemisDatePipe,
-        ButtonComponent,
         FormsModule,
         ReactiveFormsModule,
         RouterLink,
         FaIconComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        PaginatorModule,
+        TumAetUiPaginatorComponent,
         CourseRequestFormComponent,
-        DialogModule,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
+        TumAetUiInputDirective,
+        TumAetUiTooltipDirective,
     ],
 })
 export class CourseRequestsComponent implements OnInit {
@@ -52,14 +69,13 @@ export class CourseRequestsComponent implements OnInit {
     private readonly alertService = inject(AlertService);
     private readonly fb = inject(FormBuilder);
 
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly CourseRequestStatus = CourseRequestStatus;
     protected readonly faCheck = faCheck;
+    protected readonly faChevronDown = faChevronDown;
     protected readonly faTimes = faTimes;
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
     protected readonly faSync = faSync;
-    protected readonly faEdit = faEdit;
+    protected readonly faPencil = faPencil;
     protected readonly SHORT_NAME_PATTERN = SHORT_NAME_PATTERN;
     protected readonly semesters = getCurrentAndFutureSemesters();
 
@@ -69,7 +85,7 @@ export class CourseRequestsComponent implements OnInit {
     readonly decidedRequests = signal<CourseRequest[]>([]);
     /** Total count of decided requests for pagination */
     readonly totalDecidedCount = signal(0);
-    /** Current page for decided requests (1-indexed; the PrimeNG paginator emits 0-indexed pages) */
+    /** Current page for decided requests (1-indexed; the paginator emits 0-indexed pages) */
     readonly decidedPage = signal(1);
     /** Page size for decided requests */
     readonly decidedPageSize = 20;
@@ -92,15 +108,42 @@ export class CourseRequestsComponent implements OnInit {
         title: ['', [Validators.required, Validators.maxLength(255)]],
         shortName: ['', [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)]],
         semester: ['', [Validators.required]],
-        startDate: [undefined as any],
-        endDate: [undefined as any],
+        startDate: [undefined as dayjs.Dayjs | undefined, [Validators.required]],
+        endDate: [undefined as dayjs.Dayjs | undefined, [Validators.required]],
         testCourse: [false],
+        gradeRelevant: [true],
         reason: ['', [Validators.required]],
     });
     /** Whether edit date range is invalid */
     readonly editDateRangeInvalid = signal(false);
     /** Whether edit is being submitted */
     readonly isSubmittingEdit = signal(false);
+
+    private previousSemester?: string;
+
+    constructor() {
+        this.editForm.controls.semester.valueChanges.pipe(takeUntilDestroyed()).subscribe((semester) => {
+            this.applySemesterDateRange(semester ?? undefined);
+        });
+    }
+
+    /**
+     * Applies the range of the newly selected semester to the two date controls, unless the admin picked a date by
+     * hand.
+     *
+     * @param semester the newly selected semester
+     */
+    private applySemesterDateRange(semester: string | undefined): void {
+        const { startDate, endDate } = applySemesterToDates(
+            semester,
+            this.previousSemester,
+            this.editForm.controls.startDate.value ?? undefined,
+            this.editForm.controls.endDate.value ?? undefined,
+        );
+        this.previousSemester = semester;
+        this.editForm.controls.startDate.setValue(startDate);
+        this.editForm.controls.endDate.setValue(endDate);
+    }
 
     ngOnInit() {
         this.load();
@@ -127,9 +170,9 @@ export class CourseRequestsComponent implements OnInit {
         this.load();
     }
 
-    /** Handles a PrimeNG paginator page change for the decided requests by converting the 0-indexed event page to the 1-indexed page and reloading. */
-    onDecidedPaginatorChange(event: PaginatorState): void {
-        this.decidedPage.set((event.page ?? 0) + 1);
+    /** Handles a paginator page change for the decided requests by converting the 0-indexed emitted page to the 1-indexed page and reloading. */
+    onDecidedPaginatorChange(page: number): void {
+        this.decidedPage.set(page + 1);
         this.onDecidedPageChange();
     }
 
@@ -193,43 +236,38 @@ export class CourseRequestsComponent implements OnInit {
         });
     }
 
-    badgeClass(status?: CourseRequestStatus) {
+    badgeSeverity(status?: CourseRequestStatus): 'success' | 'danger' | 'secondary' {
         switch (status) {
             case CourseRequestStatus.ACCEPTED:
-                return 'bg-success';
+                return 'success';
             case CourseRequestStatus.REJECTED:
-                return 'bg-danger';
+                return 'danger';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
-    }
-
-    /**
-     * Formats the instructor course count for display.
-     * This is only used for pending requests where the count is always computed.
-     * Due to @JsonInclude(NON_EMPTY), a count of 0 is omitted and received as undefined.
-     *
-     * @param count the instructor course count (undefined means 0 due to JSON serialization)
-     * @return "No" if count is 0/undefined, "Yes (count)" if count > 0
-     */
-    formatInstructorCount(count?: number): string {
-        if (!count) {
-            return 'No';
-        }
-        return `Yes (${count})`;
     }
 
     openEditModal(request: CourseRequest) {
         this.selectedRequest.set(request);
         this.editDateRangeInvalid.set(false);
         this.isSubmittingEdit.set(false);
+        // Must be set before reset(): reset() emits the semester valueChanges synchronously, and
+        // applySemesterDateRange needs previousSemester to already reflect this request, not the one
+        // that was open before it, or it judges this request's own stored dates against the wrong range.
+        this.previousSemester = request.semester;
+        // Computed explicitly, rather than left to the reset-triggered valueChanges above, because reset()
+        // applies startDate/endDate after semester and would otherwise overwrite whatever that callback just
+        // derived: a request without dates yet needs them filled from its own semester right here.
+        const { startDate, endDate } = applySemesterToDates(request.semester, request.semester, request.startDate, request.endDate);
         this.editForm.reset({
             title: request.title,
             shortName: request.shortName,
             semester: request.semester ?? '',
-            startDate: request.startDate,
-            endDate: request.endDate,
+            startDate,
+            endDate,
             testCourse: request.testCourse ?? false,
+            // The control holds the choice for a regular course; the form shows a test course as not grade-relevant on its own
+            gradeRelevant: request.testCourse ? true : (request.gradeRelevant ?? true),
             reason: request.reason,
         });
         this.editModalVisible.set(true);
@@ -243,20 +281,23 @@ export class CourseRequestsComponent implements OnInit {
             return;
         }
 
-        const startDate = this.editForm.get('startDate')!.value;
-        const endDate = this.editForm.get('endDate')!.value;
-        if (startDate && endDate && !startDate.isBefore(endDate)) {
+        const startDate = this.editForm.get('startDate')!.value!;
+        const endDate = this.editForm.get('endDate')!.value!;
+        if (!startDate.isBefore(endDate)) {
             this.editDateRangeInvalid.set(true);
             return;
         }
 
+        const testCourse = this.editForm.get('testCourse')!.value ?? false;
         const payload: BaseCourseRequest = {
             title: this.editForm.get('title')!.value!,
             shortName: this.editForm.get('shortName')!.value!,
-            semester: this.editForm.get('semester')!.value ?? undefined,
+            semester: this.editForm.get('semester')!.value!,
             startDate,
             endDate,
-            testCourse: this.editForm.get('testCourse')!.value ?? false,
+            testCourse,
+            // A test course is never grade relevant, whatever the (disabled) control still holds
+            gradeRelevant: !testCourse && (this.editForm.get('gradeRelevant')!.value ?? true),
             reason: this.editForm.get('reason')!.value!,
         };
 

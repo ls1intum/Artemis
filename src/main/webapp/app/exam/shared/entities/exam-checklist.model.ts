@@ -1,13 +1,14 @@
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class ExamChecklist {
     public numberOfGeneratedStudentExams?: number; // transient
 
     public numberOfTestRuns?: number; // transient
 
-    public numberOfExamsSubmitted: number;
+    public numberOfExamsSubmitted!: number;
 
-    public numberOfExamsStarted: number;
+    public numberOfExamsStarted!: number;
 
-    public numberOfTotalParticipationsForAssessment: number;
+    public numberOfTotalParticipationsForAssessment!: number;
 
     public numberOfTotalExamAssessmentsFinishedByCorrectionRound?: number[]; // all exercises summed up
 
@@ -17,7 +18,7 @@ export class ExamChecklist {
 
     public allExamExercisesAllStudentsPrepared?: boolean;
 
-    public existsUnassessedQuizzes: boolean;
+    public existsUnassessedQuizzes!: boolean;
 
-    public existsUnsubmittedExercises: boolean;
+    public existsUnsubmittedExercises!: boolean;
 }

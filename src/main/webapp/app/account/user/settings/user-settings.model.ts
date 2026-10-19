@@ -29,12 +29,17 @@ export interface SettingGroup<T> {
  * (name, description) are stored in x-settings-structure.ts files,
  * i.e. their respective keys, the full string is located in the translation jsons
  * whereas the changeable properties (e.g. webapp, email : on/off) are saved in the DB
+ *
+ * Deserialized from server data / populated by subclasses after construction, hence the definite-assignment (!) marker.
  */
 export abstract class Setting {
     // can not replace T with Setting due to shadowing rules of TSLint
     // generic is needed to make Setting polymorphic (e.g. for settings structures) otherwise compiler errors occur
     key?: string;
     descriptionKey?: string;
-    settingId: SettingId;
+    settingId!: SettingId;
     changed?: boolean;
+    // The on/off state of the setting (see the class doc: settings hold changeable on/off properties). Kept on the base
+    // so concrete settings components can read it via the inherited signals without re-declaring (shadowing) them.
+    active?: boolean;
 }

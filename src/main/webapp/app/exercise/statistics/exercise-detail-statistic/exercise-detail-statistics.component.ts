@@ -1,4 +1,4 @@
-import { Component, OnInit, input } from '@angular/core';
+import { Component, OnInit, input, signal } from '@angular/core';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -15,12 +15,12 @@ export class ExerciseDetailStatisticsComponent implements OnInit {
     readonly doughnutStats = input<ExerciseManagementStatisticsDto>(undefined!);
     readonly exerciseType = input<ExerciseType>(undefined!);
 
-    course: Course;
+    readonly course = signal<Course>(undefined!);
     isCommunicationEnabled = isCommunicationEnabled;
 
     readonly DoughnutChartType = DoughnutChartType;
 
     ngOnInit() {
-        this.course = getCourseFromExercise(this.exercise())!;
+        this.course.set(getCourseFromExercise(this.exercise())!);
     }
 }

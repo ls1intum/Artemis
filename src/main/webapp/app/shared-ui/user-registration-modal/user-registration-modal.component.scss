@@ -1,6 +1,6 @@
 .user-registration-dialog {
     .p-dialog-header {
-        padding: 1.25rem 1.25rem 0.25rem 1.25rem;
+        padding: 1.25rem 1.25rem 0.25rem;
     }
 
     .jhi-table-view-container .p-datatable {
@@ -27,8 +27,8 @@
         justify-content: center;
         flex: 1;
         text-align: center;
-        color: var(--bs-secondary-color, #6c757d);
-        border: 1px solid var(--bs-border-color);
+        color: var(--p-text-muted-color);
+        border: 1px solid var(--p-content-border-color);
         border-radius: 0.5rem;
         padding: 2rem;
 

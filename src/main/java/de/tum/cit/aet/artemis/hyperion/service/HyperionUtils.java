@@ -138,6 +138,24 @@ final class HyperionUtils {
     }
 
     /**
+     * Sanitizes exercise-authored content without removing template expressions such as
+     * {@code {{variable}}}. These expressions are legitimate content in Angular and
+     * Mustache exercises and are safe here because prompt variables are substituted in a
+     * single pass. Control characters and prompt delimiter lines are still removed.
+     *
+     * @param input the raw exercise content, may be null
+     * @return the sanitized and trimmed string, never null
+     */
+    static String sanitizeExerciseContent(String input) {
+        if (input == null) {
+            return "";
+        }
+        String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
+        sanitized = DELIMITER_PATTERN.matcher(sanitized).replaceAll("");
+        return sanitized.trim();
+    }
+
+    /**
      * Sanitizes user input while preserving line structure (line count and positions).
      * Unlike {@link #sanitizeInput(String)}, this method does not trim the result,
      * ensuring that line numbers from the client remain valid for targeted (line-based) refinement.

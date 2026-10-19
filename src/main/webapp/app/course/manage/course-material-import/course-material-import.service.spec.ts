@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -8,8 +7,6 @@ import { CourseMaterialImportService } from './course-material-import.service';
 import { CourseMaterialImportOptionsDTO, CourseMaterialImportResultDTO } from './course-material-import.model';
 
 describe('CourseMaterialImportService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseMaterialImportService;
     let httpMock: HttpTestingController;
 

@@ -4,15 +4,12 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentRef } from '@angular/core';
 
 import { MetricsGarbageCollectorComponent } from 'app/admin/metrics/blocks/metrics-garbagecollector/metrics-garbagecollector.component';
 import { GarbageCollector } from 'app/admin/metrics/metrics.model';
 
 describe('MetricsGarbageCollectorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: MetricsGarbageCollectorComponent;
     let componentRef: ComponentRef<MetricsGarbageCollectorComponent>;
     let fixture: ComponentFixture<MetricsGarbageCollectorComponent>;

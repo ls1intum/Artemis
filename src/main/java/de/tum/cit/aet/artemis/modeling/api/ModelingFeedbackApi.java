@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -36,12 +37,13 @@ public class ModelingFeedbackApi extends AbstractModelingApi {
 
     /**
      * Triggers automatic Athena feedback for a modeling exercise submission inside a test exam. Soft-skips instead
-     * of throwing when Athena is unavailable, the submission is missing/empty or already has an Athena result.
+     * of throwing when Athena is unavailable, the submission is empty or already has an Athena result.
      *
      * @param participation    the student participation associated with the modeling exercise
      * @param modelingExercise the modeling exercise
+     * @param submission       the submission that was validated as eligible for feedback
      */
-    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise) {
-        modelingExerciseFeedbackService.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise, Submission submission) {
+        modelingExerciseFeedbackService.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, submission);
     }
 }

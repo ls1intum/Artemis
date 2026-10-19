@@ -1,19 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { NgModel } from '@angular/forms';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { provideHttpClient } from '@angular/common/http';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { MAX_PACKAGE_NAME_LENGTH } from 'app/foundation/constants/input.constants';
+
+/**
+ * Typed view onto the `packageNameField` viewChild signal so the spec can stub it directly
+ * instead of depending on real NgModel validity timing in the zoneless test environment.
+ */
+type LanguageInternals = ProgrammingExerciseLanguageComponent & {
+    packageNameField: Signal<NgModel | undefined>;
+};
+const internals = (c: ProgrammingExerciseLanguageComponent): LanguageInternals => c as LanguageInternals;
 
 describe('ProgrammingExerciseLanguageComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseLanguageComponent>;
     let comp: ProgrammingExerciseLanguageComponent;
 
@@ -48,7 +59,6 @@ describe('ProgrammingExerciseLanguageComponent', () => {
             packageName: true,
             enableStaticCodeAnalysis: true,
             sequentialTestRuns: true,
-            customizeBuildScript: true,
         });
     });
 
@@ -72,5 +82,155 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         comp.programmingExercise().allowOnlineIde = true;
         fixture.detectChanges();
         expect(comp.programmingExerciseTheiaComponent()).toBeDefined();
+    });
+
+    it('should mark package name as invalid when it exceeds the maximum length', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        exercise.packageName = 'a'.repeat(MAX_PACKAGE_NAME_LENGTH + 1);
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
+        fixture.detectChanges();
+        const packageNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_packageName');
+        expect(packageNameInput.maxLength).toBe(MAX_PACKAGE_NAME_LENGTH);
+        vi.spyOn(internals(comp), 'packageNameField').mockReturnValue({ valid: false } as NgModel);
+        expect(comp.isPackageNameValid()).toBe(false);
+    });
+
+    it('should mark package name as valid when it is within the maximum length', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        exercise.packageName = 'validpackage';
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
+        fixture.detectChanges();
+        const packageNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_packageName');
+        expect(packageNameInput.maxLength).toBe(MAX_PACKAGE_NAME_LENGTH);
+        vi.spyOn(internals(comp), 'packageNameField').mockReturnValue({ valid: true } as NgModel);
+        expect(comp.isPackageNameValid()).toBe(true);
+    });
+
+    describe('sequential test runs checkbox', () => {
+        const getSequentialTestRunsCheckbox = (): HTMLInputElement => fixture.nativeElement.querySelector('#field_sequentialTestRuns');
+
+        const setUp = async (configOverrides: Partial<ProgrammingExerciseCreationConfig>) => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            exercise.buildConfig = new ProgrammingExerciseBuildConfig();
+            exercise.buildConfig.sequentialTestRuns = true;
+            fixture.componentRef.setInput('programmingExercise', exercise);
+            fixture.componentRef.setInput(
+                'programmingExerciseCreationConfig',
+                Object.assign({}, programmingExerciseCreationConfigMock, { sequentialTestRunsAllowed: true }, configOverrides),
+            );
+            fixture.detectChanges();
+            // NgModel applies the disabled state in a microtask
+            await fixture.whenStable();
+        };
+
+        it('should be enabled when a new exercise is created', async () => {
+            await setUp({});
+            expect(getSequentialTestRunsCheckbox().disabled).toBe(false);
+        });
+
+        it('should be disabled when importing from a file', async () => {
+            await setUp({ isImportFromFile: true });
+            expect(getSequentialTestRunsCheckbox().disabled).toBe(true);
+        });
+
+        it('should be disabled when importing from the sharing platform', async () => {
+            await setUp({ isImportFromSharing: true });
+            expect(getSequentialTestRunsCheckbox().disabled).toBe(true);
+        });
+    });
+
+    describe('programming language selector', () => {
+        const getLanguageSelect = (): HTMLSelectElement => fixture.nativeElement.querySelector('#field_programmingLanguage');
+
+        const setUp = async (configOverrides: Partial<ProgrammingExerciseCreationConfig>, exerciseId?: number) => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = exerciseId;
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            exercise.buildConfig = new ProgrammingExerciseBuildConfig();
+            fixture.componentRef.setInput('programmingExercise', exercise);
+            fixture.componentRef.setInput(
+                'programmingExerciseCreationConfig',
+                Object.assign({}, programmingExerciseCreationConfigMock, { supportedLanguages: [ProgrammingLanguage.JAVA, ProgrammingLanguage.PYTHON] }, configOverrides),
+            );
+            fixture.detectChanges();
+            // NgModel applies the disabled state in a microtask
+            await fixture.whenStable();
+        };
+
+        it('should be enabled when a new exercise is created', async () => {
+            await setUp({});
+            expect(getLanguageSelect().disabled).toBe(false);
+        });
+
+        it('should be disabled when editing an existing exercise', async () => {
+            await setUp({}, 42);
+            expect(getLanguageSelect().disabled).toBe(true);
+        });
+
+        it.each([
+            ['importing an existing exercise', { isImportFromExistingExercise: true }],
+            ['importing from a file', { isImportFromFile: true }],
+            ['importing from the sharing platform', { isImportFromSharing: true }],
+        ])('should be disabled when %s', async (_description, configOverrides) => {
+            await setUp(configOverrides);
+            expect(getLanguageSelect().disabled).toBe(true);
+        });
+    });
+
+    describe('project type picker', () => {
+        const getProjectTypeButtons = (): HTMLButtonElement[] => Array.from(fixture.nativeElement.querySelectorAll('jhi-mode-picker button'));
+
+        const setUp = (configOverrides: Partial<ProgrammingExerciseCreationConfig>) => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            exercise.buildConfig = new ProgrammingExerciseBuildConfig();
+            fixture.componentRef.setInput('programmingExercise', exercise);
+            fixture.componentRef.setInput(
+                'programmingExerciseCreationConfig',
+                Object.assign(
+                    {},
+                    programmingExerciseCreationConfigMock,
+                    {
+                        projectTypes: [ProjectType.PLAIN_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_BLACKBOX],
+                        modePickerOptions: [
+                            { value: ProjectType.PLAIN_GRADLE, label: 'Gradle', btnClass: 'btn-primary' },
+                            { value: ProjectType.MAVEN_BLACKBOX, label: 'Blackbox', btnClass: 'btn-primary' },
+                        ],
+                    },
+                    configOverrides,
+                ),
+            );
+            fixture.detectChanges();
+        };
+
+        it('should be enabled when a new exercise is created', () => {
+            setUp({});
+            expect(getProjectTypeButtons()).toHaveLength(2);
+            expect(getProjectTypeButtons().every((button) => !button.disabled)).toBe(true);
+        });
+
+        it.each([
+            ['importing an existing exercise', { isImportFromExistingExercise: true }],
+            ['importing from a file', { isImportFromFile: true }],
+            ['importing from the sharing platform', { isImportFromSharing: true }],
+        ])('should be disabled when %s', (_description, configOverrides) => {
+            setUp(configOverrides);
+            expect(getProjectTypeButtons()).toHaveLength(2);
+            expect(getProjectTypeButtons().every((button) => button.disabled)).toBe(true);
+        });
+
+        it('should not offer the with dependencies option when importing from the sharing platform', () => {
+            const isEditFieldDisplayedRecord = { programmingLanguage: true, projectType: true, withExemplaryDependency: true, packageName: true };
+            fixture.componentRef.setInput('isEditFieldDisplayedRecord', isEditFieldDisplayedRecord);
+            setUp({});
+            expect(fixture.nativeElement.querySelector('#field_with_dependencies')).not.toBeNull();
+            setUp({ isImportFromSharing: true });
+            expect(fixture.nativeElement.querySelector('#field_with_dependencies')).toBeNull();
+        });
     });
 });

@@ -34,10 +34,12 @@ import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -46,7 +48,6 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
-import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationStatusRepository;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
@@ -72,21 +73,18 @@ public class CourseScoreCalculationService {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
-    private final Optional<IrisSettingsApi> irisSettingsApi;
-
     private final PresentationPointsCalculationService presentationPointsCalculationService;
 
     private final UserCourseNotificationStatusRepository userCourseNotificationStatusRepository;
 
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
             Optional<PlagiarismCaseApi> plagiarismCaseApi, PresentationPointsCalculationService presentationPointsCalculationService,
-            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, Optional<IrisSettingsApi> irisSettingsApi) {
+            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
-        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -112,7 +110,11 @@ public class CourseScoreCalculationService {
         double reachableMaxPoints = 0.0;
         double reachablePresentationPoints = 0.0;
 
+        // Non-variant exercises are summed individually.
         for (var exercise : exercises) {
+            if (isExerciseVariant(exercise)) {
+                continue;
+            }
             if (!includeIntoScoreCalculation(exercise)) {
                 continue;
             }
@@ -125,6 +127,11 @@ public class CourseScoreCalculationService {
             }
         }
 
+        // Variant groups each contribute at most their configured maxPoints.
+        MaxAndReachablePointsDTO variantGroupPoints = calculateVariantGroupMaxAndReachablePoints(exercises);
+        maxPoints += variantGroupPoints.maxPoints();
+        reachableMaxPoints += variantGroupPoints.reachablePoints();
+
         if (gradingScale != null) {
             reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, reachableMaxPoints);
             maxPoints += reachablePresentationPoints;
@@ -132,6 +139,33 @@ public class CourseScoreCalculationService {
         }
 
         return new MaxAndReachablePointsDTO(maxPoints, reachableMaxPoints, reachablePresentationPoints);
+    }
+
+    /**
+     * Calculates the max and reachable max points contributed by the exercise variant groups among the given exercises.
+     * Each group's variant max points are summed and then capped at the group's configured maxPoints. Non-variant
+     * exercises are ignored here (they are summed up separately).
+     *
+     * @param exercises the exercises which are checked for variant group membership
+     * @return the capped max and reachable max points contributed by the variant groups (presentation points are always 0)
+     */
+    private MaxAndReachablePointsDTO calculateVariantGroupMaxAndReachablePoints(Set<ExerciseCourseScoreDTO> exercises) {
+        var maxPointsPerGroup = new VariantGroupCappedSum();
+        var reachableMaxPointsPerGroup = new VariantGroupCappedSum();
+
+        for (var exercise : exercises) {
+            if (!isExerciseVariant(exercise) || !includeIntoScoreCalculation(exercise)) {
+                continue;
+            }
+            if (exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                maxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints());
+                if (isAssessmentDone(exercise)) {
+                    reachableMaxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints());
+                }
+            }
+        }
+
+        return new MaxAndReachablePointsDTO(maxPointsPerGroup.total(), reachableMaxPointsPerGroup.total(), 0.0);
     }
 
     /**
@@ -218,17 +252,16 @@ public class CourseScoreCalculationService {
      * Get all the items needed for the CourseForDashboardDTO.
      * This includes scoresPerExerciseType and participationResults.
      *
-     * @param course                     the course to calculate the items for.
-     * @param gradingScale               the grading scale with the presentation configuration to use for calculating the presentation points.
-     * @param userId                     the id of the students whose scores in the course will be calculated.
-     * @param includeIrisEnabledInCourse whether the enabled state of Iris in this course should be included in the CourseForDashboardDTO
+     * @param course       the course to calculate the items for.
+     * @param gradingScale the grading scale with the presentation configuration to use for calculating the presentation points.
+     * @param userId       the id of the students whose scores in the course will be calculated.
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
-    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, @Nullable GradingScale gradingScale, long userId, boolean includeIrisEnabledInCourse) {
+    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, @Nullable GradingScale gradingScale, long userId) {
         Set<StudentParticipation> gradedStudentParticipations = new HashSet<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
-            // This method is used in the CourseResource where the course is first fetched with lazy participations, and participations are then fetched separately in the
+            // This method is used in the CourseOverviewResource where the course is first fetched with lazy participations, and participations are then fetched separately in the
             // CourseService and added to the course if found.
             // If no participations are found for the course, no value is set to the course's participations and trying to access them here would throw a
             // LazyInitializationException. This is why we first need to check if the participations are initialized before adding them to the list of participations.
@@ -250,8 +283,7 @@ public class CourseScoreCalculationService {
 
         List<PlagiarismCase> plagiarismCases = new ArrayList<>();
         for (Exercise exercise : courseExercises) {
-            // TODO: Look into refactoring the fetchPlagiarismCasesForCourseExercises method in the CourseService to always initialize the participations (to an
-            // empty list if there aren't any). This way you don't need this very unintuitive check for the initialization state.
+            // TODO: implement this differently
             if (Hibernate.isInitialized(exercise.getPlagiarismCases())) {
                 plagiarismCases.addAll(exercise.getPlagiarismCases());
             }
@@ -266,6 +298,9 @@ public class CourseScoreCalculationService {
         // Get scores per exercise type for the course (used in course-statistics.component i.a.).
         Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresForStudentParticipations(course, gradedStudentParticipations, userId, plagiarismCases);
 
+        // Computed before the loop below nulls each participation's exercise, while the group membership is still available.
+        Map<Long, Double> achievedPointsPerVariantGroup = calculateAchievedPointsPerVariantGroup(userId, gradedStudentParticipations, plagiarismCases);
+
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
@@ -278,10 +313,44 @@ public class CourseScoreCalculationService {
             studentParticipation.setExercise(null);
         }
 
-        return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
-                scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
-                participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()),
-                includeIrisEnabledInCourse ? irisSettingsApi.map(api -> api.isIrisEnabledForCourse(course.getId())).orElse(false) : null);
+        return new CourseForDashboardDTO(CourseDashboardDTO.of(course), totalScores, scoresPerExerciseType.get(ExerciseType.TEXT),
+                scoresPerExerciseType.get(ExerciseType.PROGRAMMING), scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD),
+                scoresPerExerciseType.get(ExerciseType.QUIZ), participationResults,
+                userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()), achievedPointsPerVariantGroup);
+    }
+
+    /**
+     * Calculates the plagiarism-adjusted points a student earns per variant group, keyed by group id. Groups with a
+     * configured {@code maxPoints} are capped at it; groups without one contribute their raw sum. A course-wide
+     * {@link PlagiarismVerdict#PLAGIARISM} verdict zeroes the whole course (empty map); otherwise each contribution runs
+     * through {@link #calculatePointsAchievedFromExercise}, applying the per-exercise plagiarism deduction.
+     *
+     * @param userId                  the id of the student whose per-group points are calculated
+     * @param participationsOfStudent the student's graded participations (exercises must still be attached)
+     * @param plagiarismCases         the plagiarism verdicts relevant for the student
+     * @return the plagiarism-adjusted points per variant group id (capped where a cap is configured); empty when no
+     *         variant group contributes
+     */
+    Map<Long, Double> calculateAchievedPointsPerVariantGroup(long userId, Collection<StudentParticipation> participationsOfStudent, Collection<PlagiarismCase> plagiarismCases) {
+        PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
+        if (plagiarismMapping.studentHasVerdict(userId, PlagiarismVerdict.PLAGIARISM)) {
+            return Map.of();
+        }
+        var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(userId);
+        var achievedPointsPerVariantGroup = new VariantGroupCappedSum();
+        for (StudentParticipation participation : participationsOfStudent) {
+            Exercise exercise = participation.getExercise();
+            ExerciseVariantGroup variantGroup = exercise.getExerciseVariantGroup();
+            if (variantGroup == null || !includeIntoScoreCalculation(ExerciseCourseScoreDTO.from(exercise))) {
+                continue;
+            }
+            Result result = getResultForParticipation(participation, exercise.getDueDate());
+            if (result != null && result.isRated()) {
+                double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
+                achievedPointsPerVariantGroup.add(variantGroup.getId(), variantGroup.getMaxPoints(), pointsAchievedFromExercise);
+            }
+        }
+        return achievedPointsPerVariantGroup.cappedPointsPerGroup();
     }
 
     /**
@@ -338,7 +407,7 @@ public class CourseScoreCalculationService {
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
 
         if (plagiarismMapping.studentHasVerdict(studentId, PlagiarismVerdict.PLAGIARISM)) {
-            return new StudentScoresDTO(0.0, 0.0, 0.0, 0);
+            return new StudentScoresDTO(0.0, 0.0, 0.0, 0.0, 0);
         }
 
         Map<Long, CourseGradeScoreDTO> gradeScoreDTOMap = courseGradeScoreDTOsOfStudent.stream()
@@ -348,7 +417,11 @@ public class CourseScoreCalculationService {
         double presentationScore = 0;
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
 
+        // Non-variant exercises are summed individually.
         for (ExerciseCourseScoreDTO exercise : courseExercises) {
+            if (isExerciseVariant(exercise)) {
+                continue;
+            }
             if (!includeIntoScoreCalculation(exercise)) {
                 continue;
             }
@@ -361,6 +434,11 @@ public class CourseScoreCalculationService {
             }
         }
 
+        // Exercise variants: the points a student earns across a group's variants are capped at the group's configured maxPoints.
+        VariantGroupCappedSum variantGroupAchievedPoints = calculateVariantGroupAchievedPoints(courseExercises, gradeScoreDTOMap, plagiarismCasesForStudent, course);
+        pointsAchievedByStudentInCourse += variantGroupAchievedPoints.total();
+        double pointsCappedAwayFromVariantGroups = variantGroupAchievedPoints.uncappedTotal() - variantGroupAchievedPoints.total();
+
         // calculate presentation points for graded presentations
         if (gradingScale != null && maxAndReachablePoints.reachablePresentationPoints() > 0.0) {
             presentationScore = presentationPointsCalculationService.calculatePresentationPointsForStudentId(gradingScale, studentId,
@@ -372,11 +450,43 @@ public class CourseScoreCalculationService {
             presentationScore = courseGradeScoreDTOsOfStudent.stream().filter(p -> p.presentationScore() != null && p.presentationScore() > 0.0).count();
         }
 
-        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, presentationScore);
+        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, pointsAchievedByStudentInCourse + pointsCappedAwayFromVariantGroups,
+                presentationScore);
     }
 
-    private StudentScoresDTO getStudentScoresDTO(Course course, MaxAndReachablePointsDTO maxAndReachablePoints, double pointsAchievedByStudentInCourse, double presentationScore) {
+    /**
+     * Calculates the points a student earns from the exercise variant groups among the given exercises. Each group's
+     * earned variant points are summed and then capped at the group's configured maxPoints. Non-variant exercises are
+     * ignored here (they are summed up separately).
+     *
+     * @param courseExercises           the exercises which are checked for variant group membership
+     * @param gradeScoreDTOMap          the student's achieved scores per exercise id
+     * @param plagiarismCasesForStudent the plagiarism cases of the student per exercise id
+     * @param course                    the course the scores are calculated for (used for rounding)
+     * @return the per-group accumulator of the points the student earns from the variant groups (see
+     *         {@link VariantGroupCappedSum#total()} for the capped and {@link VariantGroupCappedSum#uncappedTotal()} for the uncapped sum)
+     */
+    private VariantGroupCappedSum calculateVariantGroupAchievedPoints(Set<ExerciseCourseScoreDTO> courseExercises, Map<Long, CourseGradeScoreDTO> gradeScoreDTOMap,
+            Map<Long, PlagiarismCase> plagiarismCasesForStudent, Course course) {
+        var achievedPointsPerGroup = new VariantGroupCappedSum();
+        for (ExerciseCourseScoreDTO exercise : courseExercises) {
+            if (!isExerciseVariant(exercise) || !includeIntoScoreCalculation(exercise)) {
+                continue;
+            }
+            CourseGradeScoreDTO courseGradeScoreDTO = gradeScoreDTOMap.get(exercise.id());
+            if (courseGradeScoreDTO != null) {
+                double pointsAchievedFromExercise = calculatePointsAchievedFromExerciseScoreDTO(exercise, courseGradeScoreDTO.score(), plagiarismCasesForStudent.get(exercise.id()),
+                        course);
+                achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), pointsAchievedFromExercise);
+            }
+        }
+        return achievedPointsPerGroup;
+    }
+
+    private StudentScoresDTO getStudentScoresDTO(Course course, MaxAndReachablePointsDTO maxAndReachablePoints, double pointsAchievedByStudentInCourse,
+            double pointsAchievedByStudentInCourseUncapped, double presentationScore) {
         double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
+        double absolutePointsTotal = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourseUncapped, course);
         double relativeScore = maxAndReachablePoints.maxPoints() > 0
                 ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.maxPoints() * 100.0, course)
                 : 0.0;
@@ -384,7 +494,7 @@ public class CourseScoreCalculationService {
                 ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.reachablePoints() * 100.0, course)
                 : 0.0;
 
-        return new StudentScoresDTO(absolutePoints, relativeScore, currentRelativeScore, presentationScore);
+        return new StudentScoresDTO(absolutePoints, absolutePointsTotal, relativeScore, currentRelativeScore, presentationScore);
     }
 
     /**
@@ -404,13 +514,15 @@ public class CourseScoreCalculationService {
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
 
         if (participationsOfStudent.isEmpty() || plagiarismMapping.studentHasVerdict(studentId, PlagiarismVerdict.PLAGIARISM)) {
-            return new StudentScoresDTO(0.0, 0.0, 0.0, 0);
+            return new StudentScoresDTO(0.0, 0.0, 0.0, 0.0, 0);
         }
 
         double pointsAchievedByStudentInCourse = 0.0;
         double presentationScore = 0;
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
 
+        // A student's points across a group's variants are summed here and then capped at the group's configured maxPoints.
+        var achievedPointsPerVariantGroup = new VariantGroupCappedSum();
         for (StudentParticipation participation : participationsOfStudent) {
             Exercise exercise = participation.getExercise();
             if (!includeIntoScoreCalculation(ExerciseCourseScoreDTO.from(exercise))) {
@@ -421,9 +533,18 @@ public class CourseScoreCalculationService {
             var result = getResultForParticipation(participation, exercise.getDueDate());
             if (result != null && result.isRated()) {
                 double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
-                pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
+                var variantGroup = exercise.getExerciseVariantGroup();
+                if (variantGroup != null && variantGroup.getMaxPoints() != null) {
+                    achievedPointsPerVariantGroup.add(variantGroup.getId(), variantGroup.getMaxPoints(), pointsAchievedFromExercise);
+                }
+                else {
+                    // Non-variant exercises are summed individually.
+                    pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
+                }
             }
         }
+        pointsAchievedByStudentInCourse += achievedPointsPerVariantGroup.total();
+        double pointsCappedAwayFromVariantGroups = achievedPointsPerVariantGroup.uncappedTotal() - achievedPointsPerVariantGroup.total();
 
         // calculate presentation points for graded presentations
         if (gradingScale != null && maxAndReachablePoints.reachablePresentationPoints() > 0.0) {
@@ -436,7 +557,8 @@ public class CourseScoreCalculationService {
             presentationScore = participationsOfStudent.stream().filter(p -> p.getPresentationScore() != null && p.getPresentationScore() > 0.0).count();
         }
 
-        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, presentationScore);
+        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, pointsAchievedByStudentInCourse + pointsCappedAwayFromVariantGroups,
+                presentationScore);
     }
 
     private double calculatePointsAchievedFromExercise(Exercise exercise, Result result, @Nullable PlagiarismCase plagiarismCaseForExercise) {
@@ -537,6 +659,18 @@ public class CourseScoreCalculationService {
     }
 
     /**
+     * Determines whether the given exercise is a variant of an exercise variant group with a configured points cap.
+     * Only such exercises go through the separate, capped variant-group computation; all others are summed up
+     * individually.
+     *
+     * @param exercise the exercise to check
+     * @return {@code true} if the exercise belongs to a variant group that has a maxPoints cap
+     */
+    private static boolean isExerciseVariant(ExerciseCourseScoreDTO exercise) {
+        return exercise.variantGroupId() != null && exercise.variantGroupMaxPoints() != null;
+    }
+
+    /**
      * Determines whether the max points of a given exercise should be included in the amount of reachable points of a course.
      * <p>
      * Base case: points are reachable if the exercise is released and the assessment is over -> It was possible for the student to get points.
@@ -596,4 +730,5 @@ public class CourseScoreCalculationService {
     public double calculateReachablePoints(GradingScale gradingScale, Set<ExerciseCourseScoreDTO> exercises) {
         return calculateMaxAndReachablePoints(gradingScale, exercises).reachablePoints();
     }
+
 }

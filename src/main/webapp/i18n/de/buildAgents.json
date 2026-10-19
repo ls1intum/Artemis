@@ -14,7 +14,7 @@
             "lastBuildDate": "Letztes Build Datum",
             "averageBuildDuration": "Durchschnittliche Build-Dauer (in Sekunden)",
             "gitRevision": "Git Revision",
-            "dockerVersion": "Docker Version",
+            "buildRunner": "Build-Runner",
             "running": "Laufend",
             "idle": "Inaktiv",
             "paused": "Angehalten",
@@ -24,6 +24,8 @@
             "buildJobsRunning": "Build Jobs laufen",
             "consecutiveBuildFailures": "Konsekutiv fehlgeschlagene Builds:",
             "pauseAfterConsecutiveFailures": "Selbst anhalten nach konsekutiven Build Fehlern:",
+            "registeredAddresses": "Verbindet sich von",
+            "outsideAllowedNetworks": " (außerhalb der erlaubten Build-Agent-Netzwerke, kann nicht klonen)",
             "alerts": {
                 "buildAgentPaused": "Anfrage zum Anhalten des Build-Agenten erfolgreich gesendet. Der Agent akzeptiert keine neuen BuildJobs und wird die aktuellen BuildJobs entweder ordnungsgemäß beenden oder nach einer konfigurierbaren Anzahl von Sekunden abbrechen.",
                 "buildAgentResumed": "Anfrage zum Fortsetzen des BuildJobs erfolgreich gesendet. Der Agent wird wieder neue BuildJobs annehmen.",

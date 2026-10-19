@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -59,7 +58,8 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
                     LEFT JOIN s.messages m
                 WHERE s.userId = :userId
                     AND s.courseId = :courseId
-                    AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER
+                    AND (m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER
+                         OR m.origin = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin.PROACTIVE_STRUGGLE)
                 GROUP BY s, s.entityId, s.chatMode, e.shortName, l.title
                 HAVING COUNT(m) > 0
                 ORDER BY MAX(m.sentAt) DESC
@@ -85,7 +85,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     default List<IrisChatSession> findLatestByEntityIdAndChatModeAndUserIdWithMessages(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable) {
         List<Long> ids = findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(entityId, chatMode, userId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
         return findSessionsWithMessagesByIdIn(ids);
     }

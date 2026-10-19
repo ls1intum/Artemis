@@ -13,7 +13,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({ template: '' })
 class DummyImportComponent extends ImportCourseCompetenciesComponent {
@@ -23,7 +22,6 @@ class DummyImportComponent extends ImportCourseCompetenciesComponent {
 }
 
 describe('ImportCourseCompetenciesComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<DummyImportComponent>;
     let component: DummyImportComponent;
     let courseCompetencyService: CourseCompetencyService;
@@ -88,9 +86,9 @@ describe('ImportCourseCompetenciesComponent', () => {
 
         componentFixture.detectChanges();
 
-        expect(component.disabledIds).toHaveLength(6);
-        expect(component.disabledIds).toEqual(expect.arrayContaining([1, 2, 3, 4, 11, 12]));
-        expect(component.searchedCourseCompetencies.resultsOnPage).toHaveLength(3);
+        expect(component.disabledIds()).toHaveLength(6);
+        expect(component.disabledIds()).toEqual(expect.arrayContaining([1, 2, 3, 4, 11, 12]));
+        expect(component.searchedCourseCompetencies().resultsOnPage).toHaveLength(3);
     });
 
     it('should cancel', () => {
@@ -104,10 +102,10 @@ describe('ImportCourseCompetenciesComponent', () => {
     });
 
     it('should deactivate correctly', () => {
-        component.isLoading = false;
+        component.isLoading.set(false);
         expect(component.canDeactivate()).toBeTruthy();
 
-        component.isLoading = true;
+        component.isLoading.set(true);
         expect(component.canDeactivate()).toBeFalsy();
 
         component.isSubmitted = true;
@@ -156,28 +154,28 @@ describe('ImportCourseCompetenciesComponent', () => {
 
         component.selectCompetency({ id: 1 });
         expect(component.selectedCourseCompetencies.resultsOnPage).toHaveLength(1);
-        expect(component.disabledIds).toHaveLength(1);
+        expect(component.disabledIds()).toHaveLength(1);
 
         //no id so does not get added to disabled ids
         component.selectCompetency({});
         expect(component.selectedCourseCompetencies.resultsOnPage).toHaveLength(2);
-        expect(component.disabledIds).toHaveLength(1);
+        expect(component.disabledIds()).toHaveLength(1);
     });
 
     it('should remove competencies from selected', () => {
         component.selectedCourseCompetencies.resultsOnPage = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
-        component.disabledIds = [1, 2, 3, 4];
+        component.disabledIds.set([1, 2, 3, 4]);
 
         component.removeCompetency({ id: 1 });
         expect(component.selectedCourseCompetencies.resultsOnPage).toHaveLength(3);
-        expect(component.disabledIds).toHaveLength(3);
+        expect(component.disabledIds()).toHaveLength(3);
 
         //is not part of the competencies so nothing happens.
         component.removeCompetency({ id: 5 });
         //has no id so nothing happens
         component.removeCompetency({});
         expect(component.selectedCourseCompetencies.resultsOnPage).toHaveLength(3);
-        expect(component.disabledIds).toHaveLength(3);
+        expect(component.disabledIds()).toHaveLength(3);
     });
 
     it('should not deactivate with pending changes', () => {

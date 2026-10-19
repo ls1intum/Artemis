@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -17,8 +16,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('QuizQuestionListEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizQuestionListEditComponent>;
     let component: QuizQuestionListEditComponent;
 
@@ -89,17 +86,17 @@ describe('QuizQuestionListEditComponent', () => {
 
     it('should toggle show hide existing questions flag', () => {
         component.showHideExistingQuestions();
-        expect(component.showExistingQuestions).toBe(true);
+        expect(component.showExistingQuestions()).toBe(true);
         component.showHideExistingQuestions();
-        expect(component.showExistingQuestions).toBe(false);
+        expect(component.showExistingQuestions()).toBe(false);
     });
 
     it('should add existing quiz questions to quizQuestions and toggle show hide existing questions flag', () => {
         const question0 = new MultipleChoiceQuestion();
         const question1 = new ShortAnswerQuestion();
-        component.showExistingQuestions = true;
+        component.showExistingQuestions.set(true);
         component.handleExistingQuestionsAdded([question0, question1]);
-        expect(component.showExistingQuestions).toBe(false);
+        expect(component.showExistingQuestions()).toBe(false);
         expect(component.quizQuestions()).toHaveLength(2);
         expect(component.quizQuestions()[0]).toEqual(question0);
         expect(component.quizQuestions()[1]).toEqual(question1);

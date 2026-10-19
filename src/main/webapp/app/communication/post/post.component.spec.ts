@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, RouterState, provideRouter } from '@angular/router';
@@ -14,14 +14,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
-import { DisplayPriority, PageType, SortDirection } from 'app/communication/metis.util';
+import { DisplayPriority, PageType, SortDirection } from 'app/communication/communication.util';
 import { PostComponent } from 'app/communication/post/post.component';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -30,43 +30,40 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import {
-    metisChannel,
-    metisCourse,
-    metisPostExerciseUser1,
-    metisPostLectureUser1,
-    metisUser1,
+    communicationChannel,
+    communicationCourse,
+    communicationPostExerciseUser1,
+    communicationPostLectureUser1,
+    communicationUser1,
     post,
     sortedAnswerArray,
     unsortedAnswerArray,
-} from 'test/helpers/sample/metis-sample-data';
+} from 'test/helpers/sample/communication-sample-data';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 
 describe('PostComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostComponent;
     let fixture: ComponentFixture<PostComponent>;
     let debugElement: DebugElement;
-    let metisService: MetisService;
-    let metisServiceGetLinkSpy: ReturnType<typeof vi.spyOn>;
-    let metisServiceGetQueryParamsSpy: ReturnType<typeof vi.spyOn>;
-    let metisServiceGetPageTypeStub: ReturnType<typeof vi.spyOn>;
+    let communicationService: CommunicationService;
+    let communicationServiceGetLinkSpy: ReturnType<typeof vi.spyOn>;
+    let communicationServiceGetQueryParamsSpy: ReturnType<typeof vi.spyOn>;
+    let communicationServiceGetPageTypeStub: ReturnType<typeof vi.spyOn>;
     let router: MockRouter;
     let mainContainer: HTMLElement;
     let searchConfig: CourseWideSearchConfig;
@@ -83,6 +80,7 @@ describe('PostComponent', () => {
             filterToCourseWide: false,
             filterToUnresolved: false,
             filterToAnsweredOrReacted: false,
+            filterToUnverifiedIris: false,
             sortingOrder: SortDirection.ASCENDING,
         };
 
@@ -92,7 +90,7 @@ describe('PostComponent', () => {
                 OverlayModule,
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 PostingHeaderComponent,
                 MockComponent(PostingContentComponent),
                 PostingFooterComponent,
@@ -107,7 +105,7 @@ describe('PostComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideRouter([]),
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: Router, useClass: MockRouter },
                 { provide: DOCUMENT, useValue: document },
                 MockProvider(OneToOneChatService),
@@ -115,7 +113,7 @@ describe('PostComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ConversationService, useClass: MockConversationService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: DialogService, useValue: { open: vi.fn() } },
             ],
         }).overrideComponent(PostComponent, {
@@ -124,12 +122,12 @@ describe('PostComponent', () => {
         });
 
         fixture = TestBed.createComponent(PostComponent);
-        metisService = TestBed.inject(MetisService);
-        metisService.setCourse(metisCourse);
+        communicationService = TestBed.inject(CommunicationService);
+        communicationService.setCourse(communicationCourse);
 
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        metisServiceGetPageTypeStub = vi.spyOn(metisService, 'getPageType');
+        communicationServiceGetPageTypeStub = vi.spyOn(communicationService, 'getPageType');
         router = TestBed.inject<MockRouter>(Router as any);
         const mockRouterState = {
             snapshot: {
@@ -157,7 +155,7 @@ describe('PostComponent', () => {
         component.posting.set(post);
         component.posting()!.answers = unsortedAnswerArray;
         component.sortAnswerPosts();
-        expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
+        expect(component.sortedAnswerPosts()).toEqual(sortedAnswerArray);
     });
 
     it('should not sort empty array of answers', () => {
@@ -165,30 +163,30 @@ describe('PostComponent', () => {
         component.posting()!.answers = unsortedAnswerArray;
         component.posting()!.answers = undefined;
         component.sortAnswerPosts();
-        expect(component.sortedAnswerPosts).toEqual([]);
+        expect(component.sortedAnswerPosts()).toEqual([]);
     });
 
     it('should set router link and query params', () => {
-        metisServiceGetLinkSpy = vi.spyOn(metisService, 'getLinkForPost');
-        metisServiceGetQueryParamsSpy = vi.spyOn(metisService, 'getQueryParamsForPost');
+        communicationServiceGetLinkSpy = vi.spyOn(communicationService, 'getLinkForPost');
+        communicationServiceGetQueryParamsSpy = vi.spyOn(communicationService, 'getQueryParamsForPost');
 
-        component.posting.set(metisPostExerciseUser1);
+        component.posting.set(communicationPostExerciseUser1);
         fixture.detectChanges();
 
-        expect(metisServiceGetLinkSpy).toHaveBeenCalled();
-        expect(metisServiceGetQueryParamsSpy).toHaveBeenCalledWith(expect.objectContaining({ id: metisPostExerciseUser1.id }));
-        expect(component.routerLink).toEqual(['/courses', metisPostExerciseUser1.conversation?.course?.id, 'discussion']);
-        expect(component.queryParams).toEqual({ searchText: '#' + metisPostExerciseUser1.id });
+        expect(communicationServiceGetLinkSpy).toHaveBeenCalled();
+        expect(communicationServiceGetQueryParamsSpy).toHaveBeenCalledWith(expect.objectContaining({ id: communicationPostExerciseUser1.id }));
+        expect(component.routerLink).toEqual(['/courses', communicationPostExerciseUser1.conversation?.course?.id, 'discussion']);
+        expect(component.queryParams).toEqual({ searchText: '#' + communicationPostExerciseUser1.id });
     });
 
     it('should initialize post without context information when shown in page section', () => {
-        metisServiceGetPageTypeStub.mockReturnValue(PageType.PAGE_SECTION);
-        component.posting.set(metisPostLectureUser1);
+        communicationServiceGetPageTypeStub.mockReturnValue(PageType.PAGE_SECTION);
+        component.posting.set(communicationPostLectureUser1);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
         expect(contextLink).toBeNull();
-        component.posting.set(metisPostExerciseUser1);
+        component.posting.set(communicationPostExerciseUser1);
         fixture.detectChanges();
         fixture.changeDetectorRef.detectChanges();
         const context = getElement(fixture.debugElement, 'span.context-information');
@@ -196,7 +194,7 @@ describe('PostComponent', () => {
     });
 
     it('should contain the posting content', () => {
-        component.posting.set(metisPostExerciseUser1);
+        component.posting.set(communicationPostExerciseUser1);
         fixture.changeDetectorRef.detectChanges();
 
         const header = getElement(debugElement, 'jhi-posting-content');
@@ -209,14 +207,14 @@ describe('PostComponent', () => {
     });
 
     it('should have correct content and title', () => {
-        component.posting.set(metisPostExerciseUser1);
+        component.posting.set(communicationPostExerciseUser1);
         component.ngOnInit();
-        expect(component.content).toBe(metisPostExerciseUser1.content);
-        expect(component.posting()!.title).toBe(metisPostExerciseUser1.title);
+        expect(component.content).toBe(communicationPostExerciseUser1.content);
+        expect(component.posting()!.title).toBe(communicationPostExerciseUser1.title);
     });
 
     it('should open create answer post modal', () => {
-        component.posting.set(metisPostExerciseUser1);
+        component.posting.set(communicationPostExerciseUser1);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         // @ts-ignore
@@ -226,7 +224,7 @@ describe('PostComponent', () => {
     });
 
     it('should close create answer post modal', () => {
-        component.posting.set(metisPostExerciseUser1);
+        component.posting.set(communicationPostExerciseUser1);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         // @ts-ignore
@@ -240,48 +238,48 @@ describe('PostComponent', () => {
         const oneToOneChatService = TestBed.inject(OneToOneChatService);
         const createChatSpy = vi.spyOn(oneToOneChatService, 'create').mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
 
-        component.onUserReferenceClicked(metisUser1.login!);
+        component.onUserReferenceClicked(communicationUser1.login!);
 
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'communication'], {
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', communicationCourse.id, 'communication'], {
             queryParams: {
                 conversationId: 1,
             },
         });
-        expect(createChatSpy).toHaveBeenCalledWith(metisCourse.id, metisUser1.login!);
+        expect(createChatSpy).toHaveBeenCalledWith(communicationCourse.id, communicationUser1.login!);
     });
 
     it('should create or navigate to oneToOneChat when on messaging page', () => {
-        const metisConversationService = TestBed.inject(MetisConversationService);
+        const courseConversationsService = TestBed.inject(CourseConversationsService);
         const createOneToOneChatSpy = vi.fn().mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
-        Object.defineProperty(metisConversationService, 'createOneToOneChat', { value: createOneToOneChatSpy });
+        Object.defineProperty(courseConversationsService, 'createOneToOneChat', { value: createOneToOneChatSpy });
         fixture.componentRef.setInput('isCommunicationPage', true);
 
-        component.onUserReferenceClicked(metisUser1.login!);
+        component.onUserReferenceClicked(communicationUser1.login!);
 
-        expect(createOneToOneChatSpy).toHaveBeenCalledWith(metisUser1.login!);
+        expect(createOneToOneChatSpy).toHaveBeenCalledWith(communicationUser1.login!);
     });
 
     it('should navigate to channel when not on messaging page', () => {
         const navigateSpy = vi.spyOn(router, 'navigate');
 
-        component.onChannelReferenceClicked(metisChannel.id!);
+        component.onChannelReferenceClicked(communicationChannel.id!);
 
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'communication'], {
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', communicationCourse.id, 'communication'], {
             queryParams: {
-                conversationId: metisChannel.id!,
+                conversationId: communicationChannel.id!,
             },
         });
     });
 
     it('should navigate to channel when on messaging page', () => {
-        const metisConversationService = TestBed.inject(MetisConversationService);
+        const courseConversationsService = TestBed.inject(CourseConversationsService);
         const setActiveConversationSpy = vi.fn();
-        Object.defineProperty(metisConversationService, 'setActiveConversation', { value: setActiveConversationSpy });
+        Object.defineProperty(courseConversationsService, 'setActiveConversation', { value: setActiveConversationSpy });
         fixture.componentRef.setInput('isCommunicationPage', true);
 
-        component.onChannelReferenceClicked(metisChannel.id!);
+        component.onChannelReferenceClicked(communicationChannel.id!);
 
-        expect(setActiveConversationSpy).toHaveBeenCalledWith(metisChannel.id!);
+        expect(setActiveConversationSpy).toHaveBeenCalledWith(communicationChannel.id!);
     });
 
     it('should set isDeleted to true', () => {
@@ -318,7 +316,7 @@ describe('PostComponent', () => {
 
         expect(component.deleteTimer).toBeDefined();
         expect(component.deleteInterval).toBeDefined();
-        expect(component.deleteTimerInSeconds).toBe(component.timeToDeleteInSeconds);
+        expect(component.deleteTimerInSeconds()).toBe(component.timeToDeleteInSeconds);
     });
 
     it('should not set timers when isDelete is false', () => {
@@ -340,9 +338,8 @@ describe('PostComponent', () => {
 
     it('should close previous dropdown when another is opened', () => {
         const previousComponent = {
-            showDropdown: true,
+            showDropdown: signal(true),
             enableBodyScroll: vi.fn(),
-            changeDetector: { detectChanges: vi.fn() },
         } as any as PostComponent;
 
         PostComponent.activeDropdownPost = previousComponent;
@@ -352,11 +349,10 @@ describe('PostComponent', () => {
         Object.defineProperty(event, 'target', { value: target });
         component.onRightClick(event);
 
-        expect(previousComponent.showDropdown).toBe(false);
+        expect(previousComponent.showDropdown()).toBe(false);
         expect(previousComponent.enableBodyScroll).toHaveBeenCalled();
-        expect(previousComponent.changeDetector.detectChanges).toHaveBeenCalled();
         expect(PostComponent.activeDropdownPost).toBe(component);
-        expect(component.showDropdown).toBe(true);
+        expect(component.showDropdown()).toBe(true);
     });
 
     it('should disable body scroll', () => {
@@ -372,10 +368,10 @@ describe('PostComponent', () => {
     });
 
     it('should handle click outside and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         const enableBodyScrollSpy = vi.spyOn(component, 'enableBodyScroll' as any);
         component.onClickOutside();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
         expect(enableBodyScrollSpy).toHaveBeenCalled();
     });
 
@@ -410,8 +406,8 @@ describe('PostComponent', () => {
             component.onRightClick(event);
 
             expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
-            expect(component.showDropdown).toBe(showDropdown);
-            expect(component.dropdownPosition).toEqual(dropdownPosition);
+            expect(component.showDropdown()).toBe(showDropdown);
+            expect(component.dropdownPosition()).toEqual(dropdownPosition);
 
             vi.restoreAllMocks();
         });
@@ -419,11 +415,11 @@ describe('PostComponent', () => {
 
     it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
         const forwardMessageSpy = vi.spyOn(component, 'forwardMessage');
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.posting.set(post);
         fixture.changeDetectorRef.detectChanges();
 
-        const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
+        const forwardButton = debugElement.query(By.css('[data-testid="posting-menu-forward"]'));
         expect(forwardButton).not.toBeNull();
 
         forwardButton.nativeElement.click();
@@ -452,7 +448,7 @@ describe('PostComponent', () => {
 
     it('should display post-time span when isConsecutive() returns true', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
+        component.posting.set({ ...communicationPostExerciseUser1, creationDate: fixedDate });
 
         vi.spyOn(component, 'isConsecutive').mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
@@ -468,7 +464,7 @@ describe('PostComponent', () => {
 
     it('should not display post-time span when isConsecutive() returns false', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
+        component.posting.set({ ...communicationPostExerciseUser1, creationDate: fixedDate });
 
         vi.spyOn(component, 'isConsecutive').mockReturnValue(false);
         fixture.changeDetectorRef.detectChanges();
@@ -482,7 +478,7 @@ describe('PostComponent', () => {
         fixture.componentRef.setInput('forwardedAnswerPosts', []);
         component.fetchForwardedMessages();
 
-        expect(component.originalPostDetails).toBeUndefined();
+        expect(component.originalPostDetails()).toBeUndefined();
     });
 
     it('should set originalPostDetails from first forwarded post if forwardedPosts is non-empty', () => {
@@ -493,7 +489,7 @@ describe('PostComponent', () => {
         fixture.componentRef.setInput('forwardedAnswerPosts', []);
         component.fetchForwardedMessages();
 
-        expect(component.originalPostDetails).toEqual(forwardedPost1);
+        expect(component.originalPostDetails()).toEqual(forwardedPost1);
     });
 
     it('should set originalPostDetails from first forwarded answer if forwardedAnswerPosts is non-empty and forwardedPosts is empty', () => {
@@ -504,31 +500,27 @@ describe('PostComponent', () => {
         fixture.componentRef.setInput('forwardedAnswerPosts', [forwardedAnswer1, forwardedAnswer2]);
         component.fetchForwardedMessages();
 
-        expect(component.originalPostDetails).toEqual(forwardedAnswer1);
+        expect(component.originalPostDetails()).toEqual(forwardedAnswer1);
     });
 
-    it('should call markForCheck if a forwarded post is set', () => {
-        const markForCheckSpy = vi.spyOn(component['changeDetector'], 'markForCheck');
+    it('should set originalPostDetails when a forwarded post is set', () => {
         const forwardedPost = { id: 77, content: 'Forwarded Post MarkCheck' } as Post;
 
         fixture.componentRef.setInput('forwardedPosts', [forwardedPost]);
         fixture.componentRef.setInput('forwardedAnswerPosts', []);
         component.fetchForwardedMessages();
 
-        expect(markForCheckSpy).toHaveBeenCalled();
-        expect(component.originalPostDetails).toBe(forwardedPost);
+        expect(component.originalPostDetails()).toBe(forwardedPost);
     });
 
-    it('should call markForCheck if a forwarded answer is set', () => {
-        const markForCheckSpy = vi.spyOn(component['changeDetector'], 'markForCheck');
+    it('should set originalPostDetails when a forwarded answer is set', () => {
         const forwardedAnswer = { id: 88, content: 'Forwarded Answer MarkCheck' } as AnswerPost;
 
         fixture.componentRef.setInput('forwardedPosts', []);
         fixture.componentRef.setInput('forwardedAnswerPosts', [forwardedAnswer]);
         component.fetchForwardedMessages();
 
-        expect(markForCheckSpy).toHaveBeenCalled();
-        expect(component.originalPostDetails).toBe(forwardedAnswer);
+        expect(component.originalPostDetails()).toBe(forwardedAnswer);
     });
 
     it('should emit onNavigateToPost event when onTriggerNavigateToPost is called', () => {
@@ -550,41 +542,42 @@ describe('PostComponent', () => {
             filterToCourseWide: false,
             filterToUnresolved: false,
             filterToAnsweredOrReacted: false,
+            filterToUnverifiedIris: false,
             sortingOrder: SortDirection.ASCENDING,
         });
-        component.showSearchResultInAnswersHint = false;
+        component.showSearchResultInAnswersHint.set(false);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(true);
+        expect(component.showSearchResultInAnswersHint()).toBe(true);
     });
 
     it('should update showSearchResultInAnswersHint to true for search query matching answer content and base post content', () => {
         component.posting.set({ id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] });
         searchConfig.searchTerm = 'answer';
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = false;
+        component.showSearchResultInAnswersHint.set(false);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(true);
+        expect(component.showSearchResultInAnswersHint()).toBe(true);
     });
 
     it('should update showSearchResultInAnswersHint to false for search query matching only base post content', () => {
         component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         searchConfig.searchTerm = 'base';
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = true;
+        component.showSearchResultInAnswersHint.set(true);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(false);
+        expect(component.showSearchResultInAnswersHint()).toBe(false);
     });
 
     it('should update showSearchResultInAnswersHint to false for empty search query', () => {
         component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = true;
+        component.showSearchResultInAnswersHint.set(true);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(false);
+        expect(component.showSearchResultInAnswersHint()).toBe(false);
     });
 
     // update to true when selected author is in answers
@@ -592,9 +585,9 @@ describe('PostComponent', () => {
         component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] });
         searchConfig.selectedAuthors = [{ id: 1 }];
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = true;
+        component.showSearchResultInAnswersHint.set(true);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(true);
+        expect(component.showSearchResultInAnswersHint()).toBe(true);
     });
 });

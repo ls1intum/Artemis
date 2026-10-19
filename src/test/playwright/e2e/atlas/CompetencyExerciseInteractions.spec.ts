@@ -28,7 +28,7 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
 
     test('Links exercise to single competency', async ({ page, courseManagementExercises, competencyManagement }) => {
         await page.goto(`/course-management/${course.id}/exercises`);
-        await courseManagementExercises.getExercise(exercise.id!).getByRole('link', { name: 'Edit' }).click();
+        await courseManagementExercises.openExerciseEditForm(exercise.id!);
 
         // Link competency
         await page.getByRole('checkbox', { name: competenciesData[0].title }).check();
@@ -36,8 +36,7 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         await expect(page.getByText(competenciesData[0].title)).toBeVisible();
 
         // Verify exercise is linked
-        await competencyManagement.goto(course.id!);
-        await page.getByRole('link', { name: competenciesData[0].title }).click();
+        await competencyManagement.openCompetencyDetail(course.id!, competenciesData[0].title);
         await expect(page.getByRole('button', { name: 'Start exercise' })).toBeVisible();
     });
 
@@ -49,14 +48,14 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         test.setTimeout(360_000);
         // Link to first competency
         await page.goto(`/course-management/${course.id}/exercises`);
-        await courseManagementExercises.getExercise(exercise.id!).getByRole('link', { name: 'Edit' }).click();
+        await courseManagementExercises.openExerciseEditForm(exercise.id!);
         await page.getByRole('checkbox', { name: competenciesData[0].title }).check();
         await page.getByRole('button', { name: 'Save' }).click();
         await expect(page.getByText(competenciesData[0].title)).toBeVisible();
 
         // Link to second competency
         await page.goto(`/course-management/${course.id}/exercises`);
-        await courseManagementExercises.getExercise(exercise.id!).getByRole('link', { name: 'Edit' }).click();
+        await courseManagementExercises.openExerciseEditForm(exercise.id!);
 
         // Remove first competency
         await page.getByRole('checkbox', { name: competenciesData[0].title }).uncheck();
@@ -68,30 +67,27 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         await expect(page.getByText(competenciesData[0].title)).not.toBeVisible();
         await expect(page.getByText(competenciesData[1].title)).toBeVisible();
 
-        await competencyManagement.goto(course.id!);
-
         // Verify first competency no longer shows exercise
-        await page.getByRole('link', { name: competenciesData[0].title }).click();
+        await competencyManagement.openCompetencyDetail(course.id!, competenciesData[0].title);
         await page.waitForLoadState('domcontentloaded');
         await expect(page.getByRole('button', { name: 'Start exercise' })).toHaveCount(0);
-        await competencyManagement.goto(course.id!);
 
         // Verify second competency shows the exercise
-        await page.getByRole('link', { name: competenciesData[1].title }).click();
+        await competencyManagement.openCompetencyDetail(course.id!, competenciesData[1].title);
         await expect(page.getByRole('button', { name: 'Start exercise' })).toBeVisible();
     });
 
     test('Removes competency from exercise when unlinking', async ({ page, courseManagementExercises }) => {
         // Link exercise first
         await page.goto(`/course-management/${course.id}/exercises`);
-        await courseManagementExercises.getExercise(exercise.id!).getByRole('link', { name: 'Edit' }).click();
+        await courseManagementExercises.openExerciseEditForm(exercise.id!);
         await page.getByRole('checkbox', { name: competenciesData[0].title }).check();
         await page.getByRole('button', { name: 'Save' }).click();
         await expect(page.getByText(competenciesData[0].title)).toBeVisible();
 
         // Unlink exercise
         await page.goto(`/course-management/${course.id}/exercises`);
-        await courseManagementExercises.getExercise(exercise.id!).getByRole('link', { name: 'Edit' }).click();
+        await courseManagementExercises.openExerciseEditForm(exercise.id!);
         await page.getByRole('checkbox', { name: competenciesData[0].title }).uncheck();
         await page.getByRole('button', { name: 'Save' }).click();
 

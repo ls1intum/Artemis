@@ -8,36 +8,24 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.annotation.PreDestroy;
 
-import javax.sql.DataSource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.boot.info.BuildProperties;
-import org.springframework.boot.info.GitProperties;
-import org.springframework.boot.jdbc.metadata.DataSourcePoolMetadataProvider;
-import org.springframework.boot.jdbc.metadata.HikariDataSourcePoolMetadata;
-import org.springframework.boot.jdbc.metrics.DataSourcePoolMetrics;
 import org.springframework.boot.web.server.autoconfigure.ServerProperties;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -67,12 +55,10 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spi.properties.ClusterProperty;
-import com.hazelcast.spring.cache.HazelcastCacheManager;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionFunction;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionOn;
 import com.hazelcast.spring.context.SpringManagedContext;
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.metrics.micrometer.MicrometerMetricsTrackerFactory;
 
-import de.tum.cit.aet.artemis.core.config.cache.PrefixedKeyGenerator;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIPriorityQueueComparator;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -161,10 +147,9 @@ import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
  *
  * @see <a href="https://docs.hazelcast.com/hazelcast/latest/">Hazelcast Documentation</a>
  */
-@Conditional(CoreOrHazelcastBuildAgent.class)
+@Conditional(HazelcastDistributedDataCondition.class)
 @Lazy(value = false)
 @Configuration
-@EnableCaching
 public class HazelcastConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastConfiguration.class);
@@ -260,84 +245,21 @@ public class HazelcastConfiguration {
         HazelcastClient.shutdownAll();
     }
 
-    // ==================== Spring Cache Beans ====================
+    // ==================== Metrics ====================
 
     /**
-     * Creates the Spring {@link CacheManager} backed by Hazelcast.
-     *
+     * Binds Hazelcast cache metrics to Micrometer after the application is fully started.
      * <p>
-     * <strong>Rationale:</strong> Using Hazelcast as the cache backend (vs. local caches like Caffeine)
-     * provides distributed coherence across all Artemis nodes via Hazelcast IMaps. This is the
-     * caching layer for {@code @Cacheable} on read-heavy lookups with explicit eviction:
-     * <ul>
-     * <li>Title caches for breadcrumbs/navigation ({@code courseTitle}, {@code exerciseTitle},
-     * {@code lectureTitle}, {@code examTitle}, etc.) — evicted by {@code TitleCacheEvictionService}</li>
-     * <li>File content for static assets ({@code files}) — evicted on file write</li>
-     * <li>Computed previews ({@code linkPreview}, {@code plantUmlPng}, {@code plantUmlSvg})</li>
-     * <li>Notification settings and saved-post lookups — evicted via {@code @CacheEvict} on writers</li>
-     * </ul>
-     * Hibernate L2 entity cache is disabled cluster-wide; see
-     * {@code documentation/docs/developer/guidelines/caching.mdx} for the full policy. Do not
-     * add {@code @Cache} annotations on entities — an ArchUnit rule enforces this.
-     *
+     * Binds metrics for every Hazelcast IMap used as distributed state to Micrometer — this covers the Spring
+     * {@code @Cacheable} caches, which the distributed data provider backs with IMaps on this provider, as well as
+     * application-level maps (rate-limit buckets, atlas session state, course notification cache, etc.). Hibernate L2
+     * cache is disabled cluster-wide, so no JCache regions exist; see
+     * {@code documentation/docs/developer/guidelines/caching.mdx}.
      * <p>
-     * The {@code @Qualifier} ensures we get the correct HazelcastInstance when multiple beans exist.
-     *
-     * @param hazelcastInstance the Hazelcast instance to back the cache
-     * @return the Hazelcast-backed CacheManager for Spring's caching abstraction
-     */
-    @Bean
-    public CacheManager cacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        log.debug("Starting HazelcastCacheManager");
-        return new HazelcastCacheManager(hazelcastInstance);
-    }
-
-    /**
-     * Configures HikariCP with {@link MicrometerMetricsTrackerFactory} before the connection pool starts.
-     * <p>
-     * HikariCP timer metrics (acquire, creation, usage) are only tracked when a {@code MetricsTrackerFactory}
-     * is set before the pool's first {@code getConnection()} call. Spring Boot's auto-configuration
-     * ({@code DataSourcePoolMetricsAutoConfiguration}) attempts to set it via a {@code MeterBinder},
-     * but that runs after JPA/Hibernate initialization has already started the pool.
-     * <p>
-     * This {@code BeanPostProcessor} runs {@code postProcessBeforeInitialization} which executes
-     * after the HikariDataSource constructor but before any dependent bean (like EntityManagerFactory)
-     * can call {@code getConnection()}, ensuring the metrics tracker is configured in time.
-     *
-     * @param meterRegistryProvider lazy provider to avoid circular dependency during early initialization
-     * @return the BeanPostProcessor (must be static to prevent early initialization of enclosing config)
-     */
-    @Bean
-    static BeanPostProcessor hikariMetricsPostProcessor(ObjectProvider<MeterRegistry> meterRegistryProvider) {
-        return new BeanPostProcessor() {
-
-            private static final Logger log = LoggerFactory.getLogger("HikariMetricsPostProcessor");
-
-            @Override
-            public Object postProcessBeforeInitialization(Object bean, String beanName) {
-                if (bean instanceof HikariDataSource hikari && hikari.getMetricsTrackerFactory() == null) {
-                    MeterRegistry registry = meterRegistryProvider.getIfAvailable();
-                    if (registry != null) {
-                        hikari.setMetricsTrackerFactory(new MicrometerMetricsTrackerFactory(registry));
-                        log.info("Configured HikariCP with MicrometerMetricsTrackerFactory for timer metrics (acquire, creation, usage)");
-                    }
-                }
-                return bean;
-            }
-        };
-    }
-
-    /**
-     * Binds cache and datasource metrics to Micrometer after the application is fully started.
-     * <p>
-     * Cache: binds metrics for every Hazelcast IMap used as distributed state to Micrometer —
-     * this covers Spring {@code @Cacheable} caches backed by {@link HazelcastCacheManager} as
-     * well as application-level IMaps (rate-limit buckets, atlas session state, course
-     * notification cache, etc.). Hibernate L2 cache is disabled cluster-wide, so no JCache
-     * regions exist; see {@code documentation/docs/developer/guidelines/caching.mdx}.
-     * <p>
-     * Datasource: Binds HikariCP pool gauges (active, idle, min, max, pending connections).
-     * Timer metrics (acquire, creation, usage) are registered by {@link #hikariMetricsPostProcessor}.
+     * Hazelcast-specific by nature: these counters come from per-map local statistics that Redis has no equivalent for.
+     * The database pool metrics that used to be bound here moved to
+     * {@link de.tum.cit.aet.artemis.core.config.metric.DataSourceMetricsConfiguration}, because they must be reported
+     * whichever provider is configured.
      */
     @EventListener(ApplicationReadyEvent.class)
     public void bindMetricsToMicrometer() {
@@ -346,58 +268,27 @@ public class HazelcastConfiguration {
         }
         var registry = meterRegistry.get();
 
-        // 1. Bind metrics for every Hazelcast IMap used as distributed state.
         var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
-        if (hazelcastInstance != null) {
-            int bound = 0;
-            for (var distributedObject : hazelcastInstance.getDistributedObjects()) {
-                String name = distributedObject.getName();
-                if (name.startsWith("__") || "default".equals(name) || "nodeMetrics".equals(name)) {
-                    continue;
-                }
-                try {
-                    if (distributedObject instanceof IMap<?, ?> map) {
-                        new HazelcastCacheMetrics(map, List.of()).bindTo(registry);
-                        bound++;
-                    }
-                }
-                catch (Exception e) {
-                    log.warn("Could not bind cache metrics for '{}': {}", name, e.getMessage());
+        if (hazelcastInstance == null) {
+            return;
+        }
+        int bound = 0;
+        for (var distributedObject : hazelcastInstance.getDistributedObjects()) {
+            String name = distributedObject.getName();
+            if (name.startsWith("__") || "default".equals(name) || "nodeMetrics".equals(name)) {
+                continue;
+            }
+            try {
+                if (distributedObject instanceof IMap<?, ?> map) {
+                    new HazelcastCacheMetrics(map, List.of()).bindTo(registry);
+                    bound++;
                 }
             }
-            log.info("Bound {} cache metrics to Micrometer", bound);
-        }
-
-        // 2. Bind HikariCP datasource pool gauges (active, idle, min, max, pending connections).
-        try {
-            var dataSource = applicationContext.getBean(DataSource.class);
-            if (dataSource instanceof HikariDataSource hikariDataSource) {
-                DataSourcePoolMetadataProvider provider = ds -> new HikariDataSourcePoolMetadata((HikariDataSource) ds);
-                new DataSourcePoolMetrics(dataSource, provider, "hikaricp", List.of()).bindTo(registry);
-                log.info("Bound HikariCP pool metrics to Micrometer for pool '{}'", hikariDataSource.getPoolName());
+            catch (Exception e) {
+                log.warn("Could not bind cache metrics for '{}': {}", name, e.getMessage());
             }
         }
-        catch (Exception e) {
-            log.warn("Could not bind datasource pool metrics: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * Creates a cache key generator that includes build information in cache keys.
-     *
-     * <p>
-     * <strong>Rationale:</strong> Including git commit hash and build version in cache keys ensures
-     * that cache entries from different application versions don't collide. This is important during
-     * rolling deployments where nodes running different versions coexist temporarily. Without this,
-     * serialization incompatibilities between versions could cause errors.
-     *
-     * @param gitProperties   git commit information (commit hash, branch)
-     * @param buildProperties build metadata (version, timestamp)
-     * @return a key generator that prefixes cache keys with version information
-     */
-    @Bean
-    public KeyGenerator keyGenerator(GitProperties gitProperties, BuildProperties buildProperties) {
-        return new PrefixedKeyGenerator(gitProperties, buildProperties);
+        log.info("Bound {} cache metrics to Micrometer", bound);
     }
 
     // ==================== Hazelcast Instance Creation ====================
@@ -431,8 +322,7 @@ public class HazelcastConfiguration {
      *
      * <p>
      * <strong>Bean Naming:</strong> The explicit bean name "hazelcastInstance" is required so
-     * Spring components (notably the {@link HazelcastCacheManager} backing {@code @Cacheable})
-     * can look up the HazelcastInstance by this specific name.
+     * Spring components can look up the HazelcastInstance by this specific name.
      *
      * @param artemisProperties the Artemis properties containing cache configuration
      *                              (TTL, backup count, etc.)
@@ -531,7 +421,13 @@ public class HazelcastConfiguration {
         config.setClusterName("test-cluster-" + UUID.randomUUID());
 
         configureCacheMaps(config, artemisProperties);
+        configureMemberAttributes(config);
+        configureSplitBrainProtection(config);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
+
+        // The build job queue must be configured here as well, otherwise it silently degrades to FIFO in tests while
+        // production dispatches by priority, which would make any test of priority-based dispatch meaningless.
+        configureLocalCIQueueIfNeeded(config, artemisProperties);
 
         configureIsolatedNetworkingForTests(config);
 
@@ -905,7 +801,7 @@ public class HazelcastConfiguration {
         log.debug("Binding Hazelcast to interface {}", networkInterface);
         System.setProperty("hazelcast.local.localAddress", networkInterface);
         System.setProperty("hazelcast.local.publicAddress", networkInterface);
-        config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(networkInterface));
+        config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Set.of(networkInterface));
 
         config.setProperty("hazelcast.socket.bind.any", "false");
         config.setProperty("hazelcast.socket.server.bind.any", "false");
@@ -913,31 +809,9 @@ public class HazelcastConfiguration {
     }
 
     /**
-     * Configures split-brain protection to handle network partitions.
+     * Keeps authoring ownership and short exercise writes unavailable unless every configured data member is present.
      *
-     * <p>
-     * <strong>What is Split-Brain:</strong> When a network partition occurs, cluster members
-     * can't communicate and may form separate sub-clusters. Each sub-cluster thinks it's the
-     * "real" cluster and continues operating independently. When the partition heals, data
-     * inconsistencies must be resolved.
-     *
-     * <p>
-     * <strong>Protection Mechanism:</strong> Split-brain protection defines a minimum cluster
-     * size (quorum) required for operations. With {@code minimumClusterSize=2}, a single
-     * isolated node cannot perform cluster operations, preventing inconsistent writes.
-     *
-     * <p>
-     * <strong>Merge Policy:</strong> The merge delay settings (30 seconds for first run,
-     * 30 seconds between subsequent runs) control how quickly Hazelcast attempts to merge
-     * sub-clusters after a partition heals. The delay prevents thrashing during unstable
-     * network conditions.
-     *
-     * <p>
-     * <strong>Trade-off:</strong> This configuration prioritizes consistency over availability.
-     * A single-node partition becomes read-only, which is acceptable for Artemis where data
-     * consistency is more important than availability during network issues.
-     *
-     * @param config the Hazelcast configuration to modify
+     * @param config the member configuration
      */
     private void configureSplitBrainProtection(Config config) {
         var splitBrainConfig = new SplitBrainProtectionConfig();
@@ -947,6 +821,30 @@ public class HazelcastConfiguration {
 
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainConfig);
+        int expectedMembers = env.getProperty("jhipster.cache.hazelcast.expected-data-member-count", Integer.class, 1);
+        if (expectedMembers < 1) {
+            throw new IllegalArgumentException("Configure a positive Hazelcast expected-data-member-count");
+        }
+        String authoringProtection = "hyperion-live-save-complete-membership";
+        String countAttribute = "artemis.hyperion.expected-data-members";
+        String enabledAttribute = "artemis.hyperion.exercise-generation-enabled";
+        String configuredCount = Integer.toString(expectedMembers);
+        String configuredEnabled = Boolean.toString(env.getProperty("artemis.hyperion.exercise-generation.enabled", Boolean.class, false));
+        config.getMemberAttributeConfig().setAttribute(countAttribute, configuredCount).setAttribute(enabledAttribute, configuredEnabled);
+        // An intentional singleton works; missing, unexpected, or differently configured data members fail closed.
+        var authoringConfig = new SplitBrainProtectionConfig(authoringProtection, true).setProtectOn(SplitBrainProtectionOn.READ_WRITE)
+                .setFunctionImplementation((SplitBrainProtectionFunction & Serializable) members -> {
+                    var dataMembers = members.stream().filter(member -> !member.isLiteMember()).toList();
+                    return dataMembers.size() == expectedMembers && dataMembers.stream()
+                            .allMatch(member -> configuredCount.equals(member.getAttribute(countAttribute)) && configuredEnabled.equals(member.getAttribute(enabledAttribute)));
+                });
+        config.addSplitBrainProtectionConfig(authoringConfig);
+        for (String name : List.of(Constants.HYPERION_GENERATION_JOBS_MAP, Constants.HYPERION_LIVE_SAVE_COORDINATION_MAP)) {
+            var authoringMap = new MapConfig(name).setBackupCount(config.getMapConfig("default").getBackupCount())
+                    .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.NONE).setMaxSizePolicy(MaxSizePolicy.PER_NODE))
+                    .setSplitBrainProtectionName(authoringProtection);
+            config.addMapConfig(authoringMap);
+        }
         config.setProperty(ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.getName(), "30");
         config.setProperty(ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.getName(), "30");
     }
@@ -1341,6 +1239,7 @@ public class HazelcastConfiguration {
      * <li><strong>atlas-session-exercise-preview:</strong> Cross-node fallback for exercise mapping preview DTOs</li>
      * <li><strong>atlas-session-relation-preview:</strong> Cross-node fallback for relation mapping preview DTOs</li>
      * <li><strong>atlas-session-preview-history:</strong> Atlas preview history for incremental updates</li>
+     * <li><strong>atlas-content-change-accumulator:</strong> Per-course debounce buckets that drive the automatic competency orchestrator</li>
      * <li><strong>nodeMetrics:</strong> Per-node metrics snapshots (TTL 60s, no backups) for the multi-node admin metrics page</li>
      * </ul>
      *
@@ -1365,6 +1264,13 @@ public class HazelcastConfiguration {
         // MapConfig changes after the proxy is built are silently ignored on most cluster topologies.
         // Must be longer than the longest plausible LLM session (GPT-5.4 + medium reasoning ~5min).
         config.getMapConfigs().put("atlas-orchestrator-runs", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(30 * 60));
+        // Per-course buckets for the automatic competency orchestrator. Entries are claimed by the
+        // scheduler after the debounce window elapses. 48h TTL gives a one-day safety margin so
+        // cap-deferred batches survive into the next day even with debounce + scheduler skew
+        // (a strict 24h would expire entries before the next-day claim).
+        config.getMapConfigs().put("atlas-content-change-accumulator",
+                new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(48 * 60 * 60));
+        config.getMapConfigs().put("iris-dashboard-schedule-state", new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()));
     }
 
     /**

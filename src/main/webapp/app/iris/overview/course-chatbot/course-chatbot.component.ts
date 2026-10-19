@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked, viewChild } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
 
@@ -15,12 +15,21 @@ export class CourseChatbotComponent {
 
     readonly courseId = input<number>();
 
+    /** An existing session to open instead of the course's current one, e.g. the chat a global search answer was continued in. */
+    readonly sessionId = input<number>();
+
+    readonly isChatHistoryOpen = computed<boolean>(() => this.irisBaseChatbot()?.isChatHistoryOpen() ?? true);
+
     constructor() {
         effect(() => {
             const courseId = this.courseId();
+            const sessionId = this.sessionId();
             if (courseId !== undefined) {
-                this.chatService.setCourseId(courseId);
-                this.chatService.switchTo(ChatServiceMode.COURSE, courseId);
+                // Use untracked to avoid re-running this effect when chatService state changes
+                untracked(() => {
+                    this.chatService.setCourseId(courseId);
+                    this.chatService.openChat(ChatServiceMode.COURSE, courseId, sessionId);
+                });
             }
         });
     }

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -32,14 +33,19 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationRequestDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.OrganizationService;
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
-import de.tum.cit.aet.artemis.admin.dto.OrganizationCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.LoginListDTO;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -50,9 +56,10 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage(UserFeature.ORGANIZATIONS)
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminOrganizationResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminOrganizationResource.class);
@@ -112,6 +119,21 @@ public class AdminOrganizationResource {
     }
 
     /**
+     * POST organizations/:organizationId/users :
+     * Add multiple users to an organization.
+     * Users not found or already members are silently skipped.
+     *
+     * @param organizationId the id of the organization
+     * @param request        the request body containing the logins of the users to add
+     * @return empty ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("organizations/{organizationId}/users")
+    public ResponseEntity<Void> addUsersToOrganization(@PathVariable Long organizationId, @RequestBody @Valid LoginListDTO request) {
+        organizationService.addUsersToOrganization(organizationId, request.logins());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * POST organizations/:organizationId/users/:userLogin :
      * Add a user to an organization
      *
@@ -152,36 +174,38 @@ public class AdminOrganizationResource {
     /**
      * POST organizations : Add a new organization
      *
-     * @param organization the organization entity to add
+     * @param organizationDTO the organization data to add
      * @return the ResponseEntity containing the added organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PostMapping("organizations")
-    public ResponseEntity<Organization> addOrganization(@RequestBody Organization organization) {
-        log.debug("REST request to add new organization : {}", organization);
-        Organization created = organizationService.add(organization);
+    public ResponseEntity<OrganizationDTO> addOrganization(@Valid @RequestBody OrganizationRequestDTO organizationDTO) {
+        log.debug("REST request to add new organization : {}", organizationDTO);
+        if (organizationDTO.id() != null) {
+            throw new BadRequestAlertException("A new organization cannot already have an ID", ENTITY_NAME, "idExists");
+        }
+        Organization created = organizationService.add(organizationDTO);
 
-        return ResponseEntity.ok().body(created);
+        return ResponseEntity.ok().body(OrganizationDTO.of(created));
     }
 
     /**
      * PUT organizations/:organizationId : Update an existing organization
      *
-     * @param organizationId id of the organization in the body
-     * @param organization   the updated organization entity
+     * @param organizationId  id of the organization in the body
+     * @param organizationDTO the updated organization data
      * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PutMapping("organizations/{organizationId}")
-    public ResponseEntity<Organization> updateOrganization(@PathVariable Long organizationId, @RequestBody Organization organization) {
-        log.debug("REST request to update organization : {}", organization);
-        if (organization.getId() == null) {
+    public ResponseEntity<OrganizationDTO> updateOrganization(@PathVariable Long organizationId, @Valid @RequestBody OrganizationRequestDTO organizationDTO) {
+        log.debug("REST request to update organization : {}", organizationDTO);
+        if (organizationDTO.id() == null) {
             throw new BadRequestAlertException("The ID of the organization in the RequestBody isn't set!", ENTITY_NAME, "noId");
         }
-        if (!organization.getId().equals(organizationId)) {
+        if (!organizationDTO.id().equals(organizationId)) {
             throw new BadRequestAlertException("organizationId in path doesn't match the one in the RequestBody!", ENTITY_NAME, "organizationIdDoesNotMatch");
         }
-        organizationRepository.findByIdElseThrow(organization.getId());
-        Organization updated = organizationService.update(organization);
-        return ResponseEntity.ok(updated);
+        Organization updated = organizationService.update(organizationId, organizationDTO);
+        return ResponseEntity.ok(OrganizationDTO.of(updated));
     }
 
     /**
@@ -207,7 +231,7 @@ public class AdminOrganizationResource {
      */
     @GetMapping("organizations")
     public ResponseEntity<List<OrganizationDTO>> getOrganizations(@Valid SearchTermPageableSearchDTO<String> search, @RequestParam(defaultValue = "false") boolean withCounts) {
-        final Page<OrganizationDTO> page = organizationRepository.getAllOrganizations(search, withCounts);
+        final Page<OrganizationDTO> page = organizationService.getAllOrganizations(search, withCounts);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -223,7 +247,7 @@ public class AdminOrganizationResource {
     public ResponseEntity<List<OrganizationMemberDTO>> getOrganizationUsers(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get users of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
-        Page<OrganizationMemberDTO> page = organizationRepository.getUsersByOrganizationId(organizationId, search);
+        Page<OrganizationMemberDTO> page = organizationService.getUsersByOrganizationId(organizationId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -239,26 +263,30 @@ public class AdminOrganizationResource {
     public ResponseEntity<List<OrganizationCourseDTO>> getOrganizationCourses(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get courses of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
-        Page<OrganizationCourseDTO> page = organizationRepository.getCoursesByOrganizationId(organizationId, search);
+        Page<OrganizationCourseDTO> page = organizationService.getCoursesByOrganizationId(organizationId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
-     * GET organizations/:organizationId/count : Get the number of users and courses
-     * currently mapped to an organization
+     * GET organizations/:organizationId/users/search : Search for users to register to a given organization
      *
-     * @param organizationId the id of the organization to retrieve the number of users and courses
-     * @return ResponseEntity containing a map containing the numbers of users and courses
+     * @param organizationId the id of the organization
+     * @param loginOrName    search term matched against login, full name, email, and registration number
+     * @param pageIndex      zero-based page index (default 0)
+     * @param pageSize       number of results per page (default 10)
+     * @return ResponseEntity containing a list of matching users with pagination headers
      */
-    @GetMapping("organizations/{organizationId}/count")
-    public ResponseEntity<OrganizationCountDTO> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
-        log.debug("REST request to get number of users and courses of organization : {}", organizationId);
-
-        OrganizationCountDTO numberOfUsersAndCourses = new OrganizationCountDTO(organizationId, organizationRepository.getNumberOfUsersByOrganizationId(organizationId),
-                organizationRepository.getNumberOfCoursesByOrganizationId(organizationId));
-
-        return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
+    @GetMapping("organizations/{organizationId}/users/search")
+    public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForOrganizationRegistration(@PathVariable long organizationId, @RequestParam String loginOrName,
+            @RequestParam(defaultValue = "0") int pageIndex, @RequestParam(defaultValue = "10") int pageSize) {
+        if (pageIndex < 0 || pageSize < 1) {
+            throw new BadRequestAlertException("Invalid pagination parameters", ENTITY_NAME, "invalidPagination");
+        }
+        organizationRepository.findByIdElseThrow(organizationId);
+        Page<UserForRegistrationDTO> page = organizationService.searchUsersForOrganizationRegistration(organizationId, loginOrName, pageIndex, pageSize);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
@@ -269,10 +297,10 @@ public class AdminOrganizationResource {
      *         if exists, else with status 404 (Not Found)
      */
     @GetMapping("organizations/{organizationId}")
-    public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
+    public ResponseEntity<OrganizationDTO> getOrganizationById(@PathVariable long organizationId) {
         log.debug("REST request to get organization : {}", organizationId);
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
-        return new ResponseEntity<>(organization, HttpStatus.OK);
+        return new ResponseEntity<>(OrganizationDTO.of(organization), HttpStatus.OK);
     }
 
     /**
@@ -282,10 +310,10 @@ public class AdminOrganizationResource {
      * @return ResponseEntity containing a set of organizations containing the given user
      */
     @GetMapping("organizations/users/{userId}")
-    public ResponseEntity<Set<Organization>> getAllOrganizationsByUser(@PathVariable Long userId) {
+    public ResponseEntity<Set<OrganizationDTO>> getAllOrganizationsByUser(@PathVariable Long userId) {
         log.debug("REST request to get all organizations of user : {}", userId);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByUserId(userId);
-        return new ResponseEntity<>(organizations, HttpStatus.OK);
+        return new ResponseEntity<>(organizations.stream().map(OrganizationDTO::of).collect(Collectors.toSet()), HttpStatus.OK);
     }
 
     /**
@@ -294,6 +322,7 @@ public class AdminOrganizationResource {
      * @param organizationId the id of the organization
      * @return the title of the organization wrapped in an ResponseEntity or 404 Not Found if no organization with that id exists
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("organizations/{organizationId}/title")
     public ResponseEntity<String> getOrganizationTitle(@PathVariable Long organizationId) {
         final var title = organizationRepository.getOrganizationTitle(organizationId);

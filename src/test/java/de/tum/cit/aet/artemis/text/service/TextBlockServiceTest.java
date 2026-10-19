@@ -78,6 +78,30 @@ class TextBlockServiceTest {
     }
 
     @Test
+    void doNotSplitInsideNotEqualsOperator() {
+        final TextSubmission submission = new TextSubmission(0L).text("if (a != b) {\n    return;\n}\nx != y");
+        final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
+
+        assertThat(textBlocks).hasSize(4).has(textBlock("if (a != b) {")).has(textBlock("return;")).has(textBlock("}")).has(textBlock("x != y"));
+    }
+
+    @Test
+    void doNotFailForTextsAroundNotEqualsBoundaries() {
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text(""))).isEmpty();
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text("=")).stream().map(TextBlock::getText)).containsExactly("=");
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text("!=")).stream().map(TextBlock::getText)).containsExactly("!=");
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text("!= x")).stream().map(TextBlock::getText)).containsExactly("!= x");
+    }
+
+    @Test
+    void stillSplitSentencesEndingWithExclamationMark() {
+        final TextSubmission submission = new TextSubmission(0L).text("Hello World! This is a Test! Really!");
+        final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
+
+        assertThat(textBlocks).hasSize(3).has(textBlock("Hello World!")).has(textBlock("This is a Test!")).has(textBlock("Really!"));
+    }
+
+    @Test
     void respectLeadingWhitespace() {
         final var submission = new TextSubmission(0L).text("   Test.");
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
@@ -154,7 +178,7 @@ class TextBlockServiceTest {
     }
 
     private Condition<? super Collection<? extends TextBlock>> textBlock(String expectedText) {
-        return new Condition<>(String.format("a text block with text=\"%s\"", expectedText)) {
+        return new Condition<>("a text block with text=\"%s\"".formatted(expectedText)) {
 
             @Override
             public boolean matches(Collection<? extends TextBlock> value) {
@@ -164,7 +188,7 @@ class TextBlockServiceTest {
     }
 
     private Condition<? super Collection<? extends TextBlock>> textBlock(int expectedStartIndex, int expectedEndIndex, String expectedText) {
-        return new Condition<>(String.format("a text block with startIndex=%d, endIndex=%d, and text=\"%s\"", expectedStartIndex, expectedEndIndex, expectedText)) {
+        return new Condition<>("a text block with startIndex=%d, endIndex=%d, and text=\"%s\"".formatted(expectedStartIndex, expectedEndIndex, expectedText)) {
 
             @Override
             public boolean matches(Collection<? extends TextBlock> value) {

@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -56,6 +59,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 
 class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -99,7 +103,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @BeforeEach
     void initTest() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         programmingExercise.setProblemStatement("Line 1\nLine 2\nLine 3");
@@ -211,6 +215,78 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
+    void shouldCreateConsistencyCheckThreadsWithExplicitAuthorWithoutSecurityContext() {
+        var author = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Generated consistency issue", ArtifactType.PROBLEM_STATEMENT, "", 2);
+
+        SecurityContextHolder.clearContext();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue), author);
+
+        assertThat(createdThreads).singleElement()
+                .satisfies(thread -> assertThat(thread.getComments()).singleElement().satisfies(comment -> assertThat(comment.getAuthor().getId()).isEqualTo(author.getId())));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldValidateAndAnchorConsistencyCheckThreadsAtCallerCapturedVersionAndCommits() throws Exception {
+        var author = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ExerciseVersion savedVersion = exerciseVersionRepository.findById(exerciseVersionService.createExerciseVersionOrThrow(programmingExercise, author)).orElseThrow();
+        programmingExercise.setProblemStatement("A concurrent edit after the generated save");
+        programmingExerciseRepository.save(programmingExercise);
+        ExerciseVersion newerVersion = exerciseVersionRepository.findById(exerciseVersionService.createExerciseVersionOrThrow(programmingExercise, author)).orElseThrow();
+
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-exact-anchor");
+        pushFileToRepository(templateRepo, "src/Main.java", "class Main {}");
+        RevCommit capturedTemplateCommit = templateRepo.git().log().setMaxCount(1).call().iterator().next();
+        Files.delete(templateRepo.workingCopyPath().resolve("src/Main.java"));
+        templateRepo.git().rm().addFilepattern("src/Main.java").call();
+        GitService.commit(templateRepo.git()).setMessage("Remove src/Main.java").call();
+        pushHeadToDefaultBranch(templateRepo.git());
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Generated review issue", "Review the mismatch",
+                List.of(new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 1, 1), new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 1, 1)));
+
+        List<CommentThread> threads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue), author, savedVersion.getId(),
+                Map.of(RepositoryType.TEMPLATE, capturedTemplateCommit.getName()));
+
+        assertThat(newerVersion.getId()).isNotEqualTo(savedVersion.getId());
+        assertThat(threads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
+            assertThat(thread.getInitialVersion()).isEqualTo(savedVersion);
+        }).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEMPLATE_REPO);
+            assertThat(thread.getInitialCommitSha()).isEqualTo(capturedTemplateCommit.getName());
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectConsistencyCheckLocationMissingAtCallerCapturedCommit() throws Exception {
+        var author = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ExerciseVersion savedVersion = createExerciseVersion();
+
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-exact-missing");
+        pushFileToRepository(templateRepo, "README.md", "Initial content");
+        RevCommit capturedTemplateCommit = templateRepo.git().log().setMaxCount(1).call().iterator().next();
+        pushFileToRepository(templateRepo, "src/Main.java", "class Main {}");
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Generated review issue", ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 1);
+
+        List<CommentThread> threads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue), author, savedVersion.getId(),
+                Map.of(RepositoryType.TEMPLATE, capturedTemplateCommit.getName()));
+
+        assertThat(threads).isEmpty();
+        assertThat(commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId())).isEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldPersistInlineFixForProblemStatementConsistencyLocation() {
         ExerciseVersion initialVersion = createExerciseVersion();
@@ -312,6 +388,29 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(thread.getInitialCommitSha()).isEqualTo(expectedCommitSha);
             assertThat(thread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldBuildInlineFixForTextFileWithBinaryListedExtension() throws Exception {
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-shell-inline-fix");
+        pushFileToRepository(templateRepo, "check.sh", "#!/bin/sh\necho old\n");
+
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Update shell check", "Use the new output",
+                List.of(new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "check.sh", 2, 2, "echo new")));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        CommentThread thread = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId()).iterator().next();
+        ConsistencyIssueCommentContentDTO content = (ConsistencyIssueCommentContentDTO) thread.getComments().iterator().next().getContent();
+        assertThat(content.suggestedFix()).isNotNull();
+        assertThat(content.suggestedFix().expectedCode()).isEqualTo("echo old");
+        assertThat(content.suggestedFix().replacementCode()).isEqualTo("echo new");
     }
 
     @Test
@@ -856,7 +955,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         auxiliaryRepository.setExercise(programmingExercise);
         programmingExercise.getAuxiliaryRepositories().add(auxiliaryRepository);
         programmingExerciseRepository.save(programmingExercise);
-        auxiliaryRepository = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow().getAuxiliaryRepositories().getFirst();
+        auxiliaryRepository = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow().getAuxiliaryRepositories().iterator()
+                .next();
 
         String commitSha = exerciseReviewService.resolveLatestCommitSha(CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepository.getId(), programmingExercise.getId());
 
@@ -1306,8 +1406,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private ExerciseSnapshotDTO buildExerciseSnapshot(long exerciseId, String problemStatement, ProgrammingExerciseSnapshotDTO programmingData) {
-        return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null,
-                null, null, null, null, null, null, null, programmingData, null, null, null, null);
+        return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null, null,
+                null, null, null, null, null, programmingData, null, null, null, null);
     }
 
     private ProgrammingExerciseSnapshotDTO buildProgrammingSnapshot(String testRepositoryUri, String testsCommitId,
@@ -1367,7 +1467,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private LocalRepoWithGit createLocalRepositoryWithGit(String suffix) throws Exception {
-        String repositorySlug = programmingExercise.getProjectKey().toLowerCase() + "-" + suffix;
+        String repositorySlug = programmingExercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + suffix;
         localVCService.createProjectForExercise(programmingExercise);
         localVCService.createRepository(programmingExercise.getProjectKey(), repositorySlug);
         LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), repositorySlug);

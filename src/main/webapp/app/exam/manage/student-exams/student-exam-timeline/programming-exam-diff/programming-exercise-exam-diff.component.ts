@@ -4,8 +4,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { Dialog } from 'primeng/dialog';
+import { TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
@@ -35,10 +34,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
         CommitsInfoComponent,
         TranslateDirective,
         GitDiffLineStatComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         ButtonComponent,
         ArtemisTranslatePipe,
-        Dialog,
+        TumAetUiDialogComponent,
         GitDiffReportComponent,
     ],
 })
@@ -57,10 +56,10 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     cachedDiffInformationChange = output<Map<string, RepositoryDiffInformation>>();
     cachedDiffReportsChange = output<Map<string, RepositoryDiffInformation>>();
 
-    isLoadingDiffReport: boolean;
-    isLeftTemplate: boolean;
-    leftKey: string;
-    rightKey: string;
+    readonly isLoadingDiffReport = signal<boolean>(undefined!);
+    isLeftTemplate = false;
+    leftKey = '';
+    rightKey = '';
     addedLineCount = computed(() => this.diffInformation()?.totalLineChange.addedLineCount ?? 0);
     removedLineCount = computed(() => this.diffInformation()?.totalLineChange.removedLineCount ?? 0);
     cachedRepositoryFiles: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
@@ -70,7 +69,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     diffModalVisible = signal<boolean>(false);
     diffModalInformation = signal<RepositoryDiffInformation | undefined>(undefined);
 
-    private exerciseIdSubscription: Subscription;
+    private exerciseIdSubscription?: Subscription;
 
     readonly FeatureToggle = FeatureToggle;
     readonly ButtonSize = ButtonSize;
@@ -88,7 +87,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
             .subscribe(() => {
                 const key = this.calculateMapKey();
                 if (this.cachedDiffInformation().has(key)) {
-                    this.diffInformation.set(this.cachedDiffInformation().get(key)!);
+                    this.diffInformation.set(this.cachedDiffInformation().get(key));
                     this.diffReady.set(true);
                 } else {
                     this.fetchRepositoriesAndProcessDiff();
@@ -128,7 +127,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
             if (left && right) {
                 this.cachedRepositoryFiles.set(this.leftKey, left);
                 this.cachedRepositoryFiles.set(this.rightKey, right);
-                this.processRepositoryDiff(left, right);
+                void this.processRepositoryDiff(left, right);
             } else {
                 this.alertService.error('artemisApp.programmingExercise.repositoryFilesError');
             }
@@ -185,7 +184,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
         this.diffInformation.set(await processRepositoryDiff(left, right));
         this.cachedDiffInformation().set(this.calculateMapKey(), this.diffInformation()!);
         this.cachedDiffInformationChange.emit(this.cachedDiffInformation());
-        this.isLoadingDiffReport = false;
+        this.isLoadingDiffReport.set(false);
 
         // Set ready state to true when diff processing is complete
         this.diffReady.set(true);

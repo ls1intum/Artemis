@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ModuleFeature, PROFILE_DEV, PROFILE_PROD, ProfileFeature } from 'app/app.constants';
 import { ProfileInfo } from '../profile-info.model';
@@ -6,14 +6,14 @@ import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-togg
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { firstValueFrom } from 'rxjs';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProfileService {
     private http = inject(HttpClient);
     private featureToggleService = inject(FeatureToggleService);
     private browserFingerprintService = inject(BrowserFingerprintService);
 
     /** Internal mutable reference */
-    private profileInfo: ProfileInfo;
+    private profileInfo!: ProfileInfo; // set in loadProfileInfo(), called once by the app initializer before any read
 
     // Should only be called once by the app initializer
     public async loadProfileInfo(): Promise<void> {

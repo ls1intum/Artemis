@@ -3,13 +3,10 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TemplateRef } from '@angular/core';
 import { AdminTitleBarService } from './admin-title-bar.service';
 
 describe('AdminTitleBarService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: AdminTitleBarService;
 
     beforeEach(() => {

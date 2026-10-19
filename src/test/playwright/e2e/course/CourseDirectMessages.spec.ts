@@ -93,7 +93,8 @@ test.describe('Direct messages', { tag: '@fast' }, () => {
         test('Student should be able to edit a message in a DM', async ({ login, courseMessages, communicationAPIRequests }) => {
             const originalText = 'Original DM ' + generateUUID().slice(0, 8);
             const message = await communicationAPIRequests.createCourseMessage(course, dmConversationId!, 'oneToOneChat', originalText);
-            await login(studentOne, `/courses/${course.id}/communication?conversationId=${dmConversationId}`);
+            await login(studentOne);
+            await courseMessages.openConversationAndWaitForPost(course.id, dmConversationId!, message.id!);
             // Verify original message is visible
             await courseMessages.checkMessage(message.id!, originalText);
             // Edit the message
@@ -109,7 +110,8 @@ test.describe('Direct messages', { tag: '@fast' }, () => {
         test('Student should be able to delete a message in a DM', async ({ login, courseMessages, communicationAPIRequests }) => {
             const messageText = 'Delete me DM ' + generateUUID().slice(0, 8);
             const message = await communicationAPIRequests.createCourseMessage(course, dmConversationId!, 'oneToOneChat', messageText);
-            await login(studentOne, `/courses/${course.id}/communication?conversationId=${dmConversationId}`);
+            await login(studentOne);
+            await courseMessages.openConversationAndWaitForPost(course.id, dmConversationId!, message.id!);
             // Verify message exists before deletion
             await courseMessages.checkMessage(message.id!, messageText);
             // Delete the message

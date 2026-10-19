@@ -5,6 +5,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { LearningPathCompetencyDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
@@ -22,13 +23,13 @@ import { ScienceService } from 'app/foundation/science/science.service';
     styleUrl: './learning-path-nav-overview.component.scss',
 })
 export class LearningPathNavOverviewComponent {
-    protected readonly faCheckCircle = faCheckCircle;
-
     private readonly alertService = inject(AlertService);
     private readonly dialogService = inject(DialogService);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly scienceService = inject(ScienceService);
+
+    protected readonly faCheckCircle = faCheckCircle;
 
     readonly learningPathId = input.required<number>();
 
@@ -49,7 +50,7 @@ export class LearningPathNavOverviewComponent {
 
             this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN_NAVIGATION, learningPathId);
 
-            untracked(() => this.loadCompetencies(learningPathId));
+            void untracked(() => this.loadCompetencies(learningPathId));
         });
     }
 
@@ -59,7 +60,7 @@ export class LearningPathNavOverviewComponent {
             const competencies = await this.learningPathApiService.getLearningPathCompetencies(learningPathId);
             this.competencies.set(competencies);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
         }

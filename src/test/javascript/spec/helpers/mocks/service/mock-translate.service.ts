@@ -17,7 +17,7 @@ export class MockTranslateService {
     onFallbackLangChange: Observable<string> = this.onFallbackLangChangeSubject.asObservable();
     isLoaded: Observable<boolean> = this.isLoadedSubject.asObservable();
 
-    private currentLang: string;
+    private currentLang!: string;
 
     languages: string[] = ['de'];
 

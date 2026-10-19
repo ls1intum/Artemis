@@ -33,11 +33,11 @@ export class TeamExerciseSearchComponent {
     readonly searchFailed = output<boolean>();
     readonly searchNoResults = output<string | undefined>();
 
-    exercise: Exercise;
+    exercise?: Exercise;
     exerciseOptions: Exercise[] = [];
     exerciseOptionsLoaded = false;
 
-    inputDisplayValue: string;
+    inputDisplayValue = '';
 
     onAutocompleteSelect = (exercise: Exercise) => {
         this.inputDisplayValue = this.searchResultFormatter(exercise);
@@ -50,7 +50,7 @@ export class TeamExerciseSearchComponent {
 
     searchResultFormatter = (exercise: Exercise): string => {
         const { title, releaseDate } = exercise;
-        const date = releaseDate ? releaseDate.format(ArtemisDatePipe.format(this.translateService.getCurrentLang(), 'short-date')) : '';
+        const date = releaseDate ? releaseDate.format(ArtemisDatePipe.format(this.translateService.getCurrentLang() ?? 'en', 'short-date')) : '';
         return title + (releaseDate ? ` (${date})` : '');
     };
 

@@ -1,23 +1,23 @@
-import { Component, Injectable, inject } from '@angular/core';
+import { Component, Service, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import dayjs from 'dayjs/esm';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseUpdateWarningService {
     private modalService = inject(NgbModal);
 
-    private ngbModalRef: NgbModalRef;
+    private ngbModalRef!: NgbModalRef; // assigned when the warning modal is opened in checkExerciseBeforeUpdate()
 
-    instructionDeleted: boolean;
-    creditChanged: boolean;
-    usageCountChanged: boolean;
-    immediateReleaseWarning: string;
-    isSaving: boolean;
+    instructionDeleted = false;
+    creditChanged = false;
+    usageCountChanged = false;
+    immediateReleaseWarning = '';
+    isSaving = false;
 
-    isExamMode: boolean;
+    isExamMode = false;
 
     /**
      * Open the modal with the given content for the given exercise.

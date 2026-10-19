@@ -10,7 +10,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
-import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/communication/metis.util';
+import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/communication/communication.util';
 import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
@@ -28,7 +28,7 @@ type PostCreator = (post: Post) => Observable<Post>;
 @Component({
     selector: 'jhi-post-create-edit-modal',
     templateUrl: './post-create-edit-modal.component.html',
-    styleUrls: ['../../metis.component.scss'],
+    styleUrls: ['../../communication.component.scss'],
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit {
@@ -36,16 +36,16 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
 
     exercises?: Exercise[];
     lectures?: Lecture[];
-    course: Course;
-    pageType: PageType;
-    isAtLeastTutorInCourse: boolean;
-    isAtLeastInstructorInCourse: boolean;
-    currentContextSelectorOption: ContextSelectorOption;
+    course!: Course; // set in ngOnInit() from communicationService.getCourse()
+    pageType!: PageType; // set in resetFormGroup() before the modal is used
+    isAtLeastTutorInCourse!: boolean; // set in ngOnInit() from communicationService
+    isAtLeastInstructorInCourse!: boolean; // set in ngOnInit() from communicationService
+    currentContextSelectorOption!: ContextSelectorOption; // set in ngOnInit() via resetCurrentContextSelectorOption()
     similarPosts: Post[] = [];
     private contextSubscription?: Subscription;
 
     readonly PageType = PageType;
-    readonly EditType = PostingEditType;
+    override readonly EditType = PostingEditType;
     protected readonly getAsChannel = getAsChannelDTO;
 
     // Icons
@@ -56,16 +56,16 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     /**
      * on initialization: reset all input field of the modal, determine the post context;
      * subscribe to the form control changes of the context selector in order to show the Announcement info box on selection;
-     * authorize the user by invoking the metis service
+     * authorize the user by invoking the communication service
      */
-    ngOnInit(): void {
+    override ngOnInit(): void {
         this.resetCurrentContextSelectorOption();
         super.ngOnInit();
-        this.course = this.metisService.getCourse();
+        this.course = this.communicationService.getCourse();
         this.lectures = this.course.lectures;
         this.exercises = this.course.exercises;
-        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
+        this.isAtLeastTutorInCourse = this.communicationService.currentUserIsAtLeastTutorInCourse();
+        this.isAtLeastInstructorInCourse = this.communicationService.currentUserIsAtLeastInstructorInCourse();
     }
 
     isDialogVisible = signal(false);
@@ -90,7 +90,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * resets the pageType, initialContext, post tags, post title, and post content
      */
     resetFormGroup(): void {
-        this.pageType = this.metisService.getPageType();
+        this.pageType = this.communicationService.getPageType();
         this.similarPosts = [];
         const posting = this.posting();
         if (posting) {
@@ -106,53 +106,53 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     }
 
     /**
-     * invokes the metis service after setting the title and current date as creation date of the new answer post,
+     * invokes the communication service after setting the title and current date as creation date of the new answer post,
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = this.setPostProperties(deepClone(posting));
 
         const override = this.createOverride();
-        const create$ = override ? override(payload) : this.metisService.createPost(payload);
+        const create$ = override ? override(payload) : this.communicationService.createPost(payload);
 
         create$.subscribe({
             next: (post: Post) => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.resetFormGroup();
                 this.isDialogVisible.set(false);
                 this.onCreate.emit(post);
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }
 
     /**
-     * invokes the metis service after setting the title of the updated post
+     * invokes the communication service after setting the title of the updated post
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = this.setPostProperties(deepClone(posting));
-        this.metisService.updatePost(payload).subscribe({
+        this.communicationService.updatePost(payload).subscribe({
             next: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.resetFormGroup();
                 this.isDialogVisible.set(false);
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }
@@ -162,10 +162,10 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      */
     updateModalTitle(): void {
         if (this.editType === this.EditType.UPDATE) {
-            this.modalTitle = 'artemisApp.metis.editPosting';
+            this.modalTitle = 'artemisApp.communication.editPosting';
         } else if (this.editType === this.EditType.CREATE) {
             this.modalTitle =
-                'artemisApp.metis.' + (getAsChannelDTO(this.posting()?.conversation)?.isAnnouncementChannel ? 'createModalTitleAnnouncement' : 'createModalTitlePost');
+                'artemisApp.communication.' + (getAsChannelDTO(this.posting()?.conversation)?.isAnnouncementChannel ? 'createModalTitleAnnouncement' : 'createModalTitlePost');
         }
     }
 

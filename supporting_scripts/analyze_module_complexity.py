@@ -121,7 +121,7 @@ def analyze_module(module_path):
         '@EntityGraph': 0
     }
 
-    for root, dirs, files in os.walk(module_path):
+    for root, _, files in os.walk(module_path):
         java_files = [f for f in files if f.endswith('.java')]
         total_files += len(java_files)
 
@@ -203,7 +203,7 @@ def analyze_services_entities(module_path):
     service_complexities = []
     entity_complexities = []
 
-    for root, dirs, files in os.walk(module_path):
+    for root, _, files in os.walk(module_path):
         java_files = [f for f in files if f.endswith('.java')]
 
         for file in java_files:

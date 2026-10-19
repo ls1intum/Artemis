@@ -5,7 +5,6 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { TutorParticipation } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
-import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
@@ -43,7 +42,7 @@ export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;
 
 export interface ValidationReason {
     translateKey: string;
-    translateValues: any;
+    translateValues: { [key: string]: unknown };
 }
 
 export interface PlagiarismDetectionConfig {
@@ -73,6 +72,21 @@ export enum IncludedInOverallScore {
     NOT_INCLUDED = 'NOT_INCLUDED',
 }
 
+/**
+ * The variant group this exercise belongs to, as embedded in the serialized exercise (the server entity minus its
+ * back-reference list), so the student dashboard can rebuild groups without a separate request.
+ */
+export interface ExerciseVariantGroupReference {
+    id?: number;
+    title?: string;
+    maxPoints?: number;
+    releaseDate?: dayjs.Dayjs;
+    startDate?: dayjs.Dayjs;
+    dueDate?: dayjs.Dayjs;
+    assessmentDueDate?: dayjs.Dayjs;
+    exampleSolutionPublicationDate?: dayjs.Dayjs;
+}
+
 export abstract class Exercise implements BaseEntity {
     public id?: number;
     public problemStatement?: string;
@@ -87,7 +101,6 @@ export abstract class Exercise implements BaseEntity {
     public bonusPoints?: number;
     public assessmentType?: AssessmentType;
     public allowComplaintsForAutomaticAssessments?: boolean;
-    public allowFeedbackRequests?: boolean;
     public difficulty?: DifficultyLevel;
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
     public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
@@ -101,10 +114,10 @@ export abstract class Exercise implements BaseEntity {
     public tutorParticipations?: TutorParticipation[];
     public course?: Course;
     public exampleSubmissions?: ExampleSubmission[];
-    public attachments?: Attachment[];
     public posts?: Post[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
+    public exerciseVariantGroup?: ExerciseVariantGroupReference;
     public competencyLinks?: CompetencyExerciseLink[];
 
     public plagiarismDetectionConfig?: PlagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG; // default value
@@ -125,10 +138,12 @@ export abstract class Exercise implements BaseEntity {
     public numberOfRatings?: number;
     public channelName?: string;
     public completed?: boolean;
+    // only sent for exam exercises on the assessment dashboard, see ExerciseResource.getExerciseForAssessmentDashboard
+    public latestExamEndDate?: dayjs.Dayjs;
+    public assessmentPossibleFrom?: dayjs.Dayjs;
 
     // helper attributes
     public secondCorrectionEnabled = false;
-    public feedbackSuggestionModule?: string;
     public isAtLeastTutor?: boolean;
     public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;
@@ -137,7 +152,6 @@ export abstract class Exercise implements BaseEntity {
     public dueDateError?: boolean;
     public startDateError?: boolean;
     public exampleSolutionPublicationDateError?: boolean;
-    public exampleSolutionPublicationDateWarning?: boolean;
     public loading?: boolean;
     public numberOfParticipationsWithRatedResult?: number;
     public numberOfSuccessfulParticipations?: number;
@@ -159,7 +173,6 @@ export abstract class Exercise implements BaseEntity {
         this.exampleSolutionPublicationDateError = false;
         this.presentationScoreEnabled = false; // default value;
         this.allowComplaintsForAutomaticAssessments = false; // default value;
-        this.allowFeedbackRequests = false; // default value;
     }
 
     /**
@@ -180,7 +193,7 @@ export abstract class Exercise implements BaseEntity {
  */
 export function getIcon(exerciseType?: ExerciseType): IconProp {
     if (!exerciseType) {
-        return faQuestion as IconProp;
+        return faQuestion;
     }
 
     const icons: Record<string, IconProp> = {
@@ -191,7 +204,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
     };
 
-    return icons[exerciseType] ?? (faQuestion as IconProp);
+    return icons[exerciseType] ?? faQuestion;
 }
 
 export function getIconTooltip(exerciseType?: ExerciseType): string {
@@ -279,9 +292,12 @@ export function resetForImport(exercise: Exercise) {
 
     // without dates set, they can only be false
     exercise.allowComplaintsForAutomaticAssessments = false;
-    exercise.allowFeedbackRequests = false;
 
     exercise.competencyLinks = [];
+
+    // The copy starts outside any variant group. With the source's group, the import form would lock its dates to that
+    // group, and the group dialog of the form would edit the group of the source exercise.
+    exercise.exerciseVariantGroup = undefined;
 }
 
 /**

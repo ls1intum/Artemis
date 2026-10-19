@@ -19,14 +19,16 @@
             },
             "numberOfUsers": "Number of users:",
             "numberOfUsersImported": "Imported:",
-            "numberOfUsersNotImported": "Not found:",
+            "numberOfUsersNotFound": "Not found:",
+            "numberOfStaffRejected": "Rejected staff:",
             "genericErrorMessage": "Import of users failed!",
             "firstName": "First name",
             "lastName": "Last name",
             "registrationNumber": "registration number",
             "room": "Room",
             "seat": "Seat",
-            "email": "Email"
+            "email": "Email",
+            "testUser": "Test user"
         }
     }
 }

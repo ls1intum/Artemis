@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -15,8 +14,6 @@ import { AdminSidebarComponent } from './admin-sidebar.component';
 class MockEmptyComponent {}
 
 describe('AdminSidebarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AdminSidebarComponent;
     let fixture: ComponentFixture<AdminSidebarComponent>;
 
@@ -45,8 +42,8 @@ describe('AdminSidebarComponent', () => {
         expect(component.atlasEnabled()).toBe(false);
         expect(component.examEnabled()).toBe(false);
         expect(component.passkeyEnabled()).toBe(false);
-        expect(component.passkeyRequiredForAdmin()).toBe(false);
         expect(component.isSuperAdmin()).toBe(false);
+        expect(component.weaviateEnabled()).toBe(false);
     });
 
     it('should generate sidebar groups', () => {
@@ -76,15 +73,29 @@ describe('AdminSidebarComponent', () => {
         expect(buildSystemGroup).toBeFalsy();
     });
 
+    it('should include the ingestion dashboard item only when weaviateEnabled is true', () => {
+        const findIngestionItem = () =>
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .find((item) => item.testId === 'admin-course-ingestion-dashboard');
+
+        expect(findIngestionItem()).toBeFalsy();
+
+        fixture.componentRef.setInput('weaviateEnabled', true);
+        fixture.detectChanges();
+
+        expect(findIngestionItem()).toBeTruthy();
+    });
+
     it('should emit toggleCollapseState when called', () => {
         const toggleSpy = vi.spyOn(component.toggleCollapseState, 'emit');
         component.toggleCollapseState.emit();
         expect(toggleSpy).toHaveBeenCalled();
     });
 
-    it('should include passkey management link when all conditions are met', () => {
+    it('should include passkey management link when passkeys are enabled and user is super admin', () => {
         fixture.componentRef.setInput('passkeyEnabled', true);
-        fixture.componentRef.setInput('passkeyRequiredForAdmin', true);
         fixture.componentRef.setInput('isSuperAdmin', true);
         fixture.detectChanges();
 
@@ -101,22 +112,6 @@ describe('AdminSidebarComponent', () => {
 
     it('should not include passkey management link when passkey is not enabled', () => {
         fixture.componentRef.setInput('passkeyEnabled', false);
-        fixture.componentRef.setInput('passkeyRequiredForAdmin', true);
-        fixture.componentRef.setInput('isSuperAdmin', true);
-        fixture.detectChanges();
-
-        const groups = component.sidebarGroups();
-        const userManagementGroup = groups.find((g) => g.translation === 'global.menu.admin.groups.usersAndOrganizations');
-        expect(userManagementGroup).toBeTruthy();
-        expect(userManagementGroup!.items).toHaveLength(3); // User Management, Organizations, Data Exports only
-
-        const passkeyManagementItem = userManagementGroup!.items.find((i) => i.routerLink === '/admin/passkey-management');
-        expect(passkeyManagementItem).toBeFalsy();
-    });
-
-    it('should not include passkey management link when passkey is not required for admin', () => {
-        fixture.componentRef.setInput('passkeyEnabled', true);
-        fixture.componentRef.setInput('passkeyRequiredForAdmin', false);
         fixture.componentRef.setInput('isSuperAdmin', true);
         fixture.detectChanges();
 
@@ -131,7 +126,6 @@ describe('AdminSidebarComponent', () => {
 
     it('should not include passkey management link when user is not super admin', () => {
         fixture.componentRef.setInput('passkeyEnabled', true);
-        fixture.componentRef.setInput('passkeyRequiredForAdmin', true);
         fixture.componentRef.setInput('isSuperAdmin', false);
         fixture.detectChanges();
 

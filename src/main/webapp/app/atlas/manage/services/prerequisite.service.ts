@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CompetencyImportResponseDTO, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyImportOptionsDTO } from 'app/atlas/shared/entities/competency.model';
@@ -18,18 +18,16 @@ type EntityArrayResponseType = HttpResponse<Prerequisite[]>;
 type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
 type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class PrerequisiteService extends CourseCompetencyService {
-    getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
+    override getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseDTOType) => this.mapPrerequisiteArrayResponse(res)),
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
     }
 
-    findById(prerequisiteId: number, courseId: number) {
+    override findById(prerequisiteId: number, courseId: number) {
         return this.httpClient.get<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/prerequisites/${prerequisiteId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseDTOType) => {
                 const mapped = this.mapPrerequisiteResponse(res);
@@ -83,7 +81,7 @@ export class PrerequisiteService extends CourseCompetencyService {
             .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapPrerequisiteImportResponse(res)));
     }
 
-    importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
+    override importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
         const payload: CourseCompetencyImportOptionsDTO = {
             competencyIds: [],
             importLectures: false,

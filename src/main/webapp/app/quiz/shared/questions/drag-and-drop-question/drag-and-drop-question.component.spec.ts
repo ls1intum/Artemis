@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
@@ -14,7 +13,8 @@ import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, CdkDropList, DragDropModule } from '@angular/cdk/drag-drop';
+import { By } from '@angular/platform-browser';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { MockProfileService } from 'src/test/javascript/spec/helpers/mocks/service/mock-profile.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -22,8 +22,6 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('DragAndDropQuestionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<DragAndDropQuestionComponent>;
     let comp: DragAndDropQuestionComponent;
     let markdownService: ArtemisMarkdownService;
@@ -79,10 +77,10 @@ describe('DragAndDropQuestionComponent', () => {
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
-        expect(comp.renderedQuestion).toBeDefined();
-        expect(comp.renderedQuestion.text).toBe(`${question.text}markdown`);
-        expect(comp.renderedQuestion.hint).toBe(`${question.hint}markdown`);
-        expect(comp.renderedQuestion.explanation).toBe(`${question.explanation}markdown`);
+        expect(comp.renderedQuestion()).toBeDefined();
+        expect(comp.renderedQuestion().text).toBe(`${question.text}markdown`);
+        expect(comp.renderedQuestion().hint).toBe(`${question.hint}markdown`);
+        expect(comp.renderedQuestion().explanation).toBe(`${question.explanation}markdown`);
         expect(comp.hideSampleSolution).toHaveBeenCalledOnce();
         expect(comp.showingSampleSolution()).toBeFalsy();
     });
@@ -91,7 +89,7 @@ describe('DragAndDropQuestionComponent', () => {
         const { dropLocation } = getDropLocationMappingAndItem();
         comp.dragAndDropQuestion().dropLocations = [dropLocation];
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.correctAnswer).toBe(0);
+        expect(comp.correctAnswer()).toBe(0);
     });
 
     it('should count correct mappings on changes', () => {
@@ -110,7 +108,7 @@ describe('DragAndDropQuestionComponent', () => {
          *   without selected items it should not set correct answers to drop locations without valid drag item
          *   as they are excluded from the score calculation as well
          */
-        expect(comp.correctAnswer).toBe(0);
+        expect(comp.correctAnswer()).toBe(0);
 
         // if there is a selected item should count drop locations that have the selected items drag item
         // dropLocation1 and dropLocation3 is selected
@@ -124,7 +122,7 @@ describe('DragAndDropQuestionComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         comp.dragAndDropQuestion().dropLocations = [dropLocation1, dropLocation2, dropLocation3, dropLocation5];
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.correctAnswer).toBe(1);
+        expect(comp.correctAnswer()).toBe(1);
     });
 
     it('should return correct drag item for drop location', () => {
@@ -222,13 +220,46 @@ describe('DragAndDropQuestionComponent', () => {
 
     it('should change loading with given value', () => {
         comp.changeLoading('loading');
-        expect(comp.loadingState).toBe('loading');
+        expect(comp.loadingState()).toBe('loading');
+    });
+
+    it('should not hard-code the color of the invalid hint icon, so it stays readable in the dark theme', () => {
+        const { dropLocation } = getDropLocationMappingAndItem();
+        dropLocation.invalid = true;
+        dropLocation.posX = 0;
+        dropLocation.posY = 0;
+        dropLocation.width = 10;
+        dropLocation.height = 10;
+        comp.dragAndDropQuestion().dropLocations = [dropLocation];
+        fixture.componentRef.setInput('showResult', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const icon: HTMLElement | null = fixture.nativeElement.querySelector('.drop-location.results .invalid fa-icon');
+        expect(icon).toBeTruthy();
+        expect(icon!.getAttribute('style') ?? '').not.toContain('color');
+    });
+
+    it('should not let the CDK reorder the drag item list or a drop location while an item is dragged', () => {
+        // Neither order carries meaning, and the sorting moved the items of the wrapped list up and down while the view scrolled.
+        const { dropLocation, dragItem } = getDropLocationMappingAndItem();
+        dropLocation.posX = 0;
+        dropLocation.posY = 0;
+        dropLocation.width = 10;
+        dropLocation.height = 10;
+        comp.dragAndDropQuestion().dropLocations = [dropLocation];
+        comp.dragAndDropQuestion().dragItems = [dragItem];
+        fixture.changeDetectorRef.detectChanges();
+
+        const dropLists = fixture.debugElement.queryAll(By.directive(CdkDropList)).map((element) => element.injector.get(CdkDropList));
+        // the drop location and the list of unassigned drag items
+        expect(dropLists).toHaveLength(2);
+        expect(dropLists.map((dropList) => dropList.sortingDisabled)).toEqual([true, true]);
     });
 
     it('should set drop allowed to true when dragged', () => {
-        comp.dropAllowed = false;
+        comp.dropAllowed.set(false);
         comp.drag();
-        expect(comp.dropAllowed).toBe(true);
+        expect(comp.dropAllowed()).toBe(true);
     });
 
     const getDropLocationMappingAndItem = () => {

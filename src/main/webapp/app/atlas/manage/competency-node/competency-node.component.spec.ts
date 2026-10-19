@@ -2,10 +2,8 @@ import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyNodeComponent } from 'app/atlas/manage/competency-node/competency-node.component';
 import { CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyNodeComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CompetencyNodeComponent;
     let fixture: ComponentFixture<CompetencyNodeComponent>;
     let sizeUpdateEmitSpy: ReturnType<typeof vi.spyOn>;

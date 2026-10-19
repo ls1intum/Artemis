@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 
@@ -10,8 +9,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 
 describe('CourseStorageService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseStorageService;
 
     beforeEach(() => {
@@ -49,6 +46,27 @@ describe('CourseStorageService', () => {
         expect(service.getCourse(1)).toBeDefined();
     });
 
+    it('should derive the current course from its id and follow course updates', () => {
+        service.setCourses([{ id: 1, title: 'old' } as Course]);
+        service.setCurrentCourse(1);
+
+        expect(service.currentCourse()?.title).toBe('old');
+
+        service.updateCourse({ id: 1, title: 'new' } as Course);
+
+        expect(service.currentCourse()?.title).toBe('new');
+    });
+
+    it('should clear the current course without removing it from storage', () => {
+        service.setCourses([{ id: 1 } as Course]);
+        service.setCurrentCourse(1);
+
+        service.clearCurrentCourse();
+
+        expect(service.currentCourse()).toBeUndefined();
+        expect(service.getCourse(1)).toBeDefined();
+    });
+
     describe('authentication state changes', () => {
         let authState: BehaviorSubject<User | undefined>;
         let scoped: CourseStorageService;
@@ -68,8 +86,10 @@ describe('CourseStorageService', () => {
         });
 
         it('should clear stored courses on logout', () => {
+            scoped.setCurrentCourse(1);
             authState.next(undefined);
             expect(scoped.getCourse(1)).toBeUndefined();
+            expect(scoped.currentCourse()).toBeUndefined();
         });
 
         it('should clear stored courses when a different user logs in', () => {

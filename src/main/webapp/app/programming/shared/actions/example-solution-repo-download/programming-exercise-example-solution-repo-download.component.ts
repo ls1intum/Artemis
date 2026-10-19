@@ -8,7 +8,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     template: `<jhi-button
         [disabled]="!exerciseId()"
         [btnType]="displayedOnExamSummary() ? ButtonType.PRIMARY_OUTLINE : ButtonType.INFO"
-        [btnSize]="ButtonSize.MEDIUM"
+        [btnSize]="displayedOnExamSummary() ? ButtonSize.SMALL : ButtonSize.MEDIUM"
         [shouldSubmit]="false"
         [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
         [icon]="faDownload"
@@ -21,7 +21,7 @@ export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends Pro
     readonly includeTests = input<boolean>();
     readonly displayedOnExamSummary = input(false);
 
-    exportRepository() {
+    override exportRepository() {
         const exerciseId = this.exerciseId();
         if (exerciseId) {
             this.programmingExerciseService.exportStudentRequestedRepository(exerciseId, this.includeTests() ?? false).subscribe((response) => {

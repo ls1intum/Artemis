@@ -6,6 +6,7 @@ import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -26,8 +27,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 
 /**
  * An IrisMessage represents a single message in an IrisSession.
@@ -41,6 +45,7 @@ public class IrisMessage extends DomainObject {
     @ManyToOne(optional = false)
     @JoinColumn(name = "session_id")
     @JsonIgnore
+    @Parent
     private IrisSession session;
 
     @Nullable
@@ -55,6 +60,39 @@ public class IrisMessage extends DomainObject {
     @Enumerated(EnumType.STRING)
     private IrisMessageSender sender;
 
+    /**
+     * The Artemis app a user message was sent from (iOS/Android), resolved from the request {@code User-Agent}.
+     * {@code null} for messages sent from a web browser, from an unrecognized client, or for non-user messages.
+     */
+    @Nullable
+    @Column(name = "sender_origin")
+    @Enumerated(EnumType.STRING)
+    private ArtemisApp senderOrigin;
+
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origin")
+    private IrisMessageOrigin origin;
+
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "proactive_outcome")
+    private IrisProactiveOutcome proactiveOutcome;
+
+    @Nullable
+    @Column(name = "proactive_episode_id")
+    private String proactiveEpisodeId;
+
+    /**
+     * The exercise the proactive message was decided for, stamped at insert time. Deliberately NOT derived from
+     * {@code session.entityId}: a session is born a COURSE_CHAT and its mode/entityId change on every context switch,
+     * so the session is not a durable record of which exercise a row belongs to. Episode lookups scope by this column
+     * so an episode id reused across two exercises cannot make one exercise's outcome terminal for the other.
+     */
+    @Nullable
+    @Column(name = "proactive_exercise_id")
+    private Long proactiveExerciseId;
+
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
@@ -66,6 +104,22 @@ public class IrisMessage extends DomainObject {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "created_memories", columnDefinition = "json")
     private List<MemirisMemoryDTO> createdMemories = new ArrayList<>();
+
+    /**
+     * Deliberately not annotated {@code @Lob}. The column is plain text on both databases - Liquibase {@code clob}
+     * becomes {@code longtext} on MySQL and {@code text} on PostgreSQL - whereas a CLOB on PostgreSQL is a large
+     * object: Hibernate binds and extracts the column as an {@code oid}, so reading a row whose {@code tool_activity}
+     * holds the converted JSON fails with "Bad value for type long". Without the annotation the converted JSON is
+     * bound and extracted as a string, which round-trips on both databases.
+     */
+    @Nullable
+    @Convert(converter = IrisMessageToolActivityConverter.class)
+    @Column(name = "tool_activity")
+    private List<PyrisActivityDTO> toolActivity;
+
+    @Nullable
+    @Column(name = "intermediate")
+    private Boolean intermediate;
 
     @Transient
     private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
@@ -104,6 +158,51 @@ public class IrisMessage extends DomainObject {
         this.sender = sender;
     }
 
+    @Nullable
+    public ArtemisApp getSenderOrigin() {
+        return senderOrigin;
+    }
+
+    public void setSenderOrigin(@Nullable ArtemisApp senderOrigin) {
+        this.senderOrigin = senderOrigin;
+    }
+
+    @Nullable
+    public IrisMessageOrigin getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(@Nullable IrisMessageOrigin origin) {
+        this.origin = origin;
+    }
+
+    @Nullable
+    public IrisProactiveOutcome getProactiveOutcome() {
+        return proactiveOutcome;
+    }
+
+    public void setProactiveOutcome(@Nullable IrisProactiveOutcome proactiveOutcome) {
+        this.proactiveOutcome = proactiveOutcome;
+    }
+
+    @Nullable
+    public String getProactiveEpisodeId() {
+        return proactiveEpisodeId;
+    }
+
+    public void setProactiveEpisodeId(@Nullable String proactiveEpisodeId) {
+        this.proactiveEpisodeId = proactiveEpisodeId;
+    }
+
+    @Nullable
+    public Long getProactiveExerciseId() {
+        return proactiveExerciseId;
+    }
+
+    public void setProactiveExerciseId(@Nullable Long proactiveExerciseId) {
+        this.proactiveExerciseId = proactiveExerciseId;
+    }
+
     public List<IrisMessageContent> getContent() {
         return content;
     }
@@ -135,6 +234,24 @@ public class IrisMessage extends DomainObject {
         this.createdMemories = createdMemories;
     }
 
+    @Nullable
+    public List<PyrisActivityDTO> getToolActivity() {
+        return toolActivity;
+    }
+
+    public void setToolActivity(@Nullable List<PyrisActivityDTO> toolActivity) {
+        this.toolActivity = toolActivity;
+    }
+
+    @Nullable
+    public Boolean getIntermediate() {
+        return intermediate;
+    }
+
+    public void setIntermediate(@Nullable Boolean intermediate) {
+        this.intermediate = intermediate;
+    }
+
     @JsonProperty
     public Integer getMessageDifferentiator() {
         return messageDifferentiator;
@@ -148,6 +265,6 @@ public class IrisMessage extends DomainObject {
     @Override
     public String toString() {
         return "IrisMessage{" + "id=" + getId() + ", session=" + session + ", sentAt=" + sentAt + ", helpful=" + helpful + ", sender=" + sender + ", content=" + content
-                + ", messageDifferentiator=" + messageDifferentiator + '}';
+                + ", toolActivity=" + toolActivity + ", intermediate=" + intermediate + ", messageDifferentiator=" + messageDifferentiator + '}';
     }
 }

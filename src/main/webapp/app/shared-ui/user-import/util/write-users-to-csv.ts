@@ -1,4 +1,4 @@
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 
 export type ExportUserInformationRow = {
@@ -9,38 +9,12 @@ export type ExportUserInformationRow = {
 };
 
 export function exportUserInformationAsCsv(rows: ExportUserInformationRow[], keys: string[], fileName: string) {
-    const sanitizedRows = rows.map((row) => sanitizeRow(row));
-    const options = {
+    // downloadCsv guards every string cell against CSV/formula injection, so no extra sanitization is needed here.
+    downloadCsv(rows, {
+        columnHeaders: keys,
+        fileName,
         fieldSeparator: ';',
         quoteStrings: true,
         quoteCharacter: '"',
-        showLabels: true,
-        showTitle: false,
-        filename: fileName,
-        useTextFile: false,
-        useBom: true,
-        columnHeaders: keys,
-    };
-    const csvExportConfig = mkConfig(options);
-    const csvData = generateCsv(csvExportConfig)(sanitizedRows);
-    download(csvExportConfig)(csvData);
-}
-
-function sanitizeRow(row: ExportUserInformationRow): ExportUserInformationRow {
-    return {
-        [NAME_KEY]: sanitizeValue(row[NAME_KEY]),
-        [USERNAME_KEY]: sanitizeValue(row[USERNAME_KEY]),
-        [EMAIL_KEY]: sanitizeValue(row[EMAIL_KEY]),
-        [REGISTRATION_NUMBER_KEY]: sanitizeValue(row[REGISTRATION_NUMBER_KEY]),
-    };
-}
-
-/**
- * Prefixes values that look like spreadsheet formulas so Excel and similar tools
- * treat them as plain text instead of executing them. This prevents CSV injection
- * because exported fields contain user-controlled input from students, while
- * the CSV is typically opened by instructors or admins.
- */
-function sanitizeValue(value: string): string {
-    return /^\s*[=+\-@]/.test(value) ? `'${value}` : value;
+    });
 }
