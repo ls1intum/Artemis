@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -363,14 +364,7 @@ public class ModelingExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
         // Notify AtlasML about the modeling exercise update
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(persistedExercise, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about modeling exercise update: {}", e.getMessage());
-            }
-        });
+        atlasMLApi.ifPresent(api -> api.notifyExerciseUpdated(persistedExercise));
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
@@ -784,26 +778,7 @@ public class ModelingExerciseResource {
             exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(dto.plagiarismDetectionConfig()));
         }
 
-        // Grading criteria (with their structured grading instructions, needed for the copy tracker during import)
-        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
-            exercise.setGradingCriteria(GradingCriteriaMapper.create(dto.gradingCriteria(), exercise));
-        }
-
-        // Competency links as new unmanaged objects referencing only the competency id
-        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
-            exercise.setCompetencyLinks(CompetencyExerciseLinkService.toTransientLinks(dto, exercise, ENTITY_NAME));
-        }
-
-        // Attach a managed Course and/or ExerciseGroup so role checks see the configured groups. The exclusivity invariant
-        // (exactly one of the two) is validated downstream by checkCourseAndExerciseGroupExclusivity.
-        if (dto.courseId() != null) {
-            Course course = courseRepository.findByIdElseThrow(dto.courseId());
-            exercise.setCourse(course);
-        }
-        if (dto.exerciseGroupId() != null) {
-            ExerciseGroup exerciseGroup = exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class)).findByIdElseThrow(dto.exerciseGroupId());
-            exercise.setExerciseGroup(exerciseGroup);
-        }
+        ExerciseImportService.applyImportReferences(dto, exercise, courseRepository, exerciseGroupApi, ENTITY_NAME);
         return exercise;
     }
 

@@ -1,11 +1,20 @@
 package de.tum.cit.aet.artemis.exercise.dto;
 
+import java.util.Collection;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 
 /** Scalar input shared by manual exercise imports, preserving defaults omitted by older clients. */
-public interface ExerciseImportSettingsDTO extends ExerciseMetadataDTO {
+public interface ExerciseImportSettingsDTO extends ExerciseMetadataDTO, CompetencyLinksHolderDTO {
+
+    Collection<GradingCriterionDTO> gradingCriteria();
+
+    Long courseId();
+
+    Long exerciseGroupId();
 
     Long id();
 

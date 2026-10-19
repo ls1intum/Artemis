@@ -488,14 +488,7 @@ public class FileUploadExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
         // Sync with AtlasML for AI-based features
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(persistedExercise, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise update: {}", e.getMessage());
-            }
-        });
+        atlasMLApi.ifPresent(api -> api.notifyExerciseUpdated(persistedExercise));
 
         // Create a version snapshot for history tracking
         exerciseVersionService.createExerciseVersion(persistedExercise);

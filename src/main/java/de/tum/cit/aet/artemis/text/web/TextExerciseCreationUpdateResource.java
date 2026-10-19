@@ -297,7 +297,7 @@ public class TextExerciseCreationUpdateResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
         // Notify AtlasML about the text exercise update
-        notifyAtlasML(persistedExercise, OperationTypeDTO.UPDATE, "text exercise update");
+        atlasMLApi.ifPresent(api -> api.notifyExerciseUpdated(persistedExercise));
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
 

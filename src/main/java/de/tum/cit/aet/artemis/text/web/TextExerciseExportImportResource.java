@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -30,13 +29,10 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
-import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
-import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -150,26 +146,7 @@ public class TextExerciseExportImportResource {
             exercise.setPlagiarismDetectionConfig(dto.plagiarismDetectionConfig().toEntity());
         }
 
-        // Grading criteria (with their structured grading instructions, needed for the copy tracker during import)
-        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
-            exercise.setGradingCriteria(GradingCriteriaMapper.create(dto.gradingCriteria(), exercise));
-        }
-
-        // Competency links as new unmanaged objects referencing only the competency id
-        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
-            exercise.setCompetencyLinks(CompetencyExerciseLinkService.toTransientLinks(dto, exercise, ENTITY_NAME));
-        }
-
-        // Attach a managed Course and/or ExerciseGroup so role checks see the configured groups. The exclusivity invariant
-        // (exactly one of the two) is validated downstream by checkCourseAndExerciseGroupExclusivity.
-        if (dto.courseId() != null) {
-            Course course = courseRepository.findByIdElseThrow(dto.courseId());
-            exercise.setCourse(course);
-        }
-        if (dto.exerciseGroupId() != null) {
-            ExerciseGroup exerciseGroup = exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class)).findByIdElseThrow(dto.exerciseGroupId());
-            exercise.setExerciseGroup(exerciseGroup);
-        }
+        ExerciseImportService.applyImportReferences(dto, exercise, courseRepository, exerciseGroupApi, ENTITY_NAME);
         return exercise;
     }
 

@@ -68,29 +68,7 @@
             @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'releaseDate' && nextRelevantDateLabel() !== 'startDate')) {
             } @else {
                 <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
-                @if (exercise().presentationScoreEnabled) {
-                    <div>
-                        @if (effectiveCourse()?.presentationScore) {
-                            {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
-                            @if ((studentParticipation()?.presentationScore ?? 0) > 0) {
-                                <span class="badge bg-success" jhiTranslate="global.generic.yes"></span>
-                            }
-                            @if ((studentParticipation()?.presentationScore ?? 0) <= 0) {
-                                <span class="badge bg-secondary" jhiTranslate="global.generic.no"></span>
-                            }
-                        } @else {
-                            {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
-                            @if (studentParticipation()?.presentationScore) {
-                                <span class="badge bg-success">
-                                    {{ studentParticipation()!.presentationScore + '%' }}
-                                </span>
-                            }
-                            @if (!studentParticipation()?.presentationScore) {
-                                <span class="badge bg-secondary" jhiTranslate="global.generic.unset"></span>
-                            }
-                        }
-                    </div>
-                }
+                <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
             }
             @if (dueDate()) {
                 <div class="fw-500">
@@ -107,30 +85,7 @@
             @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'assessmentDue' && nextRelevantDateLabel() !== 'complaintDue')) {
             } @else {
                 <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
-                @if (exercise().presentationScoreEnabled) {
-                    <div>
-                        @if (effectiveCourse()?.presentationScore) {
-                            {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
-                            @if ((studentParticipation()?.presentationScore ?? 0) > 0) {
-                                <span class="badge bg-success" jhiTranslate="global.generic.yes"></span>
-                            }
-                            @if ((studentParticipation()?.presentationScore ?? 0) <= 0) {
-                                <span class="badge bg-secondary" jhiTranslate="global.generic.no"></span>
-                            }
-                        }
-                        @if (!effectiveCourse()?.presentationScore) {
-                            {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
-                            @if (studentParticipation()?.presentationScore) {
-                                <span class="badge bg-success">
-                                    {{ studentParticipation()!.presentationScore + '%' }}
-                                </span>
-                            }
-                            @if (!studentParticipation()?.presentationScore) {
-                                <span class="badge bg-secondary" jhiTranslate="global.generic.unset"></span>
-                            }
-                        }
-                    </div>
-                }
+                <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
             }
             @if (!nextRelevantDate() && canComplainLaterOn()) {
                 <div class="fw-500">
@@ -157,6 +112,32 @@
             >
                 {{ nextRelevantDate() | artemisTimeAgo }}
             </span>
+        </div>
+    }
+</ng-template>
+
+<ng-template #presentationScoreSummary>
+    @if (exercise().presentationScoreEnabled) {
+        <div>
+            @if (effectiveCourse()?.presentationScore) {
+                {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
+                @if ((studentParticipation()?.presentationScore ?? 0) > 0) {
+                    <span class="badge bg-success" jhiTranslate="global.generic.yes"></span>
+                }
+                @if ((studentParticipation()?.presentationScore ?? 0) <= 0) {
+                    <span class="badge bg-secondary" jhiTranslate="global.generic.no"></span>
+                }
+            } @else {
+                {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
+                @if (studentParticipation()?.presentationScore) {
+                    <span class="badge bg-success">
+                        {{ studentParticipation()!.presentationScore + '%' }}
+                    </span>
+                }
+                @if (!studentParticipation()?.presentationScore) {
+                    <span class="badge bg-secondary" jhiTranslate="global.generic.unset"></span>
+                }
+            }
         </div>
     }
 </ng-template>

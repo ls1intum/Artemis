@@ -278,39 +278,39 @@ export const UNIVERSITY_LOGOS: UniversityLogo[] = [
     { name: 'Maria-Theresia-Gymnasium', file: 'content/images/landing/user-logos/maria-theresia.webp', width: 57 },
 ];
 
-function footerLinkGroup(id: string, links: [string, string][]): FooterLinkGroup {
+function footerLinkGroup(id: string, linksByLabel: Readonly<Record<string, string>>): FooterLinkGroup {
     return {
         titleKey: `landing.footer.links.${id}.title`,
-        links: links.map(([label, href]) => ({ labelKey: `landing.footer.links.${id}.${label}`, href })),
+        links: Object.entries(linksByLabel).map(([label, href]) => ({ labelKey: `landing.footer.links.${id}.${label}`, href })),
     };
 }
 
 export const FOOTER_LINK_GROUPS: FooterLinkGroup[] = [
-    footerLinkGroup('features', [
-        ['exercises', 'https://docs.artemis.tum.de/instructor/exercises/intro'],
-        ['lectures', 'https://docs.artemis.tum.de/student/learning-content/lectures'],
-        ['communication', 'https://docs.artemis.tum.de/student/communication-support/communication'],
-        ['adaptiveLearning', 'https://docs.artemis.tum.de/student/progress-analytics/adaptive-learning'],
-        ['iris', 'https://ls1intum.github.io/edutelligence/iris/'],
-    ]),
-    footerLinkGroup('instructors', [
-        ['examMode', 'https://docs.artemis.tum.de/instructor/exams/participation-checker'],
-        ['assessment', 'https://docs.artemis.tum.de/instructor/assessment-grading/assessment'],
-        ['tutorials', 'https://docs.artemis.tum.de/instructor/communication-support/tutorial-groups'],
-        ['faq', 'https://docs.artemis.tum.de/instructor/communication-support/faq'],
-    ]),
-    footerLinkGroup('project', [
-        ['about', 'https://docs.artemis.tum.de/about'],
-        ['try', 'https://docs.artemis.tum.de/about/try'],
-        ['trust', 'https://docs.artemis.tum.de/about/trust'],
-        ['governance', 'https://docs.artemis.tum.de/about/governance'],
-        ['roadmap', 'https://docs.artemis.tum.de/about/roadmap'],
-        ['adoption', 'https://docs.artemis.tum.de/about/adoption'],
-    ]),
-    footerLinkGroup('resources', [
-        ['documentation', 'https://docs.artemis.tum.de'],
-        ['publication', 'https://docs.artemis.tum.de/publications'],
-        ['github', 'https://github.com/ls1intum/Artemis'],
-        ['security', 'https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md'],
-    ]),
+    footerLinkGroup('features', {
+        exercises: 'https://docs.artemis.tum.de/instructor/exercises/intro',
+        lectures: 'https://docs.artemis.tum.de/student/learning-content/lectures',
+        communication: 'https://docs.artemis.tum.de/student/communication-support/communication',
+        adaptiveLearning: 'https://docs.artemis.tum.de/student/progress-analytics/adaptive-learning',
+        iris: 'https://ls1intum.github.io/edutelligence/iris/',
+    }),
+    footerLinkGroup('instructors', {
+        examMode: 'https://docs.artemis.tum.de/instructor/exams/participation-checker',
+        assessment: 'https://docs.artemis.tum.de/instructor/assessment-grading/assessment',
+        tutorials: 'https://docs.artemis.tum.de/instructor/communication-support/tutorial-groups',
+        faq: 'https://docs.artemis.tum.de/instructor/communication-support/faq',
+    }),
+    footerLinkGroup('project', {
+        about: 'https://docs.artemis.tum.de/about',
+        try: 'https://docs.artemis.tum.de/about/try',
+        trust: 'https://docs.artemis.tum.de/about/trust',
+        governance: 'https://docs.artemis.tum.de/about/governance',
+        roadmap: 'https://docs.artemis.tum.de/about/roadmap',
+        adoption: 'https://docs.artemis.tum.de/about/adoption',
+    }),
+    footerLinkGroup('resources', {
+        documentation: 'https://docs.artemis.tum.de',
+        publication: 'https://docs.artemis.tum.de/publications',
+        github: 'https://github.com/ls1intum/Artemis',
+        security: 'https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md',
+    }),
 ];
