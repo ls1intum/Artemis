@@ -32,15 +32,15 @@ requirement remains open. Verify all three levels after every submission.
 
 The main evidence is maintained in these locations:
 
-| Practice                                          | Evidence                                                                                                                            |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Governance, roles, and continuity                 | [Governance](/about/governance), named maintainers, and CODEOWNERS                                                                  |
-| At least one year of intended work and scope      | [Roadmap](/about/roadmap) and its linked project board                                                                              |
-| Architecture and security requirements            | [System design](./system-design), [trust and transparency](/about/trust), and the [security assurance case](./security-assurance)   |
-| Contributions, coding rules, and regression tests | Contribution guidelines, [development process](./development-process), and the enforcing CI workflows                               |
-| Dependencies and release verification             | Lockfiles, SBOMs, [builds and dependencies](./builds-and-dependencies), and the security policy's release-verification instructions |
-| Coverage                                          | Server JaCoCo and client Vitest reports from the same successful complete CI run                                                    |
-| Vulnerability response and credit                 | Security policy and the advisories for reports resolved during the preceding twelve months                                          |
+| Practice                                          | Evidence                                                                                                                                             |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Governance, roles, and continuity                 | [Governance](/about/governance), named maintainers, and CODEOWNERS                                                                                   |
+| At least one year of intended work and scope      | [Roadmap](/about/roadmap) and its linked project board                                                                                               |
+| Architecture and security requirements            | [System design](./system-design), [trust and transparency](/about/trust), and the [security assurance case](./security-assurance)                    |
+| Contributions, coding rules, and regression tests | Contribution guidelines, [development process](./development-process), and the enforcing CI workflows                                                |
+| Dependencies and release verification             | Lockfiles, SBOMs, [builds and dependencies](./builds-and-dependencies), and the security policy's release-verification instructions                  |
+| Coverage                                          | Complete server JaCoCo and client Vitest reports, with tested revisions and any verified source-equivalence or execution-data recombination recorded |
+| Vulnerability response and credit                 | Security policy and the advisories for reports resolved during the preceding twelve months                                                           |
 
 ## Checks that require more than a policy link
 
@@ -132,29 +132,105 @@ is applied. A new legal contribution requirement needs an explicit maintainer de
 ## Progress toward Gold
 
 The [Gold criteria](https://www.bestpractices.dev/en/criteria/2?details=true) strengthen several Silver
-requirements. `.bestpractices.json` also records the Gold baseline; an unknown or unmet answer is a
-work item, not a reason to weaken the evidence. Reassess the shared criteria at the stricter level.
-For example, encrypting network communication is a SHOULD at Silver and a MUST at Gold.
+requirements. The review below records the evidence checked on **2026-10-19**. Silver has been
+achieved; Gold remains open. A claim in `.bestpractices.json` is a proposed answer supported by its
+links, not a change to organization settings or a certification.
 
-Work through these areas before proposing Gold:
+### Coverage after the merged test improvements
 
-| Area                     | Next evidence or change                                                                                                                                                                                                  |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Silver                   | Publish the evidence and complete Silver first.                                                                                                                                                                          |
-| Contributor independence | Confirm two significant contributors in the preceding year are paid by unrelated organizations; profile company names alone are insufficient.                                                                            |
-| Source notices           | Inventory project-owned, third-party, and generated files; establish accurate copyright and license notices, including generator changes. Preserve third-party notices.                                                  |
-| Account protection       | Require organization-wide two-factor authentication and verify suitable second factors for repository and private-report access. Coordinate enforcement with maintainers before changing account access.                 |
-| Independent builds       | Pin a builder environment and have a separate party reproduce the artifact bytes. The controlled-environment Silver check alone is insufficient.                                                                         |
-| Coverage                 | Raise server instruction coverage (the Java statement proxy) to at least 90% and branch coverage to at least 80%, using meaningful tests and reports from the complete suite. Keep the client above the same thresholds. |
-| Transport and websites   | Close plaintext network paths or document how deployment enforces encryption; verify required security headers across project, documentation, and download sites with their operators.                                   |
-| Human security review    | Record reviewers, date, requirements, trust boundaries, findings, and remediation for a qualifying review within five years. Automated scans and this assurance case do not replace it.                                  |
-| Dynamic analysis         | Select a qualifying check before every major release, enable applicable runtime assertions, and retain reviewed results. Fuzz testing is outside the current scope.                                                      |
+The server coverage work in [#14279](https://github.com/ls1intum/Artemis/pull/14279),
+[#14280](https://github.com/ls1intum/Artemis/pull/14280), and
+[#14286](https://github.com/ls1intum/Artemis/pull/14286) has been merged. Both application language
+suites now supply evidence above Gold's 90% statement and 80% branch targets.
 
-The initial coverage baseline is complete CI run
-[38921395454](https://github.com/ls1intum/Artemis/actions/runs/38921395454): server instruction coverage
-89.58% and branch coverage 74.85%; client statement coverage 92.04% and branch coverage 80.17%.
-Refresh these measurements after changes rather than treating this snapshot as a permanent claim.
+| Suite and evidence                                                                                                        | Statement evidence                                  | Branch coverage              |
+| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ---------------------------- |
+| Client, complete successful [CI 39163316687](https://github.com/ls1intum/Artemis/actions/runs/39163316687)                | Vitest statements: 82,875 / 90,018 (**92.06%**)     | 33,791 / 42,138 (**80.19%**) |
+| Server test expansion, complete successful [CI 39164068412](https://github.com/ls1intum/Artemis/actions/runs/39164068412) | JaCoCo instructions: 531,538 / 577,914 (**91.98%**) | 38,456 / 47,889 (**80.30%**) |
+| Server, merged-source recomputation from the three successful test-PR runs                                                | JaCoCo instructions: 534,108 / 577,958 (**92.41%**) | 38,842 / 47,897 (**81.09%**) |
 
-Keep the live assessment honest while work proceeds. A root JSON proposal neither changes
-organization settings nor proves a deployment's configuration, and it does not automatically submit
-or award a badge.
+JaCoCo instructions supply the Java statement-coverage proxy; the recomputed server line coverage
+is 99,314 / 107,851 (**92.08%**). The weighted README line badge does not establish either statement
+or branch coverage.
+
+The client report tested `a9989e8b3b9f6228e289313aed5a5c866a76caa9`. Its production sources under
+`src/main/webapp` and `packages/tum-aet-ui` are unchanged in merged
+[`3d0bd7dfb4cd077394cc7cc22293855ed0dad9d5`](https://github.com/ls1intum/Artemis/commit/3d0bd7dfb4cd077394cc7cc22293855ed0dad9d5).
+The recomputation compiles that merged revision and combines all seven passing server shards from
+each of [CI 39163868255](https://github.com/ls1intum/Artemis/actions/runs/39163868255),
+[CI 39160461237](https://github.com/ls1intum/Artemis/actions/runs/39160461237), and
+[CI 39164068412](https://github.com/ls1intum/Artemis/actions/runs/39164068412). It preserves the
+existing class filters and exclusions and uses only passing CI execution data. The inputs are the
+**Server Coverage Execution Data** artifacts; retain their distinct filenames when combining the
+21 `.exec` files. Analyze them against the merged production classes with the existing JaCoCo report
+tasks, rather than summing coverage percentages or counters from reports with different class IDs.
+This is a recomputation from published CI data, not a new standalone CI run on `develop`.
+
+Refresh these measurements after production or test changes. Prefer a new complete run of the
+current revision; when using reports from separate runs, record each tested revision and verify the
+relevant production sources match. Do not use a filtered local test run as a substitute for the
+complete suite.
+
+### Contributor independence and human security review
+
+The preceding-year review window is **2025-10-19 through 2026-10-19**. Two independently affiliated
+contributors have non-trivial merged work in that interval:
+
+- **Benedikt Fein**, University of Passau, GitHub `b-fein`: the production documentation migration in
+  [#11583](https://github.com/ls1intum/Artemis/pull/11583) and the programming-template correction in
+  [#12661](https://github.com/ls1intum/Artemis/pull/12661).
+- **Eduard Frankford**, University of Innsbruck, GitHub `eduardfrankford`: the websocket deadlock fix
+  and regression tests in [#13834](https://github.com/ls1intum/Artemis/pull/13834), lecture file-form
+  improvements in [#13965](https://github.com/ls1intum/Artemis/pull/13965), and the coverage-tooling fix
+  in [#14243](https://github.com/ls1intum/Artemis/pull/14243).
+
+The maintainer confirmed the affiliations on 2026-10-19. The institutional staff listings for
+[Passau](https://www.fim.uni-passau.de/en/chair-for-software-engineering-ii/team) and
+[Innsbruck](https://www.uibk.ac.at/de/informatik/team/) corroborate them. The criterion requires
+non-trivial contributions in the preceding year; 50 commits, 1,000 lines of code, and 20 pages of
+documentation are examples of significant contributions, not mandatory minimums. Assess the
+substance of the linked changes instead of treating a profile company name or a count alone as proof.
+
+The maintainer also confirmed on **2026-10-19** that the core maintainer team conducts **monthly
+internal human security reviews**, covering the security requirements and trust boundaries in the
+[security assurance case](./security-assurance). This supplies the human-review evidence within
+Gold's five-year window. The assurance document and scanner results alone would not establish it.
+Exact days and confidential vulnerability details need not be published; internal records should
+identify the review month, participants, scope, findings, and remediation.
+
+### Runtime assertions and the dynamic-analysis route
+
+Delivered Java code contains hundreds of Bean Validation runtime contracts, Spring `Assert` guards,
+and explicit constructor and invariant checks, including
+[`WorkerSettings`](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/aiworker/config/WorkerSettings.java).
+The tests exercise valid and invalid inputs against those production checks. These contracts are
+separate from assertions written only inside tests.
+
+The Gradle `test` task was inspected on 2026-10-19: `enableAssertions=true`, and its JVM arguments
+include `-ea`. This also enables Java language assertions during the JUnit run, consistent with
+[Gradle's documented test default](https://docs.gradle.org/current/dsl/org.gradle.api.tasks.testing.Test.html#org.gradle.api.tasks.testing.Test:enableAssertions).
+It does not claim that Java assertions are enabled in a deployed production JVM.
+
+Gold accepts an automated test suite with **at least 80% branch coverage** as a dynamic-analysis
+tool. Fuzzing is therefore not required for this route and remains outside the current scope.
+The tool threshold is now met, but the separate requirement to apply and review a qualifying run
+**before every proposed major production release** still needs release-practice confirmation.
+A test run triggered by GitHub's `release: published` event happens after publication and does not
+by itself prove that pre-release step. Retain the candidate revision, complete server/client reports,
+runtime failures, and their disposition when recording the release review.
+
+### Remaining work
+
+| Area                                      | Evidence or change still needed                                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-file copyright and license statements | Inventory project-owned, third-party, and generated source. Add accurate notices and generator support while preserving existing third-party notices. The repository-wide MIT license alone does not meet the two per-file criteria.                                                                                             |
+| Mandatory account protection              | The organization API still reported `two_factor_requirement_enabled=false` on 2026-10-19. Establish mandatory 2FA for repository changes and private-report access; also verify cryptographic second factors. Coordinate account-access changes with authorized administrators.                                                  |
+| Independent reproducible builds           | Pin the builder environment and obtain an independent rebuild of the same artifact bytes. The controlled-environment Silver build pair does not establish this.                                                                                                                                                                  |
+| Encrypted transport defaults              | Close plaintext communication paths, including distributed infrastructure links, and establish the secure deployment defaults. A private network alone does not prove encrypted transport.                                                                                                                                       |
+| Website headers                           | `artemis.tum.de` now returns HSTS, CSP, `nosniff`, and `X-Frame-Options: DENY`. The HTTPS GET response from `docs.artemis.tum.de` on 2026-10-19 omitted all four. Configure the documentation hosting/proxy headers and verify project, repository, and download sites. Gold also requires these headers for fully static sites. |
+| Pre-release dynamic analysis              | Confirm and record the complete test and coverage review before each major production release, using the qualifying suite described above.                                                                                                                                                                                       |
+
+Keep the live assessment and repository proposals aligned. Reassess shared criteria at the stricter
+level, and verify Passing and Silver after saving any Gold changes. Organization settings,
+independent rebuilds, deployment hardening, and a human review cannot be established merely by
+changing a proposal to `Met`.
