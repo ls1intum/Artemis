@@ -167,6 +167,28 @@ describe('ParticipationSubmissionComponent', () => {
             expect(rowIds()).toEqual([10, 30, 20]);
         });
 
+        it('preserves submission-date ordering when a live submission contains an ISO date string', () => {
+            comp.submissions.set([
+                { id: 1, submissionDate: dayjs('2026-01-01') },
+                { id: 3, submissionDate: dayjs('2026-01-03') },
+            ]);
+            render();
+            sortBy('artemisApp.participation.participationSubmission.submissionDate');
+            expect(rowIds()).toEqual([1, 3]);
+
+            buildStates.next(
+                JSON.parse(`{
+                    "participationId": 1,
+                    "submissionState": "${ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION}",
+                    "submission": {"id": 2, "submissionDate": "2026-01-02T00:00:00Z"}
+                }`),
+            );
+            render();
+            expect(rowIds()).toEqual([1, 2, 3]);
+            sortBy('artemisApp.participation.participationSubmission.submissionDate');
+            expect(rowIds()).toEqual([3, 2, 1]);
+        });
+
         it('sorts by the latest completed result and preserves that order when a live submission arrives', () => {
             comp.submissions.set([
                 { id: 1, submissionDate: dayjs('2026-01-01'), results: [{ completionDate: dayjs('2026-01-04') }, { completionDate: dayjs('2026-01-02') }] },

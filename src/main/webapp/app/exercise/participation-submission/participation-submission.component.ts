@@ -150,7 +150,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 headerKey: 'artemisApp.participation.participationSubmission.submissionDate',
                 field: 'submissionDate',
                 sort: true,
-                sortComparator: (rowA, rowB) => (rowA.submissionDate?.valueOf() ?? 0) - (rowB.submissionDate?.valueOf() ?? 0),
+                sortComparator: (rowA, rowB) => (rowA.submissionDate ? dayjs(rowA.submissionDate).valueOf() : 0) - (rowB.submissionDate ? dayjs(rowB.submissionDate).valueOf() : 0),
                 width: '180px',
                 templateRef: this.submissionDateTemplate(),
             },
