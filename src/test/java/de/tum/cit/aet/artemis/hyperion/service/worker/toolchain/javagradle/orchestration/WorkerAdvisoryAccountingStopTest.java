@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -53,7 +54,7 @@ class WorkerAdvisoryAccountingStopTest {
 
     @ParameterizedTest
     @CsvSource({ "MISSING_USAGE, true", "MISSING_USAGE, false", "INDETERMINATE, true", "INDETERMINATE, false", "DELIVERY, true", "DELIVERY, false" })
-    void fatalAccountingStopsWitnessAfterAdvisoryMutantCatch(Failure failure, boolean retriesDisabled) {
+    void fatalAccountingFailurePropagatesAndStopsWitness(Failure failure, boolean retriesDisabled) {
         ChatModel model = model();
         var firstCall = when(model.call(any(Prompt.class)));
         switch (failure) {
@@ -74,7 +75,12 @@ class WorkerAdvisoryAccountingStopTest {
         var critic = critic(model);
         assertThat(stop.getAsBoolean()).isFalse();
 
-        assertThat(critic.authorSemanticMutants(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(), recorder, stop)).isEmpty();
+        var thrown = assertThatThrownBy(() -> critic.authorSemanticMutants(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(), recorder, stop));
+        switch (failure) {
+            case MISSING_USAGE -> thrown.isInstanceOf(IllegalArgumentException.class).hasMessage("Provider response contains no usage metadata");
+            case INDETERMINATE -> thrown.isInstanceOf(IllegalStateException.class).hasMessage("indeterminate transport failure");
+            case DELIVERY -> thrown.isInstanceOf(IllegalStateException.class).hasMessage("usage delivery failed");
+        }
 
         assertThat(stop.getAsBoolean()).isTrue();
         assertThat(recorder.budgetExhausted()).isFalse();
@@ -87,7 +93,7 @@ class WorkerAdvisoryAccountingStopTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    void knownRejectedMutantRequestDoesNotStopAdvisoryWitness(boolean retriesDisabled) {
+    void knownRejectedMutantRequestPropagatesWithoutAccountingStop(boolean retriesDisabled) {
         ChatModel model = model();
         when(model.call(any(Prompt.class))).thenThrow(BadRequestException.builder().headers(Headers.builder().build()).build()).thenReturn(accounted("{\"witnesses\":[]}"));
         var recorder = new WorkerUsageRecorder(1_000, 1, retriesDisabled, ignored -> {
@@ -95,7 +101,8 @@ class WorkerAdvisoryAccountingStopTest {
         var stop = JavaGradleGenerationAdapterService.stopAuthoring(() -> false, recorder, Instant.MAX);
         var critic = critic(model);
 
-        assertThat(critic.authorSemanticMutants(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(), recorder, stop)).isEmpty();
+        assertThatThrownBy(() -> critic.authorSemanticMutants(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(), recorder, stop))
+                .isInstanceOf(BadRequestException.class);
         assertThat(stop.getAsBoolean()).isFalse();
         assertThat(critic.authorContractWitnesses(SPEC, "class SchedulerTest {}", SOURCE, recorder, stop)).isEmpty();
 
