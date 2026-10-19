@@ -136,6 +136,21 @@ class SlowQueryCollectorTest {
     }
 
     @Test
+    void failingCallSiteResolutionStillCountsTheQuery() {
+        Supplier<QueryCallSite> failing = () -> {
+            throw new IllegalStateException("stack walk failed");
+        };
+        query(SQL, 1, failing);
+        query(SQL, 2, failing);
+
+        assertThat(finishRequest()).singleElement().satisfies(finding -> {
+            assertThat(finding.executions()).isEqualTo(2);
+            assertThat(finding.repositoryMethod()).isNull();
+            assertThat(finding.callerMethod()).isNull();
+        });
+    }
+
+    @Test
     void endpointTimingSumsATemplateOverItsCallSites() {
         query(SQL, 1);
         query(SQL, 2, () -> new QueryCallSite("UserRepository.findByIdElseThrow", "ExamDeletionService.delete"));

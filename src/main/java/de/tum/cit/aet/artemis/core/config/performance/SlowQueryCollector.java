@@ -103,7 +103,7 @@ public class SlowQueryCollector {
 
         // --- Per-request statistics (feed both repeated-query detection and the endpoint timing) ---
         if (httpEndpoint != null) {
-            TemplateKey key = new TemplateKey(normalizedSql, callSiteResolver.get());
+            TemplateKey key = new TemplateKey(normalizedSql, resolveCallSite(callSiteResolver));
             TemplateStats stats = requestTemplates.get().computeIfAbsent(key, k -> new TemplateStats(joinCount));
             stats.executions++;
             stats.totalDurationMs += executionTimeMs;
@@ -222,6 +222,20 @@ public class SlowQueryCollector {
         if (distinct < stats.executions) {
             addRepeatedQueryFinding(new RepeatedQueryFinding(RepeatedQueryFinding.Type.DUPLICATE, sql, stats.executions, distinct, site.repositoryMethod(), site.callerMethod(),
                     httpMethod, httpEndpoint, testName, phase));
+        }
+    }
+
+    /**
+     * Resolves the call site without letting a failure reach the query: the listener runs inside
+     * the application's JDBC call, so an exception here would fail the request being measured.
+     */
+    private static QueryCallSite resolveCallSite(Supplier<QueryCallSite> callSiteResolver) {
+        try {
+            return callSiteResolver.get();
+        }
+        catch (RuntimeException e) {
+            log.debug("[RepeatedQuery] Could not resolve the call site of a query", e);
+            return QueryCallSite.UNKNOWN;
         }
     }
 
