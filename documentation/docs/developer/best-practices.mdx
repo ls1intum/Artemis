@@ -106,10 +106,15 @@ Both complete `Artemis-10.4.war` files had SHA-256:
 f0f91909df8831a0bfe7f5ce8a6595eed3db3ac5edabef9bce73c27da2c2547e
 ```
 
-A byte comparison also found no difference. This establishes the controlled-environment Silver
-criterion for the recorded source. It does not establish Gold's independent reproducibility
-requirement or promise the same hash for a different revision or build environment. Repeat the check
-when changing the build process.
+A byte comparison also found no difference. This pair establishes the controlled-environment Silver
+criterion for the recorded source; the pair alone does not establish independent reproduction.
+
+On **2026-10-19**, the project maintainer separately confirmed that another maintainer independently
+built the same source revision in a separate build and obtained an identical complete WAR SHA-256.
+The Gold answer records this maintainer attestation of independent bit-for-bit reproduction,
+alongside the documented build procedure and earlier controlled-environment pair. A container image
+can describe the build environment but is not mandatory under the criterion. Repeat the check when
+changing the build process; matching hashes are not promised across arbitrary revisions or environments.
 
 ### Maintainer continuity and reporter credit
 
@@ -227,7 +232,6 @@ runtime failures, and their disposition when recording the release review.
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Per-file copyright and license statements | Inventory project-owned, third-party, and generated source. Add accurate notices and generator support while preserving existing third-party notices. The repository-wide MIT license alone does not meet the two per-file criteria.                                                                                             |
 | Mandatory account protection              | The organization API still reported `two_factor_requirement_enabled=false` on 2026-10-19. Establish mandatory 2FA for repository changes and private-report access; also verify cryptographic second factors. Coordinate account-access changes with authorized administrators.                                                  |
-| Independent reproducible builds           | Pin the builder environment and obtain an independent rebuild of the same artifact bytes. The controlled-environment Silver build pair does not establish this.                                                                                                                                                                  |
 | Encrypted transport defaults              | Close plaintext communication paths, including distributed infrastructure links, and establish the secure deployment defaults. A private network alone does not prove encrypted transport.                                                                                                                                       |
 | Website headers                           | `artemis.tum.de` now returns HSTS, CSP, `nosniff`, and `X-Frame-Options: DENY`. The HTTPS GET response from `docs.artemis.tum.de` on 2026-10-19 omitted all four. Configure the documentation hosting/proxy headers and verify project, repository, and download sites. Gold also requires these headers for fully static sites. |
 
