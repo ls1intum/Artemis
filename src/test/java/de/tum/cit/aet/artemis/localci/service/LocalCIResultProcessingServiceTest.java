@@ -589,7 +589,7 @@ class LocalCIResultProcessingServiceTest {
         verify(buildJobRepository).save(saved.capture());
         assertThat(saved.getValue().getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
         assertThat(saved.getValue().getResult()).isSameAs(aggregatedResult);
-        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any(), any());
         // the aggregate is still in progress, so the student is told neither of a result nor of an error
         verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
         verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
@@ -620,7 +620,7 @@ class LocalCIResultProcessingServiceTest {
         BuildJob recorded = saved.getAllValues().getLast();
         assertThat(recorded.getBuildStatus()).isEqualTo(BuildStatus.ERROR);
         assertThat(recorded.getResult()).isNull();
-        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any(), any());
         verify(aggregationLocks).unlock("group-1");
     }
 
@@ -642,7 +642,7 @@ class LocalCIResultProcessingServiceTest {
         draftAssessment.setId(3L);
         draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         draftAssessment.setCompletionDate(null);
-        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), eq(false), any())).thenReturn(draftAssessment);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), eq(false), any(), any())).thenReturn(draftAssessment);
 
         resultProcessingService.processResultAsync();
 
@@ -683,7 +683,7 @@ class LocalCIResultProcessingServiceTest {
         withParticipation();
         Result finalizedResult = new Result();
         finalizedResult.setCompletionDate(completionDate);
-        when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, true, false, completionDate)).thenReturn(finalizedResult);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), eq(participation), eq(true), eq(false), eq(completionDate), any())).thenReturn(finalizedResult);
 
         assertThat(sweep()).isEqualTo(1);
 
@@ -694,7 +694,7 @@ class LocalCIResultProcessingServiceTest {
         InOrder order = inOrder(aggregationLocks, programmingExerciseGradingService);
         order.verify(aggregationLocks).lock("group-1");
         order.verify(aggregationLocks).lock(participationLock);
-        order.verify(programmingExerciseGradingService).finalizeContainerResult(7L, participation, true, false, completionDate);
+        order.verify(programmingExerciseGradingService).finalizeContainerResult(eq(7L), eq(participation), eq(true), eq(false), eq(completionDate), any());
         order.verify(aggregationLocks).unlock(participationLock);
         order.verify(aggregationLocks).unlock("group-1");
     }
@@ -726,7 +726,7 @@ class LocalCIResultProcessingServiceTest {
         Result finalizedResult = new Result();
         finalizedResult.setId(7L);
         finalizedResult.setCompletionDate(ZonedDateTime.now());
-        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), eq(false), any())).thenReturn(finalizedResult);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), eq(false), any(), any())).thenReturn(finalizedResult);
         when(buildJobRepository.findWithDataByBuildGroupId("group-1")).thenReturn(List.of(finishedJobOfGroup("job-a"), finishedJobOfGroup("job-b")));
 
         resultProcessingService.processResultAsync();
@@ -763,7 +763,7 @@ class LocalCIResultProcessingServiceTest {
         withParticipation();
         Result finalizedResult = new Result();
         finalizedResult.setCompletionDate(completionDate);
-        when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, true, false, completionDate)).thenReturn(finalizedResult);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), eq(participation), eq(true), eq(false), eq(completionDate), any())).thenReturn(finalizedResult);
         when(buildJobRepository.findWithDataByBuildGroupId("group-1")).thenReturn(List.of(finishedJobOfGroup("job-a"), finishedJobOfGroup("job-b")));
 
         assertThat(sweep()).isEqualTo(1);
@@ -778,7 +778,7 @@ class LocalCIResultProcessingServiceTest {
         withParticipation();
         Result finalizedResult = new Result();
         finalizedResult.setCompletionDate(completionDate);
-        when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, true, false, completionDate)).thenReturn(finalizedResult);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), eq(participation), eq(true), eq(false), eq(completionDate), any())).thenReturn(finalizedResult);
         when(buildJobRepository.findWithDataByBuildGroupId("group-1")).thenThrow(new IllegalStateException("the websocket broker is gone"));
 
         assertThat(sweep()).isEqualTo(1);
@@ -796,7 +796,8 @@ class LocalCIResultProcessingServiceTest {
         when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.of(solutionParticipation));
         Result finalizedResult = new Result();
         finalizedResult.setCompletionDate(completionDate);
-        when(programmingExerciseGradingService.finalizeContainerResult(7L, solutionParticipation, true, false, completionDate)).thenReturn(finalizedResult);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), eq(solutionParticipation), eq(true), eq(false), eq(completionDate), any()))
+                .thenReturn(finalizedResult);
 
         assertThat(sweep()).isEqualTo(1);
 
@@ -821,7 +822,8 @@ class LocalCIResultProcessingServiceTest {
         Result finalizedResult = new Result();
         finalizedResult.setCompletionDate(completionDate);
         finalizedResult.setSubmission(testSubmission);
-        when(programmingExerciseGradingService.finalizeContainerResult(7L, solutionParticipation, true, false, completionDate)).thenReturn(finalizedResult);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), eq(solutionParticipation), eq(true), eq(false), eq(completionDate), any()))
+                .thenReturn(finalizedResult);
 
         assertThat(sweep()).isEqualTo(1);
 
@@ -858,7 +860,7 @@ class LocalCIResultProcessingServiceTest {
         assertThat(jobs.get(1).getBuildStatus()).isEqualTo(BuildStatus.CANCELLED);
         verify(buildJobRepository).saveAll(any());
         verify(programmingExerciseGradingService).discardContainerResult(7L);
-        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any(), any());
         verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
         // the jobs no longer link to a result, which an open build overview has to learn
         verify(localCIQueueWebsocketService, times(2)).sendChangedFinishedBuildJobOverWebsocket(any());
@@ -873,7 +875,7 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(eq(PARTICIPATION_ID), eq("commit"), any(ZonedDateTime.class))).thenReturn(false);
         Result finalizedResult = new Result();
         finalizedResult.setCompletionDate(completionDate);
-        when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, false, true, completionDate)).thenReturn(finalizedResult);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), eq(participation), eq(false), eq(true), eq(completionDate), any())).thenReturn(finalizedResult);
 
         assertThat(sweep()).isEqualTo(1);
 
@@ -908,7 +910,7 @@ class LocalCIResultProcessingServiceTest {
 
     private void verifyTheLateResultWasNotMerged() {
         verify(programmingExerciseGradingService, never()).appendContainerResult(any(), any(), anyBoolean(), any(), any());
-        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any(), any());
         // the job keeps the outcome the sweep gave it
         verify(buildJobRepository, never()).save(any(BuildJob.class));
         // the student is told neither of a result nor of an error: the group's result was dealt with without this container
@@ -994,7 +996,7 @@ class LocalCIResultProcessingServiceTest {
 
         assertThat(sweep()).isZero();
 
-        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any(), any());
         verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
         verify(aggregationLocks).unlock("group-1");
     }
@@ -1016,13 +1018,13 @@ class LocalCIResultProcessingServiceTest {
         Result finalizedResult = new Result();
         finalizedResult.setId(7L);
         finalizedResult.setCompletionDate(ZonedDateTime.now());
-        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), eq(true), any())).thenReturn(finalizedResult);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), eq(true), any(), any())).thenReturn(finalizedResult);
 
         resultProcessingService.processResultAsync();
 
         ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
         verify(buildJobRepository).save(saved.capture());
         assertThat(saved.getValue().isBuildFailed()).as("the container's verdict is recorded on its job").isTrue();
-        verify(programmingExerciseGradingService).finalizeContainerResult(eq(7L), any(), eq(true), eq(true), any());
+        verify(programmingExerciseGradingService).finalizeContainerResult(eq(7L), any(), eq(true), eq(true), any(), any());
     }
 }

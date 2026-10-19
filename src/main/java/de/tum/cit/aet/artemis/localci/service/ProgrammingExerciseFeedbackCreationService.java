@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -364,9 +365,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param deactivateAbsentTestCases whether existing active test cases absent from this result are deactivated
      */
     public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
-        if (mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled).isPresent() && buildResult instanceof BuildResult localResult
-                && (exercise.getReleaseDate() == null || exercise.getReleaseDate().isAfter(ZonedDateTime.now()))
-                && !programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exercise.getId())) {
+        if (buildResult instanceof BuildResult localResult && isDiscoveryCoordinated(exercise)) {
             if (StringUtils.isBlank(buildResult.assignmentRepoCommitHash()) || StringUtils.isBlank(buildResult.testsRepoCommitHash())) {
                 return;
             }
@@ -374,23 +373,48 @@ public class ProgrammingExerciseFeedbackCreationService {
                     && localResult.jobs().stream().anyMatch(job -> !job.successfulTests().isEmpty()) && localResult.jobs().stream().allMatch(job -> job.failedTests().isEmpty());
             boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash(),
                     synchronizationBuildSuccessful, () -> {
-                        ProgrammingExercise current = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        String configuredBranch = buildConfigs.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
-                        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
-                        if (!buildResult.assignmentRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.SOLUTION), branch))
-                                || !buildResult.testsRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.TESTS), branch))) {
+                        ProgrammingExercise current = currentExerciseAt(exercise.getId(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash());
+                        if (current == null) {
                             return false;
                         }
                         extractCurrentTestCases(buildResult, current, deactivateAbsentTestCases);
-                        return true;
+                        // The container of a multi-container build reports only its share of the test cases, so it does not
+                        // complete the synchronization; the build's finalization does, over the test cases of every container.
+                        return deactivateAbsentTestCases;
                     });
-            if (!synchronizedCases) {
+            if (!synchronizedCases && deactivateAbsentTestCases) {
                 log.info("Skipped canonical test discovery for exercise {}: the draft is being saved or the build revisions are superseded; the result is still graded",
                         exercise.getId());
             }
             return;
         }
         extractCurrentTestCases(buildResult, exercise, deactivateAbsentTestCases);
+    }
+
+    /**
+     * Whether test discovery for the exercise is coordinated with Hyperion's exercise generation: it then runs only for
+     * a build of the current solution and test revisions, and while a generated draft is saved only for the build that
+     * the save expects.
+     */
+    private boolean isDiscoveryCoordinated(ProgrammingExercise exercise) {
+        return mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled).isPresent()
+                && (exercise.getReleaseDate() == null || exercise.getReleaseDate().isAfter(ZonedDateTime.now()))
+                && !programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exercise.getId());
+    }
+
+    /**
+     * @return the exercise, loaded again, if the given revisions are still the heads of its solution and test
+     *         repositories, otherwise null
+     */
+    private ProgrammingExercise currentExerciseAt(long exerciseId, String solutionCommitHash, String testsCommitHash) {
+        ProgrammingExercise current = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        String configuredBranch = buildConfigs.getProgrammingExerciseBuildConfigElseThrow(exerciseId).getBranch();
+        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
+        if (!solutionCommitHash.equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.SOLUTION), branch))
+                || !testsCommitHash.equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.TESTS), branch))) {
+            return null;
+        }
+        return current;
     }
 
     private void extractCurrentTestCases(BuildResultNotification buildResult, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
@@ -475,18 +499,55 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     /**
-     * Deactivates the exercise's active test cases that no container of a multi-container solution build reported, and
-     * broadcasts the change.
+     * Reconciles the exercise's test cases with the ones every container of a multi-container solution build reported:
+     * deactivates the active ones that no container reported, and broadcasts the change. Where test discovery is
+     * coordinated with Hyperion (see {@link #extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification, ProgrammingExercise, boolean)}),
+     * it runs only for a build of the current revisions and completes the synchronization a save expects; a build whose
+     * revisions are unknown, as when the sweep finalizes it, then leaves the test cases as they are.
      *
      * @param presentTestCaseNames the names of the test cases the merged build result reported
      * @param exercise             the solution's programming exercise
+     * @param revisions            the solution and test revisions the build ran, or null if they are unknown
+     * @param buildSuccessful      whether the build passed every test case it reported, which a save requires
      */
-    public void deactivateSolutionTestCasesAbsentFromMergedResult(Set<String> presentTestCaseNames, ProgrammingExercise exercise) {
+    public void reconcileTestCasesOfMergedSolutionBuild(Set<String> presentTestCaseNames, ProgrammingExercise exercise, @Nullable BuildRevisions revisions,
+            boolean buildSuccessful) {
+        if (!isDiscoveryCoordinated(exercise)) {
+            reconcileMergedTestCases(presentTestCaseNames, exercise);
+            return;
+        }
+        if (revisions == null || StringUtils.isBlank(revisions.solutionCommitHash()) || StringUtils.isBlank(revisions.testsCommitHash())) {
+            log.info("Skipped the test case reconciliation of exercise {}: the revisions of its multi-container solution build are unknown", exercise.getId());
+            return;
+        }
+        boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), revisions.solutionCommitHash(), revisions.testsCommitHash(), buildSuccessful, () -> {
+            ProgrammingExercise current = currentExerciseAt(exercise.getId(), revisions.solutionCommitHash(), revisions.testsCommitHash());
+            if (current == null) {
+                return false;
+            }
+            reconcileMergedTestCases(presentTestCaseNames, current);
+            return true;
+        });
+        if (!synchronizedCases) {
+            log.info("Skipped the test case reconciliation of exercise {}: the draft is being saved or the build revisions are superseded", exercise.getId());
+        }
+    }
+
+    private void reconcileMergedTestCases(Set<String> presentTestCaseNames, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> testCasesFromMergedResult = presentTestCaseNames.stream()
                 .map(name -> new ProgrammingExerciseTestCase().testName(name).exercise(exercise).active(true)).collect(Collectors.toSet());
         if (reconcileTestCases(testCasesFromMergedResult, exercise, true)) {
             broadcastTestCases(exercise);
         }
+    }
+
+    /**
+     * The revisions a build ran.
+     *
+     * @param solutionCommitHash the commit of the solution (assignment) repository the build ran
+     * @param testsCommitHash    the commit of the test repository the build ran
+     */
+    public record BuildRevisions(String solutionCommitHash, String testsCommitHash) {
     }
 
     private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,

@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService;
+import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.BuildRevisions;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationResultService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -484,10 +485,11 @@ public class ProgrammingExerciseGradingService {
      * @param allJobsSucceeded          whether every container's build job finished with a successful job status and merged its result
      * @param anyContainerFailedToBuild whether a container of the build failed to build, as recorded on the group's build jobs
      * @param completionDate            the completion date to set on the finalized result
+     * @param revisions                 the revisions the build ran, reported by its last container, or null if they are unknown
      * @return the finalized result, or the tutor's assessment its feedback was merged into
      */
     public Result finalizeContainerResult(long resultId, ProgrammingExerciseParticipation participation, boolean allJobsSucceeded, boolean anyContainerFailedToBuild,
-            ZonedDateTime completionDate) {
+            ZonedDateTime completionDate, @Nullable BuildRevisions revisions) {
         Result aggregatedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         hydrateTypedFeedback(aggregatedResult);
         if (aggregatedResult.isManual()) {
@@ -516,7 +518,10 @@ public class ProgrammingExerciseGradingService {
             else {
                 Set<String> presentTestCaseNames = aggregatedResult.getTestCaseFeedbacks().stream().map(feedback -> feedback.getTestCase().getTestName())
                         .collect(Collectors.toSet());
-                feedbackCreationService.deactivateSolutionTestCasesAbsentFromMergedResult(presentTestCaseNames, participation.getProgrammingExercise());
+                boolean everyReportedTestCasePassed = !aggregatedResult.getTestCaseFeedbacks().isEmpty()
+                        && aggregatedResult.getTestCaseFeedbacks().stream().allMatch(feedback -> Boolean.TRUE.equals(feedback.isPositive()));
+                feedbackCreationService.reconcileTestCasesOfMergedSolutionBuild(presentTestCaseNames, participation.getProgrammingExercise(), revisions,
+                        everyReportedTestCasePassed);
             }
         }
         // The scoring leaves a result without test-case feedback as it is, so a build whose containers reported no test

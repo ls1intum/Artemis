@@ -24,6 +24,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.BuildRevisions;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -418,7 +420,8 @@ public class LocalCIResultProcessingService {
             long finishedJobs = jobs.stream().filter(job -> FINISHED_BUILD_STATUSES.contains(job.getBuildStatus())).count();
             ZonedDateTime completionDate = jobs.stream().map(BuildJob::getBuildCompletionDate).filter(Objects::nonNull).max(Comparator.naturalOrder())
                     .orElseGet(ZonedDateTime::now);
-            Result finalizedResult = finalizeIfGroupComplete(jobs, (int) finishedJobs, participation, completionDate);
+            // the sweep has no container result, so the revisions the build ran are unknown
+            Result finalizedResult = finalizeIfGroupComplete(jobs, (int) finishedJobs, participation, completionDate, null);
             if (finalizedResult == null) {
                 return false;
             }
@@ -539,7 +542,8 @@ public class LocalCIResultProcessingService {
                     }
                 }
                 if (appended != null) {
-                    Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
+                    Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(),
+                            revisionsOf(effectiveBuildResult));
                     outcome = new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob, finalizedResult != null);
                 }
             }
@@ -555,7 +559,8 @@ public class LocalCIResultProcessingService {
                 // covers a second failure.
                 Result finalizedResult = null;
                 try {
-                    finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
+                    finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(),
+                            revisionsOf(effectiveBuildResult));
                 }
                 catch (RuntimeException e) {
                     log.error("Could not finalize build group {} after container {} of build job {} merged; the group's aggregated result stays in progress", buildGroupId,
@@ -566,7 +571,8 @@ public class LocalCIResultProcessingService {
             // The merge failed: record the job as finished anyway, without a link, so the group's count still advances and, if
             // this was the last container, the siblings' aggregate is finalized now, as failed.
             BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null);
-            Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
+            Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(),
+                    revisionsOf(effectiveBuildResult));
             return new ContainerOutcome(finalizedResult, savedContainerJob, finalizedResult != null);
         }
         finally {
@@ -578,12 +584,18 @@ public class LocalCIResultProcessingService {
         return buildJobRepository.findResultIdsOfBuildGroup(buildGroupId, PageRequest.of(0, 1)).stream().findFirst().orElse(null);
     }
 
-    private Result finalizeIfGroupComplete(String buildGroupId, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate) {
-        return finalizeIfGroupComplete(buildJobRepository.findAllByBuildGroupId(buildGroupId), expectedContainerCount, participation, completionDate);
+    private Result finalizeIfGroupComplete(String buildGroupId, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate,
+            BuildRevisions revisions) {
+        return finalizeIfGroupComplete(buildJobRepository.findAllByBuildGroupId(buildGroupId), expectedContainerCount, participation, completionDate, revisions);
+    }
+
+    private static BuildRevisions revisionsOf(BuildResult buildResult) {
+        return new BuildRevisions(buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash());
     }
 
     /** Finalizes the aggregated result of a build group once every job of the group has finished. */
-    private Result finalizeIfGroupComplete(List<BuildJob> jobs, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate) {
+    private Result finalizeIfGroupComplete(List<BuildJob> jobs, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate,
+            @Nullable BuildRevisions revisions) {
         long finishedContainers = jobs.stream().filter(job -> FINISHED_BUILD_STATUSES.contains(job.getBuildStatus())).count();
         if (finishedContainers < expectedContainerCount) {
             return null;
@@ -619,7 +631,7 @@ public class LocalCIResultProcessingService {
                 List<Long> supersededResultIds = triggeredAt == null ? List.of()
                         : buildJobRepository.findLaterCreatedResultsOfSubmissionTriggeredBefore(aggregatedResultId, triggeredAt);
                 finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild,
-                        completionDate);
+                        completionDate, revisions);
                 supersededResultIds.forEach(programmingExerciseGradingService::deleteSupersededResult);
             }
         }
