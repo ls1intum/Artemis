@@ -471,6 +471,19 @@ describe('HyperionRunInspectorComponent', () => {
         expect(testId('hyperion-run-run-again')).toBeNull();
     });
 
+    it('explains incomplete AI accounting instead of reporting an unexpected failure', () => {
+        render(status({ accountingState: 'INCOMPLETE', events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
+
+        expect(testId('hyperion-run-outcome-reason')!.textContent).toContain('artemisApp.hyperion.generation.terminationReason.ACCOUNTING_INCOMPLETE');
+        expect(testId('hyperion-run-outcome-reason')!.textContent).not.toContain('terminationReason.RUN_FAILED');
+    });
+
+    it('does not mislabel an explicit cancellation with incomplete usage as a provider failure', () => {
+        render(status({ accountingState: 'INCOMPLETE', events: [event({ type: 'CANCELLED', terminationReason: 'CANCELLED' })] }));
+
+        expect(testId('hyperion-run-outcome-reason')!.textContent).toContain('artemisApp.hyperion.generation.terminationReason.CANCELLED');
+    });
+
     it('keeps the original brief collapsed in the inspector until requested', () => {
         render(status({ input: { prompt: 'Implement a stack.' } }));
         const briefToggle = () => testId('hyperion-run-input')!.querySelector('button')!;

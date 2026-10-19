@@ -279,7 +279,11 @@ export class HyperionRunInspectorComponent {
             bodyKey: `artemisApp.hyperion.generation.outcome.${copy}Body`,
             terminationReasonKey:
                 (outcome === 'failed' || outcome === 'cancelled') && terminal?.terminationReason
-                    ? `artemisApp.hyperion.generation.terminationReason.${terminal.terminationReason}`
+                    ? `artemisApp.hyperion.generation.terminationReason.${
+                          outcome === 'failed' && terminal.terminationReason === 'RUN_FAILED' && this.facade.accountingState() === 'INCOMPLETE'
+                              ? 'ACCOUNTING_INCOMPLETE'
+                              : terminal.terminationReason
+                      }`
                     : undefined,
             checks,
             testCountKey: verdict ? (verdict.testCount === 1 ? 'artemisApp.hyperion.generation.verdict.oneTest' : 'artemisApp.hyperion.generation.verdict.tests') : undefined,

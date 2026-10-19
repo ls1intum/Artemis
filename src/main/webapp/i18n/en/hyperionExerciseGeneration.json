@@ -224,7 +224,7 @@
                     "cancelledTitle": "You cancelled this run",
                     "cancelledBody": "This run was cancelled. The exercise contents remain unchanged.",
                     "retained": "The work Artemis had done is kept so you can look at it. It is not part of your exercise.",
-                    "nothingRetained": "Nothing from this run could be kept, so there is nothing to inspect. Your exercise is unchanged — run it again when you are ready.",
+                    "nothingRetained": "No generated files are available to inspect.",
                     "technicalDetails": "Show technical details",
                     "disclaimer": "Generated with AI. Check the problem statement, the tests, and the sample solution before releasing this exercise.",
                     "serverMessageCount": "{{count}} server messages"
@@ -259,6 +259,7 @@
                     "TOKEN_BUDGET_EXHAUSTED": "The run hit its budget limit.",
                     "AGENT_ERROR": "The AI model failed while working on the exercise.",
                     "ENVIRONMENT_UNAVAILABLE": "The build environment was not available.",
+                    "ACCOUNTING_INCOMPLETE": "AI usage could not be verified. Further AI requests were stopped to protect the run budget. Try again later or contact an administrator.",
                     "RUN_FAILED": "The run failed unexpectedly.",
                     "NOT_STARTED": "The run never started."
                 },
