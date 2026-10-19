@@ -186,14 +186,15 @@ public class SlowQueryCollector {
     /**
      * Assembles and returns the current report.
      *
+     * @param indexes the indexes of every table, passed through to the report (see {@link IndexCatalog}).
      * @return an immutable snapshot of all collected findings.
      */
-    public SlowQueryReportDTO getReport() {
+    public SlowQueryReportDTO getReport(Map<String, List<TableIndex>> indexes) {
         List<SlowQueryRecord> slowSnapshot = new ArrayList<>(slowQueries);
         List<RepeatedQueryFinding> repeatedSnapshot = new ArrayList<>(repeatedQueries);
         List<EndpointTimingRecord> endpointTimingSnapshot = new ArrayList<>(endpointTimings);
         return new SlowQueryReportDTO(Instant.now(), properties.getSlowQueryThresholdMs(), slowSnapshot.size(), repeatedSnapshot.size(), slowSnapshot, repeatedSnapshot,
-                endpointTimingSnapshot);
+                endpointTimingSnapshot, indexes);
     }
 
     /**

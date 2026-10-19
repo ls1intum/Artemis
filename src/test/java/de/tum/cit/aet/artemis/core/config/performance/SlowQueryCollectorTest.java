@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config.performance;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -43,7 +44,7 @@ class SlowQueryCollectorTest {
     private List<RepeatedQueryFinding> finishRequest() {
         collector.recordEndpointTiming("GET", ENDPOINT, "CourseStats.spec", "action", 10);
         collector.resetRequestState();
-        return collector.getReport().repeatedQueries();
+        return collector.getReport(Map.of()).repeatedQueries();
     }
 
     @Test
@@ -191,7 +192,7 @@ class SlowQueryCollectorTest {
         query(SQL, 2, () -> new QueryCallSite("UserRepository.findByIdElseThrow", "ExamDeletionService.delete"));
         finishRequest();
 
-        assertThat(collector.getReport().endpointTimings()).singleElement().satisfies(timing -> {
+        assertThat(collector.getReport(Map.of()).endpointTimings()).singleElement().satisfies(timing -> {
             assertThat(timing.queryCount()).isEqualTo(2);
             assertThat(timing.queries()).singleElement().satisfies(entry -> assertThat(entry.count()).isEqualTo(2));
         });
@@ -203,7 +204,7 @@ class SlowQueryCollectorTest {
             collector.record(SQL, id, 1, 0, () -> SITE, null, null, null, null, "scheduling-1");
         }
 
-        assertThat(collector.getReport().repeatedQueries()).isEmpty();
+        assertThat(collector.getReport(Map.of()).repeatedQueries()).isEmpty();
     }
 
     /** One bound parameter, as the proxy records a {@code PreparedStatement.setXxx(index, value)} call. */

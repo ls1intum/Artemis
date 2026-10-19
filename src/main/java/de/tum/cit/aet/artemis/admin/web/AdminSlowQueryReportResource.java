@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.config.performance.IndexCatalog;
 import de.tum.cit.aet.artemis.core.config.performance.SlowQueryCollector;
 import de.tum.cit.aet.artemis.core.config.performance.SlowQueryReportDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
@@ -48,8 +49,11 @@ public class AdminSlowQueryReportResource {
 
     private final SlowQueryCollector collector;
 
-    public AdminSlowQueryReportResource(SlowQueryCollector collector) {
+    private final IndexCatalog indexCatalog;
+
+    public AdminSlowQueryReportResource(SlowQueryCollector collector, IndexCatalog indexCatalog) {
         this.collector = collector;
+        this.indexCatalog = indexCatalog;
     }
 
     /**
@@ -60,7 +64,7 @@ public class AdminSlowQueryReportResource {
      */
     @GetMapping("slow-queries")
     public ResponseEntity<SlowQueryReportDTO> getReport() {
-        SlowQueryReportDTO report = collector.getReport();
+        SlowQueryReportDTO report = collector.getReport(indexCatalog.indexes());
         log.debug("[SlowQuery] Report requested: {} slow queries, {} repeated-query findings", report.slowQueryCount(), report.repeatedQueryCount());
         return ResponseEntity.ok(report);
     }

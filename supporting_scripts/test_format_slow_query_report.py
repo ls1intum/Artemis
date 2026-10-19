@@ -142,6 +142,57 @@ class ProblemTest(unittest.TestCase):
         self.assertEqual(report.summarize_sql("insert into result (id,score) values (?,?)"), "insert into result")
 
 
+INDEXES = {
+    "saved_post": [{"name": "pk_saved_post", "columns": ["id"], "unique": True},
+                   {"name": "idx_saved_post_user_id_post_id_post_type", "columns": ["user_id", "post_id", "post_type"], "unique": True}],
+    "user_course_notification_status": [{"name": "pk_user_course_notification_status", "columns": ["course_notification_id", "user_id"], "unique": True}],
+    "course_notification": [{"name": "pk_course_notification", "columns": ["id"], "unique": True}],
+    "exercise": [{"name": "pk_exercise", "columns": ["id"], "unique": True}],
+    "participation": [{"name": "fk_participation_exercise_id", "columns": ["exercise_id"], "unique": False}],
+}
+
+
+class IndexLookupTest(unittest.TestCase):
+
+    def verdict(self, sql):
+        return report.index_lookup(sql, INDEXES)
+
+    def test_a_filter_on_the_leading_columns_of_an_index_is_indexed(self):
+        lookup = self.verdict("select sp1_0.post_id from saved_post sp1_0 where sp1_0.user_id= ? and sp1_0.post_type= ?")
+        self.assertEqual((lookup["verdict"], lookup["index"], lookup["columns"]), ("indexed", "idx_saved_post_user_id_post_id_post_type", ["user_id"]))
+
+    def test_a_filter_on_a_later_column_of_a_composite_key_is_a_scan(self):
+        sql = ("select count(*) from user_course_notification_status ucns1_0 join course_notification cn1_0 on cn1_0.id=ucns1_0.course_notification_id "
+               "where ucns1_0.user_id= ? and cn1_0.course_id= ? and ucns1_0.status= ?")
+        lookup = self.verdict(sql)
+        self.assertEqual((lookup["verdict"], lookup["table"], lookup["columns"]), ("scan", "user_course_notification_status", ["status", "user_id"]))
+
+    def test_statements_without_an_alias_and_wrapped_in_exists_are_judged(self):
+        self.assertEqual(self.verdict("delete from saved_post where user_id= ?")["verdict"], "indexed")
+        self.assertEqual(self.verdict("select exists ( select sp1_0.id from saved_post sp1_0 where sp1_0.id= ? )")["verdict"], "indexed")
+
+    def test_the_inheritance_subselect_reads_its_table(self):
+        sql = "select p1_0.id from participation p1_0 left join ( select * from exercise t where t.discriminator IN ( ? )) e1_0 on e1_0.id=p1_0.exercise_id where e1_0.id= ?"
+        self.assertEqual(self.verdict(sql)["index"], "pk_exercise")
+
+    def test_shapes_it_cannot_judge_are_not_checked(self):
+        self.assertEqual(self.verdict("select * from saved_post sp1_0 where sp1_0.user_id= ? or sp1_0.post_id= ?"), {"verdict": "unknown", "reason": "OR condition"})
+        self.assertEqual(self.verdict("select * from saved_post sp1_0 where lower(sp1_0.post_type)= ?")["verdict"], "unknown")
+        self.assertEqual(self.verdict("insert into saved_post (user_id) values (?)"), {"verdict": "n/a"})
+
+    def test_a_select_without_a_filter_reads_the_whole_table(self):
+        self.assertEqual(self.verdict("select e1_0.id from exercise e1_0")["reason"], "no filter")
+
+    def test_a_problem_with_an_unindexed_query_ranks_first_among_equally_avoidable_ones(self):
+        indexed = repeated(callerMethod="A.run", normalizedSql="select * from saved_post sp1_0 where sp1_0.user_id= ?")
+        scan = repeated(callerMethod="B.run", normalizedSql="select * from user_course_notification_status u1_0 where u1_0.user_id= ?")
+        groups = report.group_repeated_queries([indexed, scan])
+        report.link_static_confirmations(groups, [])
+        problems = report.build_problems(groups, INDEXES)
+        self.assertEqual([(p["anchor"], p["index_state"]) for p in problems], [("B.run", "scan"), ("A.run", "indexed")])
+        self.assertEqual({p["index_state"] for p in report.build_problems(groups)}, {""})
+
+
 class HtmlTest(unittest.TestCase):
 
     def test_html_report_renders_every_section(self):

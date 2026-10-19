@@ -196,12 +196,93 @@ def summarize_sql(sql: str) -> str:
     return summary + (f" where {where}" if where else "")
 
 
+# ---------------------------------------------------------------------------
+# Index lookup: can a query find its rows through an index?
+# ---------------------------------------------------------------------------
+# Judged from the index catalog in the report rather than from the database's query plan: E2E
+# tables hold a handful of rows, so the planner scans them even where an index exists. The
+# question here is whether an index could serve the lookup once a table is large.
+
+SQL_CLAUSE_WORDS = {"on", "where", "left", "right", "inner", "cross", "full", "join", "order", "group", "limit", "offset", "fetch", "for", "set"}
+COLUMN_REFERENCE = r"(?<![\w.(])(?:(\w+)\.)?(\w+)"
+
+
+def best_index(indexes: dict, table: str, equal: set, ranged: set):
+    """The index serving the longest lookup: a prefix of its columns compared for equality,
+    optionally followed by one compared by range."""
+    best = None
+    for index in indexes.get(table, []):
+        columns = index["columns"]
+        n = 0
+        while n < len(columns) and columns[n] in equal:
+            n += 1
+        if n < len(columns) and columns[n] in ranged:
+            n += 1
+        if n > 0 and (best is None or n > best[1] or (n == best[1] and len(columns) < len(best[0]["columns"]))):
+            best = (index, n)
+    return best
+
+
+def index_lookup(sql: str, indexes: dict) -> dict:
+    """Whether the statement's filter can use an index: 'indexed', 'scan', 'unknown' (a shape this
+    does not judge, with the reason) or 'n/a' (an insert, which looks nothing up)."""
+    s = " ".join((sql or "").split()).lower()
+    verb = s.split(" ", 1)[0] if s else ""
+    if verb == "insert":
+        return {"verdict": "n/a"}
+    exists = re.match(r"^select exists \( ?(select .*?) ?\)$", s)
+    if exists:
+        s = exists.group(1)
+    # Hibernate's subselect for one class of a joined inheritance, "( select * from exercise t where t.discriminator= ? ) pe1_0", reads that table
+    s = re.sub(r"\(\s*select \* from (\w+) \w+ where (?:[^()]|\([^()]*\))*\)\s*(\w+)", r"\1 \2", s)
+    # a nested "in (select …)" or "exists (select …)" is judged on the outer statement alone
+    s = re.sub(r"\(\s*select\b(?:[^()]|\((?:[^()]|\([^()]*\))*\))*\)", "( ? )", s)
+    if len(re.findall(r"\bselect\b", s)) > 1:
+        return {"verdict": "unknown", "reason": "subquery"}
+
+    head = re.search(r"^update (\w+)(?: (\w+))?" if verb == "update" else r"\bfrom (\w+)(?: (\w+))?", s)
+    if not head:
+        return {"verdict": "unknown", "reason": "unparsed statement"}
+    root = head.group(2) if head.group(2) and head.group(2) not in SQL_CLAUSE_WORDS else head.group(1)
+    tables = {root: head.group(1)}
+    for join in re.finditer(r"\bjoin (\w+)(?: (\w+))? on ", s):
+        tables[join.group(2) if join.group(2) and join.group(2) not in SQL_CLAUSE_WORDS else join.group(1)] = join.group(1)
+
+    where = re.search(r" where (.*?)(?: order by | group by | limit | offset | fetch | for update|$)", s)
+    if not where:
+        return {"verdict": "scan" if verb == "select" else "unknown", "table": tables[root], "columns": [], "reason": "no filter"}
+    condition = where.group(1)
+    if re.search(r"\bor\b", condition):
+        return {"verdict": "unknown", "reason": "OR condition"}
+
+    equal, ranged = {}, {}
+    for pattern, target in ((rf"{COLUMN_REFERENCE}\s*(?:=\s*\?|in\s*\(|is null)", equal), (rf"{COLUMN_REFERENCE}\s*(?:<=|>=|<|>|between\b|like\s*\?)", ranged)):
+        for m in re.finditer(pattern, condition):
+            table = tables.get(m.group(1) or root)
+            if table:
+                target.setdefault(table, set()).add(m.group(2))
+    if not equal and not ranged:
+        return {"verdict": "unknown", "reason": "function on a column" if re.search(r"\w\(", condition) else "unparsed condition"}
+
+    best = None
+    for table in list(equal) + [t for t in ranged if t not in equal]:
+        candidate = best_index(indexes, table, equal.get(table, set()), ranged.get(table, set()))
+        if candidate and (best is None or candidate[1] > best[1][1]):
+            best = (table, candidate)
+    if best:
+        table, (index, n) = best
+        return {"verdict": "indexed", "table": table, "index": index["name"], "columns": index["columns"][:n]}
+    table, columns = next(iter(equal.items()), None) or next(iter(ranged.items()))
+    return {"verdict": "scan", "table": table, "columns": sorted(columns)}
+
+
 def endpoint_label(method: str, endpoint: str) -> str:
     return f"{method or '?'} {endpoint or '?'}"
 
 
-def build_problems(groups: list) -> list:
-    """One problem per place to fix, most avoidable executions first."""
+def build_problems(groups: list, indexes: dict = None) -> list:
+    """One problem per place to fix, most avoidable executions first; among equal ones, those with
+    a query no index serves first. Without an index catalog, no query is judged."""
     problems = {}
     for g in groups:
         insert = INSERT_TABLE_PATTERN.match(g["sql"])
@@ -218,10 +299,11 @@ def build_problems(groups: list) -> list:
                                                           "call_sites": set()})
         query["groups"].append(g)
         query["call_sites"].update(g["call_sites"])
-    return sorted((summarize_problem(p) for p in problems.values()), key=lambda p: (-p["avoidable"], -len(p["endpoints"]), -len(p["tests"]), p["anchor"]))
+    return sorted((summarize_problem(p, indexes) for p in problems.values()),
+                  key=lambda p: (-p["avoidable"], p["index_state"] != "scan", -len(p["endpoints"]), -len(p["tests"]), p["anchor"]))
 
 
-def summarize_problem(problem: dict) -> dict:
+def summarize_problem(problem: dict, indexes: dict = None) -> dict:
     queries = []
     for q in problem["queries"].values():
         if problem["kind"] == "insert":
@@ -231,7 +313,8 @@ def summarize_problem(problem: dict) -> dict:
         q["requests"] = sorted(({**o, "endpoint": endpoint_label(g["method"], g["endpoint"]), "avoidable": avoidable_executions(g["type"], o["executions"], o["distinct"])}
                                 for g in q["groups"] for o in g["occurrences"]), key=lambda r: (-r["avoidable"], -r["executions"]))
         worst = q["requests"][0]
-        q.update(executions=worst["executions"], distinct=worst["distinct"], avoidable=worst["avoidable"], summary=summarize_sql(q["sql"]))
+        q.update(executions=worst["executions"], distinct=worst["distinct"], avoidable=worst["avoidable"], summary=summarize_sql(q["sql"]),
+                 index=index_lookup(q["sql"], indexes) if indexes else None)
         queries.append(q)
     queries.sort(key=lambda q: -q["avoidable"])
 
@@ -257,8 +340,17 @@ def summarize_problem(problem: dict) -> dict:
         phases=sorted({r["phase"] for q in queries for r in q["requests"] if r.get("phase") in ("action", "setup")}),
         static_matches=sorted({i for g in groups for i in g.get("static_matches", [])}),
         is_new=any(g.get("is_new") for g in groups),
+        index_state=index_state([q["index"] for q in queries]),
     )
     return problem
+
+
+def index_state(lookups: list) -> str:
+    """'scan' if any query has no usable index, 'indexed' if every judged one has, '' otherwise."""
+    verdicts = [lookup["verdict"] for lookup in lookups if lookup and lookup["verdict"] != "n/a"]
+    if "scan" in verdicts:
+        return "scan"
+    return "indexed" if verdicts and all(v == "indexed" for v in verdicts) else ""
 
 
 def loops_before_inserts(problems: list) -> list:
@@ -327,6 +419,7 @@ def problem_rows_md(problems: list) -> list:
     lines = ["| Where to fix | Shape | Avoidable / request | Biggest repeat | Endpoints | Tests |", "|---|---|---|---|---|---|"]
     for p in problems:
         confirmed = " · 🔍 static rule agrees" if p["static_matches"] else ""
+        confirmed += " · ⚠️ not indexed" if p["index_state"] == "scan" else ""
         biggest = p["queries"][0]
         more = f" +{len(p['endpoints']) - 1} more" if len(p["endpoints"]) > 1 else ""
         lines.append(f"| `{trunc(p['anchor'], 90)}` | {CATEGORY_LABELS[p['category']]}{confirmed} | {p['avoidable']} "
@@ -353,11 +446,12 @@ def capped(items: list, lines_for, run_url: str, what: str) -> list:
 def build_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "") -> str:
     generated_at = iso_to_human(report.get("generatedAt", ""))
     slow_groups = compute_slow_query_groups(report.get("slowQueries", []))
-    problems = loops_before_inserts(build_problems(groups))
+    indexes = report.get("indexes") or {}
+    problems = loops_before_inserts(build_problems(groups, indexes))
 
     lines = ["", "---"]
     if baseline is not None:
-        new_problems = loops_before_inserts(build_problems([g for g in groups if g.get("is_new")]))
+        new_problems = loops_before_inserts(build_problems([g for g in groups if g.get("is_new")], indexes))
         new_static = [f for f in static_findings if f.get("is_new")]
         emoji = "✅" if not new_problems and not new_static else "⚠️"
         status = ("No new query anti-patterns compared to develop" if emoji == "✅" else
@@ -529,6 +623,11 @@ details.more-list summary { cursor: pointer; color: var(--new); font-size: 12.5p
 td.where-cell summary { cursor: pointer; }
 td.where-cell .query-list, td.where-cell .foot-list { margin-top: 6px; }
 .problem.filtered-out { display: none; }
+.index-tag { grid-column: 1 / -1; font-size: 12px; }
+.index-ok { color: #16a34a; }
+.index-scan { color: var(--sev-high); font-weight: 600; }
+.index-ok-badge { background: rgba(22, 163, 74, .15); color: #16a34a; }
+.index-scan-badge { background: color-mix(in srgb, var(--sev-high) 15%, transparent); color: var(--sev-high); }
 @media (max-width: 640px) { .problem-foot { grid-template-columns: 1fr; } .query-item { grid-template-columns: minmax(0, 1fr) auto; } .query-avoidable { display: none; } }
 """
 
@@ -664,6 +763,7 @@ setupGroupedTable('slow-queries-table', { endpoint: 1, occurrences: 3, joins: 4,
     var problems = Array.prototype.slice.call(panel.querySelectorAll('.problem'));
     var excluded = { category: {}, phase: {}, method: {} };
     var onlyNew = false;
+    var onlyScan = false;
     function apply() {
         var query = search.value.toLowerCase();
         var shown = 0;
@@ -674,6 +774,7 @@ setupGroupedTable('slow-queries-table', { endpoint: 1, occurrences: 3, joins: 4,
                 && (phases.length === 0 || phases.some(function (p) { return !excluded.phase[p]; }))
                 && !(excluded.method.DELETE && methods.every(function (m) { return m === 'DELETE'; }))
                 && (!onlyNew || el.dataset.new === 'true')
+                && (!onlyScan || el.dataset.index === 'scan')
                 && (!query || el.textContent.toLowerCase().indexOf(query) !== -1);
             el.classList.toggle('filtered-out', !visible);
             if (visible) shown++;
@@ -686,6 +787,7 @@ setupGroupedTable('slow-queries-table', { endpoint: 1, occurrences: 3, joins: 4,
             var pressed = chip.getAttribute('aria-pressed') !== 'true';
             chip.setAttribute('aria-pressed', pressed ? 'true' : 'false');
             if (chip.dataset.filter === 'new') onlyNew = pressed;
+            else if (chip.dataset.filter === 'scan') onlyScan = pressed;
             else excluded[chip.dataset.filter][chip.dataset.value] = !pressed;
             apply();
         });
@@ -798,7 +900,20 @@ def query_item_html(q: dict, problem: dict) -> str:
     return (f'<li class="query-item">{source_html}'
             f'<details class="query-sql"><summary><code>{html.escape(q["summary"])}</code></summary><pre>{highlight_sql(q["sql"])}</pre>{query_requests_html(q)}</details>'
             f'<span class="query-counts">{html.escape(query_counts_label(q))}</span>'
-            f'<span class="query-avoidable" title="executions one request could have saved">−{q["avoidable"]}</span></li>')
+            f'<span class="query-avoidable" title="executions one request could have saved">−{q["avoidable"]}</span>{index_tag_html(q["index"])}</li>')
+
+
+def index_tag_html(lookup: dict) -> str:
+    if not lookup or lookup["verdict"] == "n/a":
+        return ""
+    if lookup["verdict"] == "indexed":
+        title = f'{lookup["table"]}({", ".join(lookup["columns"])})'
+        return f'<span class="index-tag index-ok" title="{html.escape(title)}">✓ uses index {html.escape(lookup["index"])}</span>'
+    if lookup["verdict"] == "scan":
+        if lookup.get("reason") == "no filter":
+            return f'<span class="index-tag index-scan">⚠ reads all of {html.escape(lookup["table"])}</span>'
+        return f'<span class="index-tag index-scan">⚠ no index on {html.escape(lookup["table"])}({html.escape(", ".join(lookup["columns"]))})</span>'
+    return f'<span class="index-tag muted">? index not checked: {html.escape(lookup["reason"])}</span>'
 
 
 def problem_tags_html(p: dict, static_findings: list, has_baseline: bool) -> str:
@@ -806,6 +921,10 @@ def problem_tags_html(p: dict, static_findings: list, has_baseline: bool) -> str
     if has_baseline and p["is_new"]:
         tags.append('<span class="badge badge-new">new</span>')
     tags += [html_phase(phase) for phase in p["phases"]]
+    if p["index_state"] == "scan":
+        tags.append('<span class="badge index-scan-badge" title="a query has no index for its filter">⚠ not indexed</span>')
+    elif p["index_state"] == "indexed":
+        tags.append('<span class="badge index-ok-badge">✓ indexed</span>')
     if p["static_matches"]:
         labels = "; ".join(STATIC_RULE_LABELS.get(static_findings[i]["type"], static_findings[i]["type"]) for i in p["static_matches"])
         indices = ",".join(str(i) for i in p["static_matches"])
@@ -815,7 +934,7 @@ def problem_tags_html(p: dict, static_findings: list, has_baseline: bool) -> str
 
 def problem_attributes(p: dict) -> str:
     return (f'data-category="{p["category"]}" data-phases="{" ".join(p["phases"])}" data-methods="{html.escape(" ".join(p["methods"]))}" '
-            f'data-new="{"true" if p["is_new"] else "false"}"')
+            f'data-new="{"true" if p["is_new"] else "false"}" data-index="{p["index_state"]}"')
 
 
 def problem_card_html(p: dict, rank: int, static_findings: list, has_baseline: bool) -> str:
@@ -858,7 +977,7 @@ def problem_table_html(problems: list, first_rank: int, static_findings: list, h
             f'<th>Shape</th><th>Where to fix</th><th>Tests</th></tr></thead><tbody>{rows}</tbody></table></div>')
 
 
-def build_problems_html(problems: list, static_findings: list, has_baseline: bool) -> str:
+def build_problems_html(problems: list, static_findings: list, has_baseline: bool, has_indexes: bool) -> str:
     if not problems:
         return '<p class="ok">✅ No query ran more than once within a request.</p>'
     ordered = loops_before_inserts(problems)
@@ -872,6 +991,8 @@ def build_problems_html(problems: list, static_findings: list, has_baseline: boo
               '<button type="button" class="filter-chip" data-filter="method" data-value="DELETE" aria-pressed="true" title="problems seen only at DELETE endpoints">DELETE</button>')
     if has_baseline:
         chips += '<button type="button" class="filter-chip only-chip" data-filter="new" aria-pressed="false">only new</button>'
+    if has_indexes:
+        chips += '<button type="button" class="filter-chip only-chip" data-filter="scan" aria-pressed="false">only ⚠ not indexed</button>'
     parts = [f'<div class="problem-controls"><input class="filter-box problem-search" type="search" placeholder="Filter by method, endpoint, test, table, SQL…">{chips}</div>']
     if top:
         parts.append(f'<h2>Top {len(top)} problems</h2><p class="muted section-note">Ranked by the biggest repeat: the executions one fix would save in a single request.</p>'
@@ -961,11 +1082,13 @@ def build_html_report(report: dict, groups: list, static_findings: list, baselin
     threshold_ms = report.get("thresholdMs", "?")
     slow_queries = report.get("slowQueries", [])
     slow_count = len(compute_slow_query_groups(slow_queries))
-    problems = build_problems(groups)
+    has_indexes = bool(report.get("indexes"))
+    problems = build_problems(groups, report.get("indexes"))
     n_plus_one = sum(1 for p in problems if p["category"] == "n_plus_one")
     duplicates = sum(1 for p in problems if p["category"] in ("duplicate_one_place", "duplicate_several_places"))
     inserts = sum(1 for p in problems if p["category"] == "insert")
     confirmed = sum(1 for p in problems if p["static_matches"])
+    not_indexed = sum(1 for p in problems if p["index_state"] == "scan")
     run_link = f'<p><a href="{html.escape(run_url)}">View CI run</a></p>' if run_url else ""
     if has_baseline:
         new_count = sum(1 for p in problems if p["is_new"]) + sum(1 for f in static_findings if f.get("is_new"))
@@ -992,11 +1115,13 @@ def build_html_report(report: dict, groups: list, static_findings: list, baselin
 more than once in one request, either with different parameters (<strong>N+1</strong>) or with the same ones (<strong>duplicate</strong>), or rows inserted one
 statement at a time (<strong>row-by-row insert</strong>). They are grouped by where the fix goes: the method that loops, the endpoint for data that several places
 load again, or the table for inserts. <strong>Static findings</strong> come from scanning the source code. A problem marked 🔍 is flagged by a static rule
-for the very same code. <strong>Slow queries</strong> are shown for context only: query timing in CI is too noisy to judge a change by. {comparison}</p>
+for the very same code. A query marked ⚠ <strong>not indexed</strong> has no index that starts with the columns it filters on, so once the
+table is large every repetition reads all of it; this comes from the database's indexes, not from timing. <strong>Slow queries</strong> are shown for context only: query timing in CI is too noisy to judge a change by. {comparison}</p>
 <div class="stats">
 <div class="stat-tile"><span class="stat-value">{n_plus_one}</span><span class="stat-label">N+1</span><span class="stat-sub">a method queries once per item</span></div>
 <div class="stat-tile"><span class="stat-value">{duplicates}</span><span class="stat-label">Duplicate</span><span class="stat-sub">the same data loaded again</span></div>
 <div class="stat-tile"><span class="stat-value">{inserts}</span><span class="stat-label">Row-by-row insert</span><span class="stat-sub">one statement per row</span></div>
+{f'<div class="stat-tile"><span class="stat-value">{not_indexed}</span><span class="stat-label">Not indexed</span><span class="stat-sub">a repeated query has no index for its filter</span></div>' if has_indexes else ""}
 <div class="stat-tile"><span class="stat-value">{confirmed}</span><span class="stat-label">Confirmed statically</span><span class="stat-sub">a static rule flags the same code</span></div>
 <div class="stat-tile"><span class="stat-value">{len(static_findings)}</span><span class="stat-label">Static findings</span><span class="stat-sub">from the source scan</span></div>
 </div>
@@ -1008,7 +1133,7 @@ for the very same code. <strong>Slow queries</strong> are shown for context only
 </div>
 
 <section class="tab-panel" id="panel-repeated-queries" role="tabpanel">
-{build_problems_html(problems, static_findings, has_baseline)}
+{build_problems_html(problems, static_findings, has_baseline, has_indexes)}
 </section>
 <section class="tab-panel" id="panel-static-findings" role="tabpanel" hidden>
 {build_static_findings_table_html(static_findings, has_baseline)}
