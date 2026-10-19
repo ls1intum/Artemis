@@ -220,7 +220,8 @@ final class ApprovedStructuralContract {
             }
             JavaClass actual = actualTypes.get(expected.getKey());
             if (actual == null) {
-                continue; // The existing ownership gate reports a missing solution type more directly.
+                reasons.add("the " + repository + " does not declare the approved Public API type " + expected.getKey());
+                continue;
             }
             Set<String> expectedSurface = canonicalSurface(expected.getValue(), types.keySet(), "template".equals(repository));
             Set<String> actualSurface = canonicalSurface(actual, types.keySet(), false);
