@@ -17,7 +17,8 @@ Trace the failing check through its called workflow; job names are prefixed by t
 (for example, `Quality / Server Code Style`). Check the repository's required-check settings
 before claiming that an advisory failure blocks merging.
 
-PR and non-PR E2E jobs can use different topologies. Compare their definitions in
+PR and non-PR E2E jobs can use different topologies: a pull request runs one node, develop runs three
+nodes with Redis (Valkey) as distributed data provider. Compare their definitions in
 `.github/workflows/ci-e2e.yml` before treating a develop-only failure as flaky.
 
 ## Classify before changing code
@@ -25,6 +26,9 @@ PR and non-PR E2E jobs can use different topologies. Compare their definitions i
 Use `reference/known-failure-patterns.md` to distinguish timeouts, architecture gates,
 missing workflow runs, and known harness failures from application defects. A single failure
 is not evidence of flakiness; compare logs and execution conditions.
+
+A latest PR run that is pending with no jobs can be waiting for an obsolete run to release its
+concurrency slot. Follow the cancellation entry in the reference before rerunning or cancelling jobs.
 
 ## Re-run when justified
 

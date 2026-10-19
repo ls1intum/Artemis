@@ -10,6 +10,7 @@ import { MockCommunicationService } from 'test/helpers/mocks/service/mock-commun
 import { communicationPostToCreateUser1, directMessageUser1 } from 'test/helpers/sample/communication-sample-data';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
+import { MAX_CONTENT_LENGTH } from 'app/communication/directive/posting-create-edit.directive';
 import { throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,6 +23,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
+import { By } from '@angular/platform-browser';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { PostingEditType } from 'app/communication/communication.util';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;
@@ -86,6 +90,25 @@ describe('MessageReplyInlineInputComponent', () => {
         vi.advanceTimersByTime(0);
         expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting()!, content: newContent });
+    });
+
+    it('should hand the conversation and the edit type to the markdown editor, which decides whether @all is offered', () => {
+        const conversation = new GroupChatDTO();
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.componentRef.setInput('activeConversation', conversation);
+        fixture.detectChanges();
+
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.activeConversation()).toBe(conversation);
+        expect(editor.editType()).toBe(PostingEditType.CREATE);
+    });
+
+    it('should tell the markdown editor that an existing reply is edited, which notifies nobody', () => {
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
+
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.editType()).toBe(PostingEditType.UPDATE);
     });
 
     it('should stop loading when communication service throws error during replying to message', () => {
@@ -222,6 +245,23 @@ describe('MessageReplyInlineInputComponent', () => {
             vi.advanceTimersByTime(0);
 
             expect(saveDraftSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('content length validation', () => {
+        beforeEach(() => {
+            component.posting.set({ ...communicationPostToCreateUser1 });
+            fixture.detectChanges();
+        });
+
+        it('should flag a maxlength error when the reply content exceeds MAX_CONTENT_LENGTH', () => {
+            component.formGroup.get('content')?.setValue('a'.repeat(MAX_CONTENT_LENGTH + 1));
+            expect(component.formGroup.get('content')?.hasError('maxlength')).toBe(true);
+        });
+
+        it('should not flag a maxlength error when the reply content is exactly MAX_CONTENT_LENGTH', () => {
+            component.formGroup.get('content')?.setValue('a'.repeat(MAX_CONTENT_LENGTH));
+            expect(component.formGroup.get('content')?.hasError('maxlength')).toBe(false);
         });
     });
 });

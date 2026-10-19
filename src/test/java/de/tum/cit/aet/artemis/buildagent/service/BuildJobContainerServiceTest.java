@@ -54,15 +54,15 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
 
     private static final String DUMMY_CONTAINER_ID = "1234567890";
 
+    @TempDir
+    private Path temporaryDirectory;
+
     @Autowired
     BuildJobContainerService buildJobContainerService;
 
     CreateContainerCmd createContainerCmd;
 
     ArgumentCaptor<HostConfig> hostConfigCaptor;
-
-    @TempDir
-    private Path temporaryDirectory;
 
     private ExecCreateCmd execCreateCmd;
 
@@ -137,6 +137,32 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         assertThat(hostConfig.getCpuQuota()).isEqualTo(MAX_XXX_VALUE * buildAgentConfiguration.hostConfig().getCpuPeriod());
         assertThat(hostConfig.getMemory()).isEqualTo(MAX_XXX_VALUE * 1024L * 1024L);
         assertThat(hostConfig.getMemorySwap()).isEqualTo(MAX_XXX_VALUE * 1024L * 1024L);
+    }
+
+    @Test
+    void testAMemoryLimitAboveTheDefaultSwapLimitRunsWithoutSwap() {
+        // the instance default is 2g of memory and a 2g total; a job that sets only 4096 MB of memory would inherit a total below its memory, which Docker refuses
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemory", 8096);
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemorySwap", 8096);
+        var runConfig = new DockerRunConfig(List.of(), "", 0, 4096, 0);
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
+
+        HostConfig hostConfig = captureHostConfig();
+        assertThat(hostConfig.getMemory()).isEqualTo(4096L * 1024L * 1024L);
+        assertThat(hostConfig.getMemorySwap()).as("the total is raised to the memory, so the job runs without swap").isEqualTo(4096L * 1024L * 1024L);
+    }
+
+    @Test
+    void testTheMaximumTotalLimitBoundsTheMemoryWhenItIsBelowTheMaximumMemory() {
+        // the administrator allows 8096 MB of memory but a total of 2048 MB; a job asking for 4096/4096 MB keeps both maxima, so it gets 2048/2048 MB
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemory", 8096);
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemorySwap", 2048);
+        var runConfig = new DockerRunConfig(List.of(), "", 0, 4096, 4096);
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
+
+        HostConfig hostConfig = captureHostConfig();
+        assertThat(hostConfig.getMemory()).as("the memory is lowered to the maximum total instead of the total being raised above it").isEqualTo(2048L * 1024L * 1024L);
+        assertThat(hostConfig.getMemorySwap()).isEqualTo(2048L * 1024L * 1024L);
     }
 
     @Test

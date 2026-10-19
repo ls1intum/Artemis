@@ -108,7 +108,15 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      */
     ngOnInit(): void {
         const messagingOnlyActions = isCommunicationEnabled(this.communicationService.getCourse())
-            ? [new UserMentionAction(this.courseManagementService, this.communicationService), new ChannelReferenceAction(this.communicationService, this.channelService)]
+            ? [
+                  new UserMentionAction(
+                      this.courseManagementService,
+                      this.communicationService,
+                      () => this.editType() === PostingEditType.UPDATE,
+                      () => this.activeConversation(),
+                  ),
+                  new ChannelReferenceAction(this.communicationService, this.channelService),
+              ]
             : [];
 
         this.defaultActions.set([
@@ -226,6 +234,16 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         // Prevent a newline from being added to the text when pressing enter
         if (this.suppressNewlineOnEnter() && event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
+            // Enter submits the form right after this handler, therefore sync the form control first.
+            this.flushPendingTextChange();
         }
+    }
+
+    /**
+     * The editor debounces its text changes, so the form control may still hold the content from before the last
+     * keystrokes. Call this before submitting the form to sync the control with the editor.
+     */
+    flushPendingTextChange(): void {
+        this.markdownEditor().flushPendingTextChange();
     }
 }

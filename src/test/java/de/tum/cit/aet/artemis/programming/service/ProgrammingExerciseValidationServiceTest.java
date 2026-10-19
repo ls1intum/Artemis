@@ -204,6 +204,43 @@ class ProgrammingExerciseValidationServiceTest {
                 buildConfigWithDockerFlags(null))).as("the exercise sets no flags at all").doesNotThrowAnyException();
     }
 
+    @Test
+    void validateContainerDockerFlags_rejectsAMemoryOverrideAboveTheInstanceDefaultSwapLimit() {
+        // neither the container nor the exercise sets a swap limit, so the job inherits the instance default of 2048 MB, below the 4096 MB the container sets
+        when(programmingExerciseBuildConfigService.isAllowedNetwork(any())).thenReturn(true);
+        when(programmingExerciseBuildConfigService.getDefaultMemorySwapLimitMB()).thenReturn(2048);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService
+                .validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 4096, null)), buildConfigWithDockerFlags(null)))
+                .extracting(BadRequestAlertException::getErrorKey).isEqualTo("buildContainerMemorySwapBelowMemory");
+        assertThatCode(() -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 1024, null)),
+                buildConfigWithDockerFlags(null))).as("a memory limit the default swap limit covers").doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateContainerDockerFlags_resolvesAnExplicitZeroSwapLimitAgainstTheInstanceDefault() {
+        // a container that sets memorySwap to 0 replaces the exercise's 512 MB with the instance default, as the run config and the agent do
+        ProgrammingExerciseBuildConfig buildConfig = buildConfigWithDockerFlags(flags(1, 512, 512));
+        when(programmingExerciseBuildConfigService.isAllowedNetwork(any())).thenReturn(true);
+        when(programmingExerciseBuildConfigService.getDefaultMemorySwapLimitMB()).thenReturn(2048);
+
+        assertThatCode(() -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 1024, 0)), buildConfig))
+                .as("the instance default of 2048 MB covers the override").doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class).as("the instance default does not cover a larger override")
+                .isThrownBy(() -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 4096, 0)), buildConfig))
+                .extracting(BadRequestAlertException::getErrorKey).isEqualTo("buildContainerMemorySwapBelowMemory");
+    }
+
+    @Test
+    void validateDockerFlags_rejectsAMemoryLimitAboveTheInstanceDefaultSwapLimit() {
+        when(programmingExerciseBuildConfigService.getDefaultMemorySwapLimitMB()).thenReturn(2048);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(flags(1, 4096, 0))))
+                .extracting(BadRequestAlertException::getErrorKey).isEqualTo("memorySwapBelowMemoryLimit");
+        assertThatCode(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(flags(1, 4096, 4096)))).as("a swap limit the exercise sets itself")
+                .doesNotThrowAnyException();
+    }
+
     private static BuildPlanPhasesDTO planWithContainerFlags(BuildContainerDockerFlagsDTO containerFlags) {
         BuildPhaseDTO phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of());
         return new BuildPlanPhasesDTO(null, null, List.of(new BuildContainerDTO("student_tests", null, null, List.of(phase), containerFlags)));

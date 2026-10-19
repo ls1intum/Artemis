@@ -162,6 +162,59 @@ describe('NotificationSettingsComponent', () => {
         expect(component['notificationSpecifications']()).toHaveLength(1);
     });
 
+    describe('settings that apply without a chosen preset (an unconfigured test account)', () => {
+        // The server reports the custom preset with the channels that apply: the default preset's, but without e-mail.
+        const effectiveSettingInfo: CourseNotificationSettingInfo = {
+            selectedPreset: 0,
+            notificationTypeChannels: {
+                '1': {
+                    [CourseNotificationChannel.PUSH]: true,
+                    [CourseNotificationChannel.EMAIL]: false,
+                    [CourseNotificationChannel.WEBAPP]: true,
+                },
+            },
+        };
+        // A shared preset that would switch e-mail on, as the default preset does.
+        const presetsWithEmail: CourseNotificationSettingPreset[] = [
+            {
+                identifier: 'default',
+                typeId: 1,
+                presetMap: {
+                    newPostNotification: {
+                        [CourseNotificationChannel.PUSH]: true,
+                        [CourseNotificationChannel.EMAIL]: true,
+                        [CourseNotificationChannel.WEBAPP]: true,
+                    },
+                },
+            },
+        ];
+
+        beforeEach(() => {
+            component['settingInfo'] = effectiveSettingInfo;
+            component['info'] = { notificationTypes: mockNotificationTypes, presets: presetsWithEmail };
+            component.initializeValues();
+        });
+
+        it('should show the channels that apply and no selected preset, where the preset would show e-mail', () => {
+            expect(component['selectedSettingPreset']()).toBeUndefined();
+            expect(component['notificationSpecifications']()).toHaveLength(1);
+            expect(component['notificationSpecifications']()[0].channelSetting[CourseNotificationChannel.EMAIL]).toBe(false);
+        });
+
+        it('should customize from what is shown, without a preset to copy', () => {
+            const specification = component['notificationSpecifications']()[0];
+            const changed = new CourseNotificationSettingSpecification(specification.identifier, specification.typeId, {
+                ...specification.channelSetting,
+                [CourseNotificationChannel.PUSH]: false,
+            });
+
+            component.optionChanged(changed);
+
+            expect(courseNotificationSettingServiceMock.setSettingSpecification).toHaveBeenCalledWith(courseId, changed, undefined);
+            expect(changed.channelSetting[CourseNotificationChannel.EMAIL]).toBe(false);
+        });
+    });
+
     it('should update selected preset when presetSelected is called', () => {
         component['settingInfo'] = mockSettingInfo;
         component['info'] = mockInfo;

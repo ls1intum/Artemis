@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import java.util.List;
 
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
@@ -7,6 +9,7 @@ import org.springframework.ai.content.Content;
 import org.springframework.ai.observation.ObservabilityHelper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -26,6 +29,7 @@ import io.micrometer.observation.ObservationFilter;
  */
 @Lazy
 @Component
+@Profile("!" + PROFILE_AIWORKER)
 @ConditionalOnProperty(prefix = "management.langfuse", name = "enabled", havingValue = "true")
 public class ChatModelCompletionContentObservationFilter implements ObservationFilter {
 

@@ -190,6 +190,75 @@ class ExerciseConfigurationLoadProfileTest extends AbstractSpringIntegrationInde
     }
 
     @Test
+    void attachingTheConfigurationOfOnePersistedExerciseReadsItInOneQuery() throws Exception {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(textExerciseId);
+        assertThat(exercise.getStoredTeamAssignmentConfig()).as("an exercise read from the database carries no configuration").isNull();
+        TeamAssignmentConfig stored = teamAssignmentConfigRepository.findByExerciseId(textExerciseId).orElseThrow();
+
+        assertThatDb(() -> {
+            teamAssignmentConfigRepository.attachTo(exercise);
+            return exercise;
+        }).hasBeenCalledTimes(1);
+
+        assertThat(exercise.getStoredTeamAssignmentConfig()).isNotNull();
+        assertThat(exercise.getStoredTeamAssignmentConfig().getId()).isEqualTo(stored.getId());
+        assertThat(exercise.getStoredTeamAssignmentConfig().getExerciseId()).isEqualTo(textExerciseId);
+        assertThat(exercise.getStoredTeamAssignmentConfig().getMinTeamSize()).isEqualTo(2);
+        assertThat(exercise.getStoredTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(4);
+    }
+
+    @Test
+    void attachingTheConfigurationOfAnExerciseThatIsNotPersistedYetReadsNothingAndLeavesTheSlotUntouched() throws Exception {
+        TextExercise unsaved = new TextExercise();
+        TeamAssignmentConfig placeholder = new TeamAssignmentConfig();
+        placeholder.setMinTeamSize(3);
+        placeholder.setMaxTeamSize(5);
+        unsaved.setTeamAssignmentConfig(placeholder);
+        assertThat(unsaved.getId()).isNull();
+
+        assertThatDb(() -> {
+            teamAssignmentConfigRepository.attachTo(unsaved);
+            return unsaved;
+        }).hasBeenCalledTimes(0);
+
+        assertThat(unsaved.getStoredTeamAssignmentConfig()).isSameAs(placeholder);
+        assertThat(unsaved.getStoredTeamAssignmentConfig().getMinTeamSize()).isEqualTo(3);
+        assertThat(unsaved.getStoredTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(5);
+    }
+
+    @Test
+    void attachingTheConfigurationOfAnExerciseWithoutAStoredRowEmptiesTheSlot() {
+        Exercise exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(examExercise().getExerciseGroup()));
+        assertThat(teamAssignmentConfigRepository.findByExerciseId(exercise.getId())).isEmpty();
+        exercise.setTeamAssignmentConfig(new TeamAssignmentConfig());
+
+        teamAssignmentConfigRepository.attachTo(exercise);
+
+        assertThat(exercise.getStoredTeamAssignmentConfig()).as("a stale slot must not survive when nothing is stored").isNull();
+    }
+
+    @Test
+    void attachingTheConfigurationReplacesWhatTheSlotCarried() {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(modelingExerciseId);
+        TeamAssignmentConfig stale = new TeamAssignmentConfig();
+        stale.setMinTeamSize(7);
+        stale.setMaxTeamSize(8);
+        exercise.setTeamAssignmentConfig(stale);
+
+        teamAssignmentConfigRepository.attachTo(exercise);
+
+        assertThat(exercise.getStoredTeamAssignmentConfig()).isNotSameAs(stale);
+        assertThat(exercise.getStoredTeamAssignmentConfig().getMinTeamSize()).isEqualTo(2);
+        assertThat(exercise.getStoredTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(4);
+        assertThat(exercise.getStoredTeamAssignmentConfig().getExerciseId()).isEqualTo(modelingExerciseId);
+    }
+
+    @Test
+    void attachingTheConfigurationOfNoExerciseIsRejected() {
+        assertThatThrownBy(() -> teamAssignmentConfigRepository.attachTo((Exercise) null)).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
     void deletingTheExerciseDeletesItsConfiguration() {
         long configId = teamAssignmentConfigRepository.findByExerciseId(textExerciseId).orElseThrow().getId();
 

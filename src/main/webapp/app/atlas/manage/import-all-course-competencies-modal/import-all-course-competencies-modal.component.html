@@ -7,7 +7,7 @@
     </div>
     <hr class="m-0" />
     <div class="p-3">
-        <jhi-import-course-competencies-settings [(importSettings)]="importSettings" />
+        <jhi-import-course-competencies-settings [(importSettings)]="importSettings" (referenceDateTextValidChange)="referenceDateTextValid.set($event)" />
         <div class="mt-4">
             <jhi-import-table
                 columnBaseTranslationKey="artemisApp.courseCompetency.importAll"

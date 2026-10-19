@@ -232,24 +232,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(@Param("resultId") long resultId);
 
     /**
-     * counts the number of assessments of a course, which are either rated or not rated (excluding test run participations)
-     *
-     * @param exerciseIdsWithManualAssessment - the ids of the exercises of the course (should be filtered to only include exercises with manual assessment)
-     * @return the number of assessments for the course
-     */
-    @Query("""
-            SELECT COUNT(r)
-            FROM Result r
-                JOIN r.submission s
-                JOIN s.participation p
-            WHERE r.completionDate IS NOT NULL
-                AND r.assessor IS NOT NULL
-                AND p.testRun = FALSE
-                AND r.exerciseId IN :exerciseIds
-            """)
-    long countAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIdsWithManualAssessment);
-
-    /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
      *
      * @param resultId the id of the result to load from the database
@@ -302,27 +284,51 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     /**
-     * Counts the number of finished assessments for a set of exercise IDs, ignoring test runs.
-     * Only submissions that have been submitted before the due date (if set) are considered.
+     * Counts the submissions of text, modeling and file upload exercises with at least one finished manual result, ignoring test runs.
+     * Every such submission counts exactly once, no matter whether it was submitted in time or late, whether its result is rated and how many results it has
+     * (e.g. after a complaint response). A participation can contain several submitted submissions, which are counted separately.
+     * This matches how {@code SubmissionRepository#countAllByExerciseIdsSubmittedBeforeDueDate} and {@code SubmissionRepository#countAllByExerciseIdsSubmittedAfterDueDate}
+     * count the submissions of the same exercises.
      *
      * @param exerciseIds set of exercise IDs
-     * @return the number of finished assessments for the given exercise IDs, ignoring test runs
+     * @return the number of assessed submissions for the given exercise IDs, ignoring test runs
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT s)
+            FROM Result r
+                JOIN r.submission s
+                JOIN s.participation p
+                JOIN p.exercise e
+            WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND e.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND r.assessor IS NOT NULL
+                AND s.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+            """)
+    long countNumberOfAssessedSubmissionsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Counts the participations of programming exercises with a submitted submission and at least one finished manual result, ignoring test runs.
+     * A student can have multiple submissions in a programming exercise, so the participations are counted, like
+     * {@code ProgrammingExerciseRepository#countAllSubmissionsByExerciseIdsSubmitted} does for the submissions of the same exercises.
+     *
+     * @param exerciseIds set of exercise IDs
+     * @return the number of assessed participations for the given exercise IDs, ignoring test runs
      */
     @Query("""
             SELECT COUNT(DISTINCT p)
-            FROM StudentParticipation p
+            FROM ProgrammingExerciseStudentParticipation p
                 JOIN p.submissions s
                 JOIN s.results r
                 JOIN p.exercise e
             WHERE e.id IN :exerciseIds
                 AND p.testRun = FALSE
                 AND r.assessor IS NOT NULL
-                AND r.rated = TRUE
                 AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
-    long countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+    long countNumberOfAssessedProgrammingParticipationsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * @param exerciseId id of exercise
@@ -658,7 +664,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
+     * Given the exercise ids of a course, return the number of assessed submissions for these exercises that have been completed (e.g. no draft!).
+     * This is the counterpart of the submissions counted for the same exercises, i.e. one per submission for text, modeling and file upload exercises
+     * and one per participation for programming exercises, independent of the due date and the rated flag.
      *
      * @param exerciseIds - the exercise ids of the course we are interested in (should be filtered to only include exercises with manual assessment)
      * @return a number of assessments for the course
@@ -668,7 +676,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         if (exerciseIds == null || exerciseIds.isEmpty()) {
             return 0;
         }
-        return countAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
+        return countNumberOfAssessedSubmissionsForExerciseIdsIgnoreTestRuns(exerciseIds) + countNumberOfAssessedProgrammingParticipationsForExerciseIdsIgnoreTestRuns(exerciseIds);
     }
 
     /**

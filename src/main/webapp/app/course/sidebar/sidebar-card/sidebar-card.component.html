@@ -1,0 +1,22 @@
+@if (cardItem(); as item) {
+    @switch (size()) {
+        @case ('S') {
+            <jhi-small-sidebar-card
+                [sidebarItem]="item"
+                [sidebarType]="sidebarType()"
+                [itemSelected]="itemSelected()"
+                [groupKey]="groupKey()"
+                (onUpdateSidebar)="onUpdateSidebar.emit()"
+            />
+        }
+        @case ('M') {
+            <jhi-medium-sidebar-card [sidebarItem]="item" [sidebarType]="sidebarType()" [itemSelected]="itemSelected()" [groupKey]="groupKey()" [activeItemId]="activeItemId()" />
+        }
+        @case ('L') {
+            <jhi-large-sidebar-card [sidebarItem]="item" [sidebarType]="sidebarType()" [itemSelected]="itemSelected()" [groupKey]="groupKey()" />
+        }
+        @default {
+            <!-- an unknown size renders no card -->
+        }
+    }
+}

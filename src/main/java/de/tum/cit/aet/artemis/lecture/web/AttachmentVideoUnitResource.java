@@ -166,7 +166,8 @@ public class AttachmentVideoUnitResource {
      * @param hiddenPages            the pages to be hidden in the attachment video unit
      * @param pageOrder              the new order of the edited attachment video unit
      * @param keepFilename           specifies if the original filename should be kept or not
-     * @param notificationText       the text to be used for the notification. No notification will be sent if the parameter is not set
+     * @param notificationText       the message students are notified with. No notification will be sent if the parameter is not set; an empty one notifies
+     *                                   students without a message
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentVideoUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -209,7 +210,7 @@ public class AttachmentVideoUnitResource {
 
         if (notificationText != null && attachment != null) {
             // The unit lecture is already loaded with its course, which is what the notification resolves the recipients from.
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), savedAttachmentVideoUnit.getLecture());
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), savedAttachmentVideoUnit.getLecture(), notificationText);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
@@ -285,6 +286,11 @@ public class AttachmentVideoUnitResource {
 
         validateVideoSource(attachmentVideoUnitDTO.videoSource());
 
+        // The file is split into slides after the unit is saved, so reject one that cannot be read before a unit without slides is created.
+        if (file != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()))) {
+            lectureUnitProcessingService.validatePdfElseThrow(file);
+        }
+
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
@@ -348,6 +354,7 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
         try {
+            lectureUnitProcessingService.validatePdfElseThrow(file);
             String filename = lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, minutesUntilDeletion);
             // Explicitly set JSON content type to prevent XSS — the filename derives from user input
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(JsonObjectMapper.get().writeValueAsString(filename));
