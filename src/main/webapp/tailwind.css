@@ -60,6 +60,9 @@
 @source './app/admin';
 @source './app/presentation';
 @source './app/atlas/shared/standardized-competencies';
+@source './app/atlas/shared/competency-selection';
+@source './app/shared-ui/form/title-channel-name';
+@source './app/exercise/exercise-title-channel-name';
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
 @source './app/exercise/result';
@@ -70,7 +73,6 @@
 /* The whole exam mode, and the example solution that only its summary shows. */
 @source './app/exam';
 @source './app/exercise/example-solution';
-
 @source './app/localci/build-queue';
 @source './app/course/request';
 @source './app/shared-ui/user-import';
@@ -79,6 +81,7 @@
 @source './app/shared-ui/delete-dialog';
 @source './app/core/alert';
 @source './app/core/about-us';
+
 /* Lecture editor: the page, its sections, its content and the dialogs and pages it opens lay out with Tailwind. */
 @source './app/lecture/manage/lecture-update';
 
@@ -92,7 +95,6 @@
 
 /* A text unit on its own page. */
 @source './app/lecture/overview/course-lectures/text-unit-fullscreen';
-
 @source './app/core/feature-overview';
 @source './app/core/layouts/footer';
 @source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
@@ -108,6 +110,7 @@
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/quiz/manage/apollon-diagrams';
+
 /* AI exercise variant generation: the navbar progress tray and the wizard modal. */
 @source './app/core/navbar/variant-generation-tray';
 @source './app/course/manage/exercises/create-variant-modal';
@@ -134,6 +137,7 @@
    chrome (course title bar) and the not-yet-migrated import dialog, so it is scanned without being lockable yet. */
 @source './app/tutorialgroup/manage/tutorial-groups-management';
 @source './app/tutorialgroup/manage/tutorial-group-utilization-indicator';
+
 /* Holidays page: TUM AET UI + Tailwind throughout, but it renders the shared Bootstrap course title bar like the list above. */
 @source './app/tutorialgroup/manage/holidays';
 
