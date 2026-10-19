@@ -743,6 +743,27 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void bash_readOnlyHarnessCommandWithStderrDiscardReachesTheSandbox() {
+        FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "__HYP_META__ rc=0 bytes=7 lines=1\ncontent"));
+        String command = "ls /opt/aiworker/trusted-structural 2>/dev/null && find /opt/aiworker/trusted-structural -type f | head -50; echo ---; cat /workspace/tests/build.gradle | sed -n '40,200p'";
+
+        String out = new SandboxAgentTools(sandbox, "s").bash(command);
+
+        assertThat(out).isEqualTo("exit=0\ncontent");
+        assertThat(sandbox.lastScript()).contains(java.util.Base64.getEncoder().encodeToString(command.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    void bash_stderrDiscardDoesNotPermitRedirectingIntoTheHarness() {
+        FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "should not run"));
+
+        String out = new SandboxAgentTools(sandbox, "s").bash("cat 2>/dev/null > tests/build.gradle");
+
+        assertThat(out).startsWith("exit=2\n").contains("Do not modify tests-repository build/harness files");
+        assertThat(sandbox.lastScript()).isNull();
+    }
+
+    @Test
     void bash_commandMentioningApplyPatch_isNotMistakenForAnInvocation() {
         // A command that merely mentions apply_patch (e.g. grepping for it) must run normally; only the first shell word matters.
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
@@ -783,6 +804,26 @@ class SandboxAgentToolsTest {
         assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("sed -i 's/a/b/' tests/package.json")).isTrue();
         assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat tests/pom.xml")).isFalse();
         assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat > tests/test/de/test/CalculatorTest.java")).isFalse();
+    }
+
+    @Test
+    void harnessReadsMayDiscardStderrWithoutBeingTreatedAsWrites() {
+        for (String command : List.of(
+                "ls /opt/aiworker/trusted-structural 2>/dev/null && find /opt/aiworker/trusted-structural -type f | head -50; echo ---; cat /workspace/tests/build.gradle | sed -n '40,200p'",
+                "cat tests/build.gradle 2> /dev/null", "cat tests/build.gradle 2 > /dev/null", "cat tests/build.gradle 2>/dev/null; echo done",
+                "cat tests/build.gradle 2>/dev/null | head -20")) {
+            assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure(command)).as(command).isFalse();
+        }
+    }
+
+    @Test
+    void stderrDiscardDoesNotHideHarnessWritesOrOtherRedirections() {
+        for (String command : List.of("cat > tests/build.gradle 2>/dev/null", "cat 2>/dev/null > tests/build.gradle", "cat >> tests/build.gradle 2>/dev/null",
+                "cat tests/build.gradle 2>/dev/null 2>&1", "cat tests/build.gradle 2>&1", "cat tests/build.gradle >&2", "cat tests/build.gradle 2>/dev/null-other",
+                "cat tests/build.gradle 2>/dev/null/../harness", "cat tests/build.gradle 12>/dev/null", "cat tests/build.gradle 2>>/dev/null",
+                "sed -i 's/a/b/' tests/build.gradle 2>/dev/null", "cp replacement tests/build.gradle 2>/dev/null")) {
+            assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure(command)).as(command).isTrue();
+        }
     }
 
     @Test
