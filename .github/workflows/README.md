@@ -19,6 +19,11 @@ associate a successful Gradle wrapper validation workflow with the latest commit
 reliably through a reusable-workflow call alone. The direct push trigger provides that evidence while
 the reusable call keeps wrapper validation inside the existing required PR gate.
 
+`scorecard.yml` starts after that direct validation succeeds on `develop`, using a `workflow_run`
+trigger. Starting both workflows on the same push lets Scorecard finish before validation and flag
+all six wrapper JARs as unverified binaries. The weekly, manual and branch-protection triggers remain
+available to refresh repository settings independently of a push.
+
 ```text
 ci.yml                                                            (single entry workflow)
 ├── detect-changes               (dorny/paths-filter, emits per-area booleans)
@@ -52,7 +57,7 @@ ci.yml                                                            (single entry 
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
-`ci-summary` is a second terminal job (`needs:` every required and advisory job, `if: always()`).
+`ci-summary` is a second terminal job (`needs:` every required and advisory job, `if: ${{ !cancelled() }}`).
 The develop-only deploy jobs — `deploy-docs`, `coverage-badge`, `sonar` — are deliberately outside
 its `needs:`, so they never appear in its table and never hold it up. On the run's
 **Summary** page it renders a per-job table (job · required/advisory · result), a failure-only
@@ -130,6 +135,23 @@ context, so it never needs touching again.
   hand-rolled cancellation workaround for queue-stacking. Keep E2E a direct `needs:` edge.
 - **Stable required check.** Branch protection requires exactly one job:
   `CI / All required CI Passed`. Renaming or adding child jobs does not require updating it.
+
+### Cancellation of superseded pull request runs
+
+The umbrella workflow groups runs by PR number and sets `cancel-in-progress` for pull requests.
+A new push cancels the previous revision so its E2E jobs release their self-hosted runners and the
+new revision can start.
+
+Jobs that must evaluate failed or skipped dependencies use `!cancelled()` in their job-level `if`,
+including Phase 2, the E2E reporter, coverage reporting, the required gate and the CI summary.
+This overrides the implicit `success()` check while allowing cancellation. Keep the explicit
+result checks that decide whether Phase 2 is eligible and whether required jobs passed.
+
+Do not use job-level `always()` for these jobs: GitHub re-evaluates job conditions during
+cancellation, and a true condition keeps the job alive. An obsolete Phase 2 can then wait hours
+for a runner while holding the PR concurrency slot and blocking the latest revision. Step-level
+`always()` is still appropriate for bounded cleanup and diagnostics inside a cancellable job.
+See [GitHub's cancellation reference](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-cancellation).
 
 ### Why `build_relevant` uses ignore-semantics
 
@@ -270,13 +292,15 @@ The one exception is the `deploy-docs` **job** in `ci.yml`, which carries a job-
 not the reusable-workflow lock that #3205 warns about), and the repo-global `pages` group is what
 serializes every GitHub Pages deploy — across umbrella runs and against the manual redeploy in
 `deploy-documentation.yml`. `coverage-badge` deliberately has **no** job-level group: the umbrella's
-own `ci-${{ github.ref }}` group already serializes develop runs end to end, and nothing outside
-`ci.yml` writes the `badges` branch.
+own `ci-${{ github.ref }}` group already serializes develop runs end to end. Release metadata
+updates can overlap; the shared publisher retries a non-force push after fetching and rebasing over
+the other writer. A conflict keeps the published files and emits a warning.
 
 ## The coverage badge
 
-The `coverage` badge in the root `README.md` is served by Shields from `coverage.json` on the
-orphan **`badges`** branch. `ci.yml`'s `coverage-badge` job recomputes it on every `develop` push,
+The `coverage` badge in the root `README.md` is a self-hosted `coverage.svg` on the orphan
+**`badges`** branch, rendered locally from our own `coverage.json` without a hosted badge API.
+`ci.yml`'s `coverage-badge` job recomputes it on every `develop` push,
 from the same `Server JaCoCo XML` and `Client Coverage Summaries` artifacts the `test` job already
 uploads — no test re-run. The figure is
 `(server.covered + client.covered) / (server.total + client.total)` over **lines**, the one metric
@@ -298,8 +322,8 @@ than publishing a worse one:
    catches a vanished module report without freezing on a genuine coverage regression, which leaves
    the denominator intact.
 
-Every rejection is a no-op: the job exits 0 without committing, and Shields keeps serving the last
-good file. Nothing about the badge can turn `develop` red.
+Every rejection is a no-op: the job exits 0 without committing, and GitHub keeps serving the last
+good SVG. Nothing about the badge can turn `develop` red.
 
 **Guard 3 latches, by construction.** It compares against the last *published* total, which only
 advances when something is published. So a legitimate halving of the combined line total — a large
@@ -316,6 +340,35 @@ this repo matches `badges`, and GitHub does not fire workflows for `GITHUB_TOKEN
 
 The logic is unit-tested in `supporting_scripts/code-coverage/coverage-badge/compute-coverage-badge.spec.mjs`,
 which runs as part of `pnpm run test:rules` in the client test job.
+
+## The release and license badges
+
+`publish-badges.yml` renders `latest-version.svg` and `license.svg` locally and publishes them to
+`badges`. It runs on release publication, edits, deletion and unpublication, daily, and on manual
+dispatch. The daily run repairs missed events and allows the three new SVGs to be bootstrapped
+from the existing coverage JSON without another test run. GitHub serves the SVGs directly from
+`raw.githubusercontent.com`; the README has no Shields dependency. No badge npm packages,
+external fonts, or rendering services are involved.
+
+The version comes from the highest stable numeric Artemis release returned by GitHub's paginated
+releases API, accepting tags such as `10.3` and `v10.3.1`. Drafts, prereleases, scoped `@tumaet/*`
+package releases and development version files are excluded. A late maintenance release therefore
+cannot make the badge move backwards. The license is the repository's static MIT license. Source
+or publishing failures preserve the previous SVGs and are advisory. Codacy, Sonar and OpenSSF
+badges continue to come directly from their authoritative services.
+
+The trusted tooling is checked out from the default branch even for a release event referencing
+an older tag. Only the separate `badges` checkout retains write credentials. Both publishers use
+`supporting_scripts/badges/publish-badges.mjs`; concurrent writers fetch and rebase before retrying
+up to three non-force pushes. No commit lands on the development branch. Tests exercise release
+selection, SVG escaping, failed inputs and real Git writer races, using Node's built-in test runner
+in `ci-workflows.yml`.
+
+After deployment, manually dispatch **Publish README Badges** once to create all three SVGs before
+expecting the changed README URLs to resolve. If the orphan branch is absent, follow the
+[re-seeding instructions](../../supporting_scripts/code-coverage/coverage-badge/README.md#re-seeding-the-badges-branch),
+then dispatch the workflow. For local rendering and tests, see
+[the badge tooling README](../../supporting_scripts/badges/README.md).
 
 ## The code quality analyses
 

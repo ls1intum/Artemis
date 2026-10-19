@@ -113,7 +113,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.3.1"
+version = "10.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -206,6 +206,11 @@ modernizer {
 }
 
 gitProperties {
+    if (project.hasProperty('reproducible')) {
+        // Keep stable revision/author information used at runtime; omit machine and builder identity.
+        keys = ['git.branch', 'git.commit.id', 'git.commit.id.abbrev', 'git.commit.id.describe', 'git.commit.time', 'git.commit.user.name', 'git.commit.user.email', 'git.build.version']
+        dateFormatTimeZone = 'UTC'
+    }
     // Only override branch when CI (= env variable present)
     def ciBranch = System.getenv('GIT_BRANCH')
     if (ciBranch) {
@@ -218,6 +223,10 @@ gitProperties {
         customProperty 'git.commit.id', ciCommit
         customProperty 'git.commit.id.abbrev', ciCommit.take(7)
     }
+}
+
+tasks.named('generateGitProperties') {
+    inputs.property('reproducible', project.hasProperty('reproducible'))
 }
 
 // Override Spring Boot BOM versions to patched releases addressing known CVEs:
@@ -425,7 +434,10 @@ dependencies {
     // OpenAI module (official com.openai SDK). Since 2.0.0-M5/M6 this single module serves both
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
     // the former spring-ai-starter-model-azure-openai module was removed upstream.
-    implementation "org.springframework.ai:spring-ai-starter-model-openai"
+    implementation("org.springframework.ai:spring-ai-starter-model-openai") {
+        // OpenAI's Java SDK pulls in legacy annotations that duplicate springdoc's Jakarta Schema class.
+        exclude group: "io.swagger.core.v3", module: "swagger-annotations"
+    }
     // Spring Boot 4's OTLP tracing auto-configuration is not supplied by the exporter alone.
     // The starter also supplies the tracing bridge, so do not declare that bridge again below.
     implementation "org.springframework.boot:spring-boot-starter-opentelemetry"
@@ -747,6 +759,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.springframework:spring-test"
     testImplementation "org.assertj:assertj-core:3.27.7"
+    testImplementation "io.micrometer:micrometer-registry-otlp"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     // needed to add mockito as agent and avoid its warning
     mockitoAgent ("org.mockito:mockito-core:${mockito_version}") {

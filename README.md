@@ -15,9 +15,9 @@ their own infrastructure.
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=security_rating)](https://sonarcloud.io/project/issues?id=ls1intum_Artemis&issueStatuses=OPEN%2CCONFIRMED&types=VULNERABILITY)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=sqale_rating)](https://sonarcloud.io/summary/overall?id=ls1intum_Artemis)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=duplicated_lines_density)](https://sonarcloud.io/summary/overall?id=ls1intum_Artemis)
-[![Coverage Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fls1intum%2FArtemis%2Fbadges%2Fcoverage.json)](https://github.com/ls1intum/Artemis/actions/workflows/ci.yml)
-[![Latest version](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Coverage Status](https://raw.githubusercontent.com/ls1intum/Artemis/badges/coverage.svg)](https://github.com/ls1intum/Artemis/actions/workflows/ci.yml)
+[![Latest version](https://raw.githubusercontent.com/ls1intum/Artemis/badges/latest-version.svg)](https://github.com/ls1intum/Artemis/releases/latest)
+[![License: MIT](https://raw.githubusercontent.com/ls1intum/Artemis/badges/license.svg)](./LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/ls1intum/Artemis/badge)](https://scorecard.dev/viewer/?uri=github.com/ls1intum/Artemis)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14163/badge)](https://www.bestpractices.dev/projects/14163)
 
@@ -166,7 +166,7 @@ file into `build/libs` first; see the
 The following command automates deployment to a test server:
 
 ```shell
-./deployment/artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-10.3.1.war
+./deployment/artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-10.4.war
 ```
 
 ## Repository layout

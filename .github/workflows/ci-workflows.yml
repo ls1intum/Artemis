@@ -51,6 +51,19 @@ jobs:
       - name: Test requirement handling of the C and C++ test templates
         run: python3 supporting_scripts/test_template_test_requirements.py
 
+  badge-tests:
+    name: self-hosted README badge tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - run: node --test supporting_scripts/badges/badges.test.mjs
+
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest

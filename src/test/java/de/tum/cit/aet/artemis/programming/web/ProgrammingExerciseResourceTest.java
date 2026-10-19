@@ -76,11 +76,15 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 
-class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+// Use the existing generation-disabled lane for ordinary exercise operations and their query budget.
+class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILocalVCBatchTest {
 
     private static final String TEST_PREFIX = "programmingexerciseresource";
+
+    @Value("${artemis.hyperion.exercise-generation.enabled:false}")
+    private boolean exerciseGenerationEnabled;
 
     /** The timeline a variant group owns in the tests below; its members must keep exactly these dates. */
     private static final ZonedDateTime GROUP_BASE_DATE = ZonedDateTime.parse("2099-01-01T00:00:00Z");
@@ -1305,6 +1309,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_doesNotFanOutQueries() throws Exception {
+        assertThat(exerciseGenerationEnabled).isFalse();
         addInstructorToCourse();
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
