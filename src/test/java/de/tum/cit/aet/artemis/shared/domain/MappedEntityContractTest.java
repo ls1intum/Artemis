@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseTimeline;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseWithExampleSolution_;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -103,6 +104,19 @@ class MappedEntityContractTest extends AbstractSpringIntegrationIndependentTest 
     }
 
     @Test
+    void exampleSolutionsKeepTheirExerciseColumnAndTextDetailsTable() {
+        for (Class<?> type : List.of(TextExercise.class, FileUploadExercise.class)) {
+            var mapping = mapping(type);
+            assertThat(mapping.getPropertyColumnNames(ExerciseWithExampleSolution_.EXAMPLE_SOLUTION)).containsExactly("example_solution");
+            assertThat(mapping.getTableNameForColumn("example_solution")).isEqualTo("exercise");
+            int index = Arrays.asList(mapping.getPropertyNames()).indexOf(ExerciseWithExampleSolution_.EXAMPLE_SOLUTION);
+            assertThat(mapping.getPropertyNullability()[index]).isTrue();
+            assertThat(mapping.getPropertyType(ExerciseWithExampleSolution_.EXAMPLE_SOLUTION).getReturnedClass()).isEqualTo(String.class);
+        }
+        assertThat(mapping(TextExercise.class).getTableNames()).contains("exercise", "text_exercise_details");
+    }
+
+    @Test
     void everyTimelinePersistsAndRetainsTopLevelJsonDates() throws Exception {
         var course = courseUtilService.createCourse();
         List<ExerciseTimeline> timelines = List.of(new TextExercise(), new FileUploadExercise(), new ModelingExercise(), new ProgrammingExercise(), new QuizExercise(),
@@ -120,6 +134,8 @@ class MappedEntityContractTest extends AbstractSpringIntegrationIndependentTest 
             for (String property : TIMELINE_COLUMNS.keySet()) {
                 assertThat(emptyJson.has(property)).as(property).isFalse();
             }
+            assertThat(emptyJson.has("exampleSolution")).isFalse();
+            setExampleSolution(timeline, "Example solution with\nmultiple lines");
             var start = ZonedDateTime.parse("2026-01-01T10:00:00Z");
             timeline.setReleaseDate(start);
             timeline.setStartDate(start.plusHours(1));
@@ -134,6 +150,7 @@ class MappedEntityContractTest extends AbstractSpringIntegrationIndependentTest 
             }
             ExerciseTimeline decoded = timeline instanceof Exercise ? mapper.treeToValue(json, Exercise.class) : mapper.treeToValue(json, ExerciseVariantGroup.class);
             assertDates(decoded, start);
+            assertThat(exampleSolution(decoded)).isEqualTo(exampleSolution(timeline));
             if (timeline instanceof Exercise exercise) {
                 exerciseRepository.saveAndFlush(exercise);
                 configurations.initialize(exercise);
@@ -141,7 +158,10 @@ class MappedEntityContractTest extends AbstractSpringIntegrationIndependentTest 
             else {
                 groups.saveAndFlush((ExerciseVariantGroup) timeline);
             }
-            assertDates(load(timeline.getClass(), timeline.getId()), start);
+            var stored = load(timeline.getClass(), timeline.getId());
+            assertDates(stored, start);
+            assertThat(exampleSolution(stored)).isEqualTo(exampleSolution(timeline));
+            setExampleSolution(timeline, null);
             timeline.setReleaseDate(null);
             timeline.setStartDate(null);
             timeline.setDueDate(null);
@@ -154,6 +174,7 @@ class MappedEntityContractTest extends AbstractSpringIntegrationIndependentTest 
                 groups.saveAndFlush((ExerciseVariantGroup) timeline);
             }
             var empty = load(timeline.getClass(), timeline.getId());
+            assertThat(exampleSolution(empty)).isNull();
             assertThat(empty.getReleaseDate()).isNull();
             assertThat(empty.getStartDate()).isNull();
             assertThat(empty.getDueDate()).isNull();
@@ -245,6 +266,19 @@ class MappedEntityContractTest extends AbstractSpringIntegrationIndependentTest 
                 assertThat(entityManagerFactory.getPersistenceUnitUtil().isLoaded(entity, UserCourseAssociation_.COURSE)).isFalse();
             }
         }
+    }
+
+    private static void setExampleSolution(ExerciseTimeline exercise, String solution) {
+        if (exercise instanceof TextExercise text) {
+            text.setExampleSolution(solution);
+        }
+        else if (exercise instanceof FileUploadExercise fileUpload) {
+            fileUpload.setExampleSolution(solution);
+        }
+    }
+
+    private static String exampleSolution(ExerciseTimeline exercise) {
+        return exercise instanceof TextExercise text ? text.getExampleSolution() : exercise instanceof FileUploadExercise fileUpload ? fileUpload.getExampleSolution() : null;
     }
 
     private AbstractEntityPersister mapping(Class<?> type) {

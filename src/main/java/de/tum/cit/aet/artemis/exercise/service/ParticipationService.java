@@ -1008,16 +1008,7 @@ public class ParticipationService {
         if (exercise.isTeamMode()) {
             Optional<StudentParticipationSubmitTargetDTO> teamParticipation = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId())
                     .flatMap(team -> studentParticipationRepository.findSubmitTargetByExerciseIdAndTeamId(exercise.getId(), team.getId()));
-            // Like for an individual exercise, the practice participation takes over once the working period is over. It is the student's own, not the team's.
-            ZonedDateTime effectiveDueDate = teamParticipation.map(StudentParticipationSubmitTargetDTO::individualDueDate).orElse(exercise.getDueDate());
-            if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
-                Optional<StudentParticipationSubmitTargetDTO> practiceParticipation = studentParticipationRepository
-                        .findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(), student.getId(), true);
-                if (practiceParticipation.isPresent()) {
-                    return practiceParticipation;
-                }
-            }
-            return teamParticipation;
+            return preferPracticeSubmitTargetAfterDueDate(exercise, student, teamParticipation);
         }
         return findSubmitTargetOfStudent(exercise, student);
     }
@@ -1063,6 +1054,16 @@ public class ParticipationService {
         }
         Optional<StudentParticipationSubmitTargetDTO> gradedParticipation = studentParticipationRepository.findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
                 student.getId(), false);
+        Optional<StudentParticipationSubmitTargetDTO> selectedParticipation = preferPracticeSubmitTargetAfterDueDate(exercise, student, gradedParticipation);
+        if (selectedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
+        }
+        return selectedParticipation;
+    }
+
+    /** Prefers the student's own practice target after the effective deadline, including for a graded team target. */
+    private Optional<StudentParticipationSubmitTargetDTO> preferPracticeSubmitTargetAfterDueDate(Exercise exercise, User student,
+            Optional<StudentParticipationSubmitTargetDTO> gradedParticipation) {
         ZonedDateTime effectiveDueDate = gradedParticipation.map(StudentParticipationSubmitTargetDTO::individualDueDate).orElse(exercise.getDueDate());
         if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
             Optional<StudentParticipationSubmitTargetDTO> practiceParticipation = studentParticipationRepository
@@ -1070,9 +1071,6 @@ public class ParticipationService {
             if (practiceParticipation.isPresent()) {
                 return practiceParticipation;
             }
-        }
-        if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
-            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
         }
         return gradedParticipation;
     }
