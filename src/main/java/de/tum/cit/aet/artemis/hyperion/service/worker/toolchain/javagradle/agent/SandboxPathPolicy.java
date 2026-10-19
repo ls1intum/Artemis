@@ -27,6 +27,8 @@ final class SandboxPathPolicy {
             "(?s).*(?:tests|solution|template)/(buildsrc/.*|gradle/.*|pom\\.xml|build\\.gradle|build\\.gradle\\.kts|settings\\.gradle|settings\\.gradle\\.kts|gradle\\.properties|package\\.json|"
                     + "package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock|.*\\.cabal).*");
 
+    private static final Pattern STDERR_DISCARD = Pattern.compile("(?<!\\S)2\\s*+>\\s*+/dev/null(?=\\s|[;&|]|$)");
+
     private static final String WORKSPACE = "/workspace";
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
@@ -75,8 +77,9 @@ final class SandboxPathPolicy {
         if (!MANAGED_BUILD_PATH.matcher(lower).matches()) {
             return false;
         }
-        return lower.contains(">") || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ") || lower.contains(" rm ")
-                || lower.startsWith("rm ") || lower.contains(" mv ") || lower.startsWith("mv ") || lower.contains(" cp ") || lower.startsWith("cp ");
+        String withoutStderrDiscard = STDERR_DISCARD.matcher(lower).replaceAll("");
+        return withoutStderrDiscard.contains(">") || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ")
+                || lower.contains(" rm ") || lower.startsWith("rm ") || lower.contains(" mv ") || lower.startsWith("mv ") || lower.contains(" cp ") || lower.startsWith("cp ");
     }
 
     /**
