@@ -12,8 +12,6 @@ import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
@@ -30,8 +28,6 @@ import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 @Lazy
 @Service
 public class ArtemisGitServletService extends GitServlet {
-
-    private static final Logger log = LoggerFactory.getLogger(ArtemisGitServletService.class);
 
     private final LocalVCServletService localVCServletService;
 
@@ -112,17 +108,17 @@ public class ArtemisGitServletService extends GitServlet {
             ReceivePack receivePack = new ReceivePack(repository);
             // we only need to set the PreReceiveHook and PostReceiveHook for authorized POST requests, as only these trigger onPreReceive or onPostReceive.
             if (isAuthorizedPostRequest(request)) {
+                final User user;
                 try {
-                    String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-                    User user = localVCServletService.getUserByAuthHeader(authorizationHeader);
-                    // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
-                    receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                    // Add a hook that triggers the creation of a new submission after the push went through successfully.
-                    receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
+                    user = localVCServletService.getUserByAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
                 }
-                catch (LocalVCAuthException exception) {
-                    log.error("Error while retrieving user from request header: {}", exception.getMessage());
+                catch (LocalVCAuthException e) {
+                    throw new ServiceNotAuthorizedException("Could not resolve the authenticated LocalVC push user", e);
                 }
+                // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
+                receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
+                // Add a hook that triggers the creation of a new submission after the push went through successfully.
+                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
             }
             return receivePack;
         });

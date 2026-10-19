@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -38,6 +39,7 @@ describe('TutorialEditContainerComponent', () => {
     };
     let alertService: MockAlertService;
     let activatedRoute: ActivatedRoute;
+    const entityTitleService = { setTitle: vi.fn() };
 
     beforeEach(async () => {
         tutorialGroupApiService = {
@@ -62,6 +64,7 @@ describe('TutorialEditContainerComponent', () => {
             providers: [
                 mockedActivatedRoute({ tutorialGroupId: '17' }, {}, {}, { courseId: '2' }),
                 { provide: Router, useClass: MockRouter },
+                { provide: EntityTitleService, useValue: entityTitleService },
                 { provide: TutorialGroupApi, useValue: tutorialGroupApiService },
                 { provide: TutorialGroupCourseAndGroupService, useValue: tutorialGroupCourseAndGroupService },
                 { provide: TutorialGroupTutorsService, useValue: tutorialGroupTutorsService },
@@ -171,6 +174,34 @@ describe('TutorialEditContainerComponent', () => {
         expect(component.schedule()).toEqual(createSchedule());
     });
 
+    it('loads the requested group instead of reusing a different cached group', () => {
+        const cached = createTutorialGroup();
+        cached.id = 18;
+        tutorialGroupCourseAndGroupService.tutorialGroup.set(cached);
+        tutorialGroupApiService.getTutorialGroupSchedule.mockReturnValue(of(createSchedule()));
+
+        createComponent();
+
+        expect(tutorialGroupCourseAndGroupService.fetchTutorialGroup).toHaveBeenCalledWith(2, 17);
+        expect(component.tutorialGroup()).toBeUndefined();
+    });
+
+    it('cancels a previous schedule request when the route switches groups', () => {
+        const first = new Subject<TutorialGroupSchedule>();
+        const second = new Subject<TutorialGroupSchedule>();
+        tutorialGroupApiService.getTutorialGroupSchedule.mockReturnValueOnce(first).mockReturnValueOnce(second);
+        createComponent();
+        const params = activatedRoute.paramMap as BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+        params.next(convertToParamMap({ tutorialGroupId: '18' }));
+        fixture.detectChanges();
+        const latest = createSchedule();
+        latest.location = 'Second group';
+        second.next(latest);
+        first.next(createSchedule());
+
+        expect(component.schedule()?.location).toBe('Second group');
+    });
+
     it('should show an error alert when loading the schedule fails on init', () => {
         const schedule$ = new Subject<TutorialGroupSchedule>();
         tutorialGroupApiService.getTutorialGroupSchedule.mockReturnValue(schedule$.asObservable());
@@ -211,6 +242,7 @@ describe('TutorialEditContainerComponent', () => {
         expect(tutorialGroupCourseAndGroupService.fetchTutorialGroup).toHaveBeenCalledOnce();
         expect(tutorialGroupCourseAndGroupService.fetchTutorialGroup).toHaveBeenCalledWith(2, 17);
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups']);
+        expect(entityTitleService.setTitle).toHaveBeenCalledWith(EntityType.TUTORIAL_GROUP, [17], 'Updated TG 1');
         expect(alertService.addErrorAlert).not.toHaveBeenCalled();
     });
 
