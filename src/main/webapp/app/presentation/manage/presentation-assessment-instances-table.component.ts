@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, linkedSignal, output } from '@angular/core';
 import { faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 
@@ -43,8 +43,11 @@ export class PresentationAssessmentInstancesTableComponent {
     readonly editInstance = output<PresentationAssessmentInstance>();
     readonly deleteInstance = output<PresentationAssessmentInstance>();
 
-    /** Keys of the rows whose details are shown. */
-    protected readonly expandedRowKeys = signal<string[]>([]);
+    /** Keys of the rows whose details are shown; a different presentation starts with all rows collapsed. */
+    protected readonly expandedRowKeys = linkedSignal<number | undefined, string[]>({
+        source: () => this.presentationAssessment().id,
+        computation: () => [],
+    });
 
     protected toggleDetails(row: PresentationStudentTableRow): void {
         this.expandedRowKeys.update((keys) => (keys.includes(row.rowKey) ? keys.filter((key) => key !== row.rowKey) : [...keys, row.rowKey]));

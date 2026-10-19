@@ -101,4 +101,17 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
         expect(toggle.getAttribute('aria-expanded')).toBe('false');
         expect(query('.presentation-detail-row')).toBeNull();
     });
+
+    it('should keep rows expanded while the rows reload and collapse them for another presentation', () => {
+        render([createRow()]);
+        query('button[aria-controls="presentation-detail-10:student1"]')!.click();
+        fixture.detectChanges();
+
+        render([createRow()]);
+        expect(query('.presentation-detail-row')).not.toBeNull();
+
+        fixture.componentRef.setInput('presentationAssessment', { id: 2, title: 'Midterm', maxPoints: 20 });
+        fixture.detectChanges();
+        expect(query('.presentation-detail-row')).toBeNull();
+    });
 });
