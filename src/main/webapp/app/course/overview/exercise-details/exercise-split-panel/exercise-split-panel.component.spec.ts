@@ -3,7 +3,9 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterOutlet, convertToParamMap } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { ResultService } from 'app/exercise/result/result.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizParticipationBase } from 'app/quiz/overview/participation/quiz-participation.base';
@@ -82,6 +84,7 @@ describe('ExerciseSplitPanelComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ExerciseSplitPanelComponent],
             providers: [
+                { provide: ResultService, useValue: { getFeedbackDetailsForResult: vi.fn(() => of(new HttpResponse({ body: [] }))) } },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: IrisChatService, useValue: { openChat: vi.fn() } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
@@ -349,6 +352,48 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
+    it.each([
+        { reference: 'file:src/Main.java_line:0', type: FeedbackType.MANUAL },
+        { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: '{"filePath":"src/Main.java","startLine":4}', type: FeedbackType.AUTOMATIC },
+    ])('should load missing feedback details before deciding whether to show the tab: %j', (feedback) => {
+        const response = new Subject<HttpResponse<Feedback[]>>();
+        const load = vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(response);
+        const result = createResult({ id: 2, completionDate: dayjs() });
+        const participation = { id: 1, submissions: [{ results: [result] }] } as StudentParticipation;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', participation);
+        fixture.detectChanges();
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+        expect(load).toHaveBeenCalledExactlyOnceWith(1, result);
+
+        response.next(new HttpResponse({ body: [feedback] }));
+        fixture.detectChanges();
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+        expect(router.navigate).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 1], { relativeTo: {} });
+
+        fixture.componentRef.setInput('studentParticipation', { ...participation });
+        fixture.detectChanges();
+        expect(load).toHaveBeenCalledTimes(1);
+    });
+
+    it('should discard stale feedback and cancel its request when switching participations', () => {
+        const response = new Subject<HttpResponse<Feedback[]>>();
+        const load = vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(response);
+        const result = createResult({ id: 2, completionDate: dayjs() });
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [{ results: [result] }] } as StudentParticipation);
+        fixture.detectChanges();
+        response.next(new HttpResponse({ body: [{ reference: 'file:Main.java_line:0' }] }));
+        fixture.detectChanges();
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+
+        load.mockReturnValue(throwError(() => new Error('Feedback unavailable')));
+        fixture.componentRef.setInput('studentParticipation', { id: 3, submissions: [{ results: [createResult({ id: 4, completionDate: dayjs() })] }] } as StudentParticipation);
+        fixture.detectChanges();
+        expect(response.observed).toBe(false);
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+    });
+
     it('should show the feedback tab for successful Athena feedback results even before feedback details are attached', () => {
         const result = createResult({ id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true });
         const submission = { buildFailed: false, results: [result] };
@@ -592,6 +637,7 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
         await TestBed.configureTestingModule({
             imports: [ExerciseSplitPanelComponent],
             providers: [
+                { provide: ResultService, useValue: { getFeedbackDetailsForResult: vi.fn(() => of(new HttpResponse({ body: [] }))) } },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: IrisChatService, useValue: { openChat: vi.fn() } },
                 { provide: Router, useValue: { navigate: vi.fn() } },

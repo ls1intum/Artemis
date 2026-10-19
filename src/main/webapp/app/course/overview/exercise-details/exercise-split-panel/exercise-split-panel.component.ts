@@ -40,6 +40,7 @@ import { TeamPracticeHintComponent } from 'app/course/overview/exercise-details/
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { findLatestResult } from 'app/foundation/util/utils';
+import { ResultService } from 'app/exercise/result/result.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
@@ -71,6 +72,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
     ],
 })
 export class ExerciseSplitPanelComponent {
+    private readonly resultService = inject(ResultService);
     private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
@@ -250,6 +252,24 @@ export class ExerciseSplitPanelComponent {
         );
     });
 
+    private readonly loadedFeedback = signal<{ key: string; feedbacks: Feedback[] } | undefined>(undefined);
+    // Only the result identity drives the request; websocket object replacements must not fetch it again.
+    private readonly feedbackRequestKey = computed(() => {
+        const exercise = this.exercise();
+        const participation = this.studentParticipation();
+        const result = this.latestResultOfActiveParticipation();
+        if (
+            exercise.type !== ExerciseType.PROGRAMMING ||
+            (exercise as ProgrammingExercise).allowOnlineEditor ||
+            !participation?.id ||
+            !result?.id ||
+            result.feedbacks !== undefined
+        ) {
+            return undefined;
+        }
+        return `${participation.id}:${result.id}`;
+    });
+
     private latestResultHasInlineFeedback(): boolean {
         const latestResult = this.latestResultOfActiveParticipation();
         if (!latestResult) {
@@ -261,11 +281,14 @@ export class ExerciseSplitPanelComponent {
         if (latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA && latestResult.successful) {
             return true;
         }
-        return latestResult.feedbacks?.some(Feedback.canBeShownInProgrammingEditor) ?? false;
+        const loaded = this.loadedFeedback();
+        const feedbacks = latestResult.feedbacks ?? (loaded?.key === this.feedbackRequestKey() ? loaded?.feedbacks : undefined);
+        return feedbacks?.some(Feedback.canBeShownInProgrammingEditor) ?? false;
     }
 
     private resultBelongsToFailedBuild(result: Result): boolean {
-        if (result.submission?.buildFailed) {
+        const submission: ProgrammingSubmission | undefined = result.submission;
+        if (submission?.buildFailed) {
             return true;
         }
         return (
@@ -280,6 +303,20 @@ export class ExerciseSplitPanelComponent {
     }
 
     constructor() {
+        effect((onCleanup) => {
+            const key = this.feedbackRequestKey();
+            if (!key) {
+                return;
+            }
+            untracked(() => {
+                const result = this.latestResultOfActiveParticipation()!;
+                const subscription = this.resultService.getFeedbackDetailsForResult(this.studentParticipation()!.id, result).subscribe({
+                    next: (response) => this.loadedFeedback.set({ key, feedbacks: response.body ?? [] }),
+                    error: () => this.loadedFeedback.set({ key, feedbacks: [] }),
+                });
+                onCleanup(() => subscription.unsubscribe());
+            });
+        });
         // Keep _quizBatchStarted / _quizEnded in sync with the exercise input.
         // Effects (unlike computed signals) do not throw NG0950 when reading required inputs,
         // so this is safe even during the initial evaluation before inputs are fully bound.
