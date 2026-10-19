@@ -98,7 +98,7 @@ public class GenerationSeedService {
      * Reads only three trusted blobs at the configured tests branch, without cloning or checking out any repository.
      *
      * @param exercise authorized source
-     * @return bounded committed harness files; missing paths remain absent for fail-closed validation
+     * @return bounded committed harness files; missing or unsupported paths remain absent for fail-closed validation
      */
     public Map<String, String> readTestHarness(ProgrammingExercise exercise) {
         String configuredBranch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
@@ -121,11 +121,11 @@ public class GenerationSeedService {
                             continue;
                         }
                         if (!tree.getFileMode(0).equals(FileMode.REGULAR_FILE) && !tree.getFileMode(0).equals(FileMode.EXECUTABLE_FILE)) {
-                            throw new IllegalArgumentException("Generation harness files must be regular files");
+                            continue;
                         }
                         var blob = repository.open(tree.getObjectId(0), Constants.OBJ_BLOB);
                         if (blob.getSize() > WorkspaceFile.MAX_FILE_BYTES) {
-                            throw new IllegalArgumentException("Generation harness file exceeds the byte limit");
+                            continue;
                         }
                         files.put(path, new String(blob.getBytes(WorkspaceFile.MAX_FILE_BYTES), StandardCharsets.UTF_8));
                     }

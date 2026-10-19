@@ -57,8 +57,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
     /**
-     * Makes a prepared draft and its authoring reservation visible as one database commit.
-     * The callback creates only database metadata and claims coordination; repository copies and builds run after commit.
+     * Commits draft preparation before its authoring job can be dispatched.
+     * The callback validates the source and claims coordination; repository copies and builds run after commit.
      *
      * @param prepareAndReserve draft initialization followed by its exclusive authoring reservation
      * @param <T>               prepared authoring result

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
@@ -39,6 +40,7 @@ import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -48,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 class GenerationSeedServiceTest {
@@ -294,19 +297,31 @@ class GenerationSeedServiceTest {
     }
 
     @Test
-    void oversizedHarnessBlobFailsClosedWithoutCloning() {
+    void oversizedHarnessBlobRemainsAbsentForValidationWithoutCloning() {
         doAnswer(invocation -> createHarnessRepository(temporary.resolve("harness.git"), new byte[WorkspaceFile.MAX_FILE_BYTES + 1], FileMode.REGULAR_FILE)).when(bareRepositories)
                 .getExistingBareRepository(uri, "main");
-        assertThatThrownBy(() -> service.readTestHarness(exercise)).isInstanceOf(IllegalStateException.class).hasRootCauseInstanceOf(IllegalArgumentException.class)
-                .hasStackTraceContaining("Generation harness file exceeds the byte limit");
+        Map<String, String> harness = service.readTestHarness(exercise);
+        assertThat(harness).containsOnlyKeys("gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml");
+        assertThat(AresTestHarness.reasons(harness)).anyMatch(reason -> reason.contains("Gradle harness file"));
         verifyNoInteractions(git);
     }
 
     @Test
-    void harnessSymlinkFailsClosedWithoutCloning() {
+    void harnessSymlinkRemainsAbsentForValidationWithoutCloning() {
         doAnswer(invocation -> createHarnessRepository(temporary.resolve("harness.git"), "somewhere".getBytes(StandardCharsets.UTF_8), FileMode.SYMLINK)).when(bareRepositories)
                 .getExistingBareRepository(uri, "main");
-        assertThatThrownBy(() -> service.readTestHarness(exercise)).isInstanceOf(IllegalStateException.class).hasRootCauseInstanceOf(IllegalArgumentException.class);
+        Map<String, String> harness = service.readTestHarness(exercise);
+        assertThat(harness).containsOnlyKeys("gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml");
+        assertThat(AresTestHarness.reasons(harness)).anyMatch(reason -> reason.contains("Gradle harness file"));
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void harnessRepositoryReadFailureRemainsAnAccessFailure() {
+        var failure = new GitException("repository read failed", new IOException("disk unavailable"));
+        doThrow(failure).when(bareRepositories).getExistingBareRepository(uri, "main");
+
+        assertThatThrownBy(() -> service.readTestHarness(exercise)).isInstanceOf(IllegalStateException.class).hasCause(failure);
         verifyNoInteractions(git);
     }
 
