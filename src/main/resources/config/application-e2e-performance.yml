@@ -1,0 +1,25 @@
+# ===================================================================
+# Spring profile: e2e-performance
+#
+# Activates runtime slow-query detection during E2E test runs.
+# This profile is NOT for production. It is added to SPRING_PROFILES_INCLUDE
+# in deployment/docker/artemis/config/playwright.env (CI E2E runs only).
+#
+# What it does:
+#   - Wraps the HikariCP DataSource with a datasource-proxy interceptor.
+#   - Records every SQL statement's execution time.
+#   - Flags queries exceeding `slow-query-threshold-ms`.
+#   - Detects queries repeated within one request: N+1 (same template, different values) and
+#     duplicates (same statement, same values). No threshold: any repetition is reported.
+#   - Exposes results via GET /api/admin/performance/slow-queries
+# ===================================================================
+
+artemis:
+    performance:
+        # Queries slower than this value (in ms) are captured. 100 ms is a reasonable
+        # starting point for the small datasets used in E2E seeds; tune in iteration 6.
+        slow-query-threshold-ms: 100
+
+        # Circuit-breaker: stop recording after this many entries to prevent memory growth
+        # on pathological runs.
+        max-recorded-queries: 10000

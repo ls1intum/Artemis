@@ -151,6 +151,41 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Download develop slow-query baseline (Phase 1)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // The keys of the latest develop run's findings: lets the report mark what this PR adds.
+            const fs = require('fs');
+            fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
+            const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
+            const latest = data.artifacts
+              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+            if (!latest) {
+              core.info('No develop baseline available yet; the report will not classify findings as new.');
+              return;
+            }
+            const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: latest.id, archive_format: 'zip' });
+            fs.writeFileSync('slow-query-baseline.zip', Buffer.from(zip.data));
+            core.info(`Using baseline artifact ${latest.id} from ${latest.created_at}`);
+
+      - name: Collect slow-query report (Phase 1)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+
+      - name: Upload slow-query report artifact (Phase 1)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        continue-on-error: true
+        with:
+          name: Slow Query Report Phase 1
+          path: slow-query-report.html
+          if-no-files-found: warn
+
       - name: E2E Teardown
         id: teardown
         if: ${{ !cancelled() }}
@@ -227,6 +262,7 @@ jobs:
           INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
         with:
           script: |
+            const fs = require('fs');
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
 
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -241,6 +277,12 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            // Read from disk rather than an env var: actions/github-script spawns a fresh Node
+            // process with the whole job environment, and a large report here has previously
+            // pushed that environment past the OS's exec() size limit ("Argument list too long"),
+            // silently swallowed by this step's continue-on-error.
+            let slowQueryMd = '';
+            try { slowQueryMd = fs.readFileSync('slow-query-summary.md', 'utf8'); } catch {}
 
             const failedTests = parseFailedTests('phase1-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
@@ -259,6 +301,7 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
+            if (slowQueryMd) { body += '\n' + slowQueryMd; }
             body += `\n\n**Test Strategy:** Two-phase execution\n`;
             body += `- **Phase 1:** \`${relevantTests}\`\n`;
             body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
@@ -343,6 +386,41 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Download develop slow-query baseline (Phase 2)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // The keys of the latest develop run's findings: lets the report mark what this PR adds.
+            const fs = require('fs');
+            fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
+            const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
+            const latest = data.artifacts
+              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+            if (!latest) {
+              core.info('No develop baseline available yet; the report will not classify findings as new.');
+              return;
+            }
+            const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: latest.id, archive_format: 'zip' });
+            fs.writeFileSync('slow-query-baseline.zip', Buffer.from(zip.data));
+            core.info(`Using baseline artifact ${latest.id} from ${latest.created_at}`);
+
+      - name: Collect slow-query report (Phase 2)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+
+      - name: Upload slow-query report artifact (Phase 2)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        continue-on-error: true
+        with:
+          name: Slow Query Report Phase 2
+          path: slow-query-report.html
+          if-no-files-found: warn
+
       - name: E2E Teardown
         id: teardown
         if: ${{ !cancelled() }}
@@ -417,6 +495,7 @@ jobs:
           INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
         with:
           script: |
+            const fs = require('fs');
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
 
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -429,6 +508,12 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            // Read from disk rather than an env var: actions/github-script spawns a fresh Node
+            // process with the whole job environment, and a large report here has previously
+            // pushed that environment past the OS's exec() size limit ("Argument list too long"),
+            // silently swallowed by this step's continue-on-error.
+            let slowQueryMd = '';
+            try { slowQueryMd = fs.readFileSync('slow-query-summary.md', 'utf8'); } catch {}
 
             const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
 
@@ -436,7 +521,7 @@ jobs:
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
             const flakinessTable = buildFlakinessTable(flakinessResults);
 
-            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable);
+            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable + (slowQueryMd ? '\n' + slowQueryMd : ''));
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
@@ -534,6 +619,41 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Download develop slow-query baseline (All PR)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // The keys of the latest develop run's findings: lets the report mark what this PR adds.
+            const fs = require('fs');
+            fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
+            const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
+            const latest = data.artifacts
+              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+            if (!latest) {
+              core.info('No develop baseline available yet; the report will not classify findings as new.');
+              return;
+            }
+            const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: latest.id, archive_format: 'zip' });
+            fs.writeFileSync('slow-query-baseline.zip', Buffer.from(zip.data));
+            core.info(`Using baseline artifact ${latest.id} from ${latest.created_at}`);
+
+      - name: Collect slow-query report (All PR)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+
+      - name: Upload slow-query report artifact (All PR)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        continue-on-error: true
+        with:
+          name: Slow Query Report All PR
+          path: slow-query-report.html
+          if-no-files-found: warn
+
       - name: E2E Teardown
         id: teardown
         if: ${{ !cancelled() }}
@@ -616,6 +736,7 @@ jobs:
           INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
         with:
           script: |
+            const fs = require('fs');
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
 
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -628,6 +749,12 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            // Read from disk rather than an env var: actions/github-script spawns a fresh Node
+            // process with the whole job environment, and a large report here has previously
+            // pushed that environment past the OS's exec() size limit ("Argument list too long"),
+            // silently swallowed by this step's continue-on-error.
+            let slowQueryMd = '';
+            try { slowQueryMd = fs.readFileSync('slow-query-summary.md', 'utf8'); } catch {}
 
             const failedTests = parseFailedTests('all-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
@@ -641,6 +768,7 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
+            if (slowQueryMd) { body += '\n' + slowQueryMd; }
             body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
@@ -697,6 +825,30 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
         run: supporting_scripts/ci/E2E-tests/execute.sh multi-node-redis playwright
+
+      - name: Collect slow-query report (Non-PR)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+
+      - name: Upload slow-query report artifact (Non-PR)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        continue-on-error: true
+        with:
+          name: Slow Query Report Non-PR
+          path: slow-query-report.html
+          if-no-files-found: warn
+
+      - name: Upload slow-query baseline (develop)
+        if: ${{ !cancelled() && inputs.branch_name == 'develop' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        continue-on-error: true
+        with:
+          name: Slow Query Baseline
+          path: slow-query-keys.json
+          retention-days: 90
+          if-no-files-found: warn
 
       - name: E2E Teardown
         id: teardown
