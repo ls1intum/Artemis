@@ -607,6 +607,80 @@ describe('Formatted message composer', () => {
         expect(component.searchFailed()).toBe(true);
     });
 
+    it.each(['empty', 'failed'] as const)('lets Enter reach send when completion search is %s', async (outcome) => {
+        if (outcome === 'empty') {
+            search.mockResolvedValue([]);
+        } else {
+            search.mockRejectedValue(new Error('offline'));
+        }
+        fixture.componentRef.setInput('content', 'ping @none');
+        fixture.detectChanges();
+        caretAtEnd();
+        await component.refreshSuggestions();
+        expect(component.suggestionsOpen()).toBe(true);
+        expect(component.loading()).toBe(false);
+        const bubbled = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+
+        editable.dispatchEvent(enter);
+
+        // Normal sending suppresses a native newline while the parent handles the bubbled Enter.
+        expect(enter.defaultPrevented).toBe(true);
+        expect(bubbled).toHaveBeenCalledOnce();
+        expect(component.suggestionsOpen()).toBe(false);
+        expect(editable.textContent).toBe('ping @none');
+        fixture.nativeElement.removeEventListener('keydown', bubbled);
+    });
+
+    it('blocks Enter while completion is loading, then permits sending after it finishes empty', async () => {
+        let finish!: (result: []) => void;
+        search.mockReturnValue(new Promise<[]>((resolve) => (finish = resolve)));
+        fixture.componentRef.setInput('content', 'ping @none');
+        fixture.detectChanges();
+        caretAtEnd();
+        const pending = component.refreshSuggestions();
+        const bubbled = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+        editable.dispatchEvent(enter);
+        expect(component.loading()).toBe(true);
+        expect(enter.defaultPrevented).toBe(true);
+        expect(bubbled).not.toHaveBeenCalled();
+        expect(component.suggestionsOpen()).toBe(true);
+        finish([]);
+        await pending;
+
+        const send = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+        editable.dispatchEvent(send);
+
+        expect(send.defaultPrevented).toBe(true);
+        expect(bubbled).toHaveBeenCalledOnce();
+        expect(component.suggestionsOpen()).toBe(false);
+        fixture.nativeElement.removeEventListener('keydown', bubbled);
+    });
+
+    it('keeps Shift+Enter as a newline after an empty completion search', async () => {
+        search.mockResolvedValue([]);
+        fixture.componentRef.setInput('content', 'ping @none');
+        fixture.detectChanges();
+        caretAtEnd();
+        await component.refreshSuggestions();
+        const bubbled = vi.fn();
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true, cancelable: true });
+
+        editable.dispatchEvent(enter);
+        editable.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: 'next', bubbles: true, cancelable: true }));
+
+        expect(enter.defaultPrevented).toBe(true);
+        expect(bubbled).not.toHaveBeenCalled();
+        expect(component.suggestionsOpen()).toBe(false);
+        expect(emit).toHaveBeenLastCalledWith('ping @none\nnext');
+        fixture.nativeElement.removeEventListener('keydown', bubbled);
+    });
+
     it('prevents link clicks from navigating while composing', () => {
         editable.innerHTML = '<p><a href="https://example.org">Guide</a></p>';
         const click = new MouseEvent('click', { bubbles: true, cancelable: true });

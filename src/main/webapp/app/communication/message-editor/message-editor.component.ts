@@ -288,6 +288,9 @@ export class MessageEditorComponent {
             this.refreshFormatState();
             return;
         }
+        if (event.key === 'Enter' && this.suggestionsOpen() && !this.loading() && !this.suggestions().length) {
+            this.dismissSuggestions();
+        }
         if (this.suggestionsOpen()) {
             if (['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)) {
                 event.stopPropagation();

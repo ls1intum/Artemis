@@ -726,6 +726,40 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         await expectText(reopened.editor, 'Read bold and italic next');
     });
 
+    for (const kind of ['mention', 'channel'] as const) {
+        test(`rejects links over a protected ${kind} and renders an adjacent link correctly in the posting view`, async ({ page, composer, communicationAPIRequests }) => {
+            const reference = kind === 'mention' ? '[user]Student One(artemis_test_user_1)[/user]' : `[channel]${composer.channel.name}(${composer.channel.id})[/channel]`;
+            const label = kind === 'mention' ? '@Student One' : `#${composer.channel.name}`;
+            const visible = `Hello ${label} today`;
+            const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', `Hello ${reference} today`);
+            const { posting, editor } = await reopen(page, original);
+            await selectText(editor, 0, visible.length, visible);
+            await expect(posting.getByTestId('message-link-button')).toBeDisabled();
+            await page.keyboard.press('ControlOrMeta+k');
+            await expect(posting.getByTestId('message-link-url')).toBeHidden();
+            await expect(editor.locator('[data-message-reference]')).toHaveAttribute('data-message-reference', reference);
+            await expect(editor.locator('a')).toHaveCount(0);
+
+            await selectText(editor, 0, 5, 'Hello');
+            await expect(posting.getByTestId('message-link-button')).toBeEnabled();
+            await posting.getByTestId('message-link-button').click();
+            await posting.getByTestId('message-link-url').fill('https://example.org/guide');
+            await posting.getByTestId('apply-message-link').click();
+            const saved = await saveEdited(page, composer, posting, original);
+            expect(saved.content).toBe(`[Hello](https://example.org/guide) ${reference} today`);
+            const rendered = postContent(page, saved.id!);
+            await expect(rendered.getByRole('link', { name: 'Hello', exact: true })).toHaveAttribute('href', 'https://example.org/guide');
+            await expect(rendered).toContainText(kind === 'mention' ? 'Student One' : composer.channel.name!);
+            await expect(rendered).toContainText('today');
+            await expect(rendered).not.toContainText('[Hello');
+            await expect(rendered).not.toContainText(kind === 'mention' ? '[user]' : '[channel]');
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator('a')).toHaveText('Hello');
+            await expect(reopened.editor.locator('a [data-message-reference]')).toHaveCount(0);
+            await expect(reopened.editor.locator('[data-message-reference]')).toHaveAttribute('data-message-reference', reference);
+        });
+    }
+
     test('links a single paragraph selected with native Select All and keeps its inline formatting after reopening', async ({ page, composer, communicationAPIRequests }) => {
         const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', 'Read **course** guide');
         const { posting, editor } = await reopen(page, original);
@@ -1006,6 +1040,30 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         await expect(reopened.editor.locator('ins')).toHaveText('BETA');
         await expect(reopened.editor.locator('strong strong, em, s, del')).toHaveCount(0);
         await expectText(reopened.editor, 'alpha BETA gamma');
+    });
+
+    test('Enter sends the unchanged message after member completion finishes with no results', async ({ page, composer }) => {
+        const text = 'ping @zzzznomember';
+        await composer.editor.pressSequentially(text);
+        const popup = page.getByTestId('message-completion-list');
+        await expect(popup.getByRole('status')).toContainText('No results.');
+        await expect(popup.getByRole('option')).toHaveCount(0);
+        await expect(page.getByTestId('send-formatted-message')).toBeEnabled();
+        const sent = page.waitForResponse(
+            (response) => response.request().method() === 'POST' && response.url().endsWith(`/api/communication/courses/${composer.course.id}/messages`),
+        );
+
+        await composer.editor.press('Enter');
+
+        const response = await sent;
+        expect(response.status()).toBe(201);
+        const saved = await readResponseJson<Post>(response);
+        expect(saved.content).toBe(text);
+        expect(response.request().postDataJSON().content).toBe(text);
+        await expect(postContent(page, saved.id!)).toContainText(text);
+        await expect(popup).toBeHidden();
+        await expectText(composer.editor, '');
+        await expect(page.getByTestId('send-formatted-message')).toBeDisabled();
     });
 
     test('colon emoji keyboard acceptance replaces only the shortcode and does not submit the message', async ({ page, composer }) => {

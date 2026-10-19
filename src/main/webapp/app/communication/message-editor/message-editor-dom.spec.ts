@@ -474,6 +474,45 @@ describe('Message editor editing transactions', () => {
         expect(changed).not.toHaveBeenCalled();
     });
 
+    for (const reference of ['[user]Anna(anna)[/user]', '[channel]general(7)[/channel]']) {
+        it.each(['caret', 'partial', 'sentence'] as const)(`rejects a %s link selection intersecting ${reference}`, (kind) => {
+            editor.load(`Hello ${reference} today`);
+            const item = root.querySelector('[data-message-reference]')!;
+            const range = document.createRange();
+            if (kind === 'sentence') {
+                range.selectNodeContents(root.querySelector('p')!);
+            } else {
+                range.setStart(item.firstChild!, 1);
+                range.setEnd(item.firstChild!, kind === 'caret' ? 1 : 3);
+            }
+            window.getSelection()!.removeAllRanges();
+            window.getSelection()!.addRange(range);
+            const html = root.innerHTML;
+
+            expect(editor.canLinkSelection()).toBe(false);
+            editor.setLink(range.toString() || 'New link', 'https://example.org/guide');
+
+            expect(root.innerHTML).toBe(html);
+            expect(item.getAttribute('data-message-reference')).toBe(reference);
+            expect(root.querySelector('a')).toBeNull();
+            expect(changed).not.toHaveBeenCalled();
+            editor.undo();
+            expect(root.innerHTML).toBe(html);
+            expect(changed).not.toHaveBeenCalled();
+        });
+    }
+
+    it('links text beside a protected reference without embedding or changing its payload', () => {
+        editor.load('Hello [user]Anna(anna)[/user] today');
+        select(root.querySelector('p')!.firstChild!, 0, 5);
+        expect(editor.canLinkSelection()).toBe(true);
+        editor.setLink('Hello', 'https://example.org/guide');
+        expect(root.querySelector('a')?.textContent).toBe('Hello');
+        expect(root.querySelector('a [data-message-reference]')).toBeNull();
+        expect(root.querySelector('[data-message-reference]')?.getAttribute('data-message-reference')).toBe('[user]Anna(anna)[/user]');
+        expect(changed).toHaveBeenLastCalledWith('[Hello](https://example.org/guide) [user]Anna(anna)[/user] today');
+    });
+
     it('links a single paragraph selected from its container without losing the paragraph or inline marks', () => {
         editor.load('Read **course** guide');
         const range = document.createRange();

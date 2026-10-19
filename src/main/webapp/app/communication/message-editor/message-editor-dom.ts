@@ -443,10 +443,11 @@ export class MessageEditorDom {
         const link = existing ?? this.linkAtSelection();
         if (link) return this.element.contains(link) && !link.closest('code, pre');
         const range = this.linkRange();
-        if (this.parentElement(range.startContainer)?.closest('code, pre') || this.parentElement(range.endContainer)?.closest('code, pre')) return false;
+        const protectedContent = 'code, pre, [data-message-reference]';
+        if (this.parentElement(range.startContainer)?.closest(protectedContent) || this.parentElement(range.endContainer)?.closest(protectedContent)) return false;
         if (range.collapsed) return true;
         // Block wrappers or line breaks inside an anchor would lose their structure when serialized as an inline link.
-        if (range.cloneContents().querySelector('p, div, ul, ol, li, blockquote, pre, br')) return false;
+        if (range.cloneContents().querySelector('p, div, ul, ol, li, blockquote, pre, br, [data-message-reference]')) return false;
         return !Array.from(this.element.querySelectorAll('code, pre')).some((code) => {
             const content = this.element.ownerDocument.createRange();
             content.selectNode(code);
