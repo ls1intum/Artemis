@@ -13,7 +13,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 class GenerationToolchainTest {
 
     @ParameterizedTest
-    @ValueSource(strings = { "a", "java-gradle", "python3-pytest8", "a-b-c" })
+    @ValueSource(strings = { "a", "java-gradle", "python3-pytest8", "a-b-c", "python3-pytest-8", "a0-b1-c2" })
     void preservesValidIdentifiers(String id) {
         assertThat(new GenerationToolchain(id).id()).isEqualTo(id);
     }

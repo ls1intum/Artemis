@@ -311,27 +311,26 @@ public class GenerationLiveSaveService {
             }
             catch (RuntimeException | Error failure) {
                 try {
-                    finishTestCaseSynchronization(exerciseId, claimed, false);
+                    finishTestCaseSynchronization(exerciseId, key, claimed, false);
                 }
-                catch (RuntimeException | Error cleanupFailure) {
-                    failure.addSuppressed(cleanupFailure);
+                catch (RuntimeException | Error completionFailure) {
+                    failure.addSuppressed(completionFailure);
                 }
                 throw failure;
             }
-            finishTestCaseSynchronization(exerciseId, claimed, completed);
+            finishTestCaseSynchronization(exerciseId, key, claimed, completed);
             return completed;
         }
     }
 
-    private void finishTestCaseSynchronization(long exerciseId, LiveSaveSlot claimed, boolean completed) {
-        var synchronization = claimed.synchronization();
+    private void finishTestCaseSynchronization(long exerciseId, String key, LiveSaveSlot claimed, boolean completed) {
+        var sync = claimed.synchronization();
         var finished = new LiveSaveSlot(claimed.token(), claimed.ownerNodeId(), claimed.startedAt(), claimed.readers(),
-                new TestCaseSynchronization(synchronization.solutionCommit(), synchronization.testsCommit(), false, completed));
-        if (!reservations.replace(String.valueOf(exerciseId), claimed, finished)) {
+                new TestCaseSynchronization(sync.solutionCommit(), sync.testsCommit(), false, completed));
+        if (!reservations.replace(key, claimed, finished)) {
             throw new IllegalStateException("Test synchronization lost its save reservation");
         }
-        log.info("Canonical test synchronization for exercise {} finished: solution {}, tests {}, accepted {}", exerciseId, synchronization.solutionCommit(),
-                synchronization.testsCommit(), completed);
+        log.info("Canonical test synchronization for exercise {} finished: solution {}, tests {}, accepted {}", exerciseId, sync.solutionCommit(), sync.testsCommit(), completed);
     }
 
     /**

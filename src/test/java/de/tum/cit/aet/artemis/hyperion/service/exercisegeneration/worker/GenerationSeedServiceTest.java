@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -32,7 +31,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -104,30 +102,6 @@ class GenerationSeedServiceTest {
         assertThat(seed.snapshot().files()).filteredOn(file -> file.path().equals("problem-statement.md")).singleElement()
                 .satisfies(file -> assertThat(new String(file.content(), StandardCharsets.UTF_8)).isEqualTo("The instructor's specification."));
         assertThat(temporary.toFile().list()).isEmpty();
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    void cleanupFailureDoesNotHideRepositoryCaptureFailure(boolean captureFails) throws Exception {
-        var captureFailure = new IllegalArgumentException("checkout failed");
-        if (captureFails) {
-            when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenThrow(captureFailure);
-        }
-        var deletionFailure = new IOException("delete failed");
-        try (var files = mockStatic(FileUtils.class)) {
-            files.when(() -> FileUtils.deleteDirectory(any())).thenThrow(deletionFailure);
-
-            var failure = catchThrowable(() -> service.capture(exercise));
-
-            if (captureFails) {
-                assertThat(failure).isInstanceOf(IllegalStateException.class).hasMessage("Could not capture the exercise repository for generation").hasCause(captureFailure);
-                assertThat(failure.getSuppressed()).singleElement().satisfies(cleanup -> assertThat(cleanup).isInstanceOf(IllegalStateException.class)
-                        .hasMessage("Could not remove the temporary generation checkout").hasCause(deletionFailure));
-            }
-            else {
-                assertThat(failure).isInstanceOf(IllegalStateException.class).hasMessage("Could not remove the temporary generation checkout").hasCause(deletionFailure);
-            }
-        }
     }
 
     @ParameterizedTest
@@ -225,6 +199,62 @@ class GenerationSeedServiceTest {
         sourceBytes = new byte[WorkspaceFile.MAX_FILE_BYTES + 1];
         assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class);
         assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @Test
+    void captureFailureSurvivesTemporaryCheckoutDeletionFailure() throws Exception {
+        var captureFailure = new IllegalStateException("checkout failed");
+        var cleanupFailure = new IOException("temporary checkout deletion failed");
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenThrow(captureFailure);
+
+        try (var fileUtils = mockStatic(FileUtils.class)) {
+            fileUtils.when(() -> FileUtils.deleteDirectory(any(java.io.File.class))).thenThrow(cleanupFailure);
+
+            assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasCause(captureFailure);
+            assertThat(captureFailure.getSuppressed()).containsExactly(cleanupFailure);
+        }
+    }
+
+    @Test
+    void captureErrorSurvivesTemporaryCheckoutDeletionFailure() throws Exception {
+        var captureFailure = new AssertionError("checkout failed");
+        var cleanupFailure = new IOException("temporary checkout deletion failed");
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenThrow(captureFailure);
+
+        try (var fileUtils = mockStatic(FileUtils.class)) {
+            fileUtils.when(() -> FileUtils.deleteDirectory(any(java.io.File.class))).thenThrow(cleanupFailure);
+
+            assertThatThrownBy(() -> service.capture(exercise)).isSameAs(captureFailure);
+            assertThat(captureFailure.getSuppressed()).containsExactly(cleanupFailure);
+        }
+    }
+
+    @Test
+    void repositoryCloseFailureDoesNotMaskCaptureFailureAndStillDeletesTemporaryCheckout() throws Exception {
+        var closeFailure = new IllegalStateException("repository close failed");
+        sourceMode = FileMode.SYMLINK;
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenAnswer(invocation -> {
+            Repository repository = spy(createRepository(invocation.getArgument(1)));
+            doAnswer(close -> {
+                close.callRealMethod();
+                throw closeFailure;
+            }).when(repository).closeBeforeDelete();
+            return repository;
+        });
+
+        assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).cause().isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("links or submodules").satisfies(failure -> assertThat(failure.getSuppressed()).containsExactly(closeFailure));
+        assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @Test
+    void temporaryCheckoutDeletionFailureIsReportedAfterSuccessfulCapture() {
+        var cleanupFailure = new IOException("temporary checkout deletion failed");
+        try (var fileUtils = mockStatic(FileUtils.class)) {
+            fileUtils.when(() -> FileUtils.deleteDirectory(any(java.io.File.class))).thenThrow(cleanupFailure);
+
+            assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasCause(cleanupFailure);
+        }
     }
 
     @Test

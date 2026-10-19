@@ -155,7 +155,7 @@ public class GenerationTokenUsageService {
                     || cachedInputTokens != null && (cachedInputTokens < 0 || cachedInputTokens > promptTokens)) {
                 return false;
             }
-            String model = Objects.requireNonNullElse(metadata.getModel(), "");
+            String model = Objects.toString(metadata.getModel(), "");
             GenerationUsage llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens);
             LLMRequest persisted = new LLMRequest(model, promptTokens, llmRequest.costPerMillionInputToken(), completionTokens, llmRequest.costPerMillionOutputToken(), pipelineId,
                     cachedInputTokens == null ? 0 : cachedInputTokens.intValue(), llmRequest.costPerMillionCachedInputToken(), 0, 0f);

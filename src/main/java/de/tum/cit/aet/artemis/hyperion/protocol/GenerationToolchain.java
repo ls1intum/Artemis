@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GenerationToolchain(String id) {
 
-    private static final Pattern ID_PATTERN = Pattern.compile("[a-z][a-z0-9]*(?:-[a-z0-9]+)*+");
+    private static final Pattern ID_PATTERN = Pattern.compile("[a-z][a-z0-9]*+(?:-[a-z0-9]++)*+");
 
     public static final GenerationToolchain JAVA_GRADLE = new GenerationToolchain("java-gradle");
 
