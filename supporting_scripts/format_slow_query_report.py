@@ -38,8 +38,6 @@ STATIC_RULE_LABELS = {
     "wide_entitygraph": "More than 5 @EntityGraph attribute paths",
 }
 
-SHAPE_LABELS = {"N_PLUS_ONE": "N+1", "DUPLICATE": "Duplicate"}
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -65,12 +63,6 @@ def trunc_plain(text: str, max_len: int = 100) -> str:
         return ""
     text = text.replace("\n", " ")
     return text[:max_len] + "…" if len(text) > max_len else text
-
-
-def fmt_endpoint(method: str, endpoint: str, thread_name: str = None) -> str:
-    if not method and not endpoint:
-        return f"*(background: `{thread_name}`)*" if thread_name else "*(background)*"
-    return f"`{method or '?'} {endpoint or '?'}`"
 
 
 def iso_to_human(iso: str) -> str:
@@ -148,15 +140,142 @@ def link_static_confirmations(groups: list, static_findings: list):
         g["static_matches"] = sorted(set(by_loop_call.get((g["callerMethod"], g["repositoryMethod"]), [])))
 
 
-def rank_repeated(groups: list) -> list:
-    """New first, then confirmed by a static rule, then N+1 before duplicate, then most repetitions."""
-    return sorted(groups, key=lambda g: (not g.get("is_new", False), not g["static_matches"], g["type"] != "N_PLUS_ONE", -g["max_executions"]))
-
-
 def source_label(g: dict) -> str:
     if g["repositoryMethod"] and g["callerMethod"]:
         return f"{g['repositoryMethod']} ← {g['callerMethod']}"
     return g["repositoryMethod"] or g["callerMethod"] or "?"
+
+
+# ---------------------------------------------------------------------------
+# Problems: repeated queries grouped by the place a fix goes
+# ---------------------------------------------------------------------------
+# A loop is fixed in the method that loops, so N+1 findings and duplicates issued from one place are
+# grouped by their caller. A duplicate without a single issuing place is fixed in the request as a
+# whole, so it is grouped by its endpoint. Rows inserted one statement at a time are grouped by
+# table: the SQL does not tell a save() in a loop from a cascade the database cannot batch.
+
+INSERT_TABLE_PATTERN = re.compile(r"^\s*insert\s+into\s+(\w+)", re.IGNORECASE)
+
+CATEGORY_LABELS = {
+    "n_plus_one": "N+1",
+    "duplicate_one_place": "Duplicate · one place",
+    "duplicate_several_places": "Duplicate · several places",
+    "insert": "Row-by-row insert",
+}
+
+
+def avoidable_executions(shape: str, executions: int, distinct: int) -> int:
+    """Executions one request could have saved: a duplicate needs one per distinct parameter set,
+    anything else one in total."""
+    if shape == "DUPLICATE":
+        return max(executions - max(distinct, 1), 0)
+    return max(executions - 1, 0)
+
+
+def summarize_sql(sql: str) -> str:
+    """'select u1_0.id, … from jhi_user u1_0 left join … where u1_0.id=?' -> 'select from jhi_user (+1 join) where id = ?'."""
+    s = " ".join((sql or "").split())
+    verb = s.split(" ", 1)[0].lower() if s else "?"
+    table_patterns = {"select": r"\bfrom (\w+)", "delete": r"\bfrom (\w+)", "update": r"^update (\w+)", "insert": r"\binto (\w+)"}
+    match = re.search(table_patterns[verb], s, re.IGNORECASE) if verb in table_patterns else None
+    table = match.group(1) if match else "?"
+    joins = len(re.findall(r"\bjoin \w+", s, re.IGNORECASE)) if verb == "select" else 0
+    where_match = re.search(r"\bwhere (.*)$", s, re.IGNORECASE)
+    where = ""
+    if where_match:
+        where = re.sub(r"\b\w+_\d+\.", "", where_match.group(1))
+        where = re.sub(r"\s*(<>|>=|<=|=|\bin\b)\s*", r" \1 ", where, flags=re.IGNORECASE)
+        where = trunc_plain(" ".join(where.split()), 70)
+    preposition = {"select": "from ", "delete": "from ", "insert": "into "}.get(verb, "")
+    summary = f"{verb} {preposition}{table}"
+    if joins:
+        summary += f" (+{joins} join{'s' if joins > 1 else ''})"
+    return summary + (f" where {where}" if where else "")
+
+
+def endpoint_label(method: str, endpoint: str) -> str:
+    return f"{method or '?'} {endpoint or '?'}"
+
+
+def build_problems(groups: list) -> list:
+    """One problem per place to fix, most avoidable executions first."""
+    def site(g):
+        return g["method"], g["endpoint"], g["repositoryMethod"], g["callerMethod"], g["sql"]
+
+    sites_with_n_plus_one = {site(g) for g in groups if g["type"] == "N_PLUS_ONE"}
+    problems = {}
+    for g in groups:
+        if g["type"] == "DUPLICATE" and site(g) in sites_with_n_plus_one:
+            continue  # the N+1 issued from the same place already counts these executions
+        insert = INSERT_TABLE_PATTERN.match(g["sql"])
+        if insert:
+            kind, anchor = "insert", insert.group(1).lower()
+        elif g["callerMethod"] or g["repositoryMethod"]:
+            kind, anchor = "function", g["callerMethod"] or g["repositoryMethod"]
+        else:
+            kind, anchor = "endpoint", endpoint_label(g["method"], g["endpoint"])
+        problem = problems.setdefault((kind, anchor), {"kind": kind, "anchor": anchor, "queries": {}})
+        # rows of one table inserted by different code are different places to batch them
+        query_key = (g["repositoryMethod"], g["callerMethod"] if kind == "insert" else None, g["sql"])
+        query = problem["queries"].setdefault(query_key, {"repositoryMethod": g["repositoryMethod"], "callerMethod": g["callerMethod"], "sql": g["sql"], "groups": []})
+        query["groups"].append(g)
+    return sorted((summarize_problem(p) for p in problems.values()), key=lambda p: (-p["avoidable"], -len(p["endpoints"]), -len(p["tests"]), p["anchor"]))
+
+
+def summarize_problem(problem: dict) -> dict:
+    queries = []
+    for q in problem["queries"].values():
+        if problem["kind"] == "insert":
+            q["shape"] = "INSERT"
+        else:
+            q["shape"] = "N_PLUS_ONE" if any(g["type"] == "N_PLUS_ONE" for g in q["groups"]) else "DUPLICATE"
+        q["requests"] = sorted(({**o, "endpoint": endpoint_label(g["method"], g["endpoint"]), "avoidable": avoidable_executions(g["type"], o["executions"], o["distinct"])}
+                                for g in q["groups"] for o in g["occurrences"]), key=lambda r: (-r["avoidable"], -r["executions"]))
+        worst = q["requests"][0]
+        q.update(executions=worst["executions"], distinct=worst["distinct"], avoidable=worst["avoidable"], summary=summarize_sql(q["sql"]))
+        queries.append(q)
+    queries.sort(key=lambda q: -q["avoidable"])
+
+    endpoint_avoidable = {}
+    for q in queries:
+        for r in q["requests"]:
+            endpoint_avoidable[r["endpoint"]] = max(endpoint_avoidable.get(r["endpoint"], 0), r["avoidable"])
+    groups = [g for q in queries for g in q["groups"]]
+    if problem["kind"] == "insert":
+        category = "insert"
+    elif problem["kind"] == "endpoint":
+        category = "duplicate_several_places"
+    else:
+        category = "n_plus_one" if any(q["shape"] == "N_PLUS_ONE" for q in queries) else "duplicate_one_place"
+    problem.update(
+        queries=queries,
+        category=category,
+        # the biggest single repeat, not the sum: a delete cascade issues many small repeats that one fix would not remove
+        avoidable=queries[0]["avoidable"],
+        endpoints=sorted(endpoint_avoidable, key=lambda e: (-endpoint_avoidable[e], e)),
+        methods=sorted({g["method"] or "?" for g in groups}),
+        tests=sorted(set().union(*(g["tests"] for g in groups))),
+        phases=sorted({r["phase"] for q in queries for r in q["requests"] if r.get("phase") in ("action", "setup")}),
+        static_matches=sorted({i for g in groups for i in g.get("static_matches", [])}),
+        is_new=any(g.get("is_new") for g in groups),
+    )
+    return problem
+
+
+def loops_before_inserts(problems: list) -> list:
+    """Inserts rank after every loop: their SQL does not tell whether a loop or the id generation is the cause."""
+    return [p for p in problems if p["category"] != "insert"] + [p for p in problems if p["category"] == "insert"]
+
+
+def query_counts_label(q: dict) -> str:
+    if q["shape"] == "INSERT":
+        return f"{q['executions']} rows, one statement each"
+    if q["distinct"] <= 1:
+        return f"{q['executions']}× same parameters"
+    label = f"{q['executions']}× · {q['distinct']} distinct"
+    if q["executions"] > q["distinct"]:
+        label += f" (each ~{round(q['executions'] / q['distinct'])}×)"
+    return label
 
 
 # ---------------------------------------------------------------------------
@@ -205,12 +324,14 @@ def mark_new(groups: list, static_findings: list, baseline: dict):
 # Markdown (PR comment)
 # ---------------------------------------------------------------------------
 
-def repeated_rows_md(groups: list) -> list:
-    lines = ["| Shape | Endpoint | Issued by | Max repeats / request | Tests | Query |", "|---|---|---|---|---|---|"]
-    for g in groups:
-        confirmed = " · 🔍 static rule agrees" if g["static_matches"] else ""
-        lines.append(f"| {SHAPE_LABELS.get(g['type'], g['type'])}{confirmed} | {fmt_endpoint(g['method'], g['endpoint'])} | `{trunc(source_label(g), 90)}` "
-                     f"| {g['max_executions']}× | {len(g['tests'])} | `{trunc(g['sql'], 90)}` |")
+def problem_rows_md(problems: list) -> list:
+    lines = ["| Where to fix | Shape | Avoidable / request | Biggest repeat | Endpoints | Tests |", "|---|---|---|---|---|---|"]
+    for p in problems:
+        confirmed = " · 🔍 static rule agrees" if p["static_matches"] else ""
+        biggest = p["queries"][0]
+        more = f" +{len(p['endpoints']) - 1} more" if len(p["endpoints"]) > 1 else ""
+        lines.append(f"| `{trunc(p['anchor'], 90)}` | {CATEGORY_LABELS[p['category']]}{confirmed} | {p['avoidable']} "
+                     f"| `{trunc(biggest['summary'], 80)}` {query_counts_label(biggest)} | `{trunc(p['endpoints'][0], 80)}`{more} | {len(p['tests'])} |")
     return lines
 
 
@@ -233,40 +354,42 @@ def capped(items: list, lines_for, run_url: str, what: str) -> list:
 def build_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "") -> str:
     generated_at = iso_to_human(report.get("generatedAt", ""))
     slow_groups = compute_slow_query_groups(report.get("slowQueries", []))
-    n_plus_one = [g for g in groups if g["type"] == "N_PLUS_ONE"]
-    duplicates = [g for g in groups if g["type"] == "DUPLICATE"]
-    ranked = rank_repeated(groups)
+    problems = loops_before_inserts(build_problems(groups))
 
     lines = ["", "---"]
     if baseline is not None:
-        new_groups = [g for g in ranked if g.get("is_new")]
+        new_problems = loops_before_inserts(build_problems([g for g in groups if g.get("is_new")]))
         new_static = [f for f in static_findings if f.get("is_new")]
-        emoji = "✅" if not new_groups and not new_static else "⚠️"
+        emoji = "✅" if not new_problems and not new_static else "⚠️"
         status = ("No new query anti-patterns compared to develop" if emoji == "✅" else
-                  f"{len(new_groups)} new repeated quer{'y' if len(new_groups) == 1 else 'ies'} · {len(new_static)} new static finding{'' if len(new_static) == 1 else 's'} compared to develop")
+                  f"{len(new_problems)} new repeated-query problem{'' if len(new_problems) == 1 else 's'} · {len(new_static)} new static finding{'' if len(new_static) == 1 else 's'} compared to develop")
         lines += [f"## {emoji} Query Report", "", f"**{status}**", "",
                   f"> Generated at {generated_at}, compared against the latest develop run ({iso_to_human(baseline.get('generatedAt', '?'))})."]
-        if new_groups:
-            lines += ["", f"### 🆕 New repeated queries ({len(new_groups)})", ""] + capped(new_groups, repeated_rows_md, run_url, "new repeated queries")
+        if new_problems:
+            lines += ["", f"### 🆕 New repeated queries ({len(new_problems)})", ""] + capped(new_problems, problem_rows_md, run_url, "new problems")
         if new_static:
             lines += ["", f"### 🆕 New static findings ({len(new_static)})", ""] + capped(new_static, static_rows_md, run_url, "new static findings")
     else:
         lines += ["## ℹ️ Query Report", "", "**No develop baseline available, so nothing is classified as new; the most relevant findings overall are listed instead.**", "",
                   f"> Generated at {generated_at}."]
-        if ranked:
-            lines += ["", "### 🔁 Repeated queries", ""] + capped(ranked, repeated_rows_md, run_url, "repeated queries")
+        if problems:
+            lines += ["", "### 🔁 Repeated queries", ""] + capped(problems, problem_rows_md, run_url, "problems")
 
     static_counts = {}
     for f in static_findings:
         static_counts[f["type"]] = static_counts.get(f["type"], 0) + 1
     lines += ["", "<details>", "<summary>All findings in this run</summary>", "", "| Finding | Count |", "|---|---|",
-              f"| N+1 (same query, different parameters, in one request) | {len(n_plus_one)} |",
-              f"| Duplicate (same query, same parameters, in one request) | {len(duplicates)} |"]
+              f"| N+1 (a method queries once per item) | {sum(1 for p in problems if p['category'] == 'n_plus_one')} |",
+              f"| Duplicate, one place (the same data loaded again by the same code) | {sum(1 for p in problems if p['category'] == 'duplicate_one_place')} |",
+              f"| Duplicate, several places (the same data loaded again within a request) | {sum(1 for p in problems if p['category'] == 'duplicate_several_places')} |",
+              f"| Row-by-row insert (one statement per inserted row) | {sum(1 for p in problems if p['category'] == 'insert')} |"]
     lines += [f"| Static: {STATIC_RULE_LABELS.get(t, t)} | {c} |" for t, c in sorted(static_counts.items())]
     lines += [f"| Slow queries over {report.get('thresholdMs', '?')} ms (context only, timing in CI is not compared) | {len(slow_groups)} |", "", "</details>", "",
               "<details>", "<summary>How to read this</summary>", "",
               "Every finding is a yes/no rule, without a count threshold. **N+1**: one query per item where one query for all items would do. "
-              "**Duplicate**: the same data loaded again within the same request. Repeated queries name the repository method that issued them and its caller; "
+              "**Duplicate**: the same data loaded again within the same request. **Row-by-row insert**: rows written one statement at a time. "
+              "Findings are grouped by where the fix goes: the method that loops, or the endpoint for data loaded again by several places. "
+              "**Avoidable / request** is the biggest number of executions one fix would save in a single request. "
               "🔍 means a static rule flags that same code. A finding is identified by its shape, endpoint, issuing code and query — not by the test or the "
               "repetition count, which depend on how much data a test creates.", "",
               "See the [performance guidelines](https://docs.artemis.tum.de/developer/guidelines/performance) for remediation patterns.", "", "</details>", "",
@@ -368,6 +491,46 @@ table.nested-table th, table.nested-table td { padding: 4px 8px; }
 .group-row { cursor: pointer; }
 .expand-cell { width: 20px; text-align: center; color: var(--muted); }
 .detail-row td { background: var(--tile-bg); padding: 10px 10px 14px 30px; }
+.problem-controls { position: sticky; top: 0; z-index: 2; background: var(--bg); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+.problem-controls .filter-box { margin: 0; flex: 1 1 240px; }
+.filter-chip { appearance: none; border: 1px solid var(--border); background: var(--tile-bg); color: var(--fg); border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.filter-chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+.filter-chip.only-chip[aria-pressed="false"] { opacity: 1; text-decoration: none; }
+.filter-chip.only-chip[aria-pressed="true"] { border-color: var(--new); color: var(--new); }
+.section-note { max-width: 820px; line-height: 1.5; }
+.problem-cards { display: grid; gap: 14px; margin-bottom: 32px; }
+.problem-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.cat-n_plus_one { border-left: 4px solid var(--sev-high); }
+.cat-duplicate_one_place, .cat-duplicate_several_places { border-left: 4px solid var(--sev-medium); }
+.cat-insert { border-left: 4px solid var(--sev-low); }
+.problem-head { display: flex; gap: 12px; align-items: flex-start; }
+.problem-rank { color: var(--muted); font-weight: 600; padding-top: 2px; }
+.problem-anchor { flex: 1; min-width: 0; }
+.anchor-kind, .foot-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.problem-anchor code { font-size: 14px; font-weight: 600; word-break: break-word; }
+.problem-impact { display: flex; gap: 8px; align-items: center; }
+.impact-value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.impact-label { font-size: 11px; color: var(--muted); line-height: 1.2; }
+.problem-tags { margin: 8px 0 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.badge-n_plus_one { background: color-mix(in srgb, var(--sev-high) 15%, transparent); color: var(--sev-high); }
+.badge-duplicate_one_place, .badge-duplicate_several_places { background: color-mix(in srgb, var(--sev-medium) 15%, transparent); color: var(--sev-medium); }
+.badge-insert { background: color-mix(in srgb, var(--sev-low) 15%, transparent); color: var(--sev-low); }
+.query-list { list-style: none; margin: 0; padding: 0; }
+.query-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 12px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.query-source { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-word; }
+.query-sql { min-width: 0; }
+.query-sql summary { cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.query-sql code, .query-sql pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+.query-sql pre { white-space: pre-wrap; word-break: break-word; margin: 6px 0; padding: 8px; background: var(--tile-bg); border-radius: 6px; }
+.query-counts { white-space: nowrap; }
+.query-avoidable { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.problem-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; }
+.foot-list > code, .foot-list > span, .more-list > code, .more-list > span { display: block; margin-top: 3px; word-break: break-word; }
+details.more-list summary { cursor: pointer; color: var(--new); font-size: 12.5px; margin-top: 3px; }
+td.where-cell summary { cursor: pointer; }
+td.where-cell .query-list, td.where-cell .foot-list { margin-top: 6px; }
+.problem.filtered-out { display: none; }
+@media (max-width: 640px) { .problem-foot { grid-template-columns: 1fr; } .query-item { grid-template-columns: minmax(0, 1fr) auto; } .query-avoidable { display: none; } }
 """
 
 HTML_REPORT_JS = """
@@ -491,8 +654,44 @@ function setupGroupedTable(tableId, colIndex) {
     });
 }
 
-setupGroupedTable('repeated-queries-table', { status: 1, shape: 2, endpoint: 3, source: 4, repeats: 6, requests: 7, tests: 8 });
 setupGroupedTable('slow-queries-table', { endpoint: 1, occurrences: 3, joins: 4, duration: 5 });
+
+// Repeated queries: the search box and the chips filter cards and rows together. A chip that is
+// pressed includes its problems; "only new" narrows to new ones instead.
+(function () {
+    var panel = document.getElementById('panel-repeated-queries');
+    var search = panel && panel.querySelector('.problem-search');
+    if (!search) return;
+    var problems = Array.prototype.slice.call(panel.querySelectorAll('.problem'));
+    var excluded = { category: {}, phase: {}, method: {} };
+    var onlyNew = false;
+    function apply() {
+        var query = search.value.toLowerCase();
+        var shown = 0;
+        problems.forEach(function (el) {
+            var phases = el.dataset.phases ? el.dataset.phases.split(' ') : [];
+            var methods = el.dataset.methods.split(' ');
+            var visible = !excluded.category[el.dataset.category]
+                && (phases.length === 0 || phases.some(function (p) { return !excluded.phase[p]; }))
+                && !(excluded.method.DELETE && methods.every(function (m) { return m === 'DELETE'; }))
+                && (!onlyNew || el.dataset.new === 'true')
+                && (!query || el.textContent.toLowerCase().indexOf(query) !== -1);
+            el.classList.toggle('filtered-out', !visible);
+            if (visible) shown++;
+        });
+        document.getElementById('problems-empty').hidden = shown > 0;
+    }
+    search.addEventListener('input', apply);
+    panel.querySelectorAll('.filter-chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            var pressed = chip.getAttribute('aria-pressed') !== 'true';
+            chip.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+            if (chip.dataset.filter === 'new') onlyNew = pressed;
+            else excluded[chip.dataset.filter][chip.dataset.value] = !pressed;
+            apply();
+        });
+    });
+})();
 """
 
 SQL_KEYWORDS = (
@@ -562,60 +761,131 @@ def capped_note(hidden: int, what: str) -> str:
     return f'<p class="muted" style="margin:6px 0 0;font-size:12px;">+ {hidden} more {what} not shown</p>' if hidden > 0 else ""
 
 
-def repeated_occurrences_html(occurrences: list) -> str:
-    ranked = sorted(occurrences, key=lambda o: o["executions"], reverse=True)
-    shown = ranked[:MAX_OCCURRENCES_SHOWN]
+TOP_PROBLEMS = 20
+FOOT_ITEMS_SHOWN = 3
+
+
+def html_more_list(items: list, shown: int, render) -> str:
+    """The first few items, the rest behind a '+ n more' toggle."""
+    rest = items[shown:]
+    more = f'<details class="more-list"><summary>+ {len(rest)} more</summary>{"".join(render(i) for i in rest)}</details>' if rest else ""
+    return "".join(render(i) for i in items[:shown]) + more
+
+
+def query_requests_html(q: dict) -> str:
+    """The individual requests a query repeated in, the most avoidable executions first."""
+    shown = q["requests"][:MAX_OCCURRENCES_SHOWN]
     rows = "".join(
         "<tr>"
-        f'<td class="num" data-sort="{o["executions"]}">{o["executions"]}×</td>'
-        f'<td class="num" data-sort="{o["distinct"]}">{o["distinct"]}</td>'
-        f'<td data-sort="{1 if o.get("phase") == "action" else 0}">{html_phase(o.get("phase"))}</td>'
-        f'<td>{html.escape(o["test"]) if o.get("test") else "<span class=muted>—</span>"}</td>'
-        "</tr>" for o in shown)
-    return ('<table class="nested-table sortable"><thead><tr><th data-type="number">Executions</th><th data-type="number">Distinct parameters</th>'
-            f'<th data-type="number">Phase</th><th data-type="string">Test</th></tr></thead><tbody>{rows}</tbody></table>'
-            f'{capped_note(len(ranked) - len(shown), "requests")}')
+        f'<td>{html.escape(r["endpoint"])}</td>'
+        f'<td class="num" data-sort="{r["executions"]}">{r["executions"]}×</td>'
+        f'<td class="num" data-sort="{r["distinct"]}">{r["distinct"]}</td>'
+        f'<td data-sort="{1 if r.get("phase") == "action" else 0}">{html_phase(r.get("phase"))}</td>'
+        f'<td>{html.escape(r["test"]) if r.get("test") else "<span class=muted>—</span>"}</td>'
+        "</tr>" for r in shown)
+    return ('<div class="table-scroll"><table class="nested-table sortable"><thead><tr><th data-type="string">Endpoint</th><th data-type="number">Executions</th>'
+            '<th data-type="number">Distinct parameters</th><th data-type="number">Phase</th><th data-type="string">Test</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table></div>{capped_note(len(q["requests"]) - len(shown), "requests")}')
 
 
-def build_repeated_queries_table_html(groups: list, static_findings: list, has_baseline: bool) -> str:
-    if not groups:
+def query_item_html(q: dict, problem: dict) -> str:
+    if problem["kind"] == "insert":
+        source = source_label(q)
+    elif problem["kind"] == "function":
+        source = q["repositoryMethod"] or ""
+    else:
+        source = ""
+    source_html = f'<div class="query-source">{html.escape(source)}</div>' if source else ""
+    return (f'<li class="query-item">{source_html}'
+            f'<details class="query-sql"><summary><code>{html.escape(q["summary"])}</code></summary><pre>{highlight_sql(q["sql"])}</pre>{query_requests_html(q)}</details>'
+            f'<span class="query-counts">{html.escape(query_counts_label(q))}</span>'
+            f'<span class="query-avoidable" title="executions one request could have saved">−{q["avoidable"]}</span></li>')
+
+
+def problem_tags_html(p: dict, static_findings: list, has_baseline: bool) -> str:
+    tags = [f'<span class="badge badge-{p["category"]}">{CATEGORY_LABELS[p["category"]]}</span>']
+    if has_baseline and p["is_new"]:
+        tags.append('<span class="badge badge-new">new</span>')
+    tags += [html_phase(phase) for phase in p["phases"]]
+    if p["static_matches"]:
+        labels = "; ".join(STATIC_RULE_LABELS.get(static_findings[i]["type"], static_findings[i]["type"]) for i in p["static_matches"])
+        indices = ",".join(str(i) for i in p["static_matches"])
+        tags.append(f'<button type="button" class="static-badge" title="{html.escape(labels)}" data-finding-indices="{indices}">🔍 static rule agrees</button>')
+    return "".join(tags)
+
+
+def problem_attributes(p: dict) -> str:
+    return (f'data-category="{p["category"]}" data-phases="{" ".join(p["phases"])}" data-methods="{html.escape(" ".join(p["methods"]))}" '
+            f'data-new="{"true" if p["is_new"] else "false"}"')
+
+
+def problem_card_html(p: dict, rank: int, static_findings: list, has_baseline: bool) -> str:
+    anchor_kind = {"function": "Method", "endpoint": "Endpoint", "insert": "Table"}[p["kind"]]
+    tests = f'{len(p["tests"])} test{"" if len(p["tests"]) == 1 else "s"}'
+    endpoints = f'Seen at {len(p["endpoints"])} endpoint{"" if len(p["endpoints"]) == 1 else "s"}'
+    return (f'<article class="problem problem-card cat-{p["category"]}" {problem_attributes(p)}>'
+            f'<div class="problem-head"><span class="problem-rank">#{rank}</span>'
+            f'<div class="problem-anchor"><span class="anchor-kind">{anchor_kind}</span><code>{html.escape(p["anchor"])}</code></div>'
+            f'<div class="problem-impact"><span class="impact-value">{p["avoidable"]}</span><span class="impact-label">avoidable executions<br>per request</span></div></div>'
+            f'<div class="problem-tags">{problem_tags_html(p, static_findings, has_baseline)}</div>'
+            f'<ul class="query-list">{html_more_list(p["queries"], 4, lambda q: query_item_html(q, p))}</ul>'
+            f'<div class="problem-foot"><div><span class="foot-label">{endpoints}</span><div class="foot-list">'
+            f'{html_more_list(p["endpoints"], FOOT_ITEMS_SHOWN, lambda e: f"<code>{html.escape(e)}</code>")}</div></div>'
+            f'<div><span class="foot-label">{tests}</span><div class="foot-list">'
+            f'{html_more_list(p["tests"], FOOT_ITEMS_SHOWN - 1, lambda t: f"<span>{html.escape(t)}</span>")}</div></div></div>'
+            '</article>')
+
+
+def problem_row_html(p: dict, rank: int, static_findings: list, has_baseline: bool) -> str:
+    count = len(p["queries"])
+    if p["kind"] == "insert":
+        what = f'{count} caller{"" if count == 1 else "s"}'
+    else:
+        what = f'{count} quer{"y" if count == 1 else "ies"}'
+    return (f'<tr class="problem" {problem_attributes(p)}>'
+            f'<td class="num muted">#{rank}</td>'
+            f'<td class="num"><strong>{p["avoidable"]}</strong></td>'
+            f'<td>{problem_tags_html(p, static_findings, has_baseline)}</td>'
+            f'<td class="where-cell"><details><summary><code>{html.escape(p["anchor"])}</code> '
+            f'<span class="muted">· {what} · {len(p["endpoints"])} endpoint{"" if len(p["endpoints"]) == 1 else "s"}</span></summary>'
+            f'<ul class="query-list">{"".join(query_item_html(q, p) for q in p["queries"])}</ul>'
+            f'<div class="foot-list">{"".join(f"<code>{html.escape(e)}</code>" for e in p["endpoints"])}</div></details></td>'
+            f'<td class="num">{len(p["tests"])}</td></tr>')
+
+
+def problem_table_html(problems: list, first_rank: int, static_findings: list, has_baseline: bool) -> str:
+    rows = "".join(problem_row_html(p, first_rank + i, static_findings, has_baseline) for i, p in enumerate(problems))
+    return ('<div class="table-scroll"><table class="problem-table"><thead><tr><th>#</th><th title="executions one request could have saved">Avoidable</th>'
+            f'<th>Shape</th><th>Where to fix</th><th>Tests</th></tr></thead><tbody>{rows}</tbody></table></div>')
+
+
+def build_problems_html(problems: list, static_findings: list, has_baseline: bool) -> str:
+    if not problems:
         return '<p class="ok">✅ No query ran more than once within a request.</p>'
-    rows = []
-    for idx, g in enumerate(rank_repeated(groups)):
-        detail_id = f"repeated-query-detail-{idx}"
-        severity = "sev-high" if g["static_matches"] else ("sev-medium" if g["type"] == "N_PLUS_ONE" else "sev-low")
-        confirmation = ""
-        if g["static_matches"]:
-            labels = "; ".join(STATIC_RULE_LABELS.get(static_findings[i]["type"], static_findings[i]["type"]) for i in g["static_matches"])
-            indices = ",".join(str(i) for i in g["static_matches"])
-            confirmation = f'<br><button type="button" class="static-badge" title="{html.escape(labels)}" data-finding-indices="{indices}">🔍 static rule agrees</button>'
-        rows.append(
-            f'<tr class="{severity} group-row" data-detail-target="{detail_id}">'
-            '<td class="expand-cell"><span class="expand-arrow">&#9654;</span></td>'
-            f"{html_status(g, has_baseline)}"
-            f"<td>{SHAPE_LABELS.get(g['type'], html.escape(g['type'] or '?'))}{confirmation}</td>"
-            f"<td>{html_endpoint(g['method'], g['endpoint'])}</td>"
-            f'<td class="code">{html.escape(source_label(g))}</td>'
-            f'<td class="sql-cell">{html_sql_cell(g["sql"])}</td>'
-            f'<td class="num" data-sort="{g["max_executions"]}">{g["max_executions"]}×</td>'
-            f'<td class="num" data-sort="{g["requests"]}">{g["requests"]}</td>'
-            f'<td class="num" data-sort="{len(g["tests"])}">{len(g["tests"])}</td>'
-            "</tr>"
-            f'<tr class="detail-row" id="{detail_id}" hidden><td></td><td colspan="8">{repeated_occurrences_html(g["occurrences"])}</td></tr>'
-        )
-    return (
-        '<input class="filter-box" type="search" placeholder="Filter by endpoint, method, test, new, N+1, …" data-target="repeated-queries-table">\n'
-        '<div class="table-scroll"><table class="grouped-table" id="repeated-queries-table">\n<thead><tr><th></th>'
-        '<th data-type="number" data-col="status">Status</th>'
-        '<th data-type="string" data-col="shape">Shape</th>'
-        '<th data-type="string" data-col="endpoint">Endpoint</th>'
-        '<th data-type="string" data-col="source">Issued by (repository ← caller)</th>'
-        '<th>Query</th>'
-        '<th data-type="number" data-col="repeats" title="Most executions of this query within one request">Max repeats</th>'
-        '<th data-type="number" data-col="requests">Requests</th>'
-        '<th data-type="number" data-col="tests">Tests</th>'
-        f"</tr></thead>\n<tbody>{''.join(rows)}</tbody>\n</table></div>"
-    )
+    ordered = loops_before_inserts(problems)
+    loops = [p for p in ordered if p["category"] != "insert"]
+    inserts = ordered[len(loops):]
+    top, rest = loops[:TOP_PROBLEMS], loops[TOP_PROBLEMS:]
+    chips = "".join(f'<button type="button" class="filter-chip" data-filter="category" data-value="{c}" aria-pressed="true">{label}</button>'
+                    for c, label in CATEGORY_LABELS.items())
+    chips += ('<button type="button" class="filter-chip" data-filter="phase" data-value="action" aria-pressed="true">action</button>'
+              '<button type="button" class="filter-chip" data-filter="phase" data-value="setup" aria-pressed="true">setup</button>'
+              '<button type="button" class="filter-chip" data-filter="method" data-value="DELETE" aria-pressed="true" title="problems seen only at DELETE endpoints">DELETE</button>')
+    if has_baseline:
+        chips += '<button type="button" class="filter-chip only-chip" data-filter="new" aria-pressed="false">only new</button>'
+    parts = [f'<div class="problem-controls"><input class="filter-box problem-search" type="search" placeholder="Filter by method, endpoint, test, table, SQL…">{chips}</div>']
+    if top:
+        parts.append(f'<h2>Top {len(top)} problems</h2><p class="muted section-note">Ranked by the biggest repeat: the executions one fix would save in a single request.</p>'
+                     f'<div class="problem-cards">{"".join(problem_card_html(p, i + 1, static_findings, has_baseline) for i, p in enumerate(top))}</div>')
+    if rest:
+        parts.append(f'<h2>All other problems <span class="muted">({len(rest)})</span></h2>{problem_table_html(rest, len(top) + 1, static_findings, has_baseline)}')
+    if inserts:
+        parts.append(f'<h2>Row-by-row inserts <span class="muted">({len(inserts)})</span></h2>'
+                     '<p class="muted section-note">Rows inserted one statement at a time: either <code>save()</code> in a loop, or one <code>save()</code>/<code>saveAll()</code> '
+                     'that Hibernate cannot batch because the database generates the ids. The SQL does not tell the two apart, so these are listed apart from the loops.</p>'
+                     f'{problem_table_html(inserts, 1, static_findings, has_baseline)}')
+    parts.append('<p id="problems-empty" class="muted" hidden>No problem matches the filters.</p>')
+    return "\n".join(parts)
 
 
 def slow_query_occurrences_html(occurrences: list) -> str:
@@ -692,14 +962,17 @@ def build_html_report(report: dict, groups: list, static_findings: list, baselin
     threshold_ms = report.get("thresholdMs", "?")
     slow_queries = report.get("slowQueries", [])
     slow_count = len(compute_slow_query_groups(slow_queries))
-    n_plus_one = sum(1 for g in groups if g["type"] == "N_PLUS_ONE")
-    duplicates = sum(1 for g in groups if g["type"] == "DUPLICATE")
-    confirmed = sum(1 for g in groups if g["static_matches"])
+    problems = build_problems(groups)
+    n_plus_one = sum(1 for p in problems if p["category"] == "n_plus_one")
+    duplicates = sum(1 for p in problems if p["category"] in ("duplicate_one_place", "duplicate_several_places"))
+    inserts = sum(1 for p in problems if p["category"] == "insert")
+    confirmed = sum(1 for p in problems if p["static_matches"])
     run_link = f'<p><a href="{html.escape(run_url)}">View CI run</a></p>' if run_url else ""
     if has_baseline:
-        new_count = sum(1 for g in groups if g.get("is_new")) + sum(1 for f in static_findings if f.get("is_new"))
+        new_count = sum(1 for p in problems if p["is_new"]) + sum(1 for f in static_findings if f.get("is_new"))
         comparison = (f"Compared against the latest develop run ({html.escape(iso_to_human(baseline.get('generatedAt', '?')))}): "
-                      f"<strong>{new_count} finding{'' if new_count == 1 else 's'} are new</strong>. Type <code>new</code> into a filter box to show only those.")
+                      f"<strong>{new_count} finding{'' if new_count == 1 else 's'} are new</strong>. Use <em>only new</em> above the repeated queries, "
+                      "or type <code>new</code> into a filter box, to show only those.")
     else:
         comparison = "No develop baseline was available, so findings are not classified as new or existing."
 
@@ -717,25 +990,26 @@ def build_html_report(report: dict, groups: list, static_findings: list, baselin
 <p class="muted">Generated at {html.escape(iso_to_human(report.get("generatedAt", "")))}</p>
 {run_link}
 <p class="lead">Every finding is a yes/no rule without a count threshold. <strong>Repeated queries</strong> were observed while the E2E tests ran: a query that ran
-more than once in one request, either with different parameters (<strong>N+1</strong>) or with the same ones (<strong>duplicate</strong>), together with the repository
-method that issued it and its caller. <strong>Static findings</strong> come from scanning the source code. A repeated query marked 🔍 is flagged by a static rule
+more than once in one request, either with different parameters (<strong>N+1</strong>) or with the same ones (<strong>duplicate</strong>), or rows inserted one
+statement at a time (<strong>row-by-row insert</strong>). They are grouped by where the fix goes: the method that loops, the endpoint for data that several places
+load again, or the table for inserts. <strong>Static findings</strong> come from scanning the source code. A problem marked 🔍 is flagged by a static rule
 for the very same code. <strong>Slow queries</strong> are shown for context only: query timing in CI is too noisy to judge a change by. {comparison}</p>
 <div class="stats">
-<div class="stat-tile"><span class="stat-value">{n_plus_one}</span><span class="stat-label">N+1</span><span class="stat-sub">same query, different parameters</span></div>
-<div class="stat-tile"><span class="stat-value">{duplicates}</span><span class="stat-label">Duplicate</span><span class="stat-sub">same query, same parameters</span></div>
+<div class="stat-tile"><span class="stat-value">{n_plus_one}</span><span class="stat-label">N+1</span><span class="stat-sub">a method queries once per item</span></div>
+<div class="stat-tile"><span class="stat-value">{duplicates}</span><span class="stat-label">Duplicate</span><span class="stat-sub">the same data loaded again</span></div>
+<div class="stat-tile"><span class="stat-value">{inserts}</span><span class="stat-label">Row-by-row insert</span><span class="stat-sub">one statement per row</span></div>
 <div class="stat-tile"><span class="stat-value">{confirmed}</span><span class="stat-label">Confirmed statically</span><span class="stat-sub">a static rule flags the same code</span></div>
 <div class="stat-tile"><span class="stat-value">{len(static_findings)}</span><span class="stat-label">Static findings</span><span class="stat-sub">from the source scan</span></div>
 </div>
 
 <div class="tabs" role="tablist">
-<button class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="panel-repeated-queries">🔁 Repeated Queries <span class="tab-count">{len(groups)}</span></button>
+<button class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="panel-repeated-queries">🔁 Repeated Queries <span class="tab-count">{len(problems)}</span></button>
 <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-static-findings">🔍 Static Findings <span class="tab-count">{len(static_findings)}</span></button>
 <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-slow-queries">🐢 Slow Queries <span class="tab-count">{slow_count}</span></button>
 </div>
 
 <section class="tab-panel" id="panel-repeated-queries" role="tabpanel">
-<p class="muted">One row per query shape at an endpoint, issued by the same code. Click a row for the individual requests (and tests) it was seen in.</p>
-{build_repeated_queries_table_html(groups, static_findings, has_baseline)}
+{build_problems_html(problems, static_findings, has_baseline)}
 </section>
 <section class="tab-panel" id="panel-static-findings" role="tabpanel" hidden>
 {build_static_findings_table_html(static_findings, has_baseline)}

@@ -89,14 +89,76 @@ class BaselineTest(unittest.TestCase):
         self.assertTrue(report.static_key(finding).startswith("wide_join_fetch:ExamRepository.java:"))
 
 
+def problems_of(*findings, static_findings=()):
+    groups = report.group_repeated_queries(list(findings))
+    report.link_static_confirmations(groups, list(static_findings))
+    return report.build_problems(groups)
+
+
+class ProblemTest(unittest.TestCase):
+
+    def test_queries_of_one_caller_form_one_problem_at_the_caller(self):
+        problems = problems_of(repeated(), repeated(repositoryMethod="SubmissionRepository.findByParticipationId", normalizedSql="select * from submission where participation_id=?"))
+        self.assertEqual(len(problems), 1)
+        self.assertEqual((problems[0]["kind"], problems[0]["anchor"], problems[0]["category"]), ("function", "ResultService.loadAll", "n_plus_one"))
+        self.assertEqual(len(problems[0]["queries"]), 2)
+
+    def test_duplicate_of_an_n_plus_one_at_the_same_place_is_folded_into_it(self):
+        problems = problems_of(repeated(executions=10, distinctParameterSets=5), repeated(type="DUPLICATE", executions=10, distinctParameterSets=5))
+        self.assertEqual(len(problems), 1)
+        self.assertEqual([q["shape"] for q in problems[0]["queries"]], ["N_PLUS_ONE"])
+
+    def test_duplicate_without_an_issuing_place_is_a_problem_of_its_endpoint(self):
+        problems = problems_of(repeated(type="DUPLICATE", repositoryMethod=None, callerMethod=None))
+        self.assertEqual((problems[0]["kind"], problems[0]["category"]), ("endpoint", "duplicate_several_places"))
+        self.assertEqual(problems[0]["anchor"], "GET /api/assessment/exercises/{exerciseId}/results")
+
+    def test_inserts_are_grouped_by_table(self):
+        insert = "insert into plagiarism_submission_element (column,file,line) values (?,?,?)"
+        problems = problems_of(repeated(normalizedSql=insert, repositoryMethod="PlagiarismResultRepository.save", callerMethod="PlagiarismService.run"),
+                               repeated(normalizedSql=insert, repositoryMethod="PlagiarismResultRepository.save", callerMethod="OtherService.run"))
+        self.assertEqual(len(problems), 1)
+        self.assertEqual((problems[0]["category"], problems[0]["anchor"], len(problems[0]["queries"])), ("insert", "plagiarism_submission_element", 2))
+
+    def test_avoidable_executions_rank_by_the_biggest_single_repeat(self):
+        cascade = [repeated(callerMethod="DeletionService.delete", normalizedSql=f"delete from t{i} where id=?", executions=6) for i in range(5)]
+        loop = repeated(executions=12)
+        problems = problems_of(*cascade, loop)
+        self.assertEqual([(p["anchor"], p["avoidable"]) for p in problems], [("ResultService.loadAll", 11), ("DeletionService.delete", 5)])
+
+    def test_a_duplicate_can_save_all_but_one_execution_per_distinct_parameter_set(self):
+        self.assertEqual(report.avoidable_executions("DUPLICATE", 100, 2), 98)
+        self.assertEqual(report.avoidable_executions("N_PLUS_ONE", 100, 2), 99)
+
+    def test_a_problem_is_new_when_any_of_its_queries_is(self):
+        old, new = repeated(), repeated(repositoryMethod="SubmissionRepository.findAll")
+        groups = report.group_repeated_queries([old, new])
+        report.link_static_confirmations(groups, [])
+        report.mark_new(groups, [], report.collect_keys(report.group_repeated_queries([old]), []))
+        self.assertTrue(report.build_problems(groups)[0]["is_new"])
+
+    def test_sql_summary_names_table_joins_and_condition(self):
+        sql = "select u1_0.id,a1_0.name from jhi_user u1_0 left join jhi_user_authority a1_0 on u1_0.id=a1_0.user_id where u1_0.id= ?"
+        self.assertEqual(report.summarize_sql(sql), "select from jhi_user (+1 join) where id = ?")
+        self.assertEqual(report.summarize_sql("insert into result (id,score) values (?,?)"), "insert into result")
+
+
 class HtmlTest(unittest.TestCase):
 
     def test_html_report_renders_every_section(self):
-        groups = report.group_repeated_queries([repeated()])
+        groups = report.group_repeated_queries([repeated(), repeated(normalizedSql="insert into result (id) values (?)")])
         report.link_static_confirmations(groups, [LOOP_FINDING])
         page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, [LOOP_FINDING], None)
-        for fragment in ('id="repeated-queries-table"', 'id="static-findings-table"', 'data-finding-indices="0"', "static rule agrees"):
+        for fragment in ('class="problem problem-card cat-n_plus_one"', "Row-by-row inserts", 'id="static-findings-table"', 'data-finding-indices="0"', "static rule agrees"):
             self.assertIn(fragment, page)
+
+    def test_only_problems_beyond_the_top_ones_are_rows(self):
+        findings = [repeated(callerMethod=f"Service{i}.run", executions=50 - i) for i in range(report.TOP_PROBLEMS + 3)]
+        groups = report.group_repeated_queries(findings)
+        report.link_static_confirmations(groups, [])
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, [], None)
+        self.assertEqual(page.count('<article class="problem '), report.TOP_PROBLEMS)
+        self.assertEqual(page.count('<tr class="problem"'), 3)
 
 
 if __name__ == "__main__":
