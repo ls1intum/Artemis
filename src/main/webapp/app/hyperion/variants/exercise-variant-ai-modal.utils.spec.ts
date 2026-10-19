@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -79,6 +80,18 @@ describe('variantGenerationBlocker', () => {
             projectType: ProjectType.PLAIN_GRADLE,
         });
     const key = (reason: string) => 'artemisApp.hyperion.generation.blocker.' + reason;
+
+    it.each([
+        ['generationHarnessUnsupported', 'harnessUnsupported'],
+        ['generationHarnessUnavailable', 'harnessUnavailable'],
+    ])('explains the server harness restriction %s without proposing lifecycle changes', (restriction, reason) => {
+        expect(variantGenerationBlocker(source(), { supported: false, canCreateVariant: false, canAdapt: false, restriction })).toBe(key(reason));
+    });
+
+    it('allows a released source with a supported harness when only adaptation is restricted', () => {
+        const released = Object.assign(source(), { releaseDate: dayjs('2020-01-01T00:00:00Z'), numberOfParticipations: 3 });
+        expect(variantGenerationBlocker(released, { supported: true, canCreateVariant: true, canAdapt: false, restriction: 'exerciseAlreadyReleased' })).toBeUndefined();
+    });
 
     it('fails closed for missing capability evidence and reports loading separately', () => {
         expect(variantGenerationBlocker(source(), undefined)).toBe(key('capabilitiesUnavailable'));

@@ -92,6 +92,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.Ge
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationRestoreTestCasesService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationSeedService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -927,7 +928,10 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     private HyperionExerciseGenerationResource createResource(HyperionEffortProfileService profiles, ExerciseGenerationRevertService revertService) {
-        var capabilities = new GenerationCapabilityService(agentSystemPromptService, auxiliaryRepositoryRepository, jobService, sandboxClient);
+        var seeds = mock(GenerationSeedService.class);
+        when(seeds.readTestHarness(any())).thenReturn(Map.of("build.gradle", "testImplementation 'de.tum.cit.ase:ares:2.2.1'\napply from: 'gradle/AresReservedPackages.gradle'",
+                "gradle/AresReservedPackages.gradle", "de/tum/cit/ase/ares/** org/junit/**", "SecurityPolicy.yaml", "trustedPackages: []"));
+        var capabilities = new GenerationCapabilityService(agentSystemPromptService, auxiliaryRepositoryRepository, jobService, sandboxClient, seeds);
         var admission = new GenerationAdmissionService(programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, reviewCommentContextRenderer,
                 sandboxClient, generationBudgetService, generationCapacityHealthIndicator, profiles);
         return new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, admission, revertService,

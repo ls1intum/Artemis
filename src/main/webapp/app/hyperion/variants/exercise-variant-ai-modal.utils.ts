@@ -1,4 +1,4 @@
-import { hasSupportedProgrammingConfiguration } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
+import { generationCapabilityBlocker, hasSupportedProgrammingConfiguration } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { ExerciseGenerationCapabilities } from 'app/openapi/model/exercise-generation-capabilities';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
@@ -40,7 +40,14 @@ export function variantGenerationBlocker(exercise: Exercise | undefined, capabil
     if (programming.auxiliaryRepositories?.length) return prefix + 'auxiliaryRepositories';
     if (loading) return prefix + 'capabilitiesLoading';
     if (!capabilities) return prefix + 'capabilitiesUnavailable';
-    return capabilities.canCreateVariant ? undefined : prefix + 'variantUnavailable';
+    if (capabilities.canCreateVariant) return undefined;
+    switch (capabilities.restriction) {
+        case 'generationHarnessUnsupported':
+        case 'generationHarnessUnavailable':
+            return generationCapabilityBlocker(capabilities) ?? prefix + 'variantUnavailable';
+        default:
+            return prefix + 'variantUnavailable';
+    }
 }
 
 /**

@@ -298,6 +298,8 @@
                     "variantUnavailable": "A variant cannot be created from this exercise. Check the exercise settings and try again.",
                     "saveBeforeVariant": "Save your changes before creating a variant. The variant uses the saved exercise.",
                     "capabilitiesUnavailable": "Checking whether this exercise can be changed. If this persists, reload the page.",
+                    "harnessUnsupported": "This exercise does not use the current Ares 2 Gradle test harness. Migrate and review its test harness manually before using AI authoring. Artemis does not automatically change the exercise security policy.",
+                    "harnessUnavailable": "Artemis could not read the test harness. Check repository read access and try again. This error does not require a harness migration.",
                     "preparationOnly": "AI authoring is available only during preparation, before student exams or test runs are assigned."
                 }
             },

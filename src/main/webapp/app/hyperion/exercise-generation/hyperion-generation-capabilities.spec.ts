@@ -64,6 +64,13 @@ describe('Shared programming authoring capabilities', () => {
         expect(generationCapabilityBlocker(capabilities.value())).toMatch(/preparationOnly$/);
     });
 
+    it.each([
+        ['generationHarnessUnsupported', 'harnessUnsupported'],
+        ['generationHarnessUnavailable', 'harnessUnavailable'],
+    ])('explains the server harness restriction %s', (restriction, reason) => {
+        expect(generationCapabilityBlocker({ supported: false, canAdapt: false, restriction })).toBe('artemisApp.hyperion.generation.blocker.' + reason);
+    });
+
     it('fails closed on a denied or unavailable capability response', () => {
         describe.mockReturnValue(throwError(() => new Error('forbidden')));
         const capabilities = TestBed.runInInjectionContext(() => injectGenerationCapabilities(exercise, authorized));

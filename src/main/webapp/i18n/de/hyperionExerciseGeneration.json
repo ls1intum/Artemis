@@ -298,6 +298,8 @@
                     "variantUnavailable": "Aus dieser Aufgabe kann keine Variante erstellt werden. Prüfe die Aufgabeneinstellungen und versuche es erneut.",
                     "saveBeforeVariant": "Speichere deine Änderungen, bevor du eine Variante erstellst. Die Variante verwendet die gespeicherte Aufgabe.",
                     "capabilitiesUnavailable": "Es wird geprüft, ob diese Aufgabe geändert werden kann. Lade die Seite neu, falls dies anhält.",
+                    "harnessUnsupported": "Diese Aufgabe verwendet nicht das aktuelle Ares-2-Gradle-Testgerüst. Migriere und prüfe das Testgerüst manuell, bevor du die KI-Erstellung verwendest. Artemis ändert die Sicherheitsrichtlinie der Aufgabe nicht automatisch.",
+                    "harnessUnavailable": "Artemis konnte das Testgerüst nicht lesen. Prüfe den Lesezugriff auf das Repository und versuche es erneut. Dieser Fehler erfordert keine Migration des Testgerüsts.",
                     "preparationOnly": "KI-Aufgabenerstellung ist nur während der Vorbereitung verfügbar, bevor Prüfungen oder Testläufe zugewiesen werden."
                 }
             },

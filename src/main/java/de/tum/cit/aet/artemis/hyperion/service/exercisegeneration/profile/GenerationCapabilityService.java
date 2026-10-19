@@ -6,9 +6,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationCapabilitiesDTO;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationSeedService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -29,12 +32,15 @@ public class GenerationCapabilityService {
 
     private final GenerationWorkerRegistryService workers;
 
+    private final GenerationSeedService seeds;
+
     public GenerationCapabilityService(GenerationRequestService requestService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GenerationJobService jobs,
-            GenerationWorkerRegistryService workers) {
+            GenerationWorkerRegistryService workers, GenerationSeedService seeds) {
         this.requestService = requestService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.jobs = jobs;
         this.workers = workers;
+        this.seeds = seeds;
     }
 
     /**
@@ -44,8 +50,10 @@ public class GenerationCapabilityService {
      * @return capability snapshot; admission rechecks the same policy
      */
     public ExerciseGenerationCapabilitiesDTO describe(ProgrammingExercise exercise) {
-        boolean supported = supportsConfiguration(exercise);
-        String restriction = supported ? mutationRestriction(exercise) : "unsupportedGenerationLanguage";
+        boolean configurationSupported = supportsConfiguration(exercise);
+        String harnessRestriction = configurationSupported ? harnessRestriction(exercise) : null;
+        boolean supported = configurationSupported && harnessRestriction == null;
+        String restriction = !configurationSupported ? "unsupportedGenerationLanguage" : harnessRestriction != null ? harnessRestriction : mutationRestriction(exercise);
         boolean mutable = supported && restriction == null;
         boolean variant = supported;
         return new ExerciseGenerationCapabilitiesDTO(supported, mutable, mutable, variant, jobs.hasActiveJob(exercise.getId()),
@@ -69,6 +77,15 @@ public class GenerationCapabilityService {
             throw new BadRequestAlertException("Whole-exercise generation is not available for exercises with auxiliary repositories: the verifier only models the solution, "
                     + "template, and tests repositories.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
+        String harnessRestriction = harnessRestriction(exercise);
+        if ("generationHarnessUnavailable".equals(harnessRestriction)) {
+            throw new ServiceUnavailableAlertException("The tests repository harness could not be read. Please try again after repository access is restored.", ENTITY_NAME,
+                    "generationHarnessUnavailable");
+        }
+        if (harnessRestriction != null) {
+            throw new BadRequestAlertException("Exercise generation requires an Ares 2 Gradle test harness. Migrate the exercise harness manually before starting generation; "
+                    + "Hyperion does not change build dependencies or security settings automatically.", ENTITY_NAME, "generationHarnessUnsupported");
+        }
     }
 
     /**
@@ -90,6 +107,16 @@ public class GenerationCapabilityService {
 
     private boolean supportsConfiguration(ProgrammingExercise exercise) {
         return !exercise.isExamExercise() && requestService.isGenerationSupported(exercise) && auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()).isEmpty();
+    }
+
+    @Nullable
+    private String harnessRestriction(ProgrammingExercise exercise) {
+        try {
+            return AresTestHarness.reasons(seeds.readTestHarness(exercise)).isEmpty() ? null : "generationHarnessUnsupported";
+        }
+        catch (RuntimeException failure) {
+            return "generationHarnessUnavailable";
+        }
     }
 
     /**

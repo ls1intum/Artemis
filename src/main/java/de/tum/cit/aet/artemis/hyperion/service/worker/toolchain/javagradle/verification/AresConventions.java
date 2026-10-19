@@ -6,13 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
 
 /** Checks the current Ares harness and trusted annotations for Java generation. */
 final class AresConventions {
-
-    private static final Pattern ARES_2_DEPENDENCY = Pattern.compile("(?m)^\\s*testImplementation\\s+['\"]de\\.tum\\.cit\\.ase:ares:");
 
     private AresConventions() {
     }
@@ -23,28 +22,6 @@ final class AresConventions {
 
     private static String sampleNames(Set<String> names) {
         return names.stream().sorted().limit(5).collect(Collectors.joining(", "));
-    }
-
-    static List<String> harnessReasons(Map<String, String> testsFiles) {
-        String gradle = testsFiles == null ? null : testsFiles.get("build.gradle");
-        if (gradle == null) {
-            return List.of("Java tests must keep the seeded Gradle harness file containing the Ares 2 dependency and trusted-package protections.");
-        }
-        String gradleWithoutComments = JavaSourceInspector.stripJavaComments(gradle);
-        List<String> reasons = new ArrayList<>();
-        if (!ARES_2_DEPENDENCY.matcher(gradleWithoutComments).find() || gradleWithoutComments.contains("de.tum.in.ase:artemis-java-test-sandbox:")) {
-            reasons.add("Java generation requires the current Ares 2 dependency (de.tum.cit.ase:ares) in tests/build.gradle; legacy Ares 1 harnesses are not supported.");
-        }
-        String reserved = testsFiles.getOrDefault("gradle/AresReservedPackages.gradle", "");
-        if (!gradleWithoutComments.contains("apply from: 'gradle/AresReservedPackages.gradle'") || !reserved.contains("de/tum/cit/ase/ares/**")
-                || !reserved.contains("org/junit/**")) {
-            reasons.add("Java Ares 2 tests must keep the seeded AresReservedPackages.gradle guard and apply it from build.gradle.");
-        }
-        String policy = testsFiles.get(AresSecurityPolicy.PATH);
-        if (policy == null || policy.isBlank()) {
-            reasons.add("Ares 2 tests must keep the explicit SecurityPolicy.yaml; the default policy must not derive exemptions from student code.");
-        }
-        return reasons;
     }
 
     static List<String> reasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean preserveUnchangedTests) {
@@ -60,7 +37,7 @@ final class AresConventions {
             reasons.add("Java tests repository must not contain generated build output such as target/ or build/ files; remove "
                     + sampleNames(new LinkedHashSet<>(generatedBuildOutput)) + ".");
         }
-        reasons.addAll(harnessReasons(producedTestsFiles));
+        reasons.addAll(AresTestHarness.reasons(producedTestsFiles));
         if (producedTestsFiles.containsKey(AresSecurityPolicy.PATH)) {
             reasons.addAll(AresSecurityPolicy.reasons(seed, producedTestsFiles));
         }

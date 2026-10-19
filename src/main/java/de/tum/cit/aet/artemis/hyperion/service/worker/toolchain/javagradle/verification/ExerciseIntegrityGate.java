@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 
@@ -589,7 +590,7 @@ public final class ExerciseIntegrityGate {
      * @return unsupported or missing Ares 2 harness components
      */
     public static List<String> javaAresHarnessReasons(Map<String, String> testsFiles) {
-        return AresConventions.harnessReasons(testsFiles);
+        return AresTestHarness.reasons(testsFiles);
     }
 
     /**

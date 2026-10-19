@@ -47,6 +47,10 @@ export function generationCapabilityBlocker(capabilities: ExerciseGenerationCapa
     if (!capabilities) return prefix + 'capabilitiesUnavailable';
     if (capabilities.canAdapt) return undefined;
     switch (capabilities.restriction) {
+        case 'generationHarnessUnsupported':
+            return prefix + 'harnessUnsupported';
+        case 'generationHarnessUnavailable':
+            return prefix + 'harnessUnavailable';
         case 'exerciseAlreadyReleased':
             return prefix + 'released';
         case 'exerciseHasParticipations':
