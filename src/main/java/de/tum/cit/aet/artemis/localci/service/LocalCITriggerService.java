@@ -284,6 +284,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         BuildPlanPhasesDTO buildPlanPhases = parseBuildPlan(programmingExerciseBuildConfig);
         List<BuildContainerDTO> containers = buildPlanPhases.effectiveContainers();
+        // Running the containers of a plan as independent jobs is the orchestration that follows in a separate change;
+        // until then a plan with several containers is refused instead of silently building its first container only.
+        if (containers.size() > 1) {
+            throw new LocalCIException("The build plan of exercise " + programmingExercise.getId() + " defines " + containers.size()
+                    + " build containers, but executing more than one container is not supported yet");
+        }
         // a build plan without any phase falls back to the default phases and image of the exercise
         BuildContainerDTO container = containers.isEmpty() ? null : containers.getFirst();
 

@@ -103,7 +103,7 @@ class BuildPlanPhasesDTOTest {
     void testKeepsScopedRepositoriesOfContainers() throws Exception {
         var studentTests = new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(new BuildContainerRepositoryDTO(RepositoryType.USER)), List.of(phase("test")));
         var instructorTests = new BuildContainerDTO("instructor_tests", DOCKER_IMAGE, List.of(new BuildContainerRepositoryDTO(RepositoryType.USER),
-                new BuildContainerRepositoryDTO(RepositoryType.TESTS), new BuildContainerRepositoryDTO(RepositoryType.AUXILIARY, "grading-utils")), List.of(phase("test")));
+                new BuildContainerRepositoryDTO(RepositoryType.TESTS), new BuildContainerRepositoryDTO(RepositoryType.AUXILIARY)), List.of(phase("test")));
         var json = new BuildPlanPhasesDTO(null, null, List.of(studentTests, instructorTests)).toBuildPlanConfiguration();
 
         var containers = BuildPlanPhasesDTO.fromBuildPlanConfiguration(json).effectiveContainers();
@@ -112,7 +112,14 @@ class BuildPlanPhasesDTOTest {
         assertThat(containers.getFirst().repositories()).extracting(BuildContainerRepositoryDTO::type).containsExactly(RepositoryType.USER);
         assertThat(containers.getLast().repositories()).extracting(BuildContainerRepositoryDTO::type).containsExactly(RepositoryType.USER, RepositoryType.TESTS,
                 RepositoryType.AUXILIARY);
-        assertThat(containers.getLast().repositories()).extracting(BuildContainerRepositoryDTO::name).containsExactly(null, null, "grading-utils");
+    }
+
+    @Test
+    void testRejectsARepositorySelectionByName() {
+        // repositories are selected by type only; a selection that names one auxiliary repository is not a supported format
+        var json = "{\"containers\":[{\"name\":\"tests\",\"repositories\":[{\"type\":\"AUXILIARY\",\"name\":\"grading-utils\"}],\"phases\":[{\"name\":\"test\",\"script\":\"echo\"}]}]}";
+
+        assertThatThrownBy(() -> BuildPlanPhasesDTO.fromBuildPlanConfiguration(json)).isInstanceOf(JacksonException.class);
     }
 
     @Test

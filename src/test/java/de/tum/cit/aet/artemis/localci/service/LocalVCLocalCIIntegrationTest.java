@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueu
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localvc.service.AuthenticationContext;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
@@ -552,6 +553,23 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(buildJobQueueItem).isNotNull();
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().network()).isEqualTo("none");
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAPlanWithSeveralContainersIsRefusedUntilTheyCanRunAsSeparateJobs() {
+            // a plan with two containers must not silently build its first container only
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+            BuildPhaseDTO phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of());
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null,
+                    List.of(new BuildContainerDTO("instructor_tests", null, List.of(phase)), new BuildContainerDTO("student_tests", null, List.of(phase))))
+                    .toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(LocalCIException.class)
+                    .hasMessageContaining("more than one container is not supported yet");
+            assertThat(queuedJobs.getAll()).noneMatch(job -> job.participationId() == studentParticipation.getId());
         }
 
         @Test
