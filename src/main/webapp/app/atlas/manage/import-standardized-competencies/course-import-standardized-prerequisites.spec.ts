@@ -102,6 +102,7 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
         const getSourcesSpy = vi.spyOn(standardizedCompetencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: sources })));
 
         componentFixture.detectChanges();
+        expect(componentFixture.nativeElement.querySelector('h2').textContent).toBe('artemisApp.standardizedCompetency.courseImport.prerequisiteTitle');
 
         expect(getForTreeViewSpy).toHaveBeenCalled();
         expect(getSourcesSpy).toHaveBeenCalled();

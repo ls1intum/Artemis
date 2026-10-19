@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexRebuildService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
@@ -95,6 +96,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
     @Autowired
     private WeaviateService weaviateService;
+
+    @Autowired
+    private WeaviateOutboxRepository weaviateOutboxRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -1213,6 +1217,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testChannelRowWithoutTheVisibilityDateIsHiddenAndRewrittenAtStartup() throws Exception {
             Channel channel = indexChannelOfExercise(ZonedDateTime.now().minusDays(1), "old-format-channel");
+            // Creation and the explicit test upsert both queue writes. Finish them before replacing the row with the old format.
+            awaitIndexing(() -> assertThat(weaviateOutboxRepository.existsByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId())).isFalse());
             Map<String, Object> oldFormat = new HashMap<>(queryChannelProperties(weaviateService, channel.getId()));
             oldFormat.remove(SearchableEntitySchema.Properties.RELEASE_DATE);
             weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data
