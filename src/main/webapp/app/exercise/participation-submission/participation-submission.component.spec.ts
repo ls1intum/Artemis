@@ -392,6 +392,140 @@ describe('ParticipationSubmissionComponent', () => {
             },
         );
 
+        it('keeps a successfully deleted failed live submission absent after reloads and repeated build events', () => {
+            fixture.detectChanges();
+            const liveSubmission: ProgrammingSubmission = { id: 3, commitHash: 'del-live', submissionDate: dayjs(), results: [] };
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: liveSubmission });
+            fixture.detectChanges();
+            expect(fixture.nativeElement.textContent).toContain('del-live');
+            const deletion = new Subject<HttpResponse<void>>();
+            const deleteRequest = vi.spyOn(submissionService, 'delete').mockReturnValue(deletion);
+            const reload = new Subject<HttpResponse<Submission[]>>();
+            findAllSubmissionsOfParticipationStub.mockReturnValue(reload);
+
+            comp.deleteSubmission(3);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.textContent).toContain('del-live');
+            deletion.next(new HttpResponse<void>());
+            expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledTimes(2);
+            reload.next(new HttpResponse({ body: [pendingSubmission, completedSubmission] }));
+            fixture.detectChanges();
+            fixture.detectChanges();
+
+            expect(deleteRequest).toHaveBeenCalledExactlyOnceWith(3);
+            expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([2, 1]);
+            expect(fixture.nativeElement.textContent).not.toContain('del-live');
+            expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(2);
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: liveSubmission });
+            // An older in-flight snapshot must not undo the confirmed deletion either.
+            reload.next(new HttpResponse({ body: [liveSubmission, pendingSubmission, completedSubmission] }));
+            fixture.detectChanges();
+            expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([2, 1]);
+            expect(fixture.nativeElement.textContent).not.toContain('del-live');
+            expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(2);
+            expect(progress()).toHaveLength(0);
+            deletion.complete();
+            reload.complete();
+        });
+
+        it('retains a failed live submission when its deletion fails', () => {
+            fixture.detectChanges();
+            const liveSubmission: ProgrammingSubmission = { id: 3, commitHash: 'not-deleted', submissionDate: dayjs() };
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: liveSubmission });
+            fixture.detectChanges();
+            vi.spyOn(submissionService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403, statusText: 'Forbidden' })));
+            const errors: string[] = [];
+            const errorSubscription = comp.dialogError$.subscribe((error) => errors.push(error));
+
+            comp.deleteSubmission(3);
+            fixture.detectChanges();
+
+            expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([3, 2, 1]);
+            expect(fixture.nativeElement.textContent).toContain('not-deleted');
+            expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(3);
+            expect(errors).toHaveLength(1);
+            expect(errors[0]).toContain('403');
+            expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
+            errorSubscription.unsubscribe();
+        });
+
+        it('retains both consecutive live submissions after failures and reconciles their loaded results by ID', () => {
+            fixture.detectChanges();
+            const first: ProgrammingSubmission = { id: 3, commitHash: 'first-live', submissionDate: dayjs(), results: [] };
+            const second: ProgrammingSubmission = { id: 4, commitHash: 'second-live', submissionDate: dayjs().add(1, 'second'), results: [] };
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: first });
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: first });
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: second });
+            fixture.detectChanges();
+            fixture.detectChanges();
+
+            expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([4, 3, 2, 1]);
+            expect(fixture.nativeElement.textContent).toContain('first-live');
+            expect(fixture.nativeElement.textContent).toContain('second-live');
+            expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(4);
+            expect(progress()).toHaveLength(1);
+            expect(comp.activeBuild()?.submission?.id).toBe(4);
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: second });
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: second });
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: second });
+            fixture.detectChanges();
+            expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([4, 3, 2, 1]);
+            expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(4);
+            expect(progress()).toHaveLength(0);
+            expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
+            expect(comp.submissions().map((submission) => submission.id)).toEqual([2, 1]);
+            expect(fixture.debugElement.queryAll(By.directive(ResultComponent)).some((element) => element.componentInstance.result()?.id === 11)).toBe(true);
+
+            findAllSubmissionsOfParticipationStub.mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [
+                            { ...second, results: [{ id: 44, score: 100, rated: true }] },
+                            { ...first, results: [{ id: 33, score: 50, rated: true }] },
+                            pendingSubmission,
+                            completedSubmission,
+                        ],
+                    }),
+                ),
+            );
+            vi.mocked(participationService.getBuildJobIdsForResultsOfParticipation).mockReturnValue(of({ '33': 'first-job', '44': 'second-job' }));
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION });
+            fixture.detectChanges();
+            fixture.detectChanges();
+            expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([4, 3, 2, 1]);
+            expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(4);
+            expect(comp.displayedSubmissions()[0].results?.[0]).toMatchObject({ id: 44, buildJobId: 'second-job' });
+            expect(comp.displayedSubmissions()[1].results?.[0]).toMatchObject({ id: 33, buildJobId: 'first-job' });
+        });
+
+        it('releases retained live submissions when switching to another participation', () => {
+            fixture.detectChanges();
+            const first: ProgrammingSubmission = { id: 3, commitHash: 'oldpart', submissionDate: dayjs() };
+            states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: first });
+            fixture.detectChanges();
+            expect(fixture.nativeElement.textContent).toContain('oldpart');
+            const nextStates = new BehaviorSubject<ProgrammingSubmissionStateObj>({ participationId: 2, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION });
+            vi.mocked(buildService.getLatestPendingSubmissionByParticipationId).mockReturnValue(nextStates);
+            TestBed.inject(ActivatedRoute).params = of({ participationId: 2, exerciseId: 42 });
+            vi.mocked(participationService.find).mockReturnValue(of(new HttpResponse({ body: { id: 2, type: ParticipationType.PROGRAMMING } })));
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: [] })));
+
+            comp.setupPage();
+            fixture.detectChanges();
+            fixture.detectChanges();
+
+            expect(comp.displayedSubmissions()).toEqual([]);
+            expect(fixture.nativeElement.textContent).not.toContain('oldpart');
+            expect(states.observed).toBe(false);
+            expect(nextStates.observed).toBe(true);
+            const nextSubmission: ProgrammingSubmission = { id: 5, commitHash: 'newpart', submissionDate: dayjs() };
+            nextStates.next({ participationId: 2, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: nextSubmission });
+            fixture.detectChanges();
+            expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([5]);
+            expect(fixture.nativeElement.textContent).toContain('newpart');
+            expect(fixture.nativeElement.textContent).not.toContain('oldpart');
+        });
+
         it('refreshes results and build log links when the active build finishes', () => {
             states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: pendingSubmission });
             fixture.detectChanges();

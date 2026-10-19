@@ -98,6 +98,8 @@ export class ParticipationSubmissionComponent implements OnInit {
     readonly resultIdToBuildJobIdMap = signal<{ [key: string]: string } | undefined>(undefined);
 
     private readonly buildState = signal<ProgrammingSubmissionStateObj | undefined>(undefined);
+    private readonly liveSubmissions = signal<ProgrammingSubmission[]>([]);
+    private readonly deletedSubmissionIds = signal<ReadonlySet<number>>(new Set());
     private readonly buildParticipationId = computed(() => this.participation()?.id);
     private readonly programmingExerciseId = computed(() => (this.exercise()?.type === ExerciseType.PROGRAMMING ? this.exercise()?.id : undefined));
     readonly showBuildProgressBar = this.profileService.isProfileActive(PROFILE_LOCALCI);
@@ -111,12 +113,13 @@ export class ParticipationSubmissionComponent implements OnInit {
 
     readonly displayedSubmissions = computed(() => {
         const submissions = this.submissions();
-        const latestSubmission = this.buildState()?.submission;
-        // Failed submissions remain persisted rows after their progress indicator stops.
-        // The table sorts its input in place. Keep the loaded snapshot and participation's submissions untouched.
-        return latestSubmission?.id !== undefined && !submissions.some((submission) => submission.id === latestSubmission.id)
-            ? [latestSubmission, ...submissions]
-            : [...submissions];
+        const loadedIds = new Set(submissions.map((submission) => submission.id));
+        const deletedIds = this.deletedSubmissionIds();
+        // Retain every received submission until participation changes; loaded rows supply authoritative results.
+        // The table sorts its input in place. Keep both source arrays untouched.
+        return [...this.liveSubmissions().filter((submission) => !loadedIds.has(submission.id)), ...submissions].filter(
+            (submission) => submission.id === undefined || !deletedIds.has(submission.id),
+        );
     });
 
     eventSubscriber?: Subscription;
@@ -222,6 +225,8 @@ export class ParticipationSubmissionComponent implements OnInit {
             const participationId = this.buildParticipationId();
             const exerciseId = this.programmingExerciseId();
             this.buildState.set(undefined);
+            this.liveSubmissions.set([]);
+            this.deletedSubmissionIds.set(new Set());
             if (participationId === undefined || exerciseId === undefined) {
                 return;
             }
@@ -247,6 +252,10 @@ export class ParticipationSubmissionComponent implements OnInit {
                     .subscribe((state) => {
                         const hadPendingSubmission = this.buildState()?.submission !== undefined;
                         this.buildState.set(state);
+                        const liveSubmission = state.submission;
+                        if (liveSubmission?.id !== undefined && !this.deletedSubmissionIds().has(liveSubmission.id)) {
+                            this.liveSubmissions.update((submissions) => [liveSubmission, ...submissions.filter((submission) => submission.id !== liveSubmission.id)]);
+                        }
                         // The shared service clears pending state only after receiving the matching result.
                         if (hadPendingSubmission && state.submissionState === ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION) {
                             this.setupPage();
@@ -406,6 +415,8 @@ export class ParticipationSubmissionComponent implements OnInit {
     deleteSubmission(submissionId: number) {
         this.submissionService.delete(submissionId).subscribe({
             next: () => {
+                this.deletedSubmissionIds.update((ids) => new Set([...ids, submissionId]));
+                this.liveSubmissions.update((submissions) => submissions.filter((submission) => submission.id !== submissionId));
                 this.eventManager.broadcast({
                     name: 'submissionsModification',
                     content: 'Deleted a submission',
