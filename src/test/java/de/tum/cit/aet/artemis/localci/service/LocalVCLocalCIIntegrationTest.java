@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepository
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDockerFlagsDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
@@ -551,6 +552,53 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(buildJobQueueItem).isNotNull();
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().network()).isEqualTo("none");
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAScopedContainerReceivesOnlyTheRepositoriesItLists() {
+            // the container lists no repository, so its job carries the assignment repository alone
+            assertQueuedTestRepositoryOfContainer(List.of(), false);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAContainerListingTheTestRepositoryReceivesIt() {
+            assertQueuedTestRepositoryOfContainer(List.of(new BuildContainerRepositoryDTO(RepositoryType.TESTS)), true);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAnUnscopedContainerReceivesEveryRepository() {
+            // no repository list at all: the legacy behaviour, every repository of the exercise
+            assertQueuedTestRepositoryOfContainer(null, true);
+        }
+
+        /**
+         * Triggers a build of a plan whose one container lists the given repositories and asserts whether the queued job
+         * carries the test repository; the assignment repository is always present.
+         */
+        private void assertQueuedTestRepositoryOfContainer(List<BuildContainerRepositoryDTO> repositories, boolean testRepositoryExpected) {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+            var container = new BuildContainerDTO("scoped", null, repositories, List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of())));
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(container)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            var repositoryInfo = queuedJobs.poll().repositoryInfo();
+            assertThat(repositoryInfo.assignmentRepositoryUri()).as("the submission is always built").isNotNull();
+            if (testRepositoryExpected) {
+                assertThat(repositoryInfo.testRepositoryUri()).isNotNull();
+            }
+            else {
+                assertThat(repositoryInfo.testRepositoryUri()).as("the instructor's tests stay out of a container that does not list them").isNull();
+            }
         }
 
         @Test

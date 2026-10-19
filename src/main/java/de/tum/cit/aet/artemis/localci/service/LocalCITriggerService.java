@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.hibernate.Hibernate;
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -280,9 +282,17 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null, null, estimatedDuration);
 
-        RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig);
+        BuildPlanPhasesDTO buildPlanPhases = parseBuildPlan(programmingExerciseBuildConfig);
+        List<BuildContainerDTO> containers = buildPlanPhases.effectiveContainers();
+        // a build plan without any phase falls back to the default phases and image of the exercise
+        BuildContainerDTO container = containers.isEmpty() ? null : containers.getFirst();
 
-        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig, restricted);
+        // the job receives only the repositories the container lists, which is what keeps the instructor's tests out of a
+        // container that runs student-authored code
+        RepositoryInfo repositoryInfo = scopeRepositoryInfo(getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig), container);
+
+        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig, buildPlanPhases, container,
+                restricted);
 
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
 
@@ -392,26 +402,45 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     }
 
+    private BuildPlanPhasesDTO parseBuildPlan(ProgrammingExerciseBuildConfig buildConfig) throws LocalCIException {
+        try {
+            return BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
+        }
+        catch (JacksonException e) {
+            throw new LocalCIException("The build plan configuration is invalid for build config " + buildConfig.getId(), e);
+        }
+    }
+
+    /**
+     * Restricts the repositories provisioned into a container to the ones it lists, so a container that does not list
+     * the test repository never receives the instructor's tests. The participation's own repository is always provided.
+     *
+     * @param full      the full repository information of the participation
+     * @param container the container to scope for; null, or a container without a repository list, receives every repository
+     * @return the repository information restricted to what the container lists
+     */
+    private RepositoryInfo scopeRepositoryInfo(RepositoryInfo full, @Nullable BuildContainerDTO container) {
+        if (container == null || container.repositories() == null) {
+            return full;
+        }
+        Set<RepositoryType> types = container.repositories().stream().map(BuildContainerRepositoryDTO::type).collect(Collectors.toSet());
+        String testRepositoryUri = types.contains(RepositoryType.TESTS) ? full.testRepositoryUri() : null;
+        String solutionRepositoryUri = types.contains(RepositoryType.SOLUTION) ? full.solutionRepositoryUri() : null;
+        boolean includeAuxiliary = types.contains(RepositoryType.AUXILIARY);
+        String[] auxiliaryRepositoryUris = includeAuxiliary ? full.auxiliaryRepositoryUris() : new String[0];
+        String[] auxiliaryRepositoryCheckoutDirectories = includeAuxiliary ? full.auxiliaryRepositoryCheckoutDirectories() : new String[0];
+        return new RepositoryInfo(full.repositoryName(), full.repositoryType(), full.triggeredByPushTo(), full.assignmentRepositoryUri(), testRepositoryUri, solutionRepositoryUri,
+                auxiliaryRepositoryUris, auxiliaryRepositoryCheckoutDirectories);
+    }
+
     private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash,
-            ProgrammingExerciseBuildConfig buildConfig, boolean restricted) throws LocalCIException {
+            ProgrammingExerciseBuildConfig buildConfig, BuildPlanPhasesDTO buildPlanPhasesDTO, @Nullable BuildContainerDTO container, boolean restricted) {
         String branch = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch() : buildConfig.getBranch();
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
-
-        BuildPlanPhasesDTO buildPlanPhasesDTO;
-        try {
-            buildPlanPhasesDTO = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
-        }
-        catch (JacksonException e) {
-            throw new LocalCIException("The build plan configuration is invalid for build config " + buildConfig.getId(), e);
-        }
-
-        final List<BuildContainerDTO> containers = buildPlanPhasesDTO.effectiveContainers();
-        // a build plan without any phase falls back to the default phases and image of the exercise
-        final BuildContainerDTO container = containers.isEmpty() ? null : containers.getFirst();
 
         final List<BuildPhaseDTO> phases = container == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig) : container.phases();
         final String configuredDockerImage = container == null ? buildPlanPhasesDTO.dockerImage() : container.dockerImage();
