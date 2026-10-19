@@ -164,11 +164,13 @@ def source_label(g: dict) -> str:
 # ---------------------------------------------------------------------------
 
 def compute_slow_query_groups(slow_queries: list) -> list:
-    """Groups raw slow-query captures by (endpoint, SQL template, background thread) -- the same
-    query crossing the threshold many times across a few tests is one row, not hundreds."""
+    """Groups raw slow-query captures by (endpoint, SQL template) -- the same query crossing the
+    threshold many times across a few tests is one row, not hundreds. The thread only tells
+    background queries apart; for a request it is whichever server thread happened to serve it."""
     groups = {}
     for q in slow_queries:
-        key = (q.get("httpMethod"), q.get("httpEndpoint"), q.get("sql", ""), q.get("threadName"))
+        thread_name = None if q.get("httpEndpoint") else q.get("threadName")
+        key = (q.get("httpMethod"), q.get("httpEndpoint"), q.get("sql", ""), thread_name)
         g = groups.setdefault(key, {"count": 0, "worst_ms": 0, "join_count": q.get("joinCount", 0), "occurrences": []})
         g["count"] += 1
         g["worst_ms"] = max(g["worst_ms"], q.get("executionTimeMs", 0))

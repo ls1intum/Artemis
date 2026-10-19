@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -47,8 +48,10 @@ public class SlowQueryCollector {
     private final CopyOnWriteArrayList<SlowQueryRecord> slowQueries = new CopyOnWriteArrayList<>();
 
     /**
-     * Per-request statistics, keyed by normalized SQL template; every query of the request, not
-     * just outliers.
+     * Per-request statistics, keyed by normalized SQL template and the code that issued it; every
+     * query of the request, not just outliers. The issuing code is part of the key because one
+     * template (e.g. loading a user by id) is run by many places in the same request, and each of
+     * them is its own finding with its own count.
      * <p>
      * Scoped via {@link ThreadLocal} rather than a single shared map: Tomcat/Spring MVC handles
      * one HTTP request per thread (this collector is never used with async/reactive request
@@ -56,9 +59,9 @@ public class SlowQueryCollector {
      * cross-request synchronization. A shared map cleared at the end of *any* request would, under
      * parallel E2E test workers, wipe another still-in-flight request's counts mid-count.
      */
-    private final ThreadLocal<Map<String, TemplateStats>> requestTemplates = ThreadLocal.withInitial(HashMap::new);
+    private final ThreadLocal<Map<TemplateKey, TemplateStats>> requestTemplates = ThreadLocal.withInitial(HashMap::new);
 
-    /** Repeated-query findings, one per (request, template, shape), capped like {@link #slowQueries}. */
+    /** Repeated-query findings, one per (request, template, issuing code, shape), capped like {@link #slowQueries}. */
     private final CopyOnWriteArrayList<RepeatedQueryFinding> repeatedQueries = new CopyOnWriteArrayList<>();
 
     /** One entry per completed HTTP request, capped like {@link #slowQueries}. */
@@ -79,11 +82,11 @@ public class SlowQueryCollector {
      * @param executionTimeMs    Measured wall-clock execution time in milliseconds.
      * @param joinCount          Number of SQL {@code join} keywords in the raw query text -- see
      *                               {@link SlowQueryRecord#joinCount()}.
-     * @param callSiteResolver   resolves where the query was issued from; only invoked on the
-     *                               second execution of a template within a request (the first
-     *                               point at which it can become a finding), so the stack walk
-     *                               is not paid for every query. Must be invoked on the query's
-     *                               own thread, which this method guarantees by calling it inline.
+     * @param callSiteResolver   resolves where the query was issued from; invoked for every
+     *                               query of a request, since each execution is counted under
+     *                               the code that issued it, and not for background queries.
+     *                               Must be invoked on the query's own thread, which this method
+     *                               guarantees by calling it inline.
      * @param httpMethod         HTTP verb of the triggering request; may be {@code null}.
      * @param httpEndpoint       route template of the triggering request; {@code null} for
      *                               background/async queries without a request.
@@ -100,13 +103,11 @@ public class SlowQueryCollector {
 
         // --- Per-request statistics (feed both repeated-query detection and the endpoint timing) ---
         if (httpEndpoint != null) {
-            TemplateStats stats = requestTemplates.get().computeIfAbsent(normalizedSql, k -> new TemplateStats(joinCount));
+            TemplateKey key = new TemplateKey(normalizedSql, callSiteResolver.get());
+            TemplateStats stats = requestTemplates.get().computeIfAbsent(key, k -> new TemplateStats(joinCount));
             stats.executions++;
             stats.totalDurationMs += executionTimeMs;
             stats.parameterSignatures.merge(parameterSignature, 1, Integer::sum);
-            if (stats.executions == 2) {
-                stats.callSite = callSiteResolver.get();
-            }
         }
 
         // --- Slow-query detection ---
@@ -145,7 +146,7 @@ public class SlowQueryCollector {
      * @param totalDurationMs Wall-clock time for the whole request, measured by the caller.
      */
     public void recordEndpointTiming(String httpMethod, String httpEndpoint, String testName, String phase, long totalDurationMs) {
-        Map<String, TemplateStats> templates = requestTemplates.get();
+        Map<TemplateKey, TemplateStats> templates = requestTemplates.get();
         requestTemplates.remove();
         if (templates.isEmpty()) {
             // No queries at all (e.g. a static asset request never reached a repository) -- not
@@ -153,16 +154,20 @@ public class SlowQueryCollector {
             return;
         }
 
-        List<QueryCountEntry> queries = new ArrayList<>();
+        // the timing breakdown stays per template, summed over the code that issued it
+        Map<String, QueryCountEntry> perTemplate = new LinkedHashMap<>();
         long dbTimeMs = 0;
         int queryCount = 0;
-        for (Map.Entry<String, TemplateStats> e : templates.entrySet()) {
+        for (Map.Entry<TemplateKey, TemplateStats> e : templates.entrySet()) {
+            String sql = e.getKey().sql();
             TemplateStats stats = e.getValue();
-            queries.add(new QueryCountEntry(e.getKey(), stats.executions, stats.totalDurationMs, stats.joinCount));
+            perTemplate.merge(sql, new QueryCountEntry(sql, stats.executions, stats.totalDurationMs, stats.joinCount),
+                    (a, b) -> new QueryCountEntry(sql, a.count() + b.count(), a.totalDurationMs() + b.totalDurationMs(), a.joinCount()));
             dbTimeMs += stats.totalDurationMs;
             queryCount += stats.executions;
-            addRepeatedQueryFindings(e.getKey(), stats, httpMethod, httpEndpoint, testName, phase);
+            addRepeatedQueryFindings(sql, e.getKey().callSite(), stats, httpMethod, httpEndpoint, testName, phase);
         }
+        List<QueryCountEntry> queries = new ArrayList<>(perTemplate.values());
 
         if (endpointTimings.size() < properties.getMaxRecordedQueries()) {
             endpointTimings.add(new EndpointTimingRecord(httpMethod, httpEndpoint, testName, phase, totalDurationMs, dbTimeMs, queryCount, queries, Instant.now()));
@@ -204,12 +209,12 @@ public class SlowQueryCollector {
     // Private helpers
     // --------------------------------------------------
 
-    private void addRepeatedQueryFindings(String sql, TemplateStats stats, String httpMethod, String httpEndpoint, String testName, String phase) {
+    private void addRepeatedQueryFindings(String sql, QueryCallSite callSite, TemplateStats stats, String httpMethod, String httpEndpoint, String testName, String phase) {
         if (stats.executions < 2) {
             return;
         }
         int distinct = stats.parameterSignatures.size();
-        QueryCallSite site = stats.callSite != null ? stats.callSite : QueryCallSite.UNKNOWN;
+        QueryCallSite site = callSite != null ? callSite : QueryCallSite.UNKNOWN;
         if (distinct >= 2) {
             addRepeatedQueryFinding(new RepeatedQueryFinding(RepeatedQueryFinding.Type.N_PLUS_ONE, sql, stats.executions, distinct, site.repositoryMethod(), site.callerMethod(),
                     httpMethod, httpEndpoint, testName, phase));
@@ -233,7 +238,11 @@ public class SlowQueryCollector {
         return s != null && s.length() > 120 ? s.substring(0, 120) + "..." : s;
     }
 
-    /** Mutable per-request accumulator for one SQL template; only ever touched by the request's own thread. */
+    /** One SQL template as issued by one piece of code. */
+    private record TemplateKey(String sql, QueryCallSite callSite) {
+    }
+
+    /** Mutable per-request accumulator for one {@link TemplateKey}; only ever touched by the request's own thread. */
     private static final class TemplateStats {
 
         private final int joinCount; // same template -> same join count every time
@@ -244,8 +253,6 @@ public class SlowQueryCollector {
 
         /** parameter signature -> how many times exactly that statement ran. */
         private final Map<Long, Integer> parameterSignatures = new HashMap<>();
-
-        private QueryCallSite callSite;
 
         private TemplateStats(int joinCount) {
             this.joinCount = joinCount;

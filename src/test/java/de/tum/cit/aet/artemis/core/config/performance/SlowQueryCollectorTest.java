@@ -102,19 +102,49 @@ class SlowQueryCollectorTest {
     }
 
     @Test
-    void callSiteIsResolvedOnlyOncePerTemplateAndRequest() {
+    void sameTemplateFromDifferentCodeIsCountedPerCallSite() {
+        // one place loads three users one by one, a later one loads the same three again
+        QueryCallSite later = new QueryCallSite("UserRepository.findByIdElseThrow", "ExamDeletionService.delete");
+        for (long id = 1; id <= 3; id++) {
+            query(SQL, id);
+        }
+        for (long id = 1; id <= 3; id++) {
+            query(SQL, id, () -> later);
+        }
+
+        assertThat(finishRequest()).hasSize(2).allSatisfy(finding -> {
+            assertThat(finding.type()).isEqualTo(Type.N_PLUS_ONE);
+            assertThat(finding.executions()).isEqualTo(3);
+            assertThat(finding.distinctParameterSets()).isEqualTo(3);
+        }).extracting(RepeatedQueryFinding::callerMethod).containsExactlyInAnyOrder(SITE.callerMethod(), later.callerMethod());
+    }
+
+    @Test
+    void callSiteIsResolvedForEveryRequestQueryButNotForBackgroundQueries() {
         AtomicInteger resolutions = new AtomicInteger();
         Supplier<QueryCallSite> countingSite = () -> {
             resolutions.incrementAndGet();
             return SITE;
         };
-        for (long id = 1; id <= 5; id++) {
+        for (long id = 1; id <= 3; id++) {
             query(SQL, id, countingSite);
         }
-        query("select * from course where id=?", 1, countingSite);
+        collector.record(SQL, 4, 1, 0, countingSite, null, null, null, null, "scheduling-1");
 
         finishRequest();
-        assertThat(resolutions).hasValue(1);
+        assertThat(resolutions).hasValue(3);
+    }
+
+    @Test
+    void endpointTimingSumsATemplateOverItsCallSites() {
+        query(SQL, 1);
+        query(SQL, 2, () -> new QueryCallSite("UserRepository.findByIdElseThrow", "ExamDeletionService.delete"));
+        finishRequest();
+
+        assertThat(collector.getReport().endpointTimings()).singleElement().satisfies(timing -> {
+            assertThat(timing.queryCount()).isEqualTo(2);
+            assertThat(timing.queries()).singleElement().satisfies(entry -> assertThat(entry.count()).isEqualTo(2));
+        });
     }
 
     @Test
