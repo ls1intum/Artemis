@@ -570,6 +570,53 @@ describe('CourseConversationsService', () => {
         });
     });
 
+    describe('a new message event for a conversation', () => {
+        const eventFor = (conversation: ConversationDTO) => {
+            const websocketDTO = new ConversationWebsocketDTO();
+            websocketDTO.action = CommunicationCrudAction.NEW_MESSAGE;
+            websocketDTO.conversation = conversation;
+            return websocketDTO;
+        };
+
+        const cachedUnreadCount = (conversationId: number | undefined) =>
+            courseConversationsService['conversationsOfUser'].find((conversation) => conversation.id === conversationId)?.unreadMessagesCount ?? 0;
+
+        it('should raise the unread count of a conversation that is not open', () => {
+            return new Promise((done) => {
+                courseConversationsService.setUpConversationService(course).subscribe({
+                    complete: () => {
+                        courseConversationsService.setActiveConversation(groupChat);
+                        const markAsRead = vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of(new HttpResponse<void>()));
+
+                        receiveMockSubject.next(eventFor(channel));
+
+                        expect(cachedUnreadCount(channel.id)).toBe(1);
+                        expect(markAsRead).not.toHaveBeenCalled();
+                        done({});
+                    },
+                });
+            });
+        });
+
+        it('should not raise the unread count of the open conversation but mark it as read on the server', () => {
+            return new Promise((done) => {
+                courseConversationsService.setUpConversationService(course).subscribe({
+                    complete: () => {
+                        courseConversationsService.setActiveConversation(channel);
+                        const markAsRead = vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of(new HttpResponse<void>()));
+
+                        // e.g. a reply in a thread of the user, which the server counted for them like a message
+                        receiveMockSubject.next(eventFor(channel));
+
+                        expect(cachedUnreadCount(channel.id)).toBe(0);
+                        expect(markAsRead).toHaveBeenCalledWith(course.id, channel.id);
+                        done({});
+                    },
+                });
+            });
+        });
+    });
+
     it('should remove conversation in conversations of user on conversation delete received', () => {
         return new Promise((done) => {
             courseConversationsService.setUpConversationService(course).subscribe({

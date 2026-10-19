@@ -202,6 +202,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     readonly sidebarData = signal<SidebarData>(undefined!);
     readonly accordionConversationGroups = signal<AccordionGroups>(undefined!);
     readonly sidebarConversations = signal<SidebarCardElement[]>([]);
+    // the unread state of the conversations as the sidebar was built, to notice that a count was raised in place afterwards
+    private renderedUnreadState = '';
     readonly isCollapsed = signal(false);
     readonly pageTitle = signal<string>('');
     readonly focusPostId = signal<number | undefined>(undefined);
@@ -538,8 +540,16 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
             if (this.sidebarData() && this.conversationsToShowInSidebar().some((conversation) => !this.isListedInSidebar(conversation.id!) && isOneToOneChatDTO(conversation))) {
                 // A direct message that was left out of the sidebar because it was empty has received its first message.
                 this.rebuildSidebarData();
+            } else if (this.sidebarData() && this.unreadStateOf(this.conversationsToShowInSidebar()) !== this.renderedUnreadState) {
+                // The service raises the unread count of the cached conversation in place when a message or a reply arrives. The sidebar cards
+                // read it from that object, so they do not notice and keep showing the old count until the sidebar is built again.
+                this.rebuildSidebarData();
             }
         });
+    }
+
+    private unreadStateOf(conversations: ConversationDTO[]): string {
+        return conversations.map((conversation) => `${conversation.id}:${conversation.unreadMessagesCount ?? 0}:${!!conversation.hasUnreadMessage}`).join(',');
     }
 
     acceptCodeOfConduct() {
@@ -645,6 +655,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
      */
     private rebuildSidebarData() {
         const conversations = this.conversationsToShowInSidebar();
+        this.renderedUnreadState = this.unreadStateOf(conversations);
         this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(conversations));
         this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, conversations, this.messagingEnabled));
         this.accordionConversationGroups().recents.entityData = this.sidebarConversations()?.filter((item) => item.isCurrent) || [];

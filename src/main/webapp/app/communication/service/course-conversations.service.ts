@@ -531,7 +531,13 @@ export class CourseConversationsService implements OnDestroy {
                 this.handleDeleteConversation(conversationDTO);
                 break;
             case CommunicationCrudAction.NEW_MESSAGE:
-                this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
+                if (conversationDTO.id === this.activeConversation?.id) {
+                    // The user is reading this conversation, so what arrived is not new to them, e.g. a reply in a thread of theirs. The server counted
+                    // it for them anyway, and reading the conversation again is what resets that count.
+                    this.conversationService.markAsRead(this._courseId, conversationDTO.id!).subscribe();
+                } else {
+                    this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
+                }
                 break;
         }
         this._conversationsOfUser$.next(this.conversationsOfUser);

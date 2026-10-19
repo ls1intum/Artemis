@@ -759,6 +759,48 @@ examples.forEach((activeConversation) => {
             });
         });
 
+        describe('the unread count of a conversation changes while the sidebar is shown', () => {
+            let channel: ConversationDTO;
+            let conversationsOfUser$: BehaviorSubject<ConversationDTO[]>;
+
+            beforeEach(() => {
+                channel = { id: 301, type: ConversationType.CHANNEL, unreadMessagesCount: 0 } as ConversationDTO;
+                conversationsOfUser$ = new BehaviorSubject<ConversationDTO[]>([channel]);
+                Object.defineProperty(courseConversationsService, 'conversationsOfUser$', { get: () => conversationsOfUser$.asObservable() });
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
+                vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockImplementation((conversations) =>
+                    conversations.map((conversation) => ({ id: conversation.id!, title: 'channel', size: 'S', conversation })),
+                );
+                fixture.detectChanges();
+                component.prepareSidebarData();
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockClear();
+                vi.mocked(courseOverviewService.groupConversationsByChannelType).mockClear();
+            });
+
+            it('should rebuild the sidebar so that a message or reply that arrived is shown', () => {
+                // the service raises the count of the cached channel in place, so the sidebar cards, which read it from that
+                // object, would not notice it without being rebuilt
+                channel.unreadMessagesCount = 1;
+                conversationsOfUser$.next([channel]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('should rebuild the sidebar when the conversation was marked as unread without a count', () => {
+                channel.hasUnreadMessage = true;
+                conversationsOfUser$.next([channel]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+            });
+
+            it('should leave the sidebar alone when no unread count changed', () => {
+                conversationsOfUser$.next([channel]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
+            });
+        });
+
         describe('opening a conversation that the sidebar does not list yet', () => {
             const newChannel = { id: 201, type: ConversationType.CHANNEL } as ConversationDTO;
             const knownChannel = { id: 202, type: ConversationType.CHANNEL } as ConversationDTO;

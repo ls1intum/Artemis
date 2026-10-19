@@ -233,6 +233,28 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     void incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
 
     /**
+     * Increment the unreadMessagesCount field of the given participants of a conversation, for a reply that only concerns
+     * them: the author of a message and the users who replied to it. Like
+     * {@link #incrementUnreadMessagesCountOfParticipants(Long, Long)}, participants whose {@code unreadMessagesCount} is
+     * null or who muted the conversation are left untouched, and it has to be called from the request that creates the reply.
+     * The sender of the reply must not be among the given users.
+     *
+     * @param conversationId id of the conversation with participants
+     * @param userIds        ids of the users who are part of the thread the reply was written in
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ConversationParticipant conversationParticipant
+            SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount + 1
+            WHERE conversationParticipant.conversation.id = :conversationId
+                AND conversationParticipant.user.id IN :userIds
+                AND conversationParticipant.unreadMessagesCount IS NOT NULL
+                AND conversationParticipant.isMuted = FALSE
+            """)
+    void incrementUnreadMessagesCountOfParticipantsIn(@Param("conversationId") Long conversationId, @Param("userIds") Collection<Long> userIds);
+
+    /**
      * Decrement unreadMessageCount field of ConversationParticipant
      *
      * @param senderId       userId of the sender of the message(Post)
