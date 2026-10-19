@@ -657,6 +657,19 @@ describe('TextEditorComponent', () => {
         expect(textSubmissionService.update).toHaveBeenCalled();
     });
 
+    it('should not auto-save on destroy when the submission has no text and the answer is empty', () => {
+        // an empty answer is normalised to '' while the submission of an untouched exercise has no text at all
+        comp.submission.set({ id: 1 } as TextSubmission);
+        comp.answer.set('');
+        comp.textExercise.set({ id: 1 } as TextExercise);
+        vi.spyOn(textSubmissionService, 'update');
+
+        expect(comp.canDeactivate()).toBe(true);
+        comp.ngOnDestroy();
+
+        expect(textSubmissionService.update).not.toHaveBeenCalled();
+    });
+
     it('isAutomaticResult reflects automatic Athena result', () => {
         comp.result.set({ assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
         expect(comp.isAutomaticResult).toBe(true);

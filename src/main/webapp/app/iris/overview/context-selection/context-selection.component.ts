@@ -8,6 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { EXERCISE_TYPE_TO_CHAT_MODE } from 'app/iris/shared/entities/iris-session-context.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
@@ -31,13 +32,6 @@ interface ContextGroup {
     label: string;
     items: ContextOption[];
 }
-
-// Maps exercise types that have Iris chat integration to their ChatServiceMode.
-// To add Iris support for a new exercise type, add a single entry here.
-const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
-    [ExerciseType.TEXT]: ChatServiceMode.TEXT_EXERCISE,
-    [ExerciseType.PROGRAMMING]: ChatServiceMode.PROGRAMMING_EXERCISE,
-};
 
 /** Icon for a selected context, derived from its mode alone so the chip does not need the entity loaded. */
 function iconForMode(mode: ChatServiceMode): IconDefinition {

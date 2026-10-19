@@ -126,6 +126,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
             Locale locale = Locale.forLanguageTag(localeKey);
             Context context = new Context(locale);
             context.setVariable(SERVER_URL_KEY, artemisServerUrl);
+            context.setVariable("baseUrl", artemisServerUrl);
             context.setVariable(TYPE_KEY, courseNotification.notificationType());
             context.setVariable(RECIPIENT_KEY, recipient);
             context.setVariable(COURSE_ID_KEY, courseNotification.courseId());

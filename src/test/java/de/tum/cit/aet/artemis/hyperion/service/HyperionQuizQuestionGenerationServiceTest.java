@@ -335,4 +335,135 @@ class HyperionQuizQuestionGenerationServiceTest {
 
         assertThatThrownBy(() -> service.generateQuizQuestions(course, request)).isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("type is invalid");
     }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({ "title,501,Generated quiz question title is invalid", "title,0,Generated quiz question title is invalid",
+            "questionText,10001,Generated quiz question text is invalid", "questionText,0,Generated quiz question text is invalid",
+            "optionText,2001,Generated quiz answer option text is invalid", "optionText,0,Generated quiz answer option text is invalid" })
+    void rejectsGeneratedTextOutsideDocumentedLengthBoundaries(String field, int length, String message) {
+        tools.jackson.databind.json.JsonMapper mapper = new tools.jackson.databind.json.JsonMapper();
+        tools.jackson.databind.node.ObjectNode question = validGeneratedQuestion(mapper);
+        if (field.equals("optionText")) {
+            ((tools.jackson.databind.node.ObjectNode) question.path("options").get(0)).put("text", "x".repeat(length));
+        }
+        else {
+            question.put(field, "x".repeat(length));
+        }
+        setGenerationResponse(mapper.writeValueAsString(mapper.createObjectNode().set("questions", mapper.createArrayNode().add(question))));
+        assertThatThrownBy(() -> service.generateQuizQuestions(new Course(), generationRequest())).isInstanceOf(InternalServerErrorAlertException.class).hasMessage(message);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "null", "{}", "{\"questions\":null}", "{\"questions\":[]}", "{\"questions\":[null]}",
+            "{\"questions\":[{\"type\":\"single-choice\",\"title\":\"Title\",\"questionText\":\"Text\"}]}" })
+    void rejectsEmptyQuestionCollectionsAndMissingOptions(String response) {
+        setGenerationResponse(response);
+        assertThatThrownBy(() -> service.generateQuizQuestions(new Course(), generationRequest())).isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining(
+                response.contains("[null]") ? "Generated quiz question is null" : response.contains("Title") ? "options are invalid" : "Generated quiz questions are empty");
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({ "single-choice,0,false", "single-choice,2,false", "multiple-choice,0,false", "multiple-choice,2,true", "true-false,0,false",
+            "true-false,1,true", "true-false,2,false" })
+    void generatedQuestionTypesRequireTheirOwnCorrectOptionCounts(String type, int correctCount, boolean valid) {
+        tools.jackson.databind.json.JsonMapper mapper = new tools.jackson.databind.json.JsonMapper();
+        tools.jackson.databind.node.ObjectNode question = validGeneratedQuestion(mapper);
+        question.put("type", type);
+        ((tools.jackson.databind.node.ObjectNode) question.path("options").get(0)).put("correct", correctCount > 0);
+        ((tools.jackson.databind.node.ObjectNode) question.path("options").get(1)).put("correct", correctCount > 1);
+        setGenerationResponse(mapper.writeValueAsString(mapper.createObjectNode().set("questions", mapper.createArrayNode().add(question))));
+        if (valid) {
+            assertThat(service.generateQuizQuestions(new Course(), generationRequest()).questions().getFirst().type().getValue()).isEqualTo(type);
+        }
+        else {
+            assertThatThrownBy(() -> service.generateQuizQuestions(new Course(), generationRequest())).isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining(
+                    type.equals("single-choice") ? "exactly one correct answer" : type.equals("multiple-choice") ? "at least one correct answer" : "exactly two options");
+        }
+    }
+
+    @Test
+    void generatedOptionsRejectNullsAndDefaultMissingCorrectnessToFalse() {
+        tools.jackson.databind.json.JsonMapper mapper = new tools.jackson.databind.json.JsonMapper();
+        tools.jackson.databind.node.ObjectNode question = validGeneratedQuestion(mapper);
+        tools.jackson.databind.node.ArrayNode options = (tools.jackson.databind.node.ArrayNode) question.path("options");
+        options.set(1, mapper.nullNode());
+        setGenerationResponse(mapper.writeValueAsString(mapper.createObjectNode().set("questions", mapper.createArrayNode().add(question))));
+        assertThatThrownBy(() -> service.generateQuizQuestions(new Course(), generationRequest())).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessage("Generated quiz answer option is null");
+        options.set(1, mapper.createObjectNode().put("text", "wrong").put("hint", "hint").put("explanation", "explanation"));
+        question.put("hint", "question hint");
+        question.put("explanation", "question explanation");
+        setGenerationResponse(mapper.writeValueAsString(mapper.createObjectNode().set("questions", mapper.createArrayNode().add(question))));
+        var result = service.generateQuizQuestions(new Course(), generationRequest()).questions().getFirst();
+        assertThat(result.hint()).isEqualTo("question hint");
+        assertThat(result.explanation()).isEqualTo("question explanation");
+        assertThat(result.options().get(1).correct()).isFalse();
+        assertThat(result.options().get(1).hint()).isEqualTo("hint");
+        assertThat(result.options().get(1).explanation()).isEqualTo("explanation");
+    }
+
+    @Test
+    void refinementIncludesHintsAndExplanationsInModelRequest() {
+        setGenerationResponse(
+                "{\"question\":{\"type\":\"single-choice\",\"title\":\"Improved\",\"questionText\":\"Text\",\"options\":[{\"text\":\"A\",\"correct\":true},{\"text\":\"B\",\"correct\":false}]},\"reasoning\":\"Precise\"}");
+        GeneratedQuizQuestionDTO original = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "Title", "Text",
+                List.of(new GeneratedQuizAnswerOptionDTO("A", true, "option hint", "option explanation"), new GeneratedQuizAnswerOptionDTO("B", false, " ", " ")), "question hint",
+                "question explanation");
+        var result = service.refineQuizQuestion(new Course(), new QuizQuestionRefinementRequestDTO(original, "Improve"));
+        assertThat(result).isInstanceOf(QuizQuestionRefinementResponseDTO.QuizQuestionRefinementSuccessDTO.class);
+        org.mockito.ArgumentCaptor<Prompt> captor = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(captor.capture());
+        assertThat(captor.getValue().getUserMessage().getText()).contains("question hint", "question explanation", "option hint", "option explanation", "[correct]", "[wrong]");
+    }
+
+    @Test
+    void competencyModeRendersTaxonomiesRelationsAndLectureContext() {
+        de.tum.cit.aet.artemis.atlas.domain.competency.Competency first = new de.tum.cit.aet.artemis.atlas.domain.competency.Competency();
+        first.setId(1L);
+        first.setTitle("Loops");
+        first.setTaxonomy(de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy.APPLY);
+        first.setDescription("Iterate elements");
+        de.tum.cit.aet.artemis.atlas.domain.competency.Competency second = new de.tum.cit.aet.artemis.atlas.domain.competency.Competency();
+        second.setId(2L);
+        second.setTitle("Variables");
+        second.setDescription(" ");
+        java.util.Set<de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation> relations = new java.util.HashSet<>();
+        long relationId = 1;
+        for (var type : de.tum.cit.aet.artemis.atlas.domain.competency.RelationType.values()) {
+            var relation = new de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation();
+            relation.setId(relationId++);
+            relation.setTailCompetency(first);
+            relation.setHeadCompetency(second);
+            relation.setType(type);
+            relations.add(relation);
+        }
+        when(competencyContextService.computeContext(7L, List.of(1L, 2L)))
+                .thenReturn(new HyperionCompetencyContextService.CompetencyContext(List.of(first, second), relations, List.of("Lecture excerpt")));
+        Course course = new Course();
+        course.setId(7L);
+        setGenerationResponse(
+                "{\"questions\":[{\"type\":\"single-choice\",\"title\":\"Title\",\"questionText\":\"Text\",\"options\":[{\"text\":\"A\",\"correct\":true},{\"text\":\"B\",\"correct\":false}]}]}");
+        var request = new QuizQuestionGenerationRequestDTO(null, List.of(1L, 2L), "", QuizQuestionGenerationLanguage.EN, Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
+        assertThat(service.generateQuizQuestions(course, request).questions()).hasSize(1);
+        org.mockito.ArgumentCaptor<Prompt> captor = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(captor.capture());
+        assertThat(captor.getValue().getUserMessage().getText()).contains("Loops (APPLY): Iterate elements", "Variables (UNDERSTAND)", "ASSUMES", "EXTENDS", "MATCHES",
+                "Lecture excerpt");
+    }
+
+    private QuizQuestionGenerationRequestDTO generationRequest() {
+        return new QuizQuestionGenerationRequestDTO("Topic", List.of(), "", QuizQuestionGenerationLanguage.EN, Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
+    }
+
+    private tools.jackson.databind.node.ObjectNode validGeneratedQuestion(tools.jackson.databind.json.JsonMapper mapper) {
+        tools.jackson.databind.node.ObjectNode question = mapper.createObjectNode().put("type", "single-choice").put("title", "Title").put("questionText", "Text");
+        question.putArray("options").addObject().put("text", "A").put("correct", true);
+        ((tools.jackson.databind.node.ArrayNode) question.path("options")).addObject().put("text", "B").put("correct", false);
+        return question;
+    }
+
+    private void setGenerationResponse(String response) {
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(response)))));
+    }
+
 }

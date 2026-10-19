@@ -126,6 +126,46 @@ describe('EditAttachmentVideoUnitComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('updates a video-only unit without sending attachment metadata', async () => {
+        attachmentVideoUnit.attachment = undefined;
+        attachmentVideoUnit.videoSource = 'https://example.com/video';
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit })));
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit })));
+        fixture.detectChanges();
+
+        fixture.componentInstance.updateAttachmentVideoUnit({
+            formProperties: { name: 'Renamed video', videoSource: 'https://example.com/updated-video' },
+            fileProperties: {},
+        });
+
+        const formData = updateAttachmentVideoUnitSpy.mock.calls[0][2];
+        expect(formData.has('attachment')).toBe(false);
+        expect(formData.has('file')).toBe(false);
+        await expect(getAttachmentVideoUnitPayload(formData)).resolves.toMatchObject({
+            name: 'Renamed video',
+            videoSource: 'https://example.com/updated-video',
+            attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+        });
+        expect(navigateSpy).toHaveBeenCalled();
+    });
+
+    it('includes attachment metadata when adding a file to a video-only unit', async () => {
+        attachmentVideoUnit.attachment = undefined;
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit })));
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit })));
+        fixture.detectChanges();
+
+        fixture.componentInstance.updateAttachmentVideoUnit({
+            formProperties: { name: 'Video with slides', videoSource: 'https://example.com/video' },
+            fileProperties: { file: fakeFile, fileName: fakeFile.name },
+        });
+
+        const formData = updateAttachmentVideoUnitSpy.mock.calls[0][2];
+        expect(formData.has('attachment')).toBe(true);
+        expect(formData.has('file')).toBe(true);
+        await expect(getAttachmentVideoUnitPayload(formData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
+    });
+
     it('should set form data correctly', async () => {
         fixture.detectChanges();
 
