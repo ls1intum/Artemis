@@ -599,18 +599,19 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Deletes older in-progress aggregates of the submission that no build job links to. A build interrupted between
-     * creating its aggregate and linking its job leaves one that nothing completes and that would hide a later assessment.
-     * The caller holds the participation's lock, under which a running build creates its aggregate and links its job, so
-     * an aggregate in the making is never taken for an abandoned one (see LocalCIResultProcessingService).
+     * Deletes the other in-progress aggregates of the submission that no build job links to. A build interrupted between
+     * creating its aggregate and linking its job leaves one that nothing completes and that, whether it was created before
+     * or after the finalized aggregate, could hide that result or the assessment it is merged into. The caller holds the
+     * participation's lock, under which a running build creates its aggregate and links its job, so an aggregate in the
+     * making is never taken for an abandoned one (see LocalCIResultProcessingService).
      *
      * @param resultsOfSubmission the submission's results
      * @param resultId            the id of the aggregated result being finalized
      */
     private void deleteAbandonedAggregates(List<Result> resultsOfSubmission, long resultId) {
         for (Result result : resultsOfSubmission) {
-            boolean olderAggregateInProgress = result.getAssessmentType() == AssessmentType.AUTOMATIC && result.getCompletionDate() == null && result.getId() < resultId;
-            if (!olderAggregateInProgress) {
+            boolean otherAggregateInProgress = result.getAssessmentType() == AssessmentType.AUTOMATIC && result.getCompletionDate() == null && result.getId() != resultId;
+            if (!otherAggregateInProgress) {
                 continue;
             }
             try {

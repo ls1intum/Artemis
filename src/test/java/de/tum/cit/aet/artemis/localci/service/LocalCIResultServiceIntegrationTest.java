@@ -475,14 +475,14 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 .as("the assessment is the submission's latest result").isEqualTo(assessment.getId());
     }
 
-    /** Finalizing a newer build deletes only unlinked leftovers; the linked aggregate of a build in progress is kept. */
+    /** Finalizing a newer build deletes only unlinked leftovers, created before or after its aggregate; the linked aggregate of a build in progress is kept. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheAggregateOfAnOverlappingBuildInProgressIsKept() {
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         participation.setProgrammingExercise(programmingExercise);
         String commitHash = "0000000000000000000000000000000000000017";
-        submissionOf(participation, commitHash);
+        ProgrammingSubmission submission = submissionOf(participation, commitHash);
 
         // the older build merged its container and has not finalized yet; an even older build was interrupted before its
         // job was linked
@@ -491,10 +491,15 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         buildJobRepository.save(new BuildJob(buildJobFor("running-0", "running", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, running));
         Result newer = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
         buildJobRepository.save(new BuildJob(buildJobFor("newer-0", "newer", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, newer));
+        // an older build created its aggregate after the newer one's and was interrupted before its job was linked
+        Result abandonedAfterwards = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
 
         programmingExerciseGradingService.finalizeContainerResult(newer.getId(), participation, true, false, ZonedDateTime.now());
 
         assertThat(resultRepository.findById(abandoned.getId())).as("no job links to the abandoned aggregate").isEmpty();
+        assertThat(resultRepository.findById(abandonedAfterwards.getId())).as("an abandoned aggregate is deleted whatever its id").isEmpty();
+        assertThat(programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submission.getId()).orElseThrow().getLatestResult().getId())
+                .as("the finalized result is not hidden by the abandoned aggregate created after it").isEqualTo(newer.getId());
         assertThat(resultRepository.findById(running.getId())).as("the running build keeps its aggregate").isPresent();
         assertThat(programmingExerciseGradingService.finalizeContainerResult(running.getId(), participation, true, false, ZonedDateTime.now()).getCompletionDate()).isNotNull();
     }
