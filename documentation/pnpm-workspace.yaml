@@ -74,6 +74,11 @@ overrides:
   'ws@>=7.0.0 <7.5.11': '7.5.11'
   'ws@>=8.0.0 <8.21.1': '8.21.1'
 
+# Share the root/UI depth guard with Docusaurus's chokidar and glob tooling.
+# Version-based audit findings remain visible until upstream ships a fix.
+patchedDependencies:
+  braces@3.0.3: ../config/pnpm/patches/braces@3.0.3.patch
+
 allowBuilds:
   '@swc/core': true
   core-js: true

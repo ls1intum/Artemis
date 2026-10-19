@@ -1005,9 +1005,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateWorkingTime_failsIfIndividualEndReachesSummaryPublicationDate() throws Exception {
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
-        // the submission overview becomes visible one hour after the nominal end date
+        // Derive the boundary from the same clock origin so getSeconds() does not truncate a fractional-second gap.
         exam1.setPublishResultsDate(null);
-        exam1.setExamSummaryPublicationDate(exam1.getEndDate().plusHours(1));
+        exam1.setExamSummaryPublicationDate(exam1.getStartDate().plusHours(3));
         exam1 = examRepository.save(exam1);
         int originalWorkingTime = studentExam1.getWorkingTime();
         long secondsUntilPublication = Duration.between(exam1.getStartDate(), exam1.getExamSummaryPublicationDate()).getSeconds();
