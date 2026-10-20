@@ -5,14 +5,14 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { DebugElement } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
-import { BuildRunState, ProgrammingBuildRunService, SelectedBuildRun } from 'app/programming/shared/services/programming-build-run.service';
+import { BuildRunState, ProgrammingBuildRunService, SelectedBuildRun, SelectedBuildRunStatus } from 'app/programming/shared/services/programming-build-run.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
@@ -30,6 +30,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 
 describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let comp: ProgrammingExerciseInstructorSubmissionStateComponent;
@@ -44,6 +45,8 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let getBuildRunStateSubject: Subject<BuildRunState>;
     let selectedBuildRunCompletionsSubject: Subject<string>;
     let getSelectedBuildRunCompletionsStub: ReturnType<typeof vi.spyOn>;
+    let getSelectedBuildRunStatusStub: ReturnType<typeof vi.spyOn>;
+    let connectionStateSubject: Subject<ConnectionState>;
 
     let triggerAllStub: ReturnType<typeof vi.spyOn>;
 
@@ -94,6 +97,10 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
                 getBuildRunStateSubject = new Subject<BuildRunState>();
                 vi.spyOn(buildRunService, 'getBuildRunUpdates').mockReturnValue(getBuildRunStateSubject);
+
+                getSelectedBuildRunStatusStub = vi.spyOn(submissionService, 'getSelectedBuildRunStatus').mockReturnValue(of({ completed: false }));
+                connectionStateSubject = new Subject<ConnectionState>();
+                vi.spyOn(TestBed.inject(WebsocketService), 'connectionState', 'get').mockReturnValue(connectionStateSubject);
 
                 selectedBuildRunCompletionsSubject = new Subject<string>();
                 getSelectedBuildRunCompletionsStub = vi.spyOn(buildRunService, 'getSelectedBuildRunCompletions').mockReturnValue(selectedBuildRunCompletionsSubject);
@@ -330,6 +337,99 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
             fixture.detectChanges();
 
             expect(comp.isBuildingFailedSubmissions()).toBe(false);
+        });
+
+        it('should ignore the response of a request that was started for the previous exercise', async () => {
+            await showFailedSubmission();
+
+            getTriggerFailedButton().click();
+            fixture.componentRef.setInput('exercise', { id: 21 } as ProgrammingExercise);
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+
+            // The response of exercise 20 arrives late, and must neither make the button busy for exercise 21 nor name the run it waits for.
+            triggerRequestSubject.next({ runId: 'run-of-exercise-20' });
+            await vi.advanceTimersByTimeAsync(60000);
+
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            expect(getSelectedBuildRunStatusStub).not.toHaveBeenCalled();
+        });
+
+        it('should not clear the busy state of the new exercise when the request of the previous exercise fails late', async () => {
+            await showFailedSubmission();
+            const previousRequest = triggerRequestSubject;
+            getTriggerFailedButton().click();
+            fixture.componentRef.setInput('exercise', { id: 21 } as ProgrammingExercise);
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+
+            triggerRequestSubject = new Subject<SelectedBuildRun>();
+            triggerAllStub.mockReturnValue(triggerRequestSubject);
+            vi.spyOn(submissionService, 'getSubmissionCountByType').mockReturnValue(failedSubmissionParticipationIds);
+            comp.triggerBuildOfFailedSubmissions();
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+            previousRequest.error(new Error('request of exercise 20 failed'));
+
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+        });
+
+        describe('when the message that announces the end of the run is missed', () => {
+            const startRun = async () => {
+                await showFailedSubmission();
+                getTriggerFailedButton().click();
+                triggerRequestSubject.next({ runId: 'run-1' });
+                await vi.advanceTimersByTimeAsync(0);
+            };
+
+            it('should ask the server for the status of the run when the websocket connection is back and become available if it completed', async () => {
+                await startRun();
+                getSelectedBuildRunStatusStub.mockReturnValue(of({ completed: true } as SelectedBuildRunStatus));
+
+                connectionStateSubject.next(new ConnectionState(true, true));
+                await vi.advanceTimersByTimeAsync(0);
+
+                expect(getSelectedBuildRunStatusStub).toHaveBeenCalledWith(20, 'run-1');
+                expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            });
+
+            it('should stay busy when the status says that the run is still going on, and ask again after a while', async () => {
+                await startRun();
+
+                connectionStateSubject.next(new ConnectionState(true, true));
+                await vi.advanceTimersByTimeAsync(0);
+                expect(getSelectedBuildRunStatusStub).toHaveBeenCalledTimes(1);
+                expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+                getSelectedBuildRunStatusStub.mockReturnValue(of({ completed: true } as SelectedBuildRunStatus));
+                await vi.advanceTimersByTimeAsync(30000);
+
+                expect(getSelectedBuildRunStatusStub).toHaveBeenCalledTimes(2);
+                expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            });
+
+            it('should ask again at the next tick when the status cannot be read', async () => {
+                await startRun();
+                getSelectedBuildRunStatusStub.mockReturnValue(throwError(() => new Error('server unreachable')));
+
+                await vi.advanceTimersByTimeAsync(30000);
+                expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+                getSelectedBuildRunStatusStub.mockReturnValue(of({ completed: true } as SelectedBuildRunStatus));
+                await vi.advanceTimersByTimeAsync(30000);
+
+                expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            });
+
+            it('should not ask while no run is awaited', async () => {
+                await showFailedSubmission();
+
+                connectionStateSubject.next(new ConnectionState(true, true));
+                await vi.advanceTimersByTimeAsync(60000);
+
+                expect(getSelectedBuildRunStatusStub).not.toHaveBeenCalled();
+            });
         });
 
         it('should follow the exercise when it changes and drop the run of the previous exercise', async () => {

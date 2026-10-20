@@ -86,13 +86,16 @@ public class ProgrammingTriggerService {
 
     private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
+    private final SelectedBuildRunStatusService selectedBuildRunStatusService;
+
     public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
+            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService,
+            SelectedBuildRunStatusService selectedBuildRunStatusService) {
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -105,6 +108,7 @@ public class ProgrammingTriggerService {
         this.programmingMessagingService = programmingMessagingService;
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
+        this.selectedBuildRunStatusService = selectedBuildRunStatusService;
     }
 
     /**
@@ -149,7 +153,8 @@ public class ProgrammingTriggerService {
      * waits keeps its thread for as long as that takes.
      * <p>
      * The clients learn that the run is done through a message that names it, also if it fails, so that their retry action can stay
-     * busy until then without mistaking the end of another run of the exercise for it.
+     * busy until then without mistaking the end of another run of the exercise for it. The end is also recorded, see
+     * {@link SelectedBuildRunStatusService}, for a client that was disconnected when the message was sent.
      *
      * @param triggerData what a trigger reads off each participation that is to be built, newest submission included
      * @param exercise    the exercise those participations belong to, loaded with its build config and auxiliary
@@ -165,6 +170,14 @@ public class ProgrammingTriggerService {
             triggerBuildForParticipationData(triggerData, exercise);
         }
         finally {
+            // The status first: a client that gets the message and asks for the status must find the run completed. A store that cannot be
+            // written must not keep the message from the clients that are connected.
+            try {
+                selectedBuildRunStatusService.markCompleted(runId, exercise.getId());
+            }
+            catch (RuntimeException e) {
+                log.warn("Could not record that the run {} of the exercise {} is completed, clients that miss the message cannot find out", runId, exercise.getId(), e);
+            }
             programmingMessagingService.notifyAboutCompletedSelectedBuildRun(exercise, runId);
         }
     }

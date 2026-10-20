@@ -61,6 +61,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunStatusDTO;
+import de.tum.cit.aet.artemis.programming.service.SelectedBuildRunStatusService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
@@ -76,6 +78,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Autowired
     private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private SelectedBuildRunStatusService selectedBuildRunStatusService;
 
     private final Map<String, String> participationCommitHashes = new HashMap<>();
 
@@ -345,9 +350,55 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
             verify(websocketMessagingService).sendMessage(topic(completionTopic), eq(secondRun));
         });
 
+        // A client that missed the message can ask for the status, and finds both runs completed.
+        assertThat(selectedBuildRunStatus(firstRun.runId()).completed()).isTrue();
+        assertThat(selectedBuildRunStatus(secondRun.runId()).completed()).isTrue();
+
         // Note: the participations above have no submissions, so the builds will not be triggered
         assertThat(submissionRepository.findAllByParticipationIdWithResults(participation1.getId())).isEmpty();
         assertThat(submissionRepository.findAllByParticipationIdWithResults(participation3.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSelectedBuildRunStatus_ofARunThatIsNotKnown_isNotCompleted() throws Exception {
+        assertThat(selectedBuildRunStatus("a-run-nobody-started").completed()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSelectedBuildRunStatus_ofACompletedRun_isCompleted() throws Exception {
+        selectedBuildRunStatusService.markCompleted("a-finished-run", exercise.getId());
+
+        assertThat(selectedBuildRunStatus("a-finished-run").completed()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSelectedBuildRunStatus_ofARunOfAnotherExercise_isNotCompleted() throws Exception {
+        selectedBuildRunStatusService.markCompleted("a-run-of-another-exercise", exercise.getId() + 1);
+
+        assertThat(selectedBuildRunStatus("a-run-of-another-exercise").completed()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getSelectedBuildRunStatus_tutorForbidden() throws Exception {
+        request.get(selectedBuildRunStatusUrl("a-finished-run"), HttpStatus.FORBIDDEN, SelectedBuildRunStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getSelectedBuildRunStatus_studentForbidden() throws Exception {
+        request.get(selectedBuildRunStatusUrl("a-finished-run"), HttpStatus.FORBIDDEN, SelectedBuildRunStatusDTO.class);
+    }
+
+    private String selectedBuildRunStatusUrl(String runId) {
+        return "/api/programming/programming-exercises/" + exercise.getId() + "/selected-build-runs/" + runId;
+    }
+
+    private SelectedBuildRunStatusDTO selectedBuildRunStatus(String runId) throws Exception {
+        return request.get(selectedBuildRunStatusUrl(runId), HttpStatus.OK, SelectedBuildRunStatusDTO.class);
     }
 
     @Test

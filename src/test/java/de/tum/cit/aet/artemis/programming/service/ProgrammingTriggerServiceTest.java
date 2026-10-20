@@ -87,6 +87,9 @@ class ProgrammingTriggerServiceTest {
     private ProgrammingMessagingService programmingMessagingService;
 
     @Mock
+    private SelectedBuildRunStatusService selectedBuildRunStatusService;
+
+    @Mock
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
     @Mock
@@ -107,7 +110,7 @@ class ProgrammingTriggerServiceTest {
         programmingTriggerService = new ProgrammingTriggerService(programmingSubmissionRepository, programmingExerciseRepository, Optional.of(continuousIntegrationTriggerService),
                 participationService, programmingExerciseParticipationService, auditEventRepository, programmingExerciseStudentParticipationRepository, programmingMessagingService,
                 templateProgrammingExerciseParticipationRepository, solutionProgrammingExerciseParticipationRepository, programmingExerciseTestCaseChangedService,
-                programmingSubmissionMessagingService);
+                programmingSubmissionMessagingService, selectedBuildRunStatusService);
         // Batching is configured from properties, which a plain unit test does not read; without a size the batch pause
         // divides by zero. A large batch keeps every test below the point where the service would sleep.
         ReflectionTestUtils.setField(programmingTriggerService, "externalSystemRequestBatchSize", 100);
@@ -468,8 +471,10 @@ class ProgrammingTriggerServiceTest {
         // The retry action of the client stays busy until its own run has queued the last build, which it learns from this message.
         programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1");
 
-        InOrder inOrder = inOrder(programmingMessagingService, continuousIntegrationTriggerService);
+        // The status is recorded before the message, so a client that gets the message and asks for the status finds the run completed.
+        InOrder inOrder = inOrder(programmingMessagingService, continuousIntegrationTriggerService, selectedBuildRunStatusService);
         inOrder.verify(continuousIntegrationTriggerService).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
+        inOrder.verify(selectedBuildRunStatusService).markCompleted("run-1", EXERCISE_ID);
         inOrder.verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
         // The run of all builds sends the notification to the instructors, a rebuild of a few participations does not.
         verify(programmingMessagingService, never()).notifyInstructorAboutStartedExerciseBuildRun(any());
@@ -493,6 +498,16 @@ class ProgrammingTriggerServiceTest {
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1"));
+
+        verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
+        verify(selectedBuildRunStatusService).markCompleted("run-1", EXERCISE_ID);
+    }
+
+    @Test
+    void triggerInstructorBuildForParticipations_stillAnnouncesTheEndOfTheRunWhenTheStatusCannotBeRecorded() {
+        doThrow(new IllegalStateException("the distributed store is unreachable")).when(selectedBuildRunStatusService).markCompleted("run-1", EXERCISE_ID);
+
+        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1");
 
         verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
     }

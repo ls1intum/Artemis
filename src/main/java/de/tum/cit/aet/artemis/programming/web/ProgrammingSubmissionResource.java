@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -56,12 +57,14 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
+import de.tum.cit.aet.artemis.programming.service.SelectedBuildRunStatusService;
 
 /**
  * REST controller for managing ProgrammingSubmission.
@@ -107,6 +110,8 @@ public class ProgrammingSubmissionResource {
 
     private final CourseAthenaConfigRepository courseAthenaConfigRepository;
 
+    private final SelectedBuildRunStatusService selectedBuildRunStatusService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -114,8 +119,9 @@ public class ProgrammingSubmissionResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
             SubmissionRepository submissionRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository,
             ExerciseDateService exerciseDateService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
-            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            CourseAthenaConfigRepository courseAthenaConfigRepository, SelectedBuildRunStatusService selectedBuildRunStatusService) {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+        this.selectedBuildRunStatusService = selectedBuildRunStatusService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
@@ -277,6 +283,22 @@ public class ProgrammingSubmissionResource {
         programmingTriggerService.triggerInstructorBuildForParticipations(triggerData, programmingExercise, run.runId());
 
         return ResponseEntity.ok(run);
+    }
+
+    /**
+     * GET programming-exercises/:exerciseId/selected-build-runs/:selectedBuildRunId : tells whether a run that queues the builds of selected participations has ended.
+     * <p>
+     * The end of a run is also announced with a websocket message. A client that was disconnected at that moment asks here instead.
+     * The server remembers an ended run for a limited time, so a run that is unknown is reported as not completed.
+     *
+     * @param exerciseId         the programming exercise the run belongs to.
+     * @param selectedBuildRunId the run, as returned by the request that started it.
+     * @return the status of the run, forbidden (403) if the user is not an instructor of the exercise.
+     */
+    @GetMapping("programming-exercises/{exerciseId}/selected-build-runs/{selectedBuildRunId}")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<SelectedBuildRunStatusDTO> getSelectedBuildRunStatus(@PathVariable Long exerciseId, @PathVariable String selectedBuildRunId) {
+        return ResponseEntity.ok(new SelectedBuildRunStatusDTO(selectedBuildRunStatusService.isCompleted(selectedBuildRunId, exerciseId)));
     }
 
     /**

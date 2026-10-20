@@ -18,6 +18,13 @@ export interface SelectedBuildRun {
     runId: string;
 }
 
+/**
+ * Whether a run that queues the builds of selected participations has queued its last build. A run the server does not know, because it is still going on or ended long ago, is not completed.
+ */
+export interface SelectedBuildRunStatus {
+    completed: boolean;
+}
+
 export interface IProgrammingBuildRunService {
     /**
      * Subscribe for updates on running build runs. Atm we assume that only build run is running for the whole exercise.
