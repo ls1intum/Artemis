@@ -174,9 +174,15 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         let textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedback);
         expect(textToBeDisplayed).toBe(feedback.detailText);
 
+        // The description is what the tutor wrote and sees, so it is not shown beside the criterion's text
         feedback.gradingInstruction = gradingInstruction;
         textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedback);
-        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.detailText);
+        expect(textToBeDisplayed).toEqual(feedback.detailText);
+
+        // Without a description of its own, the feedback shows the criterion's text
+        feedback.detailText = undefined;
+        textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedback);
+        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback);
     });
 
     it('should escape special characters', () => {
@@ -189,7 +195,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(textToBeDisplayed).toEqual(expectedTextToBeDisplayed);
     });
 
-    it('should not display a points pill for non-graded feedback suggestions', () => {
+    it('should display a points pill for non-graded feedback suggestions, such as preliminary feedback', () => {
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.AUTOMATIC,
             text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
@@ -197,7 +203,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.detectChanges();
 
         const pointsElement = fixture.debugElement.query(By.css('.unified-feedback-points'));
-        expect(pointsElement).toBeNull();
+        expect(pointsElement).not.toBeNull();
     });
 
     it('should display a points pill for graded feedback', () => {
