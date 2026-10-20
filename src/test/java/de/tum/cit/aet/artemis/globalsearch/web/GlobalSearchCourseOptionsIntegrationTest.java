@@ -4,13 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import tools.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -80,5 +84,35 @@ class GlobalSearchCourseOptionsIntegrationTest extends AbstractProgrammingIntegr
         List<CourseForSearchFilterDTO> options = request.getList(URL, HttpStatus.OK, CourseForSearchFilterDTO.class);
 
         assertThat(options).extracting(CourseForSearchFilterDTO::id).doesNotContain(foreignCourse.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void returnsOnlyCourseFilterFieldsAndPreservesFalseInJson() throws Exception {
+        List<Map<String, Object>> options = request.get(URL, HttpStatus.OK, new TypeReference<>() {
+        });
+
+        assertThat(options).hasSize(3).allSatisfy(option -> {
+            assertThat(option).containsOnlyKeys("id", "title", "active");
+            assertThat(option.get("id")).isInstanceOf(Number.class);
+            assertThat(option.get("title")).isInstanceOf(String.class);
+            assertThat(option.get("active")).isInstanceOf(Boolean.class);
+        });
+        assertThat(options).filteredOn(option -> ((Number) option.get("id")).longValue() == pastCourse.getId()).singleElement()
+                .satisfies(option -> assertThat(option).containsEntry("title", pastCourse.getTitle()).containsEntry("active", false));
+    }
+
+    @Test
+    @WithMockUser(username = "empty" + TEST_PREFIX + "student1", roles = "USER")
+    void returnsAnEmptyArrayForAUserWithoutCourses() throws Exception {
+        userUtilService.addUsers("empty" + TEST_PREFIX, 1, 0, 0, 0);
+
+        assertThat(request.getList(URL, HttpStatus.OK, CourseForSearchFilterDTO.class)).isEmpty();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void rejectsUnauthenticatedRequests() throws Exception {
+        request.get(URL, HttpStatus.UNAUTHORIZED, String.class);
     }
 }

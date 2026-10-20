@@ -137,13 +137,17 @@ describe('GlobalSearchFilterService', () => {
 
         it('falls back to the loaded courses while the read is still in flight', () => {
             // An empty response must not make the menu emptier than it was before the request was made.
+            const pending = new Subject<MenuCourse[]>();
             mockCourseStorageService.getCourses.mockReturnValue([{ id: 4, title: 'Stored Course' } as Course]);
-            mockCourseOptionsService.getCourses.mockReturnValue(of([]));
+            mockCourseOptionsService.getCourses.mockReturnValue(pending.asObservable());
             courseGeneration.set(0);
 
             service.searchQuery.set('course:');
             TestBed.tick();
 
+            expect(service.menuOptions().map((option) => option.label)).toEqual(['Stored Course']);
+            pending.next([]);
+            TestBed.tick();
             expect(service.menuOptions().map((option) => option.label)).toEqual(['Stored Course']);
         });
     });
@@ -184,12 +188,22 @@ describe('GlobalSearchFilterService', () => {
             TestBed.tick();
 
             expect(service.menuOptions()).toHaveLength(0);
+            fresh.next([{ id: 9, title: "B's course", active: true }]);
+            TestBed.tick();
+
+            expect(service.menuOptions().map((option) => option.label)).toEqual(["B's course"]);
         });
     });
 
     describe('empty menu reasons', () => {
-        it('says the user has no courses rather than showing a bare no-matches row', () => {
+        it('shows loading until an empty course response arrives, then says the user has no courses', () => {
+            const pending = new Subject<MenuCourse[]>();
+            mockCourseOptionsService.getCourses.mockReturnValue(pending.asObservable());
             service.searchQuery.set('course:');
+            TestBed.tick();
+
+            expect(service.emptyMenuReasonKey()).toBe('global.search.loadingCourses');
+            pending.next([]);
             TestBed.tick();
 
             expect(service.menuOptions()).toHaveLength(0);

@@ -1,18 +1,10 @@
 import { Service, Signal, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, of, shareReplay } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MenuCourse } from 'app/core/navbar/global-search/models/search-menu.util';
-
-/** One row of `GET api/search/course-options`. */
-interface CourseForSearchFilterDTO {
-    id?: number;
-    title?: string;
-    active?: boolean;
-}
-
-const COURSE_OPTIONS_URL = 'api/search/course-options';
+import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
+import { CourseForSearchFilter } from 'app/openapi/model/course-for-search-filter';
 
 /**
  * The courses the `course:` filter can offer.
@@ -28,11 +20,11 @@ const COURSE_OPTIONS_URL = 'api/search/course-options';
  */
 @Service()
 export class SearchCourseOptionsService {
-    private readonly http = inject(HttpClient);
+    private readonly searchApi = inject(GlobalSearchApi);
     private readonly accountService = inject(AccountService);
 
     /** The in-flight or completed request, kept so it is issued once and replayed to everyone after it. */
-    private courses?: Observable<MenuCourse[]>;
+    private courses?: Observable<CourseForSearchFilter[]>;
 
     /**
      * Incremented whenever the signed-in user changes. A cached course list belongs to the user it was read
@@ -69,12 +61,17 @@ export class SearchCourseOptionsService {
      * @return the courses, or an empty list if they could not be read
      */
     getCourses(): Observable<MenuCourse[]> {
-        this.courses ??= this.http.get<CourseForSearchFilterDTO[]>(COURSE_OPTIONS_URL).pipe(
+        if (this.courses) {
+            return this.courses;
+        }
+        const generation = this.userGeneration();
+        this.courses = this.searchApi.getCourseFilterOptions().pipe(
             catchError(() => {
-                // A failure must not be replayed for the rest of the session: drop the cached request so the next
-                // time the course menu is opened it tries again, and degrade to the store fallback meanwhile.
-                this.courses = undefined;
-                return of<MenuCourse[]>([]);
+                // Retry on the next read, but never let a previous user's late failure evict the current user's request.
+                if (generation === this.userGeneration()) {
+                    this.courses = undefined;
+                }
+                return of<CourseForSearchFilter[]>([]);
             }),
             shareReplay({ bufferSize: 1, refCount: false }),
         );
