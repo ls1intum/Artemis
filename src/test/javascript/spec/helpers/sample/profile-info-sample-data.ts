@@ -98,6 +98,7 @@ export const expectedProfileInfo: ProfileInfo = {
     externalCredentialProvider: '',
     externalPasswordResetLinkMap: { en: '', de: '' },
     features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
+    gocastEnabled: false,
     git: gitInformation,
     java: {},
     needsToAcceptTerms: false,
