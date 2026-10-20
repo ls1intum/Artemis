@@ -52,7 +52,7 @@ import { ArtemisServerDateService } from 'app/foundation/service/server-date.ser
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, NEVER, Subject, of, throwError } from 'rxjs';
-import { skip } from 'rxjs/operators';
+import { skip, tap } from 'rxjs/operators';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -747,6 +747,128 @@ describe('ExamParticipationComponent', () => {
             expect(textSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
             expect(textSubmissionUpdateSpy).not.toHaveBeenCalledWith(syncedSubmission, 5);
             expectSyncedSubmissions(submission, syncedSubmission);
+        });
+
+        describe('text saves of one submission', () => {
+            const pendingSaves: Subject<HttpResponse<TextSubmission>>[] = [];
+            let sentTexts: (string | undefined)[];
+            let inFlight: number;
+            let maxInFlight: number;
+            let submission: TextSubmission;
+
+            // Every request stays open until the test completes it, so tests control the order of the responses.
+            beforeEach(() => {
+                const textExercise = new TextExercise(new Course(), undefined);
+                textExercise.id = 5;
+                const participation = new StudentParticipation();
+                submission = new TextSubmission();
+                submission.text = 'Answer A';
+                submission.isSynced = false;
+                participation.submissions = [submission];
+                textExercise.studentParticipations = [participation];
+                comp.studentExam().exercises = [textExercise];
+                pendingSaves.length = 0;
+                sentTexts = [];
+                inFlight = 0;
+                maxInFlight = 0;
+                vi.spyOn(textSubmissionService, 'update').mockImplementation((answer) => {
+                    sentTexts.push(answer.text);
+                    inFlight++;
+                    maxInFlight = Math.max(maxInFlight, inFlight);
+                    const save = new Subject<HttpResponse<TextSubmission>>();
+                    pendingSaves.push(save);
+                    return save.pipe(
+                        tap({
+                            next: () => inFlight--,
+                            error: () => inFlight--,
+                        }),
+                    );
+                });
+            });
+
+            function respond(index: number) {
+                pendingSaves[index].next(new HttpResponse({ body: new TextSubmission() }));
+                pendingSaves[index].complete();
+            }
+
+            function edit(text: string) {
+                submission.text = text;
+                submission.isSynced = false;
+            }
+
+            it('should send the newest text only after the previous save responded, never two requests at once', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                comp.triggerSave(false);
+                // Save B must not overlap with save A: the database write order has to equal the send order.
+                expect(sentTexts).toEqual(['Answer A']);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                expect(submission.isSynced).toBe(false);
+
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(maxInFlight).toBe(1);
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+            });
+
+            it('should only send the latest of several edits made while a save is in flight', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                edit('Answer C');
+                comp.triggerSave(false);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer C']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(submission.text).toBe('Answer C');
+            });
+
+            it('should keep the submission synced when the student undoes to the text that is being saved', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                edit('Answer A');
+
+                respond(0);
+                // The server holds the same text as the editor, so nothing has to be sent again.
+                expect(sentTexts).toEqual(['Answer A']);
+                expect(submission.isSynced).toBe(true);
+            });
+
+            it('should release the slot after a failed save so the next trigger sends the latest text', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                pendingSaves[0].error(new HttpErrorResponse({ status: 500 }));
+                expect(submission.isSynced).toBe(false);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+            });
+
+            it('should still flush the latest text of a forced save while a save is in flight', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(true);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(submission.text).toBe('Answer B');
+            });
         });
 
         it('should sync modeling submissions', () => {
