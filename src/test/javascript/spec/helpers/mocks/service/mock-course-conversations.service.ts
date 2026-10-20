@@ -39,6 +39,12 @@ export class MockCourseConversationsService {
 
     setConversationViewOpen(isOpen: boolean): void {}
 
+    messagesRequested(conversationId: number): number {
+        return 0;
+    }
+
+    messagesLoaded(conversationId: number, coveredRequests: number): void {}
+
     setUpConversationService = (course: Course): Observable<never> => {
         return EMPTY;
     };

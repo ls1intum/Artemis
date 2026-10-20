@@ -214,6 +214,54 @@ describe('CommunicationService', () => {
         subscription.unsubscribe();
     });
 
+    describe('read bookkeeping of the messages request', () => {
+        it('reports the loaded messages of a single conversation as a read, also when a newer request owns the cache', () => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const courseConversations = TestBed.inject(CourseConversationsService);
+            const requested = vi.spyOn(courseConversations, 'messagesRequested').mockReturnValue(4);
+            const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
+            const olderResponse = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts').mockReturnValueOnce(olderResponse).mockReturnValue(new Subject<HttpResponse<Post[]>>());
+
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [7], page: 0 }, true);
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [8], page: 0 }, true);
+            expect(requested).toHaveBeenCalledWith(7);
+            expect(requested).toHaveBeenCalledWith(8);
+            expect(loaded).not.toHaveBeenCalled();
+
+            olderResponse.next(new HttpResponse({ body: [post] }));
+
+            expect(loaded).toHaveBeenCalledExactlyOnceWith(7, 4);
+        });
+
+        it.each([
+            ['a search', { courseId: 1, conversationIds: [7], searchText: 'term', page: 0 }],
+            ['several conversations', { courseId: 1, conversationIds: [7, 8], page: 0 }],
+            ['no conversation', { courseId: 1, page: 0 }],
+        ])('does not report the response of %s as a read', (_name, filter) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const courseConversations = TestBed.inject(CourseConversationsService);
+            const requested = vi.spyOn(courseConversations, 'messagesRequested');
+            const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [post] })));
+
+            communicationService.getFilteredPosts(filter as PostContextFilter, true);
+
+            expect(requested).not.toHaveBeenCalled();
+            expect(loaded).not.toHaveBeenCalled();
+        });
+
+        it('does not report a failed messages request as a read', () => {
+            const courseConversations = TestBed.inject(CourseConversationsService);
+            const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
+            vi.spyOn(postService, 'getPosts').mockReturnValue(throwError(() => new Error('failed')));
+
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [7], page: 0 }, true);
+
+            expect(loaded).not.toHaveBeenCalled();
+        });
+    });
+
     it('retries an unsuccessful request before allowing cache hits', () => {
         vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
         const response = new Subject<HttpResponse<Post[]>>();

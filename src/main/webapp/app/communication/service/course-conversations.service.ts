@@ -539,6 +539,38 @@ export class CourseConversationsService implements OnDestroy {
         this.isConversationViewOpen = isOpen;
     }
 
+    private readRequestsOf(conversationId: number) {
+        let readRequest = this.readRequests.get(conversationId);
+        if (!readRequest) {
+            readRequest = { sent: 0, succeeded: 0, failed: 0 };
+            this.readRequests.set(conversationId, readRequest);
+        }
+        return readRequest;
+    }
+
+    /**
+     * Notes that the messages of a conversation are being requested. The server resets the unread count of the conversation with that
+     * request, which also covers every read request that was sent for the conversation before it.
+     *
+     * @param conversationId the conversation whose messages are requested
+     * @return the number of read requests sent so far, to be passed to {@link messagesLoaded} once the messages arrived
+     */
+    public messagesRequested(conversationId: number): number {
+        return this.readRequestsOf(conversationId).sent;
+    }
+
+    /**
+     * Notes that the messages of a conversation arrived, so the read requests sent before they were requested no longer describe the unread count
+     * of the server, in case one of them fails afterwards.
+     *
+     * @param conversationId the conversation whose messages arrived
+     * @param coveredRequests the value {@link messagesRequested} returned for that request
+     */
+    public messagesLoaded(conversationId: number, coveredRequests: number) {
+        const readRequest = this.readRequestsOf(conversationId);
+        readRequest.succeeded = Math.max(readRequest.succeeded, coveredRequests);
+    }
+
     // The selected conversation only counts as read while the view that shows it is open.
     private isReadingConversation(conversationId: number | undefined): boolean {
         return this.isConversationViewOpen && conversationId !== undefined && conversationId === this.activeConversation?.id;
@@ -564,8 +596,7 @@ export class CourseConversationsService implements OnDestroy {
                     // it for them anyway, and reading the conversation again is what resets that count.
                     const selectionVersion = this.selectionVersion;
                     const conversationId = conversationDTO.id!;
-                    const readRequest = this.readRequests.get(conversationId) ?? { sent: 0, succeeded: 0, failed: 0 };
-                    this.readRequests.set(conversationId, readRequest);
+                    const readRequest = this.readRequestsOf(conversationId);
                     const requestNumber = ++readRequest.sent;
                     this.conversationService.markAsRead(this._courseId, conversationId).subscribe({
                         next: () => {
@@ -581,8 +612,9 @@ export class CourseConversationsService implements OnDestroy {
                             }
                         },
                         error: () => {
-                            // A newer read that succeeded already reset the count on the server, so this failure no longer describes it.
-                            if (readRequest.succeeded > requestNumber) {
+                            // A newer read, or the messages request that covers this one, already reset the count on the server, so this failure no
+                            // longer describes it. A request cannot both succeed and fail, so its own number is never recorded as succeeded.
+                            if (readRequest.succeeded >= requestNumber) {
                                 return;
                             }
                             readRequest.failed = Math.max(readRequest.failed, requestNumber);

@@ -783,6 +783,45 @@ describe('CourseConversationsService', () => {
             expect(courseConversationsService['hasUnreadMessages']).toBe(false);
         });
 
+        it('ignores a read failure after the conversation was reopened and its messages loaded', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const pendingRead = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pendingRead);
+            receiveMockSubject.next(eventFor(channel));
+
+            // the user switches away and back, and the messages request of the reopened conversation resets the count on the server
+            courseConversationsService.setActiveConversation(groupChat);
+            courseConversationsService.setActiveConversation(channel);
+            const coveredRequests = courseConversationsService.messagesRequested(channel.id!);
+            courseConversationsService.messagesLoaded(channel.id!, coveredRequests);
+            courseConversationsService.markAsRead(channel.id!);
+            expect(cachedUnreadCount(channel.id)).toBe(0);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
+
+            pendingRead.error(new Error('read failed'));
+
+            expect(cachedUnreadCount(channel.id)).toBe(0);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
+        });
+
+        it('still restores the count when the failed read was sent after the messages were requested', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const pendingRead = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pendingRead);
+            const coveredRequests = courseConversationsService.messagesRequested(channel.id!);
+
+            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService.messagesLoaded(channel.id!, coveredRequests);
+            pendingRead.error(new Error('read failed'));
+
+            expect(cachedUnreadCount(channel.id)).toBe(1);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+        });
+
         it('keeps the count of a newer failed read when an older read succeeds afterwards', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
             courseConversationsService.setConversationViewOpen(true);
