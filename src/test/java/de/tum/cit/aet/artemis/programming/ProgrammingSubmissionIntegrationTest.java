@@ -696,20 +696,21 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionKeepsAutomaticFeedbackAfterRequestedAiFeedback() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
-        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), now.minusHours(1));
         submission.setParticipation(programmingExerciseStudentParticipation);
         submission = submissionRepository.save(submission);
 
-        Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(3), submission);
+        Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusHours(3), submission);
         var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "lockAfterAiTest");
         participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "test failure before the AI feedback");
 
         // the student requested AI feedback after the tests ran, so it is the latest result of the submission
-        Result athenaResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now().minusHours(2), submission);
+        Result athenaResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusHours(2), submission);
         var aiFeedback = new Feedback();
         aiFeedback.setType(FeedbackType.AUTOMATIC);
         aiFeedback.setText("NonGradedFeedbackSuggestion:File Main.java at line 3");
