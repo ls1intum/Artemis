@@ -86,14 +86,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     /**
      * How many queued jobs each build slot is allowed to have before a bulk trigger waits, see {@link LocalCIBulkTriggerThrottle}. 0 disables the wait.
      */
-    @Value("${artemis.continuous-integration.bulk-trigger.max-queued-jobs-per-build-slot:2}")
-    private int bulkTriggerMaxQueuedJobsPerBuildSlot;
+    private final int bulkTriggerMaxQueuedJobsPerBuildSlot;
 
     /**
      * The longest a single bulk trigger waits for room in the queue in total, after which it queues the rest without waiting.
      */
-    @Value("${artemis.continuous-integration.bulk-trigger.max-wait-minutes:180}")
-    private int bulkTriggerMaxWaitMinutes;
+    private final int bulkTriggerMaxWaitMinutes;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
@@ -144,7 +142,22 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
-            BuildPhaseEvaluationService buildPhaseEvaluationService, BuildJobCloneTokenService buildJobCloneTokenService) {
+            BuildPhaseEvaluationService buildPhaseEvaluationService, BuildJobCloneTokenService buildJobCloneTokenService,
+            @Value("${artemis.continuous-integration.bulk-trigger.max-queued-jobs-per-build-slot:2}") int bulkTriggerMaxQueuedJobsPerBuildSlot,
+            @Value("${artemis.continuous-integration.bulk-trigger.max-wait-minutes:180}") int bulkTriggerMaxWaitMinutes) {
+        // Only 0 switches the wait off. A negative value would do so (limit) or silently remove the pacing (wait time) by accident.
+        if (bulkTriggerMaxQueuedJobsPerBuildSlot < 0) {
+            throw new IllegalArgumentException(
+                    "artemis.continuous-integration.bulk-trigger.max-queued-jobs-per-build-slot must not be negative, use 0 to turn the wait off, but was "
+                            + bulkTriggerMaxQueuedJobsPerBuildSlot);
+        }
+        if (bulkTriggerMaxWaitMinutes < 0) {
+            throw new IllegalArgumentException(
+                    "artemis.continuous-integration.bulk-trigger.max-wait-minutes must not be negative, use max-queued-jobs-per-build-slot: 0 to turn the wait off, but was "
+                            + bulkTriggerMaxWaitMinutes);
+        }
+        this.bulkTriggerMaxQueuedJobsPerBuildSlot = bulkTriggerMaxQueuedJobsPerBuildSlot;
+        this.bulkTriggerMaxWaitMinutes = bulkTriggerMaxWaitMinutes;
         this.buildJobCloneTokenService = buildJobCloneTokenService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
@@ -203,7 +216,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         if (bulkTriggerMaxQueuedJobsPerBuildSlot <= 0) {
             return BulkTriggerThrottle.NONE;
         }
-        return new LocalCIBulkTriggerThrottle(distributedDataAccessService, bulkTriggerMaxQueuedJobsPerBuildSlot, Duration.ofMinutes(Math.max(0, bulkTriggerMaxWaitMinutes)));
+        return new LocalCIBulkTriggerThrottle(distributedDataAccessService, bulkTriggerMaxQueuedJobsPerBuildSlot, Duration.ofMinutes(bulkTriggerMaxWaitMinutes));
     }
 
     /**
