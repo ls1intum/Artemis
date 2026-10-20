@@ -215,4 +215,65 @@ class SearchableEntityAccessFilterServiceTest {
         // The negated clause excluding course 5, not merely a mention of it.
         assertThat(filter).containsPattern("[Nn]ot?e? Filter\\(course_id Equal 5\\)");
     }
+
+    @Test
+    void studentFilterNeverMatchesPostsOrRepliesEvenWhenAskedFor() {
+        // Posts and answer posts are indexed but not searchable: a request naming them alongside channels gets the
+        // channels only, with no disjunct that could match a message row.
+        User user = new User();
+        user.setId(1L);
+        when(courseRepository.findAllAccessibleCoursesForUser(1L, false)).thenReturn(List.of(courseWithId(9L)));
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(),
+                Set.of(SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.POST, SearchableEntitySchema.TypeValues.ANSWER_POST));
+
+        assertThat(result.hasAccess()).isTrue();
+        String filter = result.filter().toString();
+        assertThat(filter).contains("type Equal channel");
+        assertThat(filter).doesNotContain("post");
+    }
+
+    @Test
+    void studentChannelFilterRequiresTheDateFromWhichStudentsMaySeeTheChannel() {
+        // Every channel row carries that date; a row without it predates the field and may belong to an unreleased
+        // exercise or exam, so students must not match it (no null branch).
+        User user = new User();
+        user.setId(1L);
+        when(courseRepository.findAllAccessibleCoursesForUser(1L, false)).thenReturn(List.of(courseWithId(9L)));
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(), Set.of(SearchableEntitySchema.TypeValues.CHANNEL));
+
+        String filter = result.filter().toString();
+        assertThat(filter).contains("type Equal channel").contains("release_date LessThenEqual");
+        assertThat(filter).doesNotContainIgnoringCase("release_date IsNull");
+    }
+
+    @Test
+    void adminTypeOnlyFilterNeverMatchesPostsOrRepliesEvenWhenAskedFor() {
+        // The admin fast path turns each requested type into a bare type filter with no access rule behind it, so it is
+        // the path a non-searchable type would slip through if the service trusted its caller.
+        when(authCheckService.isCurrentUserAdminAccessEnabled()).thenReturn(true);
+        User user = new User();
+        user.setId(1L);
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(),
+                Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.POST, SearchableEntitySchema.TypeValues.ANSWER_POST));
+
+        assertThat(result.hasAccess()).isTrue();
+        String filter = result.filter().toString();
+        assertThat(filter).contains("type Equal exercise");
+        assertThat(filter).doesNotContain("post");
+    }
+
+    @Test
+    void askingOnlyForPostsAndRepliesMatchesNothing() {
+        when(authCheckService.isCurrentUserAdminAccessEnabled()).thenReturn(true);
+        User user = new User();
+        user.setId(1L);
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(), Set.of(SearchableEntitySchema.TypeValues.POST, SearchableEntitySchema.TypeValues.ANSWER_POST));
+
+        assertThat(result.hasAccess()).isFalse();
+        verify(courseRepository, never()).findAll();
+    }
 }

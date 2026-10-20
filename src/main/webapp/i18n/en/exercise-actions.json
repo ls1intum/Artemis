@@ -61,6 +61,7 @@
             "openTextEditor": "Open text editor",
             "copyUrl": "Copy URL",
             "copiedUrl": "Copied URL",
+            "openRepositoryReadOnly": "Open repository in read-only online code view (new tab)",
             "uploadFile": "Upload a file",
             "viewTeam": "Team",
             "sshKeyTip": "To use SSH, you need to add an SSH key to your account {link:here}.",

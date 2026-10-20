@@ -162,6 +162,7 @@
                     "youtubeTooLong": "The video exceeds the maximum duration and cannot be transcribed.",
                     "youtubeUnavailable": "The video is unavailable (removed, region-blocked, or age-restricted).",
                     "youtubeDownloadFailed": "The video could not be downloaded for transcription.",
+                    "videoSourceUnavailable": "The video cannot be loaded right now (for example, it is not public or not recorded yet). It will be retried automatically.",
                     "noIngestibleContent": "No content could be indexed: the PDF has no readable pages and no transcript could be produced from the video. Check the file and the video source, then retry.",
                     "recoveryLimitReached": "Processing was interrupted several times in a row without finishing (for example by service restarts). It will be retried automatically."
                 }
@@ -219,7 +220,7 @@
                 "description": "Description",
                 "updateNotificationText": "Update Notification Text",
                 "updateNotificationTextPlaceholder": "Optional notification text for students about changes.",
-                "updateNotificationTextMaxLengthValidationError": "The notification text can be max 1000 characters long.",
+                "updateNotificationTextMaxLengthValidationError": "The notification text can be max 255 characters long.",
                 "descriptionPlaceHolder": "Give the content a description",
                 "nameRequiredValidationError": "Name is required.",
                 "nameMaxLengthValidationError": "Name can be max 255 characters long.",

@@ -26,7 +26,7 @@ describe('CourseChatbotComponent', () => {
 
     const createChatServiceMock = () => ({
         setCourseId: vi.fn<(courseId: number | undefined) => void>(),
-        openChat: vi.fn<(mode: ChatServiceMode, entityId: number) => void>(),
+        openChat: vi.fn<(mode: ChatServiceMode, entityId: number, sessionId?: number) => void>(),
     });
 
     beforeEach(async () => {
@@ -60,7 +60,17 @@ describe('CourseChatbotComponent', () => {
         fixture.componentRef.setInput('courseId', 2);
         await fixture.whenStable();
 
-        expect(chatService.openChat).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2);
+        expect(chatService.openChat).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2, undefined);
+    });
+
+    it('should open the requested session of the course', async () => {
+        fixture.componentRef.setInput('courseId', 2);
+        fixture.componentRef.setInput('sessionId', 77);
+        await fixture.whenStable();
+
+        // Both inputs are read in one effect run, so the chat opens the requested session in a single call instead of loading the current one first.
+        expect(chatService.openChat).toHaveBeenCalledOnce();
+        expect(chatService.openChat).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2, 77);
     });
 
     it('should not call openChat when courseId is undefined', async () => {

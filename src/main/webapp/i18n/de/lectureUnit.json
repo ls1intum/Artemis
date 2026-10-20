@@ -162,6 +162,7 @@
                     "youtubeTooLong": "Das Video überschreitet die maximale Länge und kann nicht transkribiert werden.",
                     "youtubeUnavailable": "Das Video ist nicht verfügbar (entfernt, regional gesperrt oder altersbeschränkt).",
                     "youtubeDownloadFailed": "Das Video konnte nicht für die Transkription heruntergeladen werden.",
+                    "videoSourceUnavailable": "Das Video kann gerade nicht geladen werden (zum Beispiel, weil es nicht öffentlich oder noch nicht aufgezeichnet ist). Die Verarbeitung wird automatisch wiederholt.",
                     "noIngestibleContent": "Es konnten keine Inhalte indexiert werden: Das PDF enthält keine lesbaren Seiten und aus dem Video konnte kein Transkript erstellt werden. Prüfe die Datei und die Videoquelle und starte die Verarbeitung dann erneut.",
                     "recoveryLimitReached": "Die Verarbeitung wurde mehrmals hintereinander unterbrochen, ohne abzuschließen (zum Beispiel durch Neustarts des Dienstes). Sie wird automatisch erneut versucht."
                 }
@@ -219,7 +220,7 @@
                 "description": "Beschreibung",
                 "updateNotificationText": "Update Benachrichtigungstext",
                 "updateNotificationTextPlaceholder": "Optionaler Benachrichtigungstext für Studierende über Änderungen.",
-                "updateNotificationTextMaxLengthValidationError": "Der Benachrichtigungstext kann maximal 1000 Zeichen lang sein.",
+                "updateNotificationTextMaxLengthValidationError": "Der Benachrichtigungstext kann maximal 255 Zeichen lang sein.",
                 "descriptionPlaceHolder": "Gib dem Inhalt eine Beschreibung",
                 "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
                 "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",

@@ -65,6 +65,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
 import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -92,6 +93,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
@@ -110,6 +112,8 @@ import inet.ipaddr.IPAddressString;
 @Profile(PROFILE_LOCALVC)
 // TODO: we should rename this because its used in the context of https and ssh git operations
 public class LocalVCServletService {
+
+    static final String AUTHORIZED_EXERCISE_ATTRIBUTE = LocalVCServletService.class.getName() + ".authorizedExercise";
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
 
@@ -153,6 +157,8 @@ public class LocalVCServletService {
     private final RateLimitService rateLimitService;
 
     private final ExerciseVersionService exerciseVersionService;
+
+    private final Optional<HyperionExerciseMutationApi> hyperionMutationApi;
 
     private final UserVcsAccessTokenService userVcsAccessTokenService;
 
@@ -220,10 +226,10 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService, UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
-            Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
-            BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ExerciseVersionService exerciseVersionService, Optional<HyperionExerciseMutationApi> hyperionMutationApi, UserVcsAccessTokenService userVcsAccessTokenService,
+            Optional<DistributedDataAccessService> distributedDataAccessService, Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService,
+            Optional<BuildJobCloneTokenService> buildJobCloneTokenService, BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService,
+            DistributedDataProvider distributedDataProvider, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.authenticationManager = authenticationManager;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.userRepository = userRepository;
@@ -241,6 +247,7 @@ public class LocalVCServletService {
         this.authorizationCheckService = authorizationCheckService;
         this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
+        this.hyperionMutationApi = hyperionMutationApi;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildAgentAddressRegistryService = buildAgentAddressRegistryService;
@@ -421,7 +428,40 @@ public class LocalVCServletService {
             throw e;
         }
 
+        request.setAttribute(AUTHORIZED_EXERCISE_ATTRIBUTE, exercise);
+
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
+    }
+
+    /**
+     * Claims the existing per-exercise mutation slot when a push targets a versionable staff repository. Student repositories receive a no-op lease.
+     *
+     * @param repository the repository targeted by receive-pack
+     * @param exercise   the already-authorized exercise
+     * @return a lease held by the transport until receive-pack and synchronous post-receive processing complete
+     */
+    public ProgrammingExerciseMutationGuardService.MutationLease claimProgrammingExerciseMutation(Repository repository, ProgrammingExercise exercise) {
+        return claimProgrammingExerciseMutation(repository, exercise.getId());
+    }
+
+    /**
+     * Protects a push using the already-authorized exercise id; HTTP authentication supplies a projection, not an entity.
+     *
+     * @param repository repository receiving the push
+     * @param exerciseId exercise authorized for this request
+     * @return mutation lease for staff repositories, otherwise a no-op lease
+     */
+    public ProgrammingExerciseMutationGuardService.MutationLease claimProgrammingExerciseMutation(Repository repository, long exerciseId) {
+        LocalVCRepositoryUri repositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
+        RepositoryType repositoryType = getRepositoryType(repositoryUri.getRepositoryTypeOrUserName(), exerciseId);
+        if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType) && hyperionMutationApi.map(HyperionExerciseMutationApi::isCoordinationEnabled).orElse(false)
+                && !programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exerciseId)) {
+            HyperionExerciseMutationApi api = hyperionMutationApi.orElseThrow();
+            String token = api.claimExternalMutationSlot(exerciseId);
+            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> api.clearExternalMutationSlot(exerciseId, token));
+        }
+        return new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
+        }, false);
     }
 
     /**
@@ -1405,14 +1445,15 @@ public class LocalVCServletService {
 
         try {
             if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
-                // The identified commit, not the repository head. Attribution has to name the commit this request created, and
-                // re-reading the head here would be a race: the online editor shares one working copy per repository, so a
-                // concurrent commit can move it and the alert would then be attributed to the wrong client.
-                // An alert about an auxiliary repository names one specific repository by id, so attributing it needs that id too
                 Long triggeringAuxiliaryRepositoryId = repositoryType == RepositoryType.AUXILIARY
                         ? auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise(repositoryTypeOrUserName, exercise).orElse(null)
                         : null;
-                exerciseVersionService.createExerciseVersion(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
+                if (hyperionMutationApi.map(HyperionExerciseMutationApi::isCoordinationEnabled).orElse(false) && !exercise.isExamExercise()) {
+                    exerciseVersionService.createExerciseVersionSynchronously(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
+                }
+                else {
+                    exerciseVersionService.createExerciseVersion(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
+                }
             }
 
             if (repositoryType.equals(RepositoryType.TESTS)) {
@@ -1592,21 +1633,15 @@ public class LocalVCServletService {
     }
 
     private RepositoryType getRepositoryType(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
-        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
-            return RepositoryType.TEMPLATE;
-        }
-        else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
-            return RepositoryType.SOLUTION;
-        }
-        else if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-            return RepositoryType.TESTS;
-        }
-        else if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
+        return getRepositoryType(repositoryTypeOrUserName, exercise.getId());
+    }
+
+    private RepositoryType getRepositoryType(String repositoryTypeOrUserName, long exerciseId) {
+        RepositoryType type = getRepositoryTypeWithoutAuxiliary(repositoryTypeOrUserName);
+        if (type == RepositoryType.USER && auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exerciseId)) {
             return RepositoryType.AUXILIARY;
         }
-        else {
-            return RepositoryType.USER;
-        }
+        return type;
     }
 
     private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName) {
@@ -1748,7 +1783,7 @@ public class LocalVCServletService {
 
         // If cache was empty then send an email
         if (isFirstTimeIn24Hours) {
-            MailRecipientDTO mailRecipient = new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null);
+            MailRecipientDTO mailRecipient = MailRecipientDTO.from(user);
 
             mailSendingService.buildAndSendAsync(mailRecipient, "email.httpsCloneTip.title", "mail/httpsCloneTipEmail", Map.of());
         }
