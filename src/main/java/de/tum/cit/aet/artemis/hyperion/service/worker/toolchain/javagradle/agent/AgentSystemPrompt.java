@@ -160,7 +160,8 @@ public class AgentSystemPrompt {
             Use one line per student implementation seam:
               [task][Short human title](exactTestNameA,exactTestNameB)
             Copy names verbatim from `verify`; never guess, rename, add parentheses, or remove prefixes. Put ALL visible partitions for one seam on its one task line, and bind
-            each visible test exactly once. Never bind AFTER_DUE_DATE tests, build gates, aggregates, harness checks, or structural checks already satisfied by the template.
+            each visible test exactly once. Bind every visible server-seeded structural check exactly once on its owner task, even when it carries zero weight or already
+            passes on the template. Never bind AFTER_DUE_DATE tests, build gates, aggregates, or harness checks.
             Titles describe behaviour, not raw test names. Use exact lowercase `[task]`. Task markers must be plain Markdown lines: never wrap them in backticks or fenced code.
 
             """;

@@ -38,6 +38,8 @@ Report only high-confidence defects that would make later artifacts faithfully i
 - Normative clauses cannot both hold for the same legal situation. Cite both and give a concrete witness or logical proof. A restatement or entailed rule is not a conflict.
 - An example contradicts its own inputs and rules. Independently replay each deterministic example, including state ownership, operation order, and policy decisions.
 - The exact Public API needed by the rules and ownership is missing, or a provided declaration depends on a student-created type that the starter omits.
+  Compare member-level @studentCreates markers with the Design roles: marking a supplied constructor or body-only method as absent contradicts its supplied declaration.
+  A supplied caller must compile without calling constructors or methods these markers remove from the starter. Cite both ownership claims when they conflict.
 - An admitted input has no coherent behavior. Check relevant numeric representation, boundaries, repeated operations, state transitions, and collection progress.
   Java float/double values include NaN and infinities unless narrowed; integers can overflow in intermediate calculations. Explicit, coherent preconditions are valid.
   Do not require null behavior merely because an API uses a reference type, or invent arbitrary defensive policy outside the stated domain.

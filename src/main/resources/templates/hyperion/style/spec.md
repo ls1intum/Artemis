@@ -192,6 +192,9 @@ The tag is a Javadoc block immediately before the complete final declaration, ne
 It removes the entire member from the starter, not just a return type, parameter, or `throws` clause. Keep
 checked exceptions in the final signature; if an omitted exception makes a supplied signature uncompilable,
 resolve the ownership graph rather than erasing the exception from the contract.
+Keep the Design role consistent: a supplied constructor or a method whose body students complete must retain
+its declaration and must not carry `@studentCreates`. Supplied callers must compile without invoking members
+that this marker removes from the starter.
 
 For API use, control flow, or implementation-only tasks, provide the class and method declarations instead.
 Supply incidental enums, initialized collections, exception classes, and domain holders when declaring them
