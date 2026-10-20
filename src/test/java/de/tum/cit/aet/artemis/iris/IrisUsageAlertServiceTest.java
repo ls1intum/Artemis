@@ -155,4 +155,88 @@ class IrisUsageAlertServiceTest {
                 .thenReturn(new IrisDashboardOverviewDTO(100, 50, 50.0, 200, 20, 5.0, 10, 5, 80.0, 20.0, 60.0, 15.0, 40, 10, 20, 5, 5.0, 4.0, 8.0, 10.0));
         when(dashboardService.computeStaleBefore(any(), any())).thenReturn(ZonedDateTime.of(2026, 5, 27, 11, 55, 0, 0, ZoneOffset.UTC).toInstant());
     }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "interval", "lowThreshold", "highThreshold", "lookback", "cooldown", "maxWindow", "sessions", "messages" })
+    void invalidConfigurationPreventsAcquiringLockAndSendingAlerts(String invalidField) {
+        var alert = properties.getAlert();
+        switch (invalidField) {
+            case "interval" -> alert.setCheckIntervalMinutes(0);
+            case "lowThreshold" -> alert.setNoResponseRateThreshold(-1);
+            case "highThreshold" -> alert.setNoResponseRateThreshold(101);
+            case "lookback" -> alert.setLookbackMinutes(properties.getStaleThresholdMinutes());
+            case "cooldown" -> alert.setCooldownMinutes(alert.getCheckIntervalMinutes());
+            case "maxWindow" -> alert.setLookbackMinutes(properties.getMaxQueryWindowDays() * 1440 + 1);
+            case "sessions" -> alert.setMinimumEligibleSessions(0);
+            case "messages" -> alert.setMinimumUserMessages(0);
+            default -> throw new IllegalArgumentException(invalidField);
+        }
+        alertService.validateConfig();
+        alertService.checkAlertThresholds();
+        org.mockito.Mockito.verifyNoInteractions(distributedDataProvider);
+        verify(emailService, never()).sendAlert(any());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "dev", "test", "email" })
+    void runtimeGatesPreventQueriesAndLockAcquisition(String gate) {
+        switch (gate) {
+            case "dev" -> when(profileService.isDevActive()).thenReturn(true);
+            case "test" -> alertService = new IrisUsageAlertService(profileService, properties, dashboardService, emailService, dashboardRepository, true, distributedDataProvider);
+            case "email" -> when(emailService.canSendAlert()).thenReturn(false);
+            default -> throw new IllegalArgumentException(gate);
+        }
+        alertService.checkAlertThresholds();
+        org.mockito.Mockito.verifyNoInteractions(distributedDataProvider, dashboardService);
+        verify(emailService, never()).sendAlert(any());
+    }
+
+    @Test
+    void unavailableLockIsNotUnlocked() throws Exception {
+        DistributedLock lock = distributedDataProvider.getLock("unused");
+        org.mockito.Mockito.clearInvocations(distributedDataProvider);
+        when(lock.tryLock(any())).thenReturn(false);
+        alertService.checkAlertThresholds();
+        verify(lock, never()).unlock();
+        verify(emailService, never()).sendAlert(any());
+    }
+
+    @Test
+    void insufficientMessagesUnlocksWithoutSending() {
+        mockHighNoResponseRate();
+        when(dashboardRepository.countUserMessages(any(), any())).thenReturn(0L);
+        alertService.checkAlertThresholds();
+        verify(distributedDataProvider.getLock("unused")).unlock();
+        verify(emailService, never()).sendAlert(any());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    void failedOrEmptyDeliveryLeavesCooldownUnsetAndUnlocks(boolean throwsException) {
+        mockHighNoResponseRate();
+        if (throwsException) {
+            when(emailService.sendAlert(any())).thenThrow(new IllegalStateException("mail unavailable"));
+        }
+        else {
+            when(emailService.sendAlert(any())).thenReturn(0);
+        }
+        alertService.checkAlertThresholds();
+        verify(emailService).sendAlert(any(IrisDashboardAlertDTO.class));
+        verify(scheduleStateMap, never()).put(any(), any());
+        verify(distributedDataProvider.getLock("unused")).unlock();
+    }
+
+    @Test
+    void deliveredAlertContainsExactEligibleWindowAndCounts() {
+        mockHighNoResponseRate();
+        when(emailService.sendAlert(any())).thenReturn(2);
+        alertService.checkAlertThresholds();
+        var captured = org.mockito.ArgumentCaptor.forClass(IrisDashboardAlertDTO.class);
+        verify(emailService).sendAlert(captured.capture());
+        var dto = captured.getValue();
+        org.assertj.core.api.Assertions.assertThat(dto.noResponseRate()).isEqualTo(15.0);
+        org.assertj.core.api.Assertions.assertThat(dto.eligibleSessions()).isEqualTo(50L);
+        org.assertj.core.api.Assertions.assertThat(dto.userMessageCount()).isEqualTo(100L);
+        verify(scheduleStateMap).put("last-alert-sent-at", java.time.Instant.parse("2026-05-27T12:00:00Z"));
+    }
 }

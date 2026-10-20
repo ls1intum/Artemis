@@ -903,6 +903,27 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.participationMode()).toBe('practice');
         });
 
+        it.each([
+            ['679', 680, 'practice'],
+            ['680', 679, 'graded'],
+        ])('switches from child participation %s to navigation target %s before activation', (previousId, nextId, expectedMode) => {
+            // A details response can arrive between NavigationStart and child activation. The outgoing child must
+            // not undo the mode the student is navigating to, otherwise the split panel redirects back to it.
+            getExerciseDetailsMock.mockReturnValue(NEVER);
+            vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
+            routeToParticipation(previousId);
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+            const navigation: Pick<Navigation, 'finalUrl'> = {
+                finalUrl: { toString: () => `/courses/1/exercises/programming-exercises/2/code-editor/${nextId}` } as UrlTree,
+            };
+            router.currentNavigation.mockReturnValue(navigation);
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe(expectedMode);
+            expect(comp.activeParticipation()?.id).toBe(nextId);
+        });
+
         it('keeps the graded mode when the URL addresses the graded participation', async () => {
             routeToParticipation('679');
 
