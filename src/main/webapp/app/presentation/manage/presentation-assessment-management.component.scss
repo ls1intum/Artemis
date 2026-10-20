@@ -75,7 +75,8 @@
     min-height: 3rem;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    margin: 0 1rem;
+    padding: 0.5rem 0;
 }
 
 .presentation-content thead th {
@@ -88,7 +89,6 @@
 
 .student-search-input {
     padding-left: 2.25rem;
-    background: var(--hover-slightly-darker-body-bg);
 }
 
 .presentation-detail-row > td {
@@ -139,6 +139,7 @@
     min-height: 0;
     flex: 1 1 auto;
     overflow: auto;
+    padding: 0 1rem;
 }
 
 .presentation-student-details-button {

@@ -112,7 +112,7 @@ class WeaviateOutboxDispatcherTest {
 
     private SearchableEntityWeaviateService realService(WeaviateService weaviateService, SearchableEntityResolver resolver) {
         return new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, JsonObjectMapper.get(), new SearchableEntityContentHasher(JsonObjectMapper.get()),
-                mock(ApplicationEventPublisher.class), mock(SearchableEntityVectorWriter.class), embeddingClient);
+                mock(ApplicationEventPublisher.class), mock(SearchableEntityVectorWriter.class), embeddingClient, Runnable::run);
     }
 
     @Test

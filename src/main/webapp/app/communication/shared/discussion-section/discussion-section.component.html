@@ -157,6 +157,7 @@
                                 </form>
                                 <div class="bold-line row mt-1 mb-2"></div>
                                 <div
+                                    data-testid="discussion-messages"
                                     #itemsContainer
                                     [class]="embedded() ? 'overflow-y-auto flex-grow-1' : 'items-container'"
                                     infinite-scroll
@@ -165,6 +166,7 @@
                                 >
                                     @for (post of posts(); track post.id) {
                                         <jhi-posting-thread
+                                            data-testid="discussion-post"
                                             #postingThread
                                             [id]="'item-' + post.id"
                                             class="item"

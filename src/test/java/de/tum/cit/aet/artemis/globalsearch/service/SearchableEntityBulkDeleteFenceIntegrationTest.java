@@ -95,7 +95,7 @@ class SearchableEntityBulkDeleteFenceIntegrationTest extends AbstractProgramming
                         properties.apiKey(), null),
                 environment);
         var searchableEntityWeaviateService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, jsonMapper, contentHasher, eventPublisher,
-                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class));
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), Runnable::run);
 
         long courseId = 991000, lectureId = 991001, otherLectureId = 991009, legacyUnitId = 991002, otherLegacyUnitId = 991008, newerUnitId = 991003;
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, legacyUnitId,

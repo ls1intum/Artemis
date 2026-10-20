@@ -332,4 +332,30 @@ class ContentExtractionServiceFlavorStripTest {
             return builder.getCourseID().equals(java.util.Optional.of(42L)) && builder.getExerciseID().isEmpty() && builder.getUserID().isEmpty();
         }));
     }
+
+    @Test
+    void malformedEditsAreSkippedWhileLaterValidDeletionStillApplies() {
+        var edits = java.util.Arrays.asList((FlavorStripEditsDTO.EditDTO) null, new FlavorStripEditsDTO.EditDTO("invalid", null, ""),
+                new FlavorStripEditsDTO.EditDTO("invalid", "", ""), new FlavorStripEditsDTO.EditDTO("invalid", " ", ""),
+                new FlavorStripEditsDTO.EditDTO("invalid", "Task", "Rewrite"), new FlavorStripEditsDTO.EditDTO("flavor", "Narrative. ", null));
+        stubLlm(new FlavorStripEditsDTO(edits));
+        assertThat(service.stripFlavorText("Narrative. Task: solve 2 + 2.")).isEqualTo("Task: solve 2 + 2.");
+    }
+
+    @Test
+    void missingStructuredLlmResultPreservesOriginalWhitespaceExactly() {
+        stubLlm(null);
+        String original = "Keep  spaces.\n\n\nAnd tabs.\t";
+        assertThat(service.stripFlavorText(original)).isEqualTo(original);
+    }
+
+    @Test
+    void nullModelDisablesStrippingAndNullReasoningUsesConfiguredTemperature() {
+        var disabled = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, null, null, 0.25);
+        assertThat(disabled.stripFlavorText("Keep")).isEqualTo("Keep");
+        verifyNoInteractions(chatClient, templateService);
+        var options = ContentExtractionService.buildChatOptions("model", null, 0.25).build();
+        assertThat(options.getTemperature()).isEqualTo(0.25);
+        assertThat(options.getReasoningEffort()).isNull();
+    }
 }

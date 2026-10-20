@@ -160,6 +160,18 @@ class SearchableEntityEmbeddingClientTest {
     }
 
     @Test
+    void embeddingDataComparesItsVectorByContentAndDoesNotPrintIt() {
+        var data = new EmbeddingResponseDTO.EmbeddingDataDTO(3, new float[] { 1f, 2f, 3f });
+        var sameContent = new EmbeddingResponseDTO.EmbeddingDataDTO(3, new float[] { 1f, 2f, 3f });
+
+        assertThat(data).isEqualTo(sameContent).hasSameHashCodeAs(sameContent);
+        assertThat(data).isNotEqualTo(new EmbeddingResponseDTO.EmbeddingDataDTO(3, new float[] { 1f, 2f, 4f }));
+        assertThat(data).isNotEqualTo(new EmbeddingResponseDTO.EmbeddingDataDTO(4, new float[] { 1f, 2f, 3f }));
+        assertThat(data).hasToString("EmbeddingDataDTO[index=3, dimensions=3]");
+        assertThat(new EmbeddingResponseDTO.EmbeddingDataDTO(0, null)).hasToString("EmbeddingDataDTO[index=0, dimensions=0]");
+    }
+
+    @Test
     void validate_rejectsResponsesThatDoNotGiveExactlyOneUsableVectorPerInput() {
         var good = new EmbeddingResponseDTO.EmbeddingDataDTO(0, new float[] { 1f, 0f });
 
