@@ -74,7 +74,7 @@ export class CodeButtonPopoverContentComponent {
     protected readonly copiedRepositoryUrl = signal(false);
     protected readonly labeledAuthenticationMethodData = computed(() => this.getLabeledAuthenticationMethodData());
     protected readonly selectedLabeledAuthenticationMethodData = linkedSignal(() => this.initializeSelectedLabeledAuthenticationMethodData());
-    protected readonly tokenAuthenticationAvailable = computed(() => this.isTokenAuthenticationAvailable());
+    protected readonly alternativeAuthenticationMethodAvailable = computed(() => this.isAlternativeAuthenticationMethodAvailable());
     protected readonly repositoryDisplayUrl = computed(() => this.getRepositoryDisplayUrl());
     protected readonly repositoryCopyUrl = computed(() => this.selectedLabeledAuthenticationMethodData().authenticationMethodData.url);
     protected readonly ideLinkData = computed(() => this.getIdeLinkData());
@@ -105,9 +105,14 @@ export class CodeButtonPopoverContentComponent {
 
     private initializeSelectedLabeledAuthenticationMethodData(): LabeledAuthenticationMethodData {
         const labeledAuthenticationMethodData = this.labeledAuthenticationMethodData();
-        let initialAuthenticationMethod = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
+        const initialAuthenticationMethod = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
         if (initialAuthenticationMethod === RepositoryAuthenticationMethod.Password) {
-            initialAuthenticationMethod = RepositoryAuthenticationMethod.Token;
+            const tokenAuthenticationMethodData = labeledAuthenticationMethodData.find((data) => {
+                return data.authenticationMethodData.authenticationMethod === RepositoryAuthenticationMethod.Token;
+            });
+            if (tokenAuthenticationMethodData) {
+                return tokenAuthenticationMethodData;
+            }
         }
         return (
             labeledAuthenticationMethodData.find((data) => data.authenticationMethodData.authenticationMethod === initialAuthenticationMethod) ?? labeledAuthenticationMethodData[0]
@@ -128,9 +133,9 @@ export class CodeButtonPopoverContentComponent {
         ];
     }
 
-    private isTokenAuthenticationAvailable(): boolean {
+    private isAlternativeAuthenticationMethodAvailable(): boolean {
         return this.authenticationMethodData().some((data) => {
-            return data.authenticationMethod === RepositoryAuthenticationMethod.Token;
+            return data.authenticationMethod === RepositoryAuthenticationMethod.Token || data.authenticationMethod === RepositoryAuthenticationMethod.SSH;
         });
     }
 
