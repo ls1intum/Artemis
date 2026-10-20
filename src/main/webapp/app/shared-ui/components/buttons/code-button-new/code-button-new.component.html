@@ -8,7 +8,9 @@
     data-testid="code-button-new"
 >
     <fa-icon [icon]="faCode" />
-    {{ 'artemisApp.exerciseActions.code' | artemisTranslate }}
+    @if (displayLabel()) {
+        {{ 'artemisApp.exerciseActions.code' | artemisTranslate }}
+    }
 </button>
 
 <tumaet-ui-popover

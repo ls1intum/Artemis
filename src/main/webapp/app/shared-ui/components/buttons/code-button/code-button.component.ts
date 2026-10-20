@@ -118,10 +118,9 @@ export class CodeButtonComponent implements OnInit {
     allowOnlineIde = input.required<boolean>();
     programmingLanguage = input<ProgrammingLanguage>();
     disabled = input<boolean>(false);
-
+    size = input<CodeButtonSize>('default');
     hideLabelMobile = input<boolean>(false);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
-    size = input<CodeButtonSize>('default');
 
     isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
     user = signal<User | undefined>(undefined);

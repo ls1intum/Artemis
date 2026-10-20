@@ -1,6 +1,7 @@
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,7 +21,7 @@ import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-publi
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
-import { Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CodeButtonNewComponent } from './code-button-new.component';
 
@@ -32,6 +33,8 @@ describe('CodeButtonNewComponent', () => {
     let programmingExerciseService: Mocked<ProgrammingExerciseService>;
     let ideSettingsService: Mocked<IdeSettingsService>;
     let sshUserSettingsService: Mocked<SshUserSettingsService>;
+    let mediumBreakpoint: BehaviorSubject<BreakpointState>;
+    let extraLargeBreakpoint: BehaviorSubject<BreakpointState>;
 
     const exerciseId = 42;
     const repositoryUri = 'https://vcs.example.com/course/exercise.git';
@@ -44,6 +47,8 @@ describe('CodeButtonNewComponent', () => {
     let profileInfo: ProfileInfo;
 
     beforeEach(async () => {
+        mediumBreakpoint = new BehaviorSubject<BreakpointState>({ matches: false, breakpoints: {} });
+        extraLargeBreakpoint = new BehaviorSubject<BreakpointState>({ matches: false, breakpoints: {} });
         await TestBed.configureTestingModule({
             imports: [CodeButtonNewComponent],
             providers: [
@@ -76,6 +81,13 @@ describe('CodeButtonNewComponent', () => {
                     },
                 },
                 { provide: IdeSettingsService, useValue: { loadIdePreferences: vi.fn() } },
+                {
+                    provide: BreakpointObserver,
+                    useValue: {
+                        observe: vi.fn((breakpoint: string) => (breakpoint === '(min-width: 768px)' ? mediumBreakpoint : extraLargeBreakpoint)),
+                        isMatched: vi.fn(() => false),
+                    },
+                },
             ],
         }).compileComponents();
 
@@ -157,6 +169,39 @@ describe('CodeButtonNewComponent', () => {
 
         const trigger = fixture.debugElement.query(By.css('[data-testid="code-button-new"]')).nativeElement as HTMLButtonElement;
         expect(trigger.classList).toContain(expectedClass);
+    });
+
+    it('should show the label by default', () => {
+        createComponent(false);
+
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button-new"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.textContent).toContain('artemisApp.exerciseActions.code');
+    });
+
+    it('should hide the label below the medium breakpoint', () => {
+        createComponent(false);
+        fixture.componentRef.setInput('hideLabelMobile', true);
+        fixture.detectChanges();
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button-new"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.textContent).not.toContain('artemisApp.exerciseActions.code');
+
+        mediumBreakpoint.next({ matches: true, breakpoints: { '(min-width: 768px)': true } });
+        fixture.detectChanges();
+        expect(trigger.textContent).toContain('artemisApp.exerciseActions.code');
+    });
+
+    it('should hide the label until the extra-large breakpoint when configured', () => {
+        mediumBreakpoint.next({ matches: true, breakpoints: { '(min-width: 768px)': true } });
+        createComponent(false);
+        fixture.componentRef.setInput('hideLabelMobile', true);
+        fixture.componentRef.setInput('hideLabelBreakpoint', 'xl');
+        fixture.detectChanges();
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button-new"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.textContent).not.toContain('artemisApp.exerciseActions.code');
+
+        extraLargeBreakpoint.next({ matches: true, breakpoints: { '(min-width: 1200px)': true } });
+        fixture.detectChanges();
+        expect(trigger.textContent).toContain('artemisApp.exerciseActions.code');
     });
 
     describe('VCS access token', () => {

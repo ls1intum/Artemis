@@ -1,4 +1,6 @@
 import { Component, type ResourceParamsContext, type ResourceSnapshot, computed, inject, input, resource, resourceFromSnapshots, signal } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
@@ -20,6 +22,12 @@ import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { User } from 'app/account/user/user.model';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { map } from 'rxjs/operators';
+
+const BREAKPOINTS = {
+    md: '(min-width: 768px)',
+    xl: '(min-width: 1200px)',
+} as const;
 
 type CodeButtonLoadingState =
     | { status: 'loading' }
@@ -38,6 +46,7 @@ export class CodeButtonNewComponent {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly ideSettingsService = inject(IdeSettingsService);
     private readonly router = inject(Router);
+    private readonly breakpointObserver = inject(BreakpointObserver);
 
     protected readonly faCircleExclamation = faCircleExclamation;
     protected readonly faCircleNotch = faCircleNotch;
@@ -54,8 +63,13 @@ export class CodeButtonNewComponent {
     readonly programmingLanguage = input<ProgrammingLanguage>();
     readonly disabled = input(false);
     readonly size = input<CodeButtonSize>('default');
+    readonly hideLabelMobile = input(false);
+    readonly hideLabelBreakpoint = input<'md' | 'xl'>('md');
 
     private readonly theiaDisabled = computed(() => !this.allowOnlineIde() || !this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA));
+    private readonly matchesMediumBreakpoint = this.getMatchesBreakpointSignal(BREAKPOINTS.md);
+    private readonly matchesExtraLargeBreakpoint = this.getMatchesBreakpointSignal(BREAKPOINTS.xl);
+    protected readonly displayLabel = computed(() => this.computeDisplayLabel());
     protected readonly loadingState = computed(() => this.getLoadingState());
 
     private readonly userResource = resource({
@@ -84,6 +98,19 @@ export class CodeButtonNewComponent {
         params: () => ({ programmingLanguage: this.programmingLanguage() }),
         loader: ({ params }) => this.loadPreferredIde(params.programmingLanguage),
     });
+
+    private getMatchesBreakpointSignal(breakpoint: string) {
+        return toSignal(this.breakpointObserver.observe(breakpoint).pipe(map((result) => result.matches)), {
+            initialValue: this.breakpointObserver.isMatched(breakpoint),
+        });
+    }
+
+    private computeDisplayLabel(): boolean {
+        if (!this.hideLabelMobile()) {
+            return true;
+        }
+        return this.hideLabelBreakpoint() === 'md' ? this.matchesMediumBreakpoint() : this.matchesExtraLargeBreakpoint();
+    }
 
     private getLoadingState(): CodeButtonLoadingState {
         if (this.authenticationMethodDataResource.isLoading() || this.theiaLinkDataResource.isLoading() || this.preferredIdeResource.isLoading()) {

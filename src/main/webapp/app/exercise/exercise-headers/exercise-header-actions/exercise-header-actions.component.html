@@ -162,6 +162,7 @@
                         <jhi-code-button-new
                             [disabled]="isLoading()"
                             [size]="smallButtons() ? 'small' : 'default'"
+                            [hideLabelMobile]="true"
                             [exerciseId]="exercise().id!"
                             [repositoryUri]="repositoryUriForCodeButton()"
                             [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"
