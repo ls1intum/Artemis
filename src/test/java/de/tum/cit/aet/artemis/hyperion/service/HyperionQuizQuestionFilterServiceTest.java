@@ -148,6 +148,34 @@ class HyperionQuizQuestionFilterServiceTest {
     }
 
     @Test
+    void evaluate_discardsAVerdictWhoseEntriesCarryNoSeverity() {
+        respondWith("""
+                { "rationale": "scores under another name", "modes": [
+                  { "mode": "FACTUAL_ERROR", "score": 0.9, "triggered": true, "justification": "wrong key" },
+                  { "mode": "AMBIGUOUS_CORRECT_ANSWER", "score": 0.0, "triggered": false, "justification": "fine" },
+                  { "mode": "OFF_TOPIC", "score": 0.0, "triggered": false, "justification": "fine" },
+                  { "mode": "NEAR_DUPLICATE", "score": 0.0, "triggered": false, "justification": "fine" },
+                  { "mode": "ILL_FORMED_DISTRACTORS", "score": 0.0, "triggered": false, "justification": "fine" } ] }
+                """);
+
+        assertThat(evaluate()).isEmpty();
+    }
+
+    @Test
+    void evaluate_discardsAVerdictWithANullEntryInsteadOfFailing() {
+        respondWith("""
+                { "rationale": "one entry missing", "modes": [
+                  null,
+                  { "mode": "AMBIGUOUS_CORRECT_ANSWER", "severity": 0.0, "triggered": false, "justification": "fine" },
+                  { "mode": "OFF_TOPIC", "severity": 0.0, "triggered": false, "justification": "fine" },
+                  { "mode": "NEAR_DUPLICATE", "severity": 0.0, "triggered": false, "justification": "fine" },
+                  { "mode": "ILL_FORMED_DISTRACTORS", "severity": 0.0, "triggered": false, "justification": "fine" } ] }
+                """);
+
+        assertThat(evaluate()).isEmpty();
+    }
+
+    @Test
     void evaluate_ignoresUnknownModesRatherThanFailing() {
         String json = verdict(Map.of()).replace("\"NEAR_DUPLICATE\"",
                 "\"NEAR_DUPLICATE\", \"severity\": 0.0, \"triggered\": false, \"justification\": \"x\" }, { \"mode\": \"SOMETHING_ELSE\"");
@@ -189,8 +217,8 @@ class HyperionQuizQuestionFilterServiceTest {
         verify(chatModel).call(prompt.capture());
         String userMessage = prompt.getValue().getInstructions().stream().filter(message -> message instanceof UserMessage).map(message -> message.getText()).findFirst()
                 .orElseThrow();
-        assertThat(userMessage).contains("PUT is idempotent.").contains("Which method is idempotent?").contains("- [correct] PUT").contains("- [wrong] POST")
-                .contains("Stated explanation: PUT is idempotent.");
+        assertThat(userMessage).contains("PUT is idempotent.").contains("Question type: single-choice").contains("Which method is idempotent?").contains("- [correct] PUT")
+                .contains("- [wrong] POST").contains("Stated explanation: PUT is idempotent.");
         assertThat(prompt.getValue().getOptions().getModel()).isNull();
     }
 

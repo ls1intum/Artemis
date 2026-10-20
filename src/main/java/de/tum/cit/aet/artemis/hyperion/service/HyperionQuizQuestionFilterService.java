@@ -107,9 +107,9 @@ public class HyperionQuizQuestionFilterService {
         var outputConverter = HyperionStructuredOutputs.converterFor(FilterOutput.class);
         String systemPrompt = templateService.render(PROMPT_FILTER_QUIZ_QUESTION_SYSTEM, Map.of());
         String userPrompt = templateService.renderObject(PROMPT_FILTER_QUIZ_QUESTION_USER,
-                Map.ofEntries(Map.entry("groundingBlock", groundingBlock), Map.entry("questionTitle", question.title()), Map.entry("questionText", question.questionText()),
-                        Map.entry("options", renderOptions(question.options())), Map.entry("explanation", question.explanation() == null ? "" : question.explanation()),
-                        Map.entry("format", outputConverter.getFormat())));
+                Map.ofEntries(Map.entry("groundingBlock", groundingBlock), Map.entry("questionType", question.type().getValue()), Map.entry("questionTitle", question.title()),
+                        Map.entry("questionText", question.questionText()), Map.entry("options", renderOptions(question.options())),
+                        Map.entry("explanation", question.explanation() == null ? "" : question.explanation()), Map.entry("format", outputConverter.getFormat())));
 
         ChatResponse chatResponse;
         try {
@@ -169,9 +169,19 @@ public class HyperionQuizQuestionFilterService {
         return new QuizQuestionFilterDecisionDTO(aggregate >= threshold, aggregate, List.copyOf(verdicts.values()), rationale);
     }
 
-    private static Map<QuizQuestionFailureMode, QuizQuestionFilterVerdictDTO> toVerdicts(List<ModeScore> scores) {
+    /**
+     * Maps the judged entries to verdicts. Entries that are {@code null}, name no known mode or carry no severity are skipped, so a reply
+     * with such entries fails the completeness check and is retried instead of defaulting a missing severity to "absent".
+     */
+    private static Map<QuizQuestionFailureMode, QuizQuestionFilterVerdictDTO> toVerdicts(@Nullable List<ModeScore> scores) {
         Map<QuizQuestionFailureMode, QuizQuestionFilterVerdictDTO> verdicts = new EnumMap<>(QuizQuestionFailureMode.class);
+        if (scores == null) {
+            return verdicts;
+        }
         for (ModeScore score : scores) {
+            if (score == null || score.severity() == null) {
+                continue;
+            }
             parseMode(score.mode()).ifPresent(mode -> verdicts.put(mode,
                     new QuizQuestionFilterVerdictDTO(mode, clamp(score.severity()), Boolean.TRUE.equals(score.triggered()), sanitizeInput(score.justification()))));
         }
@@ -192,10 +202,7 @@ public class HyperionQuizQuestionFilterService {
         }
     }
 
-    private static double clamp(@Nullable Double value) {
-        if (value == null) {
-            return 0;
-        }
+    private static double clamp(double value) {
         return Math.max(0, Math.min(1, value));
     }
 

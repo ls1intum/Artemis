@@ -2,6 +2,7 @@
 {{groundingBlock}}
 
 ## Question Under Review
+Question type: {{questionType}}
 Title: {{questionTitle}}
 
 {{questionText}}
