@@ -22,7 +22,7 @@
 >
     <div class="w-120">
         @let state = loadingState();
-        @if (state.status === 'loading') {
+        @if (state.status === 'idle' || state.status === 'loading') {
             <div class="flex h-40 w-full items-center justify-center">
                 <fa-icon [icon]="faCircleNotch" animation="spin" data-testid="code-button-popover-loading" />
             </div>

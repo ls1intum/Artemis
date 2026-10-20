@@ -43,7 +43,7 @@ const BREAKPOINTS = {
 } as const;
 
 type CodeButtonLoadingState =
-    | { status: 'loading' }
+    | { status: 'idle' | 'loading' }
     | { status: 'error' }
     | { status: 'complete'; authenticationMethodData: NonEmptyArray<AuthenticationMethodData>; preferredIde: Ide; theiaLinkData: TheiaLinkData | undefined };
 
@@ -64,9 +64,10 @@ export class CodeButtonComponent {
     protected readonly faCircleExclamation = faCircleExclamation;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCode = faCode;
-    protected readonly showAlternatives = signal(false);
 
     private readonly isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
+    private readonly resourceLoadingTriggered = signal(false);
+    protected readonly showAlternatives = signal(false);
 
     readonly exerciseId = input.required<number>();
     readonly repositoryUri = input.required<string>();
@@ -86,29 +87,26 @@ export class CodeButtonComponent {
     protected readonly loadingState = computed(() => this.getLoadingState());
 
     private readonly userResource = resource({
+        params: () => this.getUserResourceParams(),
         loader: () => this.loadUser(),
     });
     private readonly tokenResource = resource({
-        params: () => ({
-            exerciseId: this.exerciseId(),
-            isInCourseManagement: this.isInCourseManagement(),
-            vcsAccessTokenData: this.vcsAccessTokenData(),
-        }),
+        params: () => this.getTokenResourceParams(),
         loader: ({ params }) => this.getToken(params.exerciseId, params.isInCourseManagement, params.vcsAccessTokenData),
     });
     private readonly tokenUrlResource = resourceFromSnapshots(() => this.getTokenUrlSnapshot());
     private readonly authenticationMethodDataResource = resource({
-        params: ({ chain }) => this.getAuthenticationMethodDataParams(chain),
+        params: ({ chain }) => this.getAuthenticationMethodDataResourceParams(chain),
         loader: ({ params }) => {
             return this.loadAuthenticationMethodData(params.repositoryUri, params.login, params.tokenUrl);
         },
     });
     private readonly theiaLinkDataResource = resource({
-        params: ({ chain }) => this.getTheiaLinkDataParams(chain),
+        params: ({ chain }) => this.getTheiaLinkDataResourceParams(chain),
         loader: ({ params }) => this.loadTheiaLinkData(params.exerciseId, params.theiaPortalURL, params.repositoryUrl, params.userName, params.userEmail),
     });
     private readonly preferredIdeResource = resource({
-        params: () => ({ programmingLanguage: this.programmingLanguage() }),
+        params: () => this.getPreferredIdeResourceParams(),
         loader: ({ params }) => this.loadPreferredIde(params.programmingLanguage),
     });
 
@@ -126,9 +124,20 @@ export class CodeButtonComponent {
     }
 
     private getLoadingState(): CodeButtonLoadingState {
-        if (this.authenticationMethodDataResource.isLoading() || this.theiaLinkDataResource.isLoading() || this.preferredIdeResource.isLoading()) {
+        const anyRequiredResourceIdle =
+            this.authenticationMethodDataResource.status() === 'idle' ||
+            this.preferredIdeResource.status() === 'idle' ||
+            (!this.theiaDisabled() && this.theiaLinkDataResource.status() === 'idle');
+        const anyRequiredResourceLoading =
+            this.authenticationMethodDataResource.isLoading() || this.preferredIdeResource.isLoading() || (!this.theiaDisabled() && this.theiaLinkDataResource.isLoading());
+        const everyRequiredResourceHasValue =
+            this.authenticationMethodDataResource.hasValue() && this.preferredIdeResource.hasValue() && (this.theiaDisabled() || this.theiaLinkDataResource.hasValue());
+
+        if (anyRequiredResourceIdle) {
+            return { status: 'idle' };
+        } else if (anyRequiredResourceLoading) {
             return { status: 'loading' };
-        } else if (this.authenticationMethodDataResource.hasValue() && this.preferredIdeResource.hasValue() && (this.theiaDisabled() || this.theiaLinkDataResource.hasValue())) {
+        } else if (everyRequiredResourceHasValue) {
             return {
                 status: 'complete',
                 authenticationMethodData: this.authenticationMethodDataResource.value(),
@@ -141,9 +150,15 @@ export class CodeButtonComponent {
     }
 
     protected handleOpenChange(isOpen: boolean): void {
-        if (!isOpen) {
+        if (isOpen) {
+            this.resourceLoadingTriggered.set(true);
+        } else {
             this.showAlternatives.set(false);
         }
+    }
+
+    private getUserResourceParams(): 'no-params' | undefined {
+        return this.resourceLoadingTriggered() ? 'no-params' : undefined;
     }
 
     private async loadUser(): Promise<User> {
@@ -154,7 +169,21 @@ export class CodeButtonComponent {
         return user;
     }
 
-    private getAuthenticationMethodDataParams(chain: ResourceParamsContext['chain']) {
+    private getTokenResourceParams() {
+        if (!this.resourceLoadingTriggered()) {
+            return undefined;
+        }
+        return {
+            exerciseId: this.exerciseId(),
+            isInCourseManagement: this.isInCourseManagement(),
+            vcsAccessTokenData: this.vcsAccessTokenData(),
+        };
+    }
+
+    private getAuthenticationMethodDataResourceParams(chain: ResourceParamsContext['chain']) {
+        if (!this.resourceLoadingTriggered()) {
+            return undefined;
+        }
         const user = chain(this.userResource);
         if (!user) {
             throw new Error('Resolved user resource contained no user');
@@ -174,7 +203,10 @@ export class CodeButtonComponent {
         };
     }
 
-    private getTheiaLinkDataParams(chain: ResourceParamsContext['chain']) {
+    private getTheiaLinkDataResourceParams(chain: ResourceParamsContext['chain']) {
+        if (!this.resourceLoadingTriggered()) {
+            return undefined;
+        }
         if (this.theiaDisabled()) {
             return undefined;
         }
@@ -195,6 +227,13 @@ export class CodeButtonComponent {
             userName,
             userEmail,
         };
+    }
+
+    private getPreferredIdeResourceParams() {
+        if (!this.resourceLoadingTriggered()) {
+            return undefined;
+        }
+        return { programmingLanguage: this.programmingLanguage() };
     }
 
     private async loadTheiaLinkData(exerciseId: number, theiaPortalURL: string, repositoryUrl: string, userName: string, userEmail: string): Promise<TheiaLinkData> {

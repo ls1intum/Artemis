@@ -117,6 +117,7 @@ describe('CodeButtonComponent', () => {
         programmingLanguage: ProgrammingLanguage | undefined = ProgrammingLanguage.JAVA,
         componentRepositoryUri = repositoryUri,
         vcsAccessTokenData: VcsAccessTokenSourceInfo = { returnedTokenType: 'participation-token', participationId: 7, isOwnParticipation: true },
+        openPopover = true,
     ): void {
         fixture = TestBed.createComponent(CodeButtonComponent);
         component = fixture.componentInstance;
@@ -127,15 +128,36 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('allowOnlineIde', allowOnlineIde);
         fixture.componentRef.setInput('programmingLanguage', programmingLanguage);
         fixture.detectChanges();
+        if (openPopover) {
+            const trigger = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+            trigger.click();
+            fixture.detectChanges();
+        }
     }
+
+    it('should defer resource loading until the popover trigger is clicked', async () => {
+        createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { returnedTokenType: 'participation-token', participationId: 7, isOwnParticipation: true }, false);
+
+        expect(accountService.identity).not.toHaveBeenCalled();
+        expect(accountService.getVcsAccessToken).not.toHaveBeenCalled();
+        expect(ideSettingsService.loadIdePreferences).not.toHaveBeenCalled();
+        expect(component['loadingState']()).toEqual({ status: 'idle' });
+
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+        trigger.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(accountService.identity).toHaveBeenCalledOnce();
+        expect(accountService.getVcsAccessToken).toHaveBeenCalledExactlyOnceWith(7);
+        expect(ideSettingsService.loadIdePreferences).toHaveBeenCalledOnce();
+    });
 
     it('should reset alternative options when the popover closes', async () => {
         createComponent(false);
         await fixture.whenStable();
         const popover = fixture.debugElement.query(By.directive(TumAetUiPopoverComponent)).componentInstance as TumAetUiPopoverComponent;
-        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
 
-        popover.open(trigger);
         component['showAlternatives'].set(true);
         expect(popover.isOpen()).toBe(true);
         expect(component['showAlternatives']()).toBe(true);
