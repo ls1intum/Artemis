@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -52,6 +54,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
@@ -109,6 +112,9 @@ class LocalCIResultProcessingServiceTest {
     private LocalCIQueueWebsocketService localCIQueueWebsocketService;
 
     @Mock
+    private ProgrammingExerciseDeletionService programmingExerciseDeletionService;
+
+    @Mock
     private DistributedQueue<ResultQueueItem> resultQueue;
 
     @Mock
@@ -124,7 +130,7 @@ class LocalCIResultProcessingServiceTest {
     void setUp() {
         resultProcessingService = new LocalCIResultProcessingService(programmingExerciseGradingService, programmingMessagingService, buildJobRepository,
                 programmingExerciseRepository, participationRepository, programmingTriggerService, buildLogEntryService, programmingExerciseBuildStatisticsRepository,
-                distributedDataAccessService, programmingSubmissionMessagingService, Optional.of(localCIQueueWebsocketService));
+                distributedDataAccessService, programmingSubmissionMessagingService, Optional.of(localCIQueueWebsocketService), programmingExerciseDeletionService);
         // The production executor hands the work to a pool thread, which would make every assertion below a race. This one
         // runs the same task on the calling thread, so the test observes the finished work rather than polling for it.
         ReflectionTestUtils.setField(resultProcessingService, "resultProcessingExecutor", inlineExecutor());
@@ -480,6 +486,65 @@ class LocalCIResultProcessingServiceTest {
         assertThat(capturedBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
         verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
         verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any());
+    }
+
+    @Test
+    void aBuildOfAnExerciseThatIsBeingDeletedIsRecordedButNotGraded() {
+        // The participation still exists while the deletion runs, but a result written now would only be deleted again or, after the cleanup, block the deletion.
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(programmingExerciseDeletionService.isBeingDeleted(EXERCISE_ID)).thenReturn(true);
+
+        resultProcessingService.processResultAsync();
+
+        assertThat(capturedBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
+        verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any());
+    }
+
+    @Test
+    void aSolutionBuildOfAnExerciseThatIsBeingDeletedDoesNotRebuildTheTemplate() {
+        // The template participation is being deleted as well, so a new build of it would only produce another result that has to be dropped.
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.SOLUTION, RepositoryType.TESTS), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(programmingExerciseDeletionService.isBeingDeleted(EXERCISE_ID)).thenReturn(true);
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(programmingTriggerService);
+    }
+
+    @Test
+    void aResultThatCannotBeWrittenBecauseTheParticipationWasDeletedMeanwhileIsDropped() {
+        // The deletion removed the participation between loading it and saving the result, so the foreign key rejects the insert. This must not take the thread down.
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean()))
+                .thenThrow(new DataIntegrityViolationException("fk_result_exercise_id"));
+        when(participationRepository.existsById(PARTICIPATION_ID)).thenReturn(false);
+
+        resultProcessingService.processResultAsync();
+
+        assertThat(capturedBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
+        verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
+        verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any());
+    }
+
+    @Test
+    void aConstraintViolationOfAnExistingParticipationIsNotHidden() {
+        // Only the loss of the participation explains the violation. Any other one is a defect and must stay visible.
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+        when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean()))
+                .thenThrow(new DataIntegrityViolationException("not null"));
+        when(participationRepository.existsById(PARTICIPATION_ID)).thenReturn(true);
+        withSavedBuildJob();
+
+        assertThatThrownBy(() -> resultProcessingService.processResultAsync()).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
