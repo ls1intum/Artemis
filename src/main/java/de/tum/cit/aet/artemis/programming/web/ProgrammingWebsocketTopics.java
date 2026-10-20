@@ -20,13 +20,13 @@ import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserTopic;
 public class ProgrammingWebsocketTopics implements WebsocketTopicProvider {
 
     /**
-     * New submissions of the template and solution participations, and build trigger errors of any participation of the exercise.
+     * New submissions and build trigger errors of any participation of the exercise.
      */
     public static final WebsocketTopic EXERCISE_SUBMISSIONS = WebsocketTopic.of("/topic/exercise/{exerciseId}/newSubmissions",
             WebsocketTopicAccess.atLeastTutorInExerciseAndEditorInExamExercise("exerciseId"));
 
     /**
-     * The start of the build of a template or solution submission.
+     * The start of the build of any submission of the exercise.
      */
     public static final WebsocketTopic EXERCISE_SUBMISSION_PROCESSING = WebsocketTopic.of("/topic/exercise/{exerciseId}/submissionProcessing",
             WebsocketTopicAccess.atLeastTutorInExerciseAndEditorInExamExercise("exerciseId"));
