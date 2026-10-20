@@ -463,6 +463,79 @@ class HyperionCodeGenerationServiceTest {
                 "The AI took too long to respond and this generation request timed out after 15 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.");
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "[]", "not-json", "{broken}extra" })
+    void oversizedMalformedSelectedFeedbackFallsBackToEmptyThreads(String prefix) throws Exception {
+        setupMockTemplateAndChatResponses("{\"files\":[]}");
+        strategy.generateCode(user, exercise, 1L, "", "tree", "", "", prefix + " ".repeat(30000) + "tail");
+        assertThat(strategy.lastSelectedFeedbackThreads).isEqualTo("{\"threads\":[]}");
+    }
+
+    @Test
+    void oversizedSelectedFeedbackWithWrongSchemaFallsBackToEmptyThreads() throws Exception {
+        setupMockTemplateAndChatResponses("{\"files\":[]}");
+        for (String payload : List.of("[\"" + "x".repeat(13000) + "\"]", "{\"other\":\"" + "x".repeat(13000) + "\"}")) {
+            strategy.generateCode(user, exercise, 1L, "", "tree", "", "", payload);
+            assertThat(strategy.lastSelectedFeedbackThreads).isEqualTo("{\"threads\":[]}");
+        }
+    }
+
+    @Test
+    void selectedFeedbackDropsWholeTrailingThreadsAndKeepsValidJson() throws Exception {
+        setupMockTemplateAndChatResponses("{\"files\":[]}");
+        String firstThread = "{\"id\":1,\"text\":\"keep\"}";
+        String payload = "{\"threads\":[" + firstThread + ",{\"id\":2,\"text\":\"" + "x".repeat(30000) + "\"}]}";
+        strategy.generateCode(user, exercise, 1L, null, "tree", "", "", payload);
+        assertThat(strategy.lastSelectedFeedbackThreads).isEqualTo("{\"threads\":[" + firstThread + "]}");
+        strategy.generateCode(user, exercise, 1L, null, "tree", "", "", "{\"threads\":[],\"extra\":\"" + "x".repeat(30000) + "\"}");
+        assertThat(strategy.lastSelectedFeedbackThreads).isEqualTo("{\"threads\":[]}");
+    }
+
+    @Test
+    void selectedFeedbackDefaultsBlankAndRejectsNull() throws Exception {
+        setupMockTemplateAndChatResponses("{\"files\":[]}");
+        strategy.generateCode(user, exercise, 1L, null, "tree", "", "", " ");
+        assertThat(strategy.lastSelectedFeedbackThreads).isEqualTo("{\"threads\":[]}");
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, null, "tree", "", "", null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("selectedFeedbackThreads must not be null");
+        assertThatThrownBy(() -> strategy.generateCode(null, exercise, 1L, null, "tree", "", "", "{}")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("user must not be null");
+        assertThatThrownBy(() -> strategy.generateCode(user, null, 1L, null, "tree", "", "", "{}")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("exercise must not be null");
+    }
+
+    @Test
+    void templateVariablesEnforceRequiredInputsAndRepositoryTargets() {
+        assertThatThrownBy(() -> strategy.baseTemplateVariables(null, "tree", "build", "issues", "{}")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("exercise must not be null");
+        assertThatThrownBy(() -> strategy.baseTemplateVariables(exercise, null, "build", "issues", "{}")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("repositoryStructure must not be null");
+        assertThatThrownBy(() -> strategy.baseTemplateVariables(exercise, "tree", null, "issues", "{}")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("buildEnvironmentContext must not be null");
+        assertThatThrownBy(() -> strategy.baseTemplateVariables(exercise, "tree", "build", null, "{}")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("consistencyIssues must not be null");
+        assertThatThrownBy(() -> strategy.baseTemplateVariables(exercise, "tree", "build", "issues", null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("selectedFeedbackThreads must not be null");
+        assertThat(strategy.baseTemplateVariables(exercise, "tree", "build", "issues", "{}")).containsEntry("programmingLanguage", ProgrammingLanguage.JAVA)
+                .containsEntry("testContext", "No tests available yet.");
+        strategy.repositoryType = RepositoryType.TEMPLATE;
+        assertThat(strategy.baseTemplateVariables(exercise, "tree", "build", "issues", "{}").get("targetBuildOutcome").toString()).contains("exactly 0%");
+        strategy.repositoryType = RepositoryType.SOLUTION;
+        assertThat(strategy.baseTemplateVariables(exercise, "tree", "build", "issues", "{}").get("targetBuildOutcome").toString()).contains("exactly 100%");
+        strategy.repositoryType = RepositoryType.TESTS;
+        assertThat(strategy.baseTemplateVariables(exercise, "tree", "build", "issues", "{}")).doesNotContainKey("targetBuildOutcome");
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = { " ", "null" })
+    void absentOrNullJsonResponseHasProcessingError(String response) {
+        when(templates.renderObject(eq("test-prompt"), anyMap())).thenReturn("prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(response == null ? new ChatResponse(List.of()) : createChatResponse(response));
+        assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-prompt", Map.of())).isInstanceOf(NetworkingException.class)
+                .hasMessage("AI response processing failed due to illegal argument. Please retry.");
+    }
+
     private void setupMockTemplateAndChatResponses(String finalResponse) {
         setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}", finalResponse);
     }
@@ -500,6 +573,10 @@ class HyperionCodeGenerationServiceTest {
 
         private String lastConsistencyIssues;
 
+        private String lastSelectedFeedbackThreads;
+
+        private RepositoryType repositoryType = RepositoryType.SOLUTION;
+
         public TestCodeGenerationStrategy(ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
             super(chatClient, templates, llmTokenUsageService);
         }
@@ -509,6 +586,7 @@ class HyperionCodeGenerationServiceTest {
                 String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             lastBuildEnvironmentContext = buildEnvironmentContext;
             lastConsistencyIssues = consistencyIssues;
+            lastSelectedFeedbackThreads = selectedFeedbackThreads;
             Map<String, Object> variables = Map.of("test", "plan");
             return callChatClient(user, exercise, courseId, "test-plan-template", variables);
         }
@@ -536,7 +614,7 @@ class HyperionCodeGenerationServiceTest {
 
         @Override
         protected RepositoryType getRepositoryType() {
-            return RepositoryType.SOLUTION;
+            return repositoryType;
         }
 
         // Expose protected method for testing
