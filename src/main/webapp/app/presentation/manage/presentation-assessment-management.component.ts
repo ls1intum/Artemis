@@ -534,6 +534,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.studentSortOrder.set(1);
     }
 
+    /** Loads the exercise titles of the course for the exercise link of a presentation; a response for a previous course is ignored. */
     private loadExercises(courseId: number): void {
         const generation = this.courseContextGeneration;
         this.exerciseService.getTitlesForCourse(courseId).subscribe({
@@ -550,6 +551,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         });
     }
 
+    /** Shows the overview of all presenters; switching from a single presentation starts at the first page. */
     private showOverview(): void {
         if (this.viewMode() !== 'students') {
             this.overviewPage.set(0);

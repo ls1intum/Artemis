@@ -42,6 +42,7 @@ export class PresentationAssessmentInstancesTableComponent {
         computation: () => [],
     });
 
+    /** Shows the details of a collapsed row and hides those of an expanded one. */
     protected toggleDetails(row: PresentationStudentTableRow): void {
         this.expandedRowKeys.update((keys) => (keys.includes(row.rowKey) ? keys.filter((key) => key !== row.rowKey) : [...keys, row.rowKey]));
     }
