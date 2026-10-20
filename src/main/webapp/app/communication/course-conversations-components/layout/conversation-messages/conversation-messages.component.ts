@@ -361,6 +361,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.pageScrollFrame !== undefined) window.cancelAnimationFrame(this.pageScrollFrame);
     }
 
+    /**
+     * Prioritizes explicit post navigation, then the first unread message on opening. Fully read conversations
+     * open at the newest message; saved positions preserve an active reader or an unloaded first-unread target.
+     */
     private scrollToStoredId() {
         let savedScrollId: number | undefined;
         if (this.focusOnPostId) {
@@ -369,6 +373,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             const firstUnreadPostId = this.firstUnreadPostIdToOpenAt();
             if (firstUnreadPostId !== undefined) {
                 requestAnimationFrame(() => this.goToLastSelectedElement(firstUnreadPostId, false, true));
+                return;
+            }
+            if (!this.canStartSaving && !this.searchText && this.unreadPostsCount() === 0) {
+                void this.goToLastSelectedElement(0, false);
                 return;
             }
             const activeConversationId = this._activeConversation()?.id;

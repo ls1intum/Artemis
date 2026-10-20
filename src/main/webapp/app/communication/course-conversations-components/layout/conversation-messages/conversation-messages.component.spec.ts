@@ -558,6 +558,39 @@ examples.forEach((activeConversation) => {
                 expect(store).toHaveBeenCalledWith(`${component.sessionStorageKey}${component._activeConversation()?.id}`, 3);
             });
 
+            it('opens at the newest message when every loaded post is read despite an older saved position', () => {
+                loadPosts([20, 18, 15, 12], 4);
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledExactlyOnceWith(0, false);
+                expect(top).toBe(listHeight - 400);
+                expect(component.canStartSaving).toBe(true);
+            });
+
+            it('keeps the saved position of a fully read conversation once the reader is already positioned', () => {
+                loadPosts([20, 18, 15, 12], 4);
+                component.canStartSaving = true;
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledExactlyOnceWith(2, false);
+                expect(top).toBe(layout.second - 10);
+            });
+
+            it('honors an explicit post target when opening a conversation with no unread messages', () => {
+                loadPosts([20, 18, 15, 12], 4);
+                component.focusOnPostId = 4;
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledExactlyOnceWith(4, false);
+                expect(top).toBe(layout.fourth - 10);
+            });
+
             it('should open at the stored position when more messages are unread than were loaded', () => {
                 // every loaded post is unread, so the first unread message is on an older page that is not loaded
                 loadPosts([9, 8, 5, 1], 100);

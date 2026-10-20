@@ -39,6 +39,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     readonly messages = viewChildren<ElementRef>('postingThread');
     readonly messages$ = toObservable(this.messages);
     readonly content = viewChild<ElementRef>('container');
+    private readonly resultContent = viewChild<ElementRef<HTMLElement>>('resultContent');
 
     readonly openThread = output<Post>();
 
@@ -70,6 +71,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private postRequestId = 0;
     private initialScrollPositioned = false;
     private scrollFrame: number | undefined;
+    private resizeObserver?: ResizeObserver;
     // The list starts at its end, but images load after that and push the newest messages out of view, so the end is held
     // until the user scrolls themselves.
     private holdsEnd = false;
@@ -77,7 +79,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.holdsEnd = false;
     };
     private readonly onContentLoaded = () => {
-        if (this.holdsEnd) this.scrollToBottomOfMessages();
+        if (this.holdsEnd && !this.isFetchingPosts() && this.pendingPageScrollDistance === undefined) this.scrollToBottomOfMessages();
     };
     page = 1;
 
@@ -98,10 +100,19 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         // load events do not bubble, so they are caught on their way down to the image
         container?.addEventListener('load', this.onContentLoaded, true);
         USER_SCROLL_EVENTS.forEach((eventName) => container?.addEventListener(eventName, this.releaseEnd, { passive: true }));
+        const resultContent = this.resultContent()?.nativeElement;
+        if (container && resultContent) {
+            // Rows can grow after their first render, without an image load event. Keep the newest result visible
+            // through those changes and viewport resizing until the reader deliberately scrolls away.
+            this.resizeObserver = new ResizeObserver(this.onContentLoaded);
+            this.resizeObserver.observe(container);
+            this.resizeObserver.observe(resultContent);
+        }
     }
 
     ngOnDestroy() {
         this.postRequestId++;
+        this.resizeObserver?.disconnect();
         if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
         const container = this.content()?.nativeElement;
         container?.removeEventListener('load', this.onContentLoaded, true);

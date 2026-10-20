@@ -210,27 +210,76 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         await screenshot(page, info, '03-unread-reply-preserved-after-deletion');
     });
 
+    test('reopens a fully read channel at the newest message after the reader saved an older scroll position', async ({ page, courseMessages }, info) => {
+        const oldest = await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'Lecture preparation: distinguish a class invariant from a method precondition.');
+        // Serialize writes to the same conversation: concurrent setup posts contend for its optimistic lock.
+        for (let index = 0; index < 24; index++) {
+            await api(staff).createCourseMessage(
+                course!,
+                channel.id!,
+                'channel',
+                `Tutorial question ${index + 1}: which invariant must hold before and after a public method?\n\nExplain how a test can demonstrate a violation and why passing tests alone do not prove the invariant.`,
+            );
+        }
+        const newest = await api(staff).createCourseMessage(
+            course!,
+            channel.id!,
+            'channel',
+            'For the next tutorial, bring a counterexample to an incorrect representation invariant.',
+        );
+        await markRead(page, channel.id!);
+        await page.goto(`/courses/${course!.id}/communication?conversationId=${channel.id}`);
+        await expect(page.getByTestId('conversation-name')).toHaveText(channel.name!);
+        await expect(courseMessages.getSinglePost(newest.id!)).toBeInViewport();
+        const list = courseMessages.getScrollableMessagesContainer();
+        await expect.poll(() => list.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+        await list.evaluate((element) => (element.scrollTop = 0));
+        await expect(courseMessages.getSinglePost(oldest.id!)).toBeInViewport();
+        const key = `conversationId.scrollPosition.${channel.id}`;
+        await expect.poll(() => page.evaluate((storageKey) => JSON.parse(sessionStorage.getItem(storageKey) ?? 'null'), key)).toBe(oldest.id);
+        await showGroups(page);
+        await conversationLink(page, other.id!).click();
+        await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
+        expect(await unread(page, channel.id!)).toBe(0);
+        expect(await page.evaluate((storageKey) => JSON.parse(sessionStorage.getItem(storageKey) ?? 'null'), key)).toBe(oldest.id);
+        await conversationLink(page, channel.id!).click();
+        await expect(page.getByTestId('conversation-name')).toHaveText(channel.name!);
+        await expect(courseMessages.getSinglePost(newest.id!)).toBeInViewport();
+        await expect(courseMessages.getSinglePost(oldest.id!)).not.toBeInViewport();
+        await expect.poll(() => list.evaluate((element) => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThanOrEqual(2);
+        await expect(page.locator('#unread-post-line')).toHaveCount(0);
+        await screenshot(page, info, '05-read-channel-reopens-at-latest');
+    });
+
     test('All Messages initially shows the newest page rather than the oldest course posts', async ({ page, courseMessages }, info) => {
         const oldest = await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'First lecture: specifications describe what a program must do.');
-        for (let start = 0; start < 60; start += 10) {
-            await Promise.all(
-                Array.from({ length: 10 }, (_, index) =>
-                    api(staff).createCourseMessage(
-                        course!,
-                        channel.id!,
-                        'channel',
-                        `Tutorial discussion ${start + index + 1}: explain how specifications, invariants and tests complement each other.`,
-                    ),
-                ),
+        for (let index = 0; index < 60; index++) {
+            await api(staff).createCourseMessage(
+                course!,
+                channel.id!,
+                'channel',
+                `Tutorial discussion ${index + 1}: explain how specifications, invariants and tests complement each other.`,
             );
         }
         const newest = await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'Next tutorial: prepare your questions about thread safety and synchronization.');
         await page.goto(`/courses/${course!.id}/communication?conversationId=${other.id}`);
         await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
+        const firstPage = page.waitForResponse((response) => {
+            const url = new URL(response.url());
+            return url.pathname.endsWith('/messages') && url.searchParams.get('conversationIds')?.includes(',') === true && url.searchParams.get('page') === '0';
+        });
         await courseMessages.searchCourseWide('');
-        await expect(courseMessages.getSinglePost(newest.id!)).toBeVisible();
+        const initialResponse = await firstPage;
+        expect(initialResponse.ok()).toBe(true);
+        expect(new URL(initialResponse.url()).searchParams.get('sortingOrder')).toBe('DESCENDING');
+        const initialPosts: { id: number }[] = await initialResponse.json();
+        expect(initialPosts).toHaveLength(50);
+        expect(initialPosts[0].id).toBe(newest.id);
+        expect(initialPosts.map((post) => post.id)).not.toContain(oldest.id);
+        await expect(courseMessages.getSinglePost(newest.id!)).toBeInViewport();
         await expect(courseMessages.getSinglePost(newest.id!)).toContainText(newest.content!);
-        await expect(courseMessages.getSinglePost(oldest.id!)).toHaveCount(0);
+        // Infinite scrolling may prefetch the older page while layout settles. It must not replace the newest view.
+        await expect(courseMessages.getSinglePost(oldest.id!)).not.toBeInViewport();
         await screenshot(page, info, '04-all-messages-newest-page');
     });
 });

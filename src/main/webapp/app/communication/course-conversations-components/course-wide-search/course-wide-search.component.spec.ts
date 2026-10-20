@@ -193,6 +193,88 @@ describe('CourseWideSearchComponent', () => {
         });
     });
 
+    describe('when result layout changes after initial positioning', () => {
+        let resize: () => void;
+        let observe: ReturnType<typeof vi.fn>;
+        let disconnect: ReturnType<typeof vi.fn>;
+        let container: HTMLElement;
+        let top: number;
+        let listHeight: number;
+        let visibleHeight: number;
+
+        beforeEach(() => {
+            fixture.destroy();
+            resize = () => {};
+            observe = vi.fn();
+            disconnect = vi.fn();
+            vi.stubGlobal(
+                'ResizeObserver',
+                class {
+                    constructor(callback: () => void) {
+                        resize = callback;
+                    }
+                    observe = observe;
+                    disconnect = disconnect;
+                },
+            );
+            fixture = TestBed.createComponent(CourseWideSearchComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
+            fixture.detectChanges();
+            component.isFetchingPosts.set(false);
+            container = component.content()!.nativeElement;
+            top = 0;
+            listHeight = 1000;
+            visibleHeight = 400;
+            Object.defineProperties(container, {
+                scrollHeight: { get: () => listHeight, configurable: true },
+                clientHeight: { get: () => visibleHeight, configurable: true },
+                scrollTop: {
+                    get: () => top,
+                    set: (value: number) => {
+                        top = Math.max(0, Math.min(value, listHeight - visibleHeight));
+                    },
+                    configurable: true,
+                },
+            });
+            component.handleScrollOnNewMessage();
+            vi.runAllTimers();
+        });
+
+        afterEach(() => vi.unstubAllGlobals());
+
+        it('holds the newest result through row-height changes and stops following after user input', () => {
+            expect(top).toBe(600);
+            listHeight = 1500;
+            resize();
+            expect(top).toBe(1100);
+
+            container.dispatchEvent(new Event('wheel'));
+            listHeight = 2000;
+            resize();
+            expect(top).toBe(1100);
+        });
+
+        it('holds the end through viewport resizing but does not override a pending older page', () => {
+            visibleHeight = 600;
+            resize();
+            expect(top).toBe(400);
+
+            component.totalNumberOfPosts.set(100);
+            component.fetchNextPage();
+            listHeight = 1500;
+            resize();
+            expect(top).toBe(400);
+        });
+
+        it('observes both result height and viewport size and disconnects on destruction', () => {
+            expect(observe).toHaveBeenCalledWith(container);
+            expect(observe).toHaveBeenCalledWith(fixture.nativeElement.querySelector('[data-testid="course-wide-search-results"]'));
+            fixture.destroy();
+            expect(disconnect).toHaveBeenCalledOnce();
+        });
+    });
+
     it('should leave the oldest search result reachable when all pages are loaded', () => {
         const container = component.content()!.nativeElement;
         container.scrollTop = 0;
