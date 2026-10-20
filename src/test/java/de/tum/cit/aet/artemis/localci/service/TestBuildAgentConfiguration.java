@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localci.service;
 
-import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -27,14 +28,23 @@ public class TestBuildAgentConfiguration {
     }
 
     /**
-     * Stubs the {@link BuildAgentConfiguration} spy once, after all singletons exist and before the scheduled tasks start (they start when the context is refreshed).
+     * Installs spy answers after Spring creates the spy, before it is injected into any consumer. Programmatically scheduled tasks can start in a consumer's
+     * {@code PostConstruct}, so waiting for all singletons to exist is too late. This ordinary processor runs after Spring's priority-ordered Mockito wrapper.
      *
-     * @param configuration the build agent configuration, a spy when the test declares one
-     * @param overrides     the overrides the stubbed answers read
-     * @return the callback that installs the stubs
+     * @param overrides the lazily resolved holder, to avoid creating application beans while post-processors are registered
+     * @return the processor that installs the stubs before the configuration is exposed
      */
     @Bean
-    public SmartInitializingSingleton installBuildAgentConfigurationOverrides(BuildAgentConfiguration configuration, BuildAgentConfigurationOverrides overrides) {
-        return () -> overrides.installOn(configuration);
+    public static BeanPostProcessor installBuildAgentConfigurationOverrides(ObjectProvider<BuildAgentConfigurationOverrides> overrides) {
+        return new BeanPostProcessor() {
+
+            @Override
+            public Object postProcessAfterInitialization(Object bean, String beanName) {
+                if (bean instanceof BuildAgentConfiguration configuration) {
+                    overrides.getObject().installOn(configuration);
+                }
+                return bean;
+            }
+        };
     }
 }

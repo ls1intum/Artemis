@@ -58,6 +58,8 @@ quiet moment. Mockito keeps the pending stubbing in the mock, so `doReturn(x).wh
 between the two halves. Do not stub or reset it per test:
 stub it once when the context is built with answers that read an `AtomicReference`, and change the
 holder in the test (`BuildAgentConfigurationOverrides`, `@MockitoSpyBean(reset = MockReset.NONE)`).
+Install these answers in a bean post-processor after Mockito creates the spy and before it is injected
+into consumers. `SmartInitializingSingleton` is too late: a consumer can schedule work in `@PostConstruct`.
 
 A scheduled task that rewrites shared state a test also writes (the `dockerImageCleanupInfo` map is
 cleared and refilled every five minutes) is switched off in the test contexts by its interval
