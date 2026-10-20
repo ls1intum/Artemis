@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { parse } from 'yaml';
 import { waitForServerReadiness } from '../../../src/test/playwright/init/server-readiness.ts';
 
 // These cases catch starting authentication while a second core node is still booting,
@@ -102,5 +103,34 @@ printf "%s" "$TEST_REVISION"
         const result = verify(expected, 'develop');
         expect(result.status).not.toBe(0);
         expect(result.stdout + result.stderr).toMatch(/expected.*sha-/);
+    });
+});
+
+describe('image launched by every E2E configuration', () => {
+    const dockerDirectory = path.resolve(import.meta.dirname, '../../../deployment/docker');
+    const executeScript = readFileSync(path.resolve(import.meta.dirname, 'execute.sh'), 'utf8');
+    // Each selectable configuration assigns COMPOSE_FILE; an overlay is spelled as "base.yml -f overlay.yml".
+    const composeSelections = [...executeScript.matchAll(/^\s*COMPOSE_FILE="([^"]+)"/gm)].map((match) => match[1].split(/\s+-f\s+/));
+
+    it('discovers the configurations selected by execute.sh', () => {
+        expect(composeSelections.flat()).toEqual(
+            expect.arrayContaining(['playwright-E2E-tests-postgres.yml', 'playwright-E2E-tests-postgres-localci.yml', 'playwright-E2E-tests-multi-node.yml']),
+        );
+    });
+
+    it.each(composeSelections.map((files) => [files.join(' + '), files]))('pins every Artemis node of %s to the verified commit tag', (_name, files) => {
+        const nodes = {};
+        for (const file of files) {
+            const { services } = parse(readFileSync(path.join(dockerDirectory, file), 'utf8'), { merge: true });
+            for (const [name, service] of Object.entries(services)) {
+                nodes[name] = { ...service, ...nodes[name] };
+            }
+        }
+        const artemisNodes = Object.entries(nodes).filter(([, service]) => service.extends?.service === 'artemis-app');
+        expect(artemisNodes.length).toBeGreaterThan(0);
+        for (const [name, service] of artemisNodes) {
+            // Without a tag, artemis.yml supplies the mutable latest image, which verify-image-revision.sh never inspects.
+            expect({ name, image: service.image }).toEqual({ name, image: 'ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG}' });
+        }
     });
 });

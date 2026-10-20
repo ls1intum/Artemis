@@ -9,6 +9,8 @@ services:
             service: postgres
 
     artemis-app:
+        # Run the exact image that supporting_scripts/ci/E2E-tests/verify-image-revision.sh verifies.
+        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG}
         extends:
             file: ./artemis.yml
             service: artemis-app
