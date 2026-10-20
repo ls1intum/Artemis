@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.HyperionCodeGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -165,6 +167,8 @@ public class HyperionCodeGenerationExecutionService {
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
+    private final GenerationLiveSaveService liveSaves;
+
     public HyperionCodeGenerationExecutionService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService,
             RepositoryService repositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
@@ -173,7 +177,8 @@ public class HyperionCodeGenerationExecutionService {
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
             ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService,
             HyperionReviewCommentContextRendererService reviewCommentContextRendererService, ExerciseVersionService exerciseVersionService,
-            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, GenerationLiveSaveService liveSaves) {
+        this.liveSaves = liveSaves;
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -456,7 +461,8 @@ public class HyperionCodeGenerationExecutionService {
             Thread.currentThread().interrupt();
         }
 
-        if (executionResult.lastCommitHash != null && exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
+        if ((!liveSaves.isCoordinationEnabled() || exercise.isExamExercise()) && executionResult.lastCommitHash != null
+                && exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
             exerciseVersionService.createExerciseVersion(exercise, user);
         }
 
@@ -516,6 +522,8 @@ public class HyperionCodeGenerationExecutionService {
             String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, boolean useSelectedFeedback, GenerationExecutionProgress executionProgress)
             throws Exception {
         String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
+        boolean coordinated = liveSaves.isCoordinationEnabled() && !exercise.isExamExercise();
+        String expectedHead = coordinated ? gitService.getLastCommitHash(repositoryUri) : null;
 
         CodeGenerationResponseDTO generationResponse = useSelectedFeedback
                 ? strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads)
@@ -528,17 +536,34 @@ public class HyperionCodeGenerationExecutionService {
             return null;
         }
 
-        boolean deletedAnyFile = deleteObsoleteFiles(repository, deletedFiles, exercise, repositoryType, publisher, executionProgress.attemptsUsed);
-        boolean publishedAnyFile = publishGeneratedFiles(repository, generatedFiles, exercise, repositoryType, publisher, executionProgress.attemptsUsed);
-        if (!deletedAnyFile && !publishedAnyFile) {
-            return null;
+        CommitTriggerResult commitTriggerResult;
+        String token = coordinated ? liveSaves.claim(exercise.getId()) : null;
+        try {
+            if (coordinated && !Objects.equals(expectedHead, gitService.getLastCommitHash(repositoryUri))) {
+                throw new ConflictException("The repository changed while code was generated. Generate again from its current state.", "hyperionCodeGeneration",
+                        "repositoryChanged");
+            }
+            boolean deletedAnyFile = deleteObsoleteFiles(repository, deletedFiles, exercise, repositoryType, publisher, executionProgress.attemptsUsed);
+            boolean publishedAnyFile = publishGeneratedFiles(repository, generatedFiles, exercise, repositoryType, publisher, executionProgress.attemptsUsed);
+            if (!deletedAnyFile && !publishedAnyFile) {
+                return null;
+            }
+            commitTriggerResult = commitAndGetHash(repository, user, repositoryUri, exercise, repositoryType);
+            String commitHash = commitTriggerResult.commitHash();
+            executionProgress.lastCommitHash = commitHash;
+            // True iff every committed attempt so far has been deletion-only (no published files). Drives the "files removed" vs "files generated" wording.
+            executionProgress.deletionOnly = (!executionProgress.generatedFilesCommitted || executionProgress.deletionOnly) && !publishedAnyFile;
+            executionProgress.generatedFilesCommitted = true;
+            if (coordinated && exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
+                exerciseVersionService.createExerciseVersionSynchronously(exercise, user);
+            }
         }
-        CommitTriggerResult commitTriggerResult = commitAndGetHash(repository, user, repositoryUri, exercise, repositoryType);
+        finally {
+            if (coordinated) {
+                liveSaves.release(exercise.getId(), token);
+            }
+        }
         String commitHash = commitTriggerResult.commitHash();
-        executionProgress.lastCommitHash = commitHash;
-        // True iff every committed attempt so far has been deletion-only (no published files). Drives the "files removed" vs "files generated" wording.
-        executionProgress.deletionOnly = (!executionProgress.generatedFilesCommitted || executionProgress.deletionOnly) && !publishedAnyFile;
-        executionProgress.generatedFilesCommitted = true;
         if (!commitTriggerResult.buildTriggered()) {
             return new GenerationAttemptResult(commitHash, new BuildResultOutcome(null, BuildResultState.CI_TRIGGER_FAILED));
         }
