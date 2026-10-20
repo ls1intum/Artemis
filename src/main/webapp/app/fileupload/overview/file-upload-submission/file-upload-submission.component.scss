@@ -1,0 +1,17 @@
+// The assessed submission panel fills the panel of the exercise page, like the modeling editor: every element down to it
+// takes the full height, and only the panel's content scrolls
+:host(.file-upload-submission--fill) {
+    height: 100%;
+
+    jhi-resizeable-container {
+        display: block;
+        height: 100%;
+    }
+}
+
+.file-upload-submission__fill {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+}
