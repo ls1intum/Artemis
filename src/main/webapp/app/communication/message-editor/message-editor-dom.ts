@@ -306,6 +306,7 @@ export class MessageEditorDom {
         const marker = prefix.toString();
         if (!/^([-*+]|1[.)])$/.test(marker)) return false;
         this.transact(() => {
+            this.revision++;
             prefix.deleteContents();
             prefix.collapse(true);
             this.select(prefix);

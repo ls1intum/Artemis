@@ -264,6 +264,21 @@ describe('Message editor editing transactions', () => {
         expect(changed).toHaveBeenLastCalledWith('- Before[faq]Question(/courses/1/faq?faqId=1)[/faq]');
     });
 
+    it('retains a pending attachment insertion point when another paragraph becomes a typed list', () => {
+        editor.load('Before after\n\nLater');
+        select(root.querySelector('p')!.firstChild!, 7);
+        const pendingUpload = editor.captureEntitySelection()!;
+        const later = root.querySelectorAll('p')[1];
+        select(later.firstChild!, 5);
+        editor.insertText('\n-');
+        expect(editor.convertTypedListMarker(' ')).toBe(true);
+        editor.insertText('Item');
+
+        editor.insertMarkdown('![pending.png](/pending.png)', editor.resolveEntitySelection(pendingUpload));
+
+        expect(changed).toHaveBeenLastCalledWith('Before ![pending.png](/pending.png)after\n\nLater\n\n- Item');
+    });
+
     it('rejects insertion into code and unrecognized bookmarks', () => {
         editor.load('`code`');
         select(root.querySelector('code')!.firstChild!, 2);
