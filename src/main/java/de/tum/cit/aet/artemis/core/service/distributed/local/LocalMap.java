@@ -54,10 +54,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         this.map = new ConcurrentHashMap<>();
     }
 
-    /**
-     * Removes every entry whose time-to-live has elapsed, firing the regular removal notifications so listeners see
-     * expiry the same way they see an explicit removal.
-     */
+    /** Removes expired entries and notifies removal listeners. */
     private void purgeExpiredEntries() {
         if (expiryDeadlines.isEmpty()) {
             return;
@@ -234,6 +231,41 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
             notifyEntryRemoved(key, value);
         }
         return removed;
+    }
+
+    @Override
+    public boolean replace(K key, V expectedValue, V replacementValue) {
+        purgeExpiredEntries();
+        ReentrantLock lock = getLock(key);
+        boolean replaced;
+        lock.lock();
+        try {
+            replaced = map.replace(key, expectedValue, replacementValue);
+        }
+        finally {
+            lock.unlock();
+        }
+        if (replaced) {
+            notifyEntryUpdated(key, replacementValue, expectedValue);
+        }
+        return replaced;
+    }
+
+    @Override
+    public boolean refreshTimeToLive(K key, Duration timeToLive) {
+        purgeExpiredEntries();
+        ReentrantLock lock = getLock(key);
+        lock.lock();
+        try {
+            if (!map.containsKey(key)) {
+                return false;
+            }
+            writeDeadline(key, System.nanoTime() + timeToLive.toNanos());
+            return true;
+        }
+        finally {
+            lock.unlock();
+        }
     }
 
     @Override

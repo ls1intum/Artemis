@@ -1002,6 +1002,158 @@ class CompetencyOrchestrationServiceTest {
         }
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "missing", "noLecture", "noCourse", "noCourseId", "foreignCourse" })
+    void batchRejectsLectureUnitsWithBrokenOrForeignOwnership(String invalidState) {
+        var unit = courseTextUnit(201L);
+        switch (invalidState) {
+            case "noLecture" -> unit.setLecture(null);
+            case "noCourse" -> unit.getLecture().setCourse(null);
+            case "noCourseId" -> unit.getLecture().getCourse().setId(null);
+            case "foreignCourse" -> unit.getLecture().getCourse().setId(999L);
+            default -> {
+            }
+        }
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(Set.of(201L))).thenReturn(invalidState.equals("missing") ? List.of() : List.of(unit));
+        var result = createService(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(), Set.of(201L));
+        assertThat(result.status()).isEqualTo(NO_OP);
+        verify(distributedDataProvider, never()).getMap(anyString());
+        verify(contentExtractionService, never()).extractContent(any());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "missing", "noLecture", "noCourse" })
+    void lectureFlushRejectsMissingContextWithoutDrainingQueue(String invalidState) {
+        var unit = courseTextUnit(201L);
+        if (invalidState.equals("noLecture")) {
+            unit.setLecture(null);
+        }
+        if (invalidState.equals("noCourse")) {
+            unit.getLecture().setCourse(null);
+        }
+        when(lectureUnitRepositoryApi.findWithLectureById(201L)).thenReturn(invalidState.equals("missing") ? Optional.empty() : Optional.of(unit));
+        var result = createService(mock(ChatClient.class)).runLectureUnitWithQueuedFlush(201L);
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_LEARNING_OBJECT);
+        verify(contentChangeAccumulatorService, never()).claimBatchNow(anyLong());
+    }
+
+    @Test
+    void lectureFlushUnavailableModelAndActiveCourseRunDoNotDrainQueue() {
+        var unit = courseTextUnit(201L);
+        when(lectureUnitRepositoryApi.findWithLectureById(201L)).thenReturn(Optional.of(unit));
+        var unavailable = createService(null).runLectureUnitWithQueuedFlush(201L);
+        assertThat(unavailable.failureReason()).isEqualTo(NO_CHAT_CLIENT);
+        stubRunMap();
+        runMap.put(COURSE_ID, new RunInfo("other", 99L, Instant.now()));
+        var active = createService(mock(ChatClient.class)).runLectureUnitWithQueuedFlush(201L);
+        assertThat(active.status()).isEqualTo(IN_PROGRESS);
+        verify(contentChangeAccumulatorService, never()).claimBatchNow(anyLong());
+    }
+
+    @Test
+    void lectureFlushRequeuesDrainedIdsWhenClickedUnitDisappears() {
+        var unit = courseTextUnit(201L);
+        when(lectureUnitRepositoryApi.findWithLectureById(201L)).thenReturn(Optional.of(unit));
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.empty());
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(Set.of(201L))).thenReturn(List.of());
+        stubRunMap();
+        var result = createService(mock(ChatClient.class)).runLectureUnitWithQueuedFlush(201L);
+        assertThat(result.failureReason()).isEqualTo(CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_LEARNING_OBJECT);
+        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(), Set.of());
+        assertThat(runMap.get(COURSE_ID)).isNull();
+    }
+
+    @Test
+    void missingClaimTimestampIsReclaimedAndOwnershiplessExercisesAreSkipped() {
+        var missingCourse = courseExercise(301L);
+        missingCourse.setCourse(null);
+        var missingCourseId = courseExercise(302L);
+        missingCourseId.getCourseViaExerciseGroupOrCourseMember().setId(null);
+        var accepted = courseExercise(303L);
+        when(exerciseRepository.findAllById(Set.of(301L, 302L, 303L))).thenReturn(List.of(missingCourse, missingCourseId, accepted));
+        when(contentExtractionService.extractContent(accepted)).thenThrow(new IllegalStateException("broken"));
+        stubRunMap();
+        runMap.put(COURSE_ID, new RunInfo("orphaned", 99L, null));
+        var result = createService(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(301L, 302L, 303L));
+        assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
+        assertThat(runMap.get(COURSE_ID)).isNull();
+        verify(contentExtractionService, never()).extractContent(missingCourse);
+        verify(contentExtractionService, never()).extractContent(missingCourseId);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({ "success,false", "llm,false", "llm,true", "incomplete,false", "incomplete,true", "budget,false", "budget,true" })
+    void lectureFlushRunsClickedUnitOnceAndRequeuesOnlyRetryablePreMutationFailures(String outcome, boolean applied) {
+        var unit = courseTextUnit(30L);
+        when(lectureUnitRepositoryApi.findWithLectureById(30L)).thenReturn(Optional.of(unit));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(Set.of(30L))).thenReturn(List.of(unit));
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(), Set.of(30L))));
+        when(contentExtractionService.extractContent(unit)).thenReturn(new ExtractedContentDTO("Title", "Body", Map.of("lectureUnitType", "text")));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system");
+        stubRunMap();
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(call -> {
+                    Map<String, Object> context = call.getArgument(3);
+                    if (applied) {
+                        ((OrchestratorToolContextKeys.AppliedActionsBuffer) context.get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY)).actions()
+                                .add(AppliedActionDTO.create(1L, "Loops", "Created", "Teaches loops"));
+                    }
+                    if (outcome.equals("llm")) {
+                        throw new IllegalStateException("provider failed");
+                    }
+                    if (outcome.equals("budget")) {
+                        throw new AtlasToolCallBudget.LimitReachedException("Budget reached");
+                    }
+                    if (outcome.equals("incomplete")) {
+                        AtlasToolCallBudget.budgetForContext(context).complete(false, "Unverified mappings");
+                        return new ChatResponse(List.of(new Generation(new AssistantMessage("unverified"))));
+                    }
+                    return completeRound(context, new ChatResponse(List.of(new Generation(new AssistantMessage("Verified lecture")))));
+                });
+        var result = createService(mock(ChatClient.class)).runLectureUnitWithQueuedFlush(30L);
+        assertThat(result.status()).isEqualTo(outcome.equals("success") ? SUCCESS : applied ? PARTIAL : FAILED);
+        assertThat(result.processedCount()).isEqualTo(1);
+        assertThat(result.appliedActions()).hasSize(applied ? 1 : 0);
+        if (outcome.equals("success")) {
+            assertThat(result.summary()).isEqualTo("Verified lecture");
+        }
+        verify(contentChangeAccumulatorService, org.mockito.Mockito.times(outcome.equals("llm") && !applied ? 1 : 0)).requeueAfterFailedRun(COURSE_ID, Set.of(), Set.of(30L));
+        verify(contentExtractionService).extractContent(unit);
+        assertThat(runMap.get(COURSE_ID)).isNull();
+    }
+
+    @Test
+    void failedLectureExtractionReturnsInternalErrorAndRequeuesDrainedBatch() {
+        var unit = courseTextUnit(30L);
+        when(lectureUnitRepositoryApi.findWithLectureById(30L)).thenReturn(Optional.of(unit));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(Set.of(30L))).thenReturn(List.of(unit));
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.empty());
+        when(contentExtractionService.extractContent(unit)).thenThrow(new IllegalStateException("content missing"));
+        stubRunMap();
+        var result = createService(mock(ChatClient.class)).runLectureUnitWithQueuedFlush(30L);
+        assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
+        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(), Set.of(30L));
+        verify(delegationService, never()).delegateOrchestratorRound(anyString(), anyString(), any(), anyMap(), any(), any(), any(), any());
+    }
+
+    @Test
+    void lockReleaseDoesNotRemoveReplacementRunAfterLeaseOwnershipChanges() {
+        var exercise = courseExercise(11L);
+        when(exerciseRepository.findByIdElseThrow(11L)).thenReturn(exercise);
+        stubRunMap();
+        var replacement = new RunInfo("replacement", 99L, Instant.now());
+        when(contentExtractionService.extractContent(exercise)).thenAnswer(call -> {
+            runMap.put(COURSE_ID, replacement);
+            throw new IllegalStateException("stale run");
+        });
+        var result = createService(mock(ChatClient.class)).run(11L);
+        assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
+        assertThat(runMap.get(COURSE_ID)).isEqualTo(replacement);
+        verify(runMap, never()).remove(COURSE_ID);
+    }
+
     private ChatResponse completeRound(Map<String, Object> context, ChatResponse response) {
         AtlasToolCallBudget budget = AtlasToolCallBudget.budgetForContext(context);
         org.springframework.ai.tool.ToolCallback read = org.springframework.ai.tool.function.FunctionToolCallback

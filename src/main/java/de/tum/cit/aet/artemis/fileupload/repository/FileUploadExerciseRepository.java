@@ -40,12 +40,13 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
     Optional<FileUploadExercise> findWithEagerCompetenciesById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "competencyLinks.competency", "exerciseVariantGroup" })
+    @EntityGraph(type = LOAD, attributePaths = { "course", "categories", "competencyLinks.competency", "exerciseVariantGroup" })
     Optional<FileUploadExercise> findWithEagerCategoriesAndCompetenciesById(Long exerciseId);
 
     @Query("""
             SELECT DISTINCT fileUploadExercise
             FROM FileUploadExercise fileUploadExercise
+                LEFT JOIN FETCH fileUploadExercise.course
                 LEFT JOIN FETCH fileUploadExercise.exampleSubmissions exampleSubmissions
                 LEFT JOIN FETCH exampleSubmissions.submission submission
                 LEFT JOIN FETCH submission.results results
@@ -76,7 +77,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
      * @param exerciseId the id of the exercise to find
      * @return the exercise with minimal data necessary for exercise versioning
      */
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "gradingCriteria" })
+    @EntityGraph(type = LOAD, attributePaths = { "course", "competencyLinks", "categories", "gradingCriteria" })
     Optional<FileUploadExercise> findForVersioningById(long exerciseId);
 
     /**
