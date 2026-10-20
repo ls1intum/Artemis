@@ -120,7 +120,10 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
 
         exerciseDeletionService.delete(exerciseId, false);
 
-        // The processor waits for deletion to release the mutex; waiting inside the deletion hook would deadlock.
+        // Scheduling is disabled in this context. Wait until admission either completed or deferred the item, then simulate the next sweep.
+        await().atMost(Duration.ofSeconds(30))
+                .until(() -> buildJobRepository.findByBuildJobId(buildJobId).isPresent() || !distributedDataAccessService.getDistributedDeferredBuildResultQueue().isEmpty());
+        localCIResultProcessingService.processDeferredResultAsync();
         await().atMost(Duration.ofSeconds(30)).until(() -> buildJobRepository.findByBuildJobId(buildJobId).isPresent());
         assertThat(markerSeen).as("the marker is set while the deletion runs").isTrue();
         verify(programmingExerciseGradingService, never()).processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean());

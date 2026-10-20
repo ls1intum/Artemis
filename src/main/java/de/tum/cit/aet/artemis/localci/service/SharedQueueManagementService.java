@@ -351,6 +351,7 @@ public class SharedQueueManagementService {
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedDockerImageCleanupInfo().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
         distributedDataAccessService.getDistributedBuildAgentInformation().clear();
     }
 

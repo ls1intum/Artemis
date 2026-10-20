@@ -2,11 +2,11 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -201,8 +202,17 @@ public class LocalCIResultProcessingService {
      * Submit an asynchronous task that polls one item from the result queue and processes it.
      */
     public void processResultAsync() {
+        submitResultProcessing(distributedDataAccessService.getDistributedBuildResultQueue());
+    }
+
+    /** Retry one deferred result without creating a queue-listener feedback loop. */
+    public void processDeferredResultAsync() {
+        submitResultProcessing(distributedDataAccessService.getDistributedDeferredBuildResultQueue());
+    }
+
+    private void submitResultProcessing(DistributedQueue<ResultQueueItem> queue) {
         try {
-            resultProcessingExecutor.execute(this::processResult);
+            resultProcessingExecutor.execute(() -> processResult(queue));
         }
         catch (RejectedExecutionException ex) {
             // this is not an issue as we rely on the queue and will continue polling from it once another
@@ -214,19 +224,24 @@ public class LocalCIResultProcessingService {
     /**
      * Polls a build job result from the build job queue, notifies the user about the result and saves the result to the database.
      */
-    private void processResult() {
-        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedBuildResultQueue().poll();
+    private void processResult(DistributedQueue<ResultQueueItem> queue) {
+        ResultQueueItem resultQueueItem = queue.poll();
 
         if (resultQueueItem == null) {
             return;
         }
-        log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
-        log.debug("Build jobs waiting in queue: {}", distributedDataAccessService.getResultQueueSize());
-        log.debug("Queued build jobs: {}", distributedDataAccessService.getResultQueueIds());
-
         var resultProcessingLock = programmingExerciseDeletionService.getResultProcessingLock(resultQueueItem.buildJobQueueItem().exerciseId());
-        resultProcessingLock.lock();
+        if (!resultProcessingLock.tryLock(Duration.ZERO)) {
+            // A failed deletion must not discard results. Keep them shared without occupying a worker or firing more listener events.
+            distributedDataAccessService.getDistributedDeferredBuildResultQueue().add(resultQueueItem);
+            return;
+        }
         try {
+            log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
+            if (log.isDebugEnabled()) {
+                log.debug("Build jobs waiting in queue: {}", distributedDataAccessService.getResultQueueSize());
+                log.debug("Queued build jobs: {}", distributedDataAccessService.getResultQueueIds());
+            }
             processResultLocked(resultQueueItem);
         }
         finally {
@@ -335,10 +350,9 @@ public class LocalCIResultProcessingService {
         if (!exerciseBeingDeleted && isSolutionBuildOfTestOrAuxPush(buildJob)) {
             log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
             try {
-                // Run async to not block the result processing thread
-                // runAsync uses the common ForkJoinPool, which the Artemis async executors do not wrap, so this
-                // lambda establishes its own context.
-                CompletableFuture.runAsync(() -> SecurityUtils
+                // Keep lifecycle-lock waits off both result workers and the shared ForkJoinPool.
+                // The independent thread establishes its own security context.
+                runFollowUpAsync(() -> SecurityUtils
                         .runAsSystem(() -> runWhileExerciseExists(buildJob.exerciseId(), () -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(),
                                 buildJob.buildConfig().testCommitHash(), SubmissionType.TEST, buildJob.repositoryInfo().triggeredByPushTo()))));
             }
@@ -391,7 +405,18 @@ public class LocalCIResultProcessingService {
     }
 
     private void updateExerciseBuildDurationAsync(long exerciseId) {
-        CompletableFuture.runAsync(() -> runWhileExerciseExists(exerciseId, () -> updateExerciseBuildDuration(exerciseId)));
+        runFollowUpAsync(() -> runWhileExerciseExists(exerciseId, () -> updateExerciseBuildDuration(exerciseId)));
+    }
+
+    private void runFollowUpAsync(Runnable operation) {
+        Thread.ofVirtual().name("local-ci-result-follow-up").start(() -> {
+            try {
+                operation.run();
+            }
+            catch (Exception e) {
+                log.error("Asynchronous result follow-up failed", e);
+            }
+        });
     }
 
     private void runWhileExerciseExists(long exerciseId, Runnable operation) {

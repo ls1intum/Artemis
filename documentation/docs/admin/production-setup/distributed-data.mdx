@@ -64,7 +64,13 @@ these structures:
 | `features` | Contains runtime feature-toggle changes made by an administrator. |
 | `pyris-job-map` | Tracks in-flight Iris jobs and their remaining expiry time. |
 
-Other distributed structures start empty in the new namespace. They contain reconstructible or transient state such as
+`deferredBuildResultQueue` was introduced after schema `1`. It holds results awaiting an exercise lifecycle lock;
+future schema migrations must preserve it alongside `buildResultQueue`. Deferred results remain visible in the admin
+result-queue listing and are retried every five seconds without queue-listener events. The admin clear operation
+clears both result queues. Before downgrading to a release without deferred-result support, let the current release
+drain both queues; the older release cannot process the deferred queue.
+
+Other distributed structures start empty in the initial schema `0` to `1` migration. They contain reconstructible or transient state such as
 build-agent registrations, websocket presence, caches, and topic messages. A user whose short-lived operation was in
 progress, for example an LTI launch, may need to retry it after the maintenance window.
 

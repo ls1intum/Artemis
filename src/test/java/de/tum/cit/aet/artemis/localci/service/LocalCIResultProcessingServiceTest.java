@@ -2,15 +2,19 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +47,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalLock;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalQueue;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
@@ -120,6 +126,9 @@ class LocalCIResultProcessingServiceTest {
     private DistributedQueue<ResultQueueItem> resultQueue;
 
     @Mock
+    private DistributedQueue<ResultQueueItem> deferredResultQueue;
+
+    @Mock
     private DistributedLock resultProcessingLock;
 
     @Mock
@@ -150,6 +159,8 @@ class LocalCIResultProcessingServiceTest {
         lenient().when(distributedDataAccessService.getDistributedBuildResultQueue()).thenReturn(resultQueue);
         lenient().when(programmingExerciseDeletionService.getResultProcessingLock(EXERCISE_ID)).thenReturn(resultProcessingLock);
         lenient().when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenReturn(true);
+        lenient().when(resultProcessingLock.tryLock(Duration.ZERO)).thenReturn(true);
+        lenient().when(distributedDataAccessService.getDistributedDeferredBuildResultQueue()).thenReturn(deferredResultQueue);
     }
 
     @AfterEach
@@ -168,7 +179,11 @@ class LocalCIResultProcessingServiceTest {
     }
 
     private static BuildJobQueueItem buildJob(RepositoryType repositoryType, RepositoryType triggeredByPushTo) {
-        return new BuildJobQueueItem("job-1", "job-1", new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), PARTICIPATION_ID, 1L, EXERCISE_ID, 0, 1, BuildStatus.BUILDING,
+        return buildJob(repositoryType, triggeredByPushTo, EXERCISE_ID, PARTICIPATION_ID, "job-1");
+    }
+
+    private static BuildJobQueueItem buildJob(RepositoryType repositoryType, RepositoryType triggeredByPushTo, long exerciseId, long participationId, String id) {
+        return new BuildJobQueueItem(id, id, new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), participationId, 1L, exerciseId, 0, 1, BuildStatus.BUILDING,
                 new RepositoryInfo("repo", repositoryType, triggeredByPushTo, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), null, 60),
                 new BuildConfig(null, "ghcr.io/example/image:1", "commit", "commit", "test-commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null,
@@ -402,6 +417,83 @@ class LocalCIResultProcessingServiceTest {
         resultProcessingService.processResultAsync();
 
         verifyNoInteractions(participationRepository, buildJobRepository, programmingExerciseGradingService);
+    }
+
+    @Test
+    void aBusyExerciseDoesNotConsumeAResultWorkerOrDiscardTheResult() {
+        ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        withQueuedResult(item);
+        when(resultProcessingLock.tryLock(Duration.ZERO)).thenReturn(false);
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(participationRepository, buildJobRepository, programmingExerciseGradingService);
+        verify(deferredResultQueue).add(item);
+        verify(resultProcessingLock, never()).lock();
+        verify(resultProcessingLock, never()).unlock();
+    }
+
+    @Test
+    void deferredResultIsGradedWhenTheExerciseRemainsAfterDeletionFails() {
+        ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        when(deferredResultQueue.poll()).thenReturn(item);
+        withParticipation();
+        withSavedBuildJob();
+        when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean())).thenReturn(new Result());
+
+        resultProcessingService.processDeferredResultAsync();
+
+        verify(programmingExerciseGradingService).processNewProgrammingExerciseResult(participation, buildResult, false);
+        verify(resultProcessingLock).unlock();
+        verify(deferredResultQueue, never()).add(any());
+    }
+
+    @Test
+    void oneWorkerProcessesAnotherExerciseWhileDeletionHoldsTheFirstLock() {
+        var ordinary = new LocalQueue<ResultQueueItem>(new LinkedBlockingQueue<>(), "ordinary-results");
+        var deferred = new LocalQueue<ResultQueueItem>(new LinkedBlockingQueue<>(), "deferred-results");
+        when(distributedDataAccessService.getDistributedBuildResultQueue()).thenReturn(ordinary);
+        when(distributedDataAccessService.getDistributedDeferredBuildResultQueue()).thenReturn(deferred);
+        LocalLock deletingLock = new LocalLock();
+        when(programmingExerciseDeletionService.getResultProcessingLock(EXERCISE_ID)).thenReturn(deletingLock);
+        when(programmingExerciseDeletionService.getResultProcessingLock(4L)).thenReturn(new LocalLock());
+        withParticipation();
+        var otherExercise = new ProgrammingExercise();
+        otherExercise.setId(4L);
+        var otherParticipation = new ProgrammingExerciseStudentParticipation();
+        otherParticipation.setId(11L);
+        otherParticipation.setProgrammingExercise(otherExercise);
+        when(participationRepository.findWithProgrammingExerciseById(11L)).thenReturn(Optional.of(otherParticipation));
+        withSavedBuildJob();
+        when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean())).thenReturn(new Result());
+        ResultQueueItem busy = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        deletingLock.lock();
+        boolean released = false;
+        resultProcessingService.init();
+        try {
+            ordinary.add(busy);
+            ordinary.add(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER, 4L, 11L, "job-2"), List.of(), null));
+            verify(programmingExerciseGradingService, timeout(5000)).processNewProgrammingExerciseResult(otherParticipation, buildResult, false);
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(deferred.getAll()).containsExactly(busy));
+            verify(participationRepository, never()).findWithProgrammingExerciseById(PARTICIPATION_ID);
+            var scheduler = new LocalCIResultListenerService(distributedDataAccessService, resultProcessingService);
+            scheduler.processQueuedResults();
+            ThreadPoolExecutor executor = (ThreadPoolExecutor) ReflectionTestUtils.getField(resultProcessingService, "resultProcessingExecutor");
+            await().atMost(Duration.ofSeconds(5)).until(() -> executor.getCompletedTaskCount() >= 3);
+            assertThat(deferred.getAll()).containsExactly(busy);
+            deletingLock.unlock();
+            released = true;
+            scheduler.processQueuedResults();
+            verify(programmingExerciseGradingService, timeout(5000)).processNewProgrammingExerciseResult(participation, buildResult, false);
+            verify(programmingExerciseGradingService, times(2)).processNewProgrammingExerciseResult(any(), any(), anyBoolean());
+        }
+        finally {
+            // The test thread owns this reentrant lock only until the simulated failed deletion ends.
+            if (!released) {
+                deletingLock.unlock();
+            }
+            resultProcessingService.removeListener();
+        }
     }
 
     @Test
