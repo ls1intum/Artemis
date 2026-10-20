@@ -228,6 +228,27 @@ describe('ResizablePanelsComponent', () => {
         expect(left.style.flexBasis).toBe(`calc(36% - ${SPLITTER_GUTTER_SIZE}px)`);
     });
 
+    it('widens the default split to a minimum above it, on init and when reopening', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.leftMinSizePercent = 75;
+        fixture.detectChanges();
+        const component = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        const splitter = fixture.nativeElement.querySelector('p-splitter');
+        const [left, right] = Array.from(splitter.querySelectorAll('[data-pc-section="panel"]')) as HTMLElement[];
+
+        expect(component.savedSizes()).toBeUndefined();
+        expect(left.style.flexBasis).toBe(`calc(75% - ${SPLITTER_GUTTER_SIZE}px)`);
+
+        component.onResizeEnd([100, 0]);
+        fixture.detectChanges();
+        component.expandRightPanel(0);
+        fixture.detectChanges();
+
+        expect(component.savedSizes()).toEqual([75, 25]);
+        expect(left.style.flexBasis).toBe(`calc(75% - ${SPLITTER_GUTTER_SIZE}px)`);
+        expect(right.style.flexBasis).toBe(`calc(25% - ${SPLITTER_GUTTER_SIZE}px)`);
+    });
+
     it('keeps the usable split when snap-collapsing after a reopen (splitter buffer is not aliased to savedSizes)', () => {
         fixture = TestBed.createComponent(ResizablePanelsTestComponent);
         fixture.componentInstance.storageKey = 'test-split';

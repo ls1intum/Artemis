@@ -90,3 +90,54 @@ export const KeyboardNavigation: Story = {
         await expect(canvas.getByRole('tabpanel')).toHaveTextContent('Course settings');
     },
 };
+
+const OVERFLOW_TABS = ['Overview', 'Exercises', 'Lectures', 'Communication', 'Competencies', 'Tutorials', 'Statistics', 'Settings'];
+
+export const OverflowKeyboardReveal: Story = {
+    tags: ['!dev', '!autodocs'],
+    args: { value: 'Overview' },
+    render: (args) => ({
+        props: { ...args, tabs: OVERFLOW_TABS },
+        template: `
+            <div style="width: 16rem">
+                <tumaet-ui-tabs [value]="value" (valueChange)="value = $event; valueChange($event)">
+                    <tumaet-ui-tab-list aria-label="Course">
+                        @for (tab of tabs; track tab) {
+                            <tumaet-ui-tab [value]="tab">{{ tab }}</tumaet-ui-tab>
+                        }
+                    </tumaet-ui-tab-list>
+                    <tumaet-ui-tab-panels>
+                        @for (tab of tabs; track tab) {
+                            <tumaet-ui-tab-panel [value]="tab">{{ tab }} content</tumaet-ui-tab-panel>
+                        }
+                    </tumaet-ui-tab-panels>
+                </tumaet-ui-tabs>
+            </div>
+        `,
+    }),
+    play: async ({ canvas, canvasElement, userEvent }) => {
+        // A tab the keyboard scrolls to must not end up under the scroll button covering either edge of the list
+        const expectClearOfScrollButtons = async (tab: HTMLElement) => {
+            const tabRect = tab.getBoundingClientRect();
+            const start = canvasElement.querySelector('.tumaet-ui-tab-scroll-start')?.getBoundingClientRect();
+            const end = canvasElement.querySelector('.tumaet-ui-tab-scroll-end')?.getBoundingClientRect();
+            await expect(tabRect.left).toBeGreaterThanOrEqual((start?.right ?? -Infinity) - 1);
+            await expect(tabRect.right).toBeLessThanOrEqual((end?.left ?? Infinity) + 1);
+        };
+
+        await userEvent.tab();
+        let tab = canvas.getByRole('tab', { name: OVERFLOW_TABS[0] });
+        for (const name of OVERFLOW_TABS.slice(1)) {
+            await fireEvent.keyDown(tab, { key: 'ArrowRight', keyCode: 39 });
+            tab = canvas.getByRole('tab', { name });
+            await expect(tab).toHaveFocus();
+            await waitFor(() => expectClearOfScrollButtons(tab));
+        }
+        for (const name of OVERFLOW_TABS.slice(0, -1).reverse()) {
+            await fireEvent.keyDown(tab, { key: 'ArrowLeft', keyCode: 37 });
+            tab = canvas.getByRole('tab', { name });
+            await expect(tab).toHaveFocus();
+            await waitFor(() => expectClearOfScrollButtons(tab));
+        }
+    },
+};
