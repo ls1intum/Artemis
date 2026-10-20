@@ -257,6 +257,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
                 competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService, pyrisPipelineService, pyrisEventService,
                 ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
         buildAgentConfigurationOverrides.reset();
+        // Preserve startup answers while discarding calls recorded by scheduled and build threads.
+        Mockito.clearInvocations(buildAgentConfiguration);
         super.resetSpyBeans();
     }
 

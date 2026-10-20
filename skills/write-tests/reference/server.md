@@ -60,6 +60,8 @@ stub it once when the context is built with answers that read an `AtomicReferenc
 holder in the test (`BuildAgentConfigurationOverrides`, `@MockitoSpyBean(reset = MockReset.NONE)`).
 Install these answers in a bean post-processor after Mockito creates the spy and before it is injected
 into consumers. `SmartInitializingSingleton` is too late: a consumer can schedule work in `@PostConstruct`.
+Clear the spy's recorded calls with `Mockito.clearInvocations(...)` after each test to bound its history;
+this preserves the startup answers and does not start a new stubbing.
 
 A scheduled task that rewrites shared state a test also writes (the `dockerImageCleanupInfo` map is
 cleared and refilled every five minutes) is switched off in the test contexts by its interval
