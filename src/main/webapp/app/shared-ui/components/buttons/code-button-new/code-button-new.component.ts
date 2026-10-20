@@ -117,13 +117,17 @@ export class CodeButtonNewComponent {
         if (!user) {
             throw new Error('Resolved user resource contained no user');
         }
+        const login = user.login;
+        if (!login) {
+            throw new Error('Resolved user resource contained no login');
+        }
         const tokenUrl = chain(this.tokenUrlResource);
         if (!tokenUrl) {
             throw new Error('Resolved token URL resource contained no URL');
         }
         return {
             repositoryUri: this.repositoryUri(),
-            login: user.login,
+            login,
             tokenUrl,
         };
     }
@@ -190,7 +194,7 @@ export class CodeButtonNewComponent {
         return { status: 'resolved', value: url };
     }
 
-    private async loadAuthenticationMethodData(repositoryUri: string, login: string | undefined, tokenUrl: string): Promise<NonEmptyArray<AuthenticationMethodData>> {
+    private async loadAuthenticationMethodData(repositoryUri: string, login: string, tokenUrl: string): Promise<NonEmptyArray<AuthenticationMethodData>> {
         const authenticationMethods = this.getAuthenticationMethods();
 
         const authenticationMethodData = await Promise.all(
@@ -215,7 +219,7 @@ export class CodeButtonNewComponent {
     private async getAuthenticationMethodData(
         authenticationMethod: RepositoryAuthenticationMethod,
         repositoryUri: string,
-        login: string | undefined,
+        login: string,
         tokenUrl: string,
     ): Promise<AuthenticationMethodData> {
         switch (authenticationMethod) {
@@ -224,7 +228,7 @@ export class CodeButtonNewComponent {
             case RepositoryAuthenticationMethod.Token:
                 return this.getTokenAuthenticationMethodData(tokenUrl);
             case RepositoryAuthenticationMethod.Password:
-                return this.getPasswordAuthenticationMethodData(repositoryUri, this.requireLogin(login));
+                return this.getPasswordAuthenticationMethodData(repositoryUri, login);
         }
     }
 
@@ -273,13 +277,6 @@ export class CodeButtonNewComponent {
         } catch {
             return undefined;
         }
-    }
-
-    private requireLogin(login: string | undefined): string {
-        if (!login) {
-            throw new Error('Incomplete token or password authentication data');
-        }
-        return login;
     }
 
     private getTokenAuthenticationMethodData(tokenUrl: string): AuthenticationMethodData {
