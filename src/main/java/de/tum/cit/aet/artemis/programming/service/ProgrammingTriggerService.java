@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -149,24 +148,24 @@ public class ProgrammingTriggerService {
      * queued before it, far longer than a request may stay open. It runs on its own executor, because a run that
      * waits keeps its thread for as long as that takes.
      * <p>
-     * The clients learn about the run through the same topic as the run of all builds: they are told when it starts and
-     * when it has queued its last build, also if it fails, so that their retry action can stay busy until then.
+     * The clients learn that the run is done through a message that names it, also if it fails, so that their retry action can stay
+     * busy until then without mistaking the end of another run of the exercise for it.
      *
      * @param triggerData what a trigger reads off each participation that is to be built, newest submission included
      * @param exercise    the exercise those participations belong to, loaded with its build config and auxiliary
      *                        repositories
+     * @param runId       names this run in the message that reports its end
      */
     @Async("bulkBuildTriggerExecutor")
-    public void triggerInstructorBuildForParticipations(List<ParticipationBuildTriggerDTO> triggerData, ProgrammingExercise exercise) {
+    public void triggerInstructorBuildForParticipations(List<ParticipationBuildTriggerDTO> triggerData, ProgrammingExercise exercise, String runId) {
         // The caller's context reaches this thread when there is one; this stands in for the paths that have none.
         // Security checks still belong before this point, since the stand-in is not a user.
         SecurityUtils.setAuthorizationObject();
-        programmingMessagingService.notifyAboutBuildRunState(exercise, BuildRunState.RUNNING);
         try {
             triggerBuildForParticipationData(triggerData, exercise);
         }
         finally {
-            programmingMessagingService.notifyAboutBuildRunState(exercise, BuildRunState.COMPLETED);
+            programmingMessagingService.notifyAboutCompletedSelectedBuildRun(exercise, runId);
         }
     }
 
@@ -181,7 +180,7 @@ public class ProgrammingTriggerService {
      * {@link ParticipationBuildTriggerDTO}.
      * <p>
      * The call can take a long time, so a caller on a request thread uses
-     * {@link #triggerInstructorBuildForParticipations(List, ProgrammingExercise)} instead.
+     * {@link #triggerInstructorBuildForParticipations(List, ProgrammingExercise, String)} instead.
      *
      * @param triggerData what a trigger reads off each participation of the exercise, newest submission included
      * @param exercise    the exercise those participations belong to, loaded with its build config and auxiliary

@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { debounceTime, filter, map, switchMap } from 'rxjs/operators';
+import { debounceTime, filter, map, switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
@@ -14,7 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { DurationPipe } from 'app/foundation/pipes/duration.pipe';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { BuildRunState, ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
+import { ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -65,6 +65,11 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     // True from the click on the retry button until the server reports that its run has queued the last build, see triggerBuildOfFailedSubmissions.
     readonly isBuildingFailedSubmissions = signal(false);
 
+    // The run that the retry button waits for, once the server named it. The end of a run can be announced before the response that names it arrives, so the runs that ended
+    // since the click are remembered as well.
+    private awaitedRunId: string | undefined;
+    private readonly endedRunIds = new Set<string>();
+
     readonly resultEtaInMs = signal<number | undefined>(undefined);
 
     // Icons
@@ -72,30 +77,60 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     faCircleNotch = faCircleNotch;
     faRedo = faRedo;
 
+    constructor() {
+        // The server queues the builds in the background and announces the end of each run by name. The stream follows the exercise like buildingSummary does, because the
+        // component is not recreated when the exercise input changes.
+        toObservable(computed(() => this.exercise().id))
+            .pipe(
+                tap(() => this.resetRetryState()),
+                filter((exerciseId): exerciseId is number => exerciseId !== undefined),
+                switchMap((exerciseId) => this.programmingBuildRunService.getSelectedBuildRunCompletions(exerciseId)),
+                takeUntilDestroyed(),
+            )
+            .subscribe((runId) => this.onSelectedBuildRunCompleted(runId));
+    }
+
     ngOnInit(): void {
         this.programmingSubmissionService
             .getResultEtaInMs()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((resultEta) => this.resultEtaInMs.set(resultEta));
-        // The server queues the builds in the background and tells us when it starts and when it is done.
-        this.programmingBuildRunService
-            .getBuildRunUpdates(this.exercise().id!)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((buildRunState) => this.isBuildingFailedSubmissions.set(buildRunState === BuildRunState.RUNNING));
     }
 
     /**
      * Retrieve the participation ids that have a failed submission and retry their build.
      * <p>
      * The request returns at once, because the server queues the builds in the background and may have to wait for room in the build queue.
-     * The button therefore stays busy until the server reports that the run is done, not until the request completes.
+     * The button therefore stays busy until the server reports that this run is done, not until the request completes. Runs of other instructors do not count.
      */
     triggerBuildOfFailedSubmissions() {
         this.isBuildingFailedSubmissions.set(true);
+        this.awaitedRunId = undefined;
+        this.endedRunIds.clear();
         const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exercise().id!, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
-        this.programmingSubmissionService
-            .triggerInstructorBuildForParticipationsOfExercise(this.exercise().id!, failedSubmissionParticipations)
-            .subscribe({ error: () => this.isBuildingFailedSubmissions.set(false) });
+        this.programmingSubmissionService.triggerInstructorBuildForParticipationsOfExercise(this.exercise().id!, failedSubmissionParticipations).subscribe({
+            next: ({ runId }) => {
+                if (this.endedRunIds.has(runId)) {
+                    this.resetRetryState();
+                } else {
+                    this.awaitedRunId = runId;
+                }
+            },
+            error: () => this.resetRetryState(),
+        });
+    }
+
+    private onSelectedBuildRunCompleted(runId: string) {
+        this.endedRunIds.add(runId);
+        if (runId === this.awaitedRunId) {
+            this.resetRetryState();
+        }
+    }
+
+    private resetRetryState() {
+        this.awaitedRunId = undefined;
+        this.endedRunIds.clear();
+        this.isBuildingFailedSubmissions.set(false);
     }
 
     private sumSubmissionStates = (buildState: ExerciseSubmissionState) =>

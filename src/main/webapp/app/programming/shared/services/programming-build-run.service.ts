@@ -1,6 +1,6 @@
 import { OnDestroy, Service, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 
 /**
@@ -11,12 +11,25 @@ export enum BuildRunState {
     COMPLETED = 'COMPLETED',
 }
 
+/**
+ * A run that queues the builds of selected participations. The server returns it when it accepts the run and sends it again when the run has queued its last build.
+ */
+export interface SelectedBuildRun {
+    runId: string;
+}
+
 export interface IProgrammingBuildRunService {
     /**
      * Subscribe for updates on running build runs. Atm we assume that only build run is running for the whole exercise.
      * @param programmingExerciseId
      */
     getBuildRunUpdates(programmingExerciseId: number): Observable<BuildRunState>;
+
+    /**
+     * Subscribe for the ends of runs that queue the builds of selected participations. Each emitted value names the run that is done.
+     * @param programmingExerciseId
+     */
+    getSelectedBuildRunCompletions(programmingExerciseId: number): Observable<string>;
 }
 
 /**
@@ -32,6 +45,7 @@ export class ProgrammingBuildRunService implements OnDestroy {
     private buildRunSubscriptions: { [programmingExerciseId: number]: Subscription } = {};
 
     private BUILD_RUN_TEMPLATE_TOPIC = '/topic/programming-exercises/%programmingExerciseId%/all-builds-triggered';
+    private SELECTED_BUILD_RUN_COMPLETED_TEMPLATE_TOPIC = '/topic/programming-exercises/%programmingExerciseId%/selected-builds-run-completed';
 
     /**
      * Unsubscribe all buildRunSubjects
@@ -76,5 +90,16 @@ export class ProgrammingBuildRunService implements OnDestroy {
         this.buildRunSubjects[programmingExerciseId] = newSubject;
         this.subscribeWebsocket(programmingExerciseId);
         return newSubject.pipe(filter((stateObj) => stateObj !== undefined));
+    }
+
+    /**
+     * Subscribe for the ends of runs that queue the builds of selected participations. Several runs of one exercise may overlap, so every value names the run that is done.
+     * The caller has to unsubscribe, which also ends the websocket subscription.
+     *
+     * @param programmingExerciseId
+     */
+    getSelectedBuildRunCompletions(programmingExerciseId: number): Observable<string> {
+        const topic = this.SELECTED_BUILD_RUN_COMPLETED_TEMPLATE_TOPIC.replace('%programmingExerciseId%', programmingExerciseId.toString());
+        return this.websocketService.subscribe<SelectedBuildRun>(topic).pipe(map((run) => run.runId));
     }
 }

@@ -50,6 +50,13 @@ public class ProgrammingWebsocketTopics implements WebsocketTopicProvider {
             WebsocketTopicAccess.atLeastTutorInExercise("exerciseId"));
 
     /**
+     * The end of a run that queued the builds of selected participations of an exercise. The payload is a {@code SelectedBuildRunDTO} that names the run, so
+     * that a client waits for its own run and not for one that another instructor started.
+     */
+    public static final WebsocketTopic SELECTED_BUILDS_RUN_COMPLETED = WebsocketTopic.of("/topic/programming-exercises/{exerciseId}/selected-builds-run-completed",
+            WebsocketTopicAccess.atLeastTutorInExercise("exerciseId"));
+
+    /**
      * New submissions of the user's own participations, and their build trigger errors.
      */
     public static final WebsocketUserTopic NEW_SUBMISSIONS = WebsocketUserTopic.of("/topic/newSubmissions");

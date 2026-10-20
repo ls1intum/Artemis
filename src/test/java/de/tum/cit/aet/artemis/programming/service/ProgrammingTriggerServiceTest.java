@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -457,7 +456,7 @@ class ProgrammingTriggerServiceTest {
 
     @Test
     void triggerInstructorBuildForParticipations_triggersEveryGivenParticipation() {
-        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false), triggerData(2L, false)), exercise);
+        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false), triggerData(2L, false)), exercise, "run-1");
 
         ArgumentCaptor<ProgrammingExerciseStudentParticipation> triggered = ArgumentCaptor.captor();
         verify(continuousIntegrationTriggerService, times(2)).triggerBuild(triggered.capture(), anyBoolean(), any(SharedBuildTriggerData.class));
@@ -465,17 +464,25 @@ class ProgrammingTriggerServiceTest {
     }
 
     @Test
-    void triggerInstructorBuildForParticipations_tellsTheClientsWhenTheRunStartsAndWhenItIsDone() {
-        // The retry action of the client stays busy until the run has queued its last build, which it learns from these two.
-        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise);
+    void triggerInstructorBuildForParticipations_tellsTheClientsWhichRunIsDoneOnceItQueuedItsBuilds() {
+        // The retry action of the client stays busy until its own run has queued the last build, which it learns from this message.
+        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1");
 
         InOrder inOrder = inOrder(programmingMessagingService, continuousIntegrationTriggerService);
-        inOrder.verify(programmingMessagingService).notifyAboutBuildRunState(exercise, BuildRunState.RUNNING);
         inOrder.verify(continuousIntegrationTriggerService).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
-        inOrder.verify(programmingMessagingService).notifyAboutBuildRunState(exercise, BuildRunState.COMPLETED);
+        inOrder.verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
         // The run of all builds sends the notification to the instructors, a rebuild of a few participations does not.
         verify(programmingMessagingService, never()).notifyInstructorAboutStartedExerciseBuildRun(any());
         verify(programmingMessagingService, never()).notifyInstructorAboutCompletedExerciseBuildRun(any());
+    }
+
+    @Test
+    void triggerInstructorBuildForParticipations_namesEachRunInItsOwnMessage() {
+        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1");
+        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(2L, false)), exercise, "run-2");
+
+        verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
+        verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-2");
     }
 
     @Test
@@ -485,10 +492,9 @@ class ProgrammingTriggerServiceTest {
         doThrow(new IllegalStateException("the queue cannot be read")).when(throttle).awaitCapacity();
 
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise));
+                .isThrownBy(() -> programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1"));
 
-        verify(programmingMessagingService).notifyAboutBuildRunState(exercise, BuildRunState.RUNNING);
-        verify(programmingMessagingService).notifyAboutBuildRunState(exercise, BuildRunState.COMPLETED);
+        verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
     }
 
     @Test

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
@@ -244,16 +246,19 @@ public class ProgrammingSubmissionResource {
      * Note: If a participationId does not belong to the exercise, it will be ignored!
      * <p>
      * The builds are queued in the background, one after the other, while the build queue has room for them. The response does not wait for that.
+     * Instead, it names the run, and the server announces the end of that run on the topic {@code SELECTED_BUILDS_RUN_COMPLETED} of the exercise.
      *
      * @param exerciseId       to identify the programming exercise.
      * @param participationIds list of participation ids.
-     * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
+     * @return the run that queues the builds if the operation was accepted, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed
+     *         to
+     *         access the exercise.
      */
     @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
     @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
+    public ResponseEntity<SelectedBuildRunDTO> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
         if (participationIds.isEmpty()) {
             throw new BadRequestAlertException("participationIds cannot be empty", "ProgrammingSubmission", "participationIdsEmpty");
         }
@@ -268,9 +273,10 @@ public class ProgrammingSubmissionResource {
         log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
                 programmingExercise.getId());
         var triggerData = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseIdAndParticipationIds(exerciseId, participationIds);
-        programmingTriggerService.triggerInstructorBuildForParticipations(triggerData, programmingExercise);
+        var run = new SelectedBuildRunDTO(UUID.randomUUID().toString());
+        programmingTriggerService.triggerInstructorBuildForParticipations(triggerData, programmingExercise, run.runId());
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(run);
     }
 
     /**

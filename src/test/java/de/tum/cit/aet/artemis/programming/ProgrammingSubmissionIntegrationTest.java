@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
@@ -333,8 +334,16 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         // Perform a call to trigger-instructor-build-all twice. We want to check that the submissions
         // aren't being re-created.
         String url = "/api/programming/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
-        request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
-        request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
+        var firstRun = request.postWithResponseBody(url, participationsToTrigger, SelectedBuildRunDTO.class, HttpStatus.OK);
+        var secondRun = request.postWithResponseBody(url, participationsToTrigger, SelectedBuildRunDTO.class, HttpStatus.OK);
+
+        // Every request names its own run, and the server reports the end of each one on the topic of the exercise.
+        assertThat(firstRun.runId()).isNotBlank().isNotEqualTo(secondRun.runId());
+        String completionTopic = "/topic/programming-exercises/" + exercise.getId() + "/selected-builds-run-completed";
+        await().untilAsserted(() -> {
+            verify(websocketMessagingService).sendMessage(topic(completionTopic), eq(firstRun));
+            verify(websocketMessagingService).sendMessage(topic(completionTopic), eq(secondRun));
+        });
 
         // Note: the participations above have no submissions, so the builds will not be triggered
         assertThat(submissionRepository.findAllByParticipationIdWithResults(participation1.getId())).isEmpty();

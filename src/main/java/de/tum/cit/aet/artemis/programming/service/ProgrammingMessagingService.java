@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.ALL_BUILDS_TRIGGERED;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.EXERCISE_SUBMISSION_PROCESSING;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.SELECTED_BUILDS_RUN_COMPLETED;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.SUBMISSION_PROCESSING;
 
 import java.util.Optional;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 
 @Profile(PROFILE_CORE)
@@ -77,15 +79,17 @@ public class ProgrammingMessagingService {
     }
 
     /**
-     * Tells the clients that watch the exercise whether a run of builds is going on, without the notification to the
-     * instructors that the run of all builds sends. The rebuild of selected participations uses it so that the client
-     * can keep its retry action busy until the run has queued all of its builds.
+     * Tells the clients that watch the exercise that a run of selected participations has queued its last build, without the
+     * notification to the instructors that the run of all builds sends. The rebuild of selected participations uses it so that the
+     * client can keep its retry action busy until then.
+     * <p>
+     * The message names the run. Several runs of one exercise may overlap, and a client must not take the end of another run for its own.
      *
-     * @param programmingExercise the exercise whose builds are queued
-     * @param buildRunState       whether the run is going on or finished
+     * @param programmingExercise the exercise whose builds were queued
+     * @param runId               the run that is done
      */
-    public void notifyAboutBuildRunState(ProgrammingExercise programmingExercise, BuildRunState buildRunState) {
-        websocketMessagingService.sendMessage(ALL_BUILDS_TRIGGERED.at(programmingExercise.getId()), buildRunState);
+    public void notifyAboutCompletedSelectedBuildRun(ProgrammingExercise programmingExercise, String runId) {
+        websocketMessagingService.sendMessage(SELECTED_BUILDS_RUN_COMPLETED.at(programmingExercise.getId()), new SelectedBuildRunDTO(runId));
     }
 
     /**
