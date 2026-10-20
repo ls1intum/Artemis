@@ -46,8 +46,18 @@ export class MessageEditorResources {
 
     private async loadSlides(courseId: number): Promise<MessageSuggestion[]> {
         const response = await firstValueFrom(this.lectures.findAllByCourseIdWithSlides(courseId));
-        return (response.body ?? []).flatMap((lecture) =>
-            (lecture.lectureUnits ?? [])
+        return (response.body ?? []).flatMap((lecture) => [
+            // Lectures stay referenceable without attachment units, as they were in the previous editor.
+            ...(lecture.id && lecture.title
+                ? [
+                      {
+                          label: lecture.title,
+                          kind: 'lecture',
+                          markdown: `[lecture]${sanitizeStringForMarkdownEditor(lecture.title)}(/courses/${courseId}/lectures/${lecture.id})[/lecture]`,
+                      } satisfies MessageSuggestion,
+                  ]
+                : []),
+            ...(lecture.lectureUnits ?? [])
                 .filter((unit): unit is AttachmentVideoUnit => unit.type === LectureUnitType.ATTACHMENT_VIDEO)
                 .flatMap((unit): MessageSuggestion[] => {
                     if (!unit.attachment?.link) {
@@ -75,6 +85,6 @@ export class MessageEditorResources {
                             })),
                     ];
                 }),
-        );
+        ]);
     }
 }

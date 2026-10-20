@@ -64,21 +64,37 @@ describe('Formatted message resources', () => {
     it('offers attachment units and individual slides with versioned student links', async () => {
         const result = await resources.search('slides', '', 1);
         expect(result.map((item) => item.markdown)).toEqual([
+            '[lecture]Lecture 2(/courses/1/lectures/2)[/lecture]',
             '[lecture-unit]Slides(lecture/student.pdf?version=3)[/lecture-unit]',
             '[slide]Slides Slide 3(#7)[/slide]',
             '[slide]Slides Slide 5(#8)[/slide]',
         ]);
-        expect(result[1].label).toContain('Lecture 2');
-        expect(result[1]).toMatchObject({ slideNumber: 3, resourceLabel: 'Lecture 2 › Slides', previewUrl: '/api/core/files/slides/7' });
+        expect(result[2].label).toContain('Lecture 2');
+        expect(result[2]).toMatchObject({ slideNumber: 3, resourceLabel: 'Lecture 2 › Slides', previewUrl: '/api/core/files/slides/7' });
         expect(files.addAttachmentVersionToUrl).toHaveBeenCalledWith('/attachments/lecture/student.pdf', 3);
-        expect(await resources.search('slides', '2', 1)).toHaveLength(3);
+        expect(await resources.search('slides', '2', 1)).toHaveLength(4);
         expect(lectures.findAllByCourseIdWithSlides).toHaveBeenCalledTimes(1);
     });
 
     it.each(['/api/core/files/slides/7', '/attachments/', ''])('skips attachment units with an unusable versioned link: %s', async (link) => {
         files.addAttachmentVersionToUrl.mockReturnValue(link);
 
-        expect(await resources.search('slides', '', 1)).toEqual([]);
+        expect((await resources.search('slides', '', 1)).map((item) => item.kind)).toEqual(['lecture']);
+    });
+
+    it('finds lectures that have no attachment units or slides', async () => {
+        lectures.findAllByCourseIdWithSlides.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [{ id: 4, title: 'Intro [recap]' }, { id: 5, title: 'Unit-free lecture', lectureUnits: [{ type: 'text', name: 'Text unit' }] }, { id: 6 }],
+                }),
+            ),
+        );
+
+        expect(await resources.search('slides', 'lecture', 1)).toEqual([
+            { label: 'Unit-free lecture', kind: 'lecture', markdown: '[lecture]Unit-free lecture(/courses/1/lectures/5)[/lecture]' },
+        ]);
+        expect((await resources.search('slides', 'intro', 1)).map((item) => item.label)).toEqual(['Intro [recap]']);
     });
 
     it('separates course caches and retries failed loads', async () => {
