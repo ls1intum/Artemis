@@ -817,6 +817,46 @@ describe('ExamParticipationComponent', () => {
             expect(submission.isSynced).toBe(true);
         });
 
+        it('should resend the answer when the student undoes to the text of a delayed older save after a newer save completed', () => {
+            const textExercise = new TextExercise(new Course(), undefined);
+            textExercise.id = 5;
+            const participation = new StudentParticipation();
+            const submission = new TextSubmission();
+            submission.text = 'Answer A';
+            submission.isSynced = false;
+            participation.submissions = [submission];
+            textExercise.studentParticipations = [participation];
+            comp.studentExam().exercises = [textExercise];
+            const saveA = new Subject<HttpResponse<TextSubmission>>();
+            const saveB = new Subject<HttpResponse<TextSubmission>>();
+            const sentTexts: (string | undefined)[] = [];
+            vi.spyOn(textSubmissionService, 'update').mockImplementation((answer) => {
+                sentTexts.push(answer.text);
+                return sentTexts.length === 1 ? saveA : sentTexts.length === 2 ? saveB : of(new HttpResponse({ body: answer }));
+            });
+
+            // Save A is sent, then the student edits to B and save B is sent while A's response is still delayed.
+            comp.triggerSave(false);
+            submission.text = 'Answer B';
+            submission.isSynced = false;
+            comp.triggerSave(false);
+            // The response of save B arrives, then the student undoes the edit back to A's text.
+            saveB.next(new HttpResponse({ body: new TextSubmission() }));
+            saveB.complete();
+            expect(submission.isSynced).toBe(true);
+            submission.text = 'Answer A';
+            submission.isSynced = false;
+
+            // The delayed response of save A must not mark the reverted answer as synced: the server may hold B.
+            saveA.next(new HttpResponse({ body: new TextSubmission() }));
+            saveA.complete();
+            expect(submission.isSynced).toBe(false);
+
+            comp.triggerSave(false);
+            expect(sentTexts).toEqual(['Answer A', 'Answer B', 'Answer A']);
+            expect(submission.isSynced).toBe(true);
+        });
+
         it('should sync modeling submissions', () => {
             const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
             modelingExercise.id = 5;

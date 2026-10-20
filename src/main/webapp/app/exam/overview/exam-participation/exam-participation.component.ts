@@ -218,6 +218,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // state outside Angular's reactivity changes (wall-clock transitions, in-place submission sync mutations)
     // so the exam view and its default-CD children (e.g. the navigation sidebar icons) re-render under zoneless.
     private readonly wallClockVersion = signal(0);
+    // Per text submission: the number of save requests sent and the highest sequence whose response has arrived.
+    private readonly textSaveStates = new WeakMap<Submission, { issued: number; completed: number }>();
     readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
     readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
 
@@ -1167,9 +1169,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     case ExerciseType.TEXT: {
                         const textSubmission = submissionToSync.submission as TextSubmission;
                         const savedText = textSubmission.text;
+                        const saveSequence = this.startTextSave(textSubmission);
                         this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
                         this.textSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(textSubmission, textSubmission.text === savedText),
+                            next: () => this.onSaveSubmissionSuccess(textSubmission, this.isTextSaveConfirmed(textSubmission, saveSequence, savedText)),
                             error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });
                         break;
@@ -1203,6 +1206,32 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.currentPageComponents()
             .filter((component) => component.hasUnsavedChanges())
             .forEach((component) => component.updateSubmissionFromView());
+    }
+
+    /** Registers a text save request and returns its sequence number, which grows with every request of the submission. */
+    private startTextSave(submission: TextSubmission): number {
+        const state = this.textSaveStates.get(submission) ?? { issued: 0, completed: 0 };
+        state.issued += 1;
+        this.textSaveStates.set(submission, state);
+        return state.issued;
+    }
+
+    /**
+     * Decides whether the response of the save request with the given sequence leaves the submission synced.
+     * Comparing the text alone is not enough: with overlapping saves, an older response can arrive after a newer one,
+     * and the student may have undone back to the older text in between. The server may then hold either answer.
+     * - the newest request confirms the answer only if the text still equals the text it sent;
+     * - an older request that completes while a newer one is pending changes nothing, the newer response decides;
+     * - an older request that completes after a newer one may have been applied last, so the answer must be sent again.
+     */
+    private isTextSaveConfirmed(submission: TextSubmission, sequence: number, savedText: string | undefined): boolean {
+        const state = this.textSaveStates.get(submission) ?? { issued: sequence, completed: 0 };
+        const newerCompleted = state.completed > sequence;
+        state.completed = Math.max(state.completed, sequence);
+        if (sequence === state.issued) {
+            return submission.text === savedText;
+        }
+        return newerCompleted ? false : !!submission.isSynced;
     }
 
     private onSaveSubmissionSuccess(submission: Submission, unchangedSinceSave = true) {
