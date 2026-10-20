@@ -12,8 +12,8 @@ import type { IndexedCollectionCount } from './indexed-collection-count';
 
 export interface IndexOverview {
     weaviateReachable: boolean;
-    weaviateAddress?: string;
+    weaviateAddress: string;
     irisEnabled: boolean;
     irisReachable: boolean;
-    collections?: Array<IndexedCollectionCount>;
+    collections: Array<IndexedCollectionCount>;
 }

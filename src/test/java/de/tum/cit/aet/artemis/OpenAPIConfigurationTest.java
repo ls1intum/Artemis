@@ -12,6 +12,8 @@ import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.util.ClassUtils;
 
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexOverviewDTO;
+import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -31,6 +33,30 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 
 class OpenAPIConfigurationTest {
+
+    @Test
+    void shouldKeepTheResolvedIndexOverviewResponseContract() {
+        var schemas = ModelConverters.getInstance().readAll(IndexOverviewDTO.class);
+        var responseSchema = new Schema<>().$ref("#/components/schemas/IndexOverviewDTO");
+        var response = new ApiResponse().content(new Content().addMediaType("application/json", new MediaType().schema(responseSchema)));
+        var operation = new Operation().operationId("getIndexOverview").addTagsItem("Ingestion Coverage Resource").responses(new ApiResponses().addApiResponse("200", response));
+        var openApi = new OpenAPI().components(new Components().schemas(new HashMap<>(schemas)))
+                .paths(new Paths().addPathItem("/api/global-search/admin/index/overview", new PathItem().get(operation)));
+
+        new OpenAPIConfiguration().schemaCustomizer().customise(openApi);
+
+        assertThat(openApi.getComponents().getSchemas()).containsOnlyKeys("IndexOverview", "IndexedCollectionCount");
+        Schema<?> overview = openApi.getComponents().getSchemas().get("IndexOverview");
+        assertThat(overview.getRequired()).containsExactlyInAnyOrder("weaviateReachable", "weaviateAddress", "irisEnabled", "irisReachable", "collections");
+        assertThat(overview.getProperties().get("collections").getItems().get$ref()).isEqualTo("#/components/schemas/IndexedCollectionCount");
+        Schema<?> collection = openApi.getComponents().getSchemas().get("IndexedCollectionCount");
+        assertThat(collection.getRequired()).containsExactlyInAnyOrder("collection", "readable");
+        assertThat(collection.getProperties()).containsKey("count");
+        assertThat(collection.getProperties().get("count").getFormat()).isEqualTo("int64");
+        assertThat(responseSchema.get$ref()).isEqualTo("#/components/schemas/IndexOverview");
+        assertThat(openApi.getPaths().get("/api/global-search/admin/index/overview").getGet()).isSameAs(operation);
+        assertThat(operation.getTags()).containsExactly("Ingestion Coverage");
+    }
 
     @Test
     void shouldGiveEverySearchTermSubclassItsOwnSchemaName() {

@@ -6,7 +6,7 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { IndexOverview } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IndexOverview } from 'app/openapi/model/index-overview';
 
 /**
  * What each Iris collection actually holds. The names come from the Iris pipeline and do not describe their contents:

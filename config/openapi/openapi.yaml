@@ -3652,7 +3652,7 @@ components:
         collections:
           type: array
           items: {$ref: '#/components/schemas/IndexedCollectionCount'}
-      required: [irisEnabled, irisReachable, weaviateReachable]
+      required: [collections, irisEnabled, irisReachable, weaviateAddress, weaviateReachable]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -3883,7 +3883,7 @@ components:
         collection: {type: string}
         count: {type: integer, format: int64}
         readable: {type: boolean}
-      required: [readable]
+      required: [collection, readable]
     CalendarEvent:
       type: object
       properties:
