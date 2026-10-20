@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.core.util.QueryCountAssert;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.ThrowingProducer;
 import de.tum.cit.aet.artemis.core.util.junit_extensions.AsyncWorkDrainExtension;
+import de.tum.cit.aet.artemis.core.util.junit_extensions.AsyncWorkTrackingConfiguration;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -82,7 +83,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @AutoConfigureMockMvc
 @ExtendWith({ SpringExtension.class, AsyncWorkDrainExtension.class })
 @Execution(ExecutionMode.CONCURRENT)
-@Import({ TestRepositoryConfiguration.class, JacksonDeserializerInitializationConfig.class })
+@Import({ TestRepositoryConfiguration.class, JacksonDeserializerInitializationConfig.class, AsyncWorkTrackingConfiguration.class })
 @AutoConfigureEmbeddedDatabase
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 

@@ -10,16 +10,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import de.tum.cit.aet.artemis.core.async.ExceptionHandlingAsyncTaskExecutor;
 
 class AsyncWorkDrainExtensionTest {
 
-    private GenericApplicationContext applicationContext;
+    private AnnotationConfigApplicationContext applicationContext;
 
-    private ExceptionHandlingAsyncTaskExecutor taskExecutor;
+    private AsyncTaskExecutor taskExecutor;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -27,17 +28,21 @@ class AsyncWorkDrainExtensionTest {
         pool.setCorePoolSize(1);
         pool.setMaxPoolSize(1);
         pool.setQueueCapacity(10);
-        taskExecutor = new ExceptionHandlingAsyncTaskExecutor(pool);
-        taskExecutor.afterPropertiesSet();
-        applicationContext = new GenericApplicationContext();
-        applicationContext.getBeanFactory().registerSingleton("taskExecutor", taskExecutor);
-        applicationContext.refresh();
+        applicationContext = contextWith(pool);
+        taskExecutor = applicationContext.getBean("taskExecutor", AsyncTaskExecutor.class);
+    }
+
+    private static AnnotationConfigApplicationContext contextWith(ThreadPoolTaskExecutor pool) {
+        var context = new AnnotationConfigApplicationContext();
+        context.register(AsyncWorkTrackingConfiguration.class);
+        context.registerBean("taskExecutor", ExceptionHandlingAsyncTaskExecutor.class, () -> new ExceptionHandlingAsyncTaskExecutor(pool));
+        context.refresh();
+        return context;
     }
 
     @AfterEach
-    void tearDown() throws Exception {
+    void tearDown() {
         applicationContext.close();
-        taskExecutor.destroy();
     }
 
     @Test
@@ -68,6 +73,40 @@ class AsyncWorkDrainExtensionTest {
         assertThat(firstFinished).isTrue();
         assertThat(secondFinished).isTrue();
         assertThat(AsyncWorkDrainExtension.hasGivenUp(applicationContext)).isFalse();
+    }
+
+    @Test
+    void drainDoesNotDeclareIdleWhileSubmittedWorkHasNotReachedTheQueue() throws Exception {
+        CountDownLatch submitted = new CountDownLatch(1);
+        CountDownLatch allowEnqueue = new CountDownLatch(1);
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor() {
+
+            @Override
+            public void execute(Runnable task) {
+                submitted.countDown();
+                await(allowEnqueue);
+                super.execute(task);
+            }
+        };
+        AtomicBoolean finished = new AtomicBoolean();
+        try (var blockedContext = contextWith(pool)) {
+            AsyncTaskExecutor executor = blockedContext.getBean("taskExecutor", AsyncTaskExecutor.class);
+            Thread submitter = Thread.ofPlatform().start(() -> executor.execute(() -> finished.set(true)));
+            try {
+                assertThat(submitted.await(5, TimeUnit.SECONDS)).isTrue();
+                assertThat(pool.getThreadPoolExecutor().getActiveCount()).isZero();
+                assertThat(pool.getThreadPoolExecutor().getQueue()).isEmpty();
+
+                AsyncWorkDrainExtension.drain(blockedContext, Duration.ofMillis(200), "submittedWorkNotYetQueued");
+
+                assertThat(AsyncWorkDrainExtension.hasGivenUp(blockedContext)).as("submitted work is still pending despite both idle pool observations").isTrue();
+                assertThat(finished).isFalse();
+            }
+            finally {
+                allowEnqueue.countDown();
+                submitter.join(5_000);
+            }
+        }
     }
 
     @Test
