@@ -51,16 +51,16 @@ class LectureUnitContentFingerprintServiceTest {
     void fingerprintIsDeterministicAndVersioned() {
         AttachmentVideoUnit unit = unitWithVideo("https://video.example/stream");
 
-        String first = fingerprintService.computeFingerprint(unit);
-        String second = fingerprintService.computeFingerprint(unit);
+        String first = fingerprintService.computeFingerprints(unit).full();
+        String second = fingerprintService.computeFingerprints(unit).full();
 
         assertThat(first).startsWith("v1:").isEqualTo(second);
     }
 
     @Test
     void fingerprintChangesWithTheVideoSource() {
-        String first = fingerprintService.computeFingerprint(unitWithVideo("https://video.example/a"));
-        String second = fingerprintService.computeFingerprint(unitWithVideo("https://video.example/b"));
+        String first = fingerprintService.computeFingerprints(unitWithVideo("https://video.example/a")).full();
+        String second = fingerprintService.computeFingerprints(unitWithVideo("https://video.example/b")).full();
 
         assertThat(first).isNotEqualTo(second);
     }
@@ -74,10 +74,10 @@ class LectureUnitContentFingerprintServiceTest {
         try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
             filePathConverter.when(FilePathConverter::getAttachmentVideoUnitFileSystemPath).thenReturn(tempDir);
 
-            String original = fingerprintService.computeFingerprint(unit);
-            String unchanged = fingerprintService.computeFingerprint(unit);
+            String original = fingerprintService.computeFingerprints(unit).full();
+            String unchanged = fingerprintService.computeFingerprints(unit).full();
             FileUtils.writeStringToFile(pdfPath.toFile(), "changed content", StandardCharsets.UTF_8);
-            String changed = fingerprintService.computeFingerprint(unit);
+            String changed = fingerprintService.computeFingerprints(unit).full();
 
             assertThat(original).isEqualTo(unchanged).isNotEqualTo(changed);
         }
@@ -90,7 +90,7 @@ class LectureUnitContentFingerprintServiceTest {
         try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
             filePathConverter.when(FilePathConverter::getAttachmentVideoUnitFileSystemPath).thenReturn(tempDir);
 
-            assertThatThrownBy(() -> fingerprintService.computeFingerprint(unit)).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(() -> fingerprintService.computeFingerprints(unit).full()).isInstanceOf(IllegalStateException.class);
         }
     }
 
@@ -105,9 +105,9 @@ class LectureUnitContentFingerprintServiceTest {
         unit.setAttachment(attachment);
 
         // No stored file to read, so this must neither throw nor look for a local file sharing the link's name.
-        String fingerprint = fingerprintService.computeFingerprint(unit);
+        String fingerprint = fingerprintService.computeFingerprints(unit).full();
 
-        assertThat(fingerprint).isEqualTo(fingerprintService.computeFingerprint(unitWithVideo("https://video.example/stream")));
+        assertThat(fingerprint).isEqualTo(fingerprintService.computeFingerprints(unitWithVideo("https://video.example/stream")).full());
     }
 
     @Test
@@ -119,10 +119,10 @@ class LectureUnitContentFingerprintServiceTest {
         try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
             filePathConverter.when(FilePathConverter::getAttachmentVideoUnitFileSystemPath).thenReturn(tempDir);
 
-            String original = fingerprintService.computeFingerprint(unit);
+            String original = fingerprintService.computeFingerprints(unit).full();
             FileUtils.writeStringToFile(pdfPath.toFile(), "changed content", StandardCharsets.UTF_8);
 
-            assertThat(fingerprintService.computeFingerprint(unit)).isNotEqualTo(original);
+            assertThat(fingerprintService.computeFingerprints(unit).full()).isNotEqualTo(original);
         }
     }
 }

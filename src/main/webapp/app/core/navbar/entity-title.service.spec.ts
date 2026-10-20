@@ -77,6 +77,22 @@ describe('EntityTitleService', () => {
         subscription.unsubscribe();
     });
 
+    it('does not overwrite a renamed tutorial group with an older fallback response', () => {
+        vi.useFakeTimers();
+        try {
+            const response = new Subject<HttpResponse<string>>();
+            vi.spyOn(TestBed.inject(HttpClient), 'get').mockReturnValue(response);
+            const titles: string[] = [];
+            service.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
+            vi.advanceTimersByTime(3000);
+            service.setTitle(EntityType.TUTORIAL_GROUP, [17], 'Renamed group');
+            response.next(new HttpResponse({ body: 'Previous group title' }));
+            expect(titles).toEqual(['Renamed group']);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('waits for a title to be set if not present and does not fire the request if it arrives within 3 seconds', async () => {
         const http = TestBed.inject(HttpClient);
         const httpSpy = vi.spyOn(http, 'get').mockReturnValue(of(new HttpResponse<string>({ body: 'Test Hint' })));

@@ -56,7 +56,7 @@ class ProgrammingExerciseImportServiceCourseTest {
     void setUp() {
         importService = new ProgrammingExerciseImportService(Optional.of(continuousIntegrationService), Optional.empty(), programmingExerciseValidationService,
                 programmingExerciseBuildPlanService, programmingExerciseCreationScheduleService, programmingExerciseTaskService, programmingExerciseImportBasicService,
-                programmingExerciseTestCaseRepository, programmingExerciseRepository, Optional.empty(), programmingExerciseBuildConfigRepository);
+                programmingExerciseTestCaseRepository, programmingExerciseRepository, Optional.empty(), programmingExerciseBuildConfigRepository, Optional.empty(), null);
     }
 
     @Test
