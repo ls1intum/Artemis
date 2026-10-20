@@ -450,7 +450,7 @@ public class HyperionQuizQuestionPoolBuildService {
         List<GeneratedQuizQuestionDTO> questions = new ArrayList<>();
         Map<HyperionQuizQuestionChecks.Defect, Integer> defects = new EnumMap<>(HyperionQuizQuestionChecks.Defect.class);
         for (PoolQuestionOutput generated : output.questions()) {
-            Optional<GeneratedQuizQuestionDTO> question = toQuestion(generated);
+            Optional<GeneratedQuizQuestionDTO> question = toQuestion(generated, requestedType);
             Optional<HyperionQuizQuestionChecks.Defect> defect = question.isPresent() ? HyperionQuizQuestionChecks.defectOf(question.orElseThrow(), Set.of(requestedType))
                     : Optional.of(HyperionQuizQuestionChecks.Defect.UNMAPPABLE);
             if (defect.isPresent()) {
@@ -570,16 +570,27 @@ public class HyperionQuizQuestionPoolBuildService {
         return course.getLanguage() == Language.GERMAN ? QuizQuestionGenerationLanguage.DE : QuizQuestionGenerationLanguage.EN;
     }
 
-    private static Optional<GeneratedQuizQuestionDTO> toQuestion(@Nullable PoolQuestionOutput generated) {
+    /**
+     * Maps a generated question to the DTO the checks and the pool use. A missing type counts as the requested one, because the model
+     * was asked for exactly that type; a named type is matched ignoring case and separator characters, and an unknown name makes the
+     * question unmappable.
+     *
+     * @param generated     the model's question, or {@code null}
+     * @param requestedType the type the generation call asked for
+     * @return the question, or empty when it cannot be mapped
+     */
+    static Optional<GeneratedQuizQuestionDTO> toQuestion(@Nullable PoolQuestionOutput generated, QuizQuestionGenerationType requestedType) {
         if (generated == null || generated.options() == null || generated.options().stream().anyMatch(option -> option == null)) {
             return Optional.empty();
         }
-        QuizQuestionGenerationType questionType;
-        try {
-            questionType = QuizQuestionGenerationType.fromValue(generated.type());
-        }
-        catch (IllegalArgumentException e) {
-            return Optional.empty();
+        QuizQuestionGenerationType questionType = requestedType;
+        if (generated.type() != null && !generated.type().isBlank()) {
+            try {
+                questionType = QuizQuestionGenerationType.fromValue(generated.type().trim().replace('_', '-').replace(' ', '-'));
+            }
+            catch (IllegalArgumentException e) {
+                return Optional.empty();
+            }
         }
         List<GeneratedQuizAnswerOptionDTO> options = generated.options().stream()
                 .map(option -> new GeneratedQuizAnswerOptionDTO(sanitizeInput(option.text()), Boolean.TRUE.equals(option.correct()), null, null)).toList();
@@ -617,10 +628,11 @@ public class HyperionQuizQuestionPoolBuildService {
     private record PoolQuestionsOutput(List<PoolQuestionOutput> questions) {
     }
 
-    private record PoolQuestionOutput(String type, String title, String questionText, List<PoolOptionOutput> options,
+    record PoolQuestionOutput(@JsonPropertyDescription("the requested question type, exactly as given") String type, String title, String questionText,
+            List<PoolOptionOutput> options,
             @JsonPropertyDescription("why the correct option is correct, why the distractors are wrong, and what work the reader must do to reach the answer") String explanation) {
     }
 
-    private record PoolOptionOutput(String text, Boolean correct) {
+    record PoolOptionOutput(String text, Boolean correct) {
     }
 }

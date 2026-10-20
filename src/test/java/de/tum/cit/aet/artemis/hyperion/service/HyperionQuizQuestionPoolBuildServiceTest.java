@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
@@ -114,6 +115,36 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
         assertThat(service.isRunning(5L)).isFalse();
         assertThat(service.tryStart(5L)).isTrue();
+    }
+
+    @Test
+    void toQuestion_fallsBackToTheRequestedTypeWhenTheModelOmitsIt() {
+        HyperionQuizQuestionPoolBuildService.PoolQuestionOutput generated = new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput(null, "Loop count",
+                "How often does the body run?",
+                List.of(new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("5 times", true), new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("4 times", false)),
+                "The condition is checked before every iteration.");
+
+        Optional<GeneratedQuizQuestionDTO> question = HyperionQuizQuestionPoolBuildService.toQuestion(generated, QuizQuestionGenerationType.SINGLE_CHOICE);
+
+        assertThat(question).hasValueSatisfying(mapped -> {
+            assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.SINGLE_CHOICE);
+            assertThat(mapped.options()).hasSize(2);
+            assertThat(mapped.explanation()).isEqualTo("The condition is checked before every iteration.");
+        });
+    }
+
+    @Test
+    void toQuestion_matchesTypeNamesIgnoringCaseAndSeparators() {
+        List<HyperionQuizQuestionPoolBuildService.PoolOptionOutput> options = List.of(new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("A", true));
+
+        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("single_choice", "T", "Q", options, null),
+                QuizQuestionGenerationType.SINGLE_CHOICE)).hasValueSatisfying(mapped -> assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.SINGLE_CHOICE));
+        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("Multiple Choice", "T", "Q", options, null),
+                QuizQuestionGenerationType.SINGLE_CHOICE)).hasValueSatisfying(mapped -> assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.MULTIPLE_CHOICE));
+        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("essay", "T", "Q", options, null),
+                QuizQuestionGenerationType.SINGLE_CHOICE)).isEmpty();
+        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput(null, "T", "Q", null, null),
+                QuizQuestionGenerationType.SINGLE_CHOICE)).isEmpty();
     }
 
     @Test
