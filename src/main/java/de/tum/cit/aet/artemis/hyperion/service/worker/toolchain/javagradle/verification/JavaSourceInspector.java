@@ -265,6 +265,10 @@ final class JavaSourceInspector {
         return Pattern.compile("@(?:[\\w.]+\\.)?" + Pattern.quote(simpleName) + "\\b").matcher(annotations).find();
     }
 
+    static String maskCommentsAndLiterals(String content) {
+        return JavaSourceText.maskCommentsAndLiterals(content);
+    }
+
     /**
      * Blanks out comments while leaving string, character, and text block literals intact, so a {@code //} inside a URL literal is not mistaken for a comment and a commented-out
      * annotation cannot spoof a gate. Every removed character becomes a space and every line terminator is kept, so offsets and line numbers still line up with the original

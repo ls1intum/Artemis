@@ -12,7 +12,6 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
-import de.tum.cit.aet.artemis.hyperion.runtime.verification.JavaSourceText;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 
 /** Builds witness probes and interprets their test reports; the caller owns sandbox execution and cleanup. */
@@ -129,7 +128,7 @@ public final class ContractWitnessProbe {
 
     static boolean collidesWithExistingTest(ContractWitness witness, Map<String, String> testSources) {
         Pattern declaration = Pattern.compile("\\bvoid\\s+" + Pattern.quote(witness.testName()) + "\\s*\\(");
-        return testSources.values().stream().anyMatch(source -> declaration.matcher(JavaSourceText.maskCommentsAndLiterals(source)).find());
+        return testSources.values().stream().anyMatch(source -> declaration.matcher(JavaSourceInspector.maskCommentsAndLiterals(source)).find());
     }
 
     /** Renames only an adopted witness's method declaration for unambiguous temporary probe attribution. */
@@ -143,7 +142,7 @@ public final class ContractWitnessProbe {
         while (collidesWithExistingTest(new ContractWitness(witness.ruleId(), name, witness.code(), witness.wrongBehavior()), testSources)) {
             name = base + suffix++;
         }
-        Matcher declaration = METHOD_DECLARATION.matcher(JavaSourceText.maskCommentsAndLiterals(witness.code()));
+        Matcher declaration = METHOD_DECLARATION.matcher(JavaSourceInspector.maskCommentsAndLiterals(witness.code()));
         int start = -1;
         int end = -1;
         while (declaration.find()) {
