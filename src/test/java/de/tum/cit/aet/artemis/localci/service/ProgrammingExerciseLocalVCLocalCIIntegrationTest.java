@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPr
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -1189,13 +1190,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(createdExercise.getSolutionParticipation().getId()).isEqualTo(response.solutionParticipation().id());
         var storedAuxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(createdExercise.getId());
         assertThat(storedAuxiliaryRepositories).hasSize(newExercise.getAuxiliaryRepositories().size());
-        for (var storedRepository : storedAuxiliaryRepositories) {
-            assertThat(response.auxiliaryRepositories()).anySatisfy(repository -> {
-                assertThat(repository.id()).isEqualTo(storedRepository.getId());
-                assertThat(repository.repositoryUri()).isEqualTo(storedRepository.getRepositoryUri());
-                assertThat(repository.checkoutDirectory()).isEqualTo(storedRepository.getCheckoutDirectory());
-                assertThat(repository.description()).isEqualTo(storedRepository.getDescription());
-            });
+        // compared as a whole so that one repository cannot satisfy two entries while another one is missing
+        if (!storedAuxiliaryRepositories.isEmpty()) {
+            assertThat(response.auxiliaryRepositories())
+                    .extracting(repository -> tuple(repository.id(), repository.repositoryUri(), repository.checkoutDirectory(), repository.description()))
+                    .containsExactlyInAnyOrderElementsOf(storedAuxiliaryRepositories.stream()
+                            .map(stored -> tuple(stored.getId(), stored.getRepositoryUri(), stored.getCheckoutDirectory(), stored.getDescription())).toList());
         }
         for (var participation : List.of(createdExercise.getTemplateParticipation(), createdExercise.getSolutionParticipation())) {
             String expectedCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
@@ -1241,16 +1241,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             assertThat(response.auxiliaryRepositories()).isNullOrEmpty();
         }
         else {
-            assertThat(response.auxiliaryRepositories()).hasSize(requestedExercise.getAuxiliaryRepositories().size());
-            response.auxiliaryRepositories().forEach(repository -> {
+            assertThat(response.auxiliaryRepositories()).allSatisfy(repository -> {
                 assertThat(repository.id()).isNotNull();
                 assertThat(repository.repositoryUri()).isNotBlank();
-                assertThat(requestedExercise.getAuxiliaryRepositories()).anySatisfy(requestedRepository -> {
-                    assertThat(repository.name()).isEqualTo(requestedRepository.getName());
-                    assertThat(repository.checkoutDirectory()).isEqualTo(requestedRepository.getCheckoutDirectory());
-                    assertThat(repository.description()).isEqualTo(requestedRepository.getDescription());
-                });
             });
+            assertThat(response.auxiliaryRepositories()).extracting(repository -> tuple(repository.name(), repository.checkoutDirectory(), repository.description()))
+                    .containsExactlyInAnyOrderElementsOf(requestedExercise.getAuxiliaryRepositories().stream()
+                            .map(requested -> tuple(requested.getName(), requested.getCheckoutDirectory(), requested.getDescription())).toList());
         }
         assertThat(response.exerciseGroup()).isNull();
         // the course stays nested rather than flattened to an id: the client renders display links off it
@@ -1377,15 +1374,22 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         auxiliaryRepository.setName("solutionhints");
         auxiliaryRepository.setCheckoutDirectory("hints");
         auxiliaryRepository.setDescription("hints for the students");
-        newExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliaryRepository)));
+        AuxiliaryRepository secondAuxiliaryRepository = new AuxiliaryRepository();
+        secondAuxiliaryRepository.setName("sampledata");
+        secondAuxiliaryRepository.setCheckoutDirectory("data");
+        secondAuxiliaryRepository.setDescription("sample data for the students");
+        newExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliaryRepository, secondAuxiliaryRepository)));
 
         ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig(), "testchannel-pe-aux");
 
         Path auxiliaryRepositoryPath = localVCRepositoryTestService.repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName("solutionhints"))
                 .getLocalRepositoryPath(localVCBasePath);
+        Path secondAuxiliaryRepositoryPath = localVCRepositoryTestService.repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName("sampledata"))
+                .getLocalRepositoryPath(localVCBasePath);
         Path testsRepositoryPath = localVCRepositoryTestService.repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName(RepositoryType.TESTS))
                 .getLocalRepositoryPath(localVCBasePath);
         assertThat(auxiliaryRepositoryPath).as("the auxiliary repository is created along with the exercise").isDirectory();
+        assertThat(secondAuxiliaryRepositoryPath).as("the second auxiliary repository is created along with the exercise").isDirectory();
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
@@ -1394,6 +1398,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         // A repository left behind on disk blocks creating a new exercise with the same short name, which is why deletion has to reach the auxiliary repositories as well.
         assertThat(auxiliaryRepositoryPath).as("the auxiliary repository is removed along with the exercise").doesNotExist();
+        assertThat(secondAuxiliaryRepositoryPath).as("the second auxiliary repository is removed along with the exercise").doesNotExist();
         assertThat(testsRepositoryPath).as("the base repositories are removed as well").doesNotExist();
     }
 
