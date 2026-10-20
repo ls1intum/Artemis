@@ -5,6 +5,7 @@ import { generateUUID, getExercise } from '../../support/utils';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise, ExerciseType } from '../../support/constants';
 import { SEED_COURSES } from '../../support/seedData';
+import { RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
 
 /**
  * Regression test for multiple-choice answer loss when adding to a SAVED selection in exam mode (issue #12938).
@@ -55,8 +56,8 @@ test.describe('Exam quiz multiple-choice add-to-saved-selection retention', { ta
         // Reload and re-enter: the saved selection [option 0] is now loaded into the input of a freshly created
         // component (whose local accumulator is empty - exactly the bug condition).
         await page.reload();
-        await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-        await examParticipation.startExam();
+        // A student who already started the exam is taken straight back into it, without the start screen.
+        await expect(page.getByTestId('hand-in-early')).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
         await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
         await expect(option(0)).toHaveClass(/selected/, { timeout: 15000 });
 
@@ -74,8 +75,7 @@ test.describe('Exam quiz multiple-choice add-to-saved-selection retention', { ta
         await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
         await secondSave;
         await page.reload();
-        await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-        await examParticipation.startExam();
+        await expect(page.getByTestId('hand-in-early')).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
         await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
 
         await expect(option(0)).toHaveClass(/selected/, { timeout: 15000 });
