@@ -13,7 +13,6 @@ import java.time.ZonedDateTime;
 import java.util.Locale;
 import java.util.Optional;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -73,9 +71,6 @@ class DemoProgrammingExerciseSeedingIntegrationTest extends AbstractSpringIntegr
 
     @Autowired
     private DistributedDataAccessService distributedDataAccessService;
-
-    @Value("${artemis.repo-clone-path}")
-    private Path repoClonePath;
 
     @BeforeAll
     static void mockDockerClient() throws InterruptedException {
@@ -151,7 +146,5 @@ class DemoProgrammingExerciseSeedingIntegrationTest extends AbstractSpringIntegr
 
     private void deleteDemoRepositories() throws IOException {
         RepositoryExportTestUtil.deleteLocalVcProjectIfPresent(localVCBasePath, DEMO_PROJECT_KEY);
-        // The server only copies the template into a repository whose working copy is empty, so stale working copies would leave the recreated repositories without commits.
-        FileUtils.deleteDirectory(repoClonePath.resolve(DEMO_PROJECT_KEY).toFile());
     }
 }
