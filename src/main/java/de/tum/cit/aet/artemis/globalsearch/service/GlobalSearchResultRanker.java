@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * repeat across lectures, and a row does not name its lecture.</li>
  * <li>With a query, the channel Artemis creates for an exercise, lecture or exam is placed directly behind that item.</li>
  * </ul>
- * Before ranking, {@link #withoutChannelsNotNamedBy} drops the channels whose name does not contain the query.
+ * Before ranking, {@link #withoutChannelsNotNamedBy} drops the channels whose name does not contain every part of the query.
  */
 public final class GlobalSearchResultRanker {
 
@@ -67,7 +67,8 @@ public final class GlobalSearchResultRanker {
      * only fits the description of a lecture found the lecture's channel, although the reader typed nothing of its name.
      * <p>
      * The query is split into parts the way Artemis turns a title into a channel name, and every part must occur in the
-     * name. Without a query (browsing a filter), every row stays.
+     * name. A query without any ASCII letter or digit has no parts and keeps no channel. Without a query (browsing a
+     * filter), every row stays.
      *
      * @param rows  the rows Weaviate returned
      * @param query the search query, may be null or blank

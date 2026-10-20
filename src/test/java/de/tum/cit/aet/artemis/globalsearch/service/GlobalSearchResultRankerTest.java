@@ -210,6 +210,15 @@ class GlobalSearchResultRankerTest {
     }
 
     @Test
+    void matchesNamesWithUpperCaseLettersOrOtherSeparators() {
+        var legacyChannel = row("channel", 1L, "Lecture-Graphs");
+        var customChannel = row("channel", 1L, "team:alpha");
+
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(legacyChannel, customChannel), "graphs")).containsExactly(legacyChannel);
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(legacyChannel, customChannel), "team alpha")).containsExactly(customChannel);
+    }
+
+    @Test
     void splitsAQueryWithAccentsAsArtemisNamesTheChannel() {
         var channel = row("channel", 1L, "lecture-einf-hrung-in-java");
 

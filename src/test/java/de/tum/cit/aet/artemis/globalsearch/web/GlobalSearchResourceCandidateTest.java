@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +21,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -33,25 +35,69 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
 
 /**
  * How many candidates the search reads from Weaviate before ranking: browsing reads only the limit, and a query reads more when merging
- * semester copies shrank a cut-off candidate set below the requested limit.
+ * semester copies or dropping channels the query does not name shrank a cut-off candidate set below the requested limit. Also which
+ * channels a query returns.
  */
 class GlobalSearchResourceCandidateTest {
 
     private SearchableEntityWeaviateService weaviateService;
+
+    private SearchableEntityAccessFilterService accessFilterService;
+
+    private CourseRepository courseRepository;
 
     private GlobalSearchResource resource;
 
     @BeforeEach
     void setUp() {
         weaviateService = mock(SearchableEntityWeaviateService.class);
-        var accessFilterService = mock(SearchableEntityAccessFilterService.class);
+        accessFilterService = mock(SearchableEntityAccessFilterService.class);
+        courseRepository = mock(CourseRepository.class);
         var userRepository = mock(UserRepository.class);
         when(userRepository.getUserWithCourseRolesAndAuthorities()).thenReturn(new User());
         var courses = Map.of(1L, course(1L, "Algorithms WS26/27", 3), 2L, course(2L, "Algorithms SS26", -3), 3L, course(3L, "Algorithms WS25/26", -9), 4L,
                 course(4L, "Algorithms SS25", -15), 5L, course(5L, "Algorithms WS24/25", -21));
         when(accessFilterService.buildSearchableItemFilter(any(), isNull(), anyList(), anySet(), anySet(), anyBoolean()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, courses, Set.of(), Set.of()));
-        resource = new GlobalSearchResource(weaviateService, accessFilterService, mock(CourseRepository.class), userRepository, mock(ExerciseRepository.class));
+        resource = new GlobalSearchResource(weaviateService, accessFilterService, courseRepository, userRepository, mock(ExerciseRepository.class));
+    }
+
+    @Test
+    void rejectsUnknownTypesAndUnknownExcludedTypes() {
+        assertThat(resource.globalSearch("sorting", "exercise,unknown", null, null, null, 10, null).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(resource.globalSearch("sorting", null, "unknown", null, null, 10, null).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(weaviateService, never()).searchSearchableEntities(any(), any(), anyInt());
+    }
+
+    @Test
+    void returnsNothingWithoutAReadWhenEveryRequestedTypeIsExcluded() {
+        var response = resource.globalSearch("sorting", "channel", "channel", null, null, 10, null);
+
+        assertThat(response.getBody()).isEmpty();
+        verify(weaviateService, never()).searchSearchableEntities(any(), any(), anyInt());
+    }
+
+    @Test
+    void resolvesTheCoursesOfTheLargerReadInAnAdminSearchAcrossAllCourses() {
+        when(accessFilterService.buildSearchableItemFilter(any(), isNull(), anyList(), anySet(), anySet(), anyBoolean()))
+                .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, null, null, null));
+        List<Map<String, Object>> unnamedChannels = new ArrayList<>();
+        for (int channel = 0; channel < 40; channel++) {
+            unnamedChannels.add(channelRow(7L, channel, "lecture-graphs-" + channel));
+        }
+        List<Map<String, Object>> moreRows = new ArrayList<>(unnamedChannels);
+        moreRows.add(row(8L, "Dijkstra"));
+        when(weaviateService.searchSearchableEntities(eq("dijkstra"), any(), eq(40))).thenReturn(unnamedChannels);
+        when(weaviateService.searchSearchableEntities(eq("dijkstra"), any(), eq(100))).thenReturn(moreRows);
+        when(courseRepository.findAllById(Set.of(7L))).thenReturn(List.of(course(7L, "Graphs", 3)));
+        when(courseRepository.findAllById(Set.of(7L, 8L))).thenReturn(List.of(course(7L, "Graphs", 3), course(8L, "Shortest Paths", 3)));
+
+        var response = resource.globalSearch("dijkstra", null, null, null, null, 10, null);
+
+        assertThat(response.getBody()).singleElement().satisfies(result -> {
+            assertThat(result.title()).isEqualTo("Dijkstra");
+            assertThat(result.metadata()).containsEntry("courseName", "Shortest Paths");
+        });
     }
 
     @Test
@@ -87,7 +133,7 @@ class GlobalSearchResourceCandidateTest {
         var response = resource.globalSearch("sorting", null, null, null, null, 10, null);
 
         assertThat(response.getBody()).hasSize(1);
-        verify(weaviateService, org.mockito.Mockito.never()).searchSearchableEntities(eq("sorting"), any(), eq(100));
+        verify(weaviateService, never()).searchSearchableEntities(eq("sorting"), any(), eq(100));
     }
 
     @Test
