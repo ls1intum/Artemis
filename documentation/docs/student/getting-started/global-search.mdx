@@ -1,0 +1,206 @@
+---
+id: global-search
+title: Global Search
+sidebar_label: Global Search
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+{/* SCREENSHOTS: every placeholder below starts with "SCREENSHOT" and names its file under ../assets/global-search/.
+    Capture in the light theme, cropped to the search dialog (not the whole browser window), with a populated course:
+    realistic course, lecture and exercise names, several lectures with ingested slides and a video, two or three
+    courses including one that has ended. Once a file exists, import it and replace the comment with:
+    import x from "../assets/global-search/<file>.png";
+    <Image src={x} alt="..." size={ImageSize.large} caption="..." />
+    (also import Image, {ImageSize} from "../../../src/components/Image/Image"). */}
+
+{/* SCREENCAST: a 2 to 3 minute TUM-Live recording of the whole flow: open with Cmd+K, filter by a course, search for a
+    topic, open the slides and videos row, ask a question, hover a citation, open a source, continue in the chat.
+    Embed it here with: import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+    <TumLiveVideo src="<recording id>" title="Global search in Artemis" /> */}
+
+Global search finds what you are looking for across all of your courses from anywhere in Artemis: an exercise, a
+lecture, the slide that explains a topic, an FAQ or a channel. If you ask a question instead of typing a name, Iris can
+answer it from your course material, with each statement linked to where it comes from.
+
+## Opening the Search
+
+Click **Search** in the navigation bar, or press **Cmd+K** on macOS and **Ctrl+K** on Windows and Linux. The same
+shortcut closes it again, as does **Esc**. You can start typing right away: anything you type while the search opens
+goes into the search field.
+
+Where you open it decides where it starts:
+
+- **Outside a course**, it starts with the filter picker, which offers **Filter by type**, **Scope to a course** and
+  **Exclude content**. You can ignore it and type; typing leaves the picker and searches.
+- **Inside a course**, it starts scoped to that course: a chip with the course's name sits under the search field and
+  the course's content is listed right away. Remove the chip to search all of your courses.
+
+{/* SCREENSHOT home-picker.png: the dialog just opened outside a course. Empty search field, the filter picker with the
+    rows Filter by type, Scope to a course and Exclude content, and the footer with the keyboard hints.
+    Caption: "The search when opened outside a course". */}
+
+{/* SCREENSHOT course-scoped.png: the dialog opened from inside a course page. The course chip under the search field and
+    the first results of that course listed without a search term. Caption: "Opened inside a course, the search starts
+    scoped to it". */}
+
+The search starts once you have typed at least three characters. For a very short term, Artemis tells you that a
+longer one gives better results.
+
+## What You Can Find
+
+The search covers courses, exercises, lectures and lecture units, exam overviews, FAQs and channels, in every course you
+are enrolled in, including courses that have already ended. Results from running courses rank above those from ended
+courses, although a much better match from an ended course can still come first. When the same item exists in several
+semesters of a course, it appears once, from the best-ranked course.
+
+Each result shows its title, its kind, its course and, depending on the kind, its due date and points. Selecting a
+result opens it, just as clicking it in the course would. **Show more results** at the end of the list loads more.
+
+{/* SCREENSHOT results.png: a search for a topic that matches an exercise, a lecture unit and an FAQ in different courses.
+    Show at least one exercise row with its due date and points, and the Slides & videos row above the results.
+    Caption: "Results from several courses". */}
+
+You only find what you could also open in the course itself:
+
+- exercises once they are released, and exam exercises once the exam has started;
+- lecture units once their release date has passed;
+- FAQs once they are accepted;
+- exams you are registered for, and test exams once they are visible;
+- public and course-wide channels, and the channel of an exercise or exam only once that exercise is released or the exam is visible.
+
+Messages and replies are not part of global search. To search messages, use the search in the course
+[communication](/student/communication-support/communication#search-filter-and-sort-messages).
+
+A channel only appears when your search contains its name.
+
+When the search is scoped to a single course, it also offers that course's own pages. Typing **grades**,
+**exercises** or **tutorials**, in English or German, offers the matching page of the course, if the course has it.
+
+## Narrowing the Results with Filters
+
+Open the filter picker with **Filter** next to the search field, or with **Cmd+F** / **Ctrl+F**:
+
+- **Filter by type** shows only one kind of result: **Courses**, **Exercises**, **Lectures**, **Slides & Videos**,
+  **Channels**, **FAQs** or **Exams**.
+- **Scope to a course** searches only one of your courses. Running courses are listed first.
+- **Exclude content** hides a kind of result (**A type**) or a course (**A course**).
+
+You can also type a filter straight into the search field:
+
+| Type | Effect |
+|------|--------|
+| `type:` | Shows only one kind of result |
+| `course:` | Searches only one course |
+| `-type:` | Hides one kind of result |
+| `-course:` | Hides one course |
+
+As soon as you type the colon, the filter picker lists the values that fit what you type after it. Press **Tab** or
+**Enter** to apply the highlighted value. If nothing matches, for example because the colon belongs to your search
+term, you can search for the text as you typed it instead. Your search term stays where it is while you add a filter,
+so you can filter after typing.
+
+{/* SCREENSHOT type-values.png: "type:" typed into the search field, the operator highlighted in colour, and the value
+    list with Courses, Exercises, Lectures, Slides & Videos, Channels, FAQs and Exams with their descriptions, one row
+    highlighted with the Tab hint. Caption: "Choosing a type after typing type:". */}
+
+Each filter appears as a chip under the search field. You can add several, for example two courses and two kinds of
+result; a hiding filter shows its value struck through. Click a chip to change it, or its **×** to remove it. With the
+cursor at the start of the search field, **Backspace** selects the last chip and a second **Backspace** removes it;
+the arrow keys move between the chips.
+
+{/* SCREENSHOT chips.png: a search term with three chips under the field: a type chip, a course chip and a struck-through
+    exclude chip, and the filtered results below. Caption: "Including a type and a course, and hiding another course". */}
+
+A filter works without a search term as well: **Exercises** alone lists the exercises of your courses. At least one
+kind of result always stays included, so you cannot hide every type at once. **Slides & Videos** cannot be combined
+with the other types, because it searches inside the lecture material rather than through the list of lectures,
+exercises and courses.
+
+## Searching Slides and Videos
+
+**Slides & Videos** searches the content of lecture slides and the transcripts of lecture videos, so it finds a topic
+even when no lecture or unit is named after it. Each result names the course, the lecture and the lecture unit, shows
+the slide page or the position in the video, and opens exactly there.
+
+You do not need to select the filter to see these hits. When your search matches lecture content, a row such as
+**Slides & videos: 4 hits in Lecture A, Lecture B** appears above the results. **Show** switches to those hits.
+
+{/* SCREENSHOT slides-and-videos.png: the Slides & Videos filter active for a topic search, with results from a slide
+    (showing "pg." and the page) and from a video, from at least two lectures. Caption: "Hits in lecture slides and
+    video transcripts". */}
+
+Searching slides and videos uses AI models, so it is only available if you allowed AI in Artemis. See
+[Choosing Whether to Use AI](/student/learning-content/iris#choosing-whether-to-use-ai).
+
+## Asking Iris
+
+If you allowed AI in Artemis and type a question rather than a name, for example *When is the deadline of the
+second homework?* or *What is the difference between a stack and a queue?*, Iris answers it in a card above the
+results. While it works, the card says what it is doing, such as **Searching course material…** or
+**Found material in** followed by the courses it found something in. The answer then appears word by word.
+
+{/* SCREENSHOT iris-thinking.png (optional): the Iris card while it works, showing the status "Found material in" with
+    a course name, the results list already visible below. Caption: "Iris looking through the course material". */}
+
+Iris answers only from your course material: lecture slides and video transcripts, and the course information that
+global search finds, such as exercises with their due dates and points, exams, FAQs and channels. It only uses what you
+are allowed to see, and only courses in which your instructor has Iris enabled. It answers in the language of your
+question, even when the material is in another language. When the material does not answer a question but names a
+lecture or exercise about it, Iris points you to that material instead.
+
+Iris does not answer every search. A term that is short or reads like a name, such as a lecture title, gets the
+results list only. If Iris looks for material but finds nothing relevant enough, the card says so briefly and then
+closes; the results below are unaffected. If something goes wrong, **Try again** asks once more.
+
+<Callout variant={CalloutVariant.info}>
+
+  An answer from Iris is generated by an AI model and can be wrong. Check important details, such as a deadline, in
+  the source the answer cites.
+
+</Callout>
+
+### Citations
+
+Every statement in an answer ends with a small number that refers to the source it comes from. The sources are listed
+below the answer as chips with the same numbers; when an answer cites more than two lecture sources, a chip such as
+**+3 more** shows the rest. Hovering over
+a number highlights its sources and shows a preview; hovering over a source highlights the statements it supports.
+Clicking either opens the source: the slide page or the video moment of a lecture source, or the page of an exercise,
+exam, FAQ or channel. Long answers are shortened; **Show more** shows the rest.
+
+{/* SCREENSHOT iris-answer.png: a finished answer to a content question that cites both a slide and course information
+    (for example an exercise with its due date), the mouse over one citation number so the preview popover and the
+    highlighted source chip are visible, and the follow-up row at the bottom. Caption: "An answer with its citations". */}
+
+### Continuing in the Course Chat
+
+A finished answer ends with **Have a follow-up? Continue chatting with me about** followed by the lecture, exercise or
+course that the answer cites most. **Open chat**, or **Cmd+Enter** / **Ctrl+Enter**, opens the course's Iris chat in a
+new conversation on that lecture, exercise or course, with your question and the answer already in it, so you can ask
+your follow-up question directly. The citations in the chat open the same slides and video moments as in the search.
+The conversation is named after your question, so you find it again in your chat history. See
+[Iris, the AI Tutor](/student/learning-content/iris).
+
+{/* SCREENSHOT handoff-chat.png: the course Iris chat right after Open chat: the conversation named after the question,
+    the question and the answer with its citations already in it, and the chat topic set to the lecture.
+    Caption: "The answer continued in the course chat". */}
+
+## Keyboard Shortcuts
+
+| Keys | Action |
+|------|--------|
+| **Cmd+K** / **Ctrl+K** | Open or close the search |
+| **↑** / **↓**, **Enter** | Move through the results and open the selected one |
+| **Cmd+F** / **Ctrl+F** | Open the filter picker |
+| **Tab** | Apply the highlighted filter value |
+| **Backspace** at the start of the field | Select the last filter chip, then remove it |
+| **Cmd+Enter** / **Ctrl+Enter** | Continue the Iris answer in the course chat |
+| **Esc** | Go back one step, or close the search |
+
+## Related
+
+- [Iris, the AI Tutor](/student/learning-content/iris) for the Iris chat that an answer continues in.
+- [Lectures](/student/learning-content/lectures) for the slide and video views that citations open.
+- [Your Course in Global Search](/instructor/course-management/global-search) for what instructors decide about what you can find.
