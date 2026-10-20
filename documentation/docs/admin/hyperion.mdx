@@ -229,7 +229,7 @@ artemis:
       generation-batch-size: 8 # questions requested per generation call
       stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
       max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
-      build-lease-minutes: 10 # a build that stops refreshing its lease for this long counts as dead and frees the course for the next build
+      build-lease-minutes: 10 # a build that stops renewing its lease for this long counts as dead and frees the course for the next build; keep it longer than the longest model call
 ```
 
 Both models must be reachable through the configured Spring AI endpoint. On Azure OpenAI / Microsoft Foundry a model name is the deployment name. Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.

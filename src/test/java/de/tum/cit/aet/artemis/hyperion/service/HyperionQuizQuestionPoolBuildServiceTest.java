@@ -3,8 +3,11 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -17,6 +20,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
@@ -59,12 +64,18 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     @Mock
     private DistributedDataProvider distributedDataProvider;
 
+    @Mock
+    private ChatModel chatModel;
+
+    private LocalMap<Long, String> leases;
+
     private AutoCloseable mocks;
 
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
-        lenient().when(distributedDataProvider.getExpiringMap(anyString(), any())).thenReturn(new LocalMap<>());
+        leases = new LocalMap<>();
+        lenient().when(distributedDataProvider.<Long, String>getExpiringMap(anyString(), any())).thenReturn(leases);
     }
 
     @AfterEach
@@ -118,15 +129,55 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     void tryStart_holdsTheLeaseUntilReleased() {
         HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
 
-        assertThat(service.tryStart(5L)).isTrue();
-        assertThat(service.isRunning(5L)).isTrue();
-        assertThat(service.tryStart(5L)).isFalse();
-        assertThat(service.tryStart(6L)).isTrue();
+        String leaseToken = service.tryStart(5L);
 
-        service.release(5L);
+        assertThat(leaseToken).isNotNull();
+        assertThat(service.isRunning(5L)).isTrue();
+        assertThat(service.tryStart(5L)).isNull();
+        assertThat(service.tryStart(6L)).isNotNull();
+
+        service.release(5L, leaseToken);
 
         assertThat(service.isRunning(5L)).isFalse();
-        assertThat(service.tryStart(5L)).isTrue();
+        assertThat(service.tryStart(5L)).isNotNull();
+    }
+
+    @Test
+    void release_leavesTheLeaseOfAnotherBuildAlone() {
+        HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
+        String expired = service.tryStart(5L);
+        leases.remove(5L);
+        String replacement = service.tryStart(5L);
+
+        service.release(5L, expired);
+
+        assertThat(leases.get(5L)).isEqualTo(replacement);
+    }
+
+    @Test
+    void buildAndRelease_dropsAQueuedBuildWhenAnotherBuildTookTheCourse() {
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        String expired = service.tryStart(5L);
+        leases.remove(5L);
+        String replacement = service.tryStart(5L);
+
+        service.buildAndRelease(5L, 7L, expired);
+
+        assertThat(leases.get(5L)).isEqualTo(replacement);
+        verify(courseRepository, never()).findByIdElseThrow(anyLong());
+    }
+
+    @Test
+    void buildAndRelease_takesTheLeaseAgainWhenItExpiredAndTheCourseIsFree() {
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        when(courseRepository.findByIdElseThrow(5L)).thenThrow(new IllegalStateException("stop here"));
+        String expired = service.tryStart(5L);
+        leases.remove(5L);
+
+        service.buildAndRelease(5L, 7L, expired);
+
+        verify(courseRepository).findByIdElseThrow(5L);
+        assertThat(service.isRunning(5L)).isFalse();
     }
 
     @Test
@@ -183,15 +234,15 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     void build_throwsWhenChatClientIsNull() {
         HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
 
-        assertThatThrownBy(() -> service.build(5L, 7L)).isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("AI chat client is not configured");
+        assertThatThrownBy(() -> service.build(5L, 7L, "lease")).isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("AI chat client is not configured");
     }
 
     @Test
     void buildAndRelease_freesTheSlotWhenTheBuildFails() {
         HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
-        service.tryStart(5L);
+        String leaseToken = service.tryStart(5L);
 
-        service.buildAndRelease(5L, 7L);
+        service.buildAndRelease(5L, 7L, leaseToken);
 
         assertThat(service.isRunning(5L)).isFalse();
     }
@@ -199,5 +250,11 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     private HyperionQuizQuestionPoolBuildService service(List<String> questionTypes, List<String> difficulties) {
         return new HyperionQuizQuestionPoolBuildService(null, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
                 llmTokenUsageService, itemRepository, settingsService, courseRepository, distributedDataProvider, "", questionTypes, difficulties, 8, 30, 10);
+    }
+
+    private HyperionQuizQuestionPoolBuildService serviceWithChatClient() {
+        return new HyperionQuizQuestionPoolBuildService(ChatClient.create(chatModel), new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi),
+                filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, distributedDataProvider, "", List.of("single-choice"), List.of("medium"), 8,
+                30, 10);
     }
 }

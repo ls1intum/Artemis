@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -77,46 +79,46 @@ class HyperionQuizQuestionPoolServiceTest {
 
     @Test
     void startBuild_enqueuesAndDispatchesWhenTheSlotIsFree() {
-        when(buildService.tryStart(5L)).thenReturn(true);
+        when(buildService.tryStart(5L)).thenReturn("lease");
         when(buildService.enqueue(course)).thenReturn(12);
 
         QuizQuestionPoolBuildStartDTO result = service.startBuild(course, 7L);
 
         assertThat(result).isEqualTo(new QuizQuestionPoolBuildStartDTO(true, 12));
-        verify(taskService).runBuildAsync(5L, 7L);
+        verify(taskService).runBuildAsync(5L, 7L, "lease");
     }
 
     @Test
     void startBuild_reportsAConflictWhenABuildIsRunning() {
-        when(buildService.tryStart(5L)).thenReturn(false);
+        when(buildService.tryStart(5L)).thenReturn(null);
 
         QuizQuestionPoolBuildStartDTO result = service.startBuild(course, 7L);
 
         assertThat(result).isEqualTo(new QuizQuestionPoolBuildStartDTO(false, 0));
         verify(buildService, never()).enqueue(course);
-        verify(taskService, never()).runBuildAsync(5L, 7L);
+        verify(taskService, never()).runBuildAsync(eq(5L), eq(7L), any());
     }
 
     @Test
     void startBuild_freesTheSlotWhenDispatchFails() {
-        when(buildService.tryStart(5L)).thenReturn(true);
+        when(buildService.tryStart(5L)).thenReturn("lease");
         when(buildService.enqueue(course)).thenReturn(12);
-        doThrow(new TaskRejectedException("executor queue full")).when(taskService).runBuildAsync(5L, 7L);
+        doThrow(new TaskRejectedException("executor queue full")).when(taskService).runBuildAsync(5L, 7L, "lease");
 
         assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(TaskRejectedException.class);
 
-        verify(buildService).release(5L);
+        verify(buildService).release(5L, "lease");
     }
 
     @Test
     void startBuild_freesTheSlotWhenEnqueuingFails() {
-        when(buildService.tryStart(5L)).thenReturn(true);
+        when(buildService.tryStart(5L)).thenReturn("lease");
         when(buildService.enqueue(course)).thenThrow(new IllegalStateException("no competencies"));
 
         assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(IllegalStateException.class);
 
-        verify(buildService).release(5L);
-        verify(taskService, never()).runBuildAsync(5L, 7L);
+        verify(buildService).release(5L, "lease");
+        verify(taskService, never()).runBuildAsync(eq(5L), eq(7L), any());
     }
 
     @Test

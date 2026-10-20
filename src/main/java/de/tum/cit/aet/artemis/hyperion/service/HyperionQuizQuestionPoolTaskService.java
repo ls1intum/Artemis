@@ -26,11 +26,12 @@ public class HyperionQuizQuestionPoolTaskService {
     /**
      * Runs a pool build on the pool executor and releases the course's build slot when it ends, however it ends.
      *
-     * @param courseId the course whose pool to build; its build slot must already be held
-     * @param userId   the user the token usage is attributed to; may be {@code null}
+     * @param courseId   the course whose pool to build
+     * @param userId     the user the token usage is attributed to; may be {@code null}
+     * @param leaseToken the lease {@code tryStart} returned for this build
      */
     @Async("hyperionQuizQuestionPoolTaskExecutor")
-    public void runBuildAsync(long courseId, @Nullable Long userId) {
-        buildService.buildAndRelease(courseId, userId);
+    public void runBuildAsync(long courseId, @Nullable Long userId, String leaseToken) {
+        buildService.buildAndRelease(courseId, userId, leaseToken);
     }
 }

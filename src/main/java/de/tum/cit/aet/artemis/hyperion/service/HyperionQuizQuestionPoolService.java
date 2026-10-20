@@ -68,16 +68,17 @@ public class HyperionQuizQuestionPoolService {
      */
     public QuizQuestionPoolBuildStartDTO startBuild(Course course, @Nullable Long userId) {
         long courseId = course.getId();
-        if (!buildService.tryStart(courseId)) {
+        String leaseToken = buildService.tryStart(courseId);
+        if (leaseToken == null) {
             return new QuizQuestionPoolBuildStartDTO(false, 0);
         }
         int enqueued;
         try {
             enqueued = buildService.enqueue(course);
-            taskService.runBuildAsync(courseId, userId);
+            taskService.runBuildAsync(courseId, userId, leaseToken);
         }
         catch (RuntimeException e) {
-            buildService.release(courseId);
+            buildService.release(courseId, leaseToken);
             throw e;
         }
         return new QuizQuestionPoolBuildStartDTO(true, enqueued);

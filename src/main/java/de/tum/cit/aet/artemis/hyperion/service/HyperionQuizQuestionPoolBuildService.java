@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -226,23 +227,27 @@ public class HyperionQuizQuestionPoolBuildService {
     }
 
     /**
-     * Takes the course's build lease, which expires after {@code build-lease-minutes} unless the running build refreshes it. One build per
-     * course runs at a time across all nodes.
+     * Takes the course's build lease under a token unique to this build. The lease expires after {@code build-lease-minutes} unless the
+     * build renews it after each unit of work, so one build per course runs at a time across all nodes as long as no unit of work
+     * outlasts the lease.
      *
      * @param courseId the course
-     * @return {@code true} when no node holds a live lease for this course
+     * @return the token of the new lease, or {@code null} when another build holds a live lease for this course
      */
-    public boolean tryStart(long courseId) {
-        return buildLeases.putIfAbsent(courseId, nodeName(), leaseDuration) == null;
+    @Nullable
+    public String tryStart(long courseId) {
+        String leaseToken = nodeName() + "/" + UUID.randomUUID();
+        return buildLeases.putIfAbsent(courseId, leaseToken, leaseDuration) == null ? leaseToken : null;
     }
 
     /**
-     * Frees the course's build slot on this node.
+     * Frees the course's build slot when the lease still belongs to the build that took it.
      *
-     * @param courseId the course
+     * @param courseId   the course
+     * @param leaseToken the token {@link #tryStart} returned
      */
-    public void release(long courseId) {
-        buildLeases.remove(courseId);
+    public void release(long courseId, String leaseToken) {
+        buildLeases.remove(courseId, leaseToken);
     }
 
     /**
@@ -255,8 +260,17 @@ public class HyperionQuizQuestionPoolBuildService {
         return buildLeases.containsKey(courseId);
     }
 
-    private void heartbeat(long courseId) {
-        buildLeases.put(courseId, nodeName(), leaseDuration);
+    /**
+     * Renews the course's lease when it still belongs to this build.
+     *
+     * @return {@code false} when the lease expired or another build holds the course
+     */
+    private boolean renewLease(long courseId, String leaseToken) {
+        if (!buildLeases.replace(courseId, leaseToken, leaseToken)) {
+            return false;
+        }
+        buildLeases.refreshTimeToLive(courseId, leaseDuration);
+        return true;
     }
 
     private String nodeName() {
@@ -302,20 +316,27 @@ public class HyperionQuizQuestionPoolBuildService {
     }
 
     /**
-     * Runs {@link #build} and frees the course's build slot afterwards, whatever the outcome.
+     * Runs {@link #build} under the given lease and frees the course's build slot afterwards, whatever the outcome. A build whose lease
+     * expired while it waited for the executor takes the lease again when the course is free, and does nothing when another build holds
+     * the course in the meantime.
      *
-     * @param courseId the course whose pool to build
-     * @param userId   the user the token usage is attributed to; may be {@code null}
+     * @param courseId   the course whose pool to build
+     * @param userId     the user the token usage is attributed to; may be {@code null}
+     * @param leaseToken the token {@link #tryStart} returned
      */
-    public void buildAndRelease(long courseId, @Nullable Long userId) {
+    public void buildAndRelease(long courseId, @Nullable Long userId, String leaseToken) {
+        if (!renewLease(courseId, leaseToken) && buildLeases.putIfAbsent(courseId, leaseToken, leaseDuration) != null) {
+            log.warn("Quiz question pool build of course [{}] is dropped: its lease expired while it waited and another build holds the course", courseId);
+            return;
+        }
         try {
-            build(courseId, userId);
+            build(courseId, userId, leaseToken);
         }
         catch (Exception e) {
             log.error("Quiz question pool build of course [{}] failed", courseId, e);
         }
         finally {
-            release(courseId);
+            release(courseId, leaseToken);
         }
     }
 
@@ -323,11 +344,12 @@ public class HyperionQuizQuestionPoolBuildService {
      * Works the course's pool to completion: generates every pending item and judges every generated one. Stale claims are released
      * and items that failed on a transient failure are revived first.
      *
-     * @param courseId the course whose pool to build
-     * @param userId   the user the token usage is attributed to; may be {@code null}
+     * @param courseId   the course whose pool to build
+     * @param userId     the user the token usage is attributed to; may be {@code null}
+     * @param leaseToken the lease the build runs under; the build stops after the unit of work during which the lease was lost
      * @return the number of items generated or judged
      */
-    public int build(long courseId, @Nullable Long userId) {
+    public int build(long courseId, @Nullable Long userId, String leaseToken) {
         if (chatClient == null) {
             throw new InternalServerErrorAlertException("AI chat client is not configured", "QuizQuestionPool", "QuizQuestionPool.chatClientNotConfigured");
         }
@@ -343,12 +365,13 @@ public class HyperionQuizQuestionPoolBuildService {
 
         Materials materials = new Materials(courseId);
         int completed = 0;
-        while (true) {
+        boolean leaseHeld = true;
+        while (leaseHeld) {
             Optional<QuizQuestionPoolItem> toJudge = claimNext(courseId, QuizQuestionPoolItemState.GENERATED, QuizQuestionPoolItemState.FILTERING);
             if (toJudge.isPresent()) {
                 judge(course, userId, toJudge.get(), materials);
                 completed++;
-                heartbeat(courseId);
+                leaseHeld = renewLease(courseId, leaseToken);
                 continue;
             }
             List<QuizQuestionPoolItem> batch = claimBatch(courseId);
@@ -357,9 +380,14 @@ public class HyperionQuizQuestionPoolBuildService {
             }
             generate(course, userId, batch, materials);
             completed += batch.size();
-            heartbeat(courseId);
+            leaseHeld = renewLease(courseId, leaseToken);
         }
-        log.info("Quiz question pool build of course [{}] finished after {} units of work", courseId, completed);
+        if (!leaseHeld) {
+            log.warn("Quiz question pool build of course [{}] stops after {} units of work: its lease expired and another build took over the course", courseId, completed);
+        }
+        else {
+            log.info("Quiz question pool build of course [{}] finished after {} units of work", courseId, completed);
+        }
         return completed;
     }
 
