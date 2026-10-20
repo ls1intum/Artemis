@@ -43,8 +43,7 @@ const BREAKPOINTS = {
 } as const;
 
 type CodeButtonLoadingState =
-    | { status: 'idle' | 'loading' }
-    | { status: 'error' }
+    | { status: 'idle' | 'loading' | 'error' }
     | { status: 'complete'; authenticationMethodData: NonEmptyArray<AuthenticationMethodData>; preferredIde: Ide; theiaLinkData: TheiaLinkData | undefined };
 
 @Component({
