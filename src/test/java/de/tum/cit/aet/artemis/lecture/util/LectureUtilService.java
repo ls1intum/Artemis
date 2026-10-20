@@ -289,6 +289,8 @@ public class LectureUtilService {
             String testFileName = "slide" + i + ".png";
 
             slide.setAttachmentVideoUnit(attachmentVideoUnit);
+            // Split from the stored file, as SlideSplitterService records it
+            slide.setAttachmentRevision(attachmentOfAttachmentVideoUnit.getVersion(), attachmentOfAttachmentVideoUnit.getSha256Hash());
             // we have to set a dummy value here, as null is not allowed. The correct value is set below.
             slide.setSlideImagePath("dummy");
             slide = slideRepository.save(slide);
@@ -340,6 +342,7 @@ public class LectureUtilService {
             }
             slide.setSlideImagePath("temp/" + testFileName);
             slide.setAttachmentVideoUnit(attachmentVideoUnit);
+            slide.setAttachmentRevision(attachmentOfAttachmentVideoUnit.getVersion(), attachmentOfAttachmentVideoUnit.getSha256Hash());
             slideRepository.save(slide);
         }
         return attachmentVideoUnitRepository.save(attachmentVideoUnit);

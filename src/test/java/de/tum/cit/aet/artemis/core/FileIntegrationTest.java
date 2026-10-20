@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -35,6 +36,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -55,10 +57,12 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -89,6 +93,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private LectureTestRepository lectureRepo;
 
     @Autowired
+    private SlideTestRepository slideRepository;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
@@ -112,6 +119,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
+        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }
@@ -307,6 +316,30 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLecturePdfAttachmentsMerged_HiddenSlidesWithoutStudentVersionReturnsNotFound() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        AttachmentVideoUnit unit = lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance).map(AttachmentVideoUnit.class::cast)
+                .filter(lectureUnit -> lectureUnit.getAttachment().getLink().endsWith(".pdf")).findFirst().orElseThrow();
+        // The upload schedules slide splitting asynchronously. Create the relevant slide explicitly so this test does
+        // not depend on the background processor winning a race with the assertion.
+        Slide slide = new Slide();
+        slide.setAttachmentVideoUnit(unit);
+        slide.setSlideNumber(1);
+        slide.setSlideImagePath("attachments/attachment-unit/" + unit.getId() + "/slide/1.png");
+        slide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.save(slide);
+        clearStoredStudentVersion(unit.getAttachment());
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance)
+                .forEach(lectureUnit -> assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), student.getId())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLecturePdfAttachmentsMerged_TutorAccessToUnreleasedUnits() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
 
@@ -419,6 +452,15 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Collect units freshly from the database to prevent issues when persisting the lecture again
         lecture.setLectureUnits(attachmentVideoUnitRepo.findAllByLectureIdAndAttachmentType(lecture.getId(), AttachmentType.FILE).stream().map(unit -> (LectureUnit) unit)
                 .collect(Collectors.toCollection(ArrayList::new)));
+
+        if (expectedStatus == HttpStatus.CREATED) {
+            // Each PDF is split into slides asynchronously, and the student downloads stay closed until its slides are complete: 3 + 2 pages
+            List<Long> unitIds = lecture.getLectureUnits().stream().map(LectureUnit::getId).toList();
+            await().untilAsserted(() -> {
+                assertThat(unitIds.stream().mapToInt(id -> slideRepository.findAllByAttachmentVideoUnitId(id).size()).sum()).isEqualTo(5);
+                assertThat(slideRepository.findAttachmentVideoUnitIdsWithSlidesOfOtherRevision(unitIds)).isEmpty();
+            });
+        }
 
         return lecture;
     }
@@ -560,6 +602,76 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
 
         assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionFailsClosedWhileRegenerationIsPending() throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithoutStudentVersion("unrestricted instructor content".getBytes());
+        saveSlide(attachmentVideoUnit, 1, ZonedDateTime.now().plusDays(1), false);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        mockMvc.perform(get(url)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionIgnoresHiddenSlidesOfReplacedFile() throws Exception {
+        byte[] content = "replacement without hidden slides".getBytes();
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithoutStudentVersion(content);
+        saveSlide(attachmentVideoUnit, 1, ZonedDateTime.now().plusDays(1), true);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+
+        assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(content);
+    }
+
+    /**
+     * After a failed editor split the previous slides are restored while the new file stays stored. Which pages of that file are hidden is then unknown, even when the
+     * restored slides hide nothing, so the full file must not be served.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionFailsClosedWhileTheSlidesBelongToAnotherFile() throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithoutStudentVersion("new file with pages hidden by the instructor".getBytes());
+        saveSlide(attachmentVideoUnit, 1, null, false, -7, "slides-of-the-previous-file");
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        mockMvc.perform(get(url)).andExpect(status().isNotFound());
+        request.get("/api/core/files/attachments/lectures/" + attachmentVideoUnit.getLecture().getId() + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    private AttachmentVideoUnit createAttachmentVideoUnitWithoutStudentVersion(byte[] content) throws IOException {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(content);
+        clearStoredStudentVersion(attachmentVideoUnit.getAttachment());
+        return attachmentVideoUnit;
+    }
+
+    /**
+     * Removes the stored student version. The reference is not updatable through the entity, so it is cleared with the conditional statement the application uses.
+     */
+    private void clearStoredStudentVersion(Attachment attachment) {
+        String stored = attachmentRepo.findStudentVersionStateById(attachment.getId()).orElseThrow().studentVersion();
+        if (stored != null) {
+            assertThat(attachmentRepo.clearStudentVersionIfUnchanged(attachment.getId(), stored)).isEqualTo(1);
+        }
+        attachment.setStudentVersion(null);
+    }
+
+    private void saveSlide(AttachmentVideoUnit attachmentVideoUnit, int slideNumber, ZonedDateTime hidden, boolean superseded) {
+        saveSlide(attachmentVideoUnit, slideNumber, hidden, superseded, attachmentVideoUnit.getAttachment().getVersion(), attachmentVideoUnit.getAttachment().getSha256Hash());
+    }
+
+    private void saveSlide(AttachmentVideoUnit attachmentVideoUnit, int slideNumber, ZonedDateTime hidden, boolean superseded, Integer splitFromVersion, String splitFromHash) {
+        var slide = new Slide();
+        slide.setAttachmentRevision(splitFromVersion, splitFromHash);
+        slide.setAttachmentVideoUnit(attachmentVideoUnit);
+        slide.setSlideNumber(slideNumber);
+        slide.setSlideImagePath("attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/slide/" + slideNumber + ".png");
+        slide.setHidden(hidden);
+        slide.setSuperseded(superseded);
+        slideRepository.save(slide);
     }
 
     @Test
