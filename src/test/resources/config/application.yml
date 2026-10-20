@@ -47,10 +47,6 @@ artemis:
         actionname: Export to Artemis@testInstance
 
     continuous-integration:
-        # A bulk trigger waits while the build queue is full, which tests that fill the queue with jobs nobody takes would
-        # wait on for as long as the queue stays full. The wait is covered by unit tests with a fake clock.
-        bulk-trigger:
-            max-queued-jobs-per-build-slot: 0
         # Defines the used docker images for certain programming languages
         build:
             default-docker-flags:
