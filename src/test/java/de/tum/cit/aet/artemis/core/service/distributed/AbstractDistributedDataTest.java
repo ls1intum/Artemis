@@ -9,6 +9,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,13 +24,18 @@ import java.util.function.Consumer;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.redisson.api.RMapCache;
 import org.springframework.cache.Cache;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.config.cache.DistributedDataCache;
 import de.tum.cit.aet.artemis.core.config.cache.DistributedDataCacheManager;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DelegatingDistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryListener;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapListener;
@@ -38,12 +44,105 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueI
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueListener;
 import de.tum.cit.aet.artemis.core.service.distributed.api.set.DistributedSet;
 import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedMap;
 import de.tum.cit.aet.artemis.core.util.IpAddresses;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.TestCaseSynchronization;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
 public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAgentTest {
 
     protected abstract DistributedDataProvider getDistributedDataProvider();
+
+    @Test
+    void testValueGuardedReplace() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("testValueGuardedReplace");
+        map.put("key", "owner-one");
+
+        assertThat(map.replace("key", "wrong-owner", "owner-two")).isFalse();
+        assertThat(map.get("key")).isEqualTo("owner-one");
+        assertThat(map.replace("key", "owner-one", "owner-two")).isTrue();
+        assertThat(map.get("key")).isEqualTo("owner-two");
+    }
+
+    @Test
+    void testRefreshTimeToLiveExtendsExpiryAndRequiresExpiringMap() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testRefreshTimeToLive", Duration.ofHours(2));
+        map.put("key", "value", Duration.ofHours(1));
+        ExpirationWindow original = expirationWindow(map, "key");
+
+        boolean localClock = getDistributedDataProvider() instanceof LocalDataProviderService;
+        long before = localClock ? System.nanoTime() : System.currentTimeMillis();
+        assertThat(map.refreshTimeToLive("key", Duration.ofHours(2))).isTrue();
+        long after = localClock ? System.nanoTime() : System.currentTimeMillis();
+        // Hazelcast stores entry expiration timestamps at whole-second precision.
+        if (getDistributedDataProvider() instanceof HazelcastDistributedDataProviderService) {
+            before = TimeUnit.SECONDS.toMillis(TimeUnit.MILLISECONDS.toSeconds(before));
+            after = TimeUnit.SECONDS.toMillis(TimeUnit.MILLISECONDS.toSeconds(after));
+        }
+        long lifetime = localClock ? Duration.ofHours(2).toNanos() : Duration.ofHours(2).toMillis();
+        ExpirationWindow refreshed = expirationWindow(map, "key");
+        assertThat(refreshed.earliest()).isGreaterThan(original.latest());
+        assertSameExpiration(new ExpirationWindow(before + lifetime, after + lifetime), refreshed);
+        assertThat(map.get("key")).isEqualTo("value");
+        assertThat(map.refreshTimeToLive("absent", Duration.ofHours(2))).isFalse();
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(() -> getDistributedDataProvider().<String, String>getMap("nonExpiringRefresh").refreshTimeToLive("key", Duration.ofHours(2)));
+    }
+
+    @Test
+    void testConditionalReplacePreservesExpiry() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testConditionalReplaceExpiry", Duration.ofHours(2));
+        map.put("key", "before", Duration.ofHours(1));
+        ExpirationWindow original = expirationWindow(map, "key");
+        if (getDistributedDataProvider() instanceof HazelcastDistributedDataProviderService) {
+            // A renewed deadline differs only after Hazelcast's whole-second clock advances.
+            long createdAt = original.earliest() - Duration.ofHours(1).toMillis();
+            Awaitility.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofSeconds(30))
+                    .until(() -> TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) > TimeUnit.MILLISECONDS.toSeconds(createdAt));
+        }
+
+        assertThat(map.replace("key", "wrong-owner", "after")).isFalse();
+        assertSameExpiration(original, expirationWindow(map, "key"));
+        assertThat(map.replace("key", "before", "after")).isTrue();
+        assertThat(map.get("key")).isEqualTo("after");
+        assertSameExpiration(original, expirationWindow(map, "key"));
+    }
+
+    private void assertSameExpiration(ExpirationWindow expected, ExpirationWindow actual) {
+        assertThat(actual.earliest()).isLessThanOrEqualTo(expected.latest());
+        assertThat(actual.latest()).isGreaterThanOrEqualTo(expected.earliest());
+    }
+
+    private record ExpirationWindow(long earliest, long latest) {
+    }
+
+    // Native deadline observations avoid requiring a live entry to survive a short CI scheduling window.
+    @SuppressWarnings("unchecked")
+    private ExpirationWindow expirationWindow(DistributedMap<String, String> map, String key) {
+        while (map instanceof DelegatingDistributedMap<?, ?>) {
+            map = (DistributedMap<String, String>) ReflectionTestUtils.getField(map, "delegate");
+        }
+        if (map instanceof LocalMap<?, ?>) {
+            Map<String, Long> deadlines = (Map<String, Long>) ReflectionTestUtils.getField(map, "expiryDeadlines");
+            long deadline = deadlines.get(key);
+            return new ExpirationWindow(deadline, deadline);
+        }
+        if (map instanceof RedissonDistributedMap<?, ?>) {
+            RMapCache<String, String> cache = (RMapCache<String, String>) ReflectionTestUtils.getField(map, "mapCache");
+            long before = System.currentTimeMillis();
+            long remaining = cache.remainTimeToLive(key);
+            long after = System.currentTimeMillis();
+            assertThat(remaining).isPositive();
+            return new ExpirationWindow(before + remaining, after + remaining);
+        }
+        IMap<String, String> nativeMap = (IMap<String, String>) ReflectionTestUtils.getField(map, "map");
+        long deadline = nativeMap.getEntryView(key).getExpirationTime();
+        return new ExpirationWindow(deadline, deadline);
+    }
 
     @Test
     void testQueueListener() {
@@ -356,6 +455,25 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
             in.defaultReadObject();
             derived = stored.toUpperCase(java.util.Locale.ROOT);
+        }
+    }
+
+    @Test
+    void testLiveSaveSynchronizationSurvivesProviderRoundTripAndValueGuardedUpdates() {
+        var synchronization = new TestCaseSynchronization("solution", "tests", false, false);
+        var pending = new LiveSaveSlot("token", "owner", Instant.EPOCH, Map.of(), synchronization);
+        DistributedMap<String, LiveSaveSlot> map = getDistributedDataProvider().getMap("liveSaveSynchronizationRoundTrip");
+        try {
+            map.put("exercise", pending);
+            assertThat(map.get("exercise")).isEqualTo(pending);
+            var completed = new LiveSaveSlot("token", "owner", Instant.EPOCH, Map.of(), new TestCaseSynchronization("solution", "tests", false, true));
+            assertThat(map.replace("exercise", pending, completed)).isTrue();
+            assertThat(map.get("exercise")).isEqualTo(completed);
+            assertThat(map.remove("exercise", pending)).isFalse();
+            assertThat(map.remove("exercise", completed)).isTrue();
+        }
+        finally {
+            map.clear();
         }
     }
 

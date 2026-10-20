@@ -1225,7 +1225,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // One batch query for grading instructions; the count must not grow with the number of feedbacks.
         assertThatDb(() -> request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment",
-                new ModelingAssessmentDTO(structuredFeedbackDtos, "text"), ResultDTO.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(50);
+                new ModelingAssessmentDTO(structuredFeedbackDtos, "text"), ResultDTO.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(41);
     }
 
     /**
