@@ -555,9 +555,11 @@ class StagedGenerationRunnerTest {
                 completed(1, "statement"));
         when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
-        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY, true, true, null);
 
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(outcome.unresolvedConceptFindings()).singleElement().asString().contains("unavailable", "instructor review");
         verify(reviewer).reviewSpecification(eq("brief"), anyString(), any(), any());
         assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
     }

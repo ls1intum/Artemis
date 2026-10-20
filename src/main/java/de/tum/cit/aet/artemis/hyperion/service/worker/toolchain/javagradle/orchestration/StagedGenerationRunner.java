@@ -359,6 +359,8 @@ public class StagedGenerationRunner {
                 return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, selection.feedback(), archivedConversation, conversation, unresolvedSpecificationFindings);
             }
             if (!selection.complete()) {
+                conceptFindings
+                        .add("The concept review was unavailable. This exercise was built directly from the instructor brief, so its learning design requires instructor review.");
                 emit(progress, "Concept exploration was unavailable; continuing from the instructor brief. The mandatory specification review still decides whether the exercise "
                         + "has a coherent, sufficiently deep learning design.");
             }
