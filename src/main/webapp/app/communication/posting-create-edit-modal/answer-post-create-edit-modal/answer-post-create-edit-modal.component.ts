@@ -2,17 +2,19 @@ import { Component, ViewContainerRef, ViewEncapsulation, input, output, signal }
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { PostContentValidationPattern } from 'app/communication/metis.util';
+import { PostContentValidationPattern } from 'app/communication/communication.util';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
     templateUrl: './answer-post-create-edit-modal.component.html',
     styleUrls: ['answer-post-create-edit-modal.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent],
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TumAetUiButtonComponent, ArtemisTranslatePipe],
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
     createEditAnswerPostContainerRef = input<ViewContainerRef>();
@@ -51,7 +53,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     }
 
     /**
-     * invokes the metis service after setting current date as creation date of the new answer post,
+     * invokes the communication service after setting current date as creation date of the new answer post,
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
@@ -62,12 +64,13 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
         }
         const payload = deepClone(posting);
         payload.content = this.formGroup.get('content')?.value;
-        this.metisService.createAnswerPost(payload).subscribe({
+        this.communicationService.createAnswerPost(payload).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
                 this.isLoading.set(false);
-                this.onCreate.emit(answerPost);
+                // clear before emitting so that a parent can reopen the editor in its onCreate handler
                 this.createEditAnswerPostContainerRef()?.clear();
+                this.onCreate.emit(answerPost);
             },
             error: () => {
                 this.isLoading.set(false);
@@ -76,7 +79,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     }
 
     /**
-     * invokes the metis service with the updated answer post
+     * invokes the communication service with the updated answer post
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
@@ -87,7 +90,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
         }
         const payload = deepClone(posting);
         payload.content = this.formGroup.get('content')?.value;
-        this.metisService.updateAnswerPost(payload).subscribe({
+        this.communicationService.updateAnswerPost(payload).subscribe({
             next: (updatedPost: AnswerPost) => {
                 this.postingUpdated.emit(updatedPost);
                 this.isLoading.set(false);
@@ -105,9 +108,9 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      */
     updateModalTitle(): void {
         if (this.editType === this.EditType.UPDATE) {
-            this.modalTitle = 'artemisApp.metis.editPosting';
+            this.modalTitle = 'artemisApp.communication.editPosting';
         } else if (this.editType === this.EditType.CREATE) {
-            this.modalTitle = 'artemisApp.metis.createModalTitleAnswer';
+            this.modalTitle = 'artemisApp.communication.createModalTitleAnswer';
         }
     }
 }

@@ -37,6 +37,15 @@ export const Success: Story = {
     },
 };
 
+export const Dismissible: Story = {
+    args: {
+        icon: undefined,
+        severity: 'success',
+        text: 'The lecture was created. You can now edit its details.',
+        dismissible: true,
+    },
+};
+
 export const Warning: Story = {
     args: {
         icon: undefined,

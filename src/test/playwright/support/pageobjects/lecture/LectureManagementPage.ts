@@ -124,7 +124,7 @@ export class LectureManagementPage {
     async addTextUnit(name: string, text: string, releaseDate = dayjs()) {
         await this.openCreateUnit(UnitType.TEXT);
         await this.page.fill('#name', name);
-        await fillDateTimePicker(this.page.locator('#pick-releaseDate #date-input-field'), releaseDate);
+        await fillDateTimePicker(this.page.locator('input#pick-releaseDate'), releaseDate);
         // Use the specific container for the content Monaco editor
         const contentField = this.page.locator('#content');
         await setMonacoEditorContentByLocator(this.page, contentField, text);

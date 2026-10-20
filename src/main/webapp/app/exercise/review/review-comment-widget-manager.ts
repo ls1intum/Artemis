@@ -4,6 +4,7 @@ import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-co
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
+import { setInputs } from 'app/foundation/util/set-inputs.util';
 
 export type ReviewCommentDraftContext = {
     targetType: CommentThreadLocationType;
@@ -73,7 +74,7 @@ export class ReviewCommentWidgetManager {
     updateDraftInputs(): void {
         const canSubmit = this.config.canSubmit();
         this.draftWidgetRefs.forEach((ref) => {
-            ref.setInput('canSubmit', canSubmit);
+            setInputs(ref, { canSubmit });
         });
     }
 
@@ -259,7 +260,7 @@ export class ReviewCommentWidgetManager {
 
         const widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
         this.initializeThreadCollapseState(thread, showLocationWarning);
-        widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
+        setInputs(widgetRef, { initialCollapsed: this.collapseState.get(thread.id) ?? false });
         this.registerThreadWidgetSubscriptions(thread, widgetRef);
         this.threadWidgetRefs.set(thread.id, widgetRef);
         return widgetRef;
@@ -285,9 +286,7 @@ export class ReviewCommentWidgetManager {
      * @param showLocationWarning Whether the widget should show a location warning.
      */
     private setThreadWidgetInputs(widgetRef: ComponentRef<ReviewCommentThreadWidgetComponent>, thread: CommentThread, showLocationWarning: boolean): void {
-        widgetRef.setInput('thread', thread);
-        widgetRef.setInput('showLocationWarning', showLocationWarning);
-        widgetRef.setInput('showFeedbackAction', this.config.showFeedbackAction(thread));
+        setInputs(widgetRef, { thread, showLocationWarning, showFeedbackAction: this.config.showFeedbackAction(thread) });
     }
 
     /**
@@ -442,11 +441,13 @@ export class ReviewCommentWidgetManager {
      * @param draftContext The resolved draft context for thread creation.
      */
     private setDraftWidgetInputs(widgetRef: ComponentRef<ReviewCommentDraftWidgetComponent>, line: number, draftContext: ReviewCommentDraftContext): void {
-        widgetRef.setInput('canSubmit', this.config.canSubmit());
-        widgetRef.setInput('targetType', draftContext.targetType);
-        widgetRef.setInput('lineNumber', line + 1);
-        widgetRef.setInput('filePath', draftContext.filePath);
-        widgetRef.setInput('auxiliaryRepositoryId', draftContext.auxiliaryRepositoryId);
+        setInputs(widgetRef, {
+            canSubmit: this.config.canSubmit(),
+            targetType: draftContext.targetType,
+            lineNumber: line + 1,
+            filePath: draftContext.filePath,
+            auxiliaryRepositoryId: draftContext.auxiliaryRepositoryId,
+        });
     }
 
     /**

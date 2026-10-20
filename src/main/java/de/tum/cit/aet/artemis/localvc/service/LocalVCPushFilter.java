@@ -7,14 +7,22 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.eclipse.jgit.http.server.ServletUtils;
+import org.eclipse.jgit.lib.Repository;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -49,11 +57,36 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
             servletResponse.setStatus(localVCServletService.getHttpStatusForException(e, servletRequest.getRequestURI()));
             return;
         }
+        catch (RateLimitExceededException e) {
+            // The git servlet runs outside Spring MVC, so the ExceptionTranslator never sees this exception: answered
+            // here, or it leaves the servlet uncaught and the client gets a generic error instead of 429. The rate limit
+            // service has already logged the rejection with the client address.
+            log.debug("LocalVC push rate limited for {}, retry after {} seconds", servletRequest.getRequestURI(), e.getRetryAfterSeconds());
+            servletResponse.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            if (e.getRetryAfterSeconds() > 0) {
+                servletResponse.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(e.getRetryAfterSeconds()));
+            }
+            return;
+        }
 
-        long startNanos = System.nanoTime();
-        // stays true if doFilter throws, so a push that blew up is not counted as a success
-        boolean failed = true;
+        if (!"POST".equals(servletRequest.getMethod())) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
+
+        Repository repository = ServletUtils.getRepository(servletRequest);
+        GitRepositoryAccessDTO exercise = (GitRepositoryAccessDTO) servletRequest.getAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE);
+        final ProgrammingExerciseMutationGuardService.MutationLease mutationLease;
         try {
+            mutationLease = localVCServletService.claimProgrammingExerciseMutation(repository, exercise.exerciseId());
+        }
+        catch (HttpStatusException e) {
+            servletResponse.sendError(e.getStatusCode().value(), e.getMessage() + " Please retry the push later.");
+            return;
+        }
+        long startNanos = System.nanoTime();
+        boolean failed = true;
+        try (mutationLease) {
             filterChain.doFilter(servletRequest, servletResponse);
             failed = servletResponse.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
         }

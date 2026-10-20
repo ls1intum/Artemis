@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantJobDTO;
@@ -638,6 +639,30 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         assertThat(jobs).noneSatisfy(entry -> assertThat(entry.jobId()).isEqualTo(foreignJob.getJobId()));
     }
 
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldAcceptCancellationOfARunningJob() throws Exception {
+        // A freshly started job sits in a cancellable phase and no pipeline is executing it.
+        var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
+        VariantJob ownJob = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
+
+        request.delete("/api/hyperion/variant-jobs/" + ownJob.getJobId(), HttpStatus.NO_CONTENT);
+
+        assertThat(jobService.isCancelRequested(ownJob.getJobId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldAcceptCancellationOfARunningJobOfTheInitiator() throws Exception {
+        // Created directly on the job map: no pipeline thread runs, so the job stays cancellable while the endpoint is called.
+        var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
+        VariantJob job = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
+
+        request.delete("/api/hyperion/variant-jobs/" + job.getJobId(), HttpStatus.NO_CONTENT);
+
+        assertThat(jobService.isCancelRequested(job.getJobId())).isTrue();
+    }
+
     // --- Placement (NEW_GROUP + exam group) ---------------------------------------------------------------
 
     @Test
@@ -657,6 +682,29 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
             assertThat(group.title()).isEqualTo("Cargo bay variants");
             assertThat(group.exerciseIds()).contains(job.getVariantExerciseId());
         });
+    }
+
+    /**
+     * The quiz provisioning copies a loaded instance of the source, which carries the source's variant group. "Add as standalone exercise" still means no
+     * group: only the placement step may add a variant to one.
+     */
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldKeepStandaloneVariantOfGroupedQuizOutOfTheSourceGroup() throws Exception {
+        ExerciseVariantGroupDTO group = request.postWithResponseBody("/api/exercise/courses/" + course.getId() + "/exercise-variant-groups",
+                new CreateExerciseVariantGroupDTO("Inventory variants", 10.0, null, null, null, null, null), ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        request.put("/api/exercise/courses/" + course.getId() + "/exercises/" + sourceQuiz.getId() + "/variant-group", new ExerciseVariantGroupAssignmentDTO(group.id()),
+                HttpStatus.OK);
+        scriptChatModel(PLAN_JSON, this::applyRetitleEdit, List.of());
+
+        String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
+
+        assertThat(job.getPhase()).isEqualTo(VariantJobPhase.COMPLETED);
+        assertThat(job.getVariantExerciseId()).isNotNull().isNotEqualTo(sourceQuiz.getId());
+        ExerciseVariantGroupDTO sourceGroup = request.get("/api/exercise/courses/" + course.getId() + "/exercise-variant-groups/" + group.id(), HttpStatus.OK,
+                ExerciseVariantGroupDTO.class);
+        assertThat(sourceGroup.exerciseIds()).as("the standalone variant stays out of the source's group").containsExactly(sourceQuiz.getId());
     }
 
     /** NEW_GROUP promises to group the variant WITH its source, so a source that cannot join is rejected up front. */

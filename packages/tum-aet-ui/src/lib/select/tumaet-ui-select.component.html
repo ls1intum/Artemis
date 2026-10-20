@@ -15,6 +15,7 @@
         [attr.aria-label]="ariaLabel()"
         [attr.aria-describedby]="describedBy()"
         [attr.aria-invalid]="isInvalid() ? 'true' : null"
+        [attr.aria-required]="required() ? 'true' : null"
         (click)="toggle()"
         (keydown)="onTriggerKeydown($event)"
     >
@@ -68,7 +69,9 @@
                     role="option"
                     [attr.aria-selected]="isSelected(option) ? 'true' : 'false'"
                     [class]="optionClasses(option, i)"
+                    tabindex="-1"
                     (click)="selectOption(option)"
+                    (keydown.enter)="selectOption(option)"
                     (mouseenter)="setActive(i)"
                 >
                     <span class="tumaet:flex-1 tumaet:truncate">{{ label(option) }}</span>

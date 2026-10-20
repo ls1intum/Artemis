@@ -17,6 +17,7 @@ import {
     faFlag,
     faMapPin,
     faPenToSquare,
+    faPlus,
     faQuestion,
     faTag,
     faTrash,
@@ -24,19 +25,16 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { SelectButton } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
-import { SelectModule } from 'primeng/select';
+import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-detail-session-status-indicator/tutorial-group-detail-session-status-indicator.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ButtonModule } from 'primeng/button';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ConfirmationService } from 'primeng/api';
@@ -110,14 +108,13 @@ export enum TutorialGroupDetailAccessLevel {
         ProfilePictureComponent,
         FaIconComponent,
         TranslateDirective,
-        SelectButton,
         FormsModule,
+        TumAetUiButtonDirective,
         TumAetUiDoughnutChartComponent,
-        SelectModule,
+        TumAetUiSelectButtonComponent,
         TutorialGroupDetailSessionStatusIndicatorComponent,
         NgClass,
         RouterLink,
-        ButtonModule,
         ConfirmDialogModule,
         TutorialSessionCreateOrEditModalComponent,
         TooltipModule,
@@ -147,6 +144,7 @@ export class TutorialGroupDetailComponent {
     protected readonly faQuestion = faQuestion;
     protected readonly faCheck = faCheck;
     protected readonly faPenToSquare = faPenToSquare;
+    protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
     protected readonly faBan = faBan;
     protected readonly faCirclePlay = faCirclePlay;

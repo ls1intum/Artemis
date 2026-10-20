@@ -126,6 +126,22 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             expect(button).not.toBeNull();
         });
 
+        it('should render a small button that the title row lays out itself instead of floating it', () => {
+            enableAthena();
+            acceptLLMUsage();
+
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
+            fixture.detectChanges();
+
+            const button: HTMLElement = fixture.debugElement.query(By.css('#requestAIFeedbackButton')).nativeElement;
+            // the small size keeps the page-level button at 34px, below the 40px of the title row it sits in
+            expect(button.classList).toContain('tumaet:text-sm');
+            expect(button.classList).not.toContain('tumaet:text-base');
+            // a float and an extra right margin would put it 8px off the right edge and 16px away from the next button
+            expect(button.classList).not.toContain('float-right');
+            expect(button.classList).not.toContain('mr-2!');
+        });
+
         it('should hide the button for a real exam', () => {
             enableAthena();
 

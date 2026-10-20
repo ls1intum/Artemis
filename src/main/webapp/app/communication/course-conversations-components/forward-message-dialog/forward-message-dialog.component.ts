@@ -18,13 +18,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { NgClass } from '@angular/common';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faHashtag, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -42,7 +42,7 @@ interface CombinedOption {
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
     imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective, FaIconComponent],
-    providers: [MetisService, LinkPreviewService, LinkifyService, MetisConversationService],
+    providers: [CommunicationService, LinkPreviewService, LinkifyService, CourseConversationsService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     protected dialogRef = inject(DynamicDialogRef);
@@ -150,6 +150,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     filterItems(event: Event): void {
         this.searchTerm = (event.target as HTMLInputElement).value;
         this.filterOptions();
+        this.showDropdown.set(true);
     }
 
     /**
@@ -277,9 +278,13 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         return content.length <= this.maxContentLength;
     }
 
-    /** Sets input focus and opens dropdown */
+    /** Remembers the input focus. The dropdown is not opened here, because the input is also focused programmatically when the dialog opens. */
     onInputFocus(): void {
         this.isInputFocused = true;
+    }
+
+    /** Opens the dropdown when the user clicks into the search input */
+    onInputClick(): void {
         this.showDropdown.set(true);
     }
 

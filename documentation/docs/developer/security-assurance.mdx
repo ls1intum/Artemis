@@ -1,0 +1,121 @@
+---
+id: security-assurance
+title: Security Assurance
+sidebar_label: Security Assurance
+---
+
+This assurance case explains the security properties Artemis aims to provide, the boundaries on
+which they depend, and the implementation and tests that support them. It complements the
+[security policy](https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md) and
+[trust and transparency](/about/trust). It is an engineering argument that maintainers must keep
+current, not an independent security certification or a claim that the software has no defects.
+
+## Security requirements and threat model
+
+An institution uses Artemis to store identities, course materials, submissions, assessments, and exam
+results. The security requirements are to authenticate users, limit access according to their role
+and the state of the resource, preserve the integrity of submissions and assessments, and restrict
+the effects of uploaded or executed content.
+
+Assume that an unauthenticated visitor, an authenticated student, or a compromised account can send
+arbitrary HTTP and websocket messages, guess identifiers, upload malicious files, and submit hostile
+programs. A model response, linked page, exercise repository, or integration response is untrusted
+input. Network attackers and compromised dependencies are relevant threats as well.
+
+The institution controls the host, reverse proxy, database, distributed data provider, build
+infrastructure, and configured integrations. A compromised host administrator or container runtime
+can bypass application controls. Artemis does not promise availability during an infrastructure
+failure, prevent every denial of service, establish the correctness of AI suggestions, or replace an
+institution's backup, incident-response, and data-protection procedures.
+
+## Trust boundaries
+
+| Boundary                                                         | Required control and responsibility                                                                                                                                                          |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser to reverse proxy                                         | The operator terminates HTTPS with valid certificates and current TLS settings. A client device and its submitted values remain untrusted.                                                   |
+| HTTP request to application operation                            | Authentication identifies the caller. Server authorization checks the role, course, resource ownership, and operation context; client visibility is not authorization.                       |
+| Websocket connection to subscription or message handler          | Declared topics carry subscription access rules. Message handlers check the sender before changing state.                                                                                    |
+| Application to database and distributed data                     | Repositories own persistence operations; the operator isolates database, broker, and provider endpoints and restricts their credentials. These services form part of the trusted deployment. |
+| Uploaded or repository content to filesystem and rendered output | Paths, sizes, file types, and rendering contexts require their own validation. File content must not acquire application privileges.                                                         |
+| Student program to build infrastructure                          | Build runners execute submissions in configured containers or Kubernetes jobs. The operator separates runners from the application and protects container-runtime access.                    |
+| Application to identity, AI, video, or other integration         | Each enabled integration adds a data recipient and a credential boundary. The operator chooses trusted endpoints and HTTPS; a response does not inherit the caller's authority.              |
+| Source repository to released artifact                           | Review, CI checks, dependency locks, checksums, and signed provenance provide evidence about what was built. Operators verify the assets available for their release.                        |
+
+## Why the controls support the requirements
+
+### Authentication and least privilege
+
+Spring Security configures the HTTP entry points in
+[`SecurityConfiguration`](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/config/SecurityConfiguration.java).
+JWT verification and revocation checks are exercised by
+[`JWTFilterTest`](https://github.com/ls1intum/Artemis/blob/develop/src/test/java/de/tum/cit/aet/artemis/core/security/jwt/JWTFilterTest.java).
+Local passwords use the configured bcrypt encoder in
+[`PasswordService`](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/account/service/user/PasswordService.java).
+External authentication and passkeys are alternatives; the
+[access-rights matrix](/admin/access-rights) defines which privileges the application grants.
+
+Course and resource checks belong on the server, including checks for a refused caller. Changing a
+resource identifier or hiding a button must not bypass those checks. The REST and websocket
+[guidelines](/developer/guidelines/) make that a review obligation.
+[`WebsocketTopicAuthorizationTest`](https://github.com/ls1intum/Artemis/blob/develop/src/test/java/de/tum/cit/aet/artemis/core/security/websocket/WebsocketTopicAuthorizationTest.java)
+exercises admitted and rejected subscribers; architecture tests require declared topics and prohibit
+alternative broker entry points. Together these checks support least privilege across both transports.
+
+### Untrusted input and common implementation weaknesses
+
+Typed request contracts, Bean Validation, and operation-specific allowlists constrain identifiers,
+enumerated choices, paths, and bounded input. The server must enforce the constraints even when the
+client also validates them. This counters malformed requests and unauthorized object access; it does
+not justify trusting all values merely because JSON deserialization succeeded.
+
+Filesystem and rendering controls address separate threats. Archive extraction and repository access
+must keep paths within their intended roots; see
+[`ZipFileService`](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/service/ZipFileService.java)
+and
+[`LocalVCServicePathValidationTest`](https://github.com/ls1intum/Artemis/blob/develop/src/test/java/de/tum/cit/aet/artemis/localvc/service/LocalVCServicePathValidationTest.java).
+Angular's rendering contexts and context-specific sanitization reduce script injection. The
+[`SvgSanitizer`](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/service/SvgSanitizer.java)
+and its tests harden server-generated PlantUML output; that sanitizer deliberately does not authorize
+arbitrary uploaded SVG. Production startup also restricts PlantUML's rendering profile.
+
+Repositories provide parameterized persistence operations. Architecture rules restrict direct database
+access and transaction boundaries, making the allowed data-access paths reviewable. CodeQL examines
+Java and TypeScript for common vulnerability patterns. A green analyzer result supplies supporting
+evidence, not proof that every injection or authorization defect has been eliminated.
+
+### Isolation, secure configuration, and recovery
+
+Student code has to cross an execution boundary before it runs. The
+[build-runner guide](/admin/production-setup/build-runners) describes the supported infrastructure;
+[`DockerBuildJobRunnerTest`](https://github.com/ls1intum/Artemis/blob/develop/src/test/java/de/tum/cit/aet/artemis/buildagent/service/runner/DockerBuildJobRunnerTest.java)
+checks the runner behavior. Container isolation relies on the runtime and operator configuration.
+Access to its socket is privileged, and running untrusted submissions on the application host weakens
+the separation.
+
+Production startup rejects published default credentials and undersized JWT keys. Operators supply
+secrets outside version control, restrict file access, and configure network isolation, TLS, monitoring,
+and backups as described in [security configuration](/admin/production-setup/security).
+The platform therefore fails early for known unsafe credentials while leaving deployment-specific
+controls with the institution that can enforce them.
+
+### Supply chain and response to discovered defects
+
+Pinned actions, locked dependencies, verified installer downloads, automated dependency updates, and
+vulnerability scanning reduce supply-chain risk. Release provenance binds published artifacts to a
+workflow and source revision; it does not establish that every dependency is trustworthy or that a
+build is bit-for-bit repeatable. The [security policy](https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md#verifying-a-release)
+documents verification, including the limits of older and retrospectively signed releases.
+
+Private vulnerability reporting, advisory publication, supported-version fixes, and reporter credit
+provide a route for correcting controls when they fail. The
+[release policy](/about/releases) tells operators what support and upgrade path to expect.
+
+## Maintaining the argument
+
+A change to an authentication mechanism, permission boundary, file-processing path, runner,
+integration, or release process must update the affected argument and its tests. Reviewers check both
+an allowed operation and a refused or malformed operation where applicable. Findings from security
+reviews, incidents, dependency scans, and regression tests feed back into these controls.
+
+The [OpenSSF Best Practices assessment](./best-practices) records the evidence used for self-assessment
+and distinguishes verified controls from requirements that still need evidence.

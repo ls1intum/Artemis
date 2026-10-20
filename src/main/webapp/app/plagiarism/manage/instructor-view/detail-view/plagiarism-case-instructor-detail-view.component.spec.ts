@@ -12,7 +12,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, ReplaySubject, of } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -75,7 +75,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should set plagiarism case and exercises on initialization', async () => {
-        const setCourseSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'setCourse');
+        const setCourseSpy = vi.spyOn(fixture.debugElement.injector.get(CommunicationService), 'setCourse');
         component.ngOnInit();
         await Promise.resolve();
         expect(component.courseId()).toBe(1);
@@ -253,9 +253,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should not display post unrelated to the current plagiarism case', async () => {
-        const metisPostsSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
+        const communicationPostsSpy = vi.spyOn(fixture.debugElement.injector.get(CommunicationService), 'posts', 'get');
         const postsSubject = new ReplaySubject<Post[]>(1);
-        metisPostsSpy.mockReturnValue(postsSubject.asObservable());
+        communicationPostsSpy.mockReturnValue(postsSubject.asObservable());
 
         postsSubject.next([]);
 
@@ -280,9 +280,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should delete post successfully', async () => {
-        const metisPostsSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
+        const communicationPostsSpy = vi.spyOn(fixture.debugElement.injector.get(CommunicationService), 'posts', 'get');
         const postsSubject = new ReplaySubject<Post[]>(1);
-        metisPostsSpy.mockReturnValue(postsSubject.asObservable());
+        communicationPostsSpy.mockReturnValue(postsSubject.asObservable());
 
         postsSubject.next([]);
 

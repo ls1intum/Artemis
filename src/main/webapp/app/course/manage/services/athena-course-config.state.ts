@@ -48,6 +48,15 @@ export class AthenaCourseConfigState {
     /** The configuration on screen; undefined until it is either loaded or switched. */
     readonly config = signal<AthenaCourseConfigDTO | undefined>(undefined);
 
+    /**
+     * Whether the load has succeeded. Until then the configuration on screen is only the "disabled" fallback, so
+     * switching a feature off would be dropped as a no-op while the stored state may well be on.
+     */
+    readonly loaded = signal(false);
+
+    /** Whether the latest load failed, so the toggles can offer to {@link load} again instead of staying blocked. */
+    readonly loadFailed = signal(false);
+
     readonly formativeFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.formativeFeedbackEnabled ?? false);
 
     readonly gradingFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.gradingFeedbackEnabled ?? false);
@@ -112,8 +121,11 @@ export class AthenaCourseConfigState {
      * sent is old news the answer already reflects. The answer is also recorded as the confirmed state of a field the
      * server has not spoken about yet, even one still being switched, so a switch that fails rolls back to what is
      * stored rather than to "disabled".
+     *
+     * Can be called again after a failed load to retry it.
      */
     load(): void {
+        this.loadFailed.set(false);
         const revisionsAtRequest = deepClone(this.revisions);
         const settledAtRequest = deepClone(this.settled);
 
@@ -147,10 +159,12 @@ export class AthenaCourseConfigState {
                     }
                 }
                 this.loadStarted = false;
+                this.loaded.set(true);
             },
             error: (error: HttpErrorResponse) => {
                 // Nothing was confirmed, so a later mount for this course must be able to try again.
                 this.loadStarted = false;
+                this.loadFailed.set(true);
                 onError(this.alertService, error);
             },
         });
@@ -172,10 +186,9 @@ export class AthenaCourseConfigState {
      * Switch one of the two features and save it. The new state is shown right away and rolled back to the last state
      * the server confirmed if the request fails, so the toggle never claims a setting that was not stored.
      *
-     * A course that has never been configured has no stored configuration, and a failed load leaves none either. Both
-     * cases count as "both features off" rather than blocking the toggles, so the instructor can always switch a
-     * feature on and find out from the alert if that could not be saved. A failure while the load is still on its way
-     * falls back to "off" for the same reason; correcting that is what the load is still applied for afterwards.
+     * A feature the server has not confirmed yet counts as "off": a switch that fails while the load is still on its
+     * way falls back to that, and correcting it is what the load is still applied for afterwards. Toggles that offer
+     * switching a feature off wait for {@link loaded}, since before it that switch would be dropped as a no-op.
      *
      * @param feature the feature to switch
      * @param enabled whether the feature should be enabled

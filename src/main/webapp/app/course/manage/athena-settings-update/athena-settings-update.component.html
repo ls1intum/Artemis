@@ -6,6 +6,11 @@
      Bootstrap also defines under the same class name with another size (the 3, 4 and 5 steps) is written as an
      arbitrary value, since Bootstrap's `!important` version would otherwise win. -->
 <div class="mx-auto flex max-w-[800px] flex-col gap-[1rem] pt-[1rem]">
+    @if (loadFailed()) {
+        <button tumAetUiButton type="button" size="small" severity="secondary" variant="outlined" class="self-start" data-testid="athena-settings-retry" (click)="retryLoad()">
+            <span jhiTranslate="entity.action.retry"></span>
+        </button>
+    }
     @for (feature of features; track feature.key) {
         @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
         <!-- Muted like the cards on the Iris settings page, so the two AI-feedback settings pages read as one family. -->
@@ -15,12 +20,13 @@
                     [inputId]="feature.testId + '-toggle'"
                     [ngModel]="feature.enabled()"
                     [ngModelOptions]="{ standalone: true }"
+                    [disabled]="!loaded()"
                     (changed)="setEnabled(feature.key, $event)"
                     [ariaLabel]="featureKey + '.label' | artemisTranslate"
                     [attr.data-testid]="feature.testId"
                 />
                 <!-- The title and hint describe the current state; the switch itself keeps the constant feature name. -->
-                <label class="cursor-pointer" [for]="feature.testId + '-toggle'">
+                <label [class.cursor-pointer]="loaded()" [for]="feature.testId + '-toggle'">
                     <span [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledLabel' : '.disabledLabel')"></span>
                     <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"></small>
                 </label>

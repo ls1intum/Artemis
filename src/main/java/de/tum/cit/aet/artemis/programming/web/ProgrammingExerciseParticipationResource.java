@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.CorruptObjectException;
 import org.eclipse.jgit.lib.ObjectChecker;
+import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -455,6 +456,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        checkParticipantRepositoryVisibilityElseThrow(participation);
         var commitInfo = programmingExerciseParticipationService.getCommitInfos(participation.getVcsRepositoryUri());
         return ResponseEntity.ok(commitInfo);
     }
@@ -573,6 +575,7 @@ public class ProgrammingExerciseParticipationResource {
                         participation, ENTITY_NAME);
                 ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
                 participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+                checkParticipantRepositoryVisibilityElseThrow(participation);
                 // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
                 return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation, null));
             }
@@ -631,6 +634,10 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
                 ENTITY_NAME);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        // Only a recorded submission of this participation is an assessment snapshot; a full hash alone can also name unsubmitted code.
+        if (!ObjectId.isId(commitId) || !submissionService.isCommitSubmitted(participationId, commitId)) {
+            checkParticipantRepositoryVisibilityElseThrow(participation);
+        }
         try {
             return ResponseEntity
                     .ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, validFilePaths));
@@ -669,8 +676,19 @@ public class ProgrammingExerciseParticipationResource {
         return ResponseEntity.ok(vcsAccessLogDTOs);
     }
 
+    /**
+     * Refuses a tutor the live repository and its history of another student while participant information is hidden. Editors keep the repository permissions they have, which
+     * include reading, so they follow the visibility of the participant list only for names.
+     */
+    private void checkParticipantRepositoryVisibilityElseThrow(Participation participation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && !canSeeParticipantInformation(studentParticipation)
+                && !authCheckService.isAtLeastEditorForExercise(studentParticipation.getExercise())) {
+            throw new AccessForbiddenException("Direct repository access is unavailable during anonymous assessment. Use the assessment dashboard.");
+        }
+    }
+
     private boolean canSeeParticipantInformation(ProgrammingExerciseStudentParticipation participation) {
-        return authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastInstructorForExercise(participation.getExercise());
+        return participationAuthCheckService.canSeeParticipantInformation(participation);
     }
 
     /**
@@ -683,7 +701,7 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         ZonedDateTime exerciseStartDate = participation.getExercise().getParticipationStartDate();
         if (exerciseStartDate != null) {
-            boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null);
+            boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow(), null);
             boolean exerciseNotStarted = exerciseStartDate.isAfter(ZonedDateTime.now());
             if (isStudent && exerciseNotStarted) {
                 throw new AccessForbiddenException("Participation not yet started");
@@ -698,12 +716,13 @@ public class ProgrammingExerciseParticipationResource {
      * @return true if the results should be hidden, false otherwise
      */
     private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
-        // Test-run results are never hidden: the conductor is the instructor who created the test run. The lookup below cannot resolve a test run either, because a test run has no
-        // regular (non-test-run) student exam.
+        // Test-run results are never hidden as a whole: the conductor is the instructor who created the test run. The lookup below cannot resolve a test run either, because a test
+        // run has no regular (non-test-run) student exam. The feedback of a test run is still filtered like a student's, see ResultService#filterSensitiveInformationIfNecessary.
         if (participation.isTestRun()) {
             return false;
         }
-        if (participation.getProgrammingExercise().isExamExercise() && !participation.getProgrammingExercise().isTestExamExercise()) {
+        var exercise = participation.getExercise();
+        if (exercise.isExamExercise() && !exercise.isTestExamExercise()) {
             var examApi = this.examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
             var studentExamApi = this.studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
             User student = participation.getStudent()

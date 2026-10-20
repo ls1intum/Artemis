@@ -192,17 +192,6 @@ describe('LectureUnitService', () => {
         expect(result.id).toBe(23);
     });
 
-    it('should convert lecture unit array dates from client', () => {
-        const units = [attachmentVideoUnit, textUnit, exerciseUnit];
-        const result = service.convertLectureUnitArrayDatesFromClient(units);
-        expect(result).toHaveLength(3);
-    });
-
-    it('should handle empty array when converting dates from client', () => {
-        const result = service.convertLectureUnitArrayDatesFromClient([]);
-        expect(result).toHaveLength(0);
-    });
-
     it('should convert lecture unit response dates from server for attachment video unit', () => {
         const response = new HttpResponse<AttachmentVideoUnit>({ body: attachmentVideoUnit });
         const result = service.convertLectureUnitResponseDatesFromServer(response);

@@ -2,19 +2,21 @@ package de.tum.cit.aet.artemis.course.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
+
 @Entity
 @Table(name = "course_athena_config")
-public class CourseAthenaConfig {
+public class CourseAthenaConfig extends DomainObject {
 
     /**
      * Value of {@link #defaultFeedbackDetail} and {@link #defaultFeedbackFormality} meaning "no course default":
@@ -28,12 +30,15 @@ public class CourseAthenaConfig {
      */
     public static final int MAX_FEEDBACK_STYLE_VALUE = 3;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Transient
+    /**
+     * The course this configuration belongs to. The key lives here rather than on the course: the course carries no
+     * mapped association to its Athena configuration, so loading a course can never pull this row in, and the
+     * configuration cannot outlive the course. Read it through {@code CourseAthenaConfigRepository} where it is needed.
+     */
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "course_id", nullable = false, unique = true)
     @JsonIgnore
+    @Parent
     private Course course;
 
     @Column(name = "grading_feedback_enabled", nullable = false)
@@ -51,10 +56,6 @@ public class CourseAthenaConfig {
     @Min(FEEDBACK_STYLE_NOT_SET)
     @Max(MAX_FEEDBACK_STYLE_VALUE)
     private int defaultFeedbackFormality = FEEDBACK_STYLE_NOT_SET;
-
-    public Long getId() {
-        return id;
-    }
 
     public Course getCourse() {
         return course;

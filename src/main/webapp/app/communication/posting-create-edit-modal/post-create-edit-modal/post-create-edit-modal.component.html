@@ -12,13 +12,13 @@
                     <div class="modal-body">
                         <!-- info if announcement is created-->
                         @if (this.editType === EditType.CREATE && isCommunicationPage() && getAsChannel(posting()?.conversation)?.isAnnouncementChannel) {
-                            <div class="alert alert-warning" jhiTranslate="artemisApp.metis.post.announcementHint"></div>
+                            <div class="alert alert-warning" jhiTranslate="artemisApp.communication.post.announcementHint"></div>
                         }
                         <!-- title -->
                         <div class="position-relative mb-3">
                             <div>
-                                <label for="title" class="mb-1" jhiTranslate="artemisApp.metis.post.title"></label>
-                                <jhi-help-icon text="artemisApp.metis.post.titleTooltip" />
+                                <label for="title" class="mb-1" jhiTranslate="artemisApp.communication.post.title"></label>
+                                <jhi-help-icon text="artemisApp.communication.post.titleTooltip" />
                             </div>
                             <div>
                                 <input id="title" formControlName="title" type="text" class="form-control" name="title" />
@@ -26,8 +26,8 @@
                         </div>
                         <div class="position-relative mb-1">
                             <div>
-                                <label class="mb-1" jhiTranslate="artemisApp.metis.post.content"></label>
-                                <jhi-help-icon text="artemisApp.metis.post.contentTooltip" />
+                                <label class="mb-1" jhiTranslate="artemisApp.communication.post.content"></label>
+                                <jhi-help-icon text="artemisApp.communication.post.contentTooltip" />
                             </div>
                             <div class="row mb-2">
                                 <jhi-posting-markdown-editor

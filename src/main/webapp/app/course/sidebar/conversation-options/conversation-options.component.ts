@@ -14,7 +14,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -35,7 +35,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 })
 export class ConversationOptionsComponent implements OnInit, OnDestroy {
     conversationService = inject(ConversationService);
-    private metisService = inject(MetisService);
+    private communicationService = inject(CommunicationService);
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
 
@@ -45,7 +45,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     hide$ = new Subject<boolean>();
     mute$ = new Subject<boolean>();
 
-    course!: Course; // set in ngOnInit() from metisService.getCourse()
+    course!: Course; // set in ngOnInit() from communicationService.getCourse()
 
     readonly conversation = input.required<ConversationDTO>();
 
@@ -69,14 +69,14 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     isOneToOneChat = isOneToOneChatDTO;
 
     ngOnInit(): void {
-        this.course = this.metisService.getCourse();
+        this.course = this.communicationService.getCourse();
         this.updateConversationIsFavorite();
         this.updateConversationIsHidden();
         this.updateConversationIsMuted();
         const conversationAsChannel = getAsChannelDTO(this.conversation());
         this.conversationAsChannel.set(conversationAsChannel);
         this.channelSubTypeReferenceTranslationKey.set(getChannelSubTypeReferenceTranslationKey(conversationAsChannel?.subType));
-        this.channelSubTypeReferenceRouterLink.set(this.metisService.getLinkForChannelSubType(conversationAsChannel));
+        this.channelSubTypeReferenceRouterLink.set(this.communicationService.getLinkForChannelSubType(conversationAsChannel));
     }
 
     onArchiveClicked(event: MouseEvent) {

@@ -50,6 +50,22 @@ public class RepositoryAccessService {
     }
 
     /**
+     * Resolves the course of the exercise. The course cannot be resolved from a masked exam graph, in which case the
+     * access check fails closed instead of dereferencing null.
+     *
+     * @param exercise the exercise whose course is needed
+     * @return the course of the exercise
+     * @throws AccessForbiddenException if the course cannot be resolved
+     */
+    private static Course getCourseOrThrow(ProgrammingExercise exercise) {
+        Course course = exercise == null ? null : exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new AccessForbiddenException("The course of this programming exercise could not be resolved.");
+        }
+        return course;
+    }
+
+    /**
      * Checks if the user has access to the repository of the given participation.
      * Throws an {@link AccessForbiddenException} otherwise.
      *
@@ -61,7 +77,7 @@ public class RepositoryAccessService {
      */
     public void checkAccessRepositoryElseThrow(ProgrammingExerciseParticipation programmingParticipation, User user, ProgrammingExercise programmingExercise,
             RepositoryActionType repositoryActionType) throws AccessForbiddenException {
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = getCourseOrThrow(programmingExercise);
         // Each of these resolves in memory when the user was loaded with its course roles, and costs a query otherwise, so
         // none of them is evaluated before its answer is actually needed. A student, the overwhelmingly common caller on
         // this path, reaches only isAtLeastStudentInCourse.
@@ -69,8 +85,9 @@ public class RepositoryAccessService {
             return;
         }
         boolean isTeachingAssistant = authorizationCheckService.isTeachingAssistantInCourse(course, user);
-        // The user is allowed to access the repository in any way if they are at least an editor or if they are a teaching assistant and only want to read the repository.
-        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ) {
+        // Tutors may read other student repositories during the support window; exercise repositories remain readable for assessment.
+        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ
+                && (!(programmingParticipation instanceof ProgrammingExerciseStudentParticipation) || !exerciseDateService.isAssessmentAnonymizationActive(programmingExercise))) {
             return;
         }
 
@@ -113,7 +130,8 @@ public class RepositoryAccessService {
             return;
         }
         boolean isTeachingAssistant = authorizationCheckService.isTeachingAssistantInCourse(courseId, user);
-        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ) {
+        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ
+                && (!(programmingParticipation instanceof ProgrammingExerciseStudentParticipation) || !exerciseDateService.isAssessmentAnonymizationActive(exercise))) {
             return;
         }
 
@@ -124,6 +142,21 @@ public class RepositoryAccessService {
         }
 
         throw new AccessForbiddenException("You are not allowed to access the repository of this programming exercise.");
+    }
+
+    /**
+     * Allows reading anonymous code snapshots during assessment even when direct repository access is closed.
+     * This does not authorize live repository access, Git history, cloning, writing or resetting.
+     *
+     * @param participation the participation whose submitted code is read
+     * @param user          the requesting user
+     * @param exercise      the exercise being assessed
+     */
+    public void checkAccessRepositoryForAssessmentElseThrow(ProgrammingExerciseParticipation participation, User user, ProgrammingExercise exercise) {
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(exercise), user)) {
+            return;
+        }
+        checkAccessRepositoryElseThrow(participation, user, exercise, RepositoryActionType.READ);
     }
 
     /**
@@ -234,19 +267,20 @@ public class RepositoryAccessService {
      */
     public void checkAccessTestOrAuxRepositoryElseThrow(boolean atLeastEditor, ProgrammingExercise exercise, User user, String repositoryType) {
         if (atLeastEditor) {
-            if (!authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            if (!authorizationCheckService.isAtLeastEditorInCourse(getCourseOrThrow(exercise), user)) {
                 throw new AccessForbiddenException("You are not allowed to push to the " + repositoryType + " repository of this programming exercise.");
             }
         }
         else {
-            if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(exercise), user)) {
                 throw new AccessForbiddenException("You are not allowed to access the " + repositoryType + " repository of this programming exercise.");
             }
         }
     }
 
     /**
-     * Checks if the user has access to the plagiarism submission of the given programming participation.
+     * Checks access to the live repository used by the plagiarism view. Staff must also have live repository read access;
+     * anonymous assessment reads use the separately authorized submitted-commit endpoints.
      *
      * @param programmingParticipation The participation for which the plagiarism submission should be accessed.
      * @param user                     The user who wants to access the plagiarism submission.
@@ -256,9 +290,10 @@ public class RepositoryAccessService {
     public void checkHasAccessToPlagiarismSubmission(ProgrammingExerciseParticipation programmingParticipation, User user, RepositoryActionType repositoryActionType)
             throws AccessForbiddenException {
         if (repositoryActionType == RepositoryActionType.READ) {
-            boolean isAtLeastTeachingAssistant = authorizationCheckService
-                    .isAtLeastTeachingAssistantInCourse(programmingParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), user);
+            boolean isAtLeastTeachingAssistant = authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(programmingParticipation.getProgrammingExercise()),
+                    user);
             if (isAtLeastTeachingAssistant) {
+                checkAccessRepositoryElseThrow(programmingParticipation, user, programmingParticipation.getProgrammingExercise(), RepositoryActionType.READ);
                 return;
             }
             if (plagiarismAccessApi.isEmpty()
@@ -270,7 +305,7 @@ public class RepositoryAccessService {
     }
 
     public void checkHasAccessToOfflineIDEElseThrow(ProgrammingExercise exercise, User user) throws AccessForbiddenException {
-        if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+        if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(getCourseOrThrow(exercise), user)) {
             throw new AccessForbiddenException();
         }
     }
@@ -279,7 +314,7 @@ public class RepositoryAccessService {
         boolean isAllowedRepository = repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
                 || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
 
-        return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(getCourseOrThrow(exercise), user);
     }
 
 }

@@ -35,7 +35,7 @@ import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-ite
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
@@ -57,7 +57,7 @@ import { MODULE_FEATURE_ATLASLLM } from 'app/app.constants';
     selector: 'jhi-course-management-container',
     templateUrl: './course-management-container.component.html',
     styleUrls: ['course-management-container.component.scss'],
-    providers: [MetisConversationService],
+    providers: [CourseConversationsService],
     imports: [
         CdkScrollable,
         NgClass,
@@ -115,6 +115,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     operationProgress = signal<CourseOperationProgressDTO | undefined>(undefined);
 
     private learningPathsActive = signal(false);
+    gocastEnabled = false;
+    private presentationAssessmentsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
 
@@ -129,6 +131,17 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     readonly removePadding = toSignal(this.finalizedUrl$.pipe(map((currentUrl) => currentUrl.includes('test-runs') && currentUrl.includes('conduction'))), {
         initialValue: this.router.url.includes('test-runs') && this.router.url.includes('conduction'),
     });
+    readonly hasTransparentCourseBody = toSignal(this.finalizedUrl$.pipe(map(() => this.activeRouteHasData('transparentCourseBody'))), {
+        initialValue: this.activeRouteHasData('transparentCourseBody'),
+    });
+
+    private activeRouteHasData(dataKey: string): boolean {
+        let activeRoute = this.route.snapshot;
+        while (activeRoute.firstChild) {
+            activeRoute = activeRoute.firstChild;
+        }
+        return activeRoute.data?.[dataKey] === true;
+    }
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -141,6 +154,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private async initializeCourseManagementContainerComponent(): Promise<void> {
+        this.gocastEnabled = this.profileService.isGocastEnabled();
         this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
@@ -152,6 +166,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((isActive) => {
                 this.learningPathsActive.set(isActive);
+            });
+
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.PresentationAssessments)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.presentationAssessmentsActive.set(isActive);
+                this.sidebarItems.set(this.getSidebarItems());
             });
 
         this.featureToggleService
@@ -323,6 +345,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (this.lectureEnabled && isEditor) {
             sidebarItems.push(this.sidebarItemService.getLecturesItem(courseId));
         }
+        if (currentCourse.isAtLeastTutor && this.presentationAssessmentsActive() && currentCourse.presentationAssessmentsEnabled) {
+            sidebarItems.push(this.sidebarItemService.getPresentationAssessmentsItem(courseId));
+        }
         sidebarItems.push(...this.addTutorialGroupsItem(currentCourse, isInstructor));
         sidebarItems.push(this.sidebarItemService.getExamsItem(courseId));
         if (this.atlasEnabled && isEditor) {
@@ -347,6 +372,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (isInstructor) {
             if (this.localCIActive) {
                 sidebarItems.push(this.sidebarItemService.getBuildQueueItem(courseId));
+            }
+            if (this.gocastEnabled) {
+                sidebarItems.push(this.sidebarItemService.getGocastBindingItem(courseId));
             }
             if (this.ltiEnabled && currentCourse.onlineCourse) {
                 sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(courseId));

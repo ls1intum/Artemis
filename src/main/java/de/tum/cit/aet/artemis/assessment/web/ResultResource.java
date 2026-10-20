@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -102,6 +103,8 @@ public class ResultResource {
 
     private final Optional<ExamDateApi> examDateApi;
 
+    private final Optional<StudentExamApi> studentExamApi;
+
     private final ExerciseRepository exerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -117,13 +120,15 @@ public class ResultResource {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, Optional<ExamDateApi> examDateApi,
-            ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, ParticipationAuthorizationCheckService participationAuthCheckService,
-            UserRepository userRepository, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            Optional<StudentExamApi> studentExamApi, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
         this.examDateApi = examDateApi;
+        this.studentExamApi = studentExamApi;
         this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
         this.participationAuthCheckService = participationAuthCheckService;
@@ -285,9 +290,24 @@ public class ResultResource {
         }
 
         Optional<User> student = userRepository.findOneWithAuthoritiesByLogin(studentLogin);
-        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), student.get())) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();
+        }
+
+        // Without a student exam the student has no working period, which the participation and the result of an exam exercise depend on
+        if (exercise.isExamExercise()) {
+            StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+            if (!api.hasWorkingPeriod(exercise.getExerciseGroup().getExam().getId(), student.get().getId())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "noWorkingPeriod",
+                        "This student has no working period in this exam, because no student exam exists for them. Generate the student exams first.")).build();
+            }
+            // A result for an exercise that the student exam does not contain would be left out of the exam result
+            if (!api.isExerciseOfNewestStudentExam(exercise.getExerciseGroup().getExam().getId(), student.get().getId(), exercise.getId())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "exerciseNotInStudentExam",
+                        "The student exam of this student does not contain this exercise.")).build();
+            }
         }
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
@@ -305,6 +325,8 @@ public class ResultResource {
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
         Submission submission = participationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).findLatestSubmission().orElseThrow();
         result.setSubmission(submission);
+        // the check above guarantees that the submission holds no result yet, so this is the result of the first correction round
+        result.setCorrectionRound(0);
         // the exercise id is a non-null column on the result; it is derived from the path, never from the request
         result.setExerciseId(exercise.getId());
 

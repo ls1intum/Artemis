@@ -3,10 +3,11 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiSelectButtonComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
+import { FormsModule } from '@angular/forms';
 import { Holiday } from 'app/tutorialgroup/manage/holidays/holiday.model';
 
 /** Which holidays the list shows. */
@@ -44,7 +45,16 @@ interface HolidayListEntry {
     selector: 'jhi-holiday-list',
     templateUrl: './holiday-list.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective],
+    imports: [
+        FaIconComponent,
+        FormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiSelectButtonComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+    ],
 })
 export class HolidayListComponent {
     private readonly translateService = inject(TranslateService);
@@ -72,9 +82,8 @@ export class HolidayListComponent {
     protected readonly faTrash = faTrash;
 
     /**
-     * Two plain buttons rather than a form control: the filter is component state, so nothing here needs ngModel.
-     *
-     * The keys are spelled out rather than built from the value, so a search for either one finds this.
+     * Options for the segmented filter control. The keys are spelled out rather than built from the value, so a
+     * search for either one finds this.
      */
     protected readonly filters: readonly { value: HolidayListFilter; labelKey: string }[] = [
         { value: 'upcoming', labelKey: 'artemisApp.pages.tutorialFreePeriodsManagement.filter.upcoming' },

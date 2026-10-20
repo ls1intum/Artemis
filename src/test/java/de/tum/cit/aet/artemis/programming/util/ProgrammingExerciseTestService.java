@@ -92,6 +92,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -116,6 +117,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.jenkins.service.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -258,6 +260,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
@@ -577,6 +582,7 @@ public class ProgrammingExerciseTestService {
         var importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
                 ImportProgrammingExerciseRequestDTO.of(exercise, buildConfig), "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
         assertThat(importedExercise).isNotNull();
+        exerciseUtilService.assertHasPermanentConfigurations(importedExercise.getId());
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
         assertThat(importedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(importedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
@@ -874,6 +880,7 @@ public class ProgrammingExerciseTestService {
         // Traced read contract of the import response: the client navigates to the new exercise and renders it from
         // the nested course, so id, title, the discriminator and the nested course identity are needed.
         assertThat(importResponse.getId()).isNotNull();
+        exerciseUtilService.assertHasPermanentConfigurations(importResponse.getId());
         assertThat(importResponse.getTitle()).isEqualTo("ImportTitle");
         assertThat(importResponse.getShortName()).isEqualTo("imported");
         assertThat(importResponse.getProgrammingLanguage()).isEqualTo(programmingLanguage);
@@ -1022,7 +1029,6 @@ public class ProgrammingExerciseTestService {
                 courseUtilService.addEnrolledEmptyCourse(userPrefix));
         exerciseToBeImported.setMode(TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exerciseToBeImported);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -1055,7 +1061,6 @@ public class ProgrammingExerciseTestService {
         programmingExerciseRepository.save(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(sourceExercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -1252,8 +1257,8 @@ public class ProgrammingExerciseTestService {
         // Import the exam
         targetExam.setChannelName("testchannel-imported");
         // The import response carries only the imported exam's id/title; re-fetch the persisted exam graph to assert it.
-        Long importedExamId = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", targetExam, ExamImportResultDTO.class, HttpStatus.CREATED).exam()
-                .id();
+        Long importedExamId = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", ExamImportDTO.of(targetExam, course.getId()),
+                ExamImportResultDTO.class, HttpStatus.CREATED).exam().id();
         final Exam received = examTestRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(importedExamId);
 
         // Extract the programming exercise from the exam
@@ -1501,9 +1506,8 @@ public class ProgrammingExerciseTestService {
 
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        await().timeout(20, TimeUnit.SECONDS)
-                .until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent()
-                        && participationRepository.findByIdElseThrow(participation.getId()).getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
+        await().timeout(20, TimeUnit.SECONDS).until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exercise.getId()).isPresent()
+                && participationRepository.findByIdElseThrow(participation.getId()).getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
 
         // Fetch updated participation and assert
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
@@ -1695,11 +1699,11 @@ public class ProgrammingExerciseTestService {
 
     public void exportProgrammingExerciseInstructorMaterial_withTeamConfig() throws Exception {
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        exercise.setMode(ExerciseMode.TEAM);
         exercise = saveWithBuildConfig(exercise);
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig);
         programmingExerciseUtilService.saveBuildConfigIfMissing(exercise);
 
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false, false, false);
@@ -2604,6 +2608,7 @@ public class ProgrammingExerciseTestService {
 
     private void validateProgrammingExercise(ProgrammingExercise generatedExercise) {
         exercise.setId(generatedExercise.getId());
+        exerciseUtilService.assertHasPermanentConfigurations(generatedExercise.getId());
         exercise.setTemplateParticipation(generatedExercise.getTemplateParticipation());
         exercise.setSolutionParticipation(generatedExercise.getSolutionParticipation());
         assertThat(exercise).isEqualTo(generatedExercise);

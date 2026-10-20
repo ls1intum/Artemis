@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
@@ -14,17 +14,22 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
+let nextTeamHintId = 0;
 
 @Component({
     selector: 'jhi-start-practice-mode-button',
     templateUrl: './start-practice-mode-button.component.html',
     styleUrls: ['./start-practice-mode-button.component.scss'],
-    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, NgbPopover, TranslateDirective, ArtemisTranslatePipe],
+    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, NgbPopover, TranslateDirective, ArtemisTranslatePipe, TumAetUiTooltipDirective],
 })
 export class StartPracticeModeButtonComponent {
     private courseExerciseService = inject(CourseExerciseService);
     private alertService = inject(AlertService);
     private participationService = inject(ParticipationService);
+    private host = inject<ElementRef<HTMLElement>>(ElementRef);
+    private destroyRef = inject(DestroyRef);
 
     readonly FeatureToggle = FeatureToggle;
 
@@ -38,6 +43,10 @@ export class StartPracticeModeButtonComponent {
     readonly startingPracticeMode = computed(() => this._startingPracticeMode());
     readonly gradedStudentParticipation = computed(() => this._gradedStudentParticipation());
     readonly isProgrammingExercise = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
+    /** Practice of a team exercise is individual, which the button explains. */
+    readonly isTeamExercise = computed(() => !!this.exercise().teamMode);
+    /** Unique per button, because the header and the exercise list can show a button of the same exercise at once. */
+    readonly teamHintId = `start-practice-team-hint-${nextTeamHintId++}`;
 
     // Icons
     faPlayCircle = faPlayCircle;
@@ -49,9 +58,22 @@ export class StartPracticeModeButtonComponent {
                 if (!exercise) {
                     return;
                 }
-                this._gradedStudentParticipation.set(this.participationService.getSpecificStudentParticipation(exercise.studentParticipations ?? [], false));
+                // The graded participation of a team exercise belongs to the team: its practice is individual and always starts from the template.
+                this._gradedStudentParticipation.set(
+                    exercise.teamMode ? undefined : this.participationService.getSpecificStudentParticipation(exercise.studentParticipations ?? [], false),
+                );
             });
         });
+    }
+
+    /**
+     * The popover points `aria-describedby` of its trigger to itself while it is open and removes the attribute when it closes,
+     * which would drop the permanent description of a team exercise for good, so it is set again once the popover is hidden.
+     */
+    restoreTeamHintDescription(): void {
+        if (this.isTeamExercise()) {
+            this.host.nativeElement.querySelector('button[jhi-exercise-action-button]')?.setAttribute('aria-describedby', this.teamHintId);
+        }
     }
 
     startPractice(useGradedParticipation: boolean): void {
@@ -59,13 +81,23 @@ export class StartPracticeModeButtonComponent {
         if (this._startingPracticeMode()) {
             return;
         }
+        const exercise = this.exercise();
         this._startingPracticeMode.set(true);
         this.courseExerciseService
-            .startPractice(this.exercise().id!, useGradedParticipation, this.exercise())
-            .pipe(finalize(() => this._startingPracticeMode.set(false)))
+            .startPractice(exercise.id!, useGradedParticipation, exercise)
+            .pipe(
+                finalize(() => {
+                    if (!this.destroyRef.destroyed) {
+                        this._startingPracticeMode.set(false);
+                    }
+                }),
+            )
             .subscribe({
                 next: (participation) => {
-                    const exercise = this.exercise();
+                    // The service completes the start even if the details-to-editor redirect destroyed this button.
+                    if (this.destroyRef.destroyed || this.exercise().id !== exercise.id) {
+                        return;
+                    }
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         if (participation?.initializationState === InitializationState.INITIALIZED) {
                             if ((exercise as ProgrammingExercise).allowOfflineIde) {
@@ -82,6 +114,9 @@ export class StartPracticeModeButtonComponent {
                     }
                 },
                 error: () => {
+                    if (this.destroyRef.destroyed || this.exercise().id !== exercise.id) {
+                        return;
+                    }
                     this.alertService.error('artemisApp.exercise.startError');
                 },
             });

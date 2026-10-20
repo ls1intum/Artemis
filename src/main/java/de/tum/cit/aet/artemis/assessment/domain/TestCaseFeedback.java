@@ -148,6 +148,11 @@ public class TestCaseFeedback extends DomainObject {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
+    @Override
     public String toString() {
         return "TestCaseFeedback{id=" + getId() + ", positive=" + positive + '}';
     }

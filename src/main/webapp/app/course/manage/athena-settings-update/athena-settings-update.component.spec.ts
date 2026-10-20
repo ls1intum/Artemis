@@ -319,4 +319,27 @@ describe('AthenaSettingsUpdateComponent', () => {
         expect(example.textContent).toContain(ATHENA_FEEDBACK_STYLE_EXAMPLES['en'].defaultFeedbackDetail[2].reference);
         expect(example.querySelectorAll('jhi-unified-feedback')).toHaveLength(1);
     });
+
+    it('should keep the toggles blocked after a failed load and load again on retry', () => {
+        const getSpy = vi
+            .spyOn(athenaCourseConfigService, 'getCourseConfig')
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+            .mockReturnValueOnce(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+        createComponent();
+        fixture.detectChanges();
+
+        const toggles = () => fixture.debugElement.queryAll(By.directive(TumAetUiToggleSwitchComponent)).map((toggle) => toggle.componentInstance as TumAetUiToggleSwitchComponent);
+        expect(comp.loaded()).toBe(false);
+        expect(comp.loadFailed()).toBe(true);
+        expect(toggles().map((toggle) => toggle.disabled())).toEqual([true, true]);
+
+        fixture.nativeElement.querySelector('[data-testid="athena-settings-retry"]').click();
+        fixture.detectChanges();
+
+        expect(getSpy).toHaveBeenCalledTimes(2);
+        expect(comp.loaded()).toBe(true);
+        expect(comp.gradingEnabled()).toBe(true);
+        expect(toggles().map((toggle) => toggle.disabled())).toEqual([false, false]);
+        expect(fixture.nativeElement.querySelector('[data-testid="athena-settings-retry"]')).toBeNull();
+    });
 });

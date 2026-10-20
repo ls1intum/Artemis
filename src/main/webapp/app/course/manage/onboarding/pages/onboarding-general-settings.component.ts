@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, input, output, signal, viewChild }
 import { FormsModule } from '@angular/forms';
 import { Course, Language } from 'app/course/shared/entities/course.model';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
@@ -25,6 +25,7 @@ import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/abou
 import { AthenaFeature, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
 import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-onboarding-general-settings',
@@ -33,7 +34,7 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
     imports: [
         FormsModule,
         ColorSelectorComponent,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
         TranslateDirective,
         KeyValuePipe,
         ArtemisTranslatePipe,
@@ -42,6 +43,7 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
         IrisLogoComponent,
         EnabledToggleComponent,
         AthenaLogoComponent,
+        TumAetUiButtonDirective,
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
@@ -55,6 +57,8 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
 
     readonly course = input.required<Course>();
     readonly courseUpdated = output<Course>();
+    /** Emits whether the text in both date pickers is a date, so the wizard does not advance with dates the fields no longer show. */
+    readonly dateTextValidityChange = output<boolean>();
 
     readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
     readonly irisSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
@@ -69,6 +73,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly athenaConfig = computed(() => this.athenaState()?.config());
     readonly isAthenaFormativeEnabled = computed(() => this.athenaState()?.formativeFeedbackEnabled() ?? false);
     readonly isAthenaGradingEnabled = computed(() => this.athenaState()?.gradingFeedbackEnabled() ?? false);
+    /** Until the configuration has loaded, "Disabled" is only a fallback, so the Athena toggles cannot be switched yet. */
+    readonly isAthenaLoaded = computed(() => this.athenaState()?.loaded() ?? false);
+    readonly isAthenaLoadFailed = computed(() => this.athenaState()?.loadFailed() ?? false);
 
     /** The two Athena toggle rows, rendered by one @for so the markup stays in a single place. */
     protected readonly athenaFeatures = [
@@ -81,7 +88,24 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly semesters = computed(() => getSemesters(this.course().semester));
     readonly semesterMissing = computed(() => !this.course().semester?.trim());
 
+    /** Start and end date are required: the field is marked while no date is set, like the missing semester above. */
+    readonly startDateMissing = computed(() => !this.course().startDate);
+    readonly endDateMissing = computed(() => !this.course().endDate);
+    /** The picker keeps its last valid value while the typed text is not a date, so the text validity is tracked separately. */
+    protected readonly startTextValid = signal(true);
+    protected readonly endTextValid = signal(true);
+
     private previousSemester?: string;
+
+    protected setStartTextValid(valid: boolean) {
+        this.startTextValid.set(valid);
+        this.dateTextValidityChange.emit(valid && this.endTextValid());
+    }
+
+    protected setEndTextValid(valid: boolean) {
+        this.endTextValid.set(valid);
+        this.dateTextValidityChange.emit(this.startTextValid() && valid);
+    }
 
     readonly languageOptions: { key: string; value: string }[] = [
         { key: Language.ENGLISH, value: 'English' },
@@ -140,6 +164,13 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
      */
     setAthenaFeatureEnabled(feature: AthenaFeature, enabled: boolean) {
         this.athenaState()?.setEnabled(feature, enabled);
+    }
+
+    /**
+     * Load the Athena configuration again after it failed to load, which is what keeps its toggles blocked.
+     */
+    retryAthenaLoad() {
+        this.athenaState()?.load();
     }
 
     updateField<K extends keyof Course>(field: K, value: Course[K]) {

@@ -147,8 +147,7 @@ public class PermanentUserDeletionService {
 
     private User loadUserForDeletion(long userId) {
         User user = userRepository.findByIdForDeletion(userId).orElseThrow(() -> new IllegalArgumentException("User " + userId + " does not exist"));
-        // The repository fetches the authorities because this service deliberately has no transaction boundary.
-        user.getAuthorities().size();
+        // The repository query fetches the authorities because this service deliberately has no transaction boundary.
         return user;
     }
 

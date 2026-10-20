@@ -4,9 +4,12 @@ import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTop
 import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.PLAGIARISM_CASE_POSTS;
 import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.USER_CONVERSATION_POSTS;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,7 +34,8 @@ import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
@@ -62,7 +66,7 @@ public abstract class PostingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    protected static final String METIS_POST_ENTITY_NAME = "metis.post";
+    protected static final String POST_ENTITY_NAME = "messages.post";
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
@@ -109,7 +113,7 @@ public abstract class PostingService {
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
+        broadcastForPost(updatedPost, CommunicationCrudAction.UPDATE, course.getId(), null);
     }
 
     /**
@@ -131,7 +135,7 @@ public abstract class PostingService {
      *                       ({@link #hasPendingIrisReply}); in that case recipients are re-resolved via {@link #getNotificationRecipients}
      *                       because per-user delivery needs each recipient's course role to choose the tutor vs. student payload.
      */
-    public void broadcastForPost(Post post, MetisCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
+    public void broadcastForPost(Post post, CommunicationCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
         // A pending (unverified) Iris reply must never reach students. Clients replace their whole cached
         // post — including its answers — on every UPDATE frame, so a single shared payload cannot serve
         // students and tutors at once: re-broadcasting an unrelated change (a reaction, an edit, another
@@ -210,7 +214,7 @@ public abstract class PostingService {
      * @param action       the CRUD action this broadcast describes
      * @param conversation the conversation the post belongs to
      */
-    private void broadcastPostWithPendingIrisReply(Post post, MetisCrudAction action, Conversation conversation) {
+    private void broadcastPostWithPendingIrisReply(Post post, CommunicationCrudAction action, Conversation conversation) {
         // Tutor payload first, while the pending reply is still attached.
         PostBroadcastDTO tutorPayload = PostBroadcastDTO.from(post, action);
         // Then strip the pending replies and re-project for everyone else.
@@ -367,6 +371,40 @@ public abstract class PostingService {
     protected abstract String getEntityName();
 
     /**
+     * Checks whether a posting pings all members of its conversation. The "@all" token only counts in group chats, in every other conversation it is plain text.
+     *
+     * @param conversation   the conversation the posting belongs to
+     * @param postingContent content of the posting, may be null
+     * @return true if the posting contains the "@all" token and the conversation is a group chat
+     */
+    protected static boolean mentionsAllMembers(Conversation conversation, String postingContent) {
+        return conversation instanceof GroupChat && AtAllMentionDetector.containsAtAllMention(postingContent);
+    }
+
+    /**
+     * Determines the users that receive the mention notification: the explicitly mentioned users and, if the posting pings all members, every member who did not mute or hide
+     * the conversation. A user is contained once even if the posting mentions them by name and through "@all". The author never receives a mention notification.
+     * Explicitly mentioned users are kept as they are, i.e. they are notified even if they muted the conversation.
+     *
+     * @param mentionedUserRecipients the explicitly mentioned users who are allowed to receive the notification
+     * @param mentionsAllMembers      whether the posting pings all members of the conversation
+     * @param conversationRecipients  the members of the conversation including their mute and hide flags
+     * @param authorId                the id of the author of the posting
+     * @return the users that receive the mention notification
+     */
+    protected static List<User> resolveMentionRecipients(List<User> mentionedUserRecipients, boolean mentionsAllMembers,
+            Collection<ConversationNotificationRecipientSummary> conversationRecipients, Long authorId) {
+        if (!mentionsAllMembers) {
+            return mentionedUserRecipients;
+        }
+        Map<Long, User> recipientsById = new LinkedHashMap<>();
+        mentionedUserRecipients.forEach(user -> recipientsById.put(user.getId(), user));
+        conversationRecipients.stream().filter(summary -> summary.shouldNotifyRecipient() && !Objects.equals(summary.userId(), authorId))
+                .forEach(summary -> recipientsById.computeIfAbsent(summary.userId(), userId -> summary.toUser()));
+        return new ArrayList<>(recipientsById.values());
+    }
+
+    /**
      * Gets the list of logins for users mentioned in a posting.
      * Throws an exception, if a mentioned user is not part of the course.
      *
@@ -405,17 +443,17 @@ public abstract class PostingService {
         Set<User> mentionedUsers = userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
-            throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");
+            throw new BadRequestAlertException("At least one of the mentioned users does not exist", POST_ENTITY_NAME, "invalidUserMention");
         }
 
         mentionedUsers.forEach(user -> {
             if (!user.getName().equals(matches.get(user.getLogin()))) {
-                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's full name " + user.getName(),
-                        METIS_POST_ENTITY_NAME, "invalidUserMention");
+                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's full name " + user.getName(), POST_ENTITY_NAME,
+                        "invalidUserMention");
             }
 
             if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-                throw new BadRequestAlertException("The user " + user.getLogin() + " is not a member of the course", METIS_POST_ENTITY_NAME, "invalidUserMention");
+                throw new BadRequestAlertException("The user " + user.getLogin() + " is not a member of the course", POST_ENTITY_NAME, "invalidUserMention");
             }
         });
 

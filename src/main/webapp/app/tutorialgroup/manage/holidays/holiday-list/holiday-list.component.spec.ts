@@ -203,11 +203,16 @@ describe('HolidayListComponent', () => {
         expect(emitted).toBe('all');
     });
 
-    it('should mark the active filter, so which one applies is visible and announced', () => {
-        const upcoming = fixture.debugElement.query(By.css('[data-filter="upcoming"]')).nativeElement as HTMLButtonElement;
-        const all = fixture.debugElement.query(By.css('[data-filter="all"]')).nativeElement as HTMLButtonElement;
+    it('should mark the active filter, so which one applies is visible and announced', async () => {
+        // ngModel writes the select button's value on a microtask, so let it settle before reading the state.
+        await fixture.whenStable();
+        fixture.detectChanges();
 
-        expect(upcoming.getAttribute('aria-pressed')).toBe('true');
-        expect(all.getAttribute('aria-pressed')).toBe('false');
+        // The select button carries aria-pressed on the option button; the data-filter hook sits on its label.
+        const upcoming = (fixture.debugElement.query(By.css('[data-filter="upcoming"]')).nativeElement as HTMLElement).closest('button');
+        const all = (fixture.debugElement.query(By.css('[data-filter="all"]')).nativeElement as HTMLElement).closest('button');
+
+        expect(upcoming?.getAttribute('aria-pressed')).toBe('true');
+        expect(all?.getAttribute('aria-pressed')).toBe('false');
     });
 });

@@ -15,8 +15,8 @@
 
                 <div class="sidebar-body">
                     @if (searchFieldEnabled()) {
-                        <div class="mt-2 d-flex align-items-center">
-                            <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="flex-grow-1 search-filter" />
+                        <div class="mt-2 flex items-stretch">
+                            <jhi-search-filter [size]="searchFieldSize()" (newSearchEvent)="setSearchValue($event)" class="flex-grow-1 search-filter" />
                             @if (showFilter()) {
                                 <div class="ms-2">
                                     <a
@@ -40,7 +40,7 @@
                             }
 
                             @if (inCommunication()) {
-                                <div class="ms-2" ngbDropdown>
+                                <div class="ms-2 flex" ngbDropdown>
                                     <button type="button" data-testid="sidebar-create-menu-button" class="btn btn-primary btn-sm square-button" ngbDropdownToggle>
                                         <fa-icon [icon]="faPlusCircle" class="item-icon" />
                                     </button>
@@ -76,8 +76,23 @@
                         </div>
                     }
 
+                    @if (sidebarDataInternal().pinnedData?.length) {
+                        <div class="mt-2 border-y py-2">
+                            @for (sidebarItem of sidebarDataInternal().pinnedData; track sidebarItem.trackId ?? sidebarItem.id) {
+                                <jhi-sidebar-card
+                                    [size]="sidebarItem.size"
+                                    [itemSelected]="itemSelected()"
+                                    [sidebarType]="sidebarDataInternal().sidebarType"
+                                    [sidebarItem]="sidebarItem"
+                                />
+                            }
+                        </div>
+                    }
+
                     @if (
-                        !sidebarDataInternal()?.ungroupedData || !(sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length
+                        !sidebarDataInternal().pinnedData?.length &&
+                        (!sidebarDataInternal()?.ungroupedData ||
+                            !(sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length)
                     ) {
                         <div
                             [jhiTranslate]="
@@ -118,13 +133,12 @@
                                     let last = $last
                                 ) {
                                     <div [class]="{ 'mb-2': !last }">
-                                        <div
-                                            jhiSidebarCard
+                                        <jhi-sidebar-card
                                             [size]="sidebarItem.size"
                                             [itemSelected]="itemSelected()"
                                             [sidebarType]="sidebarDataInternal().sidebarType"
                                             [sidebarItem]="sidebarItem"
-                                        ></div>
+                                        />
                                     </div>
                                 }
                             }

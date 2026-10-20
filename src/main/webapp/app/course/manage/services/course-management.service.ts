@@ -165,6 +165,14 @@ export class CourseManagementService implements OnDestroy {
         return this.http.put<OnlineCourseConfiguration>(`api/lti/courses/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
+    /**
+     * Gets the time zones a course may use, sorted. The server interprets the course's time zone, and browsers list
+     * different names, some without ones such as `UTC` or `Europe/Kyiv`, so the course form uses the server's list.
+     */
+    getSupportedTimeZones(): Observable<string[]> {
+        return this.http.get<string[]>('api/course/time-zones');
+    }
+
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
         const params = new HttpParams().set('clientId', '' + clientId);
         return this.http.get<OnlineCourseDtoModel[]>('api/lti/courses/for-lti-dashboard', { params });
@@ -608,10 +616,12 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId The id of the course to search in.
      * @return Observable<HttpResponse<User[]>> with the list of found users as body.
      */
-    searchStudents(courseId: number, loginOrName: string): Observable<HttpResponse<User[]>> {
+    searchStudents(courseId: number, loginOrName: string, page: number, size: number): Observable<HttpResponse<User[]>> {
         // create loginOrName HTTP Param
         let httpParams = new HttpParams();
         httpParams = httpParams.append('loginOrName', loginOrName);
+        httpParams = httpParams.append('page', page);
+        httpParams = httpParams.append('size', size);
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/students/search`, { observe: 'response', params: httpParams });
     }
     /**

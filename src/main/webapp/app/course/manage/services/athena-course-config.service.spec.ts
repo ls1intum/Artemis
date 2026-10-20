@@ -91,6 +91,20 @@ describe('AthenaCourseConfigService', () => {
         expect(received).toEqual(second);
     });
 
+    it('should load the configuration only once the updates queued for the course have answered', () => {
+        let received: AthenaCourseConfigDTO | undefined;
+        service.updateCourseConfig(42, config).subscribe({ error: () => {} });
+        service.getCourseConfig(42).subscribe((response) => (received = response));
+
+        // The load waits, so it reads what the update stored rather than what it is about to replace; a failed
+        // update does not keep it from being sent.
+        httpMock.expectNone({ method: 'GET' });
+        httpMock.expectOne({ method: 'PATCH', url: 'api/course/courses/42/athena-configuration' }).flush('error', { status: 500, statusText: 'Server Error' });
+
+        httpMock.expectOne({ method: 'GET', url: 'api/course/courses/42/athena-configuration' }).flush(config);
+        expect(received).toEqual(config);
+    });
+
     it('should not make the update of one course wait for another course', () => {
         service.updateCourseConfig(42, config).subscribe();
         service.updateCourseConfig(43, config).subscribe();

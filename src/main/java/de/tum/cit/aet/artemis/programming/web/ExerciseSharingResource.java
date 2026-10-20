@@ -146,7 +146,7 @@ public class ExerciseSharingResource {
             return ResponseUtil.wrapOrNotFound(sharingInfoDTO);
         }
         else {
-            log.warn("Checksum validation failed for basketToken={}", basketToken);
+            log.warn("Checksum validation failed for a shopping basket request");
             return ResponseEntity.badRequest().build();
         }
     }
@@ -257,7 +257,7 @@ public class ExerciseSharingResource {
     // Custom Key validation is applied
     public ResponseEntity<Resource> exportExerciseToSharing(@PathVariable("token") String token, @RequestParam("sec") String sec) {
         if (!exerciseSharingService.validate(token, sec)) {
-            log.warn("Security Token {} is not valid", sec);
+            log.warn("Security Token of an export request is not valid");
             return ResponseEntity.status(401).build();
         }
         Optional<Path> zipFilePath = exerciseSharingService.getExportedExerciseByToken(token);

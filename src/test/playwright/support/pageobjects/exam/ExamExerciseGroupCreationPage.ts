@@ -73,7 +73,7 @@ export class ExamExerciseGroupCreationPage {
             exercise = { ...quiz, additionalData };
         }
 
-        if (exerciseType === ExerciseType.PROGRAMMING) {
+        if (exerciseType === ExerciseType.PROGRAMMING && !additionalData.skipBuildResultCheck) {
             const RETRY_NUMBER = 0;
             await this.exerciseAPIRequests.changeProgrammingExerciseTestVisibility(exercise, Visibility.Always, RETRY_NUMBER);
         }
@@ -110,6 +110,7 @@ export class ExamExerciseGroupCreationPage {
                     exerciseGroup,
                     title,
                     assessmentType: additionalData.progExerciseAssessmentType,
+                    allowComplaintsForAutomaticAssessments: additionalData.allowComplaintsForAutomaticAssessments,
                     programmingLanguage: additionalData.programmingLanguage,
                     buildAndTestStudentSubmissionsAfterDueDate,
                 });

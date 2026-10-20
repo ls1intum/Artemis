@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateD
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 /**
@@ -66,16 +68,22 @@ public class ProgrammingExercisePartialUpdateResource {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     private final UserRepository userRepository;
 
     private final ExerciseVersionService exerciseVersionService;
+
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
 
     public ProgrammingExercisePartialUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, ExerciseService exerciseService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseVersionService exerciseVersionService, ExerciseVariantGroupService exerciseVariantGroupService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseVersionService exerciseVersionService,
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard, ExerciseVariantGroupService exerciseVariantGroupService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -84,6 +92,7 @@ public class ProgrammingExercisePartialUpdateResource {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.exerciseVersionService = exerciseVersionService;
+        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
@@ -112,12 +121,21 @@ public class ProgrammingExercisePartialUpdateResource {
             throw new BadRequestAlertException("The timeline of an exercise in a variant group is managed by its group and must be changed there", ENTITY_NAME,
                     "timelineManagedByVariantGroup");
         }
-        var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(timelineUpdateDTO, notificationText);
-        exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
-                .body(ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise,
-                        programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(updatedProgrammingExercise.getId())));
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(timelineUpdateDTO.id())) {
+            var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id()) : existingProgrammingExercise;
+            var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(programmingExercise, timelineUpdateDTO, notificationText);
+            exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(updatedProgrammingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
+            }
+            teamAssignmentConfigRepository.attachTo(updatedProgrammingExercise);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
+                    .body(ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise,
+                            programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(updatedProgrammingExercise.getId())));
+        }
     }
 
     /**
@@ -134,17 +152,28 @@ public class ProgrammingExercisePartialUpdateResource {
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)
+        var authorizationExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
         var user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
-        exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
-        // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
-        programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle())).body(
-                ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, authorizationExercise, user);
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+            var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
+                    .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId)) : authorizationExercise;
+            var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
+            exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(updatedProgrammingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
+            }
+            // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
+            programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
+            teamAssignmentConfigRepository.attachTo(updatedProgrammingExercise);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
+                    .body(ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise,
+                            programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(updatedProgrammingExercise.getId())));
+        }
     }
 
 }

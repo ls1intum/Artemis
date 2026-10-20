@@ -60,6 +60,9 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Route guards return or emit a `UrlTree` or `RedirectCommand`; resolvers return, emit or throw a
   `RedirectCommand`. Never call `router.navigate()` in either, or throw a redirect from a guard.
   `localRules/no-navigation-in-guard-or-resolver` bans the navigation calls. [client development](documentation/docs/developer/guidelines/client-development.mdx#redirecting-from-guards-and-resolvers)
+- Do not call `ComponentRef.setInput` in production code; its string input name is not type checked.
+  Declare the components in a template (a `@switch` for a closed set) or use `setInputs`.
+  `localRules/no-component-ref-set-input` bans any use of `setInput`. [client development](documentation/docs/developer/guidelines/client-development.mdx#setting-inputs-of-a-component-created-in-code)
 - In production client TypeScript, do not copy objects with spread, `Object.assign` or
   `structuredClone`; use the repository's deep-clone helpers. Array spread and object rest are
   allowed. [client development](documentation/docs/developer/guidelines/client-development.mdx)
@@ -113,10 +116,17 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 
 ## Commits and pull requests
 
-- Target `develop`; rebase to reduce noise. Follow `CONTRIBUTING.md` and the guidelines in
+- Target `develop`; rebase to reduce noise. Follow `.github/CONTRIBUTING.md` and the guidelines in
   `documentation/docs/developer/guidelines/`. Use `.github/PULL_REQUEST_TEMPLATE.md`, including
   the problem and solution, linked issue when applicable, checks run, screenshots for UI changes
   and documentation updates when relevant.
+- Before creating or updating a PR, follow [PR readiness](documentation/docs/developer/development-process.mdx#pull-request-readiness).
+  Complete applicable author tasks with `[x]`, remove only inapplicable tasks and empty sections, and
+  leave applicable review tasks open until verified. Never claim tests or reviews that were not performed.
+- Set the PR milestone to the intended release. Keep draft state and the `ready for review` / `ready to merge`
+  labels aligned with the documented stage; recheck them after updates. Add `ready to merge` only after
+  all remaining tasks, required approvals, resolved threads, passing checks and mergeability are verified.
+  If metadata permissions or release context are missing, report the gap and request maintainer help.
 - PR titles use a backticked module followed by a colon, e.g. `` `Development`: Improve documentation ``.
   Allowed modules and the exact pattern are in `.github/workflows/validate-pr-title.yml`.
   Do not infer the format from squash-merge subjects, which omit the backticks.

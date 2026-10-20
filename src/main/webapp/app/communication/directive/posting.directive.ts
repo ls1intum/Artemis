@@ -1,22 +1,22 @@
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Directive, OnDestroy, OnInit, inject, input, model, signal } from '@angular/core';
-import { MetisService } from 'app/communication/service/metis.service';
-import { DisplayPriority } from 'app/communication/metis.util';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { DisplayPriority } from 'app/communication/communication.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { Router } from '@angular/router';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
     protected oneToOneChatService = inject(OneToOneChatService);
-    protected metisConversationService = inject(MetisConversationService);
-    protected metisService = inject(MetisService);
+    protected courseConversationsService = inject(CourseConversationsService);
+    protected communicationService = inject(CommunicationService);
     protected router = inject(Router);
 
     readonly posting = model<T>();
@@ -160,7 +160,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     markMessageAsUnread() {
         const posting = this.posting();
         if (posting) {
-            this.metisService.markMessageAsUnread(posting);
+            this.communicationService.markMessageAsUnread(posting);
         }
     }
 
@@ -171,12 +171,12 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         }
 
         if (posting.isSaved) {
-            this.metisService.removeSavedPost(posting);
+            this.communicationService.removeSavedPost(posting);
             const updated = deepClone(posting);
             updated.isSaved = false;
             this.posting.set(updated);
         } else {
-            this.metisService.savePost(posting);
+            this.communicationService.savePost(posting);
             const updated = deepClone(posting);
             updated.isSaved = true;
             this.posting.set(updated);
@@ -189,9 +189,9 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
             return;
         }
         if (this.isAnswerPost) {
-            this.metisService.deleteAnswerPost(posting).subscribe();
+            this.communicationService.deleteAnswerPost(posting).subscribe();
         } else {
-            this.metisService.deletePost(posting);
+            this.communicationService.deletePost(posting);
         }
     }
 
@@ -201,10 +201,10 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      * @param referencedUserLogin login of the referenced user
      */
     onUserReferenceClicked(referencedUserLogin: string) {
-        const course = this.metisService.getCourse();
+        const course = this.communicationService.getCourse();
         if (isMessagingEnabled(course)) {
             if (this.isCommunicationPage()) {
-                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe({
+                this.courseConversationsService.createOneToOneChat(referencedUserLogin).subscribe({
                     // the chat itself is created before the conversations are reloaded, and a failed reload is already
                     // reported by the service, so it must not surface as an unhandled error here
                     error: () => {},
@@ -231,10 +231,10 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
         const referencedUserId = this.posting()!.author!.id!;
 
-        const course = this.metisService.getCourse();
+        const course = this.communicationService.getCourse();
         if (isMessagingEnabled(course)) {
             if (this.isCommunicationPage()) {
-                this.metisConversationService.createOneToOneChatWithId(referencedUserId).subscribe({
+                this.courseConversationsService.createOneToOneChatWithId(referencedUserId).subscribe({
                     // see above, a failed reload of the conversations must not surface as an unhandled error
                     error: () => {},
                 });

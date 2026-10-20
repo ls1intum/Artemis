@@ -18,7 +18,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -32,14 +32,14 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -108,7 +108,7 @@ describe('CourseManagementContainerComponent', () => {
     let courseAccessStorageService: CourseAccessStorageService;
     let eventManager: EventManager;
     let featureToggleService: FeatureToggleService;
-    let metisConversationService: MetisConversationService;
+    let courseConversationsService: CourseConversationsService;
     let profileService: ProfileService;
     let localStorageService: LocalStorageService;
     let router: Router;
@@ -127,6 +127,13 @@ describe('CourseManagementContainerComponent', () => {
     } as Course;
 
     beforeEach(async () => {
+        const storageMap = new Map<string, string>();
+        vi.stubGlobal('localStorage', {
+            getItem: vi.fn((key: string) => storageMap.get(key) ?? null),
+            setItem: vi.fn((key: string, value: string) => storageMap.set(key, value)),
+            removeItem: vi.fn((key: string) => storageMap.delete(key)),
+            clear: vi.fn(() => storageMap.clear()),
+        });
         route = {
             firstChild: {
                 params: of({ courseId: course1.id }) as Params,
@@ -151,17 +158,13 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: HasAnyAuthorityDirective, useClass: MockHasAnyAuthorityDirective },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CourseManagementContainerComponent);
-        component = fixture.componentInstance;
-
-        component.isShownViaLti.set(false);
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
         courseAdminService = TestBed.inject(CourseAdminService);
@@ -174,9 +177,7 @@ describe('CourseManagementContainerComponent', () => {
         router = TestBed.inject(Router);
         websocketService = TestBed.inject(WebsocketService);
 
-        // Mock WebsocketService.subscribe to return an empty observable
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(EMPTY);
-
         findSpy = vi.spyOn(courseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
@@ -185,16 +186,11 @@ describe('CourseManagementContainerComponent', () => {
                 }),
             ),
         );
-        metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
-
-        findCourseSpy = vi.spyOn(courseService, 'find').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: course1,
-                    headers: new HttpHeaders(),
-                }),
-            ),
-        );
+        findCourseSpy = findSpy;
+        fixture = TestBed.createComponent(CourseManagementContainerComponent);
+        component = fixture.componentInstance;
+        component.isShownViaLti.set(false);
+        courseConversationsService = fixture.debugElement.injector.get(CourseConversationsService);
 
         getCourseSummarySpy = vi.spyOn(courseAdminService, 'getCourseSummary').mockReturnValue(
             of(
@@ -237,9 +233,10 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
             activeProfiles: [PROFILE_PROD],
+            gocastEnabled: true,
         } as unknown as ProfileInfo);
 
-        vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
+        vi.spyOn(courseConversationsService, 'course', 'get').mockReturnValue(course);
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
     });
@@ -248,6 +245,7 @@ describe('CourseManagementContainerComponent', () => {
         vi.restoreAllMocks();
         localStorageService?.clear();
         TestBed.inject(SessionStorageService).clear();
+        vi.unstubAllGlobals();
     });
 
     it('should call necessary methods on init', async () => {
@@ -259,13 +257,56 @@ describe('CourseManagementContainerComponent', () => {
         await component['initializeCourseManagementContainerComponent']();
 
         expect(getCourseStub).toHaveBeenCalledWith(1);
-        expect(getSidebarItems).toHaveBeenCalledOnce();
+        expect(getSidebarItems).toHaveBeenCalledTimes(2);
         expect(subscribeToCourseUpdates).toHaveBeenCalledWith(1);
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
             1,
             CourseAccessStorageService.STORAGE_KEY,
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
         );
+    });
+
+    it('should keep presentations hidden until a delayed feature toggle response enables them', async () => {
+        const presentationToggle = new Subject<boolean>();
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature) =>
+            feature === FeatureToggle.PresentationAssessments ? presentationToggle : of(true),
+        );
+        vi.spyOn(courseService, 'find').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: { ...course1, presentationAssessmentsEnabled: true },
+                }),
+            ),
+        );
+
+        await component.ngOnInit();
+
+        expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeUndefined();
+
+        presentationToggle.next(true);
+        expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeTruthy();
+
+        presentationToggle.next(false);
+        expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeUndefined();
+    });
+
+    it.each([
+        { role: 'tutor', isAtLeastTutor: true, shown: true },
+        { role: 'student', isAtLeastTutor: false, shown: false },
+    ])('should show presentations in the sidebar of a $role: $shown', ({ isAtLeastTutor, shown }) => {
+        component.course.set({ ...course1, isAtLeastTutor, isAtLeastEditor: false, isAtLeastInstructor: false, presentationAssessmentsEnabled: true });
+        component['presentationAssessmentsActive'].set(true);
+
+        const sidebarItems = component.getSidebarItems();
+
+        expect(sidebarItems.some((item) => item.title === 'Presentations')).toBe(shown);
+    });
+
+    it('should keep the transparent presentation layout for a selected exercise-linked presentation', () => {
+        route.snapshot.firstChild!.data = { transparentCourseBody: true };
+        (router as unknown as MockRouter).setUrl('/course-management/1/presentations/17/exercises/7');
+
+        expect(component.hasTransparentCourseBody()).toBe(true);
     });
 
     it('should subscribe to profileService and set values correctly', async () => {
@@ -311,6 +352,7 @@ describe('CourseManagementContainerComponent', () => {
         component.irisEnabled = true;
         component.athenaEnabled = true;
         component.tutorialGroupEnabled = true;
+        component.gocastEnabled = true;
         const sidebarItems = component.getSidebarItems();
 
         expect(sidebarItems.find((item) => item.title === 'Overview')).toBeTruthy();
@@ -328,7 +370,17 @@ describe('CourseManagementContainerComponent', () => {
         expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Statistics')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'LTI Configuration')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Settings')).toBeTruthy();
+    });
+
+    it('should not include the TUM.Live sidebar item when the integration is unavailable', () => {
+        component.course.set(course1);
+        component.gocastEnabled = false;
+
+        const sidebarItems = component.getSidebarItems();
+
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeUndefined();
     });
     it('should not include Tutorials sidebar item when tutorial group module feature is disabled', () => {
         component.course.set({
@@ -356,6 +408,7 @@ describe('CourseManagementContainerComponent', () => {
         component.course.set(courseWithDisabledFeatures);
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeUndefined();
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeUndefined();
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
 
@@ -583,7 +636,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should set up conversation service if course has communication enabled', () => {
-        const setUpConversationServiceSpy = vi.spyOn(metisConversationService, 'setUpConversationService').mockImplementation(() => {
+        const setUpConversationServiceSpy = vi.spyOn(courseConversationsService, 'setUpConversationService').mockImplementation(() => {
             return new Observable((subscriber) => subscriber.complete());
         });
 
@@ -750,7 +803,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should check for unread messages if messaging is enabled', () => {
-        const checkForUnreadMessagesSpy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
+        const checkForUnreadMessagesSpy = vi.spyOn(courseConversationsService, 'checkForUnreadMessages');
         const subscribeToHasUnreadMessagesSpy = vi.spyOn(component as any, 'subscribeToHasUnreadMessages');
         const courseWithMessaging = {
             ...course1,
@@ -766,7 +819,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should not check for unread messages if communication is disabled', () => {
-        const checkForUnreadMessagesSpy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
+        const checkForUnreadMessagesSpy = vi.spyOn(courseConversationsService, 'checkForUnreadMessages');
 
         component.course.set({
             ...course1,

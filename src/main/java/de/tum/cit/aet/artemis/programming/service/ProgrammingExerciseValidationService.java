@@ -60,7 +60,7 @@ public class ProgrammingExerciseValidationService {
      * (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>)
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
      */
-    private static final String PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*)*$";
+    private static final String PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*){0,255}$";
 
     /**
      * Swift package name Regex derived from
@@ -84,7 +84,11 @@ public class ProgrammingExerciseValidationService {
     private static final String PACKAGE_NAME_REGEX_FOR_DART = "^(?!(?:assert|await|break|case|catch|class|const|continue|default|do|else|enum|extends|false|final|finally|for|if|in|is|new|null|rethrow|return|super|switch|this|throw|true|try|var|void|while|with|yield|test|artemis_test)$)"
             + "[a-z_][a-z0-9_]*$";
 
-    private static final Pattern PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN = Pattern.compile(PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN);
+    /**
+     * Public so that code proposing a package name can check its proposal against the very rule that will judge it, rather than against a second copy of the regex that would
+     * drift. Hyperion derives package names for generated exercises this way.
+     */
+    public static final Pattern PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN = Pattern.compile(PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN);
 
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_SWIFT = Pattern.compile(PACKAGE_NAME_REGEX_FOR_SWIFT);
 

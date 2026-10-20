@@ -52,7 +52,13 @@
                             </div>
                             @if (canMoveBetweenGroups()) {
                                 <td>
-                                    <fa-icon cdkDragHandle [icon]="faBars" class="drag-handle" [title]="'artemisApp.exerciseManagement.table.dragTooltip' | artemisTranslate" />
+                                    <fa-icon
+                                        cdkDragHandle
+                                        data-testid="exercise-drag-handle"
+                                        [icon]="faBars"
+                                        class="drag-handle"
+                                        [title]="'artemisApp.exerciseManagement.table.dragTooltip' | artemisTranslate"
+                                    />
                                 </td>
                             }
                             <td class="align-middle">

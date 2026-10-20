@@ -1,9 +1,11 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { User } from 'app/account/user/user.model';
+import { COURSE_ROLE_SLUGS, CourseForRoleAssignment, CourseRoleName, UserCourseRole } from 'app/account/user/shared/user-course-role.model';
 import { UserFilter } from 'app/admin/user-management/user-management.component';
 import { BulkUserDeletionImpact, BulkUserDeletionRequest, UserDeletionImpact, UserDeletionResult } from 'app/account/user/shared/user-deletion.model';
 
@@ -12,6 +14,8 @@ export class AdminUserService {
     private http = inject(HttpClient);
 
     public resourceUrl = 'api/account/admin/users';
+
+    private readonly courseResourceUrl = 'api/course/courses';
 
     /**
      * Create a user on the server.
@@ -87,6 +91,46 @@ export class AdminUserService {
      */
     findUser(login: string): Observable<User> {
         return this.http.get<User>(`${this.resourceUrl}/${login}`);
+    }
+
+    /**
+     * Get the courses in which a user holds a role, with one entry per course and role.
+     * The caller shows a failure next to the course roles, so no separate error alert is raised.
+     * @param login The login of the user.
+     * @return Observable<UserCourseRole[]> with the course roles of the user, ordered by course title.
+     */
+    getCourseRoles(login: string): Observable<UserCourseRole[]> {
+        return this.http.get<UserCourseRole[]>(`${this.resourceUrl}/${login}/course-roles`, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
+    }
+
+    /**
+     * Search the courses in which a course role can be assigned, by a part of their title or short name.
+     * @param searchTerm The text to look for in the title and the short name of the courses.
+     * @param size The maximum number of courses to return.
+     * @return Observable<CourseForRoleAssignment[]> with the best matching courses, ordered by title.
+     */
+    searchCoursesForRoleAssignment(searchTerm: string, size = 10): Observable<CourseForRoleAssignment[]> {
+        return this.http.get<CourseForRoleAssignment[]>('api/admin/courses/for-role-assignment', { params: { searchTerm, size } });
+    }
+
+    /**
+     * Give a user a role in a course. The server also keeps the global authorities of the user in sync. Adding a role the user already has changes nothing.
+     * @param login The login of the user.
+     * @param courseId The id of the course.
+     * @param role The role to grant.
+     */
+    addCourseRole(login: string, courseId: number, role: CourseRoleName): Observable<void> {
+        return this.http.post<void>(`${this.courseResourceUrl}/${courseId}/${COURSE_ROLE_SLUGS[role]}/${login}`, null);
+    }
+
+    /**
+     * Remove a role of a user in a course. The server also keeps the global authorities of the user in sync.
+     * @param login The login of the user.
+     * @param courseId The id of the course.
+     * @param role The role to revoke.
+     */
+    removeCourseRole(login: string, courseId: number, role: CourseRoleName): Observable<void> {
+        return this.http.delete<void>(`${this.courseResourceUrl}/${courseId}/${COURSE_ROLE_SLUGS[role]}/${login}`);
     }
 
     /**

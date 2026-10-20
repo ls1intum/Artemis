@@ -1,10 +1,12 @@
 import { test as base } from './baseFixtures';
 import { LoginPage } from './pageobjects/LoginPage';
-import { UserCredentials } from './users';
+import { admin, UserCredentials } from './users';
+import { createAuthenticatedApiContext } from './authenticatedApiContext';
 import { NavigationBar } from './pageobjects/NavigationBar';
 import { CourseManagementAPIRequests } from './requests/CourseManagementAPIRequests';
 import { CourseManagementPage } from './pageobjects/course/CourseManagementPage';
 import { CompetencyManagementPage } from './pageobjects/course/CompetencyManagementPage';
+import { PresentationAssessmentManagementPage } from './pageobjects/assessment/PresentationAssessmentManagementPage';
 import { CourseCreationPage } from './pageobjects/course/CourseCreationPage';
 import { UserManagementAPIRequests } from './requests/UserManagementAPIRequests';
 import { Commands } from './commands';
@@ -103,6 +105,7 @@ export type ArtemisPageObjects = {
     textExerciseAssessment: TextExerciseAssessmentPage;
     courseManagement: CourseManagementPage;
     competencyManagement: CompetencyManagementPage;
+    presentationAssessmentManagement: PresentationAssessmentManagementPage;
     courseManagementExercises: CourseManagementExercisesPage;
     courseCreation: CourseCreationPage;
     courseList: CoursesPage;
@@ -164,6 +167,7 @@ export type ArtemisRequests = {
     userManagementAPIRequests: UserManagementAPIRequests;
     exerciseAPIRequests: ExerciseAPIRequests;
     examAPIRequests: ExamAPIRequests;
+    adminExamAPIRequests: ExamAPIRequests;
     communicationAPIRequests: CommunicationAPIRequests;
 };
 
@@ -308,6 +312,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     competencyManagement: async ({ page }, use) => {
         await use(new CompetencyManagementPage(page));
+    },
+    presentationAssessmentManagement: async ({ page }, use) => {
+        await use(new PresentationAssessmentManagementPage(page));
     },
     courseManagementExercises: async ({ page }, use) => {
         await use(new CourseManagementExercisesPage(page));
@@ -483,6 +490,14 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     examAPIRequests: async ({ page }, use) => {
         await use(new ExamAPIRequests(page));
+    },
+    adminExamAPIRequests: async ({ playwright, baseURL }, use) => {
+        const context = await createAuthenticatedApiContext(playwright.request, baseURL!, admin, ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN']);
+        try {
+            await use(new ExamAPIRequests(context));
+        } finally {
+            await context.dispose();
+        }
     },
     communicationAPIRequests: async ({ page }, use) => {
         await use(new CommunicationAPIRequests(page));

@@ -18,7 +18,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { A11yModule } from '@angular/cdk/a11y';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import type { FormValueControl } from '@angular/forms/signals';
@@ -29,24 +29,33 @@ import { TumAetUiButtonComponent } from '../button/tumaet-ui-button.component';
 import { TumAetUiOverlayService } from '../overlay/tumaet-ui-overlay.service';
 import { TumAetUiTooltipDirective } from '../tooltip/tumaet-ui-tooltip.directive';
 import { TumAetUiCalendarComponent } from './tumaet-ui-calendar.component';
-import { TIME_REGEX, combineDateAndTime, formatDisplay, matchesDisplayFormat, parseDisplay, valuesEqual } from './tumaet-ui-date-picker.util';
+import { TIME_REGEX, combineDateAndTime, formatDisplay, matchesDisplayFormat, normalizeDisplayText, parseDisplay, valuesEqual } from './tumaet-ui-date-picker.util';
 import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 
 let nextDatePickerId = 0;
 
-/** Date-and-time field with typed input and an accessible calendar dialog; `timeOnly` reduces it to a time. */
+/**
+ * Date-and-time field with typed input and an accessible calendar dialog; `timeOnly` reduces it to a time.
+ *
+ * An element marked `tumAetUiDatePickerLabelAddon`, such as a help icon, is shown right after the visible label, so it stays on
+ * one line with the label and the time-zone indicator. It needs `labelName` and is dropped together with the label by `hideLabelName`.
+ */
 @Component({
     selector: 'tumaet-ui-date-picker',
     templateUrl: './tumaet-ui-date-picker.component.html',
     styleUrl: './tumaet-ui-date-picker.component.scss',
     host: {
         class: 'tumaet-ui-date-picker',
+        '[class.tumaet-ui-date-picker--date-only]': 'dateOnly()',
+        '[class.tumaet-ui-date-picker--time-only]': 'timeOnly()',
+        '[class.tumaet-ui-date-picker--inline]': 'inline()',
     },
     imports: [
         A11yModule,
         FaIconComponent,
         FaStackComponent,
         FaStackItemSizeDirective,
+        NgTemplateOutlet,
         TumAetUiButtonComponent,
         TumAetUiCalendarComponent,
         TumAetUiTooltipDirective,
@@ -66,17 +75,50 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
      */
     readonly value = model<dayjs.Dayjs | undefined>(undefined);
 
-    /** Adds an external validation error without discarding the last committed value. */
+    /**
+     * Adds an external validation error without discarding the last committed value. It marks the field only: the built-in
+     * message is about text that is not a date, so the consumer explains an external error, such as an end before the start.
+     */
     readonly invalid = input(false, { transform: booleanAttribute });
     readonly disabled = input(false, { transform: booleanAttribute });
     /** Hides the visible label while retaining the input's accessible name. */
     readonly hideLabelName = input(false, { transform: booleanAttribute });
     /** Hides the built-in validation message without changing validity or `aria-invalid`. */
     readonly hideValidationMessage = input(false, { transform: booleanAttribute });
+    /** Defer text errors until blur while continuing to emit validity during typing. */
+    readonly validateOnBlur = input(false, { transform: booleanAttribute });
     /** Shows the browser time-zone indicator beside the label. */
     readonly shouldDisplayTimeZoneWarning = input(true, { transform: booleanAttribute });
     /** Edit `HH:mm` without a calendar, preserving the value's date or using today when empty. */
     readonly timeOnly = input(false, { transform: booleanAttribute });
+
+    /** Reduces the field to a date: the text is `DD.MM.YYYY`, the dialog drops the time steppers, and the value is kept at the start of the day. */
+    readonly dateOnly = input(false, { transform: booleanAttribute });
+
+    /**
+     * Renders the picker's controls in place instead of behind a field and overlay: no text input, no trigger
+     * icon, no popup - just the calendar and time steppers, always visible. Pairs with `timeOnly` to show a bare
+     * time stepper the reader never has to open.
+     */
+    readonly inline = input(false, { transform: booleanAttribute });
+
+    /**
+     * Opens the calendar when the input itself is clicked, not only its trigger icon. Off by default: the panel
+     * traps focus, so a picker whose readers type the date want a plain cursor on click, while one used purely by
+     * pointer wants the calendar. The session form asks for it; the date fields that are typed into do not.
+     */
+    readonly openOnClick = input(false, { transform: booleanAttribute });
+
+    /** Month the calendar opens on while the field is empty; a held value always wins. Defaults to the current month. */
+    readonly startAt = input<dayjs.Dayjs>();
+
+    /**
+     * Days before this day are shown but cannot be selected in the calendar. Only the calendar is limited: text typed into the field
+     * is not checked against it, so the consumer validates the value and explains an error, as for any external error.
+     */
+    readonly min = input<dayjs.Dayjs>();
+    /** Days after this day are shown but cannot be selected in the calendar; see {@link min}. */
+    readonly max = input<dayjs.Dayjs>();
 
     /** ID used to associate the input, label, validation message, and dialog. */
     readonly inputId = input(`tumaet-ui-date-picker-${nextDatePickerId++}`);
@@ -84,6 +126,12 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     readonly labelName = input<string>();
     /** Accessible name used when no visible label is rendered. */
     readonly ariaLabel = input<string>();
+    /** Ids of elements that describe the field as well, such as the consumer's message for an external error. */
+    readonly ariaDescribedBy = input<string>();
+    /** IDs of elements that name the field, when a visible label lives outside the component (e.g. a form row label). */
+    readonly ariaLabelledBy = input<string>();
+    /** Marks the control required for assistive technology, independent of any visible asterisk. */
+    readonly ariaRequired = input(false, { transform: booleanAttribute });
     /** Emits text-input validity independently of the external `invalid` state. */
     readonly inputValidityChange = output<boolean>();
     /** Emits when the text input loses focus. */
@@ -102,7 +150,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     // Equivalent Dayjs instances must not reset uncommitted text; key linked state by its displayed value.
     private readonly valueKey = computed(() => {
         const current = this.value();
-        return current ? formatDisplay(current, this.timeOnly()) : '';
+        return current ? formatDisplay(current, this.timeOnly(), this.dateOnly()) : '';
     });
     private readonly isInputValid = linkedSignal(() => {
         this.valueKey();
@@ -111,25 +159,43 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     protected readonly isOpen = signal(false);
     protected readonly panelId = computed(() => `${this.inputId()}-dialog`);
     protected readonly activeMonth = signal(dayjs().startOf('month'));
-    protected readonly timeText = signal('');
+    // Kept in step with the value so the inline steppers show it without a dialog ever opening.
+    protected readonly timeText = linkedSignal(() => this.value()?.format('HH:mm') ?? '');
     protected readonly inputText = linkedSignal(() => this.valueKey());
 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
-    private readonly dateInput = viewChild.required<ElementRef<HTMLInputElement>>('dateInput');
-    private readonly triggerWrapper = viewChild.required<ElementRef<HTMLElement>>('triggerWrapper');
+    private readonly dateInput = viewChild<ElementRef<HTMLInputElement>>('dateInput');
+    private readonly triggerWrapper = viewChild<ElementRef<HTMLElement>>('triggerWrapper');
     private readonly hourField = viewChild<ElementRef<HTMLInputElement>>('hourInput');
     private overlayRef?: OverlayRef;
     private restoreFocusElement?: HTMLElement;
     private pendingHourFocus = false;
 
-    protected readonly showErrorBorder = computed(() => this.invalid() || !this.isInputValid());
-    protected readonly placeholderKey = computed(() => (this.timeOnly() ? 'tumAetUi.datePicker.timePlaceholder' : 'tumAetUi.datePicker.placeholder'));
-    protected readonly dialogLabelKey = computed(() => (this.timeOnly() ? 'tumAetUi.datePicker.timeDialog' : 'tumAetUi.datePicker.dialog'));
-    protected readonly invalidMessageKey = computed(() => (this.timeOnly() ? 'tumAetUi.datePicker.invalidTime' : 'tumAetUi.datePicker.invalid'));
-    protected readonly openLabelKey = computed(() => (this.timeOnly() ? 'tumAetUi.datePicker.openTime' : 'tumAetUi.datePicker.open'));
+    private readonly isEditingText = signal(false);
+    private readonly showTextError = computed(() => !this.isInputValid() && (!this.validateOnBlur() || !this.isEditingText()));
+    protected readonly showErrorBorder = computed(() => this.invalid() || this.showTextError());
+    protected readonly showValidationMessage = computed(() => !this.hideValidationMessage() && this.showTextError());
+    protected readonly describedBy = computed(() => {
+        const ids = [this.showValidationMessage() ? `${this.inputId()}-error` : undefined, this.ariaDescribedBy()].filter(Boolean);
+        return ids.length ? ids.join(' ') : null;
+    });
+    protected readonly placeholderKey = computed(() =>
+        this.dateOnly() ? 'tumAetUi.datePicker.datePlaceholder' : this.timeOnly() ? 'tumAetUi.datePicker.timePlaceholder' : 'tumAetUi.datePicker.placeholder',
+    );
+    protected readonly dialogLabelKey = computed(() =>
+        this.dateOnly() ? 'tumAetUi.datePicker.dateDialog' : this.timeOnly() ? 'tumAetUi.datePicker.timeDialog' : 'tumAetUi.datePicker.dialog',
+    );
+    protected readonly invalidMessageKey = computed(() =>
+        this.dateOnly() ? 'tumAetUi.datePicker.invalidDate' : this.timeOnly() ? 'tumAetUi.datePicker.invalidTime' : 'tumAetUi.datePicker.invalid',
+    );
+    protected readonly openLabelKey = computed(() =>
+        this.dateOnly() ? 'tumAetUi.datePicker.open' : this.timeOnly() ? 'tumAetUi.datePicker.openTime' : 'tumAetUi.datePicker.open',
+    );
     protected readonly showClear = computed(() => !!this.inputText());
-    protected readonly displayHour = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[0] : '00'));
-    protected readonly displayMinute = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[1] : '00'));
+    // Empty, not '00', until a real time is committed - otherwise an unset required field reads as midnight, and
+    // a user who wants midnight cannot commit it without first changing the shown value and changing it back.
+    protected readonly displayHour = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[0] : ''));
+    protected readonly displayMinute = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[1] : ''));
 
     constructor() {
         this.destroyRef.onDestroy(() => this.overlayRef?.dispose());
@@ -152,8 +218,9 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     readonly isValid = computed(() => !this.invalid() && this.isInputValid());
 
     protected onInput(raw: string): void {
+        this.isEditingText.set(true);
         this.inputText.set(raw);
-        const parsed = parseDisplay(raw, this.timeOnly(), this.value());
+        const parsed = parseDisplay(raw, this.timeOnly(), this.value(), this.dateOnly());
         if (parsed) {
             this.commit(parsed);
         } else if (!raw.trim()) {
@@ -168,9 +235,17 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     }
 
     protected onBlur(raw: string): void {
-        const trimmed = raw.trim();
-        if (trimmed && !matchesDisplayFormat(trimmed, this.timeOnly())) {
+        this.isEditingText.set(false);
+        const trimmed = normalizeDisplayText(raw);
+        const current = this.value();
+        if (trimmed && !matchesDisplayFormat(trimmed, this.timeOnly(), this.dateOnly())) {
             this.isInputValid.set(false);
+        } else if (trimmed && current && this.isInputValid()) {
+            // Text that only differs in whitespace leaves the displayed value unchanged, so the binding does not rewrite the field.
+            const field = this.dateInput()?.nativeElement;
+            if (field) {
+                field.value = formatDisplay(current, this.timeOnly(), this.dateOnly());
+            }
         }
         this.touch.emit();
     }
@@ -246,6 +321,10 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     }
 
     protected onDaySelect(day: dayjs.Dayjs): void {
+        if (this.dateOnly()) {
+            this.commit(day.startOf('day'));
+            return;
+        }
         const time = this.value() ?? dayjs().startOf('day');
         this.commit(combineDateAndTime(day, time));
     }
@@ -256,7 +335,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
         if (this.value() !== undefined) {
             this.value.set(undefined);
         }
-        this.dateInput().nativeElement.focus();
+        this.dateInput()?.nativeElement.focus();
     }
 
     protected toggle(): void {
@@ -272,20 +351,31 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
         this.open();
     }
 
+    protected onFieldClick(): void {
+        if (this.openOnClick()) {
+            this.open();
+        }
+    }
+
     protected open(): void {
         if (this.isOpen() || this.disabled()) {
             return;
         }
-        const anchor = this.value() ?? dayjs();
+        const trigger = this.triggerWrapper();
+        if (!trigger) {
+            return;
+        }
+        const anchor = this.value() ?? this.startAt() ?? this.nearestAllowedDay();
         this.activeMonth.set(anchor.startOf('month'));
-        this.timeText.set(this.value()?.format('HH:mm') ?? '');
         const activeElement = this.document.activeElement;
         this.restoreFocusElement = activeElement && typeof (activeElement as HTMLElement).focus === 'function' ? (activeElement as HTMLElement) : undefined;
-        this.overlayRef = this.overlayService.createConnectedOverlay(this.triggerWrapper(), 'bottom', { hasBackdrop: true });
+        this.overlayRef = this.overlayService.createConnectedOverlay(trigger, 'bottom', { hasBackdrop: true });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.overlayRef.backdropClick().subscribe(() => this.close());
         this.overlayRef.keydownEvents().subscribe((event) => {
             if (event.key === 'Escape') {
+                // The Escape that closes the calendar must not also reach a dialog the field sits in.
+                event.stopPropagation();
                 this.close();
             }
         });
@@ -306,14 +396,45 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
         this.restoreFocusElement = undefined;
     }
 
+    /** Today, or the closest day the calendar allows when today is outside {@link min} and {@link max}. */
+    private nearestAllowedDay(): dayjs.Dayjs {
+        const today = dayjs();
+        const min = this.min();
+        const max = this.max();
+        if (min && today.isBefore(min, 'day')) {
+            return min;
+        }
+        if (max && today.isAfter(max, 'day')) {
+            return max;
+        }
+        return today;
+    }
+
     focus(options?: FocusOptions): void {
-        this.dateInput().nativeElement.focus(options);
+        this.dateInput()?.nativeElement.focus(options);
+    }
+
+    /**
+     * Replaces the value from the outside and discards text that was typed but not committed, also when the new value
+     * displays like the current one. Assigning the `value` model alone keeps invalid text in the field in that case,
+     * because the draft is keyed by the displayed value, so a form reset or a preset that sets a value on purpose uses this.
+     *
+     * @param next the value to show, or undefined to empty the field
+     */
+    replaceValue(next: dayjs.Dayjs | undefined): void {
+        this.isInputValid.set(true);
+        this.inputText.set(next ? formatDisplay(next, this.timeOnly(), this.dateOnly()) : '');
+        this.timeText.set(next?.format('HH:mm') ?? '');
+        if (next) {
+            this.activeMonth.set(next.startOf('month'));
+        }
+        this.value.set(next);
     }
 
     private commit(next: dayjs.Dayjs): void {
         this.isInputValid.set(true);
         if (valuesEqual(this.value(), next)) {
-            this.inputText.set(formatDisplay(next, this.timeOnly()));
+            this.inputText.set(formatDisplay(next, this.timeOnly(), this.dateOnly()));
             return;
         }
         this.activeMonth.set(next.startOf('month'));

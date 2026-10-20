@@ -59,6 +59,8 @@ export class CourseManagementAPIRequests {
      *   - allowCommunication: if communication should be enabled for the course
      *   - allowMessaging: if messaging should be enabled for the course
      *   - timeZone: the IANA time zone of the course (default: undefined; required before tutorial groups can be added)
+     *   - presentationAssessmentsEnabled: whether presentation assessments are enabled in the course (default: false)
+     *   - testCourse: whether the course is a test course (default: true); exams of test courses are left out of the admin overview of upcoming exams
      * @returns Promise<Course> representing the course created
      */
     async createCourse(
@@ -73,6 +75,8 @@ export class CourseManagementAPIRequests {
             allowCommunication?: boolean;
             allowMessaging?: boolean;
             timeZone?: string;
+            presentationAssessmentsEnabled?: boolean;
+            testCourse?: boolean;
         } = {},
     ): Promise<Course> {
         const {
@@ -88,16 +92,19 @@ export class CourseManagementAPIRequests {
             allowCommunication = true,
             allowMessaging = true,
             timeZone,
+            presentationAssessmentsEnabled = false,
+            testCourse = true,
         } = options;
 
         const course = new Course();
         course.title = courseName;
         course.shortName = courseShortName;
-        course.testCourse = true;
+        course.testCourse = testCourse;
         course.startDate = asModelDate(start);
         course.endDate = asModelDate(end);
         course.semester = semester;
         course.timeZone = timeZone;
+        course.presentationAssessmentsEnabled = presentationAssessmentsEnabled;
 
         if (allowCommunication && allowMessaging) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -395,6 +402,9 @@ export class CourseManagementAPIRequests {
             workingTime: 1080,
         };
         const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to create test run for exam ${exam.id}: ${response.status()} ${await response.text()}`);
+        }
         return response.json();
     }
 
@@ -568,6 +578,7 @@ function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUp
         unenrollmentEnabled: course.unenrollmentEnabled,
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
         learningPathsEnabled: course.learningPathsEnabled,
+        presentationAssessmentsEnabled: course.presentationAssessmentsEnabled ?? false,
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,

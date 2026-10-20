@@ -20,6 +20,12 @@ export interface TumAetUiFormFieldContext {
     /** Id the field's `<label for>` points at; a control without an id of its own adopts it. */
     readonly labelTargetId: Signal<string>;
 
+    /**
+     * Id of the field's `<label>` element. A control whose focusable element is not natively labelable (a `div` with
+     * `role="combobox"`, say) points `aria-labelledby` at it, because `<label for>` does not name such an element.
+     */
+    readonly labelId: Signal<string>;
+
     /** Space-separated ids of the text currently describing the field, or `undefined` when it shows none. */
     readonly describedBy: Signal<string | undefined>;
 

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewContainerRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -32,7 +32,7 @@ function withConsecutiveFlag(answerPost: AnswerPost, isConsecutive: boolean): An
     imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe, NgClass],
 })
 export class PostingFooterComponent implements OnInit, OnDestroy {
-    private metisService = inject(MetisService);
+    private communicationService = inject(CommunicationService);
 
     constructor() {
         effect(() => {
@@ -70,8 +70,8 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
     readonly groupedAnswerPosts = signal<PostGroup[]>([]);
 
     ngOnInit(): void {
-        this.courseId = this.metisService.getCourse().id!;
-        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.courseId = this.communicationService.getCourse().id!;
+        this.isAtLeastTutorInCourse = this.communicationService.currentUserIsAtLeastTutorInCourse();
         this.createdAnswerPost.set(this.createEmptyAnswerPost());
         this.groupAnswerPosts();
     }
@@ -146,6 +146,14 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
     isLastPost(group: PostGroup, answerPost: AnswerPost): boolean {
         const lastPostInGroup = group.posts[group.posts.length - 1];
         return lastPostInGroup.id === answerPost.id;
+    }
+
+    /**
+     * Prepares an empty draft and reopens the reply input, so that the user can answer the thread multiple times in a row
+     */
+    onAnswerPostCreated(): void {
+        this.createdAnswerPost.set(this.createEmptyAnswerPost());
+        this.openCreateAnswerPostModal();
     }
 
     /**

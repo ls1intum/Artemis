@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
@@ -50,7 +50,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
-import { mockThemeSwitcherComponentViewChildren } from 'test/helpers/mocks/mock-instance.helper';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
@@ -109,9 +108,6 @@ describe('NavbarComponent', () => {
         translate: true,
         uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
-
-    // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
-    mockThemeSwitcherComponentViewChildren();
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -340,6 +336,18 @@ describe('NavbarComponent', () => {
             expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
         });
 
+        it('should link a routed exercise-linked presentation to its exercise in the student view', () => {
+            router.setUrl('/course-management/123/presentations/17/exercises/42');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'exercises', '42']);
+        });
+
+        it('should link a routed standalone presentation to the student course overview', () => {
+            router.setUrl('/course-management/123/presentations/17');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
+        });
+
         it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])('should not provide perspective links outside course routes for %s', (url) => {
             router.setUrl(url);
 
@@ -457,6 +465,22 @@ describe('NavbarComponent', () => {
         expect(languageChangeSpy).not.toHaveBeenCalled();
     });
 
+    it('should update the tab title when the lecture is renamed after the page loaded', () => {
+        const titleService = TestBed.inject(Title);
+        const lectureTitle = new BehaviorSubject('Old lecture');
+        entityTitleServiceStub.mockImplementation((type: EntityType) =>
+            type === EntityType.LECTURE ? lectureTitle : of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()),
+        );
+        router.setUrl('/course-management/1/lectures/2/edit');
+        fixture.detectChanges();
+        expect(titleService.getTitle()).toContain('Old lecture');
+
+        lectureTitle.next('Renamed lecture');
+
+        expect(titleService.getTitle()).toContain('Renamed lecture');
+        expect(component.breadcrumbs().some((crumb) => crumb.label === 'Renamed lecture')).toBe(true);
+    });
+
     it('should not build breadcrumbs for students', () => {
         const testUrl = '/courses/1/exercises';
         router.setUrl(testUrl);
@@ -498,7 +522,95 @@ describe('NavbarComponent', () => {
         expect(component.gitUsername()).toBe('Max Musterman');
     });
 
+    it('should leave the tab title to the route while there are no breadcrumbs', () => {
+        router.setUrl('/courses/1/exercises');
+        fixture.detectChanges();
+        const setTitleSpy = vi.spyOn(TestBed.inject(Title), 'setTitle');
+
+        component.buildTabTitles();
+
+        expect(setTitleSpy).not.toHaveBeenCalled();
+    });
+
     describe('Special Cases for Breadcrumbs', () => {
+        it('uses the translated TUM.Live label for the course connection route', () => {
+            router.setUrl('/course-management/1/gocast-binding');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs()).toHaveLength(3);
+            expect(component.breadcrumbs()[2]).toEqual({
+                label: 'artemisApp.gocast.title',
+                translate: true,
+                uri: '/course-management/1/gocast-binding/',
+            } as MockBreadcrumb);
+        });
+
+        it.each(['', '?filter=pending'])('translates the presentation breadcrumb with suffix %s', (suffix) => {
+            router.setUrl(`/course-management/1/presentations${suffix}`);
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().at(-1)).toEqual({
+                label: 'artemisApp.presentationAssessment.home.title',
+                translate: true,
+                uri: '/course-management/1/presentations/',
+            });
+        });
+
+        it.each(['/17', '/17/exercises/42'])('ends the breadcrumbs at the presentations overview for the selected presentation route %s', (suffix) => {
+            router.setUrl(`/course-management/1/presentations${suffix}`);
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().at(-1)).toEqual({
+                label: 'artemisApp.presentationAssessment.home.title',
+                translate: true,
+                uri: '/course-management/1/presentations/',
+            });
+            expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/exercises/'))).toBe(false);
+        });
+
+        it('submissions link to the scores, since there is no list of submissions only', () => {
+            router.setUrl('/course-management/1/text-exercises/2/submissions');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().some((crumb) => crumb.uri === '/course-management/1/text-exercises/2/scores/')).toBe(true);
+            expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/submissions/'))).toBe(false);
+        });
+
+        it('tutorial lectures link to the course, which lists them', () => {
+            router.setUrl('/course-management/1/tutorial-lectures/5');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('tutorial-lectures'))).toBe(false);
+        });
+
+        it('tutorial group holidays skip the configuration routing layer', () => {
+            router.setUrl('/course-management/1/tutorial-groups/configuration/5/tutorial-free-days');
+
+            fixture.detectChanges();
+
+            const tutorialGroupsCrumb = {
+                label: 'artemisApp.breadcrumb.title',
+                translate: true,
+                uri: '/course-management/1/tutorial-groups/',
+            } as MockBreadcrumb;
+            const holidaysCrumb = {
+                label: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
+                translate: true,
+                uri: '/course-management/1/tutorial-groups/configuration/5/tutorial-free-days/',
+            } as MockBreadcrumb;
+
+            // Course, Tutorial Groups, Holidays - no "Configuration" crumb and no configuration id between them.
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual(tutorialGroupsCrumb);
+            expect(component.breadcrumbs()[3]).toEqual(holidaysCrumb);
+            expect(component.breadcrumbs().some((crumb) => crumb.label === 'global.menu.admin.sidebar.configuration')).toBe(false);
+        });
+
         it('programming exercise import', () => {
             const testUrl = '/course-management/1/programming-exercises/import/2';
             router.setUrl(testUrl);

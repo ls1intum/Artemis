@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, signal, untracked, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, afterRenderEffect, effect, inject, input, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
+import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/communication/communication.util';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subject, combineLatest, map, takeUntil } from 'rxjs';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { User } from 'app/account/user/user.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -45,7 +45,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         SearchFilterComponent,
         ResizableDirective,
     ],
-    providers: [MetisService],
+    providers: [CommunicationService],
 })
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements AfterViewInit, OnDestroy {
     private channelService = inject(ChannelService);
@@ -67,6 +67,10 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     private ngUnsubscribe = new Subject<void>();
     private previousScrollDistanceFromTop = 0;
     private page = 1;
+    private postRequestId = 0;
+    private isFetchingPosts = false;
+    private readonly pendingPageScrollDistance = signal<number | undefined>(undefined);
+    private pageScrollFrame?: number;
     private readonly PAGE_SIZE = 50;
     private totalNumberOfPosts = 0;
     private get messagesContainerHeight(): number {
@@ -98,6 +102,22 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             const lectureValue = this.lecture();
             untracked(() => this.loadData(exerciseValue, lectureValue));
         });
+        afterRenderEffect(() => {
+            this.messages();
+            const distance = this.pendingPageScrollDistance();
+            if (distance === undefined) return;
+            untracked(() => {
+                if (this.pageScrollFrame !== undefined) window.cancelAnimationFrame(this.pageScrollFrame);
+                const requestId = this.postRequestId;
+                this.pageScrollFrame = window.requestAnimationFrame(() => {
+                    this.pageScrollFrame = undefined;
+                    if (requestId !== this.postRequestId) return;
+                    const element = this.content()?.nativeElement;
+                    if (element) element.scrollTop = element.scrollHeight - distance;
+                    this.pendingPageScrollDistance.set(undefined);
+                });
+            });
+        });
     }
 
     loadData(exercise?: Exercise, lecture?: Lecture): void {
@@ -110,8 +130,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             if (courseId) {
                 this.course.set(this.courseStorageService.getCourse(courseId));
             }
-            this.metisService.setCourse(this.course());
-            this.metisService.setPageType(this.PAGE_TYPE);
+            this.communicationService.setCourse(this.course());
+            this.communicationService.setPageType(this.PAGE_TYPE);
             if (routeParams.params.courseId) {
                 this.setChannel(routeParams.params.courseId);
             } else if (this.course()?.id) {
@@ -120,7 +140,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.createEmptyPost();
             this.resetFormGroup();
         });
-        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+        this.postsSubscription = this.communicationService.posts.subscribe((posts: Post[]) => {
             if (this.viewChildrenInitialized && this.content()) {
                 this.previousScrollDistanceFromTop = this.content()!.nativeElement.scrollHeight - this.content()!.nativeElement.scrollTop;
             }
@@ -138,7 +158,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     })
                     .reverse(),
             );
-            this.isLoading.set(false);
             if (this.currentPostId && this.posts().length > 0) {
                 this.currentPost.set(this.posts().find((post) => post.id === this.currentPostId));
             }
@@ -146,7 +165,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         void this.accountService.identity().then((user: User | undefined) => {
             this.currentUser = user!;
         });
-        this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
+        this.communicationService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
         });
     }
@@ -155,12 +174,16 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * on leaving the page, the modal should be closed
      */
     ngOnDestroy(): void {
+        ++this.postRequestId;
+        this.clearPageScroll();
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
         super.onDestroy();
         this.postCreateEditModal()?.close();
     }
 
     /**
-     * on changing the sort direction via icon, the metis service is invoked to deliver the posts for the currently set context,
+     * on changing the sort direction via icon, the communication service is invoked to deliver the posts for the currently set context,
      * sorted on the server
      */
     onChangeSortDir(): void {
@@ -186,7 +209,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         return;
                     }
 
-                    this.metisService.getFilteredPosts(this.currentPostContextFilter, true, this.channel());
+                    this.fetchPosts(true);
 
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -210,16 +233,16 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     /**
-     * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
+     * invoke communication service to create an empty default post that is needed on initialization of a modal to create a post,
      * this empty post has either exercise or lecture set as context, depending on if this component holds an exercise or a lecture reference
      */
     createEmptyPost(): void {
         if (this.channel()) {
             const conversation = this.channel() as Channel;
             this.shouldSendMessage.set(false);
-            this.createdPost.set(this.metisService.createEmptyPostForContext(conversation));
+            this.createdPost.set(this.communicationService.createEmptyPostForContext(conversation));
         } else {
-            this.createdPost.set(this.metisService.createEmptyPostForContext());
+            this.createdPost.set(this.communicationService.createEmptyPostForContext());
         }
     }
 
@@ -232,6 +255,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     handleScrollOnNewMessage = () => {
+        if (this.pendingPageScrollDistance() !== undefined) return;
         if ((this.posts().length > 0 && this.content()?.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
@@ -243,28 +267,74 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
     }
 
-    fetchNextPage() {
-        const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
-        if (morePostsAvailable) {
-            this.page += 1;
-            this.commandMetisToFetchPosts();
+    /** Loads one older page at a time. An initial request without an applied response retries page zero. */
+    fetchNextPage(): void {
+        if (this.isFetchingPosts || this.pendingPageScrollDistance() !== undefined) return;
+        if (this.page === 0) {
+            this.page = 1;
+            this.fetchPosts(true, 0);
+            return;
         }
-        if (this.content()?.nativeElement) {
-            this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollTop + this.PAGE_SIZE;
+        if (this.posts().length < this.totalNumberOfPosts) {
+            const previousPage = this.page;
+            this.page += 1;
+            this.fetchPosts(false, previousPage);
         }
     }
 
-    public commandMetisToFetchPosts(forceUpdate = false) {
-        if (this.currentPostContextFilter) {
-            this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: this.page - 1 });
-            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel());
-        }
+    /**
+     * Fetches this page with request-scoped completion. Live publications cannot unlock pagination, and superseded
+     * completions cannot change a newer context. Restore the last applied page when no response was applied.
+     * @param forceUpdate whether to replace the context rather than append a page
+     * @param previousPage the last applied one-based page; zero means the initial context has not loaded
+     */
+    public fetchPosts(forceUpdate = false, previousPage = forceUpdate ? 0 : this.page): void {
+        if (!this.currentPostContextFilter || (this.isFetchingPosts && !forceUpdate)) return;
+        if (forceUpdate) this.clearPageScroll();
+        const requestId = ++this.postRequestId;
+        this.isFetchingPosts = true;
+        if (forceUpdate) this.isLoading.set(true);
+        this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: this.page - 1 });
+        this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel(), {
+            beforeApply: () => {
+                if (requestId !== this.postRequestId || forceUpdate) return;
+                // Capture after any reader movement/live updates, immediately before this page changes the list.
+                const element = this.content()?.nativeElement;
+                this.pendingPageScrollDistance.set(element ? element.scrollHeight - element.scrollTop : undefined);
+            },
+            complete: (applied) => {
+                if (requestId !== this.postRequestId) return;
+                this.isFetchingPosts = false;
+                this.isLoading.set(false);
+                if (!applied) {
+                    this.clearPageScroll();
+                    this.page = previousPage;
+                    this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: Math.max(previousPage - 1, 0) });
+                }
+            },
+        });
+    }
+
+    /** Cancels deferred viewport restoration when a context is replaced, fails or is destroyed. */
+    private clearPageScroll(): void {
+        if (this.pageScrollFrame !== undefined) window.cancelAnimationFrame(this.pageScrollFrame);
+        this.pageScrollFrame = undefined;
+        this.pendingPageScrollDistance.set(undefined);
+    }
+
+    /** Replaces the context through the same request lifecycle used by initial loads and pagination. */
+    override onSelectContext(): void {
+        this.setFilterAndSort();
+        this.fetchPosts(true);
     }
 
     /**
      * sets the filter options after receiving user input
      */
     setFilterAndSort(): void {
+        ++this.postRequestId;
+        this.clearPageScroll();
+        this.isFetchingPosts = false;
         this.page = 1;
         this.scrollToBottomOfMessages();
         this.currentPostContextFilter = {

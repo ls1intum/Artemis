@@ -130,11 +130,14 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         if (hasUpload) {
             formData.append('file', file, fileName);
         }
-        formData.append('attachment', objectToJsonBlob(updatedAttachment));
+        // A video-only unit has no attachment to update until a file is uploaded.
+        if (currentAttachment.id !== undefined || hasUpload) {
+            formData.append('attachment', objectToJsonBlob(updatedAttachment));
+        }
         formData.append('attachmentVideoUnit', objectToJsonBlob(updatedUnit));
 
         this.attachmentVideoUnitService
-            .update(lectureId, currentUnit.id, formData, this.notificationText())
+            .update(lectureId, currentUnit.id, formData, this.notificationText() || undefined)
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isLoading.set(false)),
