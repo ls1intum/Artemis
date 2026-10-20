@@ -82,7 +82,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
         {
             id: new FormControl<number | undefined>(undefined),
             title: new FormControl<string | undefined>(undefined, [Validators.required, Validators.minLength(1), Validators.maxLength(50)]),
-            text: new FormControl<string | undefined>(undefined),
+            text: new FormControl<string | undefined>(undefined, [Validators.maxLength(2000)]),
             type: new FormControl<SystemNotificationType | undefined>(undefined, [Validators.required]),
             notificationDate: new FormControl<dayjs.Dayjs | undefined>(undefined, [Validators.required]),
             expireDate: new FormControl<dayjs.Dayjs | undefined>(undefined, [Validators.required]),
@@ -93,6 +93,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     /** Icons */
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
+    protected readonly TEXT_LIMIT = 2000;
 
     /**
      * Loads notification from route data and initializes the form.

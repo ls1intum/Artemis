@@ -9,7 +9,20 @@
                 </div>
                 <div class="mb-3 flex flex-col gap-2">
                     <label for="text" class="font-bold" jhiTranslate="artemisApp.systemNotification.text"></label>
-                    <input id="text" type="text" tumAetUiInput class="w-full" name="text" formControlName="text" />
+                    <input
+                        id="text"
+                        type="text"
+                        tumAetUiInput
+                        class="w-full"
+                        name="text"
+                        formControlName="text"
+                        [attr.maxlength]="TEXT_LIMIT"
+                        [attr.aria-invalid]="form.get('text')?.hasError('maxlength') && (form.get('text')?.dirty || form.get('text')?.touched) ? 'true' : null"
+                        [attr.aria-describedby]="form.get('text')?.hasError('maxlength') && (form.get('text')?.dirty || form.get('text')?.touched) ? 'text-maxlength-error' : null"
+                    />
+                    @if (form.get('text')?.hasError('maxlength') && (form.get('text')?.dirty || form.get('text')?.touched)) {
+                        <small id="text-maxlength-error" class="text-state-danger text-sm" jhiTranslate="artemisApp.systemNotification.textMaxlength"></small>
+                    }
                 </div>
                 <div class="mb-3 flex flex-col gap-2">
                     <label for="type" class="font-bold" jhiTranslate="artemisApp.systemNotification.type"></label>
