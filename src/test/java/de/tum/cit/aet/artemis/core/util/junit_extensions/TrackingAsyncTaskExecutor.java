@@ -1,12 +1,12 @@
 package de.tum.cit.aet.artemis.core.util.junit_extensions;
 
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.core.task.AsyncTaskExecutor;
 
 /** Tracks shared test work from submission until its runnable actually exits, including the gaps in pool monitoring. */
@@ -21,8 +21,7 @@ final class TrackingAsyncTaskExecutor implements AsyncTaskExecutor {
     }
 
     @Override
-    public void execute(Runnable task) {
-        Objects.requireNonNull(task);
+    public void execute(@NonNull Runnable task) {
         pending.incrementAndGet();
         AtomicBoolean completed = new AtomicBoolean();
         Runnable finish = () -> {
