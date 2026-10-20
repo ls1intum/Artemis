@@ -22,6 +22,15 @@ class AgentSystemPromptTest {
     }
 
     @Test
+    void statementPromptsKeepVisibleSeededChecksBoundAndHiddenChecksUnbound() {
+        for (String prompt : Set.of(prompts.build(input(true), Mode.GENERATE), prompts.build(input(true), Mode.ADAPT),
+                prompts.buildStage(input(true), GenerationStage.STATEMENT))) {
+            assertThat(prompt).contains("Bind every visible server-seeded structural check exactly once on its owner task", "even when it carries zero weight or already",
+                    "passes on the template", "Never bind AFTER_DUE_DATE tests").doesNotContain("or structural checks already satisfied by the template");
+        }
+    }
+
+    @Test
     void specificationDeclaresTheCompletedApiRatherThanAnIntermediateStarter() {
         assertThat(prompts.buildStage(input(false), GenerationStage.SPEC)).contains("completed solution", "enum constants");
     }
