@@ -243,9 +243,15 @@ Only the following abstract base test classes are permitted to define context-af
    class that never touches the bean — it inherits a stub from a class that ran earlier. `LocalVCFetchAndPushIntegrationTest`
    left `doReturn(true).when(ldapTemplate).compare(...)` behind, which had LDAP accepting every password for the rest
    of the run.
+   A spy that scheduled or build threads of the application call while tests run, such as `BuildAgentConfiguration`,
+   must not be stubbed or reset by a test at all: Mockito keeps the pending stubbing in the mock, so a call from
+   another thread between `doReturn(...)` and `.when(spy).method()` fails the test's `@BeforeEach` with
+   `WrongTypeOfReturnValue` or stubs the wrong method. Declare it with `@MockitoSpyBean(reset = MockReset.NONE)`, stub it
+   once when the context is built with answers that read an `AtomicReference`, and let tests change that holder
+   (`BuildAgentConfigurationOverrides`).
 9. An architecture test (`SpringContextConfigurationArchitectureTest`) enforces these rules automatically, including
    the reset above: a bean counts as reset when the class declaring it reads it in an `@AfterEach` method, or in one
-   named `resetSpyBeans`.
+   named `resetSpyBeans`. A spy declared with `reset = MockReset.NONE` is exempt.
 
 ### Why This Matters
 

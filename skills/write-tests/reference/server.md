@@ -52,6 +52,17 @@ The fix is in the background path, not in the test. Making the test wait longer,
 stubbing, moves the race rather than removing it. Find what is still running from the previous test
 and stop it deterministically.
 
+A spy that scheduled tasks or build threads call all the time (`BuildAgentConfiguration`) has no
+quiet moment. Mockito keeps the pending stubbing in the mock, so `doReturn(x).when(spy).m()` in a
+`@BeforeEach` fails with `WrongTypeOfReturnValue` when such a thread calls any method of the spy
+between the two halves. Do not stub or reset it per test:
+stub it once when the context is built with answers that read an `AtomicReference`, and change the
+holder in the test (`BuildAgentConfigurationOverrides`, `@MockitoSpyBean(reset = MockReset.NONE)`).
+
+A scheduled task that rewrites shared state a test also writes (the `dockerImageCleanupInfo` map is
+cleared and refilled every five minutes) is switched off in the test contexts by its interval
+property instead.
+
 ## Coverage
 
 CI enforces coverage thresholds per module. A new class with no test can fail the build even when
