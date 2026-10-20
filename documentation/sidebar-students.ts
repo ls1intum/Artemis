@@ -11,6 +11,7 @@ const sidebars: SidebarsConfig = {
                 'getting-started/general',
                 'getting-started/courses',
                 'getting-started/user-experience',
+                'getting-started/global-search',
                 'getting-started/mobile-applications',
             ],
         },

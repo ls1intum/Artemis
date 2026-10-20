@@ -170,6 +170,13 @@ search. If connecting to the
 embedding API or waiting for its answer takes longer than `embedding.query-timeout` (each), or the hybrid query fails,
 the search uses BM25 keyword search.
 
+Every query carries the filter of `SearchableEntityAccessFilterService`: one clause per requested type, with the
+release, registration, FAQ state and channel visibility rules of the user's role in each course, so a result is never
+filtered after the fact. Its `SEARCHABLE_TYPES` are what search returns; posts and answer posts are indexed but left
+out, because the reconcile passes do not keep them current. `GlobalSearchResultRanker` then re-ranks the rows: a row of
+a course that has ended keeps a reduced score, the same item from several semesters of a course is shown once, and an
+item's channel follows directly behind the item.
+
 For Iris, `searchEntityCandidatesForAnswer` also returns the vectors of each hit. `SearchableEntityPassages` picks the
 chunk closest to the query, derives it again from the stored properties, checks it against the stored
 `chunk_hashes`, and returns its text as the `passage` of the candidate. Iris shows its reranker that passage instead

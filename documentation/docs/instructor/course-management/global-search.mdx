@@ -1,0 +1,76 @@
+---
+id: global-search
+title: Your Course in Global Search
+sidebar_label: Global Search
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+Global search in the navigation bar lets everyone in your course find its exercises, lectures, lecture units, exams,
+FAQs and channels, search inside the lecture slides and video transcripts, and ask Iris questions answered from the
+course material. You do not have to set anything up for it. What a student can find follows the settings you already
+use to release content, so this page explains which of them decide what appears. For what the search looks like to a
+student, see [Global Search](/student/getting-started/global-search).
+
+## What Students Find
+
+A student finds only what they could also open in the course:
+
+| Content | Visible to students |
+|---------|---------------------|
+| Exercises | Once released. Exam exercises once the exam has started |
+| Lectures | Always, like on the course's lecture page |
+| Lecture units | Once their release date has passed, or when they have none |
+| Exams | Exams they are registered for, once the visible date has passed. Test exams once the visible date has passed |
+| FAQs | Accepted FAQs only |
+| Channels | Public and course-wide channels. The channel of an exercise or exam only once the exercise is released or the exam is visible |
+
+Course messages and replies are not part of global search. Students search them in the course communication instead.
+
+Course staff find more than students. Editors and instructors find every exercise and exam of the course, and
+tutors find every exam once it is visible. Staff find every lecture unit and FAQ, released or not, and the public and
+course-wide channels of unreleased exercises and exams, so you can check what an upcoming lecture contains before
+students can see it.
+
+Changes are picked up automatically. After you release, edit or delete something, the search reflects it shortly
+afterwards; there is nothing to trigger or refresh.
+
+## Slides and Video Transcripts
+
+**Slides & Videos** searches the content of the lecture units' slides and video transcripts. Artemis processes that
+content when you upload or change a unit, so a new unit becomes searchable once its processing has finished. For a
+video, that includes transcribing it, which takes longer than processing slides.
+
+The same release rules apply as for the lecture unit itself: students find a unit's slides and transcript only once
+the unit is released, while staff find them right away. Pages you have hidden in an attachment are left out for
+everyone, staff included, for as long as they are hidden. See
+[Attachment Unit Management](/instructor/lectures/lectures#attachment-unit-management).
+
+<Callout variant={CalloutVariant.info}>
+
+  Searching slides and videos uses AI models, so a student only sees these results after choosing to use AI in
+  Artemis. You cannot make that choice for your students.
+
+</Callout>
+
+## Iris Answers and Your Iris Setting
+
+When a student asks a question in the search, Iris answers it from the lecture content and the course information
+described above, with each statement linked to its source. A student can then continue the answer in the course's
+Iris chat.
+
+Iris answers only use courses in which Iris is turned on. If you turn Iris off in the
+[Iris settings](/instructor/communication-support/iris#turning-iris-on) of your course, global search no longer
+answers from your course and no longer offers to continue in its chat. The course's slides and transcripts stay
+searchable under **Slides & Videos**, because that is search and not an Iris feature. Turning Iris off does not
+remove content that was already processed.
+
+The answer applies the same visibility rules as the results list, so Iris never cites an unreleased exercise or a
+hidden page to a student.
+
+## Related
+
+- [Global Search](/student/getting-started/global-search) for the student's view of the search.
+- [Iris, the AI Tutor](/instructor/communication-support/iris) for the course's Iris settings.
+- [Lectures](/instructor/lectures/lectures) for release dates and hidden pages of lecture units.
