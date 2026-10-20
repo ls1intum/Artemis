@@ -64,6 +64,42 @@ describe('Formatted message composer', () => {
         return button;
     }
 
+    it('keeps all text formats grouped and emoji available without expanding', () => {
+        for (const id of ['message-format-strong', 'message-format-em', 'message-format-ins', 'message-format-s', 'message-format-code', 'message-emoji-button']) {
+            expect(fixture.nativeElement.querySelector(`[data-testid="${id}"]`).closest('[hidden]')).toBeNull();
+        }
+    });
+
+    it('reveals selection formatting once and respects an explicit collapse of the same selection', () => {
+        const range = document.createRange();
+        range.setStart(editable.querySelector('p')!.firstChild!, 0);
+        range.setEnd(editable.querySelector('p')!.firstChild!, 5);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+        fixture.detectChanges();
+        const toggle = fixture.nativeElement.querySelector('[data-testid="message-toolbar-toggle"]');
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        toggleToolbar();
+        document.dispatchEvent(new Event('selectionchange'));
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it.each(['-', '*', '+', '1.', '1)'])('turns a typed leading %s and space into a list before sending', (marker) => {
+        fixture.componentRef.setInput('content', marker.replace(/[-*+.)]/g, '\\$&'));
+        fixture.detectChanges();
+        caretAtEnd();
+        expect(editable.textContent).toBe(marker);
+        const space = new InputEvent('beforeinput', { inputType: 'insertText', data: ' ', bubbles: true, cancelable: true });
+
+        editable.dispatchEvent(space);
+
+        expect(space.defaultPrevented).toBe(true);
+        expect(editable.querySelector(marker.startsWith('1') ? 'ol > li' : 'ul > li')).not.toBeNull();
+        expect(editable.textContent?.trim()).toBe('');
+    });
+
     it('starts compact and exposes the advanced controls through an accessible toggle', () => {
         const advanced = fixture.nativeElement.querySelector('[data-testid="message-advanced-toolbar"]') as HTMLElement;
         expect(advanced).not.toBeNull();
@@ -669,6 +705,73 @@ describe('Formatted message composer', () => {
         expect(bubbled).toHaveBeenCalledOnce();
         expect(component.suggestionsOpen()).toBe(false);
         fixture.nativeElement.removeEventListener('keydown', bubbled);
+    });
+
+    it.each(['populated', 'loading'] as const)('inserts a newline without accepting or sending when suggestions are %s', async (state) => {
+        let finish!: (result: []) => void;
+        if (state === 'loading') {
+            search.mockReturnValue(new Promise<[]>((resolve) => (finish = resolve)));
+        }
+        fixture.componentRef.setInput('content', 'ping @ann');
+        fixture.detectChanges();
+        caretAtEnd();
+        const pending = component.refreshSuggestions();
+        if (state === 'populated') {
+            await pending;
+        }
+        const bubbled = vi.fn();
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true, cancelable: true });
+
+        editable.dispatchEvent(enter);
+        editable.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: 'next', bubbles: true, cancelable: true }));
+        if (state === 'loading') {
+            finish([]);
+            await pending;
+        }
+
+        expect(enter.defaultPrevented).toBe(true);
+        expect(bubbled).not.toHaveBeenCalled();
+        expect(component.suggestionsOpen()).toBe(false);
+        expect(emit).toHaveBeenLastCalledWith('ping @ann\nnext');
+        expect(editable.querySelector('[data-message-reference]')).toBeNull();
+        fixture.nativeElement.removeEventListener('keydown', bubbled);
+    });
+
+    it.each(['code', 'quote'])('lets ArrowDown leave a final %s block without removing its formatting', (kind) => {
+        fixture.componentRef.setInput('content', kind === 'code' ? '```\ninside\n```' : '> inside');
+        fixture.detectChanges();
+        const block = editable.querySelector(kind === 'code' ? 'pre' : 'blockquote')!;
+        const range = document.createRange();
+        range.selectNodeContents(block);
+        range.collapse(false);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const key = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+
+        editable.dispatchEvent(key);
+
+        expect(key.defaultPrevented).toBe(true);
+        expect(editable.querySelector(':scope > p')).not.toBeNull();
+        expect(block.textContent).toBe('inside');
+    });
+
+    it.each([
+        ['example.org/path', 'https://example.org/path'],
+        ['example.org:8443/path', 'https://example.org:8443/path'],
+        ['/courses/1', '/courses/1'],
+        ['./guide.pdf', './guide.pdf'],
+        ['#section', '#section'],
+    ])('normalizes a link destination %s to %s', (input, expected) => {
+        caretAtEnd();
+        component['openLink']();
+        component.linkText.set('Guide');
+        component.linkUrl.set(input);
+
+        component['saveLink']();
+
+        expect(editable.querySelector('a')?.getAttribute('href')).toBe(expected);
     });
 
     it('keeps Shift+Enter as a newline after an empty completion search', async () => {

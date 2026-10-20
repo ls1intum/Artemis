@@ -87,30 +87,12 @@
         <div
             class="message-editor-advanced-toolbar flex max-w-full flex-wrap items-center gap-1"
             [id]="advancedToolbarId"
-            [hidden]="!toolbarExpanded() && !uploading() && !tools()?.error()"
+            [hidden]="!toolbarExpanded()"
             [attr.role]="toolbarExpanded() ? 'group' : null"
             [attr.aria-label]="toolbarExpanded() ? ('artemisApp.communication.formattedEditor.moreOptions' | artemisTranslate) : null"
             data-testid="message-advanced-toolbar"
         >
             <div class="message-editor-advanced-controls flex flex-wrap gap-1" [hidden]="!toolbarExpanded()">
-                @for (format of advancedFormats; track format.tag) {
-                    <button
-                        type="button"
-                        tumAetUiButton
-                        variant="text"
-                        severity="secondary"
-                        size="small"
-                        [attr.aria-label]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
-                        [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
-                        tumAetUiTooltipDescribesHost="false"
-                        [attr.data-testid]="'message-format-' + format.tag"
-                        [attr.aria-pressed]="activeFormatting().includes(format.tag)"
-                        (mousedown)="remember($event)"
-                        (click)="applyFormat(format.tag)"
-                    >
-                        <fa-icon [icon]="format.icon" />
-                    </button>
-                }
                 @for (block of blocks; track block.tag) {
                     <button
                         type="button"
@@ -130,18 +112,18 @@
                     </button>
                 }
             </div>
-            <jhi-message-editor-tools
-                [controlsVisible]="toolbarExpanded()"
-                [courseId]="courseId()"
-                [conversationId]="conversation()?.id"
-                [editorRevision]="editorRevision()"
-                [draftIdentity]="draftIdentity()"
-                [captureSelection]="captureEntitySelection"
-                (insert)="insertResource($event)"
-                (uploadingChange)="uploadStateChanged($event)"
-                (closed)="focus()"
-            />
         </div>
+        <jhi-message-editor-tools
+            [controlsVisible]="toolbarExpanded()"
+            [courseId]="courseId()"
+            [conversationId]="conversation()?.id"
+            [editorRevision]="editorRevision()"
+            [draftIdentity]="draftIdentity()"
+            [captureSelection]="captureEntitySelection"
+            (insert)="insertResource($event)"
+            (uploadingChange)="uploadStateChanged($event)"
+            (closed)="focus()"
+        />
     </div>
 
     @if (linkOpen()) {

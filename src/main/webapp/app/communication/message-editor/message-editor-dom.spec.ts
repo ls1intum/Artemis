@@ -22,6 +22,98 @@ describe('Message editor editing transactions', () => {
     });
     afterEach(() => root.remove());
 
+    it('converts a typed list marker on a soft line and keeps undo, redo and following text', () => {
+        editor.load('Introduction');
+        select(root.querySelector('p')!.firstChild!, 12);
+        editor.insertText('\n-');
+        expect(editor.convertTypedListMarker(' ')).toBe(true);
+        editor.insertText('Item');
+        expect(root.querySelector('ul > li')?.textContent).toBe('Item');
+        expect(changed).toHaveBeenLastCalledWith('Introduction\n\n- Item');
+        editor.undo();
+        editor.undo();
+        expect(root.querySelector('ul')).toBeNull();
+        expect(root.textContent).toBe('Introduction-');
+        editor.redo();
+        editor.redo();
+        expect(root.querySelector('ul > li')?.textContent).toBe('Item');
+    });
+
+    it.each(['`-`', '```\n-\n```', '> \\-'])('keeps a marker literal inside %s', (message) => {
+        editor.load(message);
+        const text = root.querySelector('code, p')!.firstChild!;
+        select(text, text.textContent!.length);
+        changed.mockClear();
+
+        expect(editor.convertTypedListMarker(' ')).toBe(false);
+        expect(changed).not.toHaveBeenCalled();
+    });
+
+    it('does not turn a protected reference labelled as a marker into a list', () => {
+        editor.load('[user]-(anna)[/user]');
+        const reference = root.querySelector('[data-message-reference]')!;
+        const range = document.createRange();
+        range.setStartAfter(reference);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        changed.mockClear();
+
+        expect(editor.convertTypedListMarker(' ')).toBe(false);
+        expect(root.querySelector('[data-message-reference]')).toBe(reference);
+        expect(changed).not.toHaveBeenCalled();
+    });
+
+    it('keeps pasted markers and mid-line punctuation literal', () => {
+        editor.load('');
+        editor.insertText('- pasted');
+        expect(root.querySelector('ul')).toBeNull();
+        expect(changed).toHaveBeenLastCalledWith('\\- pasted');
+        editor.insertText(' -');
+        expect(editor.convertTypedListMarker(' ')).toBe(false);
+        expect(root.querySelector('ul')).toBeNull();
+    });
+
+    it.each(['code', 'quote'])('writes normal text around a %s block and preserves undo', (kind) => {
+        editor.load(kind === 'code' ? '```\ninside\n```' : '> inside');
+        const block = root.querySelector(kind === 'code' ? 'pre' : 'blockquote')!;
+        const range = document.createRange();
+        range.selectNodeContents(block);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        expect(editor.leaveBlock('ArrowUp')).toBe(true);
+        editor.insertText('Before');
+        range.selectNodeContents(block);
+        range.collapse(false);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        editor.insertText('\n');
+        expect(editor.leaveBlock('Enter')).toBe(true);
+        editor.insertText('After');
+
+        expect(block.textContent).toBe('inside');
+        expect(root.firstElementChild?.textContent).toBe('Before');
+        expect(root.lastElementChild?.textContent).toBe('After');
+        editor.undo();
+        editor.undo();
+        expect(root.lastElementChild?.matches(kind === 'code' ? 'pre' : 'blockquote')).toBe(true);
+        editor.redo();
+        editor.redo();
+        expect(root.lastElementChild?.textContent).toBe('After');
+    });
+
+    it('does not exit a formatted block from its middle or with a range selected', () => {
+        editor.load('```\ninside\n```');
+        const text = root.querySelector('code')!.firstChild!;
+        select(text, 2);
+        expect(editor.leaveBlock('ArrowUp')).toBe(false);
+        expect(editor.leaveBlock('ArrowDown')).toBe(false);
+        expect(editor.leaveBlock('Enter')).toBe(false);
+        select(text, 0, 6);
+        expect(editor.leaveBlock('ArrowDown')).toBe(false);
+    });
+
     it('formats the selected text and undoes/redoes the transaction', () => {
         editor.load('Hello world');
         select(root.querySelector('p')!.firstChild!, 6, 11);

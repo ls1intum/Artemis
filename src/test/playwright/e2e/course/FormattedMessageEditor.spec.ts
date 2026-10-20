@@ -491,6 +491,39 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         await expect(postContent(page, saved.id!)).toContainText('// done tail');
     });
 
+    for (const kind of ['pre', 'blockquote']) {
+        test(`writes normal text before and after a ${kind} without losing its formatting`, async ({ page, composer }) => {
+            const { editor } = composer;
+            await editor.pressSequentially('inside');
+            await page.getByTestId(`message-block-${kind}`).click();
+            await selectText(editor, 0, 0);
+            await editor.press('ArrowUp');
+            await page.keyboard.type('Before');
+            await selectText(editor, 12, 12);
+            await editor.press('Enter');
+            await editor.press('Enter');
+            await page.keyboard.type('After');
+            await expect(editor.locator(kind)).toHaveText('inside');
+            await expect(editor.locator(':scope > p')).toHaveText(['Before', 'After']);
+            const saved = await send(page, composer);
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator(kind)).toHaveText('inside');
+            await expect(reopened.editor.locator(':scope > p')).toHaveText(['Before', 'After']);
+        });
+    }
+
+    test('saves a bare hostname as an external HTTPS link', async ({ page, composer }) => {
+        await composer.editor.pressSequentially('Guide');
+        await selectText(composer.editor, 0, 5, 'Guide');
+        await page.getByTestId('message-link-button').click();
+        await page.getByTestId('message-link-url').fill('example.org/path');
+        await page.getByTestId('apply-message-link').click();
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('[Guide](https://example.org/path)');
+        const reopened = await reopen(page, saved);
+        await expect(reopened.editor.locator('a')).toHaveAttribute('href', 'https://example.org/path');
+    });
+
     test('changing quote formatting retains a native soft line break and typed suffix', async ({ page, composer }) => {
         const { editor } = composer;
         await editor.pressSequentially('quoted');
@@ -1379,6 +1412,40 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         }
     });
 
+    for (const state of ['populated', 'loading']) {
+        test(`Shift+Enter inserts a line break while mention suggestions are ${state}`, async ({ page, composer }) => {
+            const query = studentOne.username;
+            let release = () => {};
+            if (state === 'loading') {
+                const gate = new Promise<void>((resolve) => (release = resolve));
+                await page.route(
+                    (url) => url.pathname === `/api/course/courses/${composer.course.id}/members/search` && url.searchParams.get('loginOrName') === query,
+                    async (route) => {
+                        const response = await route.fetch();
+                        await gate;
+                        await route.fulfill({ response });
+                    },
+                );
+            }
+            try {
+                await composer.editor.pressSequentially(`@${query}`);
+                const suggestions = page.getByTestId('message-completion-list');
+                await expect(suggestions).toBeVisible();
+                if (state === 'populated') {
+                    await expect(suggestions.getByRole('option')).not.toHaveCount(0);
+                }
+                await composer.editor.press('Shift+Enter');
+                await expect(suggestions).toBeHidden();
+                release();
+                await composer.editor.pressSequentially('next');
+                const saved = await send(page, composer);
+                expect(saved.content).toBe(`@${query.replaceAll('_', '\\_')}\nnext`);
+            } finally {
+                release();
+            }
+        });
+    }
+
     test('an empty dirty draft keeps a neutral border after native blur while sending stays disabled', async ({ page, composer }) => {
         const { editor } = composer;
         const host = page.locator('jhi-posting-markdown-editor').filter({ has: editor });
@@ -1433,11 +1500,20 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
             await expect(toggle).toHaveAttribute('aria-expanded', 'false');
             await expect(toggle).toHaveAccessibleName('More options');
             await expect(advanced).toBeHidden();
-            for (const id of ['message-format-strong', 'message-format-em', 'message-link-button', 'message-mention-button', 'message-reference-button']) {
+            for (const id of [
+                'message-format-strong',
+                'message-format-em',
+                'message-format-ins',
+                'message-format-s',
+                'message-format-code',
+                'message-link-button',
+                'message-mention-button',
+                'message-reference-button',
+                'message-emoji-button',
+            ]) {
                 await expect(host.getByTestId(id)).toBeVisible();
                 await expectWithinViewport(host.getByTestId(id), ['left', 'right'], { name: id });
             }
-            await expect(host.getByTestId('message-format-ins')).toBeHidden();
             await expect(host.getByTestId('message-attachment-button')).toBeHidden();
             await toggle.click();
             await expect(toggle).toHaveAttribute('aria-expanded', 'true');
@@ -1460,12 +1536,12 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
                 await expectWithinViewport(host.getByTestId(id), ['left', 'right'], { name: id });
             }
             if (viewport.width === 1728) {
-                await expectAligned([host.getByTestId('message-format-strong'), ...(await advanced.getByRole('button').all())], 'top', {
+                await expectAligned(await host.getByTestId('message-editor-toolbar').getByRole('button').all(), 'top', {
                     name: 'all expanded formatting and resource controls share the basic toolbar row when space permits',
                 });
             }
             if (viewport.width === 480) {
-                await expectBelow([host.getByTestId('message-format-ins'), host.getByTestId('message-emoji-button')], toggle, {
+                await expectBelow([host.getByTestId('message-block-ul'), host.getByTestId('message-attachment-button')], toggle, {
                     name: 'expanded controls wrap below the basic toolbar on a narrow screen',
                 });
             }
@@ -1477,6 +1553,45 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
             await expectNoHorizontalScrollAround(host, { name: 'compact message composer' });
         });
     });
+
+    test('keeps the toolbar toggle clickable beneath a hoverable quote tooltip', async ({ page, composer }) => {
+        await page.setViewportSize({ width: 1024, height: 768 });
+        const toggle = page.getByTestId('message-toolbar-toggle');
+        await toggle.click();
+        await page.getByTestId('message-block-blockquote').hover();
+        await expect(page.getByRole('tooltip', { name: 'Quote', exact: true })).toBeVisible();
+
+        await toggle.click();
+
+        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        await expect(page.getByTestId('message-advanced-toolbar')).toBeHidden();
+        await expect(composer.editor).toBeEditable();
+    });
+
+    test('reveals block formatting on a text selection while emoji stays available in compact mode', async ({ page, composer }) => {
+        const toggle = page.getByTestId('message-toolbar-toggle');
+        await expect(page.getByTestId('message-emoji-button')).toBeVisible();
+        await composer.editor.pressSequentially('Selected words');
+        await selectText(composer.editor, 0, 8, 'Selected');
+        await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+        await expect(page.getByTestId('message-block-ul')).toBeVisible();
+        await toggle.click();
+        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        await page.getByTestId('message-format-ins').click();
+        await expect(composer.editor.locator('ins')).toHaveText('Selected');
+    });
+
+    for (const marker of ['-', '*', '+', '1.', '1)']) {
+        test(`converts a typed ${marker} marker to a list and preserves it through send and reopen`, async ({ page, composer }) => {
+            await composer.editor.pressSequentially(`${marker} Item`);
+            const list = marker.startsWith('1') ? 'ol' : 'ul';
+            await expect(composer.editor.locator(`${list} > li`)).toHaveText('Item');
+            const saved = await send(page, composer);
+            expect(saved.content).toBe(marker.startsWith('1') ? '1. Item' : '- Item');
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator(`${list} > li`)).toHaveText('Item');
+        });
+    }
 
     test('preserves a native range and caret through toolbar toggles and formats the selected text', async ({ page, composer }) => {
         const { editor } = composer;
@@ -1553,7 +1668,6 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
                 await expect(host.getByRole('status')).toHaveText('Uploading attachments…');
                 await expect(toggle).toHaveAttribute('aria-expanded', 'false');
                 await expect(host.getByTestId('message-attachment-button')).toBeHidden();
-                await expect(host.getByTestId('message-format-ins')).toBeHidden();
                 await expect(sendButton).toBeDisabled();
                 release();
                 await expect(host.getByRole('alert')).toBeVisible();
@@ -1570,14 +1684,14 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
         });
     }
 
-    test('keeps hidden formatting shortcuts available while advanced controls stay collapsed', async ({ page, composer }) => {
+    test('keeps formatting shortcuts available in compact mode', async ({ page, composer }) => {
         const { editor } = composer;
-        await editor.pressSequentially('underlined');
-        await selectText(editor, 0, 10, 'underlined');
+        await editor.focus();
         await page.keyboard.press('ControlOrMeta+u');
+        await editor.pressSequentially('underlined');
         await expect(editor.locator('ins')).toHaveText('underlined');
         await expect(page.getByTestId('message-toolbar-toggle')).toHaveAttribute('aria-expanded', 'false');
-        await expect(page.getByTestId('message-format-ins')).toBeHidden();
+        await expect(page.getByTestId('message-format-ins')).toBeVisible();
         expect((await send(page, composer)).content).toBe('<ins>underlined</ins>');
     });
 });

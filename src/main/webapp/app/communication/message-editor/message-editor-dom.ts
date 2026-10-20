@@ -290,6 +290,89 @@ export class MessageEditorDom {
         });
     }
 
+    /** Converts a leading marker plus a typed space into a list as one undoable edit; pasted text stays literal. */
+    convertTypedListMarker(text: string): boolean {
+        if (text !== ' ') return false;
+        const range = this.range();
+        const parent = this.parentElement(range.startContainer);
+        if (!range.collapsed || parent?.closest('pre, code, a, li, blockquote, [data-message-reference]')) return false;
+        const paragraph = parent?.closest('p, div') ?? this.element;
+        const prefix = range.cloneRange();
+        prefix.selectNodeContents(paragraph);
+        prefix.setEnd(range.startContainer, range.startOffset);
+        const previousBreak = Array.from(paragraph.querySelectorAll('br:not([data-message-placeholder])')).findLast((lineBreak) => prefix.intersectsNode(lineBreak));
+        if (previousBreak) prefix.setStartAfter(previousBreak);
+        if (prefix.cloneContents().querySelector('code, a, [data-message-reference]')) return false;
+        const marker = prefix.toString();
+        if (!/^([-*+]|1[.)])$/.test(marker)) return false;
+        this.transact(() => {
+            prefix.deleteContents();
+            prefix.collapse(true);
+            this.select(prefix);
+            this.select(formatMessageBlocks(this.element, prefix, marker.startsWith('1') ? 'ol' : 'ul'));
+        });
+        return true;
+    }
+
+    /** Leaves a code block or quote at its edge, or on Enter after an empty final line, preserving the formatted block. */
+    leaveBlock(key: 'ArrowUp' | 'ArrowDown' | 'Enter'): boolean {
+        const range = this.range();
+        const parent = this.parentElement(range.startContainer);
+        const block = parent?.closest('pre, blockquote');
+        if (!range.collapsed || !block) return false;
+        const prefix = range.cloneRange();
+        prefix.selectNodeContents(block);
+        prefix.setEnd(range.startContainer, range.startOffset);
+        const suffix = range.cloneRange();
+        suffix.selectNodeContents(block);
+        suffix.setStart(range.endContainer, range.endOffset);
+        const before = this.rangeText(prefix);
+        const after = this.rangeText(suffix);
+        const above = key === 'ArrowUp';
+        const line = parent?.closest('p, div');
+        const emptyLine = line && line !== block && block.contains(line) && !line.textContent?.trim() && !line.querySelector('img, [data-message-reference]');
+        const remaining = above ? before : after;
+        if ((remaining && !(emptyLine && !remaining.trim())) || (key === 'Enter' && before && !before.endsWith('\n') && !emptyLine)) return false;
+        this.transact(() => {
+            if (key === 'Enter') {
+                if (emptyLine) {
+                    line.remove();
+                } else if (before.endsWith('\n')) {
+                    if (range.startContainer instanceof Text && range.startContainer.data[range.startOffset - 1] === '\n') {
+                        range.startContainer.deleteData(range.startOffset - 1, 1);
+                    } else {
+                        Array.from(block.querySelectorAll('br:not([data-message-placeholder])'))
+                            .findLast((lineBreak) => prefix.intersectsNode(lineBreak))
+                            ?.remove();
+                    }
+                }
+            }
+            let target = above ? block.previousElementSibling : block.nextElementSibling;
+            const reuseParagraph = target?.matches('p, div');
+            if (!target || !reuseParagraph) {
+                target = this.element.ownerDocument.createElement('p');
+                const placeholder = this.element.ownerDocument.createElement('br');
+                placeholder.setAttribute('data-message-placeholder', '');
+                target.append(placeholder);
+                block.insertAdjacentElement(above ? 'beforebegin' : 'afterend', target);
+            }
+            this.typingMarks = undefined;
+            const caret = this.element.ownerDocument.createRange();
+            caret.selectNodeContents(target);
+            caret.collapse(!above || !reuseParagraph);
+            this.select(caret);
+        });
+        return true;
+    }
+
+    private rangeText(range: Range): string {
+        const content = range.cloneContents();
+        content
+            .querySelectorAll('br')
+            .forEach((lineBreak) => lineBreak.replaceWith(this.element.ownerDocument.createTextNode(lineBreak.hasAttribute('data-message-placeholder') ? '' : '\n')));
+        return (content.textContent ?? '').replace(/\u200b/g, '');
+    }
+
     /** Inserts sanitized message content at the supplied or remembered range, retaining a trailing completion space. */
     insertMarkdown(message: string, range?: Range): void {
         this.typingMarks = undefined;

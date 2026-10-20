@@ -46,21 +46,7 @@
         >
             <fa-icon [icon]="icons.faFileCircleQuestion" />
         </button>
-        <button
-            type="button"
-            tumAetUiButton
-            variant="text"
-            severity="secondary"
-            size="small"
-            data-testid="message-emoji-button"
-            [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
-            tumAetUiTooltipDescribesHost="false"
-            [attr.aria-label]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
-            (mousedown)="remember($event)"
-            (click)="open('emoji')"
-        >
-            <fa-icon [icon]="icons.faFaceSmile" />
-        </button>
+
         <input
             #fileInput
             [attr.aria-label]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
@@ -73,6 +59,21 @@
             data-testid="message-file-input"
         />
     </div>
+    <button
+        type="button"
+        tumAetUiButton
+        variant="text"
+        severity="secondary"
+        size="small"
+        data-testid="message-emoji-button"
+        [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
+        tumAetUiTooltipDescribesHost="false"
+        [attr.aria-label]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
+        (mousedown)="remember($event)"
+        (click)="open('emoji')"
+    >
+        <fa-icon [icon]="icons.faFaceSmile" />
+    </button>
     @if (uploading()) {
         <span role="status" class="message-editor-muted text-xs">{{ 'artemisApp.communication.formattedEditor.uploading' | artemisTranslate }}</span>
     }

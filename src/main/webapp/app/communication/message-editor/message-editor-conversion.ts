@@ -215,6 +215,12 @@ export function editorToMessage(element: HTMLElement): string {
 }
 
 /** Accepts web, mail and relative Artemis links while rejecting executable schemes. */
+/** Treat bare external hostnames as HTTPS while retaining explicitly relative Artemis links. */
+export function normalizeMessageLink(value: string): string {
+    const trimmed = value.trim();
+    return /^(?:[\p{L}\p{N}-]+\.)+[\p{L}\p{N}-]+(?::\d+)?(?:[/?#]|$)/u.test(trimmed) ? `https://${trimmed}` : trimmed;
+}
+
 export function isMessageLinkSafe(value: string): boolean {
     if (!value.trim() || Array.from(value).some((character) => character.charCodeAt(0) <= 32)) {
         return false;

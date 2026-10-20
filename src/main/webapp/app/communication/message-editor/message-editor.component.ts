@@ -23,7 +23,7 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { MessageCompletion, MessageEditorDom } from './message-editor-dom';
 import { MessageEditorSuggestions, MessageSuggestion } from './message-editor-suggestions';
 import { revealMessageEditorOption } from './message-editor-scroll';
-import { isMessageLinkSafe } from './message-editor-conversion';
+import { isMessageLinkSafe, normalizeMessageLink } from './message-editor-conversion';
 import { MessageEditorToolsComponent, MessageResourceInsertion } from './message-editor-tools.component';
 
 @Component({
@@ -80,8 +80,6 @@ export class MessageEditorComponent {
     protected readonly basicFormats = [
         { tag: 'strong' as const, icon: faBold, label: 'bold' },
         { tag: 'em' as const, icon: faItalic, label: 'italic' },
-    ];
-    protected readonly advancedFormats = [
         { tag: 'ins' as const, icon: faUnderline, label: 'underline' },
         { tag: 's' as const, icon: faStrikethrough, label: 'strikethrough' },
         { tag: 'code' as const, icon: faCode, label: 'inlineCode' },
@@ -110,6 +108,7 @@ export class MessageEditorComponent {
     private composing = false;
     private existingLink?: HTMLAnchorElement;
     private linkSelection?: Range;
+    private disclosedSelection?: Range;
 
     constructor() {
         afterRenderEffect(() => {
@@ -141,6 +140,7 @@ export class MessageEditorComponent {
             if (changedContext) {
                 this.lastContext = context;
                 this.toolbarExpanded.set(false);
+                this.disclosedSelection = undefined;
                 this.dismissSuggestions();
             }
             if (element) {
@@ -211,6 +211,9 @@ export class MessageEditorComponent {
             } else {
                 this.editor?.redo();
             }
+        } else if (!this.composing && event.inputType === 'insertText' && event.cancelable && this.editor?.convertTypedListMarker(event.data ?? '')) {
+            event.preventDefault();
+            this.scheduleSuggestions();
         } else if (!this.composing && event.inputType === 'insertText' && event.data !== null && event.cancelable && this.editor?.needsManagedTextInsertion()) {
             // WebKit can normalize a valid caret to before the preceding line break during native insertion.
             event.preventDefault();
@@ -248,6 +251,13 @@ export class MessageEditorComponent {
         // Safari may confirm a candidate after compositionend with keyCode 229 and isComposing=false.
         if (event.isComposing || this.composing || event.keyCode === 229) {
             event.stopPropagation();
+            return;
+        }
+        if (event.key === 'Enter' && event.shiftKey) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.dismissSuggestions();
+            this.editor?.insertText('\n');
             return;
         }
         const command = event.ctrlKey || event.metaKey;
@@ -313,6 +323,11 @@ export class MessageEditorComponent {
             // A changed query invalidates the old rows immediately, before the debounce elapses.
             this.dismissSuggestions();
         }
+        if (!command && !event.shiftKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'Enter') && this.editor?.leaveBlock(event.key)) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
         if (event.key === 'Backspace' || event.key === 'Delete') {
             if ((event.key === 'Backspace' && this.editor?.exitEmptyList()) || this.editor?.deleteItem(event.key === 'Backspace')) {
                 event.preventDefault();
@@ -322,11 +337,7 @@ export class MessageEditorComponent {
             const selection = window.getSelection();
             const node = selection?.anchorNode;
             const parent = node instanceof HTMLElement ? node : node?.parentElement;
-            if (event.shiftKey) {
-                event.preventDefault();
-                event.stopPropagation();
-                this.editor?.insertText('\n');
-            } else if (parent?.closest('pre')) {
+            if (parent?.closest('pre')) {
                 event.preventDefault();
                 event.stopPropagation();
                 this.editor?.insertText('\n');
@@ -503,7 +514,7 @@ export class MessageEditorComponent {
         event?.stopPropagation();
         if (event instanceof KeyboardEvent && (this.linkComposing() || event.isComposing || event.keyCode === 229)) return;
         event?.preventDefault();
-        const url = this.linkUrl().trim();
+        const url = normalizeMessageLink(this.linkUrl());
         if (!isMessageLinkSafe(url)) {
             this.linkInvalid.set(true);
             return;
@@ -535,6 +546,22 @@ export class MessageEditorComponent {
         const element = this.editable()?.nativeElement;
         const selection = element?.ownerDocument.getSelection();
         if (selection?.anchorNode && element?.contains(selection.anchorNode)) {
+            const range = selection.rangeCount ? selection.getRangeAt(0) : undefined;
+            if (range && !range.collapsed) {
+                const previous = this.disclosedSelection;
+                if (
+                    !previous ||
+                    previous.startContainer !== range.startContainer ||
+                    previous.startOffset !== range.startOffset ||
+                    previous.endContainer !== range.endContainer ||
+                    previous.endOffset !== range.endOffset
+                ) {
+                    this.toolbarExpanded.set(true);
+                    this.disclosedSelection = range.cloneRange();
+                }
+            } else {
+                this.disclosedSelection = undefined;
+            }
             if (this.linkOpen() && element.ownerDocument.activeElement === element && this.linkSelection && selection.rangeCount) {
                 const range = selection.getRangeAt(0);
                 if (
