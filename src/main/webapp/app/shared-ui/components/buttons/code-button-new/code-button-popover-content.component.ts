@@ -28,6 +28,7 @@ export type AuthenticationMethodData =
     | { authenticationMethod: RepositoryAuthenticationMethod.SSH; url: string; sshKeyState: SshKeyState }
     | { authenticationMethod: RepositoryAuthenticationMethod.Token; url: string }
     | { authenticationMethod: RepositoryAuthenticationMethod.Password; url: string };
+type LabeledAuthenticationMethodData = { authenticationMethodData: AuthenticationMethodData; label: string };
 type IdeLinkData = { url: SafeUrl; name: string };
 export type TheiaLinkData = { theiaPortalURL: string; theiaImage: string; repositoryUrl: string; userName: string; userEmail: string };
 
@@ -71,18 +72,17 @@ export class CodeButtonPopoverContentComponent {
     readonly theiaLinkData = input<TheiaLinkData>();
     readonly showAlternatives = model.required<boolean>();
     protected readonly copiedRepositoryUrl = signal(false);
-    protected readonly selectedAuthenticationMethodData = linkedSignal(() => this.initializeSelectedAuthenticationMethodData());
-    protected readonly selectedAuthenticationMethodLabel = computed(() => this.getAuthenticationMechanismLabel(this.selectedAuthenticationMethodData().authenticationMethod));
-    protected readonly authenticationMethodDataAndLabels = computed(() => this.getAuthenticationMechanismsWithLabels());
+    protected readonly labeledAuthenticationMethodData = computed(() => this.getLabeledAuthenticationMethodData());
+    protected readonly selectedLabeledAuthenticationMethodData = linkedSignal(() => this.initializeSelectedLabeledAuthenticationMethodData());
     protected readonly tokenAuthenticationAvailable = computed(() => this.isTokenAuthenticationAvailable());
     protected readonly repositoryDisplayUrl = computed(() => this.getRepositoryDisplayUrl());
-    protected readonly repositoryCopyUrl = computed(() => this.selectedAuthenticationMethodData().url);
+    protected readonly repositoryCopyUrl = computed(() => this.selectedLabeledAuthenticationMethodData().authenticationMethodData.url);
     protected readonly ideLinkData = computed(() => this.getIdeLinkData());
     protected readonly sourceTreeUrl = computed(() => this.getSourceTreeUrl());
 
-    protected selectAuthenticationMethod(authenticationMethodData: AuthenticationMethodData) {
-        this.selectedAuthenticationMethodData.set(authenticationMethodData);
-        this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', authenticationMethodData.authenticationMethod);
+    protected selectAuthenticationMethod(labeledAuthenticationMethodData: LabeledAuthenticationMethodData) {
+        this.selectedLabeledAuthenticationMethodData.set(labeledAuthenticationMethodData);
+        this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', labeledAuthenticationMethodData.authenticationMethodData.authenticationMethod);
     }
 
     protected onRepositoryUrlCopied(successful: boolean): void {
@@ -103,20 +103,29 @@ export class CodeButtonPopoverContentComponent {
         );
     }
 
-    private initializeSelectedAuthenticationMethodData(): AuthenticationMethodData {
-        const authenticationMethodData = this.authenticationMethodData();
+    private initializeSelectedLabeledAuthenticationMethodData(): LabeledAuthenticationMethodData {
+        const labeledAuthenticationMethodData = this.labeledAuthenticationMethodData();
         let initialAuthenticationMethod = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
         if (initialAuthenticationMethod === RepositoryAuthenticationMethod.Password) {
             initialAuthenticationMethod = RepositoryAuthenticationMethod.Token;
         }
-        return authenticationMethodData.find((data) => data.authenticationMethod === initialAuthenticationMethod) ?? authenticationMethodData[0];
+        return (
+            labeledAuthenticationMethodData.find((data) => data.authenticationMethodData.authenticationMethod === initialAuthenticationMethod) ?? labeledAuthenticationMethodData[0]
+        );
     }
 
-    private getAuthenticationMechanismsWithLabels() {
-        return this.authenticationMethodData().map((authenticationMethodData) => ({
-            authenticationMethodData,
-            label: this.getAuthenticationMechanismLabel(authenticationMethodData.authenticationMethod),
-        }));
+    private getLabeledAuthenticationMethodData(): NonEmptyArray<LabeledAuthenticationMethodData> {
+        const [firstAuthenticationMethodData, ...remainingAuthenticationMethodData] = this.authenticationMethodData();
+        return [
+            {
+                authenticationMethodData: firstAuthenticationMethodData,
+                label: this.getAuthenticationMechanismLabel(firstAuthenticationMethodData.authenticationMethod),
+            },
+            ...remainingAuthenticationMethodData.map((authenticationMethodData) => ({
+                authenticationMethodData,
+                label: this.getAuthenticationMechanismLabel(authenticationMethodData.authenticationMethod),
+            })),
+        ];
     }
 
     private isTokenAuthenticationAvailable(): boolean {
@@ -133,7 +142,7 @@ export class CodeButtonPopoverContentComponent {
      * URLs for other authentication methods are returned unchanged.
      */
     private getRepositoryDisplayUrl(): string {
-        const authenticationMethodData = this.selectedAuthenticationMethodData();
+        const authenticationMethodData = this.selectedLabeledAuthenticationMethodData().authenticationMethodData;
         if (authenticationMethodData.authenticationMethod !== RepositoryAuthenticationMethod.Token) {
             return authenticationMethodData.url;
         }
@@ -143,7 +152,7 @@ export class CodeButtonPopoverContentComponent {
     private getIdeLinkData(): IdeLinkData | undefined {
         const preferredIde = this.preferredIde();
 
-        const ideUrl = this.externalCloningService.buildIdeUrl(this.selectedAuthenticationMethodData().url, preferredIde);
+        const ideUrl = this.externalCloningService.buildIdeUrl(this.selectedLabeledAuthenticationMethodData().authenticationMethodData.url, preferredIde);
         if (!ideUrl) {
             return undefined;
         }
@@ -160,7 +169,7 @@ export class CodeButtonPopoverContentComponent {
 
     private getSourceTreeUrl(): SafeUrl | undefined {
         const versionControlUrl = this.profileService.getProfileInfo().versionControlUrl;
-        const selectedAuthenticationMethodData = this.selectedAuthenticationMethodData();
+        const selectedAuthenticationMethodData = this.selectedLabeledAuthenticationMethodData().authenticationMethodData;
         const sourceTreeUrl = this.externalCloningService.buildSourceTreeUrl(versionControlUrl, selectedAuthenticationMethodData.url);
         if (!sourceTreeUrl) {
             return undefined;

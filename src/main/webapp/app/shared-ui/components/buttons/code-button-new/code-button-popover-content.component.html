@@ -2,7 +2,8 @@
     <div class="flex flex-col gap-3 p-3!">
         <h5 class="m-0" jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
 
-        @let selectedMethodData = selectedAuthenticationMethodData();
+        @let selectedMethod = selectedLabeledAuthenticationMethodData();
+        @let selectedMethodData = selectedMethod.authenticationMethodData;
         @if (selectedMethodData.authenticationMethod === RepositoryAuthenticationMethod.SSH) {
             @let sshKeys = selectedMethodData.sshKeyState;
             @if (sshKeys.status === 'missing') {
@@ -36,7 +37,7 @@
                     class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-3 text-(--tumaet-ui-primary-contrast-color)"
                     [tumAetUiMenuTrigger]="authenticationMenu"
                 >
-                    {{ selectedAuthenticationMethodLabel() }}
+                    {{ selectedMethod.label }}
                     <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
                 </button>
 
@@ -150,10 +151,9 @@
 
 <ng-template #authenticationMenu>
     <tumaet-ui-menu>
-        @for (item of authenticationMethodDataAndLabels(); track item.authenticationMethodData.authenticationMethod) {
-            @let authenticationMethodData = item.authenticationMethodData;
+        @for (item of labeledAuthenticationMethodData(); track item.authenticationMethodData.authenticationMethod) {
             @let label = item.label;
-            <button type="button" tumAetUiMenuItem (triggered)="selectAuthenticationMethod(authenticationMethodData)">
+            <button type="button" tumAetUiMenuItem (triggered)="selectAuthenticationMethod(item)">
                 {{ label }}
             </button>
         }
