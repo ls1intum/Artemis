@@ -530,7 +530,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
                 await communicationAPIRequests.createCourseMessageReply(
                     course!,
                     forwarded,
-                    `Tutorial follow-up ${index + 1}: how does the invariant constrain the implementation?`,
+                    `Tutorial follow-up ${index + 1}: how does the invariant constrain the implementation?\n\nExplain which preconditions the caller must establish and which postconditions the method guarantees.`,
                 );
             }
             await courseMessages.openThreadForMessage(forwarded.id!);
