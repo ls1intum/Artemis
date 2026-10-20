@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * repeat across lectures, and a row does not name its lecture.</li>
  * <li>With a query, the channel Artemis creates for an exercise, lecture or exam is placed directly behind that item.</li>
  * </ul>
+ * Before ranking, {@link #withoutChannelsNotNamedBy} drops the channels whose name does not contain the query.
  */
 public final class GlobalSearchResultRanker {
 
@@ -59,6 +60,31 @@ public final class GlobalSearchResultRanker {
 
     private GlobalSearchResultRanker() {
         // utility class
+    }
+
+    /**
+     * Drops the channel rows whose name does not contain the query. Weaviate also finds a row by meaning, so a query that
+     * only fits the description of a lecture found the lecture's channel, although the reader typed nothing of its name.
+     * <p>
+     * The query is split into parts the way Artemis turns a title into a channel name, and every part must occur in the
+     * name. Without a query (browsing a filter), every row stays.
+     *
+     * @param rows  the rows Weaviate returned
+     * @param query the search query, may be null or blank
+     * @return the rows in the same order, without the channels the query does not name
+     */
+    public static List<Map<String, Object>> withoutChannelsNotNamedBy(List<Map<String, Object>> rows, @Nullable String query) {
+        if (query == null || query.isBlank()) {
+            return rows;
+        }
+        List<String> queryParts = NOT_IN_CHANNEL_NAMES.splitAsStream(normalizeCase(query)).filter(part -> !part.isEmpty()).toList();
+        return rows.stream().filter(
+                row -> !SearchableEntitySchema.TypeValues.CHANNEL.equals(row.get(SearchableEntitySchema.Properties.TYPE)) || isNamedBy(normalizeCase(titleOf(row)), queryParts))
+                .toList();
+    }
+
+    private static boolean isNamedBy(String channelName, List<String> queryParts) {
+        return !queryParts.isEmpty() && queryParts.stream().allMatch(channelName::contains);
     }
 
     /**

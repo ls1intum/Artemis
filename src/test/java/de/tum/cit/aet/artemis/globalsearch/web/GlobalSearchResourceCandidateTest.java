@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityAccessFilterService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 
@@ -89,6 +90,36 @@ class GlobalSearchResourceCandidateTest {
         verify(weaviateService, org.mockito.Mockito.never()).searchSearchableEntities(eq("sorting"), any(), eq(100));
     }
 
+    @Test
+    void returnsOnlyTheChannelsWhoseNameContainsTheQuery() {
+        var lecture = row(1L, "Graph Algorithms");
+        var unnamedChannel = channelRow(1L, 11L, "lecture-graph-algorithms");
+        var namedChannel = channelRow(1L, 12L, "dijkstra-questions");
+        when(weaviateService.searchSearchableEntities(eq("dijkstra"), any(), eq(40))).thenReturn(List.of(lecture, unnamedChannel, namedChannel));
+
+        var response = resource.globalSearch("dijkstra", null, null, null, null, 10, null);
+
+        assertThat(response.getBody()).extracting(GlobalSearchResultDTO::title).containsExactly("Graph Algorithms", "dijkstra-questions");
+    }
+
+    @Test
+    void readsMoreCandidatesWhenDroppingChannelsShrankACutOffList() {
+        List<Map<String, Object>> unnamedChannels = new ArrayList<>();
+        for (int channel = 0; channel < 40; channel++) {
+            unnamedChannels.add(channelRow(1L, channel, "lecture-graphs-" + channel));
+        }
+        List<Map<String, Object>> moreRows = new ArrayList<>(unnamedChannels);
+        moreRows.add(row(1L, "Dijkstra"));
+        moreRows.add(channelRow(1L, 99L, "lecture-dijkstra"));
+        when(weaviateService.searchSearchableEntities(eq("dijkstra"), any(), eq(40))).thenReturn(unnamedChannels);
+        when(weaviateService.searchSearchableEntities(eq("dijkstra"), any(), eq(100))).thenReturn(moreRows);
+
+        var response = resource.globalSearch("dijkstra", null, null, null, null, 10, null);
+
+        verify(weaviateService).searchSearchableEntities(eq("dijkstra"), any(), eq(100));
+        assertThat(response.getBody()).extracting(GlobalSearchResultDTO::title).containsExactly("Dijkstra", "lecture-dijkstra");
+    }
+
     private static Course course(long id, String title, int endInMonths) {
         var course = new Course();
         course.setId(id);
@@ -101,5 +132,10 @@ class GlobalSearchResourceCandidateTest {
     private static Map<String, Object> row(long courseId, String title) {
         return Map.of(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.LECTURE, SearchableEntitySchema.Properties.ENTITY_ID, (long) title.hashCode(),
                 SearchableEntitySchema.Properties.COURSE_ID, courseId, SearchableEntitySchema.Properties.TITLE, title);
+    }
+
+    private static Map<String, Object> channelRow(long courseId, long channelId, String name) {
+        return Map.of(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.Properties.ENTITY_ID, channelId,
+                SearchableEntitySchema.Properties.COURSE_ID, courseId, SearchableEntitySchema.Properties.TITLE, name);
     }
 }
