@@ -75,9 +75,14 @@ const serializer = new TurndownService({ bulletListMarker: '-', codeBlockStyle: 
 const underlineMarkdownStart = '<ins>';
 const underlineMarkdownEnd = '</ins>';
 const escapeMarkdown = serializer.escape.bind(serializer);
+// Turndown escapes "# ", "+ " and "1. " only when a space follows, but typed text that ends right after the marker still
+// starts a heading or a list (a lone "#" is an empty heading, which the editor cannot edit). Escape those markers too.
+const loneBlockMarker = /^(?:(#{1,6}|\+)$|(\d+)([.)])(?=$| ))/;
+const escapeBlockMarker = (text: string) =>
+    text.replace(loneBlockMarker, (_match, symbol?: string, digits?: string, delimiter?: string) => (symbol ? '\\' + symbol : `${digits}\\${delimiter}`));
 // Turndown first escapes backslashes and Markdown syntax. Keep those escape pairs intact while
 // adding the HTML, entity, strikethrough, and math escapes that its defaults omit.
-serializer.escape = (text) => escapeMarkdown(text).replace(/\\.|[<&~$]/gs, (token) => (token.length === 2 ? token : '\\' + token));
+serializer.escape = (text) => escapeBlockMarker(escapeMarkdown(text)).replace(/\\.|[<&~$]/gs, (token) => (token.length === 2 ? token : '\\' + token));
 serializer.addRule('message-reference', {
     filter: (node) => node.hasAttribute('data-message-reference'),
     replacement: (_content, node) => node.getAttribute('data-message-reference') ?? '',
@@ -95,6 +100,12 @@ serializer.addRule('message-strikethrough', {
 serializer.addRule('message-line-break', {
     filter: 'br',
     replacement: (_content, node) => (node.hasAttribute('data-message-placeholder') ? '' : '\n'),
+});
+serializer.addRule('message-inline-code', {
+    filter: (node) => node.nodeName === 'CODE' && node.parentNode?.nodeName !== 'PRE',
+    // A Markdown code span cannot contain a line break, and Turndown would merge the lines into one. Write one span per
+    // editor line instead, so the sent message shows the same separate lines as the editor.
+    replacement: (_content, node) => editorCodeText(node).split('\n').map(inlineCodeSpan).join('\n'),
 });
 serializer.addRule('message-code-block', {
     filter: 'pre',
@@ -114,6 +125,20 @@ serializer.addRule('message-list-item', {
         return marker + content.trim().replace(/\n/g, '\n' + ' '.repeat(marker.length)) + '\n';
     },
 });
+
+/** Mirrors Turndown's code span rule for a single line: pads backticks at the edges and lengthens the delimiter as needed. */
+function inlineCodeSpan(line: string): string {
+    if (!line) {
+        return '';
+    }
+    const padding = /^`|^ .*?[^ ].* $|`$/.test(line) ? ' ' : '';
+    const backtickRuns: string[] = line.match(/`+(?!`)/g) ?? [];
+    let delimiter = '`';
+    while (backtickRuns.includes(delimiter)) {
+        delimiter += '`';
+    }
+    return delimiter + padding + line + padding + delimiter;
+}
 
 function referenceHtml(source: string, label: string, type: string, imageSource?: string): string {
     const reference = document.createElement('span');

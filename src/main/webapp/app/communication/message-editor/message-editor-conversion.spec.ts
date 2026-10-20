@@ -308,6 +308,46 @@ describe('Message editor conversion', () => {
         expect(canEditMessageVisually(source)).toBe(true);
     });
 
+    it.each(['#', '###', '######', '+', '1.', '12)', '1) text'])('keeps typed block markers literal so the draft stays editable: %s', (typed) => {
+        const element = document.createElement('div');
+        element.innerHTML = `<p>${typed}</p>`;
+        const message = editorToMessage(element);
+
+        expect(message).toContain('\\');
+        expect(canEditMessageVisually(message)).toBe(true);
+        const reopened = document.createElement('div');
+        reopened.innerHTML = messageToEditorHtml(message);
+        expect(reopened.textContent).toBe(element.textContent);
+        expect(editorToMessage(reopened)).toBe(message);
+    });
+
+    it('keeps seven hashes and hashes inside a line as ordinary text', () => {
+        const element = document.createElement('div');
+        element.innerHTML = '<p>####### and a #tag</p>';
+        expect(editorToMessage(element)).toBe('####### and a #tag');
+        expect(canEditMessageVisually('####### and a #tag')).toBe(true);
+    });
+
+    it('writes one code span per editor line so inline code keeps its line breaks', () => {
+        const element = document.createElement('div');
+        element.innerHTML = '<p>Run <code>first<br>second</code> now</p>';
+        const message = editorToMessage(element);
+
+        expect(message).toBe('Run `first`\n`second` now');
+        expect(canEditMessageVisually(message)).toBe(true);
+        const reopened = document.createElement('div');
+        reopened.innerHTML = messageToEditorHtml(message);
+        expect(Array.from(reopened.querySelectorAll('code'), (code) => code.textContent)).toEqual(['first', 'second']);
+        expect(editorToMessage(reopened)).toBe(message);
+    });
+
+    it('serializes code spans with backticks, padding and caret placeholders like single-line code', () => {
+        const element = document.createElement('div');
+        element.innerHTML = '<p><code>a`b<br>`edge`<br data-message-placeholder="true"></code></p>';
+
+        expect(editorToMessage(element)).toBe('``a`b``\n`` `edge` ``');
+    });
+
     it('accepts supported formatting and literal code containing HTML', () => {
         expect(canEditMessageVisually('<ins>Text</ins> and `<span>`')).toBe(true);
     });
