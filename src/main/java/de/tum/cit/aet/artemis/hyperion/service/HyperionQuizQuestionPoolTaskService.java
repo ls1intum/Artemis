@@ -29,7 +29,7 @@ public class HyperionQuizQuestionPoolTaskService {
      * @param courseId the course whose pool to build; its build slot must already be held
      * @param userId   the user the token usage is attributed to; may be {@code null}
      */
-    @Async("hyperionQuizPoolTaskExecutor")
+    @Async("hyperionQuizQuestionPoolTaskExecutor")
     public void runBuildAsync(long courseId, @Nullable Long userId) {
         buildService.buildAndRelease(courseId, userId);
     }

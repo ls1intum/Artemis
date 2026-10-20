@@ -16,15 +16,15 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Configuration
 @Conditional(HyperionEnabled.class)
 @Lazy
-public class HyperionQuizPoolAsyncConfiguration {
+public class HyperionQuizQuestionPoolAsyncConfiguration {
 
     /**
      * Bounded pool for quiz question pool builds.
      *
      * @return the executor used by {@code HyperionQuizQuestionPoolTaskService.runBuildAsync}
      */
-    @Bean("hyperionQuizPoolTaskExecutor")
-    public ThreadPoolTaskExecutor hyperionQuizPoolTaskExecutor() {
+    @Bean("hyperionQuizQuestionPoolTaskExecutor")
+    public ThreadPoolTaskExecutor hyperionQuizQuestionPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(1);
         executor.setMaxPoolSize(2);

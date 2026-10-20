@@ -89,7 +89,7 @@ The settings are stored as a JSON payload in `hyperion_course_settings`, keyed b
 
 ### Build Loop
 
-A build is started from the pool page and runs on the dedicated `hyperionQuizPoolTaskExecutor`; the request returns `202 Accepted` at once, or `409 Conflict` while a build of the same course is running on the node. `HyperionQuizQuestionPoolBuildService.build` then works the pool to completion:
+A build is started from the pool page and runs on the dedicated `hyperionQuizQuestionPoolTaskExecutor`; the request returns `202 Accepted` at once, or `409 Conflict` while a build of the same course is running on the node. `HyperionQuizQuestionPoolBuildService.build` then works the pool to completion:
 
 1. Claims older than `stale-claim-minutes` are returned to their stable state, and items whose last attempt failed on a model call (`CALL_FAILED`) or an unusable verdict (`FILTER_UNUSABLE`) are revived with a fresh attempt budget.
 2. While there are generated items awaiting the filter, one is claimed and judged.
