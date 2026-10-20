@@ -231,7 +231,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
         userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), AiSelectionDecision.NO_AI);
 
         // No Athena mock is set up: the request must be rejected before any call to Athena is made.
@@ -249,7 +249,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
         userUtilService.clearAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
 
         // No Athena mock is set up: the request must be rejected before any call to Athena is made.
