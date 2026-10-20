@@ -150,7 +150,7 @@
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
                             [disabled]="isLoading()"
-                            [smallButtons]="smallButtons()"
+                            [size]="smallButtons() ? 'small' : 'default'"
                             [programmingLanguage]="programmingExercise()?.programmingLanguage"
                             [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
                             [exerciseId]="exercise().id!"
@@ -161,6 +161,7 @@
                         />
                         <jhi-code-button-new
                             [disabled]="isLoading()"
+                            [size]="smallButtons() ? 'small' : 'default'"
                             [exerciseId]="exercise().id!"
                             [repositoryUri]="repositoryUriForCodeButton()"
                             [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"

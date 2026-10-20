@@ -47,6 +47,8 @@ export enum RepositoryAuthenticationMethod {
     SSH = 'ssh',
 }
 
+export type CodeButtonSize = 'small' | 'default';
+
 export type VcsAccessTokenData =
     | { type: 'participation'; participationId: number; isOwnParticipation: boolean }
     | { type: 'student-repository'; participationId: number }
@@ -115,11 +117,11 @@ export class CodeButtonComponent implements OnInit {
     repositoryViewLink = input.required<(string | number)[]>();
     allowOnlineIde = input.required<boolean>();
     programmingLanguage = input<ProgrammingLanguage>();
+    disabled = input<boolean>(false);
 
     hideLabelMobile = input<boolean>(false);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
-    smallButtons = input.required<boolean>();
-    disabled = input<boolean>(false);
+    size = input<CodeButtonSize>('default');
 
     isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
     user = signal<User | undefined>(undefined);

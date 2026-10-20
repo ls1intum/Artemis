@@ -5,7 +5,7 @@ import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTrigg
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AuthenticationMethodData, CodeButtonPopoverContentComponent, NonEmptyArray, SshKeyState, TheiaLinkData } from './code-button-popover-content.component';
-import { RepositoryAuthenticationMethod, VcsAccessTokenData } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { type CodeButtonSize, RepositoryAuthenticationMethod, VcsAccessTokenData } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
@@ -53,6 +53,7 @@ export class CodeButtonNewComponent {
     readonly allowOnlineIde = input.required<boolean>();
     readonly programmingLanguage = input<ProgrammingLanguage>();
     readonly disabled = input(false);
+    readonly size = input<CodeButtonSize>('default');
 
     private readonly theiaDisabled = computed(() => !this.allowOnlineIde() || !this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA));
     protected readonly loadingState = computed(() => this.getLoadingState());

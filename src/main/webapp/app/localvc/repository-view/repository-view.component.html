@@ -44,7 +44,6 @@
                 @if (exercise()?.allowOfflineIde) {
                     <jhi-code-button
                         [disabled]="!!exercise()!.loading"
-                        [smallButtons]="false"
                         [programmingLanguage]="exercise()?.programmingLanguage"
                         [allowOnlineIde]="exercise()?.allowOnlineIde ?? false"
                         [exerciseId]="exercise().id!"

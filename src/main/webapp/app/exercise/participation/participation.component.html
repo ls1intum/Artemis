@@ -117,7 +117,7 @@
 <ng-template #repositoryCellTemplate let-cell>
     @if (cell.data.repositoryUri) {
         <jhi-code-button
-            [smallButtons]="true"
+            size="small"
             [allowOnlineIde]="false"
             [exerciseId]="exercise()!.id!"
             [repositoryViewLink]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"

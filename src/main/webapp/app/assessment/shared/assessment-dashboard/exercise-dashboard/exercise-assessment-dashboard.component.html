@@ -211,7 +211,7 @@
                         <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.exampleSolution"></h4>
                         <!-- The exercise ID is needed for the repository-scoped token, while the online IDE is intentionally disabled for the solution clone. -->
                         <jhi-code-button
-                            [smallButtons]="true"
+                            size="small"
                             [allowOnlineIde]="false"
                             [repositoryUri]="programmingExercise().solutionParticipation?.repositoryUri || ''"
                             [repositoryViewLink]="['/course-management', courseId(), 'programming-exercises', exerciseId(), 'repository', 'SOLUTION']"

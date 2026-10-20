@@ -147,6 +147,18 @@ describe('CodeButtonNewComponent', () => {
         expect(trigger.disabled).toBe(false);
     });
 
+    it.each([
+        { size: 'small', expectedClass: 'tumaet:text-sm' },
+        { size: 'default', expectedClass: 'tumaet:text-base' },
+    ] as const)('should render the $size trigger size', ({ size, expectedClass }) => {
+        createComponent(false);
+        fixture.componentRef.setInput('size', size);
+        fixture.detectChanges();
+
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button-new"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.classList).toContain(expectedClass);
+    });
+
     describe('VCS access token', () => {
         const createdToken = 'new-vcpat-test-token';
         const repositoryTokenCases: {

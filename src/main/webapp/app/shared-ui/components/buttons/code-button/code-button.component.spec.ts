@@ -109,7 +109,7 @@ describe('CodeButtonComponent', () => {
 
                 // Reset input properties
                 fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-                fixture.componentRef.setInput('smallButtons', true);
+                fixture.componentRef.setInput('size', 'small');
                 fixture.componentRef.setInput('repositoryViewLink', []);
                 fixture.componentRef.setInput('exerciseId', 1);
                 fixture.componentRef.setInput('allowOnlineIde', false);
@@ -142,6 +142,17 @@ describe('CodeButtonComponent', () => {
 
         const button = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
         expect(button.disabled).toBe(true);
+    });
+
+    it.each([
+        { size: 'small', expectedClass: 'tumaet:text-sm' },
+        { size: 'default', expectedClass: 'tumaet:text-base' },
+    ] as const)('should render the $size button size', ({ size, expectedClass }) => {
+        fixture.componentRef.setInput('size', size);
+        fixture.detectChanges();
+
+        const button = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+        expect(button.classList).toContain(expectedClass);
     });
 
     it('should default to token authentication when password was stored in local storage', async () => {
