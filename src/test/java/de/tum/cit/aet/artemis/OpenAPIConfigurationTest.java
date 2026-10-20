@@ -17,13 +17,18 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.BooleanSchema;
+import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.QueryParameter;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
 
 class OpenAPIConfigurationTest {
 
@@ -53,6 +58,25 @@ class OpenAPIConfigurationTest {
         OpenAPIConfiguration.markPrimitiveRecordComponentsRequired(schemas);
 
         assertThat(schema.getRequired()).containsExactlyInAnyOrder("title", "count", "active");
+    }
+
+    @Test
+    void shouldKeepTheCourseFilterResponseContract() {
+        Schema<?> courseSchema = new ObjectSchema().addProperty("id", new IntegerSchema().format("int64")).addProperty("title", new StringSchema()).addProperty("active",
+                new BooleanSchema());
+        var responseSchema = new ArraySchema().items(new Schema<>().$ref("#/components/schemas/CourseForSearchFilterDTO"));
+        var response = new ApiResponse().content(new Content().addMediaType("application/json", new MediaType().schema(responseSchema)));
+        var operation = new Operation().operationId("getCourseFilterOptions").addTagsItem("Global Search Resource").responses(new ApiResponses().addApiResponse("200", response));
+        var openApi = new OpenAPI().components(new Components().addSchemas("CourseForSearchFilterDTO", courseSchema))
+                .paths(new Paths().addPathItem("/api/search/course-options", new PathItem().get(operation)));
+
+        new OpenAPIConfiguration().schemaCustomizer().customise(openApi);
+
+        assertThat(openApi.getComponents().getSchemas()).containsOnlyKeys("CourseForSearchFilter");
+        assertThat(courseSchema.getRequired()).containsExactlyInAnyOrder("id", "active");
+        assertThat(responseSchema.getItems().get$ref()).isEqualTo("#/components/schemas/CourseForSearchFilter");
+        assertThat(openApi.getPaths().get("/api/search/course-options").getGet()).isSameAs(operation);
+        assertThat(operation.getTags()).containsExactly("Global Search");
     }
 
     @Test
