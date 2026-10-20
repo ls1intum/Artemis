@@ -13,7 +13,7 @@
                         [repositoryUri]="participation()?.repositoryUri ?? participation()?.userIndependentRepositoryUri ?? ''"
                         [repositoryViewLink]="repositoryViewLink"
                         [vcsAccessTokenData]="{
-                            type: 'participation',
+                            returnedTokenType: 'participation-token',
                             participationId: participation().id!,
                             isOwnParticipation: ownsParticipationForCodeButton(),
                         }"

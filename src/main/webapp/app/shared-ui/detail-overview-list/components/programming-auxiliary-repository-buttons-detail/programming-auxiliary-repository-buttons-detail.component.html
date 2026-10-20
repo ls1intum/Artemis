@@ -12,7 +12,8 @@
                     [repositoryViewLink]="['.', 'repository', RepositoryType.AUXILIARY, auxiliaryRepository.id]"
                     [exerciseId]="data.exerciseId"
                     [vcsAccessTokenData]="{
-                        type: 'auxiliary-repository',
+                        returnedTokenType: 'repository-token',
+                        repositoryType: RepositoryType.AUXILIARY,
                         auxiliaryRepositoryId: auxiliaryRepository.id,
                     }"
                 />

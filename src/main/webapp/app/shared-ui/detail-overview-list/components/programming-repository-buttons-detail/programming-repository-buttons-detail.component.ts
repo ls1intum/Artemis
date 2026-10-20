@@ -2,7 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import type { ProgrammingRepositoryButtonsDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { RouterModule } from '@angular/router';
-import { CodeButtonComponent, type VcsAccessTokenData } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
@@ -12,7 +12,7 @@ interface ProgrammingRepositoryButtonData {
     exerciseId: number;
     repositoryUri: string;
     repositoryType: BaseRepositoryType;
-    vcsAccessTokenData: VcsAccessTokenData;
+    vcsAccessTokenData: VcsAccessTokenSourceInfo;
 }
 
 @Component({
@@ -35,7 +35,7 @@ export class ProgrammingRepositoryButtonsDetailComponent {
             exerciseId,
             repositoryUri,
             repositoryType: type,
-            vcsAccessTokenData: { type: 'base-repository', repositoryType: type },
+            vcsAccessTokenData: { returnedTokenType: 'repository-token', repositoryType: type },
         };
     }
 }

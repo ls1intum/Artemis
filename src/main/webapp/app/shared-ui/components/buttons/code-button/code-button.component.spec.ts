@@ -16,7 +16,7 @@ import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/id
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 import { User } from 'app/account/user/user.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { CodeButtonComponent, RepositoryAuthenticationMethod, type VcsAccessTokenData } from './code-button.component';
+import { CodeButtonComponent, RepositoryAuthenticationMethod, type VcsAccessTokenSourceInfo } from './code-button.component';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -116,7 +116,7 @@ describe('CodeButtonComponent', () => {
         allowOnlineIde = true,
         programmingLanguage: ProgrammingLanguage | undefined = ProgrammingLanguage.JAVA,
         componentRepositoryUri = repositoryUri,
-        vcsAccessTokenData: VcsAccessTokenData = { type: 'participation', participationId: 7, isOwnParticipation: true },
+        vcsAccessTokenData: VcsAccessTokenSourceInfo = { returnedTokenType: 'participation-token', participationId: 7, isOwnParticipation: true },
     ): void {
         fixture = TestBed.createComponent(CodeButtonComponent);
         component = fixture.componentInstance;
@@ -206,28 +206,28 @@ describe('CodeButtonComponent', () => {
         const createdToken = 'new-vcpat-test-token';
         const repositoryTokenCases: {
             description: string;
-            vcsAccessTokenData: VcsAccessTokenData;
+            vcsAccessTokenData: VcsAccessTokenSourceInfo;
             expectedRepositoryType: RepositoryType;
             expectedAuxiliaryRepositoryId: number | undefined;
             expectedParticipationId: number | undefined;
         }[] = [
             {
                 description: 'student repository',
-                vcsAccessTokenData: { type: 'student-repository', participationId: 17 },
+                vcsAccessTokenData: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId: 17 },
                 expectedRepositoryType: RepositoryType.USER,
                 expectedAuxiliaryRepositoryId: undefined,
                 expectedParticipationId: 17,
             },
             {
                 description: 'base repository',
-                vcsAccessTokenData: { type: 'base-repository', repositoryType: RepositoryType.TEMPLATE },
+                vcsAccessTokenData: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.TEMPLATE },
                 expectedRepositoryType: RepositoryType.TEMPLATE,
                 expectedAuxiliaryRepositoryId: undefined,
                 expectedParticipationId: undefined,
             },
             {
                 description: 'auxiliary repository',
-                vcsAccessTokenData: { type: 'auxiliary-repository', auxiliaryRepositoryId: 23 },
+                vcsAccessTokenData: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.AUXILIARY, auxiliaryRepositoryId: 23 },
                 expectedRepositoryType: RepositoryType.AUXILIARY,
                 expectedAuxiliaryRepositoryId: 23,
                 expectedParticipationId: undefined,
@@ -289,7 +289,7 @@ describe('CodeButtonComponent', () => {
         );
 
         it('should create a repository token when none exists', async () => {
-            const vcsAccessTokenData: VcsAccessTokenData = { type: 'base-repository', repositoryType: RepositoryType.SOLUTION };
+            const vcsAccessTokenData: VcsAccessTokenSourceInfo = { returnedTokenType: 'repository-token', repositoryType: RepositoryType.SOLUTION };
             programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
             programmingExerciseService.createRepositoryVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: createdToken })));
             createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, vcsAccessTokenData);
@@ -308,7 +308,11 @@ describe('CodeButtonComponent', () => {
         it('should create a student repository token when none exists', async () => {
             programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
             programmingExerciseService.createRepositoryVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: createdToken })));
-            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { type: 'student-repository', participationId: 17 });
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, {
+                returnedTokenType: 'repository-token',
+                repositoryType: RepositoryType.USER,
+                participationId: 17,
+            });
             await fixture.whenStable();
 
             expect(programmingExerciseService.getRepositoryVcsAccessToken).toHaveBeenCalledExactlyOnceWith(exerciseId, RepositoryType.USER, undefined, 17);
@@ -352,7 +356,7 @@ describe('CodeButtonComponent', () => {
 
         it('should expose an error without creating a repository token when loading fails with a non-404 response', async () => {
             programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { type: 'base-repository', repositoryType: RepositoryType.TESTS });
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { returnedTokenType: 'repository-token', repositoryType: RepositoryType.TESTS });
             await fixture.whenStable();
 
             expect(programmingExerciseService.createRepositoryVcsAccessToken).not.toHaveBeenCalled();
@@ -362,7 +366,7 @@ describe('CodeButtonComponent', () => {
         it('should expose an error when creating a repository token fails', async () => {
             programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
             programmingExerciseService.createRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
-            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { type: 'base-repository', repositoryType: RepositoryType.SOLUTION });
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { returnedTokenType: 'repository-token', repositoryType: RepositoryType.SOLUTION });
             await fixture.whenStable();
 
             expect(programmingExerciseService.createRepositoryVcsAccessToken).toHaveBeenCalledExactlyOnceWith(exerciseId, RepositoryType.SOLUTION, undefined, undefined);
@@ -372,7 +376,11 @@ describe('CodeButtonComponent', () => {
         it('should load the participation token for an owned participation in course management', async () => {
             const router = TestBed.inject(Router);
             await router.navigateByUrl('/course-management');
-            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { type: 'participation', participationId: 23, isOwnParticipation: true });
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, {
+                returnedTokenType: 'participation-token',
+                participationId: 23,
+                isOwnParticipation: true,
+            });
             await fixture.whenStable();
 
             expect(accountService.getVcsAccessToken).toHaveBeenCalledExactlyOnceWith(23);
@@ -383,7 +391,11 @@ describe('CodeButtonComponent', () => {
         it('should reject participation-token data for an unowned participation in course management', async () => {
             const router = TestBed.inject(Router);
             await router.navigateByUrl('/course-management');
-            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { type: 'participation', participationId: 23, isOwnParticipation: false });
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, {
+                returnedTokenType: 'participation-token',
+                participationId: 23,
+                isOwnParticipation: false,
+            });
             await fixture.whenStable();
 
             expect(accountService.getVcsAccessToken).not.toHaveBeenCalled();

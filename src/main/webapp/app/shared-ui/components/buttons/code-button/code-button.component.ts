@@ -31,11 +31,11 @@ export enum RepositoryAuthenticationMethod {
 
 export type CodeButtonSize = 'small' | 'default';
 
-export type VcsAccessTokenData =
-    | { type: 'participation'; participationId: number; isOwnParticipation: boolean }
-    | { type: 'student-repository'; participationId: number }
-    | { type: 'base-repository'; repositoryType: RepositoryType.TEMPLATE | RepositoryType.SOLUTION | RepositoryType.TESTS }
-    | { type: 'auxiliary-repository'; auxiliaryRepositoryId: number };
+export type VcsAccessTokenSourceInfo =
+    | { returnedTokenType: 'participation-token'; participationId: number; isOwnParticipation: boolean }
+    | { returnedTokenType: 'repository-token'; repositoryType: RepositoryType.USER; participationId: number }
+    | { returnedTokenType: 'repository-token'; repositoryType: RepositoryType.TEMPLATE | RepositoryType.SOLUTION | RepositoryType.TESTS }
+    | { returnedTokenType: 'repository-token'; repositoryType: RepositoryType.AUXILIARY; auxiliaryRepositoryId: number };
 
 const BREAKPOINTS = {
     md: '(min-width: 768px)',
@@ -70,7 +70,7 @@ export class CodeButtonComponent {
 
     readonly exerciseId = input.required<number>();
     readonly repositoryUri = input.required<string>();
-    readonly vcsAccessTokenData = input.required<VcsAccessTokenData>();
+    readonly vcsAccessTokenData = input.required<VcsAccessTokenSourceInfo>();
     readonly repositoryViewLink = input.required<(string | number)[]>();
     readonly allowOnlineIde = input.required<boolean>();
     readonly programmingLanguage = input<ProgrammingLanguage>();
@@ -328,20 +328,21 @@ export class CodeButtonComponent {
         };
     }
 
-    private async getToken(exerciseId: number, isInCourseManagement: boolean, vcsAccessTokenData: VcsAccessTokenData): Promise<string> {
-        switch (vcsAccessTokenData.type) {
-            case 'participation':
+    private async getToken(exerciseId: number, isInCourseManagement: boolean, vcsAccessTokenData: VcsAccessTokenSourceInfo): Promise<string> {
+        switch (vcsAccessTokenData.returnedTokenType) {
+            case 'participation-token':
                 if (!isInCourseManagement || vcsAccessTokenData.isOwnParticipation) {
                     return this.loadOrCreateParticipationToken(vcsAccessTokenData.participationId);
                 } else {
                     throw new Error('Invalid token fetch attempt: Tried to fetch token for participation in course-management of which the user was no owner.');
                 }
-            case 'student-repository':
-                return this.loadOrCreateRepositoryToken(exerciseId, RepositoryType.USER, undefined, vcsAccessTokenData.participationId);
-            case 'base-repository':
-                return this.loadOrCreateRepositoryToken(exerciseId, vcsAccessTokenData.repositoryType, undefined, undefined);
-            case 'auxiliary-repository':
-                return this.loadOrCreateRepositoryToken(exerciseId, RepositoryType.AUXILIARY, vcsAccessTokenData.auxiliaryRepositoryId, undefined);
+            case 'repository-token':
+                return this.loadOrCreateRepositoryToken(
+                    exerciseId,
+                    vcsAccessTokenData.repositoryType,
+                    'auxiliaryRepositoryId' in vcsAccessTokenData ? vcsAccessTokenData.auxiliaryRepositoryId : undefined,
+                    'participationId' in vcsAccessTokenData ? vcsAccessTokenData.participationId : undefined,
+                );
         }
     }
 

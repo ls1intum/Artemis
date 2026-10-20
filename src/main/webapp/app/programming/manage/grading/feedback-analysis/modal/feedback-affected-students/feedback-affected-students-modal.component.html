@@ -35,7 +35,8 @@
                                 [repositoryUri]="item.repositoryURI"
                                 [repositoryViewLink]="['/courses', courseId(), 'exercises', exerciseId(), 'repository', item.participationId]"
                                 [vcsAccessTokenData]="{
-                                    type: 'student-repository',
+                                    returnedTokenType: 'repository-token',
+                                    repositoryType: RepositoryType.USER,
                                     participationId: item.participationId,
                                 }"
                             />

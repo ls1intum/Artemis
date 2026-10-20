@@ -43,7 +43,8 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { CodeButtonComponent, type VcsAccessTokenData } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import {
     DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
     RequestFeedbackButtonComponent,
@@ -325,12 +326,12 @@ export class ExerciseHeaderActionsComponent {
         return !!userLogin && this.programmingParticipationForCodeButton()?.student?.login === userLogin;
     }
 
-    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenData {
+    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenSourceInfo {
         const participationId = this.programmingParticipationForCodeButton()!.id!;
         if (!this.ownsParticipationForCodeButton()) {
-            return { type: 'student-repository', participationId };
+            return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId };
         }
-        return { type: 'participation', participationId, isOwnParticipation: true };
+        return { returnedTokenType: 'participation-token', participationId, isOwnParticipation: true };
     }
 
     isStartExerciseAvailable(): boolean {

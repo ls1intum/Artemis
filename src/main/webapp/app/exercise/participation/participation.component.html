@@ -123,7 +123,8 @@
             [repositoryViewLink]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
             [repositoryUri]="cell.data.repositoryUri"
             [vcsAccessTokenData]="{
-                type: 'student-repository',
+                returnedTokenType: 'repository-token',
+                repositoryType: RepositoryType.USER,
                 participationId: cell.data.participationId,
             }"
         />

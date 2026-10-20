@@ -17,7 +17,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CodeButtonComponent, type VcsAccessTokenData } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -98,18 +98,18 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         return this.repositoryType() === RepositoryType.USER && !!userLogin && this.participation()?.student?.login === userLogin;
     }
 
-    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenData {
+    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenSourceInfo {
         const repositoryType = this.repositoryType();
         if (repositoryType === RepositoryType.AUXILIARY) {
-            return { type: 'auxiliary-repository', auxiliaryRepositoryId: this.auxiliaryRepositoryId()! };
+            return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.AUXILIARY, auxiliaryRepositoryId: this.auxiliaryRepositoryId()! };
         }
         if (repositoryType === RepositoryType.TEMPLATE || repositoryType === RepositoryType.SOLUTION || repositoryType === RepositoryType.TESTS) {
-            return { type: 'base-repository', repositoryType };
+            return { returnedTokenType: 'repository-token', repositoryType };
         }
         if (!this.ownsParticipationForCodeButton()) {
-            return { type: 'student-repository', participationId: this.participation().id! };
+            return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId: this.participation().id! };
         }
-        return { type: 'participation', participationId: this.participation().id!, isOwnParticipation: this.ownsParticipationForCodeButton() };
+        return { returnedTokenType: 'participation-token', participationId: this.participation().id!, isOwnParticipation: this.ownsParticipationForCodeButton() };
     }
 
     /**
