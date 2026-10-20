@@ -218,8 +218,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // state outside Angular's reactivity changes (wall-clock transitions, in-place submission sync mutations)
     // so the exam view and its default-CD children (e.g. the navigation sidebar icons) re-render under zoneless.
     private readonly wallClockVersion = signal(0);
-    // Per text submission: the number of save requests sent and the highest sequence whose response has arrived.
-    private readonly textSaveStates = new WeakMap<Submission, { issued: number; completed: number }>();
+    // Text submissions with a save request in flight, see saveTextSubmission.
+    private readonly textSavesInFlight = new WeakSet<Submission>();
     readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
     readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
 
@@ -1166,17 +1166,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (forceSave || this.connected()) {
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
-                    case ExerciseType.TEXT: {
-                        const textSubmission = submissionToSync.submission as TextSubmission;
-                        const savedText = textSubmission.text;
-                        const saveSequence = this.startTextSave(textSubmission);
-                        this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
-                        this.textSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(textSubmission, this.isTextSaveConfirmed(textSubmission, saveSequence, savedText)),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
-                        });
+                    case ExerciseType.TEXT:
+                        this.saveTextSubmission(submissionToSync.exercise, submissionToSync.submission);
                         break;
-                    }
                     case ExerciseType.MODELING:
                         this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
                         this.modelingSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
@@ -1208,36 +1200,42 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .forEach((component) => component.updateSubmissionFromView());
     }
 
-    /** Registers a text save request and returns its sequence number, which grows with every request of the submission. */
-    private startTextSave(submission: TextSubmission): number {
-        const state = this.textSaveStates.get(submission) ?? { issued: 0, completed: 0 };
-        state.issued += 1;
-        this.textSaveStates.set(submission, state);
-        return state.issued;
-    }
-
     /**
-     * Decides whether the response of the save request with the given sequence leaves the submission synced.
-     * Comparing the text alone is not enough: with overlapping saves, an older response can arrive after a newer one,
-     * and the student may have undone back to the older text in between. The server may then hold either answer.
-     * - the newest request confirms the answer only if the text still equals the text it sent;
-     * - an older request that completes while a newer one is pending changes nothing, the newer response decides;
-     * - an older request that completes after a newer one may have been applied last, so the answer must be sent again.
+     * Saves a text answer with at most one request in flight per submission.
+     * The server overwrites the stored text with whichever request it commits last, and neither the commit order nor the
+     * response order of overlapping requests is guaranteed to match the send order. Sending the next text only after the
+     * previous response makes the write order equal the send order, so a response can be trusted: the answer is synced
+     * if and only if the text is still the one that request sent. A newer text is not sent while a save is in flight;
+     * the response of that save sends it, so the latest answer is never skipped, including at the end of the exam.
      */
-    private isTextSaveConfirmed(submission: TextSubmission, sequence: number, savedText: string | undefined): boolean {
-        const state = this.textSaveStates.get(submission) ?? { issued: sequence, completed: 0 };
-        const newerCompleted = state.completed > sequence;
-        state.completed = Math.max(state.completed, sequence);
-        if (sequence === state.issued) {
-            return submission.text === savedText;
+    private saveTextSubmission(exercise: Exercise, submission: TextSubmission): void {
+        if (this.textSavesInFlight.has(submission)) {
+            return;
         }
-        return newerCompleted ? false : !!submission.isSynced;
+        this.textSavesInFlight.add(submission);
+        const savedText = submission.text;
+        this.examParticipationService.setSubmissionSaving(submission, true);
+        this.textSubmissionService.update(submission, exercise.id!).subscribe({
+            next: () => {
+                this.textSavesInFlight.delete(submission);
+                this.onSaveSubmissionSuccess(submission, submission.text === savedText);
+                if (!submission.isSynced) {
+                    // The student kept editing while this request was in flight.
+                    this.saveTextSubmission(exercise, submission);
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                // Release the slot so the next autosave can retry. The submission stays unsynced.
+                this.textSavesInFlight.delete(submission);
+                this.onSaveSubmissionError(error, submission);
+            },
+        });
     }
 
     private onSaveSubmissionSuccess(submission: Submission, unchangedSinceSave = true) {
         this.examParticipationService.setSubmissionSaving(submission, false);
         // A response only confirms the text sent with its request. If the student has since edited it, keep the latest
-        // answer eligible for saving, including when an older server update completes after a newer one.
+        // answer eligible for saving.
         submission.isSynced = unchangedSinceSave;
         submission.submitted = true;
         // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate.
