@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.config.IrisDashboardAiSelection;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardBreakdownDimension;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
@@ -60,7 +61,7 @@ class IrisAdminDashboardServiceTest {
     @Test
     void computeNoResponseRate_emptyResults_returnsZero() {
         stubAllRepositoryMethods();
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
         assertThat(overview.noResponseRate()).isEqualTo(0.0);
         assertThat(overview.noResponseMessageCount()).isEqualTo(0);
     }
@@ -69,10 +70,10 @@ class IrisAdminDashboardServiceTest {
     void computeNoResponseRate_withResponses_computesCorrectly() {
         stubAllRepositoryMethods();
         // Two user messages: one with LLM response, one without (both within staleBefore)
-        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any(), any()))
                 .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT", 1 },
                         new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), null, null, "CHAT", 0 }));
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
         assertThat(overview.noResponseRate()).isEqualTo(50.0);
         assertThat(overview.noResponseMessageCount()).isEqualTo(1);
         assertThat(overview.noResponseSessionCount()).isEqualTo(1);
@@ -107,10 +108,10 @@ class IrisAdminDashboardServiceTest {
         // Two consecutive USER messages with no assistant reply: the first message's immediate next is another USER message
         // (so the old nextSender==null check treated it as handled), but neither has a later assistant response, so both must
         // count as no-response. hasAssistantResponse is 0 for both.
-        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any(), any()))
                 .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "USER", Instant.parse("2026-05-26T10:00:30Z"), "CHAT", 0 },
                         new Object[] { 2L, 100L, Instant.parse("2026-05-26T10:00:30Z"), null, null, "CHAT", 0 }));
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
         assertThat(overview.noResponseMessageCount()).isEqualTo(2);
         assertThat(overview.noResponseRate()).isEqualTo(100.0);
         assertThat(overview.noResponseSessionCount()).isEqualTo(1);
@@ -119,29 +120,29 @@ class IrisAdminDashboardServiceTest {
     @Test
     void engagementRate_zeroTotalSessions_returnsZero() {
         stubAllRepositoryMethods();
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
         assertThat(overview.engagementRate()).isEqualTo(0.0);
     }
 
     @Test
     void engagementRate_withSessions_computesCorrectly() {
         stubAllRepositoryMethods();
-        when(repository.countTotalSessions(any(), any())).thenReturn(10L);
-        when(repository.countActiveSessions(any(), any())).thenReturn(7L);
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        when(repository.countTotalSessions(any(), any(), any())).thenReturn(10L);
+        when(repository.countActiveSessions(any(), any(), any())).thenReturn(7L);
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
         assertThat(overview.engagementRate()).isEqualTo(70.0);
     }
 
     @Test
     void overview_thumbsRatios_computedCorrectly() {
         stubAllRepositoryMethods();
-        when(repository.countTotalSessions(any(), any())).thenReturn(100L);
-        when(repository.countThumbsUp(any(), any())).thenReturn(20L);
-        when(repository.countThumbsDown(any(), any())).thenReturn(5L);
-        when(repository.countTotalLlmMessages(any(), any())).thenReturn(200L);
-        when(repository.countSessionsWithThumbsUp(any(), any())).thenReturn(15L);
-        when(repository.countSessionsWithThumbsDown(any(), any())).thenReturn(4L);
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        when(repository.countTotalSessions(any(), any(), any())).thenReturn(100L);
+        when(repository.countThumbsUp(any(), any(), any())).thenReturn(20L);
+        when(repository.countThumbsDown(any(), any(), any())).thenReturn(5L);
+        when(repository.countTotalLlmMessages(any(), any(), any())).thenReturn(200L);
+        when(repository.countSessionsWithThumbsUp(any(), any(), any())).thenReturn(15L);
+        when(repository.countSessionsWithThumbsDown(any(), any(), any())).thenReturn(4L);
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
         assertThat(overview.thumbsUpRatio()).isEqualTo(10.0);
         assertThat(overview.thumbsDownRatio()).isEqualTo(2.5);
         assertThat(overview.thumbsUpAbsoluteRate()).isEqualTo(15.0);
@@ -152,10 +153,10 @@ class IrisAdminDashboardServiceTest {
     void overview_responseTime_computedCorrectly() {
         stubAllRepositoryMethods();
         // Two messages with LLM responses: 5s and 10s response times
-        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any(), any()))
                 .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT", 1 },
                         new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), "LLM", Instant.parse("2026-05-26T11:00:10Z"), "CHAT", 1 }));
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
         assertThat(overview.avgResponseTimeSeconds()).isEqualTo(7.5);
         assertThat(overview.p50ResponseTimeSeconds()).isEqualTo(7.5);
     }
@@ -164,10 +165,10 @@ class IrisAdminDashboardServiceTest {
     void overview_responseTime_intermediatesAreSkippedAndFinalAnswerIsMeasured() {
         stubAllRepositoryMethods();
         // Repository contract after skipping two LLM intermediate rows: nextSender/nextSentAt point at the final LLM answer.
-        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any(), any()))
                 .thenReturn(List.<Object[]>of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:14Z"), "CHAT", 1 }));
 
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
 
         assertThat(overview.avgResponseTimeSeconds()).isEqualTo(14.0);
         assertThat(overview.p50ResponseTimeSeconds()).isEqualTo(14.0);
@@ -178,10 +179,10 @@ class IrisAdminDashboardServiceTest {
     void overview_responseTime_intermediateOnlyRunIsExcluded() {
         stubAllRepositoryMethods();
         // Repository contract after skipping LLM intermediate rows: no final next message remains.
-        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any(), any()))
                 .thenReturn(List.<Object[]>of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), null, null, "CHAT", 0 }));
 
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
 
         assertThat(overview.avgResponseTimeSeconds()).isEqualTo(0.0);
         assertThat(overview.p50ResponseTimeSeconds()).isEqualTo(0.0);
@@ -191,11 +192,11 @@ class IrisAdminDashboardServiceTest {
     @Test
     void overview_responseTime_legacyNullIntermediateRowsStayMeasured() {
         stubAllRepositoryMethods();
-        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any(), any()))
                 .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT", 1 },
                         new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), "LLM", Instant.parse("2026-05-26T11:00:10Z"), "CHAT", 1 }));
 
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
 
         assertThat(overview.avgResponseTimeSeconds()).isEqualTo(7.5);
         assertThat(overview.p50ResponseTimeSeconds()).isEqualTo(7.5);
@@ -204,8 +205,8 @@ class IrisAdminDashboardServiceTest {
     @Test
     void overview_tokenCost_summedCorrectly() {
         stubAllRepositoryMethods();
-        when(repository.computeTokenCost(any(), any())).thenReturn(List.of(new Object[] { 1, 1.50 }, new Object[] { 0, 0.75 }));
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        when(repository.computeTokenCost(any(), any(), any())).thenReturn(List.of(new Object[] { 1, 1.50 }, new Object[] { 0, 0.75 }));
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
         assertThat(overview.totalTokenCostEur()).isEqualTo(2.25);
     }
 
@@ -306,9 +307,9 @@ class IrisAdminDashboardServiceTest {
     void computeTimeSeries_sessions_returnsBucketedData() {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-27T00:00:00Z");
-        when(repository.findSessionsWithMode(any(), any())).thenReturn(List.of(new Object[] { 1L, Instant.parse("2026-05-25T10:00:00Z"), "CHAT", 1 },
+        when(repository.findSessionsWithMode(any(), any(), any())).thenReturn(List.of(new Object[] { 1L, Instant.parse("2026-05-25T10:00:00Z"), "CHAT", 1 },
                 new Object[] { 2L, Instant.parse("2026-05-25T11:00:00Z"), "CHAT", 0 }, new Object[] { 3L, Instant.parse("2026-05-26T09:00:00Z"), "CHAT", 1 }));
-        var result = service.computeTimeSeries(from, to, "DAY", IrisDashboardMetric.SESSIONS);
+        var result = service.computeTimeSeries(from, to, "DAY", IrisDashboardMetric.SESSIONS, IrisDashboardAiSelection.ALL);
         assertThat(result.metric()).isEqualTo(IrisDashboardMetric.SESSIONS);
         assertThat(result.entries()).hasSize(2); // May 25, 26 (to is exclusive)
         // First bucket (May 25): 2 total, 1 active
@@ -323,9 +324,9 @@ class IrisAdminDashboardServiceTest {
     void computeTimeSeries_messages_returnsBucketedData() {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-26T00:00:00Z");
-        when(repository.findMessagesInRange(any(), any())).thenReturn(List.of(new Object[] { 1L, Instant.parse("2026-05-25T10:00:00Z"), "USER", 100L },
+        when(repository.findMessagesInRange(any(), any(), any())).thenReturn(List.of(new Object[] { 1L, Instant.parse("2026-05-25T10:00:00Z"), "USER", 100L },
                 new Object[] { 2L, Instant.parse("2026-05-25T10:00:05Z"), "LLM", 100L }, new Object[] { 3L, Instant.parse("2026-05-25T11:00:00Z"), "USER", 101L }));
-        var result = service.computeTimeSeries(from, to, "DAY", IrisDashboardMetric.MESSAGES);
+        var result = service.computeTimeSeries(from, to, "DAY", IrisDashboardMetric.MESSAGES, IrisDashboardAiSelection.ALL);
         assertThat(result.entries()).hasSize(1); // May 25 (to is exclusive)
         assertThat(result.entries().getFirst().series().get("user")).isEqualTo(2.0);
         assertThat(result.entries().getFirst().series().get("llm")).isEqualTo(1.0);
@@ -336,9 +337,9 @@ class IrisAdminDashboardServiceTest {
     void computeTimeSeries_tokenCost_returnsBucketedData() {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-26T00:00:00Z");
-        when(repository.findTokenCostWithTimestamps(any(), any()))
+        when(repository.findTokenCostWithTimestamps(any(), any(), any()))
                 .thenReturn(List.of(new Object[] { Instant.parse("2026-05-25T10:00:00Z"), 1, 0.50 }, new Object[] { Instant.parse("2026-05-25T11:00:00Z"), 0, 0.25 }));
-        var result = service.computeTimeSeries(from, to, "DAY", IrisDashboardMetric.TOKEN_COST);
+        var result = service.computeTimeSeries(from, to, "DAY", IrisDashboardMetric.TOKEN_COST, IrisDashboardAiSelection.ALL);
         assertThat(result.entries().getFirst().series().get("chat")).isEqualTo(0.50);
         assertThat(result.entries().getFirst().series().get("other")).isEqualTo(0.25);
         assertThat(result.entries().getFirst().series().get("total")).isEqualTo(0.75);
@@ -350,13 +351,13 @@ class IrisAdminDashboardServiceTest {
     void computeBreakdown_chatMode_groupsByMode() {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-27T00:00:00Z");
-        when(repository.findSessionsWithMode(any(), any())).thenReturn(List.of(new Object[] { 1L, Instant.parse("2026-05-25T10:00:00Z"), "CHAT", 1 },
+        when(repository.findSessionsWithMode(any(), any(), any())).thenReturn(List.of(new Object[] { 1L, Instant.parse("2026-05-25T10:00:00Z"), "CHAT", 1 },
                 new Object[] { 2L, Instant.parse("2026-05-25T11:00:00Z"), "CHAT", 0 }, new Object[] { 3L, Instant.parse("2026-05-26T09:00:00Z"), "TUTOR_SUGGESTION", 1 }));
-        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any(), any()))
                 .thenReturn(List.of(new Object[] { 10L, 1L, Instant.parse("2026-05-25T10:00:00Z"), "LLM", Instant.parse("2026-05-25T10:00:05Z"), "CHAT", 1 },
                         new Object[] { 11L, 3L, Instant.parse("2026-05-26T09:00:00Z"), null, null, "TUTOR_SUGGESTION", 0 }));
 
-        var result = service.computeBreakdown(from, to, IrisDashboardBreakdownDimension.CHAT_MODE);
+        var result = service.computeBreakdown(from, to, IrisDashboardBreakdownDimension.CHAT_MODE, IrisDashboardAiSelection.ALL);
         assertThat(result).hasSize(2);
     }
 
@@ -364,14 +365,14 @@ class IrisAdminDashboardServiceTest {
     void computeBreakdown_course_resolvesNames() {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-27T00:00:00Z");
-        when(repository.findTopCoursesBySessionCount(any(), any(), anyInt())).thenReturn(List.of(new Object[] { 42L, 15L }, new Object[] { 99L, 8L }));
+        when(repository.findTopCoursesBySessionCount(any(), any(), any(), anyInt())).thenReturn(List.of(new Object[] { 42L, 15L }, new Object[] { 99L, 8L }));
 
         Course course42 = new Course();
         course42.setId(42L);
         course42.setTitle("Intro to Programming");
         when(courseRepository.findAllById(List.of(42L, 99L))).thenReturn(List.of(course42));
 
-        var result = service.computeBreakdown(from, to, IrisDashboardBreakdownDimension.COURSE);
+        var result = service.computeBreakdown(from, to, IrisDashboardBreakdownDimension.COURSE, IrisDashboardAiSelection.ALL);
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().label()).isEqualTo("Intro to Programming");
         assertThat(result.getFirst().values().get("sessions")).isEqualTo(15.0);
@@ -383,9 +384,9 @@ class IrisAdminDashboardServiceTest {
     void computeBreakdown_model_returnsCostAndTokens() {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-27T00:00:00Z");
-        when(repository.computeTokenCostByModel(any(), any())).thenReturn(List.of(new Object[] { "gpt-4o", 100000L, 1.25 }, new Object[] { "claude-sonnet", 50000L, 0.80 }));
+        when(repository.computeTokenCostByModel(any(), any(), any())).thenReturn(List.of(new Object[] { "gpt-4o", 100000L, 1.25 }, new Object[] { "claude-sonnet", 50000L, 0.80 }));
 
-        var result = service.computeBreakdown(from, to, IrisDashboardBreakdownDimension.MODEL);
+        var result = service.computeBreakdown(from, to, IrisDashboardBreakdownDimension.MODEL, IrisDashboardAiSelection.ALL);
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().label()).isEqualTo("gpt-4o");
         assertThat(result.getFirst().values().get("totalTokens")).isEqualTo(100000.0);
@@ -416,16 +417,16 @@ class IrisAdminDashboardServiceTest {
     // -- Helpers ----------------------------------------------------------------
 
     private void stubAllRepositoryMethods() {
-        when(repository.countTotalSessions(any(), any())).thenReturn(0L);
-        when(repository.countActiveSessions(any(), any())).thenReturn(0L);
-        when(repository.countTotalMessages(any(), any())).thenReturn(0L);
-        when(repository.countUniqueUsers(any(), any())).thenReturn(0L);
-        when(repository.countThumbsUp(any(), any())).thenReturn(0L);
-        when(repository.countThumbsDown(any(), any())).thenReturn(0L);
-        when(repository.countTotalLlmMessages(any(), any())).thenReturn(0L);
-        when(repository.countSessionsWithThumbsUp(any(), any())).thenReturn(0L);
-        when(repository.countSessionsWithThumbsDown(any(), any())).thenReturn(0L);
-        when(repository.findUserMessagesWithNextMessageFullRange(any(), any())).thenReturn(List.of());
-        when(repository.computeTokenCost(any(), any())).thenReturn(List.of());
+        when(repository.countTotalSessions(any(), any(), any())).thenReturn(0L);
+        when(repository.countActiveSessions(any(), any(), any())).thenReturn(0L);
+        when(repository.countTotalMessages(any(), any(), any())).thenReturn(0L);
+        when(repository.countUniqueUsers(any(), any(), any())).thenReturn(0L);
+        when(repository.countThumbsUp(any(), any(), any())).thenReturn(0L);
+        when(repository.countThumbsDown(any(), any(), any())).thenReturn(0L);
+        when(repository.countTotalLlmMessages(any(), any(), any())).thenReturn(0L);
+        when(repository.countSessionsWithThumbsUp(any(), any(), any())).thenReturn(0L);
+        when(repository.countSessionsWithThumbsDown(any(), any(), any())).thenReturn(0L);
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any(), any())).thenReturn(List.of());
+        when(repository.computeTokenCost(any(), any(), any())).thenReturn(List.of());
     }
 }

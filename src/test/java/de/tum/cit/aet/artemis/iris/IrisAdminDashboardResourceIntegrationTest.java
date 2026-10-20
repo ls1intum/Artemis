@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -29,8 +30,12 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardBreakdownEntryDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 
 class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationTest {
@@ -49,6 +54,9 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
     private IrisMessageService irisMessageService;
 
     @Autowired
+    private IrisMessageRepository irisMessageRepository;
+
+    @Autowired
     private CourseUtilService courseUtilService;
 
     @Autowired
@@ -59,7 +67,7 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
     }
 
     @Test
@@ -118,15 +126,15 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         // 0.6M x 1.0 + 1M x 0.1 + 0.4M x 1.25 + 0.1M x 4.0 = 0.6 + 0.1 + 0.5 + 0.4
         double expectedCost = 1.6;
 
-        List<Object[]> totals = dashboardRepository.computeTokenCost(from, to);
+        List<Object[]> totals = dashboardRepository.computeTokenCost(from, to, "ALL");
         assertThat(totals).hasSize(1);
         assertThat(((Number) totals.getFirst()[1]).doubleValue()).isCloseTo(expectedCost, within(0.001));
 
-        List<Object[]> timeline = dashboardRepository.findTokenCostWithTimestamps(from, to);
+        List<Object[]> timeline = dashboardRepository.findTokenCostWithTimestamps(from, to, "ALL");
         assertThat(timeline).hasSize(1);
         assertThat(((Number) timeline.getFirst()[2]).doubleValue()).isCloseTo(expectedCost, within(0.001));
 
-        List<Object[]> byModel = dashboardRepository.computeTokenCostByModel(from, to);
+        List<Object[]> byModel = dashboardRepository.computeTokenCostByModel(from, to, "ALL");
         assertThat(byModel).hasSize(1);
         assertThat(byModel.getFirst()[0]).isEqualTo(model);
         assertThat(((Number) byModel.getFirst()[2]).doubleValue()).isCloseTo(expectedCost, within(0.001));
@@ -153,7 +161,7 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
 
         Instant from = Instant.now().minus(Duration.ofHours(1));
         Instant to = Instant.now().plus(Duration.ofHours(1));
-        List<Object[]> rows = dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to);
+        List<Object[]> rows = dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to, "ALL");
 
         List<Object[]> userRows = rows.stream().filter(row -> ((Number) row[0]).longValue() == savedUserMessage.getId()).toList();
         assertThat(userRows).hasSize(1);
@@ -197,7 +205,7 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
 
         Instant from = Instant.now().minus(Duration.ofHours(1));
         Instant to = Instant.now().plus(Duration.ofHours(1));
-        List<Object[]> rows = dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to);
+        List<Object[]> rows = dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to, "ALL");
 
         Object[] answeredRow = rows.stream().filter(row -> ((Number) row[0]).longValue() == savedUserMessage.getId()).findFirst().orElseThrow();
         // nextSender (index 3) skips the COMMAND marker sitting in between and reports the answer behind it.
@@ -211,6 +219,126 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         // hasAssistantResponse (index 6) must be 0: the COMMAND marker is not an assistant response, and the earlier
         // answer sits before this message rather than after it.
         assertThat(((Number) unansweredRow[6]).intValue()).isEqualTo(0);
+    }
+
+    /**
+     * The AI selection filter keeps only users whose current selection matches, on every endpoint the dashboard calls.
+     * Without the parameter, or with ALL, the endpoints count every user, including users without a recorded selection.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void aiSelectionFilter_restrictsAllEndpointsToUsersWithThatSelection() throws Exception {
+        // a past window no other test writes to; the endpoints reject windows that end in the future
+        ZonedDateTime start = ZonedDateTime.of(2025, 2, 3, 9, 0, 0, 0, ZoneOffset.UTC);
+        String window = "from=2025-02-03T00:00:00Z&to=2025-02-04T00:00:00Z";
+        Course course = courseUtilService.createCourse();
+
+        User cloudUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.setAiSelectionDecision(cloudUser, AiSelectionDecision.CLOUD_AI);
+        User localUser = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        userUtilService.setAiSelectionDecision(localUser, AiSelectionDecision.LOCAL_AI);
+        User undecidedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        userUtilService.clearAiSelectionDecision(undecidedUser);
+
+        createAnsweredSession(course, cloudUser, start, 10, "model-cloud-ai-filter-test", 1.0f);
+        createAnsweredSession(course, localUser, start.plusMinutes(10), 200, "model-local-ai-filter-test", 0.0f);
+        createAnsweredSession(course, undecidedUser, start.plusMinutes(20), 60, "model-undecided-ai-filter-test", 2.0f);
+
+        // Overview: no parameter and ALL both count all three users, as before the filter existed
+        IrisDashboardOverviewDTO withoutParameter = request.get(BASE_URL + "overview?" + window, HttpStatus.OK, IrisDashboardOverviewDTO.class);
+        IrisDashboardOverviewDTO all = request.get(BASE_URL + "overview?" + window + "&aiSelection=ALL", HttpStatus.OK, IrisDashboardOverviewDTO.class);
+        assertThat(all).isEqualTo(withoutParameter);
+        assertThat(all.totalSessions()).isEqualTo(3);
+        assertThat(all.uniqueUsers()).isEqualTo(3);
+        assertThat(all.totalMessages()).isEqualTo(6);
+        assertThat(all.avgResponseTimeSeconds()).isCloseTo(90.0, within(0.001));
+        assertThat(all.totalTokenCostEur()).isCloseTo(3.0, within(0.001));
+
+        IrisDashboardOverviewDTO cloud = request.get(BASE_URL + "overview?" + window + "&aiSelection=CLOUD", HttpStatus.OK, IrisDashboardOverviewDTO.class);
+        assertThat(cloud.totalSessions()).isEqualTo(1);
+        assertThat(cloud.uniqueUsers()).isEqualTo(1);
+        assertThat(cloud.totalMessages()).isEqualTo(2);
+        assertThat(cloud.avgResponseTimeSeconds()).isCloseTo(10.0, within(0.001));
+        assertThat(cloud.totalTokenCostEur()).isCloseTo(1.0, within(0.001));
+
+        IrisDashboardOverviewDTO local = request.get(BASE_URL + "overview?" + window + "&aiSelection=LOCAL", HttpStatus.OK, IrisDashboardOverviewDTO.class);
+        assertThat(local.totalSessions()).isEqualTo(1);
+        assertThat(local.uniqueUsers()).isEqualTo(1);
+        assertThat(local.avgResponseTimeSeconds()).isCloseTo(200.0, within(0.001));
+        assertThat(local.totalTokenCostEur()).isCloseTo(0.0, within(0.001));
+
+        // Time series
+        assertThat(singleDayResponseTime(window, "")).isCloseTo(90.0, within(0.001));
+        assertThat(singleDayResponseTime(window, "&aiSelection=CLOUD")).isCloseTo(10.0, within(0.001));
+        assertThat(singleDayResponseTime(window, "&aiSelection=LOCAL")).isCloseTo(200.0, within(0.001));
+
+        // Breakdowns: sessions per course and token usage per model
+        assertThat(courseSessions(window, "", course)).isEqualTo(3.0);
+        assertThat(courseSessions(window, "&aiSelection=CLOUD", course)).isEqualTo(1.0);
+        assertThat(courseSessions(window, "&aiSelection=LOCAL", course)).isEqualTo(1.0);
+
+        assertThat(models(window, "")).containsExactlyInAnyOrder("model-cloud-ai-filter-test", "model-local-ai-filter-test", "model-undecided-ai-filter-test");
+        assertThat(models(window, "&aiSelection=CLOUD")).containsExactly("model-cloud-ai-filter-test");
+        assertThat(models(window, "&aiSelection=LOCAL")).containsExactly("model-local-ai-filter-test");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void aiSelectionFilter_unknownValue_badRequest() throws Exception {
+        request.get(BASE_URL + "overview?from=2026-05-26T00:00:00Z&to=2026-05-27T00:00:00Z&aiSelection=NO_AI", HttpStatus.BAD_REQUEST, Object.class);
+    }
+
+    /**
+     * Creates a chat session with one user message and one answer after {@code responseSeconds}, plus a token usage trace
+     * for the answer that costs {@code costEur}.
+     */
+    private void createAnsweredSession(Course course, User user, ZonedDateTime createdAt, int responseSeconds, String model, float costEur) {
+        IrisChatSession newSession = new IrisChatSession(course, user);
+        newSession.setCreationDate(createdAt);
+        IrisChatSession session = irisChatSessionRepository.save(newSession);
+
+        ZonedDateTime askedAt = createdAt.plusMinutes(1);
+        ZonedDateTime answeredAt = askedAt.plusSeconds(responseSeconds);
+        saveMessageSentAt(session, IrisMessageSender.USER, "Question", askedAt);
+        IrisMessage savedAnswer = saveMessageSentAt(session, IrisMessageSender.LLM, "Answer", answeredAt);
+
+        // 1M output tokens at costEur per million
+        var llmRequest = new LLMRequest(model, 0, 0f, 1_000_000, costEur, "IRIS_CHAT_COURSE_MESSAGE");
+        LLMTokenUsageTrace trace = llmTokenUsageService.saveLLMTokenUsage(List.of(llmRequest), LLMServiceType.IRIS,
+                builder -> builder.withIrisMessageID(savedAnswer.getId()).withUser(user.getId()));
+        trace.setTime(answeredAt);
+        llmTokenUsageTraceRepository.save(trace);
+    }
+
+    /**
+     * Appending a message always stamps it with the current time, so the timestamp is set afterwards.
+     */
+    private IrisMessage saveMessageSentAt(IrisChatSession session, IrisMessageSender sender, String text, ZonedDateTime sentAt) {
+        IrisMessage message = new IrisMessage();
+        message.addContent(new IrisTextMessageContent(text));
+        IrisMessage saved = irisMessageService.saveMessage(message, session, sender);
+        saved.setSentAt(sentAt);
+        return irisMessageRepository.save(saved);
+    }
+
+    private double singleDayResponseTime(String window, String filter) throws Exception {
+        IrisDashboardTimeSeriesDTO series = request.get(BASE_URL + "time-series?" + window + "&span=DAY&metric=RESPONSE_TIME" + filter, HttpStatus.OK,
+                IrisDashboardTimeSeriesDTO.class);
+        assertThat(series.entries()).hasSize(1);
+        return series.entries().getFirst().series().get("avg");
+    }
+
+    private double courseSessions(String window, String filter, Course course) throws Exception {
+        List<IrisDashboardBreakdownEntryDTO> entries = request.getList(BASE_URL + "breakdown?" + window + "&dimension=COURSE" + filter, HttpStatus.OK,
+                IrisDashboardBreakdownEntryDTO.class);
+        return entries.stream().filter(entry -> entry.label().equals(course.getTitle())).map(IrisDashboardBreakdownEntryDTO::values).map(values -> values.get("sessions"))
+                .findFirst().orElse(0.0);
+    }
+
+    private List<String> models(String window, String filter) throws Exception {
+        List<IrisDashboardBreakdownEntryDTO> entries = request.getList(BASE_URL + "breakdown?" + window + "&dimension=MODEL" + filter, HttpStatus.OK,
+                IrisDashboardBreakdownEntryDTO.class);
+        return entries.stream().map(IrisDashboardBreakdownEntryDTO::label).toList();
     }
 
     private static IrisMessage pointOutMarker() {

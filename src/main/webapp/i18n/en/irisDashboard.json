@@ -5,6 +5,7 @@
             "loading": "Loading...",
             "error": "Failed to load dashboard data. Please try again.",
             "timeSpanSelectorAriaLabel": "Time span shown in the dashboard",
+            "aiSelectionSelectorAriaLabel": "AI selection of the users shown in the dashboard",
             "refresh": "Refresh",
             "totalSessions": "Total Sessions",
             "activeSessions": "Active Sessions",
@@ -56,6 +57,12 @@
                 "week": "Week",
                 "month": "Month",
                 "quarter": "Quarter"
+            },
+            "aiSelection": {
+                "all": "Cloud and local AI",
+                "cloud": "Cloud AI only",
+                "local": "Local AI only",
+                "hint": "Only users whose current AI selection matches are counted. Artemis does not store which AI was used for each message, so a user who changed the selection is counted under the current choice for all of their messages."
             }
         }
     }

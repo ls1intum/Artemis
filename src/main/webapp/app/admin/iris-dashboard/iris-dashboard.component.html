@@ -14,6 +14,16 @@
             size="small"
             class="w-auto"
         />
+        <tumaet-ui-select
+            [ariaLabel]="'artemisApp.irisDashboard.aiSelectionSelectorAriaLabel' | artemisTranslate"
+            [ngModel]="selectedAiSelection()"
+            [options]="aiSelectionOptions()"
+            optionLabel="label"
+            (ngModelChange)="onAiSelectionChange($event)"
+            size="small"
+            class="w-auto"
+            data-testid="iris-dashboard-ai-selection"
+        />
         <tumaet-ui-button
             severity="secondary"
             variant="outlined"
@@ -25,6 +35,10 @@
             [title]="'artemisApp.irisDashboard.refresh' | artemisTranslate"
         />
     </div>
+
+    @if (selectedAiSelection().value !== 'ALL') {
+        <div class="text-muted-color text-sm mb-3" jhiTranslate="artemisApp.irisDashboard.aiSelection.hint"></div>
+    }
 
     @if (loading()) {
         <div class="text-center py-8" jhiTranslate="artemisApp.irisDashboard.loading"></div>
