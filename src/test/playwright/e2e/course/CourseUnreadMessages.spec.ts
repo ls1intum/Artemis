@@ -38,7 +38,8 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
     async function markRead(page: Page, id: number) {
         const response = await page.request.patch(`api/communication/courses/${course!.id}/conversations/${id}/mark-as-read`);
         expect(response.ok()).toBe(true);
-        expect(await unread(page, id)).toBe(0);
+        // The server resets the count asynchronously, so the response can arrive before the reset is visible.
+        await expect.poll(() => unread(page, id)).toBe(0);
     }
 
     async function showGroups(page: Page) {
