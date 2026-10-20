@@ -1,1136 +1,555 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-vi.mock('@sentry/angular', async (importOriginal) => {
-    const originalModule = await importOriginal<typeof import('@sentry/angular')>();
-    return {
-        ...originalModule,
-        captureException: vi.fn(),
-    };
-});
-
-import * as Sentry from '@sentry/angular';
-import { By } from '@angular/platform-browser';
-import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/foundation/service/alert.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { User } from 'app/account/user/user.model';
-import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
-import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { AccountService } from 'app/core/auth/account.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
-import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
-
+import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
+import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
+import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
+import { User } from 'app/account/user/user.model';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { CodeButtonComponent, RepositoryAuthenticationMethod, type VcsAccessTokenData } from './code-button.component';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import dayjs from 'dayjs/esm';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 describe('CodeButtonComponent', () => {
-    let component: CodeButtonComponent;
     let fixture: ComponentFixture<CodeButtonComponent>;
-    let profileService: ProfileService;
-    let accountService: AccountService;
-    let sshUserSettingsService: SshUserSettingsService;
-    let localStorageMock: LocalStorageService;
-    let programmingExerciseService: ProgrammingExerciseService;
+    let component: CodeButtonComponent;
+    let accountService: Mocked<AccountService>;
+    let profileService: Mocked<ProfileService>;
+    let programmingExerciseService: Mocked<ProgrammingExerciseService>;
+    let ideSettingsService: Mocked<IdeSettingsService>;
+    let sshUserSettingsService: Mocked<SshUserSettingsService>;
+    let mediumBreakpoint: BehaviorSubject<BreakpointState>;
+    let extraLargeBreakpoint: BehaviorSubject<BreakpointState>;
 
-    let getVcsAccessTokenSpy: MockInstance;
-    let createVcsAccessTokenSpy: MockInstance;
-    let getCachedSshKeysSpy: MockInstance;
-    const vcsToken: string = 'vcpat-xlhBs26D4F2CGlkCM59KVU8aaV9bYdX5Mg4IK6T8W3aT';
+    const exerciseId = 42;
+    const repositoryUri = 'https://vcs.example.com/course/exercise.git';
+    const vcsToken = 'vcpat-test-token';
+    const theiaPortalURL = 'https://theia.example.com';
+    const theiaImage = 'ghcr.io/example/theia:latest';
+    const user = Object.assign(new User(undefined, 'student', 'Student', 'Example', 'student@example.com'), { name: 'Student Example' });
 
-    const route = { snapshot: { url: of('courses') } } as any as ActivatedRoute;
-
-    let localStorageState: RepositoryAuthenticationMethod = RepositoryAuthenticationMethod.SSH;
-    let router: MockRouter;
-    const info = expectedProfileInfo;
-
-    let participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
+    let theiaFeatureActive: boolean;
+    let profileInfo: ProfileInfo;
 
     beforeEach(async () => {
-        router = new MockRouter();
-        router.setUrl('a');
-
+        mediumBreakpoint = new BehaviorSubject<BreakpointState>({ matches: false, breakpoints: {} });
+        extraLargeBreakpoint = new BehaviorSubject<BreakpointState>({ matches: false, breakpoints: {} });
         await TestBed.configureTestingModule({
-            imports: [ExerciseActionButtonComponent],
+            imports: [CodeButtonComponent],
             providers: [
-                MockProvider(AlertService),
-                { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useValue: router },
-                MockProvider(LocalStorageService),
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AccountService, useClass: MockAccountService },
-                { provide: ProfileService, useClass: MockProfileService },
+                provideRouter([]),
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: AccountService,
+                    useValue: {
+                        identity: vi.fn(),
+                        getVcsAccessToken: vi.fn(),
+                        createVcsAccessToken: vi.fn(),
+                    },
+                },
+                {
+                    provide: ProfileService,
+                    useValue: {
+                        getProfileInfo: vi.fn(),
+                        isModuleFeatureActive: vi.fn(),
+                    },
+                },
+                { provide: SshUserSettingsService, useValue: { getCachedSshKeys: vi.fn() } },
+                {
+                    provide: ProgrammingExerciseService,
+                    useValue: {
+                        getTheiaConfig: vi.fn(),
+                        getRepositoryVcsAccessToken: vi.fn(),
+                        createRepositoryVcsAccessToken: vi.fn(),
+                    },
+                },
+                { provide: IdeSettingsService, useValue: { loadIdePreferences: vi.fn() } },
+                {
+                    provide: BreakpointObserver,
+                    useValue: {
+                        observe: vi.fn((breakpoint: string) => (breakpoint === '(min-width: 768px)' ? mediumBreakpoint : extraLargeBreakpoint)),
+                        isMatched: vi.fn(() => false),
+                    },
+                },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CodeButtonComponent);
-                component = fixture.componentInstance;
-                profileService = TestBed.inject(ProfileService);
-                accountService = TestBed.inject(AccountService);
-                sshUserSettingsService = TestBed.inject(SshUserSettingsService);
-                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        }).compileComponents();
 
-                localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
+        accountService = TestBed.inject(AccountService) as Mocked<AccountService>;
+        profileService = TestBed.inject(ProfileService) as Mocked<ProfileService>;
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService) as Mocked<ProgrammingExerciseService>;
+        ideSettingsService = TestBed.inject(IdeSettingsService) as Mocked<IdeSettingsService>;
+        sshUserSettingsService = TestBed.inject(SshUserSettingsService) as Mocked<SshUserSettingsService>;
 
-                getVcsAccessTokenSpy = vi.spyOn(accountService, 'getVcsAccessToken');
-                getCachedSshKeysSpy = vi.spyOn(sshUserSettingsService, 'getCachedSshKeys');
-                createVcsAccessTokenSpy = vi.spyOn(accountService, 'createVcsAccessToken');
-
-                participation = { id: 5 };
-
-                getVcsAccessTokenSpy = vi.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
-                getCachedSshKeysSpy = vi
-                    .spyOn(sshUserSettingsService, 'getCachedSshKeys')
-                    .mockImplementation(() => Promise.resolve([{ id: 99, publicKey: 'key' } as UserSshPublicKey]));
-                fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-                vi.spyOn(localStorageMock, 'retrieve').mockImplementation(() => {
-                    return localStorageState;
-                });
-                vi.spyOn(localStorageMock, 'store').mockImplementation(() => {});
-                createVcsAccessTokenSpy = vi
-                    .spyOn(accountService, 'createVcsAccessToken')
-                    .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, statusText: 'Bad Request' })));
-
-                // Reset input properties
-                fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-                fixture.componentRef.setInput('size', 'small');
-                fixture.componentRef.setInput('repositoryViewLink', []);
-                fixture.componentRef.setInput('exerciseId', 1);
-                fixture.componentRef.setInput('allowOnlineIde', false);
-                fixture.componentRef.setInput('vcsAccessTokenData', { type: 'student-repository', participationId: 1 });
-                stubServices();
-                fixture.detectChanges();
-            });
+        theiaFeatureActive = true;
+        profileInfo = {
+            repositoryAuthenticationMechanisms: [RepositoryAuthenticationMethod.Token],
+            theiaPortalURL,
+        } as ProfileInfo;
+        profileService.getProfileInfo.mockImplementation(() => profileInfo);
+        profileService.isModuleFeatureActive.mockImplementation((feature) => feature === MODULE_FEATURE_THEIA && theiaFeatureActive);
+        accountService.identity.mockResolvedValue(user);
+        accountService.getVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: vcsToken })));
+        ideSettingsService.loadIdePreferences.mockResolvedValue(new Map());
+        programmingExerciseService.getTheiaConfig.mockReturnValue(of({ theiaImage }));
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        localStorageState = RepositoryAuthenticationMethod.SSH;
     });
 
-    it('should initialize', async () => {
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-
-        await component['initializeCodeButtonComponent']();
-        component.onClick();
+    function createComponent(
+        allowOnlineIde = true,
+        programmingLanguage: ProgrammingLanguage | undefined = ProgrammingLanguage.JAVA,
+        componentRepositoryUri = repositoryUri,
+        vcsAccessTokenData: VcsAccessTokenData = { type: 'participation', participationId: 7, isOwnParticipation: true },
+    ): void {
+        fixture = TestBed.createComponent(CodeButtonComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('exerciseId', exerciseId);
+        fixture.componentRef.setInput('repositoryUri', componentRepositoryUri);
+        fixture.componentRef.setInput('vcsAccessTokenData', vcsAccessTokenData);
+        fixture.componentRef.setInput('repositoryViewLink', ['/courses', 1, 'exercises', exerciseId, 'repository']);
+        fixture.componentRef.setInput('allowOnlineIde', allowOnlineIde);
+        fixture.componentRef.setInput('programmingLanguage', programmingLanguage);
         fixture.detectChanges();
-        expect(component.sshSettingsUrl).toBe(`${window.location.origin}/user-settings/ssh`);
-        expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
-        expect(component.versionControlUrl).toBe(info.versionControlUrl);
-        expect(getCachedSshKeysSpy).toHaveBeenCalled();
+    }
+
+    it('should reset alternative options when the popover closes', async () => {
+        createComponent(false);
+        await fixture.whenStable();
+        const popover = fixture.debugElement.query(By.directive(TumAetUiPopoverComponent)).componentInstance as TumAetUiPopoverComponent;
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+
+        popover.open(trigger);
+        component['showAlternatives'].set(true);
+        expect(popover.isOpen()).toBe(true);
+        expect(component['showAlternatives']()).toBe(true);
+
+        popover.close();
+        expect(popover.isOpen()).toBe(false);
+        expect(component['showAlternatives']()).toBe(false);
     });
 
-    it('should disable the code button', () => {
+    it('should disable only trigger if disabled input is set', async () => {
+        createComponent(false);
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.disabled).toBe(true);
 
-        const button = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
-        expect(button.disabled).toBe(true);
+        fixture.componentRef.setInput('disabled', false);
+        fixture.detectChanges();
+        expect(trigger.disabled).toBe(false);
     });
 
     it.each([
         { size: 'small', expectedClass: 'tumaet:text-sm' },
         { size: 'default', expectedClass: 'tumaet:text-base' },
-    ] as const)('should render the $size button size', ({ size, expectedClass }) => {
+    ] as const)('should render the $size trigger size', ({ size, expectedClass }) => {
+        createComponent(false);
         fixture.componentRef.setInput('size', size);
         fixture.detectChanges();
 
-        const button = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
-        expect(button.classList).toContain(expectedClass);
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.classList).toContain(expectedClass);
     });
 
-    it('should default to token authentication when password was stored in local storage', async () => {
-        localStorageState = RepositoryAuthenticationMethod.Password;
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        await component['initializeCodeButtonComponent']();
-        fixture.detectChanges();
+    it('should show the label by default', () => {
+        createComponent(false);
 
-        component.onClick();
-        fixture.detectChanges();
-
-        expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Token);
-        expect(component.useToken()).toBe(true);
-        expect(localStorageMock.store).toHaveBeenCalledWith('code-button-state', RepositoryAuthenticationMethod.Token);
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.textContent).toContain('artemisApp.exerciseActions.code');
     });
 
-    it('should preserve SSH preference from local storage', async () => {
-        localStorageState = RepositoryAuthenticationMethod.SSH;
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        await component['initializeCodeButtonComponent']();
+    it('should hide the label below the medium breakpoint', () => {
+        createComponent(false);
+        fixture.componentRef.setInput('hideLabelMobile', true);
         fixture.detectChanges();
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.textContent).not.toContain('artemisApp.exerciseActions.code');
 
-        component.onClick();
+        mediumBreakpoint.next({ matches: true, breakpoints: { '(min-width: 768px)': true } });
         fixture.detectChanges();
-
-        expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.SSH);
-        expect(component.useSsh()).toBe(true);
+        expect(trigger.textContent).toContain('artemisApp.exerciseActions.code');
     });
 
-    it('should load participation vcsAccessToken if it exists on the server', async () => {
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        await component['initializeCodeButtonComponent']();
+    it('should hide the label until the extra-large breakpoint when configured', () => {
+        mediumBreakpoint.next({ matches: true, breakpoints: { '(min-width: 768px)': true } });
+        createComponent(false);
+        fixture.componentRef.setInput('hideLabelMobile', true);
+        fixture.componentRef.setInput('hideLabelBreakpoint', 'xl');
         fixture.detectChanges();
-        await fixture.whenStable();
-        component.onClick();
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.textContent).not.toContain('artemisApp.exerciseActions.code');
+
+        extraLargeBreakpoint.next({ matches: true, breakpoints: { '(min-width: 1200px)': true } });
         fixture.detectChanges();
-        expect(component.user()!.vcsAccessToken).toEqual(vcsToken);
-        expect(getVcsAccessTokenSpy).toHaveBeenCalled();
-        expect(createVcsAccessTokenSpy).not.toHaveBeenCalled();
+        expect(trigger.textContent).toContain('artemisApp.exerciseActions.code');
     });
 
-    it('should only display available authentication mechanisms', async () => {
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        localStorageState = RepositoryAuthenticationMethod.Password;
-        await component['initializeCodeButtonComponent']();
+    describe('VCS access token', () => {
+        const createdToken = 'new-vcpat-test-token';
+        const repositoryTokenCases: {
+            description: string;
+            vcsAccessTokenData: VcsAccessTokenData;
+            expectedRepositoryType: RepositoryType;
+            expectedAuxiliaryRepositoryId: number | undefined;
+            expectedParticipationId: number | undefined;
+        }[] = [
+            {
+                description: 'student repository',
+                vcsAccessTokenData: { type: 'student-repository', participationId: 17 },
+                expectedRepositoryType: RepositoryType.USER,
+                expectedAuxiliaryRepositoryId: undefined,
+                expectedParticipationId: 17,
+            },
+            {
+                description: 'base repository',
+                vcsAccessTokenData: { type: 'base-repository', repositoryType: RepositoryType.TEMPLATE },
+                expectedRepositoryType: RepositoryType.TEMPLATE,
+                expectedAuxiliaryRepositoryId: undefined,
+                expectedParticipationId: undefined,
+            },
+            {
+                description: 'auxiliary repository',
+                vcsAccessTokenData: { type: 'auxiliary-repository', auxiliaryRepositoryId: 23 },
+                expectedRepositoryType: RepositoryType.AUXILIARY,
+                expectedAuxiliaryRepositoryId: 23,
+                expectedParticipationId: undefined,
+            },
+        ];
 
-        component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH]);
-        component.onClick();
-        fixture.detectChanges();
-        expect(component.selectedAuthenticationMechanism()).toEqual(RepositoryAuthenticationMethod.Token);
-    });
+        it('should create a participation token when none exists', async () => {
+            accountService.getVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            accountService.createVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: createdToken })));
+            createComponent(false);
+            await fixture.whenStable();
 
-    describe('repository-scoped staff token', () => {
-        const repoToken = 'vcpat-StaffStaffStaffStaffStaffStaffStaffStaff123';
-        let getRepoTokenSpy: MockInstance;
-        let createRepoTokenSpy: MockInstance;
-
-        beforeEach(() => {
-            getRepoTokenSpy = vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
-            createRepoTokenSpy = vi.spyOn(programmingExerciseService, 'createRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
-        });
-
-        it('should load the repository-scoped token when opening the dialog for a base repository', async () => {
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TEMPLATE' });
-            fixture.componentRef.setInput('exerciseId', 42);
-            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
-            await component['initializeCodeButtonComponent']();
-            component.onClick();
-            fixture.detectChanges();
-
-            expect(component.isBaseRepository()).toBe(true);
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(42, 'TEMPLATE', undefined, undefined);
-            expect(component.repositoryAccessToken()).toEqual(repoToken);
-            expect(createRepoTokenSpy).not.toHaveBeenCalled();
-        });
-
-        it('should create the repository-scoped token on demand when none exists yet (404)', async () => {
-            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'SOLUTION' });
-            fixture.componentRef.setInput('exerciseId', 42);
-            await component['initializeCodeButtonComponent']();
-            component.onClick();
-            fixture.detectChanges();
-
-            expect(createRepoTokenSpy).toHaveBeenCalledWith(42, 'SOLUTION', undefined, undefined);
-            expect(component.repositoryAccessToken()).toEqual(repoToken);
-        });
-
-        it('should not load participation tokens while in base repository mode', async () => {
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TESTS' });
-            fixture.componentRef.setInput('exerciseId', 42);
-            await component['initializeCodeButtonComponent']();
-            component.onClick();
-            fixture.detectChanges();
-
-            expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
-        });
-
-        it('should load the repository-scoped token via the exerciseId input when no exercise object is provided', async () => {
-            // The exercise detail view only knows the exercise id, not the full exercise object.
-            fixture.componentRef.setInput('exerciseId', 7);
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TEMPLATE' });
-            await component['initializeCodeButtonComponent']();
-            component.onClick();
-            fixture.detectChanges();
-
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
-            expect(component.repositoryAccessToken()).toEqual(repoToken);
-        });
-
-        it('should pass the auxiliaryRepositoryId when loading the token for an auxiliary repository', async () => {
-            fixture.componentRef.setInput('exerciseId', 7);
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'auxiliary-repository', auxiliaryRepositoryId: 3 });
-            await component['initializeCodeButtonComponent']();
-            component.onClick();
-            fixture.detectChanges();
-
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'AUXILIARY', 3, undefined);
-        });
-
-        it('should reload a fresh token when the component is reused for a different base repository', async () => {
-            // The repository view reuses one code-button instance across base repositories (only the route params change). A token minted for the previous repository must not be
-            // reused for the next one, because repository tokens are scoped to one exact repository URI.
-            localStorageState = RepositoryAuthenticationMethod.Token;
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TEMPLATE' });
-            fixture.componentRef.setInput('exerciseId', 7);
-            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
-            await component['initializeCodeButtonComponent']();
-
-            component.onClick();
-            fixture.detectChanges();
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
-            expect(component.repositoryAccessToken()).toEqual(repoToken);
-
-            // Navigate to the solution repository of the same exercise: same component instance, only the repository type and URI change.
-            const solutionToken = 'vcpat-SolutionSolutionSolutionSolutionSolutio123';
-            getRepoTokenSpy.mockReturnValue(of(new HttpResponse({ body: solutionToken })));
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'SOLUTION' });
-            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-solution.git');
-            fixture.detectChanges();
-
-            component.onClick();
-            fixture.detectChanges();
-
-            // A fresh token request is made for the new repository and the stale template token is replaced.
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined, undefined);
-            expect(component.repositoryAccessToken()).toEqual(solutionToken);
-            // The embedded clone URL must use the new repository's token, never the stale template one.
-            const cloneUrl = component.getHttpOrSshRepositoryUri(false, true, true);
-            expect(cloneUrl).toContain(`:${solutionToken}@`);
-            expect(cloneUrl).not.toContain(repoToken);
-        });
-
-        it('should ignore late repository token responses for a previously viewed base repository', async () => {
-            const templateTokenSubject = new Subject<HttpResponse<string>>();
-            const solutionTokenSubject = new Subject<HttpResponse<string>>();
-            const solutionToken = 'vcpat-SolutionSolutionSolutionSolutionSolutio123';
-            getRepoTokenSpy.mockReturnValueOnce(templateTokenSubject.asObservable()).mockReturnValueOnce(solutionTokenSubject.asObservable());
-            localStorageState = RepositoryAuthenticationMethod.Token;
-            fixture.componentRef.setInput('exerciseId', 7);
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TEMPLATE' });
-            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
-            await component['initializeCodeButtonComponent']();
-
-            component.onClick();
-            fixture.detectChanges();
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
-
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'SOLUTION' });
-            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-solution.git');
-            fixture.detectChanges();
-
-            component.onClick();
-            fixture.detectChanges();
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined, undefined);
-
-            templateTokenSubject.next(new HttpResponse({ body: repoToken }));
-            templateTokenSubject.complete();
-            expect(component.repositoryAccessToken()).toBeUndefined();
-            expect(component.copyEnabled()).toBe(false);
-
-            solutionTokenSubject.next(new HttpResponse({ body: solutionToken }));
-            solutionTokenSubject.complete();
-
-            expect(component.repositoryAccessToken()).toEqual(solutionToken);
-            expect(component.copyEnabled()).toBe(true);
-            const cloneUrl = component.getHttpOrSshRepositoryUri(false, true, true);
-            expect(cloneUrl).toContain(`:${solutionToken}@`);
-            expect(cloneUrl).not.toContain(repoToken);
-        });
-
-        it('should keep the copy button enabled for SSH when the repository token resolves after the dialog opened', async () => {
-            // Reproduces the production ordering that synchronous of() mocks hide: the token HTTP response arrives only
-            // after onClick already set the SSH copy state. The async response must not clobber it back to disabled.
-            const tokenSubject = new Subject<HttpResponse<string>>();
-            getRepoTokenSpy.mockReturnValue(tokenSubject.asObservable());
-            localStorageState = RepositoryAuthenticationMethod.SSH;
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TEMPLATE' });
-            fixture.componentRef.setInput('exerciseId', 7);
-            await component['initializeCodeButtonComponent']();
-
-            component.onClick();
-            expect(component.useSsh()).toBe(true);
-            // The user has SSH keys, so copy is enabled while the token request is still pending.
-            expect(component.copyEnabled()).toBe(true);
-
-            // The repository token resolves now, after the dialog already opened.
-            tokenSubject.next(new HttpResponse({ body: repoToken }));
-            tokenSubject.complete();
-
-            expect(component.repositoryAccessToken()).toEqual(repoToken);
-            expect(component.copyEnabled()).toBe(true);
-        });
-
-        it('should display password warning nudge when password is selected and switch to token on click', () => {
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-
-            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
-            fixture.detectChanges();
-
-            const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
-            expect(useHTTPSButton).not.toBeNull();
-            useHTTPSButton.nativeElement.click();
-            fixture.detectChanges();
-
-            const warningNudge = fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'));
-            expect(warningNudge).not.toBeNull();
-
-            const switchButton = warningNudge.query(By.css('[data-testid="switch-to-token-button"]'));
-            expect(switchButton).not.toBeNull();
-            switchButton.nativeElement.click();
-            fixture.detectChanges();
-
-            expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Token);
-            expect(component.useToken()).toBe(true);
-            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
-        });
-
-        it('should not display password warning nudge when token mechanism is not available in configuration', () => {
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-            component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password]);
-
-            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
-            fixture.detectChanges();
-
-            expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Password);
-            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
-        });
-
-        it('should not display password warning nudge when token or SSH is selected', () => {
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-            component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
-
-            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
-            fixture.detectChanges();
-
-            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
-
-            component.useSshUrl();
-            fixture.detectChanges();
-
-            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
-        });
-
-        it('should not show the manual VCS token warning for a base repository in course management', async () => {
-            // In course management (e.g. the exercise detail page) the personal-token warning must never appear for base
-            // repositories, because a repository-scoped staff token is provisioned automatically instead.
-            localStorageState = RepositoryAuthenticationMethod.Token;
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TEMPLATE' });
-            fixture.componentRef.setInput('exerciseId', 7);
-            await component['initializeCodeButtonComponent']();
-            router.setUrl('/course-management');
-            fixture.detectChanges();
-
-            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
-            fixture.detectChanges();
-
-            expect(component.isBaseRepository()).toBe(true);
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
-            expect(fixture.debugElement.query(By.css('.alert-warning'))).toBeNull();
-        });
-
-        it('should embed the repository-scoped token as the password in the clone URL', async () => {
-            localStorageState = RepositoryAuthenticationMethod.Token;
-            fixture.componentRef.setInput('exerciseId', 7);
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TEMPLATE' });
-            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
-            await component['initializeCodeButtonComponent']();
-            component.onClick();
-            fixture.detectChanges();
-
-            // The non-masked clone URL must embed the repository-scoped staff token as the password (not a participation or user token).
-            const cloneUrl = component.getHttpOrSshRepositoryUri(false);
-            expect(cloneUrl).toContain(`:${repoToken}@`);
-            expect(component.copyEnabled()).toBe(true);
-        });
-
-        it('should warn when fetching the repository token is forbidden (403) and not attempt to create one', async () => {
-            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
-            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
-            // Select the token method so the copy button state reflects the (failed) token, not SSH.
-            localStorageState = RepositoryAuthenticationMethod.Token;
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TEMPLATE' });
-            fixture.componentRef.setInput('exerciseId', 7);
-            await component['initializeCodeButtonComponent']();
-            component.onClick();
-            fixture.detectChanges();
-
-            expect(warningSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
-            expect(createRepoTokenSpy).not.toHaveBeenCalled();
-            expect(component.repositoryAccessToken()).toBeUndefined();
-            expect(component.copyEnabled()).toBe(false);
-        });
-
-        it('should show an error when fetching the repository token fails unexpectedly', async () => {
-            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TEMPLATE' });
-            fixture.componentRef.setInput('exerciseId', 7);
-            await component['initializeCodeButtonComponent']();
-            component.onClick();
-            fixture.detectChanges();
-
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenError');
-            expect(createRepoTokenSpy).not.toHaveBeenCalled();
-        });
-
-        it('should warn when creating the repository token (after a 404) is forbidden (403)', async () => {
-            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
-            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
-            createRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'SOLUTION' });
-            fixture.componentRef.setInput('exerciseId', 7);
-            await component['initializeCodeButtonComponent']();
-            component.onClick();
-            fixture.detectChanges();
-
-            expect(createRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined, undefined);
-            expect(warningSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
-            expect(component.repositoryAccessToken()).toBeUndefined();
-        });
-
-        it('should handle a base repository without a participation', async () => {
-            localStorageState = RepositoryAuthenticationMethod.Token;
-            fixture.componentRef.setInput('exerciseId', 7);
-            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-tests.git');
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'base-repository', repositoryType: 'TESTS' });
-            await component['initializeCodeButtonComponent']();
-
-            component.onClick();
-            fixture.detectChanges();
-
-            // The clone URL is built from the base repository URI plus the repository-scoped token, with no participation involved.
-            const cloneUrl = component.getHttpOrSshRepositoryUri(false);
-            expect(cloneUrl).toContain('test-tests.git');
-            expect(cloneUrl).toContain(`:${repoToken}@`);
-        });
-
-        it('should mint a repository-scoped token for a student repository browsed by staff and never leave the clone button disabled', async () => {
-            // Course staff opening another student's assignment repository in course management. Even without a personal VCS
-            // token, a repository-scoped USER token is provisioned on demand (keyed by the participation), so the copy button
-            // becomes enabled and the clone URL embeds that scoped token.
-            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined } as User));
-            localStorageState = RepositoryAuthenticationMethod.Token;
-
-            const othersParticipation = {
-                id: 45,
-                student: { login: 'some_student' },
-                repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-some_student.git',
-            } as ProgrammingExerciseStudentParticipation;
-
-            await component['initializeCodeButtonComponent']();
-            router.setUrl('/course-management');
-            fixture.componentRef.setInput('exerciseId', 99);
-            fixture.componentRef.setInput('vcsAccessTokenData', {
-                type: 'student-repository',
-                participationId: othersParticipation.id,
+            expect(accountService.getVcsAccessToken).toHaveBeenCalledWith(7);
+            expect(accountService.createVcsAccessToken).toHaveBeenCalledWith(7);
+            expect(component['loadingState']()).toMatchObject({
+                status: 'complete',
+                authenticationMethodData: [
+                    { authenticationMethod: RepositoryAuthenticationMethod.Token, url: `https://student:${createdToken}@vcs.example.com/course/exercise.git` },
+                ],
             });
-            fixture.detectChanges();
-            await fixture.whenStable();
-            component.onClick();
-            fixture.detectChanges();
-
-            expect(component.usesRepositoryScopedToken()).toBe(true);
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(99, 'USER', undefined, 45);
-            expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
-            expect(component.repositoryAccessToken()).toEqual(repoToken);
-            expect(component.copyEnabled()).toBe(true);
-            const url = component.getHttpOrSshRepositoryUri(false);
-            expect(url).toContain(`:${repoToken}@`);
-            expect(url).not.toContain('undefined');
         });
 
-        it('should mint the student token from VCS access token data when no participation object is passed (staff tables)', async () => {
-            // The scores / participations / feedback tables render the code button with only repositoryUri + exerciseId +
-            // participationId (no participations array). The scoped USER token must still be minted so the button is never disabled.
-            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined } as User));
-            localStorageState = RepositoryAuthenticationMethod.Token;
-            fixture.componentRef.setInput('exerciseId', 55);
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'student-repository', participationId: 66 });
-            fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/COURSE/some-student.git');
-            await component['initializeCodeButtonComponent']();
-            router.setUrl('/course-management');
-            fixture.detectChanges();
-            component.onClick();
-            fixture.detectChanges();
+        it.each(repositoryTokenCases)(
+            'should load an existing token for the $description',
+            async ({ vcsAccessTokenData, expectedRepositoryType, expectedAuxiliaryRepositoryId, expectedParticipationId }) => {
+                programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: vcsToken })));
+                createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, vcsAccessTokenData);
+                await fixture.whenStable();
 
-            expect(component.usesRepositoryScopedToken()).toBe(true);
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(55, 'USER', undefined, 66);
-            expect(component.repositoryAccessToken()).toEqual(repoToken);
-            expect(component.copyEnabled()).toBe(true);
-            const url = component.getHttpOrSshRepositoryUri(false);
-            expect(url).toContain(`:${repoToken}@`);
-            expect(url).not.toContain('undefined');
-        });
-
-        it('should create the repository-scoped student token on demand when none exists yet (404)', async () => {
-            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
-            localStorageState = RepositoryAuthenticationMethod.Token;
-
-            const othersParticipation = {
-                id: 46,
-                student: { login: 'some_student' },
-                repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-some_student.git',
-            } as ProgrammingExerciseStudentParticipation;
-
-            await component['initializeCodeButtonComponent']();
-            router.setUrl('/course-management');
-            fixture.componentRef.setInput('exerciseId', 99);
-            fixture.componentRef.setInput('vcsAccessTokenData', { type: 'student-repository', participationId: othersParticipation.id! });
-            fixture.detectChanges();
-            await fixture.whenStable();
-            component.onClick();
-            fixture.detectChanges();
-
-            expect(createRepoTokenSpy).toHaveBeenCalledWith(99, 'USER', undefined, 46);
-            expect(component.repositoryAccessToken()).toEqual(repoToken);
-        });
-    });
-
-    it('should create new vcsAccessToken when it does not exist', async () => {
-        createVcsAccessTokenSpy = vi.spyOn(accountService, 'createVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
-        getVcsAccessTokenSpy = vi.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));
-
-        participation.id = 1;
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        await component['initializeCodeButtonComponent']();
-        fixture.detectChanges();
-        await fixture.whenStable();
-        component.onClick();
-        fixture.detectChanges();
-        expect(component.user()!.vcsAccessToken).toEqual(vcsToken);
-        expect(getVcsAccessTokenSpy).toHaveBeenCalled();
-        expect(createVcsAccessTokenSpy).toHaveBeenCalled();
-    });
-
-    it('should get ssh url (same url for team and individual participation)', async () => {
-        participation.repositoryUri = 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git';
-        participation.team = {};
-        fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
-        fixture.changeDetectorRef.detectChanges();
-        component.onClick();
-        fixture.detectChanges();
-        expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@artemis.tum.de:7999/git/ITCPLEASE1/itcplease1-exercise.git');
-
-        participation.team = undefined;
-        expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@artemis.tum.de:7999/git/ITCPLEASE1/itcplease1-exercise.git');
-    });
-
-    it('should get copy the repository uri', async () => {
-        participation.repositoryUri = `https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
-        participation.team = {};
-        fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        component.useHttpsPassword();
-        fixture.changeDetectorRef.detectChanges();
-
-        let url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
-
-        participation.team = undefined;
-        url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
-    });
-
-    it('should insert the correct token in the repository uri', async () => {
-        participation.repositoryUri = `https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
-        fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        localStorageState = RepositoryAuthenticationMethod.Token;
-
-        await component['initializeCodeButtonComponent']();
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        component.onClick();
-        fixture.detectChanges();
-        // Placeholder is shown
-        let url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user()!.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
-
-        url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://${component.user()!.login}:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
-
-        // Team participation does not include user name
-        fixture.componentRef.setInput('repositoryUri', `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
-        participation.team = {};
-
-        // Placeholder is shown
-        url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user()!.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
-
-        url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://${component.user()!.login}:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
-    });
-
-    it('should use the participation token for the users own test run participation in course management', async () => {
-        // Exam test runs are served under a course-management URL, but the participation belongs to the current user,
-        // so its own participation token (not the personal staff token) must be used and loaded.
-        const participationToken = 'vcpat-own-test-run-participation-token';
-        getVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse({ body: participationToken })));
-        localStorageState = RepositoryAuthenticationMethod.Token;
-
-        const ownTestRunParticipation = {
-            id: 42,
-            testRun: true,
-            student: { login: 'edx_userLogin' },
-            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
-        } as ProgrammingExerciseStudentParticipation;
-
-        await component['initializeCodeButtonComponent']();
-        router.setUrl('/course-management');
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: ownTestRunParticipation.id!, isOwnParticipation: true });
-        fixture.detectChanges();
-        await fixture.whenStable();
-        component.onClick();
-        fixture.detectChanges();
-
-        expect(component.isInCourseManagement()).toBe(true);
-        expect(getVcsAccessTokenSpy).toHaveBeenCalledWith(42);
-        const url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://edx_userLogin:${participationToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git`);
-        expect(url).not.toContain('undefined');
-    });
-
-    it('should mint a repository-scoped staff token for another users test run participation in course management', async () => {
-        // When course staff open another instructor's test run summary, the participation is not owned by them. Instead of the
-        // (deprecated) personal staff token, a repository-scoped USER token is minted on demand for that student repository.
-        const repoToken = 'vcpat-StaffScopedTestRunTokenStaffScopedTestRun12';
-        const getRepoTokenSpy = vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
-        localStorageState = RepositoryAuthenticationMethod.Token;
-
-        const othersTestRunParticipation = {
-            id: 43,
-            testRun: true,
-            student: { login: 'other_instructor' },
-            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
-        } as ProgrammingExerciseStudentParticipation;
-
-        await component['initializeCodeButtonComponent']();
-        router.setUrl('/course-management');
-        fixture.componentRef.setInput('exerciseId', 77);
-        fixture.componentRef.setInput('vcsAccessTokenData', {
-            type: 'student-repository',
-            participationId: othersTestRunParticipation.id,
-        });
-        fixture.detectChanges();
-        await fixture.whenStable();
-        component.onClick();
-        fixture.detectChanges();
-
-        // The participation token endpoint must not be used for a repository the staff member does not own.
-        expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
-        // A repository-scoped staff token is requested for the student (USER) repository, keyed by the participation.
-        expect(getRepoTokenSpy).toHaveBeenCalledWith(77, 'USER', undefined, 43);
-        const url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://edx_userLogin:${repoToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git`);
-        expect(url).not.toContain('undefined');
-    });
-
-    it('should omit the token and report to Sentry when a participation token is unexpectedly missing', async () => {
-        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
-        captureSpy.mockClear();
-        // Simulate a participation whose token can neither be fetched (404) nor created (created but empty body); this is
-        // the terminal failure state that should be reported (should never happen in practice).
-        getVcsAccessTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' })));
-        createVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse<string>({ body: undefined })));
-        localStorageState = RepositoryAuthenticationMethod.Token;
-
-        const participation = {
-            id: 7,
-            testRun: false,
-            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
-        } as ProgrammingExerciseStudentParticipation;
-
-        await component['initializeCodeButtonComponent']();
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        fixture.detectChanges();
-        await fixture.whenStable();
-        component.onClick();
-        fixture.detectChanges();
-
-        const url = component.getHttpOrSshRepositoryUri(false);
-        // Building the URL again must not report a second time (per-instance guard).
-        component.getHttpOrSshRepositoryUri(false);
-        expect(createVcsAccessTokenSpy).toHaveBeenCalledWith(7);
-        expect(url).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-        expect(url).not.toContain('undefined');
-        expect(captureSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should not report to Sentry while a participation token is still loading (no terminal failure yet)', async () => {
-        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
-        captureSpy.mockClear();
-        // The token request never resolves during this test, so the token is merely in flight, not terminally missing.
-        getVcsAccessTokenSpy.mockReturnValue(new Subject<HttpResponse<string>>().asObservable());
-        localStorageState = RepositoryAuthenticationMethod.Token;
-
-        const participation = {
-            id: 8,
-            testRun: false,
-            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
-        } as ProgrammingExerciseStudentParticipation;
-
-        await component['initializeCodeButtonComponent']();
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        fixture.detectChanges();
-        await fixture.whenStable();
-        component.onClick();
-        fixture.detectChanges();
-
-        const url = component.getHttpOrSshRepositoryUri(false);
-        // The URL omits the (not-yet-available) token, but no anomaly is reported while it is still loading.
-        expect(url).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-        expect(url).not.toContain('undefined');
-        expect(captureSpy).not.toHaveBeenCalled();
-    });
-
-    it('should not report to Sentry while a repository-scoped staff token for a student repository is still loading', async () => {
-        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
-        captureSpy.mockClear();
-        // Course staff browsing another participant's repository: a repository-scoped token is minted on demand. While it is
-        // still loading, the URL must omit the token (never contain "undefined"), and this transient state must not be reported.
-        const tokenSubject = new Subject<HttpResponse<string>>();
-        vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(tokenSubject.asObservable());
-        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined }));
-        localStorageState = RepositoryAuthenticationMethod.Token;
-
-        const othersParticipation = {
-            id: 44,
-            student: { login: 'some_student' },
-            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
-        } as ProgrammingExerciseStudentParticipation;
-
-        await component['initializeCodeButtonComponent']();
-        router.setUrl('/course-management');
-        fixture.componentRef.setInput('exerciseId', 88);
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'student-repository', participationId: othersParticipation.id! });
-        fixture.detectChanges();
-        await fixture.whenStable();
-        component.onClick();
-        fixture.detectChanges();
-
-        const url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-        expect(url).not.toContain('undefined');
-        expect(captureSpy).not.toHaveBeenCalled();
-    });
-
-    it('should add the user login and token to the URL', async () => {
-        participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
-        fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
-        fixture.changeDetectorRef.detectChanges();
-
-        const url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user()!.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
-    });
-
-    it('should return http url if ssh is selected but http is forced', async () => {
-        participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
-        fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-        component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
-
-        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.SSH);
-        fixture.changeDetectorRef.detectChanges();
-
-        const url = component.getHttpOrSshRepositoryUri(false, false, true);
-        expect(url).toBe(`https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
-    });
-
-    it('should handle participation changes', async () => {
-        const participation1: ProgrammingExerciseStudentParticipation = {
-            id: 1,
-            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
-            testRun: false,
-        };
-        const participation2: ProgrammingExerciseStudentParticipation = {
-            id: 2,
-            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-practice.git',
-            testRun: true,
-        };
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation1.id!, isOwnParticipation: true });
-        fixture.componentRef.setInput('repositoryUri', participation1.repositoryUri);
-        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation2.id!, isOwnParticipation: true });
-        fixture.componentRef.setInput('repositoryUri', participation2.repositoryUri);
-        fixture.detectChanges();
-
-        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-practice.git');
-    });
-
-    it('should handle no participation', () => {
-        fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
-        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
-    });
-
-    it('should set wasCopied to true and back to false after 3 seconds on successful copy', () => {
-        fixture.detectChanges();
-        vi.useFakeTimers();
-        component.onCopyFinished(true);
-        expect(component.wasCopied()).toBeTruthy();
-        vi.advanceTimersByTime(3000);
-        expect(component.wasCopied()).toBeFalsy();
-        vi.useRealTimers();
-    });
-
-    it('should not change wasCopied if copy is unsuccessful', () => {
-        fixture.detectChanges();
-        component.onCopyFinished(false);
-        fixture.detectChanges();
-        expect(component.wasCopied()).toBeFalsy();
-    });
-
-    it('should fetch and store ssh preference', () => {
-        participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });
-
-        component.sshEnabled = true;
-        component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
-        component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH, RepositoryAuthenticationMethod.Password]);
-
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(component.useSsh()).toBeFalsy();
-
-        fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
-        fixture.detectChanges();
-
-        const useSSHButton = fixture.debugElement.query(By.css('#useSSHButton'));
-        expect(useSSHButton).not.toBeNull();
-        useSSHButton.nativeElement.click();
-        fixture.detectChanges();
-        expect(
-            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
-                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
-            ),
-        ).toEqual(['false', 'false', 'true']);
-        expect(localStorageMock.store).toHaveBeenNthCalledWith(2, 'code-button-state', 'ssh');
-        expect(component.useSsh()).toBeTruthy();
-
-        const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
-        expect(useHTTPSButton).not.toBeNull();
-        useHTTPSButton.nativeElement.click();
-        fixture.detectChanges();
-        expect(
-            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
-                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
-            ),
-        ).toEqual(['true', 'false', 'false']);
-        expect(localStorageMock.store).toHaveBeenNthCalledWith(3, 'code-button-state', 'password');
-        expect(component.useSsh()).toBeFalsy();
-
-        const useHTTPSWithTokenButton = fixture.debugElement.query(By.css('#useHTTPSWithTokenButton'));
-        expect(useHTTPSWithTokenButton).not.toBeNull();
-        useHTTPSWithTokenButton.nativeElement.click();
-        fixture.detectChanges();
-        expect(
-            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
-                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
-            ),
-        ).toEqual(['false', 'true', 'false']);
-        expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
-        expect(component.useSsh()).toBeFalsy();
-        expect(component.useToken()).toBeTruthy();
-    });
-
-    it.each([
-        [
-            'start theia button should be visible when module feature is active and theia is configured',
-            {
-                activeModuleFeatures: [MODULE_FEATURE_THEIA],
-                theiaPortalURL: 'https://theia.test',
+                expect(programmingExerciseService.getRepositoryVcsAccessToken).toHaveBeenCalledWith(
+                    exerciseId,
+                    expectedRepositoryType,
+                    expectedAuxiliaryRepositoryId,
+                    expectedParticipationId,
+                );
+                expect(programmingExerciseService.createRepositoryVcsAccessToken).not.toHaveBeenCalled();
+                expect(component['loadingState']()).toMatchObject({ status: 'complete' });
             },
-            true,
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            true,
-            true,
-        ],
-        [
-            'start theia button should not be visible when module feature is active but theia is ill-configured',
-            {
-                activeModuleFeatures: [MODULE_FEATURE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            true,
-            {
-                theiaImage: undefined,
-            },
-            false,
-            true,
-        ],
-        [
-            'start theia button should not be visible when module feature is active but onlineIde is not activated',
-            {
-                activeModuleFeatures: [MODULE_FEATURE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            false,
-            {
-                theiaImage: 'this-is-an-old-image',
-            },
-            false,
-            false,
-        ],
-        [
-            'start theia button should not be visible when module feature is active but url is not set',
-            {
-                activeModuleFeatures: [MODULE_FEATURE_THEIA],
-            },
-            true,
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            false,
-            true,
-        ],
-        [
-            'start theia button should not be visible when module feature is not active but url is set',
-            {
-                theiaPortalURL: 'https://theia.test',
-            },
-            true,
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            false,
-            false,
-        ],
-    ])('%s', async (description, profileInfo, allowOnlineIde, theiaConfig, expectedVisibility, expectedConfigRequest) => {
-        const getProfileInfoStub = vi.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoStub.mockReturnValue(profileInfo as ProfileInfo);
-
-        const getTheiaConfigStub = vi.spyOn(programmingExerciseService, 'getTheiaConfig');
-        getTheiaConfigStub.mockReturnValue(of(theiaConfig as ProgrammingExerciseTheiaConfig));
-
-        fixture.componentRef.setInput('exerciseId', 1);
-        fixture.componentRef.setInput('allowOnlineIde', allowOnlineIde);
-
-        await component['initializeCodeButtonComponent']();
-
-        expect(component.theiaEnabled()).toBe(expectedVisibility);
-        expect(getTheiaConfigStub).toHaveBeenCalledTimes(expectedConfigRequest ? 1 : 0);
-    });
-
-    it('should include the correct data in the form submission when startOnlineIDE is called', async () => {
-        const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
-        const documentAppendChildSpy = vi.spyOn(document.body, 'appendChild');
-        const documentRemoveChildSpy = vi.spyOn(document.body, 'removeChild');
-        const formSubmitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
-
-        const getToolTokenSpy = vi.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
-
-        component['theiaImage'] = 'theia-image';
-        fixture.componentRef.setInput('repositoryUri', 'https://repo.uri');
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: 5, isOwnParticipation: true });
-        getVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse({ body: 'token' })));
-
-        component.theiaPortalURL = 'https://theia.portal.url';
-
-        fixture.detectChanges();
-
-        await component.startOnlineIDE();
-        expect(getToolTokenSpy).toHaveBeenCalledOnce();
-        expect(windowOpenSpy).toHaveBeenCalledExactlyOnceWith('', '_blank');
-        expect(documentAppendChildSpy).toHaveBeenCalledOnce();
-        expect(formSubmitSpy).toHaveBeenCalledOnce();
-
-        const form = documentAppendChildSpy.mock.calls[0]?.[0] as HTMLFormElement;
-        if (!form) {
-            throw new Error('Form element is undefined');
-        }
-        expect(form.method.toUpperCase()).toBe('GET');
-        expect(form.action).toBe('https://theia.portal.url/');
-        expect(form.target).toBe('Theia-IDE');
-
-        const inputs = form.getElementsByTagName('input');
-        const data: { [key: string]: string } = {
-            appDef: 'theia-image',
-            gitUri: 'https://edx_userLogin:token@repo.uri',
-            gitToken: 'token',
-        };
-
-        expect(Array.from(inputs).find((input) => input.name === 'gitUri')).toBeDefined();
-
-        const gitUriTest = Array.from(inputs).find((input) => input.name === 'gitUri');
-        expect(gitUriTest).toBeDefined();
-        expect(gitUriTest!.value).toBe(data.gitUri);
-
-        windowOpenSpy.mockRestore();
-        documentAppendChildSpy.mockRestore();
-        documentRemoveChildSpy.mockRestore();
-        formSubmitSpy.mockRestore();
-    });
-
-    it('should use token authentication when startOnlineIDE is called with SSH is selected', async () => {
-        const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
-        const formSubmitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
-        const documentAppendChildSpy = vi.spyOn(document.body, 'appendChild');
-
-        const getToolTokenSpy = vi.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
-
-        component['theiaImage'] = 'theia-image';
-        fixture.componentRef.setInput('repositoryUri', 'https://repo.uri');
-        fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: 5, isOwnParticipation: true });
-        getVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse({ body: 'token' })));
-        component.theiaPortalURL = 'https://theia.portal.url';
-
-        component.sshTemplateUrl = 'https://ssh.repo.url';
-        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.SSH);
-
-        fixture.changeDetectorRef.detectChanges();
-
-        await component.startOnlineIDE();
-        expect(getToolTokenSpy).toHaveBeenCalledOnce();
-        expect(windowOpenSpy).toHaveBeenCalledExactlyOnceWith('', '_blank');
-        expect(documentAppendChildSpy).toHaveBeenCalledOnce();
-        expect(formSubmitSpy).toHaveBeenCalledOnce();
-
-        const form = documentAppendChildSpy.mock.calls[0]?.[0] as HTMLFormElement;
-        expect(form).toBeDefined();
-
-        const inputs = form.getElementsByTagName('input');
-
-        const gitUriTest = Array.from(inputs).find((input) => input.name === 'gitUri');
-        expect(gitUriTest).toBeDefined();
-        expect(gitUriTest!.value).toBe('https://edx_userLogin:token@repo.uri');
-
-        windowOpenSpy.mockRestore();
-        documentAppendChildSpy.mockRestore();
-        formSubmitSpy.mockRestore();
-    });
-
-    function stubServices() {
-        const identityStub = vi.spyOn(accountService, 'identity');
-        identityStub.mockReturnValue(
-            Promise.resolve({
-                login: 'edx_userLogin',
-                internal: true,
-                vcsAccessToken: vcsToken,
-            }),
         );
 
-        const getProfileInfoStub = vi.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoStub.mockReturnValue(info);
-    }
+        it('should create a repository token when none exists', async () => {
+            const vcsAccessTokenData: VcsAccessTokenData = { type: 'base-repository', repositoryType: RepositoryType.SOLUTION };
+            programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            programmingExerciseService.createRepositoryVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: createdToken })));
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, vcsAccessTokenData);
+            await fixture.whenStable();
+
+            expect(programmingExerciseService.getRepositoryVcsAccessToken).toHaveBeenCalledWith(exerciseId, RepositoryType.SOLUTION, undefined, undefined);
+            expect(programmingExerciseService.createRepositoryVcsAccessToken).toHaveBeenCalledWith(exerciseId, RepositoryType.SOLUTION, undefined, undefined);
+            expect(component['loadingState']()).toMatchObject({
+                status: 'complete',
+                authenticationMethodData: [
+                    { authenticationMethod: RepositoryAuthenticationMethod.Token, url: `https://student:${createdToken}@vcs.example.com/course/exercise.git` },
+                ],
+            });
+        });
+
+        it('should expose an error when a successful token response has no token in its body', async () => {
+            accountService.getVcsAccessToken.mockReturnValue(of(new HttpResponse<string>({ body: null })));
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(accountService.createVcsAccessToken).not.toHaveBeenCalled();
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error without creating a token when loading fails with a non-404 response', async () => {
+            accountService.getVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(accountService.createVcsAccessToken).not.toHaveBeenCalled();
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+    });
+
+    describe('authentication method data', () => {
+        const sshCloneURLTemplate = 'ssh://git@vcs.example.com:7999/';
+
+        it('should expose an error when no user is logged in', async () => {
+            accountService.identity.mockResolvedValue(undefined);
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error when the user has no login', async () => {
+            accountService.identity.mockResolvedValue(Object.assign(new User(), user, { login: undefined }));
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose all supported authentication methods in profile order', async () => {
+            profileInfo = {
+                ...profileInfo,
+                repositoryAuthenticationMechanisms: [
+                    RepositoryAuthenticationMethod.SSH,
+                    'unsupported',
+                    RepositoryAuthenticationMethod.Token,
+                    RepositoryAuthenticationMethod.Password,
+                ],
+                sshCloneURLTemplate,
+            };
+            sshUserSettingsService.getCachedSshKeys.mockResolvedValue([]);
+            createComponent(false, ProgrammingLanguage.JAVA, 'https://old-user@vcs.example.com/course/exercise.git');
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toMatchObject({
+                status: 'complete',
+                authenticationMethodData: [
+                    {
+                        authenticationMethod: RepositoryAuthenticationMethod.SSH,
+                        url: 'ssh://git@vcs.example.com:7999/course/exercise.git',
+                        sshKeyState: { status: 'missing' },
+                    },
+                    {
+                        authenticationMethod: RepositoryAuthenticationMethod.Token,
+                        url: `https://student:${vcsToken}@vcs.example.com/course/exercise.git`,
+                    },
+                    {
+                        authenticationMethod: RepositoryAuthenticationMethod.Password,
+                        url: 'https://student@vcs.example.com/course/exercise.git',
+                    },
+                ],
+            });
+        });
+
+        it.each([
+            {
+                description: 'none of the configured keys are expired',
+                sshKeys: [new UserSshPublicKey(), Object.assign(new UserSshPublicKey(), { expiryDate: dayjs().add(1, 'day') })],
+                hasExpiredKeys: false,
+            },
+            {
+                description: 'a configured key is expired',
+                sshKeys: [Object.assign(new UserSshPublicKey(), { expiryDate: dayjs().subtract(1, 'day') })],
+                hasExpiredKeys: true,
+            },
+        ])('should expose configured SSH keys when $description', async ({ sshKeys, hasExpiredKeys }) => {
+            profileInfo = {
+                ...profileInfo,
+                repositoryAuthenticationMechanisms: [RepositoryAuthenticationMethod.SSH],
+                sshCloneURLTemplate,
+            };
+            sshUserSettingsService.getCachedSshKeys.mockResolvedValue(sshKeys);
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toMatchObject({
+                status: 'complete',
+                authenticationMethodData: [
+                    {
+                        authenticationMethod: RepositoryAuthenticationMethod.SSH,
+                        sshKeyState: { status: 'configured', hasExpiredKeys },
+                    },
+                ],
+            });
+        });
+
+        it('should expose an error when no supported authentication method is configured', async () => {
+            profileInfo = { ...profileInfo, repositoryAuthenticationMechanisms: ['unsupported'] };
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error when the SSH clone URL template is missing', async () => {
+            profileInfo = { ...profileInfo, repositoryAuthenticationMechanisms: [RepositoryAuthenticationMethod.SSH] };
+            Reflect.deleteProperty(profileInfo, 'sshCloneURLTemplate');
+            sshUserSettingsService.getCachedSshKeys.mockResolvedValue([]);
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error when loading SSH keys fails', async () => {
+            profileInfo = {
+                ...profileInfo,
+                repositoryAuthenticationMechanisms: [RepositoryAuthenticationMethod.SSH],
+                sshCloneURLTemplate,
+            };
+            sshUserSettingsService.getCachedSshKeys.mockRejectedValue(new Error('SSH key request failed'));
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error when loading SSH keys returns no result', async () => {
+            profileInfo = {
+                ...profileInfo,
+                repositoryAuthenticationMechanisms: [RepositoryAuthenticationMethod.SSH],
+                sshCloneURLTemplate,
+            };
+            sshUserSettingsService.getCachedSshKeys.mockResolvedValue(undefined);
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+    });
+
+    describe('preferred IDE', () => {
+        const intellij: Ide = { name: 'IntelliJ IDEA', deepLink: 'jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo={cloneUrl}' };
+        const eclipse: Ide = { name: 'Eclipse', deepLink: 'eclipse://clone?url={cloneUrl}' };
+        const vsCodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
+
+        it.each([
+            {
+                description: 'the programming language has a preference',
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                preferences: new Map([[ProgrammingLanguage.JAVA, intellij]]),
+                expectedIde: intellij,
+            },
+            {
+                description: 'the programming language has no preference',
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                preferences: new Map([[ProgrammingLanguage.EMPTY, eclipse]]),
+                expectedIde: eclipse,
+            },
+            {
+                description: 'no programming language is supplied',
+                programmingLanguage: undefined,
+                preferences: new Map([[ProgrammingLanguage.EMPTY, eclipse]]),
+                expectedIde: eclipse,
+            },
+            {
+                description: 'no matching or generic preference exists',
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                preferences: new Map<ProgrammingLanguage, Ide>(),
+                expectedIde: vsCodeFallback,
+            },
+        ])('should expose the expected IDE when $description', async ({ programmingLanguage, preferences, expectedIde }) => {
+            ideSettingsService.loadIdePreferences.mockResolvedValue(preferences);
+            createComponent(false, programmingLanguage);
+            await fixture.whenStable();
+
+            expect(ideSettingsService.loadIdePreferences).toHaveBeenCalledOnce();
+            expect(component['loadingState']()).toMatchObject({ status: 'complete', preferredIde: expectedIde });
+        });
+
+        it('should expose an error when loading IDE preferences fails', async () => {
+            ideSettingsService.loadIdePreferences.mockRejectedValue(new Error('IDE preferences request failed'));
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+    });
+
+    describe('Theia link data', () => {
+        it('should expose loading and then complete with Theia link data from the resolved dependencies', async () => {
+            const theiaConfigResponse = new Subject<{ theiaImage?: string }>();
+            programmingExerciseService.getTheiaConfig.mockReturnValue(theiaConfigResponse);
+            createComponent();
+
+            await vi.waitFor(() => expect(programmingExerciseService.getTheiaConfig).toHaveBeenCalledWith(exerciseId));
+            expect(component['loadingState']()).toEqual({ status: 'loading' });
+
+            theiaConfigResponse.next({ theiaImage });
+            theiaConfigResponse.complete();
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toMatchObject({
+                status: 'complete',
+                theiaLinkData: {
+                    theiaPortalURL,
+                    theiaImage,
+                    repositoryUrl: `https://student:${vcsToken}@vcs.example.com/course/exercise.git`,
+                    userName: user.name,
+                    userEmail: user.email,
+                },
+            });
+        });
+
+        it.each([
+            { description: 'online IDE use is disallowed', allowOnlineIde: false, featureActive: true },
+            { description: 'the Theia module feature is inactive', allowOnlineIde: true, featureActive: false },
+        ])('should complete without Theia link data when $description', async ({ allowOnlineIde, featureActive }) => {
+            theiaFeatureActive = featureActive;
+            createComponent(allowOnlineIde);
+            await fixture.whenStable();
+
+            expect(programmingExerciseService.getTheiaConfig).not.toHaveBeenCalled();
+            expect(component['loadingState']()).toMatchObject({ status: 'complete', theiaLinkData: undefined });
+        });
+
+        it.each([
+            { description: 'the profile has no Theia portal URL', profileOverrides: { theiaPortalURL: undefined }, userOverrides: {} },
+            { description: 'the user has no name', profileOverrides: {}, userOverrides: { name: undefined } },
+            { description: 'the user has no email address', profileOverrides: {}, userOverrides: { email: undefined } },
+        ])('should expose an error when $description', async ({ profileOverrides, userOverrides }) => {
+            profileInfo = { ...profileInfo, ...profileOverrides };
+            accountService.identity.mockResolvedValue(Object.assign(new User(), user, userOverrides));
+            createComponent();
+            await fixture.whenStable();
+
+            expect(programmingExerciseService.getTheiaConfig).not.toHaveBeenCalled();
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error when loading the Theia configuration fails', async () => {
+            programmingExerciseService.getTheiaConfig.mockReturnValue(throwError(() => new Error('Theia configuration request failed')));
+            createComponent();
+            await fixture.whenStable();
+
+            expect(programmingExerciseService.getTheiaConfig).toHaveBeenCalledWith(exerciseId);
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error when the Theia configuration has no image', async () => {
+            programmingExerciseService.getTheiaConfig.mockReturnValue(of({}));
+            createComponent();
+            await fixture.whenStable();
+
+            expect(programmingExerciseService.getTheiaConfig).toHaveBeenCalledWith(exerciseId);
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+    });
 });

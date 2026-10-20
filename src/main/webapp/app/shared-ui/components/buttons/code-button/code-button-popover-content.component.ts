@@ -13,7 +13,7 @@ import {
 } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { RepositoryAuthenticationMethod } from './code-button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';

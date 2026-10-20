@@ -11,7 +11,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
-import { RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { RepositoryAuthenticationMethod } from './code-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Mocked, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthenticationMethodData, CodeButtonPopoverContentComponent, NonEmptyArray, TheiaLinkData } from './code-button-popover-content.component';
