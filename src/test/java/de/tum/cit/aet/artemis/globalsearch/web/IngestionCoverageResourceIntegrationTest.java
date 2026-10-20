@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
@@ -92,6 +93,12 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
     }
 
     @Test
+    @WithAnonymousUser
+    void anonymousCannotReadTheOverview() throws Exception {
+        request.get(BASE + "index/overview", HttpStatus.UNAUTHORIZED, String.class);
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void overviewReportsReachabilityAndCollectionCounts() throws Exception {
         IndexOverviewDTO overview = request.get(BASE + "index/overview", HttpStatus.OK, IndexOverviewDTO.class);
@@ -100,6 +107,37 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
         assertThat(overview.weaviateAddress()).isNotBlank();
         // The container is running, so the SearchableEntities collection is present and counted.
         assertThat(overview.collections()).anySatisfy(collection -> assertThat(collection.collection()).isEqualTo("SearchableEntities"));
+
+        var json = objectMapper.readTree(request.get(BASE + "index/overview", HttpStatus.OK, String.class));
+        assertThat(json.propertyNames()).containsExactlyInAnyOrder("weaviateReachable", "weaviateAddress", "irisEnabled", "irisReachable", "collections");
+        assertThat(json.get("weaviateReachable").isBoolean()).isTrue();
+        assertThat(json.get("weaviateAddress").isString()).isTrue();
+        assertThat(json.get("weaviateAddress").stringValue()).isNotBlank();
+        // Iris is disabled in the integration-test configuration; false must be present on the wire.
+        assertThat(json.get("irisEnabled").isBoolean()).isTrue();
+        assertThat(json.get("irisEnabled").booleanValue()).isFalse();
+        assertThat(json.get("irisReachable").isBoolean()).isTrue();
+        assertThat(json.get("irisReachable").booleanValue()).isFalse();
+        var collections = json.get("collections");
+        assertThat(collections.isArray()).isTrue();
+        assertThat(collections).hasSize(5);
+        assertThat(collections.get(0).get("collection").stringValue()).isEqualTo("SearchableEntities");
+        assertThat(collections.get(1).get("collection").stringValue()).isEqualTo("Lectures");
+        assertThat(collections.get(2).get("collection").stringValue()).isEqualTo("LectureTranscriptions");
+        assertThat(collections.get(3).get("collection").stringValue()).isEqualTo("LectureUnitSegments");
+        assertThat(collections.get(4).get("collection").stringValue()).isEqualTo("LectureUnits");
+        for (var collection : collections) {
+            assertThat(collection.get("collection").isString()).isTrue();
+            assertThat(collection.get("readable").isBoolean()).isTrue();
+            if (collection.get("readable").booleanValue()) {
+                assertThat(collection.propertyNames()).containsExactlyInAnyOrder("collection", "count", "readable");
+                assertThat(collection.get("count").isIntegralNumber()).isTrue();
+                assertThat(collection.get("count").longValue()).isNotNegative();
+            }
+            else {
+                assertThat(collection.propertyNames()).containsExactlyInAnyOrder("collection", "readable");
+            }
+        }
     }
 
     @Test

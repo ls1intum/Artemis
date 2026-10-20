@@ -5,13 +5,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import {
-    CourseBrowserData,
-    IndexOverview,
-    IndexedContentObject,
-    IndexedEntityRecord,
-    IngestionCoverage,
-} from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { CourseBrowserData, IndexedContentObject, IndexedEntityRecord, IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+
+import { IndexOverview } from 'app/openapi/model/index-overview';
 
 describe('CourseIngestionDashboardService', () => {
     let service: CourseIngestionDashboardService;
@@ -26,7 +22,8 @@ describe('CourseIngestionDashboardService', () => {
         irisReachable: true,
         collections: [
             { collection: 'ArtemisSearchableEntity', count: 42, readable: true },
-            { collection: 'LectureUnits', count: null, readable: false },
+            { collection: 'Lectures', count: 0, readable: true },
+            { collection: 'LectureUnits', readable: false },
         ],
     };
 
@@ -62,13 +59,54 @@ describe('CourseIngestionDashboardService', () => {
     });
 
     it('should GET the index overview', async () => {
-        const resultPromise = firstValueFrom(service.getIndexOverview());
+        const overview$ = service.getIndexOverview();
+        httpMock.expectNone('/api/global-search/admin/index/overview');
+        const resultPromise = firstValueFrom(overview$);
 
-        const req = httpMock.expectOne(`${baseUrl}/index/overview`);
+        const req = httpMock.expectOne('/api/global-search/admin/index/overview');
         expect(req.request.method).toBe('GET');
+        expect(req.request.params.keys()).toEqual([]);
+        expect(req.request.body).toBeNull();
+        expect(req.request.responseType).toBe('json');
         req.flush(mockOverview);
 
         expect(await resultPromise).toEqual(mockOverview);
+        httpMock.verify();
+    });
+
+    it('should preserve false flags and omitted unavailable counts on a fresh read', async () => {
+        const unavailable: IndexOverview = { ...mockOverview, weaviateReachable: false, irisEnabled: false, irisReachable: false };
+        const overview$ = service.getIndexOverview();
+        const first = firstValueFrom(overview$);
+        httpMock.expectOne('/api/global-search/admin/index/overview').flush(mockOverview);
+        await expect(first).resolves.toEqual(mockOverview);
+
+        const second = firstValueFrom(overview$);
+        httpMock.expectOne('/api/global-search/admin/index/overview').flush(unavailable);
+        await expect(second).resolves.toEqual(unavailable);
+        expect((await second).collections[2]).not.toHaveProperty('count');
+        httpMock.verify();
+    });
+
+    it('should propagate an overview HTTP failure and allow an explicit read to recover', async () => {
+        const failed = firstValueFrom(service.getIndexOverview());
+        const rejection = expect(failed).rejects.toMatchObject({ status: 503 });
+        httpMock.expectOne('/api/global-search/admin/index/overview').flush({ title: 'Unavailable' }, { status: 503, statusText: 'Service Unavailable' });
+        await rejection;
+        httpMock.expectNone('/api/global-search/admin/index/overview');
+
+        const recovered = firstValueFrom(service.getIndexOverview());
+        httpMock.expectOne('/api/global-search/admin/index/overview').flush(mockOverview);
+        await expect(recovered).resolves.toEqual(mockOverview);
+        httpMock.verify();
+    });
+
+    it('should cancel a pending overview request on unsubscribe', () => {
+        const subscription = service.getIndexOverview().subscribe();
+        const req = httpMock.expectOne('/api/global-search/admin/index/overview');
+        expect(req.cancelled).toBe(false);
+        subscription.unsubscribe();
+        expect(req.cancelled).toBe(true);
         httpMock.verify();
     });
 

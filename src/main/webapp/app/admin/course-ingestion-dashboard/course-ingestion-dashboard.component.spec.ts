@@ -7,7 +7,8 @@ import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionDashboardComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { IndexOverview, IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IndexOverview } from 'app/openapi/model/index-overview';
 
 describe('CourseIngestionDashboardComponent', () => {
     let component: CourseIngestionDashboardComponent;
