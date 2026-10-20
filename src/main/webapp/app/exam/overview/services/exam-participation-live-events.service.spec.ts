@@ -143,6 +143,30 @@ describe('ExamParticipationLiveEventsService', () => {
         }
     });
 
+    it('does not send an extra request for a connection that opens before the delayed initial fetch', async () => {
+        vi.useFakeTimers();
+        try {
+            mockWebsocketService.setConnectionState(new ConnectionState(false, false));
+            currentlyLoadedStudentExamSubject.next({ id: 42, exam: { id: 24, course: { id: 12 } } });
+            const liveEventsURL = '/api/exam/courses/12/exams/24/student-exams/live-events';
+
+            // The connection opens while the delayed fetch is pending, which runs after the subscriptions exist.
+            await vi.advanceTimersByTimeAsync(500);
+            mockWebsocketService.setConnectionState(new ConnectionState(true, false));
+            httpMock.expectNone({ method: 'GET', url: liveEventsURL });
+
+            await vi.advanceTimersByTimeAsync(1500);
+            httpMock.expectOne({ method: 'GET', url: liveEventsURL }).flush([]);
+
+            // After the delayed fetch ran, a later reconnection backfills immediately again.
+            mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+            httpMock.expectOne({ method: 'GET', url: liveEventsURL }).flush([]);
+        } finally {
+            service.reset();
+            vi.useRealTimers();
+        }
+    });
+
     // Verifies the two-phase initialization when a new student exam loads:
     //   Phase 1 (immediate): WebSocket subscription is set up so no real-time events are missed
     //   Phase 2 (after 2s): REST fetch backfills any events created before the subscription

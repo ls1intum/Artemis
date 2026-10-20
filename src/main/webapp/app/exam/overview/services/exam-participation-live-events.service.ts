@@ -135,8 +135,10 @@ export class ExamParticipationLiveEventsService {
         // ready after the initial REST snapshot, so events created in that interval also need
         // recovery. RxStomp reinstalls watched subscriptions before publishing its OPEN state.
         // Keep the active-exam guard so leaving an exam stops these history requests.
+        // While the delayed initial fetch is still pending it runs after this connection and already covers it,
+        // so skipping here avoids a second request that would also bypass the load spreading of that delay.
         this.websocketService.connectionState.subscribe((connectionState: ConnectionState) => {
-            if (connectionState.connected && this.studentExamId) {
+            if (connectionState.connected && this.studentExamId && !this.fetchEventsTimeoutHandle) {
                 this.fetchPreviousExamEvents();
             }
         });
@@ -191,9 +193,12 @@ export class ExamParticipationLiveEventsService {
                 // became active (e.g., an announcement made seconds before the student loaded
                 // the page). The 2-second delay is intentional: it spreads the HTTP requests
                 // across time when hundreds of students start the exam simultaneously, reducing
-                // peak load on the server. If the first STOMP connection is still pending,
-                // the connection handler above backfills again once that connection is ready.
-                this.fetchEventsTimeoutHandle = setTimeout(() => this.fetchPreviousExamEvents(), 2000);
+                // peak load on the server. If the first STOMP connection is still pending when this fetch runs,
+                // the connection handler above backfills once that connection is ready.
+                this.fetchEventsTimeoutHandle = setTimeout(() => {
+                    this.fetchEventsTimeoutHandle = undefined;
+                    this.fetchPreviousExamEvents();
+                }, 2000);
             } else {
                 // No valid student exam (or it's a test run) — reset all identity fields so that
                 // the reconnection handler doesn't fetch events for a stale exam, and emit an
