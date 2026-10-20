@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateReposit
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitContentFingerprintService.ContentFingerprints;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
@@ -123,7 +124,7 @@ class LectureContentProcessingServiceTest {
 
         websocketMessagingService = mock(WebsocketMessagingService.class);
         contentFingerprintService = mock(LectureUnitContentFingerprintService.class);
-        when(contentFingerprintService.computeFingerprint(any())).thenReturn("v1:test-fingerprint");
+        when(contentFingerprintService.computeFingerprints(any())).thenReturn(new ContentFingerprints("v1:test-fingerprint", "v1:test-fingerprint-without-video"));
         // The atomic terminal-callback claims succeed by default; duplicate-claim tests override these
         when(processingStateRepository.completeIngestionIfLive(anyLong(), anyString(), any())).thenReturn(1);
         when(processingStateRepository.failIfStillLive(anyLong(), any(), any(), anyInt(), any(), any(), any())).thenReturn(1);
@@ -339,7 +340,7 @@ class LectureContentProcessingServiceTest {
             // Committed through the claim-guarded update rather than a whole-entity save, so a content requeue landing
             // during fingerprinting is not overwritten; 1 means this claim is still the current one.
             when(processingStateRepository.failPreparationIfStillClaimed(anyLong(), any(), anyString(), any())).thenReturn(1);
-            when(contentFingerprintService.computeFingerprint(any())).thenThrow(new IllegalStateException("Cannot read attachment file"));
+            when(contentFingerprintService.computeFingerprints(any())).thenThrow(new IllegalStateException("Cannot read attachment file"));
 
             List<ClaimedIngestionUnitDTO> claims;
             // The file store is initialized, so the failure is judged permanent, not a startup race
@@ -362,7 +363,7 @@ class LectureContentProcessingServiceTest {
             // startup, not an actually-unreadable attachment
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
             when(processingStateRepository.claimIdleForDispatch(anyLong(), anyString(), any(), anyInt())).thenReturn(1);
-            when(contentFingerprintService.computeFingerprint(any())).thenThrow(new IllegalStateException("Cannot read attachment file"));
+            when(contentFingerprintService.computeFingerprints(any())).thenThrow(new IllegalStateException("Cannot read attachment file"));
 
             List<ClaimedIngestionUnitDTO> claims;
             try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
@@ -396,8 +397,8 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(poison, healthy));
             when(processingStateRepository.claimIdleForDispatch(anyLong(), anyString(), any(), anyInt())).thenReturn(1);
             when(processingStateRepository.failPreparationIfStillClaimed(anyLong(), any(), anyString(), any())).thenReturn(1);
-            when(contentFingerprintService.computeFingerprint(testUnit)).thenThrow(new IllegalArgumentException("Illegal character in path"));
-            when(contentFingerprintService.computeFingerprint(healthyUnit)).thenReturn("v1:ok");
+            when(contentFingerprintService.computeFingerprints(testUnit)).thenThrow(new IllegalArgumentException("Illegal character in path"));
+            when(contentFingerprintService.computeFingerprints(healthyUnit)).thenReturn(new ContentFingerprints("v1:ok", "v1:ok-without-video"));
             when(transcriptionRepository.findByLectureUnit_Id(healthyUnit.getId())).thenReturn(Optional.empty());
 
             List<ClaimedIngestionUnitDTO> claims;

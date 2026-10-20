@@ -1,11 +1,14 @@
-<!-- Thanks for contributing to Artemis! Before you submit your pull request, please make sure to check all tasks by putting an x in the [ ] (don't: [x ], [ x], do: [x]). Remove not applicable tasks and do not leave them unchecked -->
+<!-- Follow https://docs.artemis.tum.de/developer/development-process#pull-request-readiness -->
+<!-- Before review: complete applicable author Checklist tasks with [x], delete only inapplicable tasks and empty sections, and replace example text. Keep unfinished applicable work in draft. -->
+<!-- Set the PR milestone to the intended release. When ready, leave draft and verify the "ready for review" label. -->
+<!-- Review Progress tasks remain open until verified. Before merge: all remaining tasks checked, required approvals obtained, threads resolved, checks passing and no conflicts; replace "ready for review" with "ready to merge". -->
 
 ### Summary 
 <!-- Add a short, but convincing summary (abstract) of the PR changes here. --> 
 
 ### Checklist
 #### General
-<!-- Remove tasks that are not applicable for your PR. Please only put the PR into ready for review if all relevant tasks are checked! -->
+<!-- Complete every applicable author task before requesting review; remove only tasks that do not apply. -->
 <!-- You only need to choose one of the first two check items: Generally, test on the test servers. -->
 <!-- If it's only a small change, testing it locally is acceptable, and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
@@ -79,7 +82,7 @@ Prerequisites:
 You can manage test servers using [Helios](https://helios.aet.cit.tum.de/). Check environment statuses in the [environment list](https://helios.aet.cit.tum.de/repo/69562331/environment/list). To deploy to a test server, go to the [CI/CD](https://helios.aet.cit.tum.de/repo/69562331/ci-cd) page, find your PR or branch, and trigger the deployment.
 
 ### Review Progress
-<!-- Each PR should be reviewed by at least two other developers. The code, the functionality (= manual test) and the exam mode need to be reviewed. -->
+<!-- Merge requires approvals from at least four reviewers, including required maintainer reviews. Keep applicable code, manual, exam mode and performance reviews below. -->
 <!-- The reviewer or author check the following boxes depending on what was reviewed or tested. All boxes should be checked before merge. -->
 <!-- You can add additional checkboxes if it makes sense to only review parts of the code or functionality. -->
 <!-- When changes are pushed, uncheck the affected boxes. (Not all changes require full re-reviews.) -->

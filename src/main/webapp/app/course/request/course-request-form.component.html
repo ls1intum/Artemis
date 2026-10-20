@@ -50,7 +50,7 @@
         }
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-3 mb-3">
         <div class="flex flex-col gap-1">
             <label class="font-semibold" [for]="idPrefix() + 'semester'" jhiTranslate="artemisApp.courseRequest.form.semester"></label>
             <p-select

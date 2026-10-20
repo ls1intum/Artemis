@@ -27,7 +27,7 @@ final class AgentToolProgress {
     }
 
     static String describe(AssistantMessage.ToolCall toolCall) {
-        String path = sanitizePath(extractJsonPathValue(toolCall.arguments() == null ? "" : toolCall.arguments()));
+        String path = sanitizePath(extractJsonPathValue(toolCall.arguments()));
         return switch (toolCall.name()) {
             case "read_file" -> path == null ? "Reviewing an exercise file." : "Reviewing " + path + ".";
             case "write_file", "edit_file" -> path == null ? "Working on an exercise file." : "Working on " + path + ".";
@@ -59,7 +59,10 @@ final class AgentToolProgress {
     }
 
     @Nullable
-    private static String extractJsonPathValue(String json) {
+    private static String extractJsonPathValue(@Nullable String json) {
+        if (json == null) {
+            return null;
+        }
         try {
             var arguments = MAPPER.readTree(json);
             var path = arguments == null ? null : arguments.get("path");

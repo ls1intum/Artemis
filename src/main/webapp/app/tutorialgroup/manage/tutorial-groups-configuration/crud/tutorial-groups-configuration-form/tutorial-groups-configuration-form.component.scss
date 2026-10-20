@@ -63,10 +63,11 @@
     font-weight: 600;
 }
 
-// Two short date fields side by side: the start and the end of the period.
+// Two short date fields side by side: the start and the end of the period. A date field never gets narrower than
+// 11.5rem, so on a narrow screen they stack instead of overlapping.
 .config-period {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
     gap: 1rem;
     width: min(36rem, 100%);
 }

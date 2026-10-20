@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
@@ -121,8 +122,7 @@ public class WorkerSupervisorService implements AutoCloseable {
 
         volatile long renewedAt;
 
-        @Nullable
-        volatile CompletableFuture<Void> cleanup;
+        final AtomicReference<CompletableFuture<Void>> cleanup = new AtomicReference<>();
 
         boolean finishing;
 
@@ -277,7 +277,7 @@ public class WorkerSupervisorService implements AutoCloseable {
                 CompletableFuture<Void> cleanup;
                 synchronized (this) {
                     execution.finishing = true;
-                    cleanup = execution.cleanup;
+                    cleanup = execution.cleanup.get();
                 }
                 if (cleanup != null) {
                     cleanup.join();
@@ -423,11 +423,11 @@ public class WorkerSupervisorService implements AutoCloseable {
 
     private void cancel(ActiveExecution execution) {
         if (execution.cancelled.compareAndSet(false, true) && !execution.finishing) {
-            execution.cleanup = CompletableFuture.runAsync(() -> {
+            execution.cleanup.set(CompletableFuture.runAsync(() -> {
                 if (!execution.engine.requestCancel(execution.assignment.identity())) {
                     cancelSandboxes.accept(execution.assignment.identity());
                 }
-            }, cancellationExecutor);
+            }, cancellationExecutor));
         }
     }
 

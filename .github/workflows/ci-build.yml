@@ -7,6 +7,11 @@ on:
         description: 'SHA the build is for. PR builds use the PR head SHA, not the merge commit.'
         required: true
         type: string
+      build_pr_image:
+        description: 'When false, the PR image (docker-pr) is not built. ci.yml passes false for a pull request that only changes tests, which neither E2E nor a test server deploy needs.'
+        required: false
+        type: boolean
+        default: true
       is_pr:
         description: 'True when the umbrella was triggered by pull_request.'
         required: true
@@ -257,7 +262,7 @@ jobs:
   docker-pr:
     name: Build and Push Docker Image (PR, amd64)
     needs: build-war
-    if: ${{ inputs.is_pr && inputs.is_internal_pr }}
+    if: ${{ inputs.is_pr && inputs.is_internal_pr && inputs.build_pr_image }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -285,10 +290,10 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302  # v6.2.0
         with:
           images: ghcr.io/ls1intum/artemis
-          # `type=ref,event=pr` → `pr-<N>` (priority 600, stays `meta.outputs.version`, so the
-          # `docker-tag` artifact and e2e-setup are unaffected). The `sha-<commit>` tag is built from
-          # `inputs.commit_sha` (the PR head this build checked out, not the merge commit), so it equals
-          # the SHA a deploy resolves; `type=sha` is avoided because it reads github.sha = the merge commit.
+          # Publish the convenient PR alias as well as the exact checked-out head commit.
+          # E2E consumes only sha-<commit>; github.sha would identify the PR merge commit.
+          labels: |
+            org.opencontainers.image.revision=${{ inputs.commit_sha }}
           tags: |
             type=ref,event=pr
             type=raw,value=sha-${{ inputs.commit_sha }}
@@ -309,7 +314,7 @@ jobs:
       # from the current parent run and pulls ghcr.io/ls1intum/artemis:<tag>.
       - name: Save Docker tag to file
         env:
-          DOCKER_TAG: ${{ steps.meta.outputs.version }}
+          DOCKER_TAG: sha-${{ inputs.commit_sha }}
         run: |
           printf '%s' "$DOCKER_TAG" > docker-tag.txt
           echo "Using Docker tag: $DOCKER_TAG"
@@ -358,7 +363,7 @@ jobs:
     steps:
       - name: Save Docker tag to file
         env:
-          DOCKER_TAG: ${{ needs.docker-release.outputs.image_tag }}
+          DOCKER_TAG: sha-${{ inputs.commit_sha }}
         run: |
           printf '%s' "$DOCKER_TAG" > docker-tag.txt
           echo "Using Docker tag: $DOCKER_TAG"

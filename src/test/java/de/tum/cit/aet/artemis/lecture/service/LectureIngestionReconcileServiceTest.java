@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -41,6 +43,7 @@ import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateReconcileRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitContentFingerprintService.ContentFingerprints;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 
 /**
@@ -52,6 +55,8 @@ class LectureIngestionReconcileServiceTest {
     private static final long COURSE_ID = 7L;
 
     private static final String FINGERPRINT = "v1:current-fingerprint";
+
+    private static final String FINGERPRINT_WITHOUT_VIDEO = "v1:current-fingerprint-without-video";
 
     private LectureIngestionReconcileService reconcileService;
 
@@ -95,7 +100,8 @@ class LectureIngestionReconcileServiceTest {
         });
 
         reconcileService = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository, attachmentVideoUnitRepository, Optional.of(irisLectureApi),
-                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository);
+                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository, Duration.ofDays(730), Duration.ofHours(6),
+                Duration.ofMinutes(30));
 
         course = new Course();
         course.setId(COURSE_ID);
@@ -111,7 +117,7 @@ class LectureIngestionReconcileServiceTest {
         state = new LectureUnitProcessingState(unit);
         state.setId(1L);
 
-        when(contentFingerprintService.computeFingerprint(unit)).thenReturn(FINGERPRINT);
+        when(contentFingerprintService.computeFingerprints(unit)).thenReturn(new ContentFingerprints(FINGERPRINT, FINGERPRINT_WITHOUT_VIDEO));
         when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of(unit));
         when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of(state));
         // Every censused unit exists by default (no orphans); orphan tests override this. The null
@@ -126,7 +132,7 @@ class LectureIngestionReconcileServiceTest {
         // The requeue is committed through a guarded update; 1 = the row is still as the batch read saw it.
         when(reconcileStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), any())).thenReturn(1);
         // A revival goes through its own guard, which additionally pins the error, timestamp and budget it judged.
-        when(reconcileStateRepository.reviveFailedIfUnchanged(anyLong(), any(), any(), anyInt(), anyInt(), any())).thenReturn(1);
+        when(reconcileStateRepository.reviveFailedIfUnchanged(anyLong(), any(), any(), anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
     }
 
     private static final int CURRENT_PIPELINE_VERSION = 3;
@@ -196,7 +202,7 @@ class LectureIngestionReconcileServiceTest {
             assertThat(state.getErrorKey()).isNull();
             // Committed through the revival guard, which pins the three FAILED facts that authorized it: a unit
             // that failed again for another reason before this write must not have that newer failure erased.
-            verify(reconcileStateRepository).reviveFailedIfUnchanged(eq(state.getId()), eq(observedErrorKey), eq(observedLastUpdated), eq(0), anyInt(), any());
+            verify(reconcileStateRepository).reviveFailedIfUnchanged(eq(state.getId()), eq(observedErrorKey), eq(observedLastUpdated), eq(0), eq(1), anyInt(), any());
         }
 
         @Test
@@ -555,7 +561,7 @@ class LectureIngestionReconcileServiceTest {
         void shouldSkipUnitWhoseFingerprintCannotBeComputed() {
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(null);
-            when(contentFingerprintService.computeFingerprint(unit)).thenThrow(new IllegalStateException("file missing"));
+            when(contentFingerprintService.computeFingerprints(unit)).thenThrow(new IllegalStateException("file missing"));
             givenCensus();
 
             int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
@@ -570,7 +576,7 @@ class LectureIngestionReconcileServiceTest {
             // IllegalStateException. It must be caught (not escape and abort the walk).
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(null);
-            when(contentFingerprintService.computeFingerprint(unit)).thenThrow(new IllegalArgumentException("Illegal character in path"));
+            when(contentFingerprintService.computeFingerprints(unit)).thenThrow(new IllegalArgumentException("Illegal character in path"));
             givenCensus();
 
             int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
@@ -713,8 +719,7 @@ class LectureIngestionReconcileServiceTest {
         void shouldCleanUpACourseWhoseLastUnitWasDeletedWhileIrisWasUnavailable() {
             // The unit's one-shot Iris deletion failed, then the unit itself was deleted: the course has no units left,
             // but the walk still visits it and the census still reports the unit's rows, so they are deleted now.
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of());
             when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of());
             when(attachmentVideoUnitRepository.findExistingIds(any())).thenReturn(Set.of());
@@ -782,7 +787,7 @@ class LectureIngestionReconcileServiceTest {
             secondState.setPhase(ProcessingPhase.DONE);
             state.setPhase(ProcessingPhase.DONE);
 
-            when(contentFingerprintService.computeFingerprint(secondUnit)).thenReturn(FINGERPRINT);
+            when(contentFingerprintService.computeFingerprints(secondUnit)).thenReturn(new ContentFingerprints(FINGERPRINT, FINGERPRINT_WITHOUT_VIDEO));
             when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of(unit, secondUnit));
             when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of(state, secondState));
             when(processingStateRepository.findById(secondState.getId())).thenReturn(Optional.of(secondState));
@@ -799,7 +804,7 @@ class LectureIngestionReconcileServiceTest {
         void shouldResumeAPausedCourseAfterItsLastVisitedUnitInsteadOfSkippingOrRestartingIt() {
             LectureIngestionReconcileService oneRequeuePerPass = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository,
                     attachmentVideoUnitRepository, Optional.of(irisLectureApi), contentFingerprintService, processingService, 5, 1, 0.8, Duration.ofHours(1), 10,
-                    transcriptionRepository);
+                    transcriptionRepository, Duration.ofDays(730), Duration.ofHours(6), Duration.ofMinutes(30));
             AttachmentVideoUnit secondUnit = new AttachmentVideoUnit();
             secondUnit.setId(101L);
             secondUnit.setLecture(lecture);
@@ -808,11 +813,10 @@ class LectureIngestionReconcileServiceTest {
             secondState.setId(2L);
             secondState.setPhase(ProcessingPhase.DONE);
             state.setPhase(ProcessingPhase.DONE);
-            when(contentFingerprintService.computeFingerprint(secondUnit)).thenReturn(FINGERPRINT);
+            when(contentFingerprintService.computeFingerprints(secondUnit)).thenReturn(new ContentFingerprints(FINGERPRINT, FINGERPRINT_WITHOUT_VIDEO));
             when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of(unit, secondUnit));
             when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of(state, secondState));
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             givenCensus();
 
             assertThat(oneRequeuePerPass.walkNextCourses()).isEqualTo(1);
@@ -827,16 +831,17 @@ class LectureIngestionReconcileServiceTest {
             assertThat(oneRequeuePerPass.walkNextCourses()).isEqualTo(1);
             assertThat(secondState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID - 1), any());
+            // Both steps belong to one pass, which reads the course list once
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsNewestFirst();
         }
 
         @Test
         void shouldNotTouchTheCursorWhileTheBacklogIsFull() {
-            when(processingStateRepository.countOpenBackgroundUnits(anyInt())).thenReturn(10L);
+            when(processingStateRepository.countOpenBackgroundUnits(anyInt(), any())).thenReturn(10L);
 
             assertThat(reconcileService.walkNextCourses()).isZero();
 
-            verify(attachmentVideoUnitRepository, never()).findReconcileCourseIdsAfter(anyLong(), any());
+            verify(attachmentVideoUnitRepository, never()).findReconcileCourseIdsNewestFirst();
             verify(irisLectureApi, never()).getIngestionCensus(anyLong());
         }
 
@@ -851,12 +856,11 @@ class LectureIngestionReconcileServiceTest {
             secondState.setId(2L);
             secondState.setPhase(ProcessingPhase.DONE);
             state.setPhase(ProcessingPhase.DONE);
-            when(contentFingerprintService.computeFingerprint(secondUnit)).thenReturn(FINGERPRINT);
+            when(contentFingerprintService.computeFingerprints(secondUnit)).thenReturn(new ContentFingerprints(FINGERPRINT, FINGERPRINT_WITHOUT_VIDEO));
             when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of(unit, secondUnit));
             when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of(state, secondState));
-            when(processingStateRepository.countOpenBackgroundUnits(anyInt())).thenReturn(9L);
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(processingStateRepository.countOpenBackgroundUnits(anyInt(), any())).thenReturn(9L);
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             givenCensus();
 
             assertThat(reconcileService.backlogBudget()).isEqualTo(1);
@@ -882,34 +886,33 @@ class LectureIngestionReconcileServiceTest {
 
         @Test
         void shouldContinueOnlyAnActivePassAndEndItAtTheWrap() {
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(FINGERPRINT);
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
 
             assertThat(reconcileService.continuePass()).as("no pass is active before the first cron tick").isZero();
-            verify(attachmentVideoUnitRepository, never()).findReconcileCourseIdsAfter(anyLong(), any());
+            verify(attachmentVideoUnitRepository, never()).findReconcileCourseIdsNewestFirst();
 
             reconcileService.startOrContinuePass();
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(0L), any());
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsNewestFirst();
+            verify(irisLectureApi).getIngestionCensus(COURSE_ID);
 
-            // The continuation takes the next step, which finds no course after the cursor and ends the pass
+            // The continuation takes the next step, which finds no course left and ends the pass
             reconcileService.continuePass();
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID), any());
-
             reconcileService.continuePass();
-            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsAfter(anyLong(), any());
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsNewestFirst();
+            verify(irisLectureApi).getIngestionCensus(COURSE_ID);
 
-            // The next cron tick starts a new pass from the beginning
+            // The next cron tick starts a new pass with the newest course, reading the course list again
             reconcileService.startOrContinuePass();
-            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsAfter(eq(0L), any());
+            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsNewestFirst();
+            verify(irisLectureApi, org.mockito.Mockito.times(2)).getIngestionCensus(COURSE_ID);
         }
 
         @Test
         void shouldKeepTheCursorOfTheActivePassOnACronTick() {
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(FINGERPRINT);
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
@@ -918,36 +921,109 @@ class LectureIngestionReconcileServiceTest {
             // A cron tick while the pass is active continues after the walked course instead of starting over
             reconcileService.startOrContinuePass();
 
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(0L), any());
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID), any());
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsNewestFirst();
+            verify(irisLectureApi).getIngestionCensus(COURSE_ID);
         }
 
         @Test
         void shouldWrapTheCursorAfterAFullPass() {
-            // One answer per cursor position; a second when() stub would consume the first
-            // sequential answer during its own stubbing invocation
-            java.util.concurrent.atomic.AtomicBoolean firstPass = new java.util.concurrent.atomic.AtomicBoolean(true);
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> invocation.getArgument(0).equals(0L) && firstPass.getAndSet(false) ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(FINGERPRINT);
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
 
             reconcileService.walkNextCourses();
-            // Second walk continues after the walked course, finds nothing, and wraps
+            // Second walk finds no course left after the walked one and wraps
             reconcileService.walkNextCourses();
-            // Third walk starts from the beginning again
+            // Third walk starts a new pass with the newest course
             reconcileService.walkNextCourses();
 
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID), any());
-            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsAfter(eq(0L), any());
+            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsNewestFirst();
+            verify(irisLectureApi, org.mockito.Mockito.times(2)).getIngestionCensus(COURSE_ID);
+        }
+
+        @Test
+        void shouldWalkTheCoursesInTheOrderOfTheCourseList() {
+            // The repository returns the newest course first; the walk must keep that order instead of sorting by id
+            long newerCourseId = COURSE_ID - 1;
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(newerCourseId, COURSE_ID));
+            when(irisLectureApi.getIngestionCensus(newerCourseId)).thenReturn(new IngestionCensusDTO(newerCourseId, CURRENT_PIPELINE_VERSION, List.of(), false));
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+
+            reconcileService.walkNextCourses();
+
+            InOrder inOrder = inOrder(irisLectureApi);
+            inOrder.verify(irisLectureApi).getIngestionCensus(newerCourseId);
+            inOrder.verify(irisLectureApi).getIngestionCensus(COURSE_ID);
+        }
+    }
+
+    @Nested
+    class CourseWindow {
+
+        @BeforeEach
+        void endTheCourseLongAgo() {
+            course.setEndDate(ZonedDateTime.now().minusYears(3));
+        }
+
+        @Test
+        void shouldNotTriggerAnyIngestionForACourseThatEndedBeforeTheWindow() {
+            when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of());
+            givenCensus();
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
+
+            verify(processingService, never()).triggerProcessingAsBacklog(any());
+        }
+
+        @Test
+        void shouldNotRequeueSkippedOrDivergedUnitsOfACourseThatEndedBeforeTheWindow() {
+            for (ProcessingPhase phase : List.of(ProcessingPhase.SKIPPED, ProcessingPhase.DONE)) {
+                state.setPhase(phase);
+                state.setConfirmedFingerprint(null);
+                givenCensus();
+
+                assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).as("phase %s must not be requeued", phase).isZero();
+                assertThat(state.getPhase()).isEqualTo(phase);
+            }
+            verify(reconcileStateRepository, never()).requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), any());
+        }
+
+        @Test
+        void shouldStillCleanUpOrphanedRowsOfACourseThatEndedBeforeTheWindow() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            long orphanUnitId = 999L;
+            when(attachmentVideoUnitRepository.findExistingIds(any())).thenReturn(Set.of(unit.getId()));
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1), censusEntry(orphanUnitId, "v1:whatever", 1));
+
+            reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<IngestionJobIdentityDTO>> captor = ArgumentCaptor.forClass(List.class);
+            verify(irisLectureApi).deleteLectureUnitsByIdentity(captor.capture());
+            assertThat(captor.getValue()).singleElement().extracting(IngestionJobIdentityDTO::lectureUnitId).isEqualTo(orphanUnitId);
+        }
+
+        @Test
+        void shouldTriggerIngestionForACourseThatEndedWithinTheWindow() {
+            course.setEndDate(ZonedDateTime.now().minusYears(1));
+            when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of());
+            givenCensus();
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(processingService).triggerProcessingAsBacklog(unit);
         }
     }
 
     @Test
     void shouldSpendNothingWithoutIrisApi() {
         LectureIngestionReconcileService withoutIris = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository, attachmentVideoUnitRepository,
-                Optional.empty(), contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository);
+                Optional.empty(), contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository, Duration.ofDays(730),
+                Duration.ofHours(6), Duration.ofMinutes(30));
 
         assertThat(withoutIris.walkNextCourses()).isZero();
     }
@@ -1061,7 +1137,7 @@ class LectureIngestionReconcileServiceTest {
 
             assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
 
-            verify(reconcileStateRepository, never()).reviveFailedIfUnchanged(anyLong(), any(), any(), anyInt(), anyInt(), any());
+            verify(reconcileStateRepository, never()).reviveFailedIfUnchanged(anyLong(), any(), any(), anyInt(), anyInt(), anyInt(), any());
         }
 
         @Test
@@ -1130,6 +1206,218 @@ class LectureIngestionReconcileServiceTest {
             assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
 
             verify(processingService, never()).retryRemovedContentCleanup(any(), anyLong());
+        }
+    }
+
+    /**
+     * A unit whose video could not be resolved is ingested without it and confirmed with the fingerprint of its content without the video. The walk keeps
+     * checking it like any done unit and tries the video again on the slow recheck interval.
+     */
+    @Nested
+    class VideoPending {
+
+        private static final String VIDEO = "https://live.rbg.tum.de/w/course/12345";
+
+        @BeforeEach
+        void givenPendingUnit() {
+            givenPdfUnit();
+            unit.setVideoSource(VIDEO);
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT_WITHOUT_VIDEO);
+            state.setVideoSourceHash("video-hash");
+            state.setLastUpdated(ZonedDateTime.now().minusHours(7));
+            when(processingService.hasSupportedVideo(unit)).thenReturn(true);
+            when(transcriptionRepository.findByLectureUnit_Id(unit.getId())).thenReturn(Optional.empty());
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT_WITHOUT_VIDEO, 1));
+        }
+
+        @Test
+        void shouldTryTheVideoAgainWithAPlainRequeueAfterTheRecheckInterval() {
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            // Plain: the confirmation is kept and no rebuild is forced, so Iris skips the unchanged pages
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), eq(FINGERPRINT_WITHOUT_VIDEO),
+                    eq(FINGERPRINT_WITHOUT_VIDEO), isNull(), isNull(), anyInt(), any());
+        }
+
+        @Test
+        void shouldWaitForTheRecheckInterval() {
+            state.setLastUpdated(ZonedDateTime.now().minusHours(1));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
+
+            verify(reconcileStateRepository, never()).requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldCheckTheIndexAgainstTheFingerprintWithoutTheVideo() {
+            // The index lost the unit's stamp: a forced rebuild, at once, not after the recheck interval
+            state.setLastUpdated(ZonedDateTime.now().minusMinutes(5));
+            givenCensus(censusEntry(unit.getId(), "v1:something-else", 1));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), eq(FINGERPRINT_WITHOUT_VIDEO), isNull(), eq(true),
+                    isNull(), anyInt(), any());
+        }
+
+        @Test
+        void shouldHandARemovedOrReplacedVideoToTheContentChangePath() {
+            when(processingService.hasVideoSourceChanged(unit, state)).thenReturn(true);
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(processingService).triggerProcessingAsBacklog(unit);
+            verify(reconcileStateRepository, never()).requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldTreatAChangedPdfAsAContentChange() {
+            // Neither the full fingerprint nor the one without the video matches: the PDF changed
+            when(contentFingerprintService.computeFingerprints(unit)).thenReturn(new ContentFingerprints("v1:new-full", "v1:new-without-video"));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), eq(FINGERPRINT_WITHOUT_VIDEO), isNull(), eq(true),
+                    isNull(), anyInt(), any());
+        }
+
+        @Test
+        void shouldNotTreatAUnitWithACompletedTranscriptAsPending() {
+            // A completed transcript is confirmed with the full fingerprint; one confirmed without the video is out of date and rebuilt
+            LectureTranscription transcription = new LectureTranscription();
+            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+            when(transcriptionRepository.findByLectureUnit_Id(unit.getId())).thenReturn(Optional.of(transcription));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), eq(FINGERPRINT_WITHOUT_VIDEO), isNull(), eq(true),
+                    isNull(), anyInt(), any());
+        }
+
+        @Test
+        void shouldTakeTheConservativePathForAMissingMarkerWhenOnlyTheFingerprintWithoutTheVideoMatches() {
+            // Without a marker, the fingerprint without the video cannot prove the video is the same one a stored transcript came from
+            state.setVideoSourceHash(null);
+            when(processingService.hasVideoSourceChanged(unit, state)).thenReturn(true);
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(processingService).triggerProcessingAsBacklog(unit);
+            verify(reconcileStateRepository, never()).recordMissingVideoSourceHash(anyLong(), any(), any());
+        }
+    }
+
+    /** A missing video marker is filled in only when the confirmation of the full content proves the video is unchanged. */
+    @Nested
+    class MissingVideoMarker {
+
+        @Test
+        void shouldRecordTheMarkerAndKeepTheContentWhenTheFullFingerprintIsConfirmed() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            state.setVideoSourceHash(null);
+            when(processingService.videoSourceHashOf(unit)).thenReturn("video-hash");
+            when(processingService.hasVideoSourceChanged(unit, state)).thenReturn(true);
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
+
+            verify(reconcileStateRepository).recordMissingVideoSourceHash(state.getId(), "video-hash", FINGERPRINT);
+            verify(processingService, never()).triggerProcessingAsBacklog(any());
+        }
+
+        @Test
+        void shouldKeepThePlainRequeueForALegacyRowWithoutConfirmationOrStamp() {
+            givenPdfUnit();
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(null);
+            givenCensus(censusEntry(unit.getId(), null, 1));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), isNull(), isNull(), isNull(), isNull(), anyInt(), any());
+        }
+    }
+
+    /** Background intake pauses while units keep failing and none succeeds; failures caused by the unit itself never pause it. */
+    @Nested
+    class OutagePause {
+
+        @Test
+        void shouldPauseWhileUnitsFailAndNoneSucceeds() {
+            when(processingStateRepository.countRecentOutageFailures(any(), any())).thenReturn(10L);
+            when(processingStateRepository.countRecentSuccessfulIngestions(any())).thenReturn(0L);
+            int[] spendCalls = { 0 };
+
+            assertThat(reconcileService.spendBacklog(room -> ++spendCalls[0])).isZero();
+
+            assertThat(spendCalls[0]).isZero();
+        }
+
+        @Test
+        void shouldNotPauseWhileUnitsStillSucceed() {
+            when(processingStateRepository.countRecentOutageFailures(any(), any())).thenReturn(10L);
+            when(processingStateRepository.countRecentSuccessfulIngestions(any())).thenReturn(1L);
+
+            assertThat(reconcileService.spendBacklog(room -> 1)).isEqualTo(1);
+        }
+
+        @Test
+        void shouldIgnoreFailuresCausedByTheUnitItself() {
+            ArgumentCaptor<Collection<String>> ignored = ArgumentCaptor.captor();
+            when(processingStateRepository.countRecentOutageFailures(any(), ignored.capture())).thenReturn(0L);
+
+            assertThat(reconcileService.spendBacklog(room -> 1)).isEqualTo(1);
+
+            assertThat(ignored.getValue()).contains("artemisApp.attachmentVideoUnit.processing.error.videoSourceUnavailable",
+                    "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable", "artemisApp.attachmentVideoUnit.processing.error.invalidUnitType")
+                    .doesNotContain("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+        }
+    }
+
+    /** A unit whose only content is a video that cannot be loaded yet is tried again on the slow recheck interval, without a revival limit. */
+    @Nested
+    class VideoOnlyUnitWaitingForItsRecording {
+
+        @BeforeEach
+        void markFailed() {
+            state.setPhase(ProcessingPhase.FAILED);
+            state.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.videoSourceUnavailable");
+            state.setRevivalCount(25);
+            givenCensus();
+        }
+
+        @Test
+        void shouldReviveAfterTheRecheckIntervalEvenPastTheRevivalLimit() {
+            state.setLastUpdated(ZonedDateTime.now().minusHours(7));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            // Waiting for a recording does not spend the budget that later protects the unit's recovery from an Iris outage
+            verify(reconcileStateRepository).reviveFailedIfUnchanged(eq(state.getId()), any(), any(), eq(25), eq(0), anyInt(), any());
+            assertThat(state.getRevivalCount()).isEqualTo(25);
+        }
+
+        @Test
+        void shouldStillReviveAGenericFailureAfterLongWaitingForTheRecording() {
+            // Weeks of video waits left the budget untouched; when the recording is there and Iris then fails, the generic revival still applies
+            state.setRevivalCount(0);
+            state.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+            state.setLastUpdated(ZonedDateTime.now().minusHours(2));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+            verify(reconcileStateRepository).reviveFailedIfUnchanged(eq(state.getId()), any(), any(), eq(0), eq(1), anyInt(), any());
+        }
+
+        @Test
+        void shouldWaitForTheRecheckInterval() {
+            state.setLastUpdated(ZonedDateTime.now().minusHours(2));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.FAILED);
         }
     }
 }

@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
@@ -28,6 +29,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -47,6 +49,8 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 public class LectureUnitProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LectureUnitProcessingService.class);
+
+    private static final String ENTITY_NAME = "attachmentVideoUnit";
 
     /** Everything a lecture unit name read off an outline slide may not contain. */
     private static final Pattern UNSAFE_UNIT_NAME_CHARACTER = Pattern.compile("[^a-zA-Z0-9\\s()_-]");
@@ -237,6 +241,24 @@ public class LectureUnitProcessingService {
         catch (IOException e) {
             log.error("Error while preparing the map with information", e);
             throw new InternalServerErrorException("Could not prepare split information");
+        }
+    }
+
+    /**
+     * Checks that the given file can be parsed as a PDF, so that corrupted or non-PDF content is rejected as invalid input
+     * instead of failing with a server error when the file is processed later.
+     *
+     * @param file the uploaded file
+     * @throws BadRequestAlertException if the content is empty or not a readable PDF
+     */
+    public void validatePdfElseThrow(MultipartFile file) {
+        try (InputStream inputStream = file.getInputStream(); PDDocument document = Loader.loadPDF(new RandomAccessReadBuffer(inputStream))) {
+            // Loading is lenient about damaged page trees, which only surface when the pages are read.
+            document.getNumberOfPages();
+        }
+        catch (IOException e) {
+            log.warn("Rejected an unreadable PDF for lecture unit processing", e);
+            throw new BadRequestAlertException("The uploaded file is not a readable PDF", ENTITY_NAME, "invalidPdf");
         }
     }
 
