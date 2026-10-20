@@ -14,7 +14,9 @@ import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/s
 import { User } from 'app/account/user/user.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CodeButtonNewComponent } from './code-button-new.component';
@@ -26,6 +28,7 @@ describe('CodeButtonNewComponent', () => {
     let profileService: Mocked<ProfileService>;
     let programmingExerciseService: Mocked<ProgrammingExerciseService>;
     let ideSettingsService: Mocked<IdeSettingsService>;
+    let sshUserSettingsService: Mocked<SshUserSettingsService>;
 
     const exerciseId = 42;
     const repositoryUri = 'https://vcs.example.com/course/exercise.git';
@@ -70,6 +73,7 @@ describe('CodeButtonNewComponent', () => {
         profileService = TestBed.inject(ProfileService) as Mocked<ProfileService>;
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService) as Mocked<ProgrammingExerciseService>;
         ideSettingsService = TestBed.inject(IdeSettingsService) as Mocked<IdeSettingsService>;
+        sshUserSettingsService = TestBed.inject(SshUserSettingsService) as Mocked<SshUserSettingsService>;
 
         theiaFeatureActive = true;
         profileInfo = {
@@ -88,17 +92,119 @@ describe('CodeButtonNewComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function createComponent(allowOnlineIde = true, programmingLanguage: ProgrammingLanguage | undefined = ProgrammingLanguage.JAVA): void {
+    function createComponent(allowOnlineIde = true, programmingLanguage: ProgrammingLanguage | undefined = ProgrammingLanguage.JAVA, componentRepositoryUri = repositoryUri): void {
         fixture = TestBed.createComponent(CodeButtonNewComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('exerciseId', exerciseId);
-        fixture.componentRef.setInput('repositoryUri', repositoryUri);
+        fixture.componentRef.setInput('repositoryUri', componentRepositoryUri);
         fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: 7, isOwnParticipation: true });
         fixture.componentRef.setInput('repositoryViewLink', ['/courses', 1, 'exercises', exerciseId, 'repository']);
         fixture.componentRef.setInput('allowOnlineIde', allowOnlineIde);
         fixture.componentRef.setInput('programmingLanguage', programmingLanguage);
         fixture.detectChanges();
     }
+
+    describe('authentication method data', () => {
+        const sshCloneURLTemplate = 'ssh://git@vcs.example.com:7999/';
+
+        it('should expose all supported authentication methods in profile order', async () => {
+            profileInfo = {
+                ...profileInfo,
+                repositoryAuthenticationMechanisms: [
+                    RepositoryAuthenticationMethod.SSH,
+                    'unsupported',
+                    RepositoryAuthenticationMethod.Token,
+                    RepositoryAuthenticationMethod.Password,
+                ],
+                sshCloneURLTemplate,
+            };
+            sshUserSettingsService.getCachedSshKeys.mockResolvedValue([]);
+            createComponent(false, ProgrammingLanguage.JAVA, 'https://old-user@vcs.example.com/course/exercise.git');
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toMatchObject({
+                status: 'complete',
+                authenticationMethodData: [
+                    {
+                        authenticationMethod: RepositoryAuthenticationMethod.SSH,
+                        url: 'ssh://git@vcs.example.com:7999/course/exercise.git',
+                        sshKeyState: { status: 'missing' },
+                    },
+                    {
+                        authenticationMethod: RepositoryAuthenticationMethod.Token,
+                        url: `https://student:${vcsToken}@vcs.example.com/course/exercise.git`,
+                    },
+                    {
+                        authenticationMethod: RepositoryAuthenticationMethod.Password,
+                        url: 'https://student@vcs.example.com/course/exercise.git',
+                    },
+                ],
+            });
+        });
+
+        it.each([
+            {
+                description: 'none of the configured keys are expired',
+                sshKeys: [new UserSshPublicKey(), Object.assign(new UserSshPublicKey(), { expiryDate: dayjs().add(1, 'day') })],
+                hasExpiredKeys: false,
+            },
+            {
+                description: 'a configured key is expired',
+                sshKeys: [Object.assign(new UserSshPublicKey(), { expiryDate: dayjs().subtract(1, 'day') })],
+                hasExpiredKeys: true,
+            },
+        ])('should expose configured SSH keys when $description', async ({ sshKeys, hasExpiredKeys }) => {
+            profileInfo = {
+                ...profileInfo,
+                repositoryAuthenticationMechanisms: [RepositoryAuthenticationMethod.SSH],
+                sshCloneURLTemplate,
+            };
+            sshUserSettingsService.getCachedSshKeys.mockResolvedValue(sshKeys);
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toMatchObject({
+                status: 'complete',
+                authenticationMethodData: [
+                    {
+                        authenticationMethod: RepositoryAuthenticationMethod.SSH,
+                        sshKeyState: { status: 'configured', hasExpiredKeys },
+                    },
+                ],
+            });
+        });
+
+        it('should expose an error when no supported authentication method is configured', async () => {
+            profileInfo = { ...profileInfo, repositoryAuthenticationMechanisms: ['unsupported'] };
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error when the SSH clone URL template is missing', async () => {
+            profileInfo = { ...profileInfo, repositoryAuthenticationMechanisms: [RepositoryAuthenticationMethod.SSH] };
+            Reflect.deleteProperty(profileInfo, 'sshCloneURLTemplate');
+            sshUserSettingsService.getCachedSshKeys.mockResolvedValue([]);
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error when loading SSH keys fails', async () => {
+            profileInfo = {
+                ...profileInfo,
+                repositoryAuthenticationMechanisms: [RepositoryAuthenticationMethod.SSH],
+                sshCloneURLTemplate,
+            };
+            sshUserSettingsService.getCachedSshKeys.mockRejectedValue(new Error('SSH key request failed'));
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+    });
 
     describe('preferred IDE', () => {
         const intellij: Ide = { name: 'IntelliJ IDEA', deepLink: 'jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo={cloneUrl}' };
