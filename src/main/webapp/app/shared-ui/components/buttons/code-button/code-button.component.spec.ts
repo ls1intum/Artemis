@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -50,7 +50,7 @@ describe('CodeButtonComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CodeButtonComponent],
             providers: [
-                provideRouter([]),
+                provideRouter([{ path: 'course-management', component: CodeButtonComponent }]),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -234,6 +234,19 @@ describe('CodeButtonComponent', () => {
             },
         ];
 
+        it('should load an existing participation token without creating one', async () => {
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(accountService.getVcsAccessToken).toHaveBeenCalledExactlyOnceWith(7);
+            expect(accountService.createVcsAccessToken).not.toHaveBeenCalled();
+            expect(programmingExerciseService.getRepositoryVcsAccessToken).not.toHaveBeenCalled();
+            expect(component['loadingState']()).toMatchObject({
+                status: 'complete',
+                authenticationMethodData: [{ authenticationMethod: RepositoryAuthenticationMethod.Token, url: `https://student:${vcsToken}@vcs.example.com/course/exercise.git` }],
+            });
+        });
+
         it('should create a participation token when none exists', async () => {
             accountService.getVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
             accountService.createVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: createdToken })));
@@ -264,7 +277,14 @@ describe('CodeButtonComponent', () => {
                     expectedParticipationId,
                 );
                 expect(programmingExerciseService.createRepositoryVcsAccessToken).not.toHaveBeenCalled();
-                expect(component['loadingState']()).toMatchObject({ status: 'complete' });
+                expect(accountService.getVcsAccessToken).not.toHaveBeenCalled();
+                expect(accountService.createVcsAccessToken).not.toHaveBeenCalled();
+                expect(component['loadingState']()).toMatchObject({
+                    status: 'complete',
+                    authenticationMethodData: [
+                        { authenticationMethod: RepositoryAuthenticationMethod.Token, url: `https://student:${vcsToken}@vcs.example.com/course/exercise.git` },
+                    ],
+                });
             },
         );
 
@@ -285,6 +305,23 @@ describe('CodeButtonComponent', () => {
             });
         });
 
+        it('should create a student repository token when none exists', async () => {
+            programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            programmingExerciseService.createRepositoryVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: createdToken })));
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { type: 'student-repository', participationId: 17 });
+            await fixture.whenStable();
+
+            expect(programmingExerciseService.getRepositoryVcsAccessToken).toHaveBeenCalledExactlyOnceWith(exerciseId, RepositoryType.USER, undefined, 17);
+            expect(programmingExerciseService.createRepositoryVcsAccessToken).toHaveBeenCalledExactlyOnceWith(exerciseId, RepositoryType.USER, undefined, 17);
+            expect(accountService.getVcsAccessToken).not.toHaveBeenCalled();
+            expect(component['loadingState']()).toMatchObject({
+                status: 'complete',
+                authenticationMethodData: [
+                    { authenticationMethod: RepositoryAuthenticationMethod.Token, url: `https://student:${createdToken}@vcs.example.com/course/exercise.git` },
+                ],
+            });
+        });
+
         it('should expose an error when a successful token response has no token in its body', async () => {
             accountService.getVcsAccessToken.mockReturnValue(of(new HttpResponse<string>({ body: null })));
             createComponent(false);
@@ -294,12 +331,63 @@ describe('CodeButtonComponent', () => {
             expect(component['loadingState']()).toEqual({ status: 'error' });
         });
 
+        it('should expose an error when a successful token creation response has no token in its body', async () => {
+            accountService.getVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            accountService.createVcsAccessToken.mockReturnValue(of(new HttpResponse<string>({ body: null })));
+            createComponent(false);
+            await fixture.whenStable();
+
+            expect(accountService.createVcsAccessToken).toHaveBeenCalledExactlyOnceWith(7);
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
         it('should expose an error without creating a token when loading fails with a non-404 response', async () => {
             accountService.getVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             createComponent(false);
             await fixture.whenStable();
 
             expect(accountService.createVcsAccessToken).not.toHaveBeenCalled();
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error without creating a repository token when loading fails with a non-404 response', async () => {
+            programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { type: 'base-repository', repositoryType: RepositoryType.TESTS });
+            await fixture.whenStable();
+
+            expect(programmingExerciseService.createRepositoryVcsAccessToken).not.toHaveBeenCalled();
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should expose an error when creating a repository token fails', async () => {
+            programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            programmingExerciseService.createRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { type: 'base-repository', repositoryType: RepositoryType.SOLUTION });
+            await fixture.whenStable();
+
+            expect(programmingExerciseService.createRepositoryVcsAccessToken).toHaveBeenCalledExactlyOnceWith(exerciseId, RepositoryType.SOLUTION, undefined, undefined);
+            expect(component['loadingState']()).toEqual({ status: 'error' });
+        });
+
+        it('should load the participation token for an owned participation in course management', async () => {
+            const router = TestBed.inject(Router);
+            await router.navigateByUrl('/course-management');
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { type: 'participation', participationId: 23, isOwnParticipation: true });
+            await fixture.whenStable();
+
+            expect(accountService.getVcsAccessToken).toHaveBeenCalledExactlyOnceWith(23);
+            expect(programmingExerciseService.getRepositoryVcsAccessToken).not.toHaveBeenCalled();
+            expect(component['loadingState']()).toMatchObject({ status: 'complete' });
+        });
+
+        it('should reject participation-token data for an unowned participation in course management', async () => {
+            const router = TestBed.inject(Router);
+            await router.navigateByUrl('/course-management');
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { type: 'participation', participationId: 23, isOwnParticipation: false });
+            await fixture.whenStable();
+
+            expect(accountService.getVcsAccessToken).not.toHaveBeenCalled();
+            expect(programmingExerciseService.getRepositoryVcsAccessToken).not.toHaveBeenCalled();
             expect(component['loadingState']()).toEqual({ status: 'error' });
         });
     });

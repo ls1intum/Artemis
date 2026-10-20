@@ -293,6 +293,14 @@ describe('CodeButtonPopoverContentComponent', () => {
             renderComponent([passwordAuthenticationMethodData]);
             expect(translatedElement('artemisApp.exerciseActions.passwordAuthenticationWarning')).toBeNull();
         });
+
+        it.each([
+            { description: 'Token', authenticationMethodData: tokenAuthenticationMethodData },
+            { description: 'SSH', authenticationMethodData: sshAuthenticationMethodData },
+        ])('should render no password warning when $description is selected', ({ authenticationMethodData }) => {
+            renderComponent([authenticationMethodData, passwordAuthenticationMethodData]);
+            expect(translatedElement('artemisApp.exerciseActions.passwordAuthenticationWarning')).toBeNull();
+        });
     });
 
     describe('alternative actions', () => {
@@ -372,6 +380,25 @@ describe('CodeButtonPopoverContentComponent', () => {
                 theiaLinkData.theiaPortalURL,
                 theiaLinkData.theiaImage,
                 theiaLinkData.repositoryUrl,
+                theiaLinkData.userName,
+                theiaLinkData.userEmail,
+            );
+        });
+
+        it('should launch Theia with its token URL when SSH is selected', () => {
+            localStorageService.retrieve.mockReturnValue(RepositoryAuthenticationMethod.SSH);
+            theiaService.startOnlineIDE.mockResolvedValue();
+            renderComponent([tokenAuthenticationMethodData, sshAuthenticationMethodData], false, theiaLinkData);
+            expectSelectedAuthenticationMethod('SSH', sshUrl);
+
+            (translatedElement('artemisApp.exerciseActions.showAlternatives') as HTMLButtonElement).click();
+            fixture.detectChanges();
+            (translatedElement('artemisApp.exerciseActions.openOnlineIDE')?.closest('a') as HTMLAnchorElement).click();
+
+            expect(theiaService.startOnlineIDE).toHaveBeenCalledWith(
+                theiaLinkData.theiaPortalURL,
+                theiaLinkData.theiaImage,
+                tokenUrl,
                 theiaLinkData.userName,
                 theiaLinkData.userEmail,
             );
