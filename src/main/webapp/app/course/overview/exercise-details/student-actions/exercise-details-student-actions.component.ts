@@ -187,7 +187,7 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     private getGradedRepositoryUri(): string {
-        const participation = this.gradedParticipation();
+        const participation = this.programmingParticipationForCodeButton();
         return participation && this.isProgrammingExerciseStudentParticipation(participation) ? (participation.repositoryUri ?? '') : '';
     }
 
