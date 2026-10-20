@@ -32,9 +32,8 @@ final class ContractWitnessEvaluator {
         List<ContractWitnessOutcome> outcomes = new ArrayList<>();
         List<ContractWitness> runnable = new ArrayList<>();
         for (ContractWitness candidate : candidates) {
-            if (duplicateNames.contains(candidate.testName()) || ContractWitnessProbe.collidesWithExistingTest(candidate, producedTestsFiles)) {
-                outcomes.add(new ContractWitnessOutcome(candidate, ContractWitnessOutcome.Disposition.INCONCLUSIVE,
-                        "The witness test name collides with another proposal or an existing graded test."));
+            if (duplicateNames.contains(candidate.testName())) {
+                outcomes.add(new ContractWitnessOutcome(candidate, ContractWitnessOutcome.Disposition.INCONCLUSIVE, "The witness test name collides with another proposal."));
             }
             else {
                 runnable.add(candidate);
@@ -55,18 +54,26 @@ final class ContractWitnessEvaluator {
         }
         try {
             for (ContractWitness candidate : runnable) {
+                ContractWitness execution;
+                try {
+                    execution = ContractWitnessProbe.forExecution(candidate, producedTestsFiles);
+                }
+                catch (IllegalArgumentException invalidWitness) {
+                    outcomes.add(new ContractWitnessOutcome(candidate, ContractWitnessOutcome.Disposition.INCONCLUSIVE, invalidWitness.getMessage()));
+                    continue;
+                }
                 restoreCandidate.run();
-                String probeSource = ContractWitnessProbe.buildProbeSource(host.get().getValue(), List.of(candidate));
+                String probeSource = ContractWitnessProbe.buildProbeSource(host.get().getValue(), List.of(execution));
                 Map<String, String> overlay = ContractWitnessProbe.workspaceOverlay(producedTestsFiles, probePath, probeSource);
                 sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(overlay, Map.of()));
                 seedVerifyScript.run();
                 BuildSummary solution = solutionBuild.get();
-                if (ContractWitnessProbe.executed(candidate, solution.testNames()) && ContractWitnessProbe.failed(candidate, solution.testFailedNames()) && !solution.timedOut()) {
-                    outcomes.add(outcome(candidate, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, solution));
+                if (ContractWitnessProbe.executed(execution, solution.testNames()) && ContractWitnessProbe.failed(execution, solution.testFailedNames()) && !solution.timedOut()) {
+                    outcomes.add(outcome(candidate, execution, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, solution));
                     continue;
                 }
-                boolean solutionPassedWitness = ContractWitnessProbe.executed(candidate, solution.testNames())
-                        && !ContractWitnessProbe.failed(candidate, solution.testFailedNames()) && !solution.timedOut() && solution.exitCode() == 0 && solution.failures() == 0;
+                boolean solutionPassedWitness = ContractWitnessProbe.executed(execution, solution.testNames())
+                        && !ContractWitnessProbe.failed(execution, solution.testFailedNames()) && !solution.timedOut() && solution.exitCode() == 0 && solution.failures() == 0;
                 if (!solutionPassedWitness) {
                     log.info("Contract-witness {} for exercise {} was rejected before starter comparison: solution tests={}, failures={}, exit={}; diagnostic={}",
                             candidate.testName(), exerciseId, solution.tests(), solution.failures(), solution.exitCode(), solution.buildDiagnostic());
@@ -79,10 +86,10 @@ final class ContractWitnessEvaluator {
                 sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(overlay, Map.of()));
                 seedVerifyScript.run();
                 BuildSummary template = templateBuild.get();
-                if (ContractWitnessProbe.executed(candidate, template.testNames()) && ContractWitnessProbe.failed(candidate, template.testFailedNames()) && !template.timedOut()) {
-                    outcomes.add(outcome(candidate, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, template));
+                if (ContractWitnessProbe.executed(execution, template.testNames()) && ContractWitnessProbe.failed(execution, template.testFailedNames()) && !template.timedOut()) {
+                    outcomes.add(outcome(candidate, execution, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, template));
                 }
-                else if (ContractWitnessProbe.executed(candidate, template.testNames()) && !ContractWitnessProbe.failed(candidate, template.testFailedNames())
+                else if (ContractWitnessProbe.executed(execution, template.testNames()) && !ContractWitnessProbe.failed(execution, template.testFailedNames())
                         && !template.timedOut()) {
                     outcomes.add(new ContractWitnessOutcome(candidate, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_NOT_FAILED, ""));
                 }
@@ -116,7 +123,7 @@ final class ContractWitnessEvaluator {
         return candidates.stream().map(candidate -> new ContractWitnessOutcome(candidate, ContractWitnessOutcome.Disposition.INCONCLUSIVE, diagnostic)).toList();
     }
 
-    private static ContractWitnessOutcome outcome(ContractWitness candidate, ContractWitnessOutcome.Disposition disposition, BuildSummary summary) {
-        return new ContractWitnessOutcome(candidate, disposition, ContractWitnessProbe.failureDiagnostic(candidate, summary));
+    private static ContractWitnessOutcome outcome(ContractWitness candidate, ContractWitness execution, ContractWitnessOutcome.Disposition disposition, BuildSummary summary) {
+        return new ContractWitnessOutcome(candidate, disposition, ContractWitnessProbe.failureDiagnostic(execution, summary));
     }
 }

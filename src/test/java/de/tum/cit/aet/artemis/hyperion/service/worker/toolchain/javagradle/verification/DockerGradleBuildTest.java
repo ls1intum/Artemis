@@ -134,6 +134,37 @@ class DockerGradleBuildTest {
     }
 
     @Test
+    void retainedWitnessStillRunsAfterTheRepairedSolutionAdoptsItsExactMethod() throws IOException {
+        var original = probeSnapshot();
+        Map<String, String> tests = new LinkedHashMap<>();
+        original.files().stream().filter(file -> file.path().startsWith("tests/"))
+                .forEach(file -> tests.put(file.path().substring("tests/".length()), new String(file.content(), StandardCharsets.UTF_8)));
+        String host = tests.get("test/de/tum/cit/aet/reference/ScoreCalculatorTest.java");
+        String adopted = ContractWitnessProbe.buildProbeSource(host, List.of(HIGH_SCORE_WITNESS)).replace(ContractWitnessProbe.PROBE_CLASS_NAME, "AdoptedWitnessTest");
+        tests.put("test/de/tum/cit/aet/reference/AdoptedWitnessTest.java", adopted);
+        String policy = AresSecurityPolicy.registerTestClasses(tests);
+        List<WorkspaceFile> files = new ArrayList<>(original.files().stream().filter(file -> !file.path().equals("tests/SecurityPolicy.yaml")).toList());
+        files.add(new WorkspaceFile("tests/SecurityPolicy.yaml", policy.getBytes(StandardCharsets.UTF_8), false));
+        files.add(new WorkspaceFile("tests/test/de/tum/cit/aet/reference/AdoptedWitnessTest.java", adopted.getBytes(StandardCharsets.UTF_8), false));
+        String session = sandbox.createSession();
+        var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, new WorkspaceSnapshot(files), true);
+
+        var outcomes = new DifferentialVerifier(commands).evaluateContractWitnesses(sandbox, session, exercise, seed.testsSeedSnapshot(), SeededStructuralTests.EMPTY,
+                List.of(HIGH_SCORE_WITNESS), candidateRestorer(session, seed));
+
+        assertThat(outcomes).singleElement().satisfies(outcome -> {
+            assertThat(outcome.witness()).isEqualTo(HIGH_SCORE_WITNESS);
+            assertThat(outcome.disposition()).as(outcome.diagnostic()).isEqualTo(ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED);
+        });
+        assertCandidateRestored(session, seed);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        BuildSummary graded = build(session, "solution");
+        assertThat(graded.exitCode()).as(graded.buildDiagnostic()).isZero();
+        assertThat(graded.testNames()).contains(HIGH_SCORE_WITNESS.testName()).noneMatch(name -> name.contains("HyperionProbe"));
+    }
+
+    @Test
     void semanticMutantCounterexampleRunsUnderAresAndRestoresTheCandidatePolicy() throws IOException {
         String session = sandbox.createSession();
         var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, probeSnapshot(), true);
