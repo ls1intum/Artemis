@@ -38,11 +38,7 @@
                 <td>{{ row.instance.presentationDate ? (row.instance.presentationDate | artemisDate) : '-' }}</td>
                 <td class="text-muted-color">{{ row.instance.remark || '-' }}</td>
                 <td>
-                    <jhi-presentation-instance-actions
-                        [canDelete]="canDelete()"
-                        (editRequested)="editInstance.emit(row.instance)"
-                        (deleteRequested)="deleteInstance.emit(row.instance)"
-                    />
+                    <jhi-presentation-instance-actions [canDelete]="canDelete()" (editRequested)="editInstance.emit(row)" (deleteRequested)="deleteInstance.emit(row)" />
                 </td>
             </tr>
             @if (expanded) {

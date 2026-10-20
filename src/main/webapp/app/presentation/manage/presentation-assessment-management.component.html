@@ -92,8 +92,8 @@
                                         [rows]="studentRows()"
                                         [presentationAssessment]="presentationAssessment"
                                         [canDelete]="isAtLeastEditor()"
-                                        (editInstance)="startEditInstance(presentationAssessment, $event)"
-                                        (deleteInstance)="deleteInstance(presentationAssessment, $event)"
+                                        (editInstance)="startEditInstance($event.presentationAssessment, $event.instance)"
+                                        (deleteInstance)="deleteInstance($event.presentationAssessment, $event.instance)"
                                     />
                                 </div>
                             </section>

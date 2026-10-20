@@ -4,7 +4,7 @@ import { TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { PresentationAssessment, PresentationAssessmentInstance } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentInstanceDetailsComponent } from 'app/presentation/manage/presentation-assessment-instance-details.component';
 import { PresentationInstanceActionsComponent } from 'app/presentation/manage/presentation-instance-actions.component';
 import { PresentationStudentToggleComponent } from 'app/presentation/manage/presentation-student-toggle.component';
@@ -33,8 +33,8 @@ export class PresentationAssessmentInstancesTableComponent {
     /** Editors remove assigned students; tutors only grade them. */
     readonly canDelete = input(false);
 
-    readonly editInstance = output<PresentationAssessmentInstance>();
-    readonly deleteInstance = output<PresentationAssessmentInstance>();
+    readonly editInstance = output<PresentationStudentTableRow>();
+    readonly deleteInstance = output<PresentationStudentTableRow>();
 
     /** Keys of the rows whose details are shown; a different presentation starts with all rows collapsed. */
     protected readonly expandedRowKeys = linkedSignal<number | undefined, string[]>({

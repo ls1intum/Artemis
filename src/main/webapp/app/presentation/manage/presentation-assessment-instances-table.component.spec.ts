@@ -83,7 +83,7 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
 
         query('[data-testid="edit-instance-button"] button')!.click();
 
-        expect(editSpy).toHaveBeenCalledWith(row.instance);
+        expect(editSpy).toHaveBeenCalledWith(row);
     });
 
     it('should show and hide the details of a row when the student is clicked', () => {
