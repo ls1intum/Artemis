@@ -196,6 +196,8 @@ public class CommunicationDemoService {
 
     private final OneToOneChatService oneToOneChatService;
 
+    private final FaqService faqService;
+
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     private final Optional<PlagiarismPostApi> plagiarismPostApi;
@@ -209,12 +211,14 @@ public class CommunicationDemoService {
     private final FaqRepository faqRepository;
 
     public CommunicationDemoService(ConversationMessagingService conversationMessagingService, AnswerMessageService answerMessageService, ReactionService reactionService,
-            OneToOneChatService oneToOneChatService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService, Optional<PlagiarismPostApi> plagiarismPostApi,
-            PostRepository postRepository, ChannelRepository channelRepository, OneToOneChatRepository oneToOneChatRepository, FaqRepository faqRepository) {
+            OneToOneChatService oneToOneChatService, FaqService faqService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService,
+            Optional<PlagiarismPostApi> plagiarismPostApi, PostRepository postRepository, ChannelRepository channelRepository, OneToOneChatRepository oneToOneChatRepository,
+            FaqRepository faqRepository) {
         this.conversationMessagingService = conversationMessagingService;
         this.answerMessageService = answerMessageService;
         this.reactionService = reactionService;
         this.oneToOneChatService = oneToOneChatService;
+        this.faqService = faqService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.plagiarismPostApi = plagiarismPostApi;
         this.postRepository = postRepository;
@@ -318,8 +322,8 @@ public class CommunicationDemoService {
     }
 
     /**
-     * Creates the FAQ like {@code FaqResource#createFaq} creates an accepted FAQ of an instructor, apart from sending it to Iris: that is a synchronous request to Pyris,
-     * which may not be reachable yet while the instance starts and would then abort the remaining demo communication. Instructors send the FAQs to Iris from the FAQ page.
+     * Creates the FAQ like {@code FaqResource#createFaq} creates an accepted FAQ of an instructor, including its synchronization with Iris, which runs in the background and
+     * leaves failures to the reconciliation of the FAQs.
      */
     private void seedFaq(Course course, Set<String> existingQuestions, String question, String answer, Set<String> categories) {
         if (existingQuestions.contains(question)) {
@@ -329,6 +333,7 @@ public class CommunicationDemoService {
         Faq faq = new CreateFaqDTO(course.getId(), question, answer, categories, FaqState.ACCEPTED).toEntity();
         faq.setCourse(course);
         Faq savedFaq = faqRepository.save(faq);
+        faqService.autoIngestFaqIntoPyris(savedFaq.getId());
         searchableEntityWeaviateService.ifPresent(service -> service.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(savedFaq)));
         log.info("Created demo FAQ '{}' with id {}", question, savedFaq.getId());
     }

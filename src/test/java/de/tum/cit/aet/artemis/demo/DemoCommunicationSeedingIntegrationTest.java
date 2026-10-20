@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChat
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.communication.service.CommunicationDemoService;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
+import de.tum.cit.aet.artemis.communication.service.FaqService;
 import de.tum.cit.aet.artemis.communication.service.ReactionService;
 import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -94,6 +95,9 @@ class DemoCommunicationSeedingIntegrationTest extends AbstractSpringIntegrationI
 
     @Autowired
     private OneToOneChatService oneToOneChatService;
+
+    @Autowired
+    private FaqService faqService;
 
     @Test
     void seedsWelcomeAnnouncementOfTheInstructor() {
@@ -219,7 +223,7 @@ class DemoCommunicationSeedingIntegrationTest extends AbstractSpringIntegrationI
         User proposer = users.students().get(5);
         SecurityUtils.runAs(proposer, () -> conversationMessagingService.deleteMessageById(demoCourse().getId(), deletedProposal.getId()));
         CommunicationDemoService withoutPlagiarismModule = new CommunicationDemoService(conversationMessagingService, answerMessageService, reactionService, oneToOneChatService,
-                Optional.empty(), Optional.empty(), postRepository, channelRepository, oneToOneChatRepository, faqRepository);
+                faqService, Optional.empty(), Optional.empty(), postRepository, channelRepository, oneToOneChatRepository, faqRepository);
 
         SecurityUtils.runAs(users.instructor(), () -> withoutPlagiarismModule.createDemo(demoCourse(), users.students(), users.tutor(), users.instructor(), null));
 
