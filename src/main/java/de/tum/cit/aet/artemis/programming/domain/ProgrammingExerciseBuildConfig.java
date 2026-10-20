@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -75,6 +77,11 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "theia_image")
     private String theiaImage;
 
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "online_ide_experience_level", length = 16)
+    private OnlineIdeExperienceLevel onlineIdeExperienceLevel;
+
     @Column(name = "allow_branching", columnDefinition = "boolean default false", nullable = false)
     private boolean allowBranching = false; // default value
 
@@ -102,6 +109,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.setBuildScript(originalBuildConfig.getBuildScript());
         this.setTimeoutSeconds(originalBuildConfig.getTimeoutSeconds());
         this.setTheiaImage(originalBuildConfig.getTheiaImage());
+        this.setOnlineIdeExperienceLevel(originalBuildConfig.getOnlineIdeExperienceLevel());
         this.setAllowBranching(originalBuildConfig.isAllowBranching());
         this.setBranchRegex(originalBuildConfig.getBranchRegex());
         this.setProgrammingExercise(null);
@@ -206,6 +214,15 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.theiaImage = theiaImage;
     }
 
+    @Nullable
+    public OnlineIdeExperienceLevel getOnlineIdeExperienceLevel() {
+        return onlineIdeExperienceLevel;
+    }
+
+    public void setOnlineIdeExperienceLevel(@Nullable OnlineIdeExperienceLevel onlineIdeExperienceLevel) {
+        this.onlineIdeExperienceLevel = onlineIdeExperienceLevel;
+    }
+
     /**
      * A regex defining which branches are allowed to be created.
      *
@@ -274,6 +291,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         return "BuildJobConfig{" + "id=" + getId() + ", sequentialTestRuns=" + sequentialTestRuns + ", branch='" + branch + '\'' + ", buildPlanConfiguration='"
                 + buildPlanConfiguration + '\'' + ", buildScript='" + buildScript + '\'' + ", checkoutSolutionRepository=" + checkoutSolutionRepository + ", checkoutPath='"
                 + testCheckoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + ", theiaImage='" + theiaImage + '\''
-                + ", allowBranching=" + allowBranching + ", branchRegex='" + branchRegex + '\'' + '}';
+                + ", onlineIdeExperienceLevel=" + onlineIdeExperienceLevel + ", allowBranching=" + allowBranching + ", branchRegex='" + branchRegex + '\'' + '}';
     }
 }

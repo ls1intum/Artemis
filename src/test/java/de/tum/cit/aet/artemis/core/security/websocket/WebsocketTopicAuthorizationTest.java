@@ -187,6 +187,10 @@ class WebsocketTopicAuthorizationTest extends AbstractSpringIntegrationIndepende
         assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, testCases)).isEqualTo(ALLOWED);
         assertThat(decide("student1", Role.STUDENT, testCases)).isEqualTo(DENIED);
 
+        String selectedBuildsRunCompleted = "/topic/programming-exercises/" + courseExercise.getId() + "/selected-builds-run-completed";
+        assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, selectedBuildsRunCompleted)).isEqualTo(ALLOWED);
+        assertThat(decide("student1", Role.STUDENT, selectedBuildsRunCompleted)).isEqualTo(DENIED);
+
         String synchronization = "/topic/exercises/" + courseExercise.getId() + "/synchronization";
         assertThat(decide("editor1", Role.EDITOR, synchronization)).isEqualTo(ALLOWED);
         assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, synchronization)).isEqualTo(DENIED);
