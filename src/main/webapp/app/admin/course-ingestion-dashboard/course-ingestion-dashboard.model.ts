@@ -7,36 +7,6 @@
 export type IngestionCoverageStatus = 'COMPLETE' | 'INCOMPLETE' | 'EMPTY';
 
 /**
- * The live object count of one indexed Weaviate collection. A collection that cannot be read (not present on this
- * instance, or unreachable) is reported with `readable = false` and a missing count rather than failing the overview.
- */
-export interface IndexedCollectionCount {
-    /** The collection name as addressed (the prefixed Artemis collection or an exact Iris collection name). */
-    collection: string;
-    /** The number of objects in the collection, or `null` if it could not be read. */
-    count: number | null;
-    /** Whether the count could be read. */
-    readable: boolean;
-}
-
-/**
- * The top-band overview of the search index: whether Weaviate is reachable and at which address, whether the Iris module
- * is enabled, and the live object count of each tracked collection.
- */
-export interface IndexOverview {
-    /** Whether the Weaviate instance is currently reachable. */
-    weaviateReachable: boolean;
-    /** The configured Weaviate address (shown whether or not it is reachable). */
-    weaviateAddress: string;
-    /** Whether the Iris module is enabled (the Iris content collections only exist when it is). */
-    irisEnabled: boolean;
-    /** Whether Iris is actually answering. Always false when the module is disabled. */
-    irisReachable: boolean;
-    /** The per-collection live object counts. */
-    collections: IndexedCollectionCount[];
-}
-
-/**
  * Per-type coverage counts for one course and one indexed entity type. Compares what the database expects against what
  * the Weaviate index actually holds. The two summary content types are present-only, so their `missing` is always 0.
  */
