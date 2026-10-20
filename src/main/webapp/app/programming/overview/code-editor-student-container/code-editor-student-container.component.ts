@@ -2,15 +2,15 @@ import { Component, OnDestroy, OnInit, inject, input, signal, viewChild } from '
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
-import { Observable, Subscription } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable, Subscription, of, throwError } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -30,6 +30,9 @@ import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/co
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ResultService } from 'app/exercise/result/result.service';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -44,12 +47,15 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseInstructionComponent,
         AdditionalFeedbackComponent,
+        RouterLink,
+        TumAetUiMessageComponent,
     ],
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, ExerciseSubmission {
     private domainService = inject(DomainService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private submissionPolicyService = inject(SubmissionPolicyService);
+    private resultService = inject(ResultService);
     private route = inject(ActivatedRoute);
 
     readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
@@ -78,6 +84,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     readonly latestResult = signal<Result | undefined>(undefined);
     readonly hasTutorAssessment = signal(false);
     readonly numberOfSubmissionsForSubmissionPolicy = signal<number | undefined>(undefined);
+    /** The earlier submission opened from the result history, shown read-only at its commit; undefined for the latest code. */
+    readonly viewedSubmission = signal<ProgrammingSubmission | undefined>(undefined);
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -85,14 +93,21 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
 
     /**
      * On init set up the route param subscription.
-     * Will load the participation according to participation Id with the latest result and result details.
+     * Will load the participation according to participation Id with the latest result and result details, or, when the route
+     * names a submission and result, with that earlier submission and result.
      */
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation.set(true);
             this.participationCouldNotBeFetched.set(false);
+            this.viewedSubmission.set(undefined);
             const participationId = this.participationId() ?? Number(params['participationId']);
-            this.loadParticipationWithLatestResult(participationId)
+            const submissionId = params['submissionId'] === undefined ? undefined : Number(params['submissionId']);
+            const participation$ =
+                submissionId === undefined
+                    ? this.loadParticipationWithLatestResult(participationId)
+                    : this.loadParticipationWithSubmissionAndResult(participationId, submissionId, Number(params['resultId']));
+            participation$
                 .pipe(
                     tap((participationWithResults) => {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
@@ -151,6 +166,38 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             map((participation: ProgrammingExerciseStudentParticipation) => {
                 return participation;
+            }),
+        );
+    }
+
+    /**
+     * Load the participation from server with only the given earlier submission and result, so the editor, the instructions and the
+     * feedback show that result. The result's feedback is loaded separately, since the participation comes without it.
+     * @param participationId the participation the submission belongs to
+     * @param submissionId    the submission to show
+     * @param resultId        the result of that submission to show
+     */
+    loadParticipationWithSubmissionAndResult(participationId: number, submissionId: number, resultId: number): Observable<ProgrammingExerciseStudentParticipation> {
+        return this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(participationId).pipe(
+            switchMap((participation) => {
+                const submission = participation.submissions?.find((candidate) => candidate.id === submissionId);
+                const result = submission?.results?.find((candidate) => candidate.id === resultId);
+                // Without its commit there is no code to show, and a result the student cannot see is not offered either
+                if (!submission?.commitHash || !result) {
+                    return throwError(() => new Error('submissionNotFound'));
+                }
+                const feedbacks$ = result.feedbacks
+                    ? of(result.feedbacks)
+                    : this.resultService.getFeedbackDetailsForResult(participationId, result).pipe(map((response) => response.body ?? []));
+                return feedbacks$.pipe(
+                    map((feedbacks) => {
+                        result.feedbacks = feedbacks;
+                        submission.results = [result];
+                        participation.submissions = [submission];
+                        this.viewedSubmission.set(submission);
+                        return participation;
+                    }),
+                );
             }),
         );
     }

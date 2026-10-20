@@ -36,6 +36,7 @@ import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedba
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
 
 /**
@@ -279,7 +280,9 @@ export class ResultHistoryDropdownComponent {
 
     isRowClickable(result?: Result): boolean {
         const type = this.exercise().type;
-        const exerciseTypeSupportsNavigation = type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ;
+        // A programming exercise shows an earlier result in its online editor; without the editor there is nowhere to show it
+        const programmingEditorShowsResults = type === ExerciseType.PROGRAMMING && !!(this.exercise() as ProgrammingExercise).allowOnlineEditor;
+        const exerciseTypeSupportsNavigation = type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ || programmingEditorShowsResults;
         return exerciseTypeSupportsNavigation && (!result || (!!result.id && !this.isUnfinishedAthenaFeedback(result)));
     }
 
@@ -315,6 +318,22 @@ export class ResultHistoryDropdownComponent {
         }
 
         const submissionId = result.submission?.id;
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            void this.router.navigate([
+                '/courses',
+                courseId,
+                'exercises',
+                'programming-exercises',
+                exercise.id,
+                'code-editor',
+                participation.id,
+                'submission',
+                submissionId,
+                'result',
+                result.id,
+            ]);
+            return;
+        }
         const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
         void this.router.navigate([
             '/courses',

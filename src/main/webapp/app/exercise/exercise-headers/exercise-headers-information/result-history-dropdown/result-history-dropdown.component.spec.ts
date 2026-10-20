@@ -512,8 +512,21 @@ describe('ResultHistoryDropdownComponent', () => {
             expect(component.isRowClickable(result)).toBe(true);
         });
 
-        it('should return false for PROGRAMMING exercises', () => {
+        it('should return false for PROGRAMMING exercises without the online editor, which has nowhere to show a result', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false, course: { id: 1 } } as unknown as Exercise);
+            fixture.detectChanges();
+
             expect(component.isRowClickable()).toBe(false);
+        });
+
+        it('should return true for PROGRAMMING exercises with the online editor, except for unfinished AI feedback', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, course: { id: 1 } } as unknown as Exercise);
+            fixture.detectChanges();
+
+            expect(component.isRowClickable()).toBe(true);
+            expect(component.isRowClickable({ id: 3, score: 50, assessmentType: AssessmentType.AUTOMATIC } as Result)).toBe(true);
+            expect(component.isRowClickable({ id: 4, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result)).toBe(true);
+            expect(component.isRowClickable({ id: 5, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined } as Result)).toBe(false);
         });
 
         it('should return false for FILE_UPLOAD exercises', () => {
@@ -538,6 +551,19 @@ describe('ResultHistoryDropdownComponent', () => {
             expect(event.preventDefault).toHaveBeenCalledOnce();
             expect(event.stopPropagation).toHaveBeenCalledOnce();
             expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'text-exercises', 10, 'participate', 2, 'submission', 7, 'result', 1]);
+        });
+
+        it('should open the online editor at the submission and result of a programming row', () => {
+            fixture.componentRef.setInput('exercise', { id: 10, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, course: { id: 5 } } as unknown as Exercise);
+            fixture.detectChanges();
+
+            const participation: Participation = { id: 2 } as Participation;
+            const result = { id: 1, submission: { id: 7, participation } } as unknown as Result;
+            const event = { stopPropagation: vi.fn() } as unknown as Event;
+
+            component.navigateToSubmission(result, event);
+
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'programming-exercises', 10, 'code-editor', 2, 'submission', 7, 'result', 1]);
         });
 
         it('should not prevent default page scrolling when space is pressed on a non-clickable row', () => {

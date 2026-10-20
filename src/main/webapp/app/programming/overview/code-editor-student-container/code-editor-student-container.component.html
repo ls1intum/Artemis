@@ -19,9 +19,22 @@
     }
 
     @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
+        @if (viewedSubmission()) {
+            <tumaet-ui-message class="mb-2 block" data-testid="viewing-earlier-submission">
+                <span jhiTranslate="artemisApp.editor.viewingEarlierSubmission"></span>
+                <a
+                    class="ml-1 underline"
+                    [routerLink]="['/courses', course()?.id, 'exercises', 'programming-exercises', exercise()?.id, 'code-editor', participation()?.id]"
+                    jhiTranslate="artemisApp.editor.openLatestSubmission"
+                ></a>
+            </tumaet-ui-message>
+        }
+        <!-- An earlier submission is read from its commit, so it can neither be edited nor built again -->
         <jhi-code-editor-container
             [isProblemStatementVisible]="false"
-            [editable]="!repositoryIsLocked()"
+            [editable]="!repositoryIsLocked() && !viewedSubmission()"
+            [commitId]="viewedSubmission()?.commitHash"
+            [buildable]="!viewedSubmission()"
             [participation]="participation()"
             [showEditorInstructions]="!lightweight() && showEditorInstructions"
             [isTutorAssessment]="hasTutorAssessment()"
@@ -60,7 +73,7 @@
               @if (repositoryIsLocked()) {
                 <jhi-code-editor-repository-is-locked class="me-3" />
               }
-              @if (participation()) {
+              @if (participation() && !viewedSubmission()) {
                 <jhi-updating-result
                   [exercise]="exercise()"
                   [showUngradedResults]="true"
@@ -73,12 +86,14 @@
                   class="me-2"
                 />
               }
-              <jhi-programming-exercise-student-trigger-build-button
-                class="me-2"
-                [exercise]="exercise()"
-                [participation]="participation()"
-                [btnSize]="ButtonSize.MEDIUM"
-              />
+              @if (!viewedSubmission()) {
+                <jhi-programming-exercise-student-trigger-build-button
+                  class="me-2"
+                  [exercise]="exercise()"
+                  [participation]="participation()"
+                  [btnSize]="ButtonSize.MEDIUM"
+                />
+              }
             </div>
             <jhi-programming-exercise-instructions
                 [class.d-none]="lightweight()"

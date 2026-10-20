@@ -13,6 +13,9 @@ import { of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { HttpResponse } from '@angular/common/http';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
     let comp: CodeEditorStudentContainerComponent;
@@ -73,4 +76,54 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(getParticipationSubmissionCountSpy).not.toHaveBeenCalled();
         },
     );
+    describe('an earlier submission from the result history', () => {
+        const commitHash = 'a'.repeat(40);
+        let resultService: ResultService;
+
+        const participationWithAllResults = (): ProgrammingExerciseStudentParticipation =>
+            ({
+                ...studentParticipation,
+                submissions: [
+                    { id: 8, commitHash: 'b'.repeat(40), results: [{ id: 81 }] } as ProgrammingSubmission,
+                    { id: 7, commitHash, results: [{ id: 71 }, { id: 72 }] } as ProgrammingSubmission,
+                ],
+            }) as ProgrammingExerciseStudentParticipation;
+
+        beforeEach(() => {
+            resultService = TestBed.inject(ResultService);
+            TestBed.inject(ActivatedRoute).params = of({ participationId: studentParticipation.id, submissionId: '7', resultId: '72' });
+            vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+        });
+
+        it('should load only the routed submission and result, with the feedback of that result', () => {
+            const latestSpy = vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(participationWithAllResults()));
+            const feedbacks: Feedback[] = [{ id: 5, detailText: 'Check the loop' }];
+            const detailsSpy = vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: feedbacks })));
+
+            comp.ngOnInit();
+
+            expect(latestSpy).not.toHaveBeenCalled();
+            expect(detailsSpy).toHaveBeenCalledExactlyOnceWith(studentParticipation.id, expect.objectContaining({ id: 72 }));
+            expect(comp.viewedSubmission()?.commitHash).toBe(commitHash);
+            expect(comp.participation().submissions).toHaveLength(1);
+            expect(comp.participation().submissions![0].results).toEqual([expect.objectContaining({ id: 72, feedbacks })]);
+            expect(comp.latestResult()?.id).toBe(72);
+            expect(comp.loadingParticipation()).toBe(false);
+            expect(comp.participationCouldNotBeFetched()).toBe(false);
+        });
+
+        it.each([
+            { submissionId: '9', resultId: '72' },
+            { submissionId: '7', resultId: '81' },
+        ])('should report a submission or result the participation does not have as not found: $submissionId/$resultId', ({ submissionId, resultId }) => {
+            TestBed.inject(ActivatedRoute).params = of({ participationId: studentParticipation.id, submissionId, resultId });
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(participationWithAllResults()));
+
+            comp.ngOnInit();
+
+            expect(comp.participationCouldNotBeFetched()).toBe(true);
+            expect(comp.viewedSubmission()).toBeUndefined();
+        });
+    });
 });
