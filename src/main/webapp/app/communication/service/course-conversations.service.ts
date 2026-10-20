@@ -67,6 +67,9 @@ export class CourseConversationsService implements OnDestroy {
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
     private isMarkedAsUnread = false;
     private isConversationViewOpen = false;
+    // Per conversation, the number of the last read request sent, and the numbers of the newest one that succeeded and that failed. Read requests of
+    // the same conversation can complete out of order, and only the newest outcome describes the count the server holds.
+    private readRequests = new Map<number, { sent: number; succeeded: number; failed: number }>();
     // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -560,18 +563,32 @@ export class CourseConversationsService implements OnDestroy {
                     // The user is reading this conversation, so what arrived is not new to them, e.g. a reply in a thread of theirs. The server counted
                     // it for them anyway, and reading the conversation again is what resets that count.
                     const selectionVersion = this.selectionVersion;
-                    this.conversationService.markAsRead(this._courseId, conversationDTO.id!).subscribe({
+                    const conversationId = conversationDTO.id!;
+                    const readRequest = this.readRequests.get(conversationId) ?? { sent: 0, succeeded: 0, failed: 0 };
+                    this.readRequests.set(conversationId, readRequest);
+                    const requestNumber = ++readRequest.sent;
+                    this.conversationService.markAsRead(this._courseId, conversationId).subscribe({
                         next: () => {
+                            readRequest.succeeded = Math.max(readRequest.succeeded, requestNumber);
+                            // A newer read that failed left a count on the server, which a delayed older success must not hide.
+                            const isSupersededByFailure = readRequest.failed > requestNumber;
                             // A delayed read must not clear a different selection or an explicit unread mark.
-                            if (selectionVersion === this.selectionVersion && this.isReadingConversation(conversationDTO.id) && !this.isMarkedAsUnread) {
+                            if (!isSupersededByFailure && selectionVersion === this.selectionVersion && this.isReadingConversation(conversationId) && !this.isMarkedAsUnread) {
                                 // Preserve the opening timestamp used by the initial posts response and its New divider.
                                 // Advancing it here can hide unread posts while that response is still pending.
                                 this.clearActiveConversationUnreadBadge();
                                 this.hasUnreadMessagesCheck();
                             }
                         },
-                        // the count the server raised stays, so the badge has to show it
-                        error: () => this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate),
+                        error: () => {
+                            // A newer read that succeeded already reset the count on the server, so this failure no longer describes it.
+                            if (readRequest.succeeded > requestNumber) {
+                                return;
+                            }
+                            readRequest.failed = Math.max(readRequest.failed, requestNumber);
+                            // the count the server raised stays, so the badge has to show it
+                            this.handleNewMessage(conversationId, conversationDTO.lastMessageDate);
+                        },
                     });
                 } else {
                     this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
