@@ -326,10 +326,11 @@ public class LectureDemoService {
 
     /**
      * Mirrors {@code AttachmentVideoUnitResource#createAttachmentVideoUnit} for an uploaded PDF: the unit is persisted through the lecture, the file is stored as its
-     * attachment, and the PDF is split into its slides in the background.
+     * attachment, and the PDF is split into its slides in the background. If the file cannot be stored, the unit is removed again, so that the next startup creates it anew.
      */
     private LectureUnit seedSlides(Lecture lecture, String name, String description, List<String> slides) {
         return seedUnit(lecture, named(name), () -> {
+            MultipartFile file = FileUtil.convertByteArrayToMultipart(name, ".pdf", renderSlides(name, slides));
             AttachmentVideoUnit unit = new AttachmentVideoUnit();
             unit.setName(name);
             unit.setDescription(description);
@@ -338,9 +339,21 @@ public class LectureDemoService {
             Attachment attachment = new Attachment();
             attachment.setName(name);
             attachment.setAttachmentType(AttachmentType.FILE);
-            MultipartFile file = FileUtil.convertByteArrayToMultipart(name, ".pdf", renderSlides(name, slides));
-            // Keeps the name of the file, like the client requests it.
-            AttachmentVideoUnit savedUnit = attachmentVideoUnitService.saveAttachmentVideoUnit(persistedUnit, attachment, file, true);
+            AttachmentVideoUnit savedUnit;
+            try {
+                // Keeps the name of the file, like the client requests it.
+                savedUnit = attachmentVideoUnitService.saveAttachmentVideoUnit(persistedUnit, attachment, file, true);
+            }
+            catch (RuntimeException exception) {
+                // A slides unit without its slides would count as seeded and never get them, so it is removed to be created again on the next startup.
+                try {
+                    lectureUnitService.removeLectureUnit(persistedUnit);
+                }
+                catch (RuntimeException removalFailure) {
+                    exception.addSuppressed(removalFailure);
+                }
+                throw exception;
+            }
             slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedUnit, null, null));
             return savedUnit;
         });

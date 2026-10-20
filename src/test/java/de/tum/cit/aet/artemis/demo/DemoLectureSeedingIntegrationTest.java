@@ -1,12 +1,15 @@
 package de.tum.cit.aet.artemis.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -33,6 +36,9 @@ import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseDemoService;
@@ -52,10 +58,14 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
+import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
+import de.tum.cit.aet.artemis.lecture.service.LectureDemoService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
+import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -113,6 +123,18 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private SlideRepository slideRepository;
+
+    @Autowired
+    private ExerciseUnitRepository exerciseUnitRepository;
+
+    @Autowired
+    private SlideSplitterService slideSplitterService;
+
+    @Autowired
+    private ChannelService channelService;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     @Test
     void seedsWeeklyLecturesWithTheirUnitsInOrder() {
@@ -243,6 +265,28 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
         verify(competencyApi).createDemo(any(Course.class), argThat(DemoLectureSeedingIntegrationTest::onlyExercises), argThat(DemoLectureSeedingIntegrationTest::onlyExercises),
                 argThat(DemoLectureSeedingIntegrationTest::onlyExercises), argThat(DemoLectureSeedingIntegrationTest::onlyExercises), anyList());
         assertThat(snapshotLectures()).as("a disabled lecture module leaves the existing lectures alone").isEqualTo(lecturesBefore);
+    }
+
+    @Test
+    void removesTheSlidesUnitAgainWhenItsSlidesCannotBeStored() {
+        seed();
+        lectureUnitService.removeLectureUnit(unitOfType(demoLecture(ARCHITECTURE), AttachmentVideoUnit.class));
+        AttachmentVideoUnitService failingAttachmentVideoUnitService = mock(AttachmentVideoUnitService.class);
+        when(failingAttachmentVideoUnitService.saveAttachmentVideoUnit(any(), any(), any(), anyBoolean()))
+                .thenThrow(new IllegalStateException("simulated failure of the file store"));
+        LectureDemoService withFailingFileStore = new LectureDemoService(lectureRepository, exerciseUnitRepository, failingAttachmentVideoUnitService, slideSplitterService,
+                channelService, channelRepository, lectureUnitService);
+
+        SecurityUtils.runAs(userApi.createDemoUsers().instructor(),
+                () -> assertThatThrownBy(() -> withFailingFileStore.createDemo(demoCourse(), List.of(), List.of(), List.of())).hasMessage("simulated failure of the file store"));
+
+        assertThat(demoLecture(ARCHITECTURE).getLectureUnits()).as("no slides unit without its slides is left, which would count as seeded on the next startup")
+                .noneMatch(AttachmentVideoUnit.class::isInstance);
+
+        seed();
+
+        long slidesUnitId = unitOfType(demoLecture(ARCHITECTURE), AttachmentVideoUnit.class).getId();
+        assertThat(attachmentVideoUnitRepository.findWithAttachmentById(slidesUnitId).orElseThrow().getAttachment()).as("the next seeding creates the slides again").isNotNull();
     }
 
     private void seed() {
