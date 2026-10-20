@@ -2,6 +2,10 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
@@ -13,12 +17,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
@@ -48,11 +56,15 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     @Mock
     private CourseTestRepository courseRepository;
 
+    @Mock
+    private DistributedDataProvider distributedDataProvider;
+
     private AutoCloseable mocks;
 
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
+        lenient().when(distributedDataProvider.getExpiringMap(anyString(), any())).thenReturn(new LocalMap<>());
     }
 
     @AfterEach
@@ -103,7 +115,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     @Test
-    void tryStart_holdsTheSlotUntilReleased() {
+    void tryStart_holdsTheLeaseUntilReleased() {
         HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
 
         assertThat(service.tryStart(5L)).isTrue();
@@ -148,6 +160,26 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     @Test
+    void saveIfStillOwned_savesAnItemWhoseClaimHolds() {
+        HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
+        QuizQuestionPoolItem item = new QuizQuestionPoolItem();
+        item.setId(3L);
+        when(itemRepository.save(item)).thenReturn(item);
+
+        assertThat(service.saveIfStillOwned(item)).isTrue();
+    }
+
+    @Test
+    void saveIfStillOwned_discardsTheResultWhenAnotherNodeTookTheItem() {
+        HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
+        QuizQuestionPoolItem item = new QuizQuestionPoolItem();
+        item.setId(3L);
+        when(itemRepository.save(item)).thenThrow(new ObjectOptimisticLockingFailureException(QuizQuestionPoolItem.class, 3L));
+
+        assertThat(service.saveIfStillOwned(item)).isFalse();
+    }
+
+    @Test
     void build_throwsWhenChatClientIsNull() {
         HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
 
@@ -166,6 +198,6 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     private HyperionQuizQuestionPoolBuildService service(List<String> questionTypes, List<String> difficulties) {
         return new HyperionQuizQuestionPoolBuildService(null, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
-                llmTokenUsageService, itemRepository, settingsService, courseRepository, "", questionTypes, difficulties, 8, 30);
+                llmTokenUsageService, itemRepository, settingsService, courseRepository, distributedDataProvider, "", questionTypes, difficulties, 8, 30, 10);
     }
 }

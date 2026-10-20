@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -108,6 +109,14 @@ public class QuizQuestionPoolItem extends DomainObject {
 
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt = ZonedDateTime.now();
+
+    /**
+     * Incremented by every write, including the conditional claim and release updates, so that a worker whose claim another node released
+     * and took over cannot overwrite the newer state.
+     */
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     public Course getCourse() {
         return course;
@@ -266,5 +275,13 @@ public class QuizQuestionPoolItem extends DomainObject {
 
     public void setUpdatedAt(ZonedDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

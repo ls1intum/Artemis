@@ -88,20 +88,22 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
     /**
      * Moves one item from an expected state into a claimed state.
      *
-     * @param itemId the item
-     * @param from   the state the item must be in
-     * @param to     the claimed state to move it to
-     * @param now    the claim time
-     * @return 1 when this caller won the claim, 0 when the item was no longer in {@code from}
+     * @param itemId  the item
+     * @param from    the state the item must be in
+     * @param to      the claimed state to move it to
+     * @param now     the claim time
+     * @param version the item's version as the caller read it; the claim fails when another write changed the item since
+     * @return 1 when this caller won the claim, 0 when the item was no longer in {@code from} or had changed
      */
     @Modifying
     @Transactional // ok because of the update
     @Query("""
             UPDATE QuizQuestionPoolItem item
-            SET item.state = :to, item.claimedAt = :now, item.updatedAt = :now
-            WHERE item.id = :itemId AND item.state = :from
+            SET item.state = :to, item.claimedAt = :now, item.updatedAt = :now, item.version = item.version + 1
+            WHERE item.id = :itemId AND item.state = :from AND item.version = :version
             """)
-    int claim(@Param("itemId") long itemId, @Param("from") QuizQuestionPoolItemState from, @Param("to") QuizQuestionPoolItemState to, @Param("now") ZonedDateTime now);
+    int claim(@Param("itemId") long itemId, @Param("from") QuizQuestionPoolItemState from, @Param("to") QuizQuestionPoolItemState to, @Param("now") ZonedDateTime now,
+            @Param("version") long version);
 
     /**
      * Returns items whose claim is older than {@code before} to the stable state the claim was taken from.
@@ -117,7 +119,7 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
     @Transactional // ok because of the update
     @Query("""
             UPDATE QuizQuestionPoolItem item
-            SET item.state = :to, item.claimedAt = NULL, item.updatedAt = :now
+            SET item.state = :to, item.claimedAt = NULL, item.updatedAt = :now, item.version = item.version + 1
             WHERE item.course.id = :courseId AND item.state = :from AND item.claimedAt < :before
             """)
     int releaseStaleClaims(@Param("courseId") long courseId, @Param("from") QuizQuestionPoolItemState from, @Param("to") QuizQuestionPoolItemState to,
@@ -137,7 +139,7 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
     @Transactional // ok because of the update
     @Query("""
             UPDATE QuizQuestionPoolItem item
-            SET item.state = :to, item.generationAttempts = 0, item.filterAttempts = 0, item.failure = NULL, item.updatedAt = :now
+            SET item.state = :to, item.generationAttempts = 0, item.filterAttempts = 0, item.failure = NULL, item.updatedAt = :now, item.version = item.version + 1
             WHERE item.course.id = :courseId AND item.state = :from AND item.failure = :failure
             """)
     int reviveTransientFailures(@Param("courseId") long courseId, @Param("from") QuizQuestionPoolItemState from, @Param("to") QuizQuestionPoolItemState to,

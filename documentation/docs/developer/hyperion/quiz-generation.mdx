@@ -89,14 +89,14 @@ The settings are stored as a JSON payload in `hyperion_course_settings`, keyed b
 
 ### Build Loop
 
-A build is started from the pool page and runs on the dedicated `hyperionQuizQuestionPoolTaskExecutor`; the request returns `202 Accepted` at once, or `409 Conflict` while a build of the same course is running on the node. `HyperionQuizQuestionPoolBuildService.build` then works the pool to completion:
+A build is started from the pool page and runs on the dedicated `hyperionQuizQuestionPoolTaskExecutor`; the request returns `202 Accepted` at once, or `409 Conflict` while a build of the same course runs anywhere in the cluster. Before enqueuing, the build takes the course's lease in the distributed map `hyperion-quiz-pool-builds`, which expires after `build-lease-minutes` unless the running build refreshes it after each unit of work, so one build per course runs at a time and a crashed node frees the course once its lease expires. `HyperionQuizQuestionPoolBuildService.build` then works the pool to completion:
 
 1. Claims older than `stale-claim-minutes` are returned to their stable state, and items whose last attempt failed on a model call (`CALL_FAILED`) or an unusable verdict (`FILTER_UNUSABLE`) are revived with a fresh attempt budget.
 2. While there are generated items awaiting the filter, one is claimed and judged.
 3. Otherwise up to `generation-batch-size` pending items of one cell are claimed and generated with a single model call; the questions are assigned to the claimed items in order, and items left without a usable question fail with `NO_VALID_QUESTION` and are retried up to three times.
 4. The loop ends when nothing is left to claim.
 
-Every state transition out of a claimed state is a conditional update that names the state it expects (`QuizQuestionPoolItemRepository.claim`), so two nodes working the same pool never act on the same item twice. The item states are `PENDING`, `GENERATING`, `GENERATED`, `FILTERING`, `FILTERED`, `FAILED_GENERATION` and `FAILED_FILTER`; `review_state` records the instructor's later decision.
+Every item carries a version that each write increments. Claims are conditional updates that name the state and the version they expect (`QuizQuestionPoolItemRepository.claim`), the release of stale claims and the revival of failed items increment the version as well, and the completion writes go through the entity's optimistic lock, so a worker whose claim another node released and took over cannot overwrite the newer state: its save fails and the result is discarded (`saveIfStillOwned`). The cell coordinates and the item index are unique in the database, so two nodes cannot enqueue the same item twice. The item states are `PENDING`, `GENERATING`, `GENERATED`, `FILTERING`, `FILTERED`, `FAILED_GENERATION` and `FAILED_FILTER`; `review_state` records the instructor's later decision.
 
 ### Generation and Filter
 

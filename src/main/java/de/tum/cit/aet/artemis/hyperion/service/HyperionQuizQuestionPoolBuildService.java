@@ -18,7 +18,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -31,6 +30,7 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +43,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.ApiConditionNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -107,6 +109,9 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private static final int CLAIM_CANDIDATES = 5;
 
+    /** Name of the distributed map that holds the build lease of every course that is being built. */
+    private static final String BUILD_LEASES = "hyperion-quiz-pool-builds";
+
     @Nullable
     private final ChatClient chatClient;
 
@@ -136,16 +141,21 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private final Duration staleClaimAge;
 
-    private final Set<Long> runningCourses = ConcurrentHashMap.newKeySet();
+    private final DistributedDataProvider distributedDataProvider;
+
+    private final DistributedMap<Long, String> buildLeases;
+
+    private final Duration leaseDuration;
 
     public HyperionQuizQuestionPoolBuildService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService,
             HyperionQuizQuestionPoolMaterialService materialService, Optional<CourseCompetencyApi> courseCompetencyApi, HyperionQuizQuestionFilterService filterService,
             LLMTokenUsageService llmTokenUsageService, QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService,
-            CourseRepository courseRepository, @Value("${artemis.hyperion.quiz-pool.generator-model:}") String generatorModel,
+            CourseRepository courseRepository, DistributedDataProvider distributedDataProvider, @Value("${artemis.hyperion.quiz-pool.generator-model:}") String generatorModel,
             @Value("${artemis.hyperion.quiz-pool.question-types:single-choice,multiple-choice}") List<String> questionTypes,
             @Value("${artemis.hyperion.quiz-pool.difficulties:easy,medium,hard}") List<String> difficulties,
             @Value("${artemis.hyperion.quiz-pool.generation-batch-size:8}") int generationBatchSize,
-            @Value("${artemis.hyperion.quiz-pool.stale-claim-minutes:30}") int staleClaimMinutes) {
+            @Value("${artemis.hyperion.quiz-pool.stale-claim-minutes:30}") int staleClaimMinutes,
+            @Value("${artemis.hyperion.quiz-pool.build-lease-minutes:10}") int buildLeaseMinutes) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.materialService = materialService;
@@ -166,6 +176,12 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         this.generationBatchSize = generationBatchSize;
         this.staleClaimAge = Duration.ofMinutes(staleClaimMinutes);
+        if (buildLeaseMinutes < 1) {
+            throw new IllegalArgumentException("artemis.hyperion.quiz-pool.build-lease-minutes must be at least 1, got " + buildLeaseMinutes);
+        }
+        this.distributedDataProvider = distributedDataProvider;
+        this.leaseDuration = Duration.ofMinutes(buildLeaseMinutes);
+        this.buildLeases = distributedDataProvider.getExpiringMap(BUILD_LEASES, leaseDuration);
     }
 
     /**
@@ -210,13 +226,14 @@ public class HyperionQuizQuestionPoolBuildService {
     }
 
     /**
-     * Reserves the course's build slot on this node.
+     * Takes the course's build lease, which expires after {@code build-lease-minutes} unless the running build refreshes it. One build per
+     * course runs at a time across all nodes.
      *
      * @param courseId the course
-     * @return {@code true} when no build of this course is running on this node
+     * @return {@code true} when no node holds a live lease for this course
      */
     public boolean tryStart(long courseId) {
-        return runningCourses.add(courseId);
+        return buildLeases.putIfAbsent(courseId, nodeName(), leaseDuration) == null;
     }
 
     /**
@@ -225,7 +242,7 @@ public class HyperionQuizQuestionPoolBuildService {
      * @param courseId the course
      */
     public void release(long courseId) {
-        runningCourses.remove(courseId);
+        buildLeases.remove(courseId);
     }
 
     /**
@@ -235,7 +252,16 @@ public class HyperionQuizQuestionPoolBuildService {
      * @return whether a build is running
      */
     public boolean isRunning(long courseId) {
-        return runningCourses.contains(courseId);
+        return buildLeases.containsKey(courseId);
+    }
+
+    private void heartbeat(long courseId) {
+        buildLeases.put(courseId, nodeName(), leaseDuration);
+    }
+
+    private String nodeName() {
+        String address = distributedDataProvider.getLocalMemberAddress();
+        return address == null ? "local" : address;
     }
 
     /**
@@ -322,6 +348,7 @@ public class HyperionQuizQuestionPoolBuildService {
             if (toJudge.isPresent()) {
                 judge(course, userId, toJudge.get(), materials);
                 completed++;
+                heartbeat(courseId);
                 continue;
             }
             List<QuizQuestionPoolItem> batch = claimBatch(courseId);
@@ -330,6 +357,7 @@ public class HyperionQuizQuestionPoolBuildService {
             }
             generate(course, userId, batch, materials);
             completed += batch.size();
+            heartbeat(courseId);
         }
         log.info("Quiz question pool build of course [{}] finished after {} units of work", courseId, completed);
         return completed;
@@ -366,12 +394,13 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private boolean claim(QuizQuestionPoolItem item, QuizQuestionPoolItemState from, QuizQuestionPoolItemState to) {
         ZonedDateTime now = ZonedDateTime.now();
-        if (itemRepository.claim(item.getId(), from, to, now) != 1) {
+        if (itemRepository.claim(item.getId(), from, to, now, item.getVersion()) != 1) {
             return false;
         }
         item.setState(to);
         item.setClaimedAt(now);
         item.setUpdatedAt(now);
+        item.setVersion(item.getVersion() + 1);
         return true;
     }
 
@@ -423,7 +452,7 @@ public class HyperionQuizQuestionPoolBuildService {
             item.setState(QuizQuestionPoolItemState.GENERATED);
             item.setClaimedAt(null);
             item.setUpdatedAt(ZonedDateTime.now());
-            itemRepository.save(item);
+            saveIfStillOwned(item);
         }
         if (questions.size() < batch.size()) {
             log.warn("Generation for lecture unit [{}] in course [{}] yielded {} usable questions for {} items", first.getLectureUnitId(), course.getId(), questions.size(),
@@ -466,6 +495,24 @@ public class HyperionQuizQuestionPoolBuildService {
         return questions;
     }
 
+    /**
+     * Saves an item this worker claimed. The version check in the save detects that another node released the claim as stale and took the
+     * item over in the meantime; this worker's result is then discarded and the stored row stays as the other node left it.
+     *
+     * @param item the claimed item with this worker's result
+     * @return {@code true} when the item was saved, {@code false} when the claim was lost
+     */
+    boolean saveIfStillOwned(QuizQuestionPoolItem item) {
+        try {
+            itemRepository.save(item);
+            return true;
+        }
+        catch (OptimisticLockingFailureException e) {
+            log.warn("Quiz question pool item [{}] was taken over by another node while this node worked on it; discarding this node's result", item.getId());
+            return false;
+        }
+    }
+
     private void recordGenerationFailure(QuizQuestionPoolItem item, String failure, boolean retryable) {
         int attempts = item.getGenerationAttempts() + 1;
         item.setGenerationAttempts(attempts);
@@ -473,7 +520,7 @@ public class HyperionQuizQuestionPoolBuildService {
         item.setState(retryable && attempts < MAX_ATTEMPTS ? QuizQuestionPoolItemState.PENDING : QuizQuestionPoolItemState.FAILED_GENERATION);
         item.setClaimedAt(null);
         item.setUpdatedAt(ZonedDateTime.now());
-        itemRepository.save(item);
+        saveIfStillOwned(item);
     }
 
     private void judge(Course course, @Nullable Long userId, QuizQuestionPoolItem item, Materials materials) {
@@ -504,7 +551,7 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         item.setClaimedAt(null);
         item.setUpdatedAt(ZonedDateTime.now());
-        itemRepository.save(item);
+        saveIfStillOwned(item);
     }
 
     /**

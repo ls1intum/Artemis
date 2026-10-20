@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,10 +38,15 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -85,9 +91,14 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     @Autowired
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
+    @Autowired
+    private QuizQuestionPoolItemRepository itemRepository;
+
     private long courseId;
 
     private Competency firstCompetency;
+
+    private LectureUnit firstTextUnit;
 
     private final AtomicInteger questionCounter = new AtomicInteger();
 
@@ -107,6 +118,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         Competency secondCompetency = competencyUtilService.createCompetency(course, "2");
         Lecture lecture = lectureUtilService.createLecture(course);
         LectureUnit textUnit = lectureUtilService.createTextUnit(lecture);
+        firstTextUnit = textUnit;
         AttachmentVideoUnit slideDeck = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 1, true);
         slideDeck.setName("Control structures slides");
         slideDeck = attachmentVideoUnitRepository.save(slideDeck);
@@ -303,6 +315,22 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldClaimAnItemOnlyWithItsCurrentVersion() {
+        QuizQuestionPoolItem item = savePendingItem(courseId);
+        ZonedDateTime now = ZonedDateTime.now();
+
+        assertThat(itemRepository.claim(item.getId(), QuizQuestionPoolItemState.PENDING, QuizQuestionPoolItemState.GENERATING, now, item.getVersion() + 1)).isZero();
+        assertThat(itemRepository.claim(item.getId(), QuizQuestionPoolItemState.PENDING, QuizQuestionPoolItemState.GENERATING, now, item.getVersion())).isEqualTo(1);
+
+        QuizQuestionPoolItem claimed = itemRepository.findByIdElseThrow(item.getId());
+        assertThat(claimed.getState()).isEqualTo(QuizQuestionPoolItemState.GENERATING);
+        assertThat(claimed.getVersion()).isEqualTo(item.getVersion() + 1);
+        assertThat(claimed.getClaimedAt()).isNotNull();
+        assertThat(itemRepository.claim(item.getId(), QuizQuestionPoolItemState.PENDING, QuizQuestionPoolItemState.GENERATING, now, item.getVersion())).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReadAndUpdateSettingsForInstructor() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
@@ -332,6 +360,18 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "editor1");
 
         request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings", HttpStatus.FORBIDDEN, HyperionCourseSettingsDTO.class);
+    }
+
+    private QuizQuestionPoolItem savePendingItem(long ownerCourseId) {
+        QuizQuestionPoolItem item = new QuizQuestionPoolItem();
+        item.setCourse(courseRepository.findByIdElseThrow(ownerCourseId));
+        item.setCompetencyId(firstCompetency.getId());
+        item.setLectureUnitId(firstTextUnit.getId());
+        item.setLanguage(QuizQuestionGenerationLanguage.EN);
+        item.setQuestionType(QuizQuestionGenerationType.SINGLE_CHOICE);
+        item.setDifficulty(QuizQuestionDifficulty.MEDIUM);
+        item.setItemIndex(0);
+        return itemRepository.save(item);
     }
 
     private void awaitBuild() {
