@@ -19,6 +19,11 @@ associate a successful Gradle wrapper validation workflow with the latest commit
 reliably through a reusable-workflow call alone. The direct push trigger provides that evidence while
 the reusable call keeps wrapper validation inside the existing required PR gate.
 
+`scorecard.yml` starts after that direct validation succeeds on `develop`, using a `workflow_run`
+trigger. Starting both workflows on the same push lets Scorecard finish before validation and flag
+all six wrapper JARs as unverified binaries. The weekly, manual and branch-protection triggers remain
+available to refresh repository settings independently of a push.
+
 ```text
 ci.yml                                                            (single entry workflow)
 ├── detect-changes               (dorny/paths-filter, emits per-area booleans)
@@ -262,6 +267,27 @@ These workflows are intentionally NOT folded into the umbrella:
 | `pullrequest-coverage-reporter.yml` | **Fork PRs only.** Posts the coverage table for fork PRs (where an in-run token can't write); hardened against a `workflow_run` pwn-request. Internal PRs use `ci.yml`'s in-run `coverage-report` job instead, so the table appears at ~test time rather than after the run. |
 | All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
 
+## E2E image identity and readiness
+
+Both build paths upload a `docker-tag` artifact containing `sha-<commit_sha>` for the exact
+revision checked out by the build. E2E setup rejects an artifact for any other revision;
+branch names and PR aliases remain convenient publishing tags but are never E2E inputs.
+After pulling, `verify-image-revision.sh` checks the image's
+`org.opencontainers.image.revision` label before Compose starts any services. The PR build
+sets this label to the PR head SHA explicitly, because the event SHA identifies a merge commit.
+All nodes in the multi-node stack use the same verified image.
+
+Nginx waits for healthy application services. Before authenticating users or warming caches,
+Playwright global setup polls `/management/health/readiness` on the configured base URL and
+every direct core-node URL in `MULTI_NODE_URLS`. Each must report HTTP 200 and status `UP`
+within a shared two-minute readiness budget; failure lists each unavailable URL and its last
+probe result. This uses the readiness group so an unrelated external connector does not block
+startup. JUnit reporting jobs receive `checks: write` from the umbrella and narrow that
+permission to the jobs that create report check runs.
+
+Regression tests for delayed readiness, unavailable nodes and image revision mismatches run
+with `pnpm run test:rules` (or select `supporting_scripts/ci/E2E-tests/setup.spec.mjs`).
+
 ## Concurrency model
 
 | Event | Group key | Cancel in progress? |
@@ -269,31 +295,33 @@ These workflows are intentionally NOT folded into the umbrella:
 | `pull_request` | `ci-pr-{N}` | yes |
 | `merge_group` | `ci-mq-{head_sha}` | no |
 | `release` | `ci-release-{tag}` | no |
-| `push` / `workflow_dispatch` | `ci-{github.ref}` | no |
+| `push` / `workflow_dispatch` | `ci-{github.ref}-{github.sha}` | no |
 
 Concurrency lives only on the umbrella. Reusables share the umbrella's `run_id`, so the
 parent's concurrency lock applies transitively. **Never** add a `concurrency:` block to a
 `ci-*.yml` reusable — it creates a second lock that can deadlock the parent
 ([actions/runner#3205](https://github.com/actions/runner/issues/3205)).
 
-GitHub keeps only one pending run in a concurrency group by default, even when
-`cancel-in-progress` is false. A newer `develop` push can therefore replace an older pending push.
-The documentation build runs on every `develop` push so that a replacement run deploys the full
-current documentation tree instead of losing documentation changes that belonged to the evicted
-run. Pull requests still use `has_docs`, so this recovery guarantee adds no unrelated PR work.
+Distinct push commits run independently so a long E2E phase cannot hold back the next commit's
+WAR or image build. Their mutable publishing aliases can therefore move while an earlier run
+is still active, which is why E2E consumes the exact commit tag and checks its revision.
+GitHub keeps only one pending run per concurrency group; repeated runs for the same ref and
+commit can still replace a pending run. Documentation builds on every `develop` push so any
+replacement run deploys the complete documentation tree. Pull requests use `has_docs`.
 
-The one exception is the `deploy-docs` **job** in `ci.yml`, which carries a job-level
+The `deploy-docs` **job** in `ci.yml` carries a job-level
 `concurrency: { group: pages, cancel-in-progress: false }`. Job-level concurrency is safe (it is
-not the reusable-workflow lock that #3205 warns about), and the repo-global `pages` group is what
-serializes every GitHub Pages deploy — across umbrella runs and against the manual redeploy in
-`deploy-documentation.yml`. `coverage-badge` deliberately has **no** job-level group: the umbrella's
-own `ci-${{ github.ref }}` group already serializes develop runs end to end, and nothing outside
-`ci.yml` writes the `badges` branch.
+not the reusable-workflow lock that #3205 warns about), and the repo-global `pages` group
+serializes every GitHub Pages deploy across umbrella runs and manual redeploys in
+`deploy-documentation.yml`. `coverage-badge` has no job-level group. Badge and release metadata
+updates can overlap; the shared publisher retries a non-force push after fetching and rebasing
+over the other writer. A conflict keeps the published files and emits a warning.
 
 ## The coverage badge
 
-The `coverage` badge in the root `README.md` is served by Shields from `coverage.json` on the
-orphan **`badges`** branch. `ci.yml`'s `coverage-badge` job recomputes it on every `develop` push,
+The `coverage` badge in the root `README.md` is a self-hosted `coverage.svg` on the orphan
+**`badges`** branch, rendered locally from our own `coverage.json` without a hosted badge API.
+`ci.yml`'s `coverage-badge` job recomputes it on every `develop` push,
 from the same `Server JaCoCo XML` and `Client Coverage Summaries` artifacts the `test` job already
 uploads — no test re-run. The figure is
 `(server.covered + client.covered) / (server.total + client.total)` over **lines**, the one metric
@@ -315,8 +343,8 @@ than publishing a worse one:
    catches a vanished module report without freezing on a genuine coverage regression, which leaves
    the denominator intact.
 
-Every rejection is a no-op: the job exits 0 without committing, and Shields keeps serving the last
-good file. Nothing about the badge can turn `develop` red.
+Every rejection is a no-op: the job exits 0 without committing, and GitHub keeps serving the last
+good SVG. Nothing about the badge can turn `develop` red.
 
 **Guard 3 latches, by construction.** It compares against the last *published* total, which only
 advances when something is published. So a legitimate halving of the combined line total — a large
@@ -333,6 +361,35 @@ this repo matches `badges`, and GitHub does not fire workflows for `GITHUB_TOKEN
 
 The logic is unit-tested in `supporting_scripts/code-coverage/coverage-badge/compute-coverage-badge.spec.mjs`,
 which runs as part of `pnpm run test:rules` in the client test job.
+
+## The release and license badges
+
+`publish-badges.yml` renders `latest-version.svg` and `license.svg` locally and publishes them to
+`badges`. It runs on release publication, edits, deletion and unpublication, daily, and on manual
+dispatch. The daily run repairs missed events and allows the three new SVGs to be bootstrapped
+from the existing coverage JSON without another test run. GitHub serves the SVGs directly from
+`raw.githubusercontent.com`; the README has no Shields dependency. No badge npm packages,
+external fonts, or rendering services are involved.
+
+The version comes from the highest stable numeric Artemis release returned by GitHub's paginated
+releases API, accepting tags such as `10.3` and `v10.3.1`. Drafts, prereleases, scoped `@tumaet/*`
+package releases and development version files are excluded. A late maintenance release therefore
+cannot make the badge move backwards. The license is the repository's static MIT license. Source
+or publishing failures preserve the previous SVGs and are advisory. Codacy, Sonar and OpenSSF
+badges continue to come directly from their authoritative services.
+
+The trusted tooling is checked out from the default branch even for a release event referencing
+an older tag. Only the separate `badges` checkout retains write credentials. Both publishers use
+`supporting_scripts/badges/publish-badges.mjs`; concurrent writers fetch and rebase before retrying
+up to three non-force pushes. No commit lands on the development branch. Tests exercise release
+selection, SVG escaping, failed inputs and real Git writer races, using Node's built-in test runner
+in `ci-workflows.yml`.
+
+After deployment, manually dispatch **Publish README Badges** once to create all three SVGs before
+expecting the changed README URLs to resolve. If the orphan branch is absent, follow the
+[re-seeding instructions](../../supporting_scripts/code-coverage/coverage-badge/README.md#re-seeding-the-badges-branch),
+then dispatch the workflow. For local rendering and tests, see
+[the badge tooling README](../../supporting_scripts/badges/README.md).
 
 ## The code quality analyses
 
