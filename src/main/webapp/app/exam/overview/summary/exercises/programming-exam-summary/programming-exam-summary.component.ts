@@ -12,7 +12,7 @@ import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.servi
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Router } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -20,6 +20,7 @@ import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complain
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-exam-summary',
@@ -55,6 +56,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     readonly commitHash = signal<string | undefined>(undefined);
     readonly ownsParticipationForCodeButton = computed(() => this.getOwnsParticipationForCodeButton());
+    protected readonly vcsAccessTokenSourceInfo = computed(() => this.getVcsAccessTokenSourceInfo());
 
     routerLink!: string; // set in ngOnInit() from the current router URL
     isInCourseManagement = false;
@@ -94,6 +96,14 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     private getOwnsParticipationForCodeButton(): boolean {
         const userLogin = this.accountService.userIdentity()?.login;
         return !!userLogin && this.participation()?.student?.login === userLogin;
+    }
+
+    private getVcsAccessTokenSourceInfo(): VcsAccessTokenSourceInfo {
+        const participationId = this.participation().id!;
+        if (this.ownsParticipationForCodeButton()) {
+            return { returnedTokenType: 'participation-token', participationId, isOwnParticipation: true };
+        }
+        return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId };
     }
 
     get repositoryViewLink(): (string | number)[] {

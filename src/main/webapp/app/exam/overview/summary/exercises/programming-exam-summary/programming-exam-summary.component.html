@@ -12,11 +12,7 @@
                         [exerciseId]="exercise().id!"
                         [repositoryUri]="participation()?.repositoryUri ?? participation()?.userIndependentRepositoryUri ?? ''"
                         [repositoryViewLink]="repositoryViewLink"
-                        [vcsAccessTokenData]="{
-                            returnedTokenType: 'participation-token',
-                            participationId: participation().id!,
-                            isOwnParticipation: ownsParticipationForCodeButton(),
-                        }"
+                        [vcsAccessTokenData]="vcsAccessTokenSourceInfo()"
                     />
                     <span>
                         @if (submission()) {
