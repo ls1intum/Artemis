@@ -1,6 +1,6 @@
 import { Component, input, viewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { faPlayCircle, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -14,7 +14,7 @@ import { StudentExerciseActionsDirective } from '../student-exercise-actions.dir
 @Component({
     selector: 'div[jhi-programming-exercise-participation-actions]',
     templateUrl: './programming-exercise-participation-actions.component.html',
-    imports: [RouterLink, NgbTooltip, ExerciseActionButtonComponent, FeatureToggleDirective, StartPracticeModeButtonComponent, ArtemisTranslatePipe],
+    imports: [RouterLink, TumAetUiTooltipDirective, ExerciseActionButtonComponent, FeatureToggleDirective, StartPracticeModeButtonComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseParticipationActionsComponent {
     readonly actions = input.required<StudentExerciseActionsDirective>();

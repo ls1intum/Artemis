@@ -26,5 +26,9 @@ describe('question statistics chart', () => {
         fixture.detectChanges();
         expect(fixture.nativeElement.textContent).toContain('7');
         expect(fixture.nativeElement.textContent).toContain('artemisApp.showStatistic.questionStatistic.titleUnrated');
+        expect(buttons[1].textContent).toContain('artemisApp.showStatistic.switchToRated');
+        fixture.componentRef.setInput('showSolution', true);
+        fixture.detectChanges();
+        expect(buttons[0].textContent).toContain('artemisApp.showStatistic.dragAndDropQuestionStatistic.hideSampleSolution');
     });
 });

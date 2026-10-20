@@ -12,7 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     template: `
         <div class="post-is-saved-message-content">
             <fa-icon [icon]="faBookmark" />
-            <span class="text-secondary" jhiTranslate="artemisApp.communication.post.saved"></span>
+            <span class="text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.communication.post.saved"></span>
         </div>
     `,
 })

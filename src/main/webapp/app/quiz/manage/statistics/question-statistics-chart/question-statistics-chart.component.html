@@ -1,5 +1,5 @@
-<div class="row">
-    <div class="col-md-7 text-start">
+<div class="-mx-2! flex flex-wrap">
+    <div class="w-full! flex-none px-2! text-start md:w-7/12!">
         <p id="text" class="chart-title-text">
             @if (rated()) {
                 <span jhiTranslate="artemisApp.showStatistic.questionStatistic.titleRated"></span>
@@ -9,7 +9,7 @@
             }
         </p>
     </div>
-    <div class="col-md-5 text-end">
+    <div class="w-full! flex-none px-2! text-end md:w-5/12!">
         <p class="chart-title-text">
             <span>{{ participants() }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
         </p>
@@ -23,16 +23,14 @@
         [ariaLabel]="(rated() ? 'artemisApp.showStatistic.questionStatistic.titleRated' : 'artemisApp.showStatistic.questionStatistic.titleUnrated') | artemisTranslate"
     />
 </div>
-<div class="col-md-12 text-center button-row">
-    <button (click)="toggleSolution.emit()" type="button" class="btn btn-primary show-solution">
+<div class="button-row w-full text-center">
+    <button (click)="toggleSolution.emit()" type="button" tumAetUiButton class="show-solution py-1.5!">
         @if (showSolution()) {
             <fa-icon [icon]="faCheckCircle" />
         }
-        &nbsp;
         @if (!showSolution()) {
             <fa-icon [icon]="faTimesCircle" />
         }
-        &nbsp;
         @if (showSolution()) {
             <span jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
         }
@@ -40,8 +38,8 @@
             <span jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
         }
     </button>
-    <button (click)="toggleRated.emit()" type="button" class="btn btn-primary">
-        <fa-icon [icon]="faSync" />&nbsp;
+    <button (click)="toggleRated.emit()" type="button" tumAetUiButton class="py-1.5!">
+        <fa-icon [icon]="faSync" />
         @if (rated()) {
             <span jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
         }

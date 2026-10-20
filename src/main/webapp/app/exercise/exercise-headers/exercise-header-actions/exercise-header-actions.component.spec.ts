@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -119,6 +120,44 @@ describe('ExerciseHeaderActionsComponent', () => {
     }
 
     describe('start exercise', () => {
+        it('explains a disabled future start through the focusable tooltip wrapper', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 7;
+            exercise.startDate = dayjs().add(1, 'day');
+            exercise.studentParticipations = [];
+            createComponent(exercise);
+            const start: HTMLButtonElement = fixture.nativeElement.querySelector('#start-exercise-7');
+            const wrapper = start.parentElement!;
+            const startRequest = vi.spyOn(TestBed.inject(CourseExerciseService), 'startExercise');
+            expect(start.disabled).toBe(true);
+            expect(wrapper.tabIndex).toBe(0);
+            start.click();
+            expect(startRequest).not.toHaveBeenCalled();
+            vi.useFakeTimers();
+            try {
+                wrapper.dispatchEvent(new Event('focusin', { bubbles: true }));
+                vi.advanceTimersByTime(150);
+                TestBed.inject(ApplicationRef).tick();
+                const tooltipId = wrapper.getAttribute('aria-describedby');
+                expect(tooltipId).toBeTruthy();
+                expect(document.getElementById(tooltipId!)?.textContent).toContain('artemisApp.exerciseActions.startExerciseBeforeStartDate');
+                wrapper.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                expect(wrapper.hasAttribute('aria-describedby')).toBe(false);
+                expect(document.getElementById(tooltipId!)).toBeNull();
+                fixture.componentRef.setInput('exercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise, { startDate: undefined }));
+                fixture.detectChanges();
+                expect(wrapper.tabIndex).toBe(-1);
+                expect(start.disabled).toBe(false);
+                wrapper.dispatchEvent(new Event('focusin', { bubbles: true }));
+                vi.advanceTimersByTime(150);
+                TestBed.inject(ApplicationRef).tick();
+                expect(wrapper.hasAttribute('aria-describedby')).toBe(false);
+            } finally {
+                fixture.destroy();
+                vi.useRealTimers();
+            }
+        });
+
         it('should send only one start request while the request is pending', () => {
             const exercise = new ProgrammingExercise(undefined, undefined);
             exercise.id = 7;

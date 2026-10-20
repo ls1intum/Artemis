@@ -2,7 +2,7 @@
 <td class="build-jobs-column-tiny">
     <!-- Stretched link enables Cmd+Click to open in new tab -->
     <a class="stretched-row-link" [routerLink]="getJobDetailRoute(buildJob.id)" aria-hidden="true" tabindex="-1"></a>
-    <span [class.text-primary]="running()" [class.text-muted-color]="!running()">
+    <span [class.text-(--tumaet-ui-primary-color)!]="running()" [class.text-muted-color]="!running()">
         @if (running()) {
             <fa-icon [icon]="faSpinner" animation="spin" />
         } @else {

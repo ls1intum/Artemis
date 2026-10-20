@@ -14,7 +14,7 @@
 @if (actions.isStartExerciseAvailable()) {
     <span
         [tabindex]="startTooltipTabIndex() ?? (actions.isBeforeStartDateAndStudent ? 0 : -1)"
-        [ngbTooltip]="actions.isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+        [tumAetUiTooltip]="actions.isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
     >
         <button
             type="button"
