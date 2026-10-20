@@ -549,6 +549,19 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special Cases for Breadcrumbs', () => {
+        it('uses the translated TUM.Live label for the course connection route', () => {
+            router.setUrl('/course-management/1/gocast-binding');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs()).toHaveLength(3);
+            expect(component.breadcrumbs()[2]).toEqual({
+                label: 'artemisApp.gocast.title',
+                translate: true,
+                uri: '/course-management/1/gocast-binding/',
+            } as MockBreadcrumb);
+        });
+
         it.each(['', '?filter=pending'])('translates the presentation breadcrumb with suffix %s', (suffix) => {
             router.setUrl(`/course-management/1/presentations${suffix}`);
             fixture.detectChanges();
