@@ -2971,7 +2971,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise.setDueDate(dueDateOffset == 0 ? null : ZonedDateTime.now().plusDays(dueDateOffset));
         exerciseRepository.save(exercise);
         String url = "/api/exercise/exercises/" + exercise.getId() + "/participations/";
-        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All");
+        var search = new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All");
         var page = request.getList(url + "page", HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(page).hasSize(1);
         assertThat(page.getFirst().repositoryUri()).isEqualTo(anonymous ? null : participation.getRepositoryUri());
@@ -2980,7 +2980,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(scores.getFirst().repositoryUri()).isEqualTo(anonymous ? null : participation.getRepositoryUri());
         var direct = request.get("/api/exercise/participations/" + participation.getId(), HttpStatus.OK, StudentParticipationDTO.class);
         assertThat(direct.repositoryUri()).isEqualTo(anonymous ? null : participation.getRepositoryUri());
-        var identitySearch = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", TEST_PREFIX + "student1", "All");
+        var identitySearch = new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", TEST_PREFIX + "student1", "All");
         request.getList(url + "page", anonymous ? HttpStatus.FORBIDDEN : HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(identitySearch));
     }
 
