@@ -12,6 +12,9 @@ import static org.mockito.Mockito.verify;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
@@ -24,6 +27,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -47,6 +52,9 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
 
     @Autowired
     private ExerciseDeletionService exerciseDeletionService;
+
+    @Autowired
+    private DistributedDataProvider distributedDataProvider;
 
     @Autowired
     private ProgrammingExerciseDeletionService programmingExerciseDeletionService;
@@ -107,17 +115,71 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
             markerSeen.set(programmingExerciseDeletionService.isBeingDeleted(exerciseId));
             distributedDataAccessService.getDistributedBuildResultQueue().add(new ResultQueueItem(buildResult(), templateBuildJob(buildJobId), List.of(), null));
             localCIResultProcessingService.processResultAsync();
-            // The build job is recorded last, so once it is there the result has been taken from the queue and dealt with.
-            await().atMost(Duration.ofSeconds(30)).until(() -> buildJobRepository.findByBuildJobId(buildJobId).isPresent());
             return invocation.callRealMethod();
         }).when(repositoryVcsAccessTokenService).deleteByExerciseId(exerciseId);
 
         exerciseDeletionService.delete(exerciseId, false);
 
+        // The processor waits for deletion to release the mutex; waiting inside the deletion hook would deadlock.
+        await().atMost(Duration.ofSeconds(30)).until(() -> buildJobRepository.findByBuildJobId(buildJobId).isPresent());
         assertThat(markerSeen).as("the marker is set while the deletion runs").isTrue();
         verify(programmingExerciseGradingService, never()).processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean());
         assertThat(programmingExerciseRepository.findById(exerciseId)).isEmpty();
         assertThat(resultRepository.existsByExerciseId(exerciseId)).isFalse();
+    }
+
+    @Test
+    void anAdmittedResultAndFinalDeletionExcludeEachOther() throws Exception {
+        long exerciseId = programmingExercise.getId();
+        String buildJobId = "admitted-deletion-race-job";
+        CountDownLatch admitted = new CountDownLatch(1);
+        CountDownLatch allowPersistence = new CountDownLatch(1);
+        AtomicBoolean deletionLockSeen = new AtomicBoolean();
+        // Use the provider namespace directly so the regression can run against the former implementation without a new service API.
+        var lock = distributedDataProvider.getLock("programming-exercise-result-processing-" + exerciseId);
+        doAnswer(invocation -> {
+            admitted.countDown();
+            assertThat(allowPersistence.await(30, TimeUnit.SECONDS)).isTrue();
+            return invocation.callRealMethod();
+        }).when(programmingExerciseGradingService).processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean());
+
+        try (var workers = Executors.newCachedThreadPool()) {
+            doAnswer(invocation -> {
+                // The deletion thread owns a reentrant lock, so probe from another thread while final cleanup is pending.
+                boolean acquired = workers.submit(() -> {
+                    boolean available = lock.tryLock(Duration.ZERO);
+                    if (available) {
+                        lock.unlock();
+                    }
+                    return available;
+                }).get(10, TimeUnit.SECONDS);
+                deletionLockSeen.set(!acquired);
+                assertThat(acquired).as("final cleanup must exclude result persistence").isFalse();
+                return invocation.callRealMethod();
+            }).when(repositoryVcsAccessTokenService).deleteByExerciseId(exerciseId);
+
+            try {
+                distributedDataAccessService.getDistributedBuildResultQueue().add(new ResultQueueItem(buildResult(), templateBuildJob(buildJobId), List.of(), null));
+                localCIResultProcessingService.processResultAsync();
+                assertThat(admitted.await(30, TimeUnit.SECONDS)).as("processing passed the marker check before deletion started").isTrue();
+                boolean acquired = lock.tryLock(Duration.ZERO);
+                if (acquired) {
+                    lock.unlock();
+                }
+                assertThat(acquired).as("an admitted processor must own the mutex until its writes finish").isFalse();
+
+                var deletion = workers.submit(() -> SecurityUtils.runAsSystem(() -> exerciseDeletionService.delete(exerciseId, false)));
+                allowPersistence.countDown();
+                deletion.get(30, TimeUnit.SECONDS);
+                assertThat(deletionLockSeen).isTrue();
+                assertThat(programmingExerciseRepository.findById(exerciseId)).isEmpty();
+                assertThat(resultRepository.existsByExerciseId(exerciseId)).isFalse();
+            }
+            finally {
+                allowPersistence.countDown();
+                await().atMost(Duration.ofSeconds(30)).until(() -> buildJobRepository.findByBuildJobId(buildJobId).isPresent());
+            }
+        }
     }
 
     /**

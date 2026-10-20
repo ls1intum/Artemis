@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
@@ -118,6 +120,9 @@ class LocalCIResultProcessingServiceTest {
     private DistributedQueue<ResultQueueItem> resultQueue;
 
     @Mock
+    private DistributedLock resultProcessingLock;
+
+    @Mock
     private BuildResult buildResult;
 
     private LocalCIResultProcessingService resultProcessingService;
@@ -143,6 +148,8 @@ class LocalCIResultProcessingServiceTest {
         participation.setId(PARTICIPATION_ID);
         participation.setProgrammingExercise(exercise);
         lenient().when(distributedDataAccessService.getDistributedBuildResultQueue()).thenReturn(resultQueue);
+        lenient().when(programmingExerciseDeletionService.getResultProcessingLock(EXERCISE_ID)).thenReturn(resultProcessingLock);
+        lenient().when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenReturn(true);
     }
 
     @AfterEach
@@ -532,6 +539,37 @@ class LocalCIResultProcessingServiceTest {
         assertThat(capturedBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
         verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
         verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any());
+    }
+
+    @Test
+    void deletedExerciseDoesNotGetStatisticsFromAsyncFollowUp() throws InterruptedException {
+        afterASuccessfulBuild();
+        CountDownLatch existenceChecked = new CountDownLatch(1);
+        when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenAnswer(invocation -> {
+            existenceChecked.countDown();
+            return false;
+        });
+
+        resultProcessingService.processResultAsync();
+
+        assertThat(existenceChecked.await(5, TimeUnit.SECONDS)).isTrue();
+        verifyNoInteractions(programmingExerciseBuildStatisticsRepository);
+    }
+
+    @Test
+    void deletedExerciseDoesNotGetAnotherTemplateBuildFromAsyncFollowUp() throws InterruptedException {
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.SOLUTION, RepositoryType.TESTS), List.of(), null));
+        withSavedBuildJob();
+        CountDownLatch existenceChecked = new CountDownLatch(1);
+        when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenAnswer(invocation -> {
+            existenceChecked.countDown();
+            return false;
+        });
+
+        resultProcessingService.processResultAsync();
+
+        assertThat(existenceChecked.await(5, TimeUnit.SECONDS)).isTrue();
+        verifyNoInteractions(programmingTriggerService);
     }
 
     @Test

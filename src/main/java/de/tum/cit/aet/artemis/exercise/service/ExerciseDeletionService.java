@@ -151,16 +151,27 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
-        // The build system keeps delivering results of the template, solution and student participations while a programming exercise is taken apart. Without the marker, such a
-        // result can be written after the results were deleted and before the exercise row is removed, which fails the deletion with a foreign key violation.
-        boolean ownsDeletionMarker = exercise instanceof ProgrammingExercise && programmingExerciseDeletionService.beginDeletion(exerciseId);
-        try {
+        if (!(exercise instanceof ProgrammingExercise)) {
             deleteExercise(exercise, deleteBaseReposBuildPlans);
+            return;
+        }
+        // Include student participation cleanup as well as the final template/solution cleanup and exercise removal.
+        // A processor admitted before the marker must finish its writes before any of these deletion steps can run.
+        var resultProcessingLock = programmingExerciseDeletionService.getResultProcessingLock(exerciseId);
+        resultProcessingLock.lock();
+        try {
+            boolean ownsDeletionMarker = programmingExerciseDeletionService.beginDeletion(exerciseId);
+            try {
+                deleteExercise(exercise, deleteBaseReposBuildPlans);
+            }
+            finally {
+                if (ownsDeletionMarker) {
+                    programmingExerciseDeletionService.endDeletion(exerciseId);
+                }
+            }
         }
         finally {
-            if (ownsDeletionMarker) {
-                programmingExerciseDeletionService.endDeletion(exerciseId);
-            }
+            resultProcessingLock.unlock();
         }
     }
 

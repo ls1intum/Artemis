@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
@@ -59,6 +60,8 @@ public class ProgrammingExerciseDeletionService {
 
     private final DistributedMap<Long, Boolean> deletionsInProgress;
 
+    private final DistributedDataProvider distributedDataProvider;
+
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
@@ -72,7 +75,19 @@ public class ProgrammingExerciseDeletionService {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
         this.sharedQueueManagementService = sharedQueueManagementService;
+        this.distributedDataProvider = distributedDataProvider;
         this.deletionsInProgress = distributedDataProvider.getExpiringMap(DELETIONS_IN_PROGRESS, DELETION_MARKER_TIME_TO_LIVE);
+    }
+
+    /**
+     * The cluster-wide mutex shared by deletion and result persistence, including asynchronous follow-up writes.
+     * Callers must acquire it before checking the deletion marker and release it in a finally block after their writes.
+     *
+     * @param exerciseId the programming exercise whose lifecycle is coordinated
+     * @return the mutex for this exercise
+     */
+    public DistributedLock getResultProcessingLock(long exerciseId) {
+        return distributedDataProvider.getLock("programming-exercise-result-processing-" + exerciseId);
     }
 
     /**

@@ -224,6 +224,17 @@ public class LocalCIResultProcessingService {
         log.debug("Build jobs waiting in queue: {}", distributedDataAccessService.getResultQueueSize());
         log.debug("Queued build jobs: {}", distributedDataAccessService.getResultQueueIds());
 
+        var resultProcessingLock = programmingExerciseDeletionService.getResultProcessingLock(resultQueueItem.buildJobQueueItem().exerciseId());
+        resultProcessingLock.lock();
+        try {
+            processResultLocked(resultQueueItem);
+        }
+        finally {
+            resultProcessingLock.unlock();
+        }
+    }
+
+    private void processResultLocked(ResultQueueItem resultQueueItem) {
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
         List<BuildLogDTO> buildLogs = resultQueueItem.buildLogs();
@@ -327,8 +338,9 @@ public class LocalCIResultProcessingService {
                 // Run async to not block the result processing thread
                 // runAsync uses the common ForkJoinPool, which the Artemis async executors do not wrap, so this
                 // lambda establishes its own context.
-                CompletableFuture.runAsync(() -> SecurityUtils.runAsSystem(() -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(),
-                        buildJob.buildConfig().testCommitHash(), SubmissionType.TEST, buildJob.repositoryInfo().triggeredByPushTo())));
+                CompletableFuture.runAsync(() -> SecurityUtils
+                        .runAsSystem(() -> runWhileExerciseExists(buildJob.exerciseId(), () -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(),
+                                buildJob.buildConfig().testCommitHash(), SubmissionType.TEST, buildJob.repositoryInfo().triggeredByPushTo()))));
             }
             catch (EntityNotFoundException e) {
                 // Something went wrong while retrieving the template participation.
@@ -379,7 +391,20 @@ public class LocalCIResultProcessingService {
     }
 
     private void updateExerciseBuildDurationAsync(long exerciseId) {
-        CompletableFuture.runAsync(() -> updateExerciseBuildDuration(exerciseId));
+        CompletableFuture.runAsync(() -> runWhileExerciseExists(exerciseId, () -> updateExerciseBuildDuration(exerciseId)));
+    }
+
+    private void runWhileExerciseExists(long exerciseId, Runnable operation) {
+        var resultProcessingLock = programmingExerciseDeletionService.getResultProcessingLock(exerciseId);
+        resultProcessingLock.lock();
+        try {
+            if (!programmingExerciseDeletionService.isBeingDeleted(exerciseId) && programmingExerciseRepository.existsById(exerciseId)) {
+                operation.run();
+            }
+        }
+        finally {
+            resultProcessingLock.unlock();
+        }
     }
 
     private void updateExerciseBuildDuration(long exerciseId) {
