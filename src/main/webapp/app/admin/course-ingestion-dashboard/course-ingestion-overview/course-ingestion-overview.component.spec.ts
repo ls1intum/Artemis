@@ -7,7 +7,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionOverviewComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-overview/course-ingestion-overview.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { IndexOverview } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IndexOverview } from 'app/openapi/model/index-overview';
 
 describe('CourseIngestionOverviewComponent', () => {
     let component: CourseIngestionOverviewComponent;
@@ -21,7 +21,8 @@ describe('CourseIngestionOverviewComponent', () => {
         irisReachable: true,
         collections: [
             { collection: 'ArtemisSearchableEntity', count: 42, readable: true },
-            { collection: 'LectureUnits', count: null, readable: false },
+            { collection: 'LectureUnits', readable: false },
+            { collection: 'Lectures', count: 0, readable: true },
         ],
     };
 
@@ -46,6 +47,10 @@ describe('CourseIngestionOverviewComponent', () => {
     });
 
     it('should load the overview on init', async () => {
+        expect(service.getIndexOverview).not.toHaveBeenCalled();
+        expect(component.overview()).toBeUndefined();
+        expect(component.loading()).toBe(true);
+        expect(component.error()).toBe(false);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -64,9 +69,13 @@ describe('CourseIngestionOverviewComponent', () => {
         expect(element.querySelector('[data-testid="weaviate-address"]')?.textContent).toContain('http://weaviate:8080');
 
         const rows = element.querySelectorAll('[data-testid="collections-table"] tbody tr');
-        expect(rows).toHaveLength(2);
+        expect(rows).toHaveLength(3);
         // Readable collection shows its numeric count.
         expect(rows[0].textContent).toContain('42');
+        expect(rows[1].querySelector('[jhiTranslate="artemisApp.courseIngestionDashboard.collections.unavailable"]')).toBeTruthy();
+        expect(rows[1].querySelector('td:last-child')?.textContent).not.toContain('0');
+        expect(rows[2].querySelector('td:last-child')?.textContent?.trim()).toBe('0');
+        expect(rows[2].querySelector('[jhiTranslate="artemisApp.courseIngestionDashboard.collections.unavailable"]')).toBeNull();
     });
 
     it('should render an unreachable status when Weaviate is down', async () => {
@@ -96,7 +105,10 @@ describe('CourseIngestionOverviewComponent', () => {
         vi.mocked(service.getIndexOverview).mockReturnValueOnce(first.asObservable()).mockReturnValueOnce(second.asObservable());
 
         component.reload();
+        expect(first.observed).toBe(true);
         component.reload();
+        expect(first.observed).toBe(false);
+        expect(second.observed).toBe(true);
         const newer: IndexOverview = { ...reachableOverview, collections: [{ collection: 'ArtemisSearchableEntity', count: 43, readable: true }] };
         second.next(newer);
         second.complete();
@@ -107,6 +119,46 @@ describe('CourseIngestionOverviewComponent', () => {
         expect(component.overview()).toEqual(newer);
         expect(component.error()).toBe(false);
         expect(component.loading()).toBe(false);
+    });
+
+    it('should retain data while reloading, clear it on error, and recover on an explicit reload', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const failed = new Subject<IndexOverview>();
+        const recovered = new Subject<IndexOverview>();
+        vi.mocked(service.getIndexOverview).mockReturnValueOnce(failed).mockReturnValueOnce(recovered);
+
+        component.reload();
+        expect(component.loading()).toBe(true);
+        expect(component.error()).toBe(false);
+        expect(component.overview()).toEqual(reachableOverview);
+        failed.error(new Error('unavailable'));
+        expect(component.loading()).toBe(false);
+        expect(component.error()).toBe(true);
+        expect(component.overview()).toBeUndefined();
+        expect(service.getIndexOverview).toHaveBeenCalledTimes(2);
+
+        component.reload();
+        expect(component.loading()).toBe(true);
+        expect(component.error()).toBe(false);
+        recovered.next(reachableOverview);
+        recovered.complete();
+        expect(component.overview()).toEqual(reachableOverview);
+        expect(component.loading()).toBe(false);
+        expect(component.error()).toBe(false);
+        expect(service.getIndexOverview).toHaveBeenCalledTimes(3);
+    });
+
+    it('should unsubscribe the pending request when destroyed', () => {
+        const pending = new Subject<IndexOverview>();
+        vi.mocked(service.getIndexOverview).mockReturnValueOnce(pending);
+        fixture.detectChanges();
+        expect(pending.observed).toBe(true);
+
+        fixture.destroy();
+        expect(pending.observed).toBe(false);
+        pending.next(reachableOverview);
+        expect(component.overview()).toBeUndefined();
     });
 
     it('should report Iris as reachable when it answers', async () => {

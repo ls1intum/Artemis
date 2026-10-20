@@ -3,9 +3,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { IngestionCoverageApi } from 'app/openapi/api/ingestion-coverage-api';
+import { IndexOverview } from 'app/openapi/model/index-overview';
 import {
     CourseBrowserData,
-    IndexOverview,
     IndexedContentObject,
     IndexedEntityRecord,
     IngestionCoverage,
@@ -41,12 +42,13 @@ export interface StoredCoverageRequest extends LiveCoverageRequest {
 @Service()
 export class CourseIngestionDashboardService {
     private http = inject(HttpClient);
+    private readonly ingestionCoverageApi = inject(IngestionCoverageApi);
 
     private readonly baseUrl = 'api/global-search/admin';
 
     /** GET the index overview: Weaviate reachability + address, whether Iris is enabled, and per-collection object counts. */
     getIndexOverview(): Observable<IndexOverview> {
-        return this.http.get<IndexOverview>(`${this.baseUrl}/index/overview`);
+        return this.ingestionCoverageApi.getIndexOverview();
     }
 
     /**
