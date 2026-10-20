@@ -479,6 +479,22 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.feedbackForSubmission()).toEqual([]);
     });
 
+    it('should use the newest result for inline feedback regardless of result order', () => {
+        const feedback = { id: 3, reference: 'file:Main.java_line:0' } as Feedback;
+        fixture.componentRef.setInput('participation', {
+            submissions: [
+                {
+                    results: [
+                        { id: 1, feedbacks: [] },
+                        { id: 2, feedbacks: [feedback] },
+                    ],
+                },
+            ],
+        } as Participation);
+
+        expect(component.feedbackForSubmission()).toEqual([feedback]);
+    });
+
     it('should guard deactivation when unsaved files exist', () => {
         const event = { preventDefault: vi.fn() } as any;
 

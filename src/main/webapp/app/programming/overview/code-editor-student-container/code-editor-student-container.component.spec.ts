@@ -12,6 +12,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute } from '@angular/router';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
@@ -48,6 +52,40 @@ describe('CodeEditorStudentContainerComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should display arriving AI feedback and replace its pending result without losing the build result', () => {
+        const buildResult: Result = { id: 1, assessmentType: AssessmentType.AUTOMATIC };
+        const participation: ProgrammingExerciseStudentParticipation = {
+            ...studentParticipation,
+            submissions: [{ id: 10, results: [buildResult] }],
+        };
+        const submission = { id: 10, participation: { id: participation.id } };
+        const pendingResult: Result = { id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, submission };
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(participation));
+        vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+        vi.spyOn(submissionPolicyService, 'getParticipationSubmissionCount').mockReturnValue(of(1));
+        comp.ngOnInit();
+
+        comp.receivedNewResult(pendingResult);
+        expect(comp.latestResult()?.id).toBe(2);
+
+        const feedback = { id: 3, type: FeedbackType.AUTOMATIC, reference: 'file:Main.java_line:0', detailText: 'AI feedback' };
+        comp.receivedNewResult({ ...pendingResult, successful: true, feedbacks: [feedback] });
+
+        const updatedSubmission = comp.participation().submissions![0];
+        expect(updatedSubmission.results).toHaveLength(2);
+        expect(updatedSubmission.results).toContainEqual(buildResult);
+        expect(getLatestSubmissionResult(updatedSubmission)?.feedbacks).toEqual([feedback]);
+        expect(comp.latestResult()?.feedbacks).toEqual([feedback]);
+        expect(participation.submissions![0].results).toEqual([buildResult]);
+    });
+
+    it('should ignore a result belonging to a previously opened participation', () => {
+        comp.participation.set(studentParticipation);
+        comp.receivedNewResult({ id: 2, submission: { id: 10, participation: { id: 99 } } });
+        expect(comp.participation()).toBe(studentParticipation);
+        expect(comp.latestResult()).toBeUndefined();
     });
 
     it('should correctly initialize the number of submissions for submission policy', () => {

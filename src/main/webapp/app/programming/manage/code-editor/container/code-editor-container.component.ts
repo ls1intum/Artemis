@@ -1,3 +1,4 @@
+import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
@@ -478,7 +479,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      */
     feedbackForSubmission(): Feedback[] {
         const submission = this.participation()?.submissions?.[0];
-        const result = submission?.results?.[0];
+        const result = getLatestSubmissionResult(submission);
         return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
     }
 
