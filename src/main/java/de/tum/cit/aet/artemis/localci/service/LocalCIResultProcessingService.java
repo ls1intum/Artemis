@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -50,6 +51,7 @@ import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
@@ -86,6 +88,8 @@ public class LocalCIResultProcessingService {
 
     private final Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService;
 
+    private final ProgrammingExerciseDeletionService programmingExerciseDeletionService;
+
     private UUID listenerId;
 
     private final AtomicLong processedResults = new AtomicLong();
@@ -101,7 +105,8 @@ public class LocalCIResultProcessingService {
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService) {
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService,
+            ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -113,6 +118,7 @@ public class LocalCIResultProcessingService {
         this.distributedDataAccessService = distributedDataAccessService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
+        this.programmingExerciseDeletionService = programmingExerciseDeletionService;
     }
 
     /**
@@ -231,6 +237,13 @@ public class LocalCIResultProcessingService {
 
         SecurityUtils.setSystemAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
+        boolean exerciseBeingDeleted = programmingExerciseDeletionService.isBeingDeleted(buildJob.exerciseId());
+        if (exerciseBeingDeleted && participationOptional.isPresent()) {
+            // The participation still exists because the deletion is not finished, but everything of it is about to be removed. A result written now would only
+            // be deleted again or, if it lands after the cleanup, block the deletion of the exercise. Treat it like the result of a deleted participation.
+            log.info("Exercise {} is being deleted. Dropping the result of build job {} for participation {}.", buildJob.exerciseId(), buildJob.id(), buildJob.participationId());
+            participationOptional = Optional.empty();
+        }
 
         try {
             if (participationOptional.isPresent()) {
@@ -248,6 +261,14 @@ public class LocalCIResultProcessingService {
             else {
                 log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
             }
+        }
+        catch (DataIntegrityViolationException exception) {
+            if (participationRepository.existsById(buildJob.participationId())) {
+                throw exception;
+            }
+            // The participation was deleted after it was loaded above, so the result or its submission can no longer be written. There is nothing left to report to.
+            log.warn("Participation with id {} was deleted while its build result was processed. Dropping the build result.", buildJob.participationId(), exception);
+            participationOptional = Optional.empty();
         }
         finally {
             processedResults.incrementAndGet();
@@ -300,7 +321,7 @@ public class LocalCIResultProcessingService {
         }
 
         // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
-        if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
+        if (!exerciseBeingDeleted && isSolutionBuildOfTestOrAuxPush(buildJob)) {
             log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
             try {
                 // Run async to not block the result processing thread

@@ -151,6 +151,21 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
+        // The build system keeps delivering results of the template, solution and student participations while a programming exercise is taken apart. Without the marker, such a
+        // result can be written after the results were deleted and before the exercise row is removed, which fails the deletion with a foreign key violation.
+        boolean ownsDeletionMarker = exercise instanceof ProgrammingExercise && programmingExerciseDeletionService.beginDeletion(exerciseId);
+        try {
+            deleteExercise(exercise, deleteBaseReposBuildPlans);
+        }
+        finally {
+            if (ownsDeletionMarker) {
+                programmingExerciseDeletionService.endDeletion(exerciseId);
+            }
+        }
+    }
+
+    private void deleteExercise(Exercise exercise, boolean deleteBaseReposBuildPlans) {
+        long exerciseId = exercise.getId();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 

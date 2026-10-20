@@ -326,6 +326,23 @@ public class SharedQueueManagementService {
     }
 
     /**
+     * Cancel all queued and running build jobs of an exercise, i.e. of its template, solution and student participations.
+     * <p>
+     * Used when the exercise is deleted: a job that is still waiting is removed from the queue, a running one is cancelled on its build agent.
+     * A job that has already finished and whose result is waiting to be processed is not affected, so the result processing has to drop such a result itself.
+     *
+     * @param exerciseId id of the exercise
+     */
+    public void cancelAllJobsForExercise(long exerciseId) {
+        List<BuildJobQueueItem> toRemove = distributedDataAccessService.getQueuedJobs().stream().filter(queuedJob -> queuedJob.exerciseId() == exerciseId).toList();
+        distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
+        updateCancelledQueuedBuildJobsStatus(toRemove);
+
+        distributedDataAccessService.getProcessingJobs().stream().filter(runningJob -> runningJob.exerciseId() == exerciseId)
+                .forEach(runningJob -> cancelBuildJob(runningJob.id()));
+    }
+
+    /**
      * Clear all build related data from the distributed data structures.
      * This method should only be called by an admin user.
      */
