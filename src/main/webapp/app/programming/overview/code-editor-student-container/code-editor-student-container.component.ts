@@ -15,7 +15,7 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { getAllResultsOfAllSubmissions, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
@@ -30,6 +30,7 @@ import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/co
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -104,7 +105,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
                         // TODO: load this information from the server in case submission policies are enabled for programming exercises
                         this.repositoryIsLocked.set(dueDateHasPassed && !isPracticeMode(participationWithResults));
                         const allResults = getAllResultsOfAllSubmissions(participationWithResults.submissions);
-                        this.latestResult.set(allResults.length >= 1 ? allResults.first() : undefined);
+                        this.latestResult.set(getNewestResult(allResults));
                         this.checkForTutorAssessment(dueDateHasPassed);
                         this.course.set(getCourseFromExercise(exercise));
                         this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exercise.id!).subscribe((submissionPolicy) => {
@@ -191,7 +192,28 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
         return [];
     }
 
-    receivedNewResult() {
+    receivedNewResult(result: Result) {
+        const participation = this.participation();
+        const submission = result.submission;
+        if (!participation || !submission || submission.participation?.id !== participation.id) {
+            return;
+        }
+
+        const existingSubmission = participation.submissions?.find((candidate) => candidate.id === submission.id);
+        const updatedSubmission = cloneWith(existingSubmission ?? submission, { participation });
+        setLatestSubmissionResult(updatedSubmission, result);
+        // Late results can belong to older submissions that were not included in the initial load.
+        const submissions = existingSubmission
+            ? participation.submissions!.map((candidate) => (candidate.id === submission.id ? updatedSubmission : candidate))
+            : [updatedSubmission, ...(participation.submissions ?? [])];
+        submissions.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+        this.participation.set(cloneWith(participation, { submissions }));
+        const latestResult = getNewestResult(getAllResultsOfAllSubmissions(this.participation().submissions));
+        this.latestResult.set(latestResult);
+        if (latestResult?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(latestResult.feedbacks);
+        }
+        this.checkForTutorAssessment(hasExerciseDueDatePassed(this.exercise(), this.participation()));
         this.getNumberOfSubmissionsForSubmissionPolicy();
     }
 }

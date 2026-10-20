@@ -1,3 +1,4 @@
+import { TranslateService } from '@ngx-translate/core';
 import { Component, Injector, OnInit, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -17,6 +18,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
@@ -66,6 +68,7 @@ const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
     ],
 })
 export class FeedbackComponent implements OnInit {
+    private translateService = inject(TranslateService);
     private resultService = inject(ResultService);
     private buildLogService = inject(BuildLogService);
     private feedbackService = inject(FeedbackService);
@@ -121,6 +124,10 @@ export class FeedbackComponent implements OnInit {
     );
     /** Whether the score chart is currently shown; seeded from the input, hidden at runtime once we know there is no chart data (see updateChart). */
     readonly scoreChartVisible = linkedSignal(() => this.showScoreChart());
+    readonly completedAiScore = computed(() => {
+        const result = this.result();
+        return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true && Number.isFinite(result.score) ? result.score : undefined;
+    });
 
     readonly isExamReviewPage = input(false);
     readonly isPrinting = input(false);
@@ -250,8 +257,8 @@ export class FeedbackComponent implements OnInit {
                         return this.fetchAndSetBuildLogs(participationId, result.id);
                     }
 
-                    if (this.scoreChartVisible() && this.feedbackItemNodes() !== undefined) {
-                        this.updateChart(this.feedbackItemNodes()!);
+                    if (this.scoreChartVisible()) {
+                        this.updateChart(this.feedbackItemNodes() ?? []);
                     }
 
                     if (isStudentParticipation(participation)) {
@@ -297,7 +304,9 @@ export class FeedbackComponent implements OnInit {
                         reference.lines = this.getReferencedLines(fileContent, reference.line, reference.lineEnd ?? reference.line);
                     }
                 });
-                this.feedbackItemNodes.update((nodes) => (nodes ? [...nodes] : nodes));
+                // Refresh the node identities as well: updating only the array leaves the OnPush cards
+                // displaying their empty code placeholder until the user interacts with them.
+                this.feedbackItemNodes.update((nodes) => (nodes ? deepClone(nodes) : nodes));
             });
     }
 
@@ -336,8 +345,18 @@ export class FeedbackComponent implements OnInit {
     };
 
     private updateChart(feedbackItemNodes: FeedbackNode[]) {
+        const aiScore = this.completedAiScore();
+        if (aiScore !== undefined) {
+            this.chartData.set({
+                xScaleMax: Math.max(100, aiScore),
+                colors: ['var(--tumaet-ui-state-success)'],
+                results: [{ name: 'scores', series: [{ name: this.translateService.instant('artemisApp.result.detail.feedback'), value: aiScore }] }],
+            });
+            return;
+        }
+
         const exercise = this.resolvedExercise();
-        if (!exercise || feedbackItemNodes.length === 0) {
+        if (this.result().assessmentType === AssessmentType.AUTOMATIC_ATHENA || !exercise || feedbackItemNodes.length === 0) {
             this.scoreChartVisible.set(false);
             return;
         }

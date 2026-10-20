@@ -19,6 +19,22 @@ describe('FeedbackNodeComponent', () => {
         component = fixture.componentInstance;
     });
 
+    it.each(['high', 'medium', 'low', undefined] as const)('should render an AI severity tag for %s without a credit classification', (severity) => {
+        const item = new FeedbackItem();
+        item.isAiFeedback = true;
+        item.name = '';
+        item.title = 'Check the loop';
+        item.credits = 5;
+        item.feedbackReference = { severity };
+        fixture.componentRef.setInput('feedbackItemNode', item);
+        fixture.detectChanges();
+
+        const element: HTMLElement = fixture.nativeElement;
+        expect(element.querySelector('[data-testid="feedback-severity"]')?.textContent).toContain(`artemisApp.feedback.severity.${severity ?? 'unclassified'}`);
+        expect(element.querySelector('.feedback-item__category')?.textContent?.trim()).toBe('Check the loop');
+        expect(element.querySelector('.feedback-item__credits')).toBeNull();
+    });
+
     it('should set specific node type correctly for feedback item', () => {
         fixture.componentRef.setInput('feedbackItemNode', new FeedbackItem());
         fixture.detectChanges();
@@ -51,7 +67,7 @@ describe('FeedbackNodeComponent', () => {
 
         expect(component.isGroupExpanded()).toBe(true);
         // The underlying open flag is NOT mutated, so it collapses back to its previous state once printing ends.
-        expect(component.feedbackItemGroup().open).toBe(false);
+        expect(component.feedbackItemGroup()!.open).toBe(false);
 
         fixture.componentRef.setInput('isPrinting', false);
         fixture.detectChanges();

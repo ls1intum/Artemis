@@ -1,3 +1,5 @@
+import { getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { isAIResultAndProcessed, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
@@ -474,12 +476,17 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     /**
-     * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
+     * Combines the newest regular assessment's feedback and the newest completed AI feedback for the current submission.
+     * Selecting each source separately keeps build results from hiding AI suggestions, regardless of arrival order.
      */
     feedbackForSubmission(): Feedback[] {
+        if (!this.showInlineFeedback()) {
+            return [];
+        }
         const submission = this.participation()?.submissions?.[0];
-        const result = submission?.results?.[0];
-        return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
+        const regularResult = getNewestResult(submission?.results?.filter((result) => !isAthenaAIResult(result)));
+        const aiResult = getNewestResult(submission?.results?.filter(isAIResultAndProcessed));
+        return [...(regularResult?.feedbacks ?? []), ...(aiResult?.feedbacks ?? [])];
     }
 
     /**

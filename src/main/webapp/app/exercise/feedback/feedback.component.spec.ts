@@ -1,3 +1,5 @@
+import { By } from '@angular/platform-browser';
+import { TumAetUiBarChartComponent } from '@tumaet/ui-angular';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -315,6 +317,63 @@ describe('FeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).not.toBeNull();
     });
 
+    describe.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('%s AI score display', (type) => {
+        it.each([-20, 0, 60, 100, 120])('shows the stored score of %s even without visible feedback', (score) => {
+            fixture.componentRef.setInput('exercise', { ...exercise, type });
+            fixture.componentRef.setInput('result', { id: 89, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, score });
+            fixture.componentRef.setInput('showScoreChart', true);
+
+            fixture.detectChanges();
+
+            const bar = fixture.nativeElement.querySelector('[data-testid="feedback-chart"]');
+            expect(bar?.querySelector('tumaet-ui-bar-chart')).not.toBeNull();
+            expect(comp.scoreChartData().series.map((series) => series.data)).toEqual([[score]]);
+            const chart: TumAetUiBarChartComponent = fixture.debugElement.query(By.directive(TumAetUiBarChartComponent)).componentInstance;
+            expect(chart['valueDomain']()[0]).toBeLessThanOrEqual(Math.min(0, score));
+            expect(chart['valueDomain']()[1]).toBe(Math.max(100, score));
+            expect(fixture.nativeElement.querySelector('h4 [jhiTranslate="artemisApp.result.scoreWithPoints"]')).not.toBeNull();
+            expect(fixture.nativeElement.textContent).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
+        });
+    });
+
+    it.each([
+        { successful: undefined, score: 60 },
+        { successful: false, score: 60 },
+        { successful: true, score: undefined },
+        { successful: true, score: NaN },
+    ])('hides the AI score bar for unavailable scores: %j', ({ successful, score }) => {
+        fixture.componentRef.setInput('result', {
+            id: 89,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful,
+            score,
+            feedbacks: generateFeedbacksAndExpectedItems().feedbacks,
+        });
+        fixture.componentRef.setInput('showScoreChart', true);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('h4 [jhiTranslate="artemisApp.result.scoreWithPoints"]')).toBeNull();
+    });
+
+    it('uses the stored AI score rather than credits on visible severity cards', () => {
+        fixture.componentRef.setInput('result', {
+            id: 89,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            score: 60,
+            feedbacks: [makeFeedback({ detailText: 'Visible hint', credits: 3, severity: 'high' })],
+        });
+        fixture.componentRef.setInput('showScoreChart', true);
+
+        fixture.detectChanges();
+
+        expect(comp.feedbackItemNodes()?.[0].credits).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"] tumaet-ui-bar-chart')).not.toBeNull();
+        expect(comp.scoreChartData().series.map((series) => series.data)).toEqual([[60]]);
+    });
+
     it('marks a preliminary result as preliminary when the participation carries no exercise', () => {
         // the list endpoints do not ship `participation.exercise`, so the tag has to read the exercise the popup resolved
         exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
@@ -369,6 +428,31 @@ describe('FeedbackComponent', () => {
                 { line: 5, code: '5', referenced: false },
             ],
         });
+    });
+
+    it('should render asynchronously loaded code while the feedback text remains collapsed', async () => {
+        const repositoryFiles = new Subject<Map<string, string>>();
+        vi.spyOn(programmingExerciseParticipationService, 'getSelectedParticipationRepositoryFilesAtCommit').mockReturnValue(repositoryFiles);
+        comp.result().assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+        comp.result().feedbacks = [
+            makeFeedback({
+                text: 'Check this implementation',
+                detailText: 'Long feedback explanation. '.repeat(30),
+                reference: 'file:src/main/java/Example.java_line:2-4',
+            }),
+        ];
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const element: HTMLElement = fixture.nativeElement;
+        expect(element.querySelector('jhi-feedback-collapse')?.textContent).toContain('artemisApp.result.seeMore');
+        expect(element.querySelectorAll('code')).toHaveLength(0);
+
+        repositoryFiles.next(new Map([['src/main/java/Example.java', 'before\nfirst referenced line\nsecond referenced line\nthird referenced line\nafter']]));
+        await fixture.whenStable();
+
+        const referencedCode = element.querySelectorAll('.feedback-item__code-reference-line--referenced code');
+        expect(Array.from(referencedCode, (code) => code.textContent)).toEqual(['first referenced line', 'second referenced line', 'third referenced line']);
+        expect(element.querySelector('jhi-feedback-collapse')?.textContent).toContain('artemisApp.result.seeMore');
     });
 
     it('should request each referenced file only once', () => {

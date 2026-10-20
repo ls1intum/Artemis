@@ -1164,7 +1164,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         List<FeedbackDTO> longFeedbackDtos = new ArrayList<>();
         for (int i = 0; i < 12; i++) {
             String detailText = ("long feedback " + i + " ").repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH);
-            longFeedbackDtos.add(new FeedbackDTO(null, null, detailText, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null));
+            longFeedbackDtos.add(new FeedbackDTO(null, null, detailText, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null, null));
         }
         ResultDTO stored = request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment", new ModelingAssessmentDTO(longFeedbackDtos, "text"),
                 ResultDTO.class, HttpStatus.OK);
@@ -1201,7 +1201,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         for (int i = 0; i < 12; i++) {
             GradingInstruction instruction = instructions.get(i % instructions.size());
             GradingInstructionDTO gradingInstructionDto = GradingInstructionDTO.of(instruction);
-            structuredFeedbackDtos.add(new FeedbackDTO(null, null, "detail " + i, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, gradingInstructionDto, null));
+            structuredFeedbackDtos
+                    .add(new FeedbackDTO(null, null, "detail " + i, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, gradingInstructionDto, null, null));
         }
 
         // One batch query for grading instructions; the count must not grow with the number of feedbacks.
