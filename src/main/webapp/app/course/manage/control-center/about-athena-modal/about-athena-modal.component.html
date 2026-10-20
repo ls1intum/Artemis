@@ -3,18 +3,20 @@
      narrow screens, and the negative margin cancels the dialog content's own padding, so this box is the whole panel. -->
 <tumaet-ui-dialog [(visible)]="visible" [dismissableMask]="true" [showHeader]="false" [ariaLabel]="'artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena' | artemisTranslate">
     <div class="relative -mx-4 -mb-4 w-[40rem] max-w-[90dvw]">
-        <button
-            type="button"
-            tumAetUiButton
-            severity="secondary"
-            variant="text"
-            size="small"
-            class="absolute top-3 right-3 z-10"
-            (click)="close()"
-            [attr.aria-label]="'artemisApp.course.athenaConfig.aboutAthenaModal.close' | artemisTranslate"
-        >
-            <fa-icon [icon]="faXmark" aria-hidden="true" />
-        </button>
+        <!-- The wrapper positions the button: tumAetUiButton's [class] host binding replaces classes set on the button. -->
+        <div class="absolute top-3 right-3 z-10">
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                variant="text"
+                size="small"
+                (click)="close()"
+                [attr.aria-label]="'artemisApp.course.athenaConfig.aboutAthenaModal.close' | artemisTranslate"
+            >
+                <fa-icon [icon]="faXmark" aria-hidden="true" />
+            </button>
+        </div>
 
         <div class="max-h-[40rem] overflow-y-auto p-10 [scrollbar-gutter:stable]">
             <div class="mb-4 flex items-start gap-4">
