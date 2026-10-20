@@ -59,7 +59,7 @@
                 "quarter": "Quartal"
             },
             "aiSelection": {
-                "all": "Cloud- und lokale KI",
+                "all": "Alle Benutzer",
                 "cloud": "Nur Cloud-KI",
                 "local": "Nur lokale KI",
                 "hint": "Gezählt werden nur Benutzer mit dieser aktuellen KI-Auswahl. Artemis speichert nicht, welche KI für eine Nachricht genutzt wurde. Wer die Auswahl geändert hat, wird daher für alle Nachrichten unter der aktuellen Auswahl gezählt."

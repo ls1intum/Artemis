@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -240,9 +241,9 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         User undecidedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
         userUtilService.clearAiSelectionDecision(undecidedUser);
 
-        createAnsweredSession(course, cloudUser, start, 10, "model-cloud-ai-filter-test", 1.0f);
-        createAnsweredSession(course, localUser, start.plusMinutes(10), 200, "model-local-ai-filter-test", 0.0f);
-        createAnsweredSession(course, undecidedUser, start.plusMinutes(20), 60, "model-undecided-ai-filter-test", 2.0f);
+        createAnsweredSession(course, cloudUser, start, 10, true, "model-cloud-ai-filter-test", 1.0f);
+        createAnsweredSession(course, localUser, start.plusMinutes(10), 200, false, "model-local-ai-filter-test", 0.0f);
+        createAnsweredSession(course, undecidedUser, start.plusMinutes(20), 60, null, "model-undecided-ai-filter-test", 2.0f);
 
         // Overview: no parameter and ALL both count all three users, as before the filter existed
         IrisDashboardOverviewDTO withoutParameter = request.get(BASE_URL + "overview?" + window, HttpStatus.OK, IrisDashboardOverviewDTO.class);
@@ -253,6 +254,10 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         assertThat(all.totalMessages()).isEqualTo(6);
         assertThat(all.avgResponseTimeSeconds()).isCloseTo(90.0, within(0.001));
         assertThat(all.totalTokenCostEur()).isCloseTo(3.0, within(0.001));
+        assertThat(all.thumbsUpCount()).isEqualTo(1);
+        assertThat(all.thumbsDownCount()).isEqualTo(1);
+        assertThat(all.sessionsWithThumbsUp()).isEqualTo(1);
+        assertThat(all.sessionsWithThumbsDown()).isEqualTo(1);
 
         IrisDashboardOverviewDTO cloud = request.get(BASE_URL + "overview?" + window + "&aiSelection=CLOUD", HttpStatus.OK, IrisDashboardOverviewDTO.class);
         assertThat(cloud.totalSessions()).isEqualTo(1);
@@ -260,17 +265,30 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         assertThat(cloud.totalMessages()).isEqualTo(2);
         assertThat(cloud.avgResponseTimeSeconds()).isCloseTo(10.0, within(0.001));
         assertThat(cloud.totalTokenCostEur()).isCloseTo(1.0, within(0.001));
+        assertThat(cloud.thumbsUpCount()).isEqualTo(1);
+        assertThat(cloud.thumbsDownCount()).isZero();
+        assertThat(cloud.thumbsUpRatio()).isCloseTo(100.0, within(0.001));
+        assertThat(cloud.sessionsWithThumbsUp()).isEqualTo(1);
+        assertThat(cloud.sessionsWithThumbsDown()).isZero();
 
         IrisDashboardOverviewDTO local = request.get(BASE_URL + "overview?" + window + "&aiSelection=LOCAL", HttpStatus.OK, IrisDashboardOverviewDTO.class);
         assertThat(local.totalSessions()).isEqualTo(1);
         assertThat(local.uniqueUsers()).isEqualTo(1);
         assertThat(local.avgResponseTimeSeconds()).isCloseTo(200.0, within(0.001));
         assertThat(local.totalTokenCostEur()).isCloseTo(0.0, within(0.001));
+        assertThat(local.thumbsUpCount()).isZero();
+        assertThat(local.thumbsDownCount()).isEqualTo(1);
+        assertThat(local.thumbsDownRatio()).isCloseTo(100.0, within(0.001));
+        assertThat(local.sessionsWithThumbsUp()).isZero();
+        assertThat(local.sessionsWithThumbsDown()).isEqualTo(1);
 
         // Time series
         assertThat(singleDayResponseTime(window, "")).isCloseTo(90.0, within(0.001));
         assertThat(singleDayResponseTime(window, "&aiSelection=CLOUD")).isCloseTo(10.0, within(0.001));
         assertThat(singleDayResponseTime(window, "&aiSelection=LOCAL")).isCloseTo(200.0, within(0.001));
+        assertThat(singleDaySeries(window, "RATINGS", "")).containsEntry("thumbsUp", 1.0).containsEntry("thumbsDown", 1.0).containsEntry("total", 3.0);
+        assertThat(singleDaySeries(window, "RATINGS", "&aiSelection=CLOUD")).containsEntry("thumbsUp", 1.0).containsEntry("thumbsDown", 0.0).containsEntry("total", 1.0);
+        assertThat(singleDaySeries(window, "RATINGS", "&aiSelection=LOCAL")).containsEntry("thumbsUp", 0.0).containsEntry("thumbsDown", 1.0).containsEntry("total", 1.0);
 
         // Breakdowns: sessions per course and token usage per model
         assertThat(courseSessions(window, "", course)).isEqualTo(3.0);
@@ -289,18 +307,18 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
     }
 
     /**
-     * Creates a chat session with one user message and one answer after {@code responseSeconds}, plus a token usage trace
-     * for the answer that costs {@code costEur}.
+     * Creates a chat session with one user message and one answer after {@code responseSeconds}, rated {@code helpful}, plus a
+     * token usage trace for the answer that costs {@code costEur}.
      */
-    private void createAnsweredSession(Course course, User user, ZonedDateTime createdAt, int responseSeconds, String model, float costEur) {
+    private void createAnsweredSession(Course course, User user, ZonedDateTime createdAt, int responseSeconds, Boolean helpful, String model, float costEur) {
         IrisChatSession newSession = new IrisChatSession(course, user);
         newSession.setCreationDate(createdAt);
         IrisChatSession session = irisChatSessionRepository.save(newSession);
 
         ZonedDateTime askedAt = createdAt.plusMinutes(1);
         ZonedDateTime answeredAt = askedAt.plusSeconds(responseSeconds);
-        saveMessageSentAt(session, IrisMessageSender.USER, "Question", askedAt);
-        IrisMessage savedAnswer = saveMessageSentAt(session, IrisMessageSender.LLM, "Answer", answeredAt);
+        saveMessage(session, IrisMessageSender.USER, "Question", askedAt, null);
+        IrisMessage savedAnswer = saveMessage(session, IrisMessageSender.LLM, "Answer", answeredAt, helpful);
 
         // 1M output tokens at costEur per million
         var llmRequest = new LLMRequest(model, 0, 0f, 1_000_000, costEur, "IRIS_CHAT_COURSE_MESSAGE");
@@ -311,21 +329,26 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
     }
 
     /**
-     * Appending a message always stamps it with the current time, so the timestamp is set afterwards.
+     * Appending a message always stamps it with the current time, so the timestamp and rating are set afterwards.
      */
-    private IrisMessage saveMessageSentAt(IrisChatSession session, IrisMessageSender sender, String text, ZonedDateTime sentAt) {
+    private IrisMessage saveMessage(IrisChatSession session, IrisMessageSender sender, String text, ZonedDateTime sentAt, Boolean helpful) {
         IrisMessage message = new IrisMessage();
         message.addContent(new IrisTextMessageContent(text));
         IrisMessage saved = irisMessageService.saveMessage(message, session, sender);
         saved.setSentAt(sentAt);
+        saved.setHelpful(helpful);
         return irisMessageRepository.save(saved);
     }
 
     private double singleDayResponseTime(String window, String filter) throws Exception {
-        IrisDashboardTimeSeriesDTO series = request.get(BASE_URL + "time-series?" + window + "&span=DAY&metric=RESPONSE_TIME" + filter, HttpStatus.OK,
+        return singleDaySeries(window, "RESPONSE_TIME", filter).get("avg");
+    }
+
+    private Map<String, Double> singleDaySeries(String window, String metric, String filter) throws Exception {
+        IrisDashboardTimeSeriesDTO series = request.get(BASE_URL + "time-series?" + window + "&span=DAY&metric=" + metric + filter, HttpStatus.OK,
                 IrisDashboardTimeSeriesDTO.class);
         assertThat(series.entries()).hasSize(1);
-        return series.entries().getFirst().series().get("avg");
+        return series.entries().getFirst().series();
     }
 
     private double courseSessions(String window, String filter, Course course) throws Exception {
