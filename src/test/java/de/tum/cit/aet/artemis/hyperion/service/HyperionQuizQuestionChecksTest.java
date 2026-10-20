@@ -80,6 +80,12 @@ class HyperionQuizQuestionChecksTest {
     }
 
     @Test
+    void defectOf_rejectsOptionsThatDifferOnlyInPunctuationOrSpacing() {
+        assertThat(defectOf(question("Which method is idempotent?", "PUT", "PUT.", "PATCH", "GET"))).contains(Defect.DUPLICATE_OPTIONS);
+        assertThat(defectOf(question("Which method is idempotent?", "a vertex", "a  vertex ", "an edge", "a face"))).contains(Defect.DUPLICATE_OPTIONS);
+    }
+
+    @Test
     void defectOf_rejectsABannedConstruction() {
         assertThat(defectOf(question("Which method is idempotent?", "PUT", "POST", "PATCH", "All of the above"))).contains(Defect.BANNED_CONSTRUCTION);
     }

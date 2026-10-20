@@ -120,7 +120,7 @@ final class HyperionQuizQuestionChecks {
         if (options.stream().anyMatch(option -> option.text().length() > MAX_OPTION_TEXT_LENGTH)) {
             return Optional.of(Defect.TEXT_TOO_LONG);
         }
-        long distinct = options.stream().map(option -> option.text().toLowerCase(Locale.ROOT)).distinct().count();
+        long distinct = options.stream().map(option -> comparable(option.text())).distinct().count();
         if (distinct != requiredOptions) {
             return Optional.of(Defect.DUPLICATE_OPTIONS);
         }
@@ -173,8 +173,13 @@ final class HyperionQuizQuestionChecks {
      * Detects one option appearing as a whole phrase inside another, which lets a student eliminate by overlap.
      * Matching on word boundaries avoids flagging coincidental substrings such as "2" inside "12".
      */
+    /** The form in which two option texts are compared: lower case, whitespace collapsed, trailing punctuation removed. */
+    private static String comparable(String text) {
+        return TRAILING_PUNCTUATION.matcher(normalise(text)).replaceAll("").strip();
+    }
+
     private static boolean hasContainedOption(List<GeneratedQuizAnswerOptionDTO> options) {
-        List<String> normalised = options.stream().map(option -> TRAILING_PUNCTUATION.matcher(normalise(option.text())).replaceAll("").strip()).toList();
+        List<String> normalised = options.stream().map(option -> comparable(option.text())).toList();
         for (int i = 0; i < normalised.size(); i++) {
             for (int j = 0; j < normalised.size(); j++) {
                 if (i == j) {
