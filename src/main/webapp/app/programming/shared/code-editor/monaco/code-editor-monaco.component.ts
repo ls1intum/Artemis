@@ -881,9 +881,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     /**
      * Retrieves the feedback node currently rendered at the specified line and throws an error if it is not available.
      * @param line The line (0-based) for which to retrieve the feedback node.
+     * @param feedback Optional feedback to distinguish multiple nodes on the same line.
      */
-    getInlineFeedbackNodeOrElseThrow(line: number): HTMLElement {
-        const element = this.getInlineFeedbackNode(line);
+    getInlineFeedbackNodeOrElseThrow(line: number, feedback?: Feedback): HTMLElement {
+        const element = this.getInlineFeedbackNode(line, feedback);
         if (!element) {
             throw new Error('No feedback node found at line ' + line);
         }
@@ -893,9 +894,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     /**
      * Retrieves the feedback node currently rendered at the specified line, or undefined if it is not available.
      * @param line The line (0-based) for which to retrieve the feedback node.
+     * @param feedback Optional feedback to distinguish multiple nodes on the same line.
      */
-    getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return this.inlineFeedbackComponents().find((comp) => comp.codeLine() === line)?.elementRef?.nativeElement;
+    getInlineFeedbackNode(line: number, feedback?: Feedback): HTMLElement | undefined {
+        return this.inlineFeedbackComponents().find((comp) => comp.codeLine() === line && (feedback === undefined || comp.feedback() === feedback))?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {
@@ -903,8 +905,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         if (line === undefined) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
-        // TODO: In the future, there may be more than one feedback node per line. The ID should be unique.
-        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line, feedback);
         // Feedback is stored with 0-based lines, but the lines of the Monaco editor used in Artemis are 1-based. We add 1 to correct this
         const oneBasedLine = line + 1;
         this.editor().addLineWidget(oneBasedLine, 'feedback-' + feedback.id + '-line-' + oneBasedLine, feedbackNode);

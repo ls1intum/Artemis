@@ -17,6 +17,12 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
     let comp: CodeEditorStudentContainerComponent;
@@ -42,8 +48,11 @@ describe('CodeEditorStudentContainerComponent', () => {
                 MockProvider(DomainService),
                 MockProvider(SubmissionPolicyService),
                 MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(CodeEditorFileService),
+                MockProvider(ExerciseReviewCommentService),
             ],
-        });
+        }).overrideComponent(CodeEditorContainerComponent, { set: { template: '' } });
         fixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
         comp = fixture.componentInstance;
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
@@ -79,6 +88,57 @@ describe('CodeEditorStudentContainerComponent', () => {
         expect(getLatestSubmissionResult(updatedSubmission)?.feedbacks).toEqual([feedback]);
         expect(comp.latestResult()?.feedbacks).toEqual([feedback]);
         expect(participation.submissions![0].results).toEqual([buildResult]);
+    });
+
+    it('should keep inline feedback on the newest submission when older AI feedback arrives late', () => {
+        const participation: ProgrammingExerciseStudentParticipation = { ...studentParticipation, submissions: [] };
+        const olderSubmission = { id: 10, participation: { id: participation.id } };
+        const newerSubmission = { id: 11, participation: { id: participation.id } };
+        const pendingAIResult: Result = { id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, submission: olderSubmission };
+        const buildFeedback = { id: 3, type: FeedbackType.AUTOMATIC, reference: 'file:Main.java_line:0', detailText: 'Latest build feedback' };
+        const buildResult: Result = { id: 3, assessmentType: AssessmentType.AUTOMATIC, submission: newerSubmission, feedbacks: [buildFeedback] };
+        const aiFeedback = { id: 4, type: FeedbackType.AUTOMATIC, reference: 'file:Main.java_line:0', detailText: 'Older AI feedback' };
+        comp.participation.set(participation);
+        comp.exercise.set(new ProgrammingExercise(undefined, undefined));
+        vi.spyOn(submissionPolicyService, 'getParticipationSubmissionCount').mockReturnValue(of(2));
+
+        comp.receivedNewResult(pendingAIResult);
+        comp.receivedNewResult(buildResult);
+        comp.receivedNewResult({ ...pendingAIResult, successful: true, feedbacks: [aiFeedback] });
+
+        const submissions = comp.participation().submissions!;
+        expect(submissions.map((submission) => submission.id)).toEqual([11, 10]);
+        expect(getLatestSubmissionResult(submissions[1])?.feedbacks).toEqual([aiFeedback]);
+        expect(comp.latestResult()).toBe(buildResult);
+
+        const editorFixture = TestBed.createComponent(CodeEditorContainerComponent);
+        editorFixture.componentRef.setInput('participation', comp.participation());
+        expect(editorFixture.componentInstance.feedbackForSubmission()).toEqual([buildFeedback]);
+    });
+
+    it.each([false, true])('should retain both inline feedback sources during live updates (AI arrives first: %s)', (aiFirst) => {
+        comp.participation.set({ ...studentParticipation, submissions: [] });
+        comp.exercise.set(new ProgrammingExercise(undefined, undefined));
+        vi.spyOn(submissionPolicyService, 'getParticipationSubmissionCount').mockReturnValue(of(1));
+        const submission = { id: 10, participation: { id: studentParticipation.id } };
+        const buildFeedback = { id: 1, type: FeedbackType.AUTOMATIC, reference: 'file:Main.java_line:0', detailText: 'Build suggestion' };
+        const aiFeedback = { id: 2, type: FeedbackType.AUTOMATIC, reference: 'file:Main.java_line:0', detailText: 'AI suggestion' };
+        const pendingAIResult: Result = { id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, submission };
+        const completedAIResult: Result = { ...pendingAIResult, successful: true, feedbacks: [aiFeedback] };
+        const buildResult: Result = { id: 3, assessmentType: AssessmentType.AUTOMATIC, submission, feedbacks: [buildFeedback] };
+        const editorFixture = TestBed.createComponent(CodeEditorContainerComponent);
+        const inlineFeedback = () => {
+            editorFixture.componentRef.setInput('participation', comp.participation());
+            return editorFixture.componentInstance.feedbackForSubmission();
+        };
+
+        comp.receivedNewResult(pendingAIResult);
+        expect(inlineFeedback()).toEqual([]);
+        comp.receivedNewResult(aiFirst ? completedAIResult : buildResult);
+        expect(inlineFeedback()).toEqual(aiFirst ? [aiFeedback] : [buildFeedback]);
+        comp.receivedNewResult(aiFirst ? buildResult : completedAIResult);
+        expect(inlineFeedback()).toEqual([buildFeedback, aiFeedback]);
+        expect(comp.participation().submissions![0].results).toHaveLength(2);
     });
 
     it('should ignore a result belonging to a previously opened participation', () => {

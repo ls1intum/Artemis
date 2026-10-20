@@ -21,6 +21,7 @@ import { CodeEditorFileService } from 'app/programming/shared/code-editor/servic
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { editor } from 'monaco-editor';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
@@ -493,6 +494,52 @@ describe('CodeEditorContainerComponent', () => {
         } as Participation);
 
         expect(component.feedbackForSubmission()).toEqual([feedback]);
+    });
+
+    it.each([false, true])('should combine build and AI inline feedback regardless of result order (AI first: %s)', (aiFirst) => {
+        const buildFeedback: Feedback = { id: 1, reference: 'file:Main.java_line:0', detailText: 'Build feedback' };
+        const aiFeedback: Feedback = { id: 2, reference: 'file:Main.java_line:0', detailText: 'AI feedback' };
+        const buildResult: Result = { id: aiFirst ? 4 : 3, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [buildFeedback] };
+        const aiResult: Result = { id: aiFirst ? 3 : 4, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, feedbacks: [aiFeedback] };
+        fixture.componentRef.setInput('participation', {
+            submissions: [{ results: aiFirst ? [aiResult, buildResult] : [buildResult, aiResult] }],
+        });
+
+        expect(component.feedbackForSubmission()).toEqual([buildFeedback, aiFeedback]);
+
+        fixture.componentRef.setInput('showInlineFeedback', false);
+        expect(component.feedbackForSubmission()).toEqual([]);
+    });
+
+    it('should select only the newest regular result and newest completed AI result from the current submission', () => {
+        const manualFeedback: Feedback = { id: 1, detailText: 'Latest manual assessment' };
+        const aiFeedback: Feedback = { id: 2, detailText: 'Latest completed AI feedback' };
+        fixture.componentRef.setInput('participation', {
+            submissions: [
+                {
+                    results: [
+                        { id: 6, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: false, feedbacks: [{ id: 6 }] },
+                        { id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, feedbacks: [aiFeedback] },
+                        { id: 1, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [{ id: 3 }] },
+                        { id: 5, assessmentType: AssessmentType.AUTOMATIC_ATHENA, feedbacks: [{ id: 5 }] },
+                        { id: 3, assessmentType: AssessmentType.MANUAL, feedbacks: [manualFeedback] },
+                        { id: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, feedbacks: [{ id: 4 }] },
+                    ],
+                },
+                { results: [{ id: 7, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [{ id: 7 }] }] },
+            ],
+        });
+
+        expect(component.feedbackForSubmission()).toEqual([manualFeedback, aiFeedback]);
+    });
+
+    it.each([undefined, false, true])('should handle an AI-only submission (successful: %s)', (successful) => {
+        const feedback: Feedback = { id: 1 };
+        fixture.componentRef.setInput('participation', {
+            submissions: [{ results: [{ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful, feedbacks: [feedback] }] }],
+        });
+
+        expect(component.feedbackForSubmission()).toEqual(successful ? [feedback] : []);
     });
 
     it('should guard deactivation when unsaved files exist', () => {

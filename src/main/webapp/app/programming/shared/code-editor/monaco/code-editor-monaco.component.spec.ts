@@ -844,6 +844,22 @@ describe('CodeEditorMonacoComponent', () => {
             expect(addLineWidgetStub).toHaveBeenCalledWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
         });
 
+        it('should render build and AI feedback on the same line with distinct nodes', async () => {
+            getInlineFeedbackNodeStub.mockRestore();
+            const buildFeedback: Feedback = { id: 20, type: FeedbackType.AUTOMATIC, reference: 'file:file1.java_line:0', detailText: 'Build suggestion' };
+            const aiFeedback: Feedback = { id: 21, type: FeedbackType.AUTOMATIC, reference: 'file:file1.java_line:0', detailText: 'AI suggestion' };
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            fixture.componentRef.setInput('feedbacks', [buildFeedback, aiFeedback]);
+            await settle();
+
+            const feedbackElements = fixture.debugElement.queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent));
+            expect(feedbackElements).toHaveLength(2);
+            expect(feedbackElements[0].componentInstance.feedback()).toBe(buildFeedback);
+            expect(feedbackElements[1].componentInstance.feedback()).toBe(aiFeedback);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(1, 'feedback-20-line-1', feedbackElements[0].nativeElement);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(1, 'feedback-21-line-1', feedbackElements[1].nativeElement);
+        });
+
         it('should render feedback on the first line after switching to the file it belongs to', async () => {
             fixture.componentRef.setInput('selectedFile', 'file1.java');
             fixture.componentRef.setInput('feedbacks', [firstLineFeedback, laterFeedback, otherFileFeedback]);

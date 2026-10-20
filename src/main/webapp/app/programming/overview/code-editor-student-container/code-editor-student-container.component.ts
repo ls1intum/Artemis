@@ -202,9 +202,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
         const existingSubmission = participation.submissions?.find((candidate) => candidate.id === submission.id);
         const updatedSubmission = cloneWith(existingSubmission ?? submission, { participation });
         setLatestSubmissionResult(updatedSubmission, result);
-        this.participation.set(
-            cloneWith(participation, { submissions: [updatedSubmission, ...(participation.submissions?.filter((candidate) => candidate.id !== submission.id) ?? [])] }),
-        );
+        // Updating an older submission must not replace the newest submission as the source of inline feedback.
+        const submissions = existingSubmission
+            ? participation.submissions!.map((candidate) => (candidate.id === submission.id ? updatedSubmission : candidate))
+            : [updatedSubmission, ...(participation.submissions ?? [])];
+        this.participation.set(cloneWith(participation, { submissions }));
         const latestResult = getNewestResult(getAllResultsOfAllSubmissions(this.participation().submissions));
         this.latestResult.set(latestResult);
         if (latestResult?.feedbacks) {
