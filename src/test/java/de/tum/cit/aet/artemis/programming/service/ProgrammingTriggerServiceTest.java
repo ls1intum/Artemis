@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -461,6 +462,33 @@ class ProgrammingTriggerServiceTest {
         ArgumentCaptor<ProgrammingExerciseStudentParticipation> triggered = ArgumentCaptor.captor();
         verify(continuousIntegrationTriggerService, times(2)).triggerBuild(triggered.capture(), anyBoolean(), any(SharedBuildTriggerData.class));
         assertThat(triggered.getAllValues()).extracting(ProgrammingExerciseStudentParticipation::getId).containsExactly(1L, 2L);
+    }
+
+    @Test
+    void triggerInstructorBuildForParticipations_tellsTheClientsWhenTheRunStartsAndWhenItIsDone() {
+        // The retry action of the client stays busy until the run has queued its last build, which it learns from these two.
+        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise);
+
+        InOrder inOrder = inOrder(programmingMessagingService, continuousIntegrationTriggerService);
+        inOrder.verify(programmingMessagingService).notifyAboutBuildRunState(exercise, BuildRunState.RUNNING);
+        inOrder.verify(continuousIntegrationTriggerService).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
+        inOrder.verify(programmingMessagingService).notifyAboutBuildRunState(exercise, BuildRunState.COMPLETED);
+        // The run of all builds sends the notification to the instructors, a rebuild of a few participations does not.
+        verify(programmingMessagingService, never()).notifyInstructorAboutStartedExerciseBuildRun(any());
+        verify(programmingMessagingService, never()).notifyInstructorAboutCompletedExerciseBuildRun(any());
+    }
+
+    @Test
+    void triggerInstructorBuildForParticipations_tellsTheClientsThatTheRunIsDoneAlsoWhenItFails() {
+        BulkTriggerThrottle throttle = mock(BulkTriggerThrottle.class);
+        when(continuousIntegrationTriggerService.createBulkTriggerThrottle()).thenReturn(throttle);
+        doThrow(new IllegalStateException("the queue cannot be read")).when(throttle).awaitCapacity();
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise));
+
+        verify(programmingMessagingService).notifyAboutBuildRunState(exercise, BuildRunState.RUNNING);
+        verify(programmingMessagingService).notifyAboutBuildRunState(exercise, BuildRunState.COMPLETED);
     }
 
     @Test

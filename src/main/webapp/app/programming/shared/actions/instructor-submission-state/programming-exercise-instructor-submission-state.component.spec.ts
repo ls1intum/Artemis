@@ -226,47 +226,79 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(getBuildState()).not.toBeNull();
     });
 
-    it('should trigger the appropriate service method on trigger failed and set the isBuildingFailedSubmissionsState until the request returns a response', async () => {
-        vi.useFakeTimers();
+    describe('retry of the failed builds', () => {
         const failedSubmissionParticipationIds = [333];
-        const triggerInstructorBuildForParticipationsOfExerciseSubject = new Subject<void>();
-        triggerAllStub.mockReturnValue(triggerInstructorBuildForParticipationsOfExerciseSubject);
-        const getFailedSubmissionParticipationsForExerciseStub = vi.spyOn(submissionService, 'getSubmissionCountByType').mockReturnValue(failedSubmissionParticipationIds);
-        // Component must have at least one failed submission for the button to be enabled. buildingSummary/
-        // hasFailedSubmissions are derived from the submission-state stream now, so drive them through it.
-        const submissionStateWithFailure = {
-            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 55 },
-            4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 333 },
-        } as ExerciseSubmissionState;
-        fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
+        let triggerRequestSubject: Subject<void>;
 
-        fixture.detectChanges();
-        getExerciseSubmissionStateSubject.next(submissionStateWithFailure);
-        // Wait for the 500ms debounce.
-        await vi.advanceTimersByTimeAsync(500);
+        const showFailedSubmission = async () => {
+            vi.useFakeTimers();
+            triggerRequestSubject = new Subject<void>();
+            triggerAllStub.mockReturnValue(triggerRequestSubject);
+            vi.spyOn(submissionService, 'getSubmissionCountByType').mockReturnValue(failedSubmissionParticipationIds);
+            // Component must have at least one failed submission for the button to be enabled. buildingSummary/
+            // hasFailedSubmissions are derived from the submission-state stream now, so drive them through it.
+            const submissionStateWithFailure = {
+                1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 55 },
+                4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 333 },
+            } as ExerciseSubmissionState;
+            fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
 
-        fixture.detectChanges();
+            fixture.detectChanges();
+            getExerciseSubmissionStateSubject.next(submissionStateWithFailure);
+            // Wait for the 500ms debounce.
+            await vi.advanceTimersByTimeAsync(500);
+            fixture.detectChanges();
+        };
 
-        const triggerButton = getTriggerFailedButton();
-        expect(triggerButton).not.toBeNull();
-        expect(triggerButton.disabled).toBe(false);
+        it('should call the service on click and keep the button busy after the request returned until the server reports the run as completed', async () => {
+            await showFailedSubmission();
+            const triggerButton = getTriggerFailedButton();
+            expect(triggerButton).not.toBeNull();
+            expect(triggerButton.disabled).toBe(false);
 
-        // Button is clicked.
-        triggerButton.click();
+            triggerButton.click();
 
-        expect(comp.isBuildingFailedSubmissions()).toBe(true);
-        expect(getFailedSubmissionParticipationsForExerciseStub).toHaveBeenCalledWith(comp.exercise()!.id, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
-        expect(triggerAllStub).toHaveBeenCalledWith(comp.exercise()!.id, failedSubmissionParticipationIds);
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+            expect(triggerAllStub).toHaveBeenCalledWith(comp.exercise()!.id, failedSubmissionParticipationIds);
 
-        fixture.detectChanges();
+            // The server answers at once and queues the builds in the background, possibly after waiting for room in the build queue.
+            triggerRequestSubject.next(undefined);
+            triggerRequestSubject.complete();
+            getBuildRunStateSubject.next(BuildRunState.RUNNING);
+            fixture.detectChanges();
 
-        // Now the request returns a response and completes — finalize() resets the flag on completion (or error).
-        triggerInstructorBuildForParticipationsOfExerciseSubject.next(undefined);
-        triggerInstructorBuildForParticipationsOfExerciseSubject.complete();
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+            expect(getTriggerFailedButton().disabled).toBe(true);
 
-        fixture.detectChanges();
+            getBuildRunStateSubject.next(BuildRunState.COMPLETED);
+            fixture.detectChanges();
 
-        expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            expect(getTriggerFailedButton().disabled).toBe(false);
+        });
+
+        it('should stay busy when the request returns before the server reported the start of the run', async () => {
+            await showFailedSubmission();
+
+            getTriggerFailedButton().click();
+            triggerRequestSubject.next(undefined);
+            triggerRequestSubject.complete();
+            fixture.detectChanges();
+
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+        });
+
+        it('should make the button available again when the request fails', async () => {
+            await showFailedSubmission();
+
+            getTriggerFailedButton().click();
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+            triggerRequestSubject.error(new Error('request failed'));
+            fixture.detectChanges();
+
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+        });
     });
 
     it('should disable the trigger all button while a build is running and re-enable it when it is complete', async () => {

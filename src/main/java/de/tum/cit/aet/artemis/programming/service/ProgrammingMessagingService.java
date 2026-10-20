@@ -77,6 +77,18 @@ public class ProgrammingMessagingService {
     }
 
     /**
+     * Tells the clients that watch the exercise whether a run of builds is going on, without the notification to the
+     * instructors that the run of all builds sends. The rebuild of selected participations uses it so that the client
+     * can keep its retry action busy until the run has queued all of its builds.
+     *
+     * @param programmingExercise the exercise whose builds are queued
+     * @param buildRunState       whether the run is going on or finished
+     */
+    public void notifyAboutBuildRunState(ProgrammingExercise programmingExercise, BuildRunState buildRunState) {
+        websocketMessagingService.sendMessage(ALL_BUILDS_TRIGGERED.at(programmingExercise.getId()), buildRunState);
+    }
+
+    /**
      * Notify user about new result.
      *
      * @param result        the result created from the result returned from the CI system.

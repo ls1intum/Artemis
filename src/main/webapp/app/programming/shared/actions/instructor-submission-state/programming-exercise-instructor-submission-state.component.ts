@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { debounceTime, filter, finalize, map, switchMap } from 'rxjs/operators';
+import { debounceTime, filter, map, switchMap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
@@ -14,6 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { DurationPipe } from 'app/foundation/pipes/duration.pipe';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { BuildRunState, ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -29,6 +30,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 })
 export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnInit {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private programmingBuildRunService = inject(ProgrammingBuildRunService);
     private destroyRef = inject(DestroyRef);
 
     FeatureToggle = FeatureToggle;
@@ -60,6 +62,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     );
     readonly hasFailedSubmissions = computed(() => (this.buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0);
     readonly hasBuildingSubmissions = computed(() => (this.buildingSummary()?.[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0) > 0);
+    // True from the click on the retry button until the server reports that its run has queued the last build, see triggerBuildOfFailedSubmissions.
     readonly isBuildingFailedSubmissions = signal(false);
 
     readonly resultEtaInMs = signal<number | undefined>(undefined);
@@ -74,18 +77,25 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
             .getResultEtaInMs()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((resultEta) => this.resultEtaInMs.set(resultEta));
+        // The server queues the builds in the background and tells us when it starts and when it is done.
+        this.programmingBuildRunService
+            .getBuildRunUpdates(this.exercise().id!)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((buildRunState) => this.isBuildingFailedSubmissions.set(buildRunState === BuildRunState.RUNNING));
     }
 
     /**
      * Retrieve the participation ids that have a failed submission and retry their build.
+     * <p>
+     * The request returns at once, because the server queues the builds in the background and may have to wait for room in the build queue.
+     * The button therefore stays busy until the server reports that the run is done, not until the request completes.
      */
     triggerBuildOfFailedSubmissions() {
         this.isBuildingFailedSubmissions.set(true);
         const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exercise().id!, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         this.programmingSubmissionService
             .triggerInstructorBuildForParticipationsOfExercise(this.exercise().id!, failedSubmissionParticipations)
-            .pipe(finalize(() => this.isBuildingFailedSubmissions.set(false)))
-            .subscribe();
+            .subscribe({ error: () => this.isBuildingFailedSubmissions.set(false) });
     }
 
     private sumSubmissionStates = (buildState: ExerciseSubmissionState) =>

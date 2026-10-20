@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -116,7 +117,7 @@ public class ProgrammingTriggerService {
      * @param exerciseId to identify the programming exercise.
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
-    @Async
+    @Async("bulkBuildTriggerExecutor")
     public void triggerInstructorBuildForExercise(long exerciseId) throws EntityNotFoundException {
         // The caller's context reaches this thread when there is one; this stands in for the paths that have none.
         // Security checks still belong before this point, since the stand-in is not a user.
@@ -145,18 +146,28 @@ public class ProgrammingTriggerService {
      * thread.
      * <p>
      * The method is async because the run waits for room in the build queue, which can take as long as the builds
-     * queued before it, far longer than a request may stay open.
+     * queued before it, far longer than a request may stay open. It runs on its own executor, because a run that
+     * waits keeps its thread for as long as that takes.
+     * <p>
+     * The clients learn about the run through the same topic as the run of all builds: they are told when it starts and
+     * when it has queued its last build, also if it fails, so that their retry action can stay busy until then.
      *
      * @param triggerData what a trigger reads off each participation that is to be built, newest submission included
      * @param exercise    the exercise those participations belong to, loaded with its build config and auxiliary
      *                        repositories
      */
-    @Async
+    @Async("bulkBuildTriggerExecutor")
     public void triggerInstructorBuildForParticipations(List<ParticipationBuildTriggerDTO> triggerData, ProgrammingExercise exercise) {
         // The caller's context reaches this thread when there is one; this stands in for the paths that have none.
         // Security checks still belong before this point, since the stand-in is not a user.
         SecurityUtils.setAuthorizationObject();
-        triggerBuildForParticipationData(triggerData, exercise);
+        programmingMessagingService.notifyAboutBuildRunState(exercise, BuildRunState.RUNNING);
+        try {
+            triggerBuildForParticipationData(triggerData, exercise);
+        }
+        finally {
+            programmingMessagingService.notifyAboutBuildRunState(exercise, BuildRunState.COMPLETED);
+        }
     }
 
     /**
