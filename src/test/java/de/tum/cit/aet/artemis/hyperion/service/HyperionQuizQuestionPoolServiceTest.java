@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.core.task.TaskRejectedException;
 
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -93,6 +95,17 @@ class HyperionQuizQuestionPoolServiceTest {
         assertThat(result).isEqualTo(new QuizQuestionPoolBuildStartDTO(false, 0));
         verify(buildService, never()).enqueue(course);
         verify(taskService, never()).runBuildAsync(5L, 7L);
+    }
+
+    @Test
+    void startBuild_freesTheSlotWhenDispatchFails() {
+        when(buildService.tryStart(5L)).thenReturn(true);
+        when(buildService.enqueue(course)).thenReturn(12);
+        doThrow(new TaskRejectedException("executor queue full")).when(taskService).runBuildAsync(5L, 7L);
+
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(TaskRejectedException.class);
+
+        verify(buildService).release(5L);
     }
 
     @Test

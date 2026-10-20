@@ -74,12 +74,12 @@ public class HyperionQuizQuestionPoolService {
         int enqueued;
         try {
             enqueued = buildService.enqueue(course);
+            taskService.runBuildAsync(courseId, userId);
         }
         catch (RuntimeException e) {
             buildService.release(courseId);
             throw e;
         }
-        taskService.runBuildAsync(courseId, userId);
         return new QuizQuestionPoolBuildStartDTO(true, enqueued);
     }
 
