@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.JavaSourceText;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 
 /** Builds witness probes and interprets their test reports; the caller owns sandbox execution and cleanup. */
@@ -24,6 +25,8 @@ public final class ContractWitnessProbe {
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+[^;]+;", Pattern.MULTILINE);
 
     private static final Pattern IMPORT_DECLARATION = Pattern.compile("^\\s*import\\s+[^;]+;", Pattern.MULTILINE);
+
+    private static final Pattern METHOD_DECLARATION = Pattern.compile("\\bvoid\\s+([a-zA-Z_$][a-zA-Z\\d_$]*)\\s*\\(");
 
     private ContractWitnessProbe() {
     }
@@ -126,7 +129,37 @@ public final class ContractWitnessProbe {
 
     static boolean collidesWithExistingTest(ContractWitness witness, Map<String, String> testSources) {
         Pattern declaration = Pattern.compile("\\bvoid\\s+" + Pattern.quote(witness.testName()) + "\\s*\\(");
-        return testSources.values().stream().anyMatch(source -> declaration.matcher(source).find());
+        return testSources.values().stream().anyMatch(source -> declaration.matcher(JavaSourceText.maskCommentsAndLiterals(source)).find());
+    }
+
+    /** Renames only an adopted witness's method declaration for unambiguous temporary probe attribution. */
+    static ContractWitness forExecution(ContractWitness witness, Map<String, String> testSources) {
+        if (!collidesWithExistingTest(witness, testSources)) {
+            return witness;
+        }
+        String base = witness.testName() + "HyperionProbe";
+        String name = base;
+        int suffix = 2;
+        while (collidesWithExistingTest(new ContractWitness(witness.ruleId(), name, witness.code(), witness.wrongBehavior()), testSources)) {
+            name = base + suffix++;
+        }
+        Matcher declaration = METHOD_DECLARATION.matcher(JavaSourceText.maskCommentsAndLiterals(witness.code()));
+        int start = -1;
+        int end = -1;
+        while (declaration.find()) {
+            if (declaration.group(1).equals(witness.testName())) {
+                if (start >= 0) {
+                    throw new IllegalArgumentException("The witness has multiple matching method declarations.");
+                }
+                start = declaration.start(1);
+                end = declaration.end(1);
+            }
+        }
+        if (start < 0) {
+            throw new IllegalArgumentException("The witness has no matching method declaration.");
+        }
+        String code = witness.code().substring(0, start) + name + witness.code().substring(end);
+        return new ContractWitness(witness.ruleId(), name, code, witness.wrongBehavior());
     }
 
     /** Report forms differ per framework ({@code testFoo}, {@code testFoo()}, {@code ClassName.testFoo}), so matching on the bare name keeps attribution stable. */

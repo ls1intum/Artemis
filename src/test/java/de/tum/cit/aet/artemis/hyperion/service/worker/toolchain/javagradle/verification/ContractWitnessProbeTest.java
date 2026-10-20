@@ -13,6 +13,41 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.criti
 
 class ContractWitnessProbeTest {
 
+    @Test
+    void adoptedWitnessRenamesOnlyItsDeclarationAndAvoidsExistingProbeNames() {
+        String code = """
+                // void retained() must remain untouched here.
+                @Test void retained() { assertEquals("void retained()", "void retained()"); }
+                """;
+        ContractWitness witness = new ContractWitness("R1", "retained", code, "counterexample");
+        var execution = ContractWitnessProbe.forExecution(witness, Map.of("Test.java", "class Test { void retained() {} void retainedHyperionProbe() {} }"));
+
+        assertThat(execution.testName()).isEqualTo("retainedHyperionProbe2");
+        assertThat(execution.code()).isEqualTo("""
+                // void retained() must remain untouched here.
+                @Test void retainedHyperionProbe2() { assertEquals("void retained()", "void retained()"); }
+                """);
+        assertThat(execution.ruleId()).isEqualTo(witness.ruleId());
+        assertThat(execution.wrongBehavior()).isEqualTo(witness.wrongBehavior());
+        assertThat(witness.code()).isEqualTo(code);
+    }
+
+    @Test
+    void noncollidingWitnessKeepsItsNameAndIgnoresCommentAndLiteralMatches() {
+        ContractWitness witness = new ContractWitness("R1", "retained", "@Test void retained() { assertTrue(true); }", "counterexample");
+
+        assertThat(ContractWitnessProbe.forExecution(witness, Map.of("Test.java", "// void retained() {}\nclass Test { String text = \"void retained()\"; }"))).isSameAs(witness);
+    }
+
+    @Test
+    void collidingWitnessWithoutOneUnambiguousDeclarationIsRejected() {
+        for (String code : List.of("@Test void another() {}", "@Test void retained() {} void retained() {}")) {
+            ContractWitness witness = new ContractWitness("R1", "retained", code, "counterexample");
+            assertThatThrownBy(() -> ContractWitnessProbe.forExecution(witness, Map.of("Test.java", "class Test { void retained() {} }")))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
     /** Shaped like a real generated suite: Ares harness annotations on the class, JUnit and static assertion imports. */
     private static final String GENERATED_TEST = """
             package de.tum.cit.aet.nodraft;

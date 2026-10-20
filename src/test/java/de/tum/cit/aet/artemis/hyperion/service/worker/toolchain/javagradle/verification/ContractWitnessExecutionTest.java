@@ -46,6 +46,49 @@ class ContractWitnessExecutionTest {
             "chooses the wrong boundary");
 
     @Test
+    void adoptedWitnessRunsUnderADistinctNameAndRetainsItsOriginalIdentityAndDiagnostic() {
+        String executionName = "existingHyperionProbe";
+        ContractWitness adopted = new ContractWitness("R1", "existing", "@Test void existing() { assertTrue(false, \"existing\"); }", "retained counterexample");
+        InteractiveSandbox sandbox = sandbox(reports("solution", List.of(executionName), List.of()), reports("template", List.of(executionName), List.of(executionName)));
+
+        var outcomes = verifier().evaluateContractWitnesses(sandbox, "session", javaExercise(), TESTS, SeededStructuralTests.EMPTY, List.of(adopted), () -> {
+        });
+
+        assertThat(outcomes).singleElement().satisfies(outcome -> {
+            assertThat(outcome.witness()).isEqualTo(adopted);
+            assertThat(outcome.disposition()).isEqualTo(Disposition.REFERENCE_PASSED_STARTER_FAILED);
+            assertThat(outcome.diagnostic()).contains("expected behaviour not met");
+        });
+        verify(sandbox, times(2)).copyOut(anyString(), anyString());
+    }
+
+    @Test
+    void adoptedWitnessCannotUseOnlyTheOriginalGradedTestsExecutionAsProbeEvidence() {
+        ContractWitness adopted = new ContractWitness("R1", "existing", "@Test void existing() { assertTrue(false); }", "counterexample");
+        InteractiveSandbox sandbox = sandbox(reports("solution", List.of("existing"), List.of()));
+
+        var outcomes = verifier().evaluateContractWitnesses(sandbox, "session", javaExercise(), TESTS, SeededStructuralTests.EMPTY, List.of(adopted), () -> {
+        });
+
+        assertThat(outcomes).singleElement().satisfies(outcome -> {
+            assertThat(outcome.witness()).isEqualTo(adopted);
+            assertThat(outcome.disposition()).isEqualTo(Disposition.INCONCLUSIVE);
+        });
+        verify(sandbox).copyOut(anyString(), anyString());
+    }
+
+    @Test
+    void duplicateProposalsRemainInconclusiveWithoutOpeningTheSandbox() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+
+        var outcomes = verifier().evaluateContractWitnesses(sandbox, "session", javaExercise(), TESTS, SeededStructuralTests.EMPTY, List.of(VALID, VALID), () -> {
+        });
+
+        assertThat(outcomes).hasSize(2).allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(Disposition.INCONCLUSIVE));
+        org.mockito.Mockito.verifyNoInteractions(sandbox);
+    }
+
+    @Test
     void malformedWitnessCannotPreventALaterValidWitnessFromBeingExecuted() {
         InteractiveSandbox sandbox = sandbox(reports("solution", List.of(), List.of()), reports("solution", List.of("validBoundary"), List.of()),
                 reports("template", List.of("validBoundary"), List.of("validBoundary")));
