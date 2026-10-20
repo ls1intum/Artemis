@@ -865,6 +865,7 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # E2E JUnit reports create check runs
     with:
       branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
