@@ -82,10 +82,8 @@ class GitServiceTest {
         ExecutorService executor = Executors.newFixedThreadPool(concurrentRequests);
         try (Git ignored = Git.init().setBare(true).setInitialBranch("main").setDirectory(bareRepositoryPath.toFile()).call();
                 Git source = Git.init().setInitialBranch("main").setDirectory(tempDirectory.resolve("source").toFile()).call()) {
-            pushCommitWithManyFiles(source, bareRepositoryPath, 0);
-            service.getOrCheckoutRepository(repositoryUri, repositoryUri, localPath, true, "main", false).close();
-
-            for (int round = 1; round <= rounds; round++) {
+            // Round zero checks concurrent first clones; later rounds check concurrent pulls of the same working copy.
+            for (int round = 0; round <= rounds; round++) {
                 // More new objects than JGit's default unpack limit, so that the fetch keeps a pack (and locks it) instead of writing loose objects
                 pushCommitWithManyFiles(source, bareRepositoryPath, round);
 
