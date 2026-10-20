@@ -41,7 +41,7 @@ public final class GenerationGrading {
         public static final Snapshot EMPTY = new Snapshot(Map.of());
 
         public Snapshot {
-            // Part of a baseline that is removed by value in Redis, which compares encoded bytes; Map.copyOf reorders on a round trip.
+            // Keep detached grading snapshots deterministic across encoding round trips.
             tests = CanonicalMaps.copyOf(tests);
         }
     }

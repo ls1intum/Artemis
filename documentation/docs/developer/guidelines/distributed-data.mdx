@@ -62,6 +62,9 @@ other immutable maps do not: their iteration order depends on a random per-JVM s
 is written in another order after a round trip, and the operation fails every time. A retry loop around it never ends.
 Copy a `Map` component of such a value with `CanonicalMaps.copyOf`, which sorts by key, and do not use a `Set` or a
 `HashMap` there. `DistributedValueEncodingStabilityTest` checks the live-save slot and the generation baseline.
+A canonical constructor can change the bytes of an older readable entry too. For live-save coordination, follow the
+[coordinated encoding upgrade](/admin/hyperion#upgrade-live-save-coordination-encoding): drain operations and reconcile
+retained reservations before stopping all old writers and clearing only that map. Do not reuse old CAS operands blindly.
 
 <Callout variant={CalloutVariant.warning}>
   A provider-level map configuration is not a substitute for asking for what you need. A Hazelcast <code>MapConfig</code>
