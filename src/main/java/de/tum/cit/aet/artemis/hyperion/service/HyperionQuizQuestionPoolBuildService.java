@@ -110,7 +110,11 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private static final int CLAIM_CANDIDATES = 5;
 
-    /** Name of the distributed map that holds the build lease of every course that is being built. */
+    /**
+     * Name of the distributed map that holds the build lease of every course that is being built. A lease value is the build's token
+     * and the time of its last renewal, {@code token|epochMillis}; a lease whose renewal lies more than the lease duration in the past
+     * counts as expired, so the clocks of the nodes must agree to within a fraction of that duration.
+     */
     private static final String BUILD_LEASES = "hyperion-quiz-pool-builds";
 
     @Nullable
@@ -182,7 +186,7 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         this.distributedDataProvider = distributedDataProvider;
         this.leaseDuration = Duration.ofMinutes(buildLeaseMinutes);
-        this.buildLeases = distributedDataProvider.getExpiringMap(BUILD_LEASES, leaseDuration);
+        this.buildLeases = distributedDataProvider.getMap(BUILD_LEASES);
     }
 
     /**
@@ -237,7 +241,7 @@ public class HyperionQuizQuestionPoolBuildService {
     @Nullable
     public String tryStart(long courseId) {
         String leaseToken = nodeName() + "/" + UUID.randomUUID();
-        return buildLeases.putIfAbsent(courseId, leaseToken, leaseDuration) == null ? leaseToken : null;
+        return acquireLease(courseId, leaseToken) ? leaseToken : null;
     }
 
     /**
@@ -247,30 +251,59 @@ public class HyperionQuizQuestionPoolBuildService {
      * @param leaseToken the token {@link #tryStart} returned
      */
     public void release(long courseId, String leaseToken) {
-        buildLeases.remove(courseId, leaseToken);
+        String current = buildLeases.get(courseId);
+        if (current != null && leaseToken.equals(tokenOf(current))) {
+            buildLeases.remove(courseId, current);
+        }
     }
 
     /**
-     * Returns whether a build of the course is running on this node.
+     * Returns whether a live build lease exists for the course.
      *
      * @param courseId the course
      * @return whether a build is running
      */
     public boolean isRunning(long courseId) {
-        return buildLeases.containsKey(courseId);
+        String current = buildLeases.get(courseId);
+        return current != null && !isExpired(current, System.currentTimeMillis());
     }
 
     /**
-     * Renews the course's lease when it still belongs to this build.
-     *
-     * @return {@code false} when the lease expired or another build holds the course
+     * Stores a fresh lease for the token when the course has no lease or only an expired one. The take-over of an expired lease is a
+     * single compare-and-set, so two builds racing for it see exactly one winner.
      */
-    private boolean renewLease(long courseId, String leaseToken) {
-        if (!buildLeases.replace(courseId, leaseToken, leaseToken)) {
+    private boolean acquireLease(long courseId, String leaseToken) {
+        long now = System.currentTimeMillis();
+        String fresh = leaseValue(leaseToken, now);
+        String current = buildLeases.putIfAbsent(courseId, fresh);
+        return current == null || (isExpired(current, now) && buildLeases.replace(courseId, current, fresh));
+    }
+
+    /**
+     * Renews the course's lease when it still belongs to this build. The renewal is a single compare-and-set on the stored lease value,
+     * so it fails when another build replaced or removed the lease in the meantime.
+     *
+     * @return {@code false} when the lease is gone or another build holds the course
+     */
+    boolean renewLease(long courseId, String leaseToken) {
+        String current = buildLeases.get(courseId);
+        if (current == null || !leaseToken.equals(tokenOf(current))) {
             return false;
         }
-        buildLeases.refreshTimeToLive(courseId, leaseDuration);
-        return true;
+        return buildLeases.replace(courseId, current, leaseValue(leaseToken, System.currentTimeMillis()));
+    }
+
+    private static String leaseValue(String leaseToken, long renewedAt) {
+        return leaseToken + "|" + renewedAt;
+    }
+
+    private static String tokenOf(String leaseValue) {
+        return leaseValue.substring(0, leaseValue.lastIndexOf('|'));
+    }
+
+    private boolean isExpired(String leaseValue, long now) {
+        long renewedAt = Long.parseLong(leaseValue.substring(leaseValue.lastIndexOf('|') + 1));
+        return now - renewedAt > leaseDuration.toMillis();
     }
 
     private String nodeName() {
@@ -325,7 +358,7 @@ public class HyperionQuizQuestionPoolBuildService {
      * @param leaseToken the token {@link #tryStart} returned
      */
     public void buildAndRelease(long courseId, @Nullable Long userId, String leaseToken) {
-        if (!renewLease(courseId, leaseToken) && buildLeases.putIfAbsent(courseId, leaseToken, leaseDuration) != null) {
+        if (!renewLease(courseId, leaseToken) && !acquireLease(courseId, leaseToken)) {
             log.warn("Quiz question pool build of course [{}] is dropped: its lease expired while it waited and another build holds the course", courseId);
             return;
         }

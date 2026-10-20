@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
@@ -10,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -75,7 +75,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
         leases = new LocalMap<>();
-        lenient().when(distributedDataProvider.<Long, String>getExpiringMap(anyString(), any())).thenReturn(leases);
+        lenient().when(distributedDataProvider.<Long, String>getMap(anyString())).thenReturn(leases);
     }
 
     @AfterEach
@@ -143,6 +143,39 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     @Test
+    void tryStart_takesOverAnExpiredLease() {
+        HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
+        leases.put(5L, "other-node/dead|" + (System.currentTimeMillis() - Duration.ofMinutes(11).toMillis()));
+
+        assertThat(service.isRunning(5L)).isFalse();
+        String leaseToken = service.tryStart(5L);
+
+        assertThat(leaseToken).isNotNull();
+        assertThat(leases.get(5L)).startsWith(leaseToken + "|");
+        assertThat(service.isRunning(5L)).isTrue();
+    }
+
+    @Test
+    void renewLease_failsOnceAnotherBuildTookTheCourse() {
+        HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
+        String leaseToken = service.tryStart(5L);
+        leases.put(5L, "other-node/replacement|" + System.currentTimeMillis());
+
+        assertThat(service.renewLease(5L, leaseToken)).isFalse();
+        assertThat(leases.get(5L)).startsWith("other-node/replacement|");
+    }
+
+    @Test
+    void renewLease_extendsAnOverdueLeaseNobodyElseTook() {
+        HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
+        String leaseToken = service.tryStart(5L);
+        leases.put(5L, leaseToken + "|" + (System.currentTimeMillis() - Duration.ofMinutes(11).toMillis()));
+
+        assertThat(service.renewLease(5L, leaseToken)).isTrue();
+        assertThat(service.isRunning(5L)).isTrue();
+    }
+
+    @Test
     void release_leavesTheLeaseOfAnotherBuildAlone() {
         HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
         String expired = service.tryStart(5L);
@@ -151,7 +184,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
         service.release(5L, expired);
 
-        assertThat(leases.get(5L)).isEqualTo(replacement);
+        assertThat(leases.get(5L)).startsWith(replacement + "|");
     }
 
     @Test
@@ -163,7 +196,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
         service.buildAndRelease(5L, 7L, expired);
 
-        assertThat(leases.get(5L)).isEqualTo(replacement);
+        assertThat(leases.get(5L)).startsWith(replacement + "|");
         verify(courseRepository, never()).findByIdElseThrow(anyLong());
     }
 
