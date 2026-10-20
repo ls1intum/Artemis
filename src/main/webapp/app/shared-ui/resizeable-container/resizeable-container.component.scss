@@ -15,6 +15,8 @@
 
     &.border-0 {
         border-radius: var(--resizeable-container-border-radius, var(--bs-card-border-radius));
+        // The splitter inside (the general feedback split) has square corners, so the rounded card clips them instead of showing its white behind them
+        overflow: hidden;
 
         .left-body {
             border-radius: inherit;
@@ -31,7 +33,9 @@
         min-height: 45px;
     }
 
-    .card-body {
+    // Only beside the problem statement does the left side scroll on its own. Without it, e.g. in the course view, the
+    // page around it already scrolls, and a second scroll area would only nest inside that one.
+    &.left--scrolls .card-body {
         max-height: 100vh;
         overflow-y: auto;
     }

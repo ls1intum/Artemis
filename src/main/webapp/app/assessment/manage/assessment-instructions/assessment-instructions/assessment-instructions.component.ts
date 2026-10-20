@@ -1,4 +1,8 @@
-import { Component, computed, effect, inject, input, model } from '@angular/core';
+import { Component, computed, effect, inject, input, model, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { CollapsedPanelRailItem } from 'app/shared-ui/components/collapsed-panel-rail/collapsed-panel-rail.component';
+import { faCircleInfo, faFileLines, faGraduationCap, faLightbulb, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
@@ -21,6 +25,15 @@ import { GradingInstructionSelectionService } from 'app/exercise/structured-grad
 import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
+/** The sections of the instructions. As tabs, each is one tab. */
+export type AssessmentInstructionsTabId = 'assessmentNote' | 'criteria' | 'problemStatement' | 'sampleSolution' | 'training';
+
+export interface AssessmentInstructionsTab {
+    id: AssessmentInstructionsTabId;
+    labelKey: string;
+    icon: IconProp;
+}
+
 @Component({
     selector: 'jhi-assessment-instructions',
     templateUrl: './assessment-instructions.component.html',
@@ -35,6 +48,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         ModelingEditorComponent,
         TumAetUiTagComponent,
         ArtemisTranslatePipe,
+        NgTemplateOutlet,
     ],
 })
 export class AssessmentInstructionsComponent {
@@ -47,12 +61,57 @@ export class AssessmentInstructionsComponent {
     readonly showAssessmentInstructions = input(true);
     /** Drops the frame and heading, for a host whose surrounding card already provides both. */
     readonly embeddedInEditorChrome = input(false);
+    /**
+     * Shows each section as a panel of a tab instead of a list of sections that open and close, as the tabs of the exercise details do. The
+     * page draws the tabs in the header of its panel with `jhi-assessment-instructions-tabs`. A section the exercise has nothing for has no tab.
+     */
+    readonly tabbed = input(false);
     readonly readOnly = input<boolean>();
     // For programming exercises we hand over the participation or use the template participation
     readonly programmingParticipation = input<ProgrammingExerciseStudentParticipation>();
     readonly gradingCriteria = model<GradingCriterion[]>();
 
     readonly ExerciseType = ExerciseType;
+
+    /** The tabs this exercise has, in the order the sections have: the note, the criteria, the problem statement, the sample solution. */
+    readonly tabs = computed<AssessmentInstructionsTab[]>(() => {
+        const tabs: AssessmentInstructionsTab[] = [];
+        if (this.showAssessmentInstructions() && this.gradingInstructions()) {
+            tabs.push({ id: 'assessmentNote', labelKey: 'artemisApp.assessmentInstructions.tabs.assessmentNote', icon: faCircleInfo });
+        }
+        if (this.showAssessmentInstructions() && (this.gradingCriteria()?.length ?? 0) > 0) {
+            tabs.push({ id: 'criteria', labelKey: 'artemisApp.assessmentInstructions.tabs.criteria', icon: faListCheck });
+        }
+        tabs.push({ id: 'problemStatement', labelKey: 'artemisApp.assessmentInstructions.tabs.problemStatement', icon: faFileLines });
+        tabs.push({ id: 'sampleSolution', labelKey: 'artemisApp.assessmentInstructions.tabs.sampleSolution', icon: faLightbulb });
+        if (this.isAssessmentTraining()) {
+            tabs.push({ id: 'training', labelKey: 'artemisApp.assessmentInstructions.tabs.training', icon: faGraduationCap });
+        }
+        return tabs;
+    });
+
+    /** What stands for the instructions once their panel is collapsed: the icon of each tab, which opens the panel at that tab. */
+    // A signal an effect fills, not a computed: the page reads it in its own template, before the exercise input of this component is set, and reading that input too early throws
+    readonly railItems = signal<CollapsedPanelRailItem[]>([]);
+
+    private readonly chosenTab = signal<AssessmentInstructionsTabId | undefined>(undefined);
+
+    /** The open tab: the one the tutor chose, else the criteria, which the tutor works with, else the first one. */
+    readonly selectedTab = computed<AssessmentInstructionsTabId>(() => {
+        const tabs = this.tabs();
+        const chosen = this.chosenTab();
+        if (chosen && tabs.some((tab) => tab.id === chosen)) {
+            return chosen;
+        }
+        return (tabs.find((tab) => tab.id === 'criteria') ?? tabs[0]).id;
+    });
+
+    selectTab(value: number | string | undefined): void {
+        const tab = this.tabs().find((candidate) => candidate.id === value);
+        if (tab) {
+            this.chosenTab.set(tab.id);
+        }
+    }
 
     readonly problemStatement = computed(() => this.markdownService.safeHtmlForMarkdown(this.exercise().problemStatement));
 
@@ -117,5 +176,6 @@ export class AssessmentInstructionsComponent {
             const exercise = this.exercise();
             this.gradingCriteria.set(exercise.gradingCriteria);
         });
+        effect(() => this.railItems.set(this.tabs().map((tab) => ({ id: tab.id, icon: tab.icon, labelKey: tab.labelKey }))));
     }
 }

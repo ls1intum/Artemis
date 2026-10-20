@@ -123,7 +123,18 @@ describe('AthenaService', () => {
         expect(feedback.reference).toBeUndefined();
     });
 
-    it.each([0, -1, 1.5])('should mark programming suggestions with invalid start line %s as unreferenced', async (lineStart) => {
+    it('should reference the first line of a file, since Athena numbers lines from 0', async () => {
+        const exercise = { ...exerciseBase, type: 'programming' } as Exercise;
+        const suggestion = new ProgrammingFeedbackSuggestion(3, exercise.id!, 9, 'Hint', 'Add a package declaration', 1, undefined, 'src/Main.java', 0, undefined);
+        const suggestionsPromise = lastValueFrom(service.getProgrammingFeedbackSuggestions(exercise, 9));
+        httpMock.expectOne('api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush([suggestion]);
+        const [feedback] = await suggestionsPromise;
+
+        expect(feedback.type).toBe(FeedbackType.MANUAL);
+        expect(feedback.reference).toBe('file:src/Main.java_line:0');
+    });
+
+    it.each([-1, 1.5])('should mark programming suggestions with invalid start line %s as unreferenced', async (lineStart) => {
         const exercise = { ...exerciseBase, type: 'programming' } as Exercise;
         const suggestion = new ProgrammingFeedbackSuggestion(3, exercise.id!, 9, 'Hint', 'Think about edge cases', 1, undefined, 'src/Main.java', lineStart, 13);
         const suggestionsPromise = lastValueFrom(service.getProgrammingFeedbackSuggestions(exercise, 9));

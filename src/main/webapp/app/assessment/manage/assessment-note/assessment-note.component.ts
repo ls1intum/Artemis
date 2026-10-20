@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, inject, input, output, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, output, viewChild } from '@angular/core';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular';
@@ -16,8 +16,16 @@ export class AssessmentNoteComponent {
     private readonly noteTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('noteTextarea');
 
     readonly assessmentNote = input<AssessmentNote | undefined>();
+    /** Whether the title is shown; a host that names the note elsewhere (e.g. in a tab) turns it off. */
+    readonly showTitle = input(true);
 
     readonly onAssessmentNoteChange = output<AssessmentNote>();
+
+    /** Same cap as a feedback description, shown to the tutor as an `n/500` counter. The column itself is unbounded. */
+    protected readonly NOTE_MAX_LENGTH = 500;
+
+    /** The host replaces the note on every input, so the length follows the text as it is typed. */
+    readonly noteLength = computed(() => (this.assessmentNote()?.note ?? '').length);
 
     constructor() {
         // Re-fit whenever the note changes, which also covers a note that is loaded after the first render.

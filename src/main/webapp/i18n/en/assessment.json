@@ -68,7 +68,14 @@
                 "pointsShort": "{{points}} pts",
                 "pointsOfShort": "{{points}} / {{maxPoints}} pts",
                 "decreasePoints": "Decrease points",
-                "increasePoints": "Increase points"
+                "increasePoints": "Increase points",
+                "addGeneralFeedback": "Add general feedback",
+                "complaintTabAwaitsResponse": "Waiting for your response",
+                "generalFeedbackAddHint": "Use the + button in the tab bar to add general feedback, or drag an assessment instruction and drop it here.",
+                "notesTab": "Notes",
+                "notesTabHasNote": "The private tutor note has text",
+                "studentComplaintTab": "Student Complaint",
+                "studentRequestTab": "Student Request"
             },
             "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {
