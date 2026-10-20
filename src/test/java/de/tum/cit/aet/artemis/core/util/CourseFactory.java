@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
@@ -132,43 +131,23 @@ public class CourseFactory {
     public static Course generateCourse(Long id, String shortName, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, Integer maxComplaints,
             Integer maxTeamComplaints, Integer maxComplaintTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled,
             boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
-        Course course = new Course();
-        course.setId(id);
-
         String randomName = ShortNameGenerator.generateRandomShortName(8);
 
-        course.setTitle("Course title " + randomName);
-
-        // must start with a letter
-        course.setShortName(shortName + randomName);
-        course.setMaxComplaints(maxComplaints);
-        course.setMaxTeamComplaints(maxTeamComplaints);
-        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
-        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
-        if (communicationEnabled && messagingEnabled) {
-            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
-        }
-        else if (communicationEnabled) {
-            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
-        }
-        else {
-            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
-        }
-        course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         // Derive a missing bound from the one that was supplied, so a caller that passes only a start or only an end
         // never ends up with the two in the wrong order. CourseValidator.validateStartAndEndDate rejects that, and the
         // columns are NOT NULL, so an inverted default would surface as a confusing failure far from its cause.
         // TimeUtil.now() rather than ZonedDateTime.now(), so a test that fixed the clock gets dates that agree with it.
         ZonedDateTime now = TimeUtil.now();
-        course.setStartDate(startDate != null ? startDate : Objects.requireNonNullElse(endDate, now).minusMonths(3));
-        course.setEndDate(endDate != null ? endDate : Objects.requireNonNullElse(startDate, now).plusMonths(3));
+        ZonedDateTime effectiveStartDate = startDate != null ? startDate : Objects.requireNonNullElse(endDate, now).minusMonths(3);
+        ZonedDateTime effectiveEndDate = endDate != null ? endDate : Objects.requireNonNullElse(startDate, now).plusMonths(3);
+
+        // The shared factory deliberately has no randomness or defaults of its own, so the test-only randomization that keeps fixtures independent of each other happens here.
+        // Fully qualified because this class shadows the simple name.
+        Course course = de.tum.cit.aet.artemis.course.factories.CourseFactory.generateCourse("Course title " + randomName, shortName + randomName, effectiveStartDate,
+                effectiveEndDate, exercises, maxComplaints, maxTeamComplaints, maxComplaintTimeDays, maxComplaintTextLimit, maxComplaintResponseTextLimit, communicationEnabled,
+                messagingEnabled, requestMoreFeedbackTimeDays);
+        course.setId(id);
         course.setSemester(DEFAULT_SEMESTER);
-        course.setExercises(exercises);
-        course.setOnlineCourse(false);
-        course.setEnrollmentEnabled(false);
-        course.setPresentationScore(2);
-        course.setAccuracyOfScores(1);
         return course;
     }
 

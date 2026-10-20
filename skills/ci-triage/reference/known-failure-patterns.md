@@ -45,6 +45,28 @@ A `CONFLICTING` pull request starts no `pull_request` workflow run at all.
 conflicts. Note that a stacked pull request has a base other than develop, so check `baseRefName`
 before merging develop into it, or you create exactly this state.
 
+## Latest PR run is pending behind an obsolete E2E run
+
+**Symptom.** The latest CI run is `pending` with no jobs, while an older revision of the same PR
+is still running or waiting for an E2E runner.
+
+**Tell.** Compare both runs' `head_sha` values with the current PR head. Both share the umbrella's
+`ci-pr-<number>` concurrency group. A job-level `always()` in the older workflow can keep its E2E
+job alive despite `cancel-in-progress`, holding the group and delaying the current revision.
+
+**What to do.** Verify that the blocking run belongs to the same PR and has been superseded before
+cancelling it. If ordinary cancellation does not stop it, use GitHub's force-cancel endpoint:
+
+```bash
+gh api --method POST repos/ls1intum/Artemis/actions/runs/<obsolete-run-id>/force-cancel
+```
+
+Confirm that the old run is completed/cancelled and that jobs appear on the current run. A rerun
+of the pending revision is unnecessary. In workflow changes, use job-level `!cancelled()` for
+phases and reporters that must evaluate failed or skipped dependencies. Preserve explicit result
+checks and bounded step-level cleanup; do not replace the condition with implicit `success()`.
+See the [workflow cancellation policy](../../../.github/workflows/README.md#cancellation-of-superseded-pull-request-runs).
+
 ## Checks never appear after a push
 
 **Symptom.** A push landed, the branch is not conflicting, and still nothing starts.
@@ -114,6 +136,49 @@ same topology, so a failure that reproduces only in one of them is expected rath
 
 **What to do.** Compare against develop and against other open pull requests before attributing the
 failure to the branch. See `skills/e2e-pr-check/SKILL.md` for how to run a targeted local check.
+
+## E2E image revision does not match the run
+
+**Symptom.** E2E behavior contradicts the checked-out source, or image verification fails before
+the containers start.
+
+**Tell.** Compare the run's source SHA with the `docker-tag` artifact and the image's
+`org.opencontainers.image.revision` label. Concurrent builds can overwrite `develop` and `pr-*`
+aliases while an older run waits for a runner.
+
+**What to do.** Keep E2E on the producing build's `sha-<full-commit>` tag and retain the revision
+check in `verify-image-revision.sh`. A mismatch is an artifact identity failure; changing test
+expectations cannot fix it.
+
+## E2E global setup fails before any tests run
+
+**Symptom.** The report contains zero test cases and setup reports an unavailable server.
+
+**Tell.** Read the readiness diagnostics for the base URL and every `MULTI_NODE_URLS` member.
+An available login page or one healthy node does not establish readiness of every load-balanced
+core node. A setup failure is not an empty test selection.
+
+**What to do.** Preserve healthy Compose prerequisites and the bounded readiness gate before
+authentication. Inspect the unavailable node's startup log. For failures inside the test runner,
+compare `collection-*.json` with `completion-*.json` in its execution evidence artifact: only a
+successful collection can establish an empty project, and execution must finish every selected
+case without global errors. A nonzero process exit remains a failure even when JUnit contains
+no failing cases or the optional reporter also fails. `runner-status.env` separates completed
+assertion failures from infrastructure failures; missing status or an infrastructure failure
+blocks the overall gate even if another test has known-flaky history.
+
+## Exam cleanup returns 403 after a test timeout
+
+**Symptom.** Exam assertions or setup time out, then teardown cannot delete the exam.
+
+**Tell.** A pending student login can finish after teardown's admin login when both share the
+page's cookie jar. The delete then runs as the student. More delete retries do not change its
+identity.
+
+**What to do.** Use `adminExamAPIRequests` for exam setup and cleanup. Its authenticated API
+context has its own cookie jar and verifies the administrator's identity. Remove irrelevant
+build-result waits from rendering-only fixtures; retain build completion checks where the test
+actually asserts on a result.
 
 ## Helios is unavailable or rejects the E2E credential
 

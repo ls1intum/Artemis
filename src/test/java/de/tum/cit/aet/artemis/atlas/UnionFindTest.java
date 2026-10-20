@@ -80,4 +80,40 @@ class UnionFindTest {
         assertThat(unionFind.inSameSet(2, 4)).isTrue();
         assertThat(unionFind.inSameSet(3, 4)).isTrue();
     }
+
+    @Test
+    void duplicateElementsAndRepeatedUnionPreserveSetCounts() {
+        unionFind.addElement(1);
+        assertThat(unionFind.size()).isEqualTo(5);
+        assertThat(unionFind.numberOfSets()).isEqualTo(5);
+        unionFind.union(1, 2);
+        unionFind.union(2, 1);
+        unionFind.union(1, 1);
+        assertThat(unionFind.numberOfSets()).isEqualTo(4);
+        assertThat(unionFind.inSameSet(1, 2)).isTrue();
+    }
+
+    @Test
+    void mergingUnequalRankTreesPreservesMembershipInEitherArgumentOrder() {
+        unionFind.union(1, 2);
+        unionFind.union(1, 3);
+        unionFind.union(4, 1);
+        assertThat(unionFind.numberOfSets()).isEqualTo(2);
+        assertThat(unionFind.inSameSet(2, 3)).isTrue();
+        assertThat(unionFind.inSameSet(3, 4)).isTrue();
+        assertThat(unionFind.inSameSet(1, 5)).isFalse();
+        assertThat(unionFind.size()).isEqualTo(5);
+    }
+
+    @Test
+    void missingElementsAreRejectedWithoutChangingExistingGroups() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> unionFind.find(9)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("element is not contained");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> unionFind.union(9, 1)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("element1 is not contained");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> unionFind.union(1, 9)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("element2 is not contained");
+        assertThat(unionFind.numberOfSets()).isEqualTo(5);
+        assertThat(unionFind.find(1)).isEqualTo(1);
+    }
+
 }
