@@ -24,7 +24,11 @@
     @if (instance().mode === PresentationAssessmentMode.ONLINE) {
         <div>
             <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
-            <a [href]="instance().meetingLink" target="_blank" rel="noopener noreferrer">{{ instance().meetingLink || '-' }}</a>
+            @if (instance().meetingLink; as meetingLink) {
+                <a [href]="meetingLink" target="_blank" rel="noopener noreferrer">{{ meetingLink }}</a>
+            } @else {
+                -
+            }
         </div>
     } @else {
         <div>
