@@ -180,7 +180,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     loadParticipationWithSubmissionAndResult(participationId: number, submissionId: number, resultId: number): Observable<ProgrammingExerciseStudentParticipation> {
         return this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(participationId).pipe(
             switchMap((participation) => {
-                const submission = participation.submissions?.find((candidate) => candidate.id === submissionId);
+                const submission: ProgrammingSubmission | undefined = participation.submissions?.find((candidate) => candidate.id === submissionId);
                 const result = submission?.results?.find((candidate) => candidate.id === resultId);
                 // Without its commit there is no code to show, and a result the student cannot see is not offered either
                 if (!submission?.commitHash || !result) {
@@ -227,13 +227,18 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     }
 
     /**
-     * Check whether a latestResult exists and if, returns the unreferenced feedback of it
+     * Check whether a latestResult exists and if, returns the unreferenced feedback of it. For an earlier submission this also includes
+     * the AI feedback about a whole file: the editor only shows feedback on a line, and the result control that would open the rest is hidden.
      */
     get unreferencedFeedback(): Feedback[] {
         const latestResult = this.latestResult();
         if (latestResult?.feedbacks) {
             checkSubsequentFeedbackInAssessment(latestResult.feedbacks);
-            return getManualUnreferencedFeedback(latestResult.feedbacks) ?? [];
+            const manualFeedback = getManualUnreferencedFeedback(latestResult.feedbacks) ?? [];
+            if (!this.viewedSubmission()) {
+                return manualFeedback;
+            }
+            return [...manualFeedback, ...latestResult.feedbacks.filter((feedback) => Feedback.isNonGradedFeedbackSuggestion(feedback) && !feedback.reference)];
         }
         return [];
     }

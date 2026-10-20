@@ -730,6 +730,31 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
+    void testRatedResultsForTheGradeLeaveOutRequestedAiFeedback() {
+        // An AI feedback copies the score of a test result, so as the latest rated result it would replace the grade: with a practice
+        // score after the due date, or with the test score after a manual assessment.
+        String login = TEST_PREFIX + "student9";
+        ZonedDateTime now = ZonedDateTime.now();
+        var gradedSubmission = saveProgrammingSubmission(participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login));
+        Result gradedResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusHours(4), gradedSubmission, true, true, 60);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusHours(3), gradedSubmission, true, true, 30);
+
+        var practiceSubmission = saveProgrammingSubmission(participationUtilService.createAndSavePracticeParticipationForExercise(exercise, login));
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusHours(2), practiceSubmission, true, false, 100);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusHours(1), practiceSubmission, true, true, 100);
+
+        long studentId = userUtilService.getUserByLogin(login).getId();
+        assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exercise.getId(), studentId)).extracting(Result::getId)
+                .containsExactly(gradedResult.getId());
+    }
+
+    private ProgrammingSubmission saveProgrammingSubmission(Participation participation) {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        return submissionRepository.save(submission);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithoutAutomaticResult() throws Exception {
 

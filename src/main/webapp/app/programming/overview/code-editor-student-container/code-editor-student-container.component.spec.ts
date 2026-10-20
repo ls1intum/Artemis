@@ -14,7 +14,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { HttpResponse } from '@angular/common/http';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
@@ -111,6 +111,30 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(comp.latestResult()?.id).toBe(72);
             expect(comp.loadingParticipation()).toBe(false);
             expect(comp.participationCouldNotBeFetched()).toBe(false);
+        });
+
+        it('should list the AI feedback about a whole file of an earlier result, but not its feedback on a line or of the tests', () => {
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(participationWithAllResults()));
+            const fileWide: Feedback = { id: 1, type: FeedbackType.AUTOMATIC, text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File Main.java`, detailText: 'Split the class' };
+            const onLine: Feedback = {
+                id: 2,
+                type: FeedbackType.AUTOMATIC,
+                text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Rename the loop variable`,
+                reference: 'file:Main.java_line:3',
+            };
+            const testFeedback: Feedback = { id: 3, type: FeedbackType.AUTOMATIC, text: 'testAdd', positive: false };
+            vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: [fileWide, onLine, testFeedback] })));
+
+            comp.ngOnInit();
+
+            expect(comp.unreferencedFeedback).toEqual([fileWide]);
+        });
+
+        it('should not list AI feedback about a whole file for the latest result, whose result control opens it', () => {
+            const fileWide: Feedback = { id: 1, type: FeedbackType.AUTOMATIC, text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File Main.java` };
+            comp.latestResult.set({ id: 1, feedbacks: [fileWide] });
+
+            expect(comp.unreferencedFeedback).toEqual([]);
         });
 
         it.each([

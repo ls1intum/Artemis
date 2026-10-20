@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseTeamAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ResultOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -269,30 +270,51 @@ public class CourseOverviewExerciseService {
         }
 
         if (exercise.type() == ExerciseType.PROGRAMMING) {
-            if (latestResultRow == null) {
-                ZonedDateTime dueDate = submissionRow.individualDueDate() != null ? submissionRow.individualDueDate() : exercise.dueDate();
-                // The same grace period the grade projections allow, so a submission that counts towards the score is
-                // never hidden from the card that is supposed to show it
-                ZonedDateTime latestAccepted = dueDate == null ? null : dueDate.plusSeconds(Constants.PROGRAMMING_GRACE_PERIOD_SECONDS);
-                boolean submittedInTime = latestAccepted == null || submissionRow.submissionDate() != null && !submissionRow.submissionDate().isAfter(latestAccepted);
-                return submittedInTime ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(), exercise.type())) : Optional.empty();
-            }
-            if (!Boolean.TRUE.equals(latestResultRow.resultRated())) {
-                return Optional.empty();
-            }
-            if (!isManual(latestResultRow.resultAssessmentType()) || isAssessmentDone(exercise, calculationTime) && latestResultRow.resultCompletionDate() != null) {
-                return Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO()), exercise.type()));
-            }
-            ParticipationOverviewRowDTO latestAutomaticResult = submissionRows.stream().filter(CourseOverviewExerciseService::isAutomatic)
-                    .max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId)).orElse(null);
-            return latestAutomaticResult == null ? Optional.empty()
-                    : Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestAutomaticResult.toResultOverviewDTO()), exercise.type()));
+            // A requested AI feedback copies the score of a test result rather than grading the submission, so the result the overview grades by
+            // is chosen among the other results. The latest AI feedback goes along with it, for the views that show it.
+            List<ParticipationOverviewRowDTO> gradedRows = submissionRows.stream().filter(row -> row.resultAssessmentType() != AssessmentType.AUTOMATIC_ATHENA).toList();
+            Optional<ParticipationOverviewRowDTO> latestAiFeedbackRow = submissionRows.stream()
+                    .filter(row -> row.resultId() != null && row.resultAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && Boolean.TRUE.equals(row.resultRated()))
+                    .max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId));
+            return visibleProgrammingSubmission(submissionRow, gradedRows, exercise, calculationTime).map(submission -> latestAiFeedbackRow
+                    .map(aiFeedbackRow -> withResult(submission, aiFeedbackRow.toResultOverviewDTO())).orElse(submission));
         }
 
         if (latestResultRow == null || !Boolean.TRUE.equals(latestResultRow.resultRated()) || !isAssessmentDone(exercise, calculationTime)) {
             return Optional.empty();
         }
         return Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO()), exercise.type()));
+    }
+
+    private Optional<SubmissionOverviewDTO> visibleProgrammingSubmission(ParticipationOverviewRowDTO submissionRow, List<ParticipationOverviewRowDTO> submissionRows,
+            ExerciseForCourseOverviewDTO exercise, ZonedDateTime calculationTime) {
+        ParticipationOverviewRowDTO latestResultRow = submissionRows.stream().filter(row -> row.resultId() != null)
+                .max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId)).orElse(null);
+        if (latestResultRow == null) {
+            ZonedDateTime dueDate = submissionRow.individualDueDate() != null ? submissionRow.individualDueDate() : exercise.dueDate();
+            // The same grace period the grade projections allow, so a submission that counts towards the score is
+            // never hidden from the card that is supposed to show it
+            ZonedDateTime latestAccepted = dueDate == null ? null : dueDate.plusSeconds(Constants.PROGRAMMING_GRACE_PERIOD_SECONDS);
+            boolean submittedInTime = latestAccepted == null || submissionRow.submissionDate() != null && !submissionRow.submissionDate().isAfter(latestAccepted);
+            return submittedInTime ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(), exercise.type())) : Optional.empty();
+        }
+        if (!Boolean.TRUE.equals(latestResultRow.resultRated())) {
+            return Optional.empty();
+        }
+        if (!isManual(latestResultRow.resultAssessmentType()) || isAssessmentDone(exercise, calculationTime) && latestResultRow.resultCompletionDate() != null) {
+            return Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO()), exercise.type()));
+        }
+        ParticipationOverviewRowDTO latestAutomaticResult = submissionRows.stream().filter(CourseOverviewExerciseService::isAutomatic)
+                .max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId)).orElse(null);
+        return latestAutomaticResult == null ? Optional.empty()
+                : Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestAutomaticResult.toResultOverviewDTO()), exercise.type()));
+    }
+
+    private static SubmissionOverviewDTO withResult(SubmissionOverviewDTO submission, ResultOverviewDTO result) {
+        List<ResultOverviewDTO> results = new ArrayList<>(submission.results() == null ? List.of() : submission.results());
+        results.add(result);
+        return new SubmissionOverviewDTO(submission.id(), submission.submissionDate(), submission.submitted(), submission.type(), submission.submissionExerciseType(),
+                submission.buildFailed(), submission.commitHash(), results);
     }
 
     private Set<ParticipationResultDTO> buildParticipationResults(Map<Long, List<ParticipationOverviewRowDTO>> rowsByParticipationId, Collection<CourseGradeScoreDTO> gradeScores) {
