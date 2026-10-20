@@ -858,6 +858,27 @@ describe('CourseConversationsService', () => {
             pending.complete();
         });
 
+        it.each([false, true])('keeps the authoritative manual unread count when an older read fails (navigate: %s)', (navigate) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const pending = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
+            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 3);
+            if (navigate) {
+                courseConversationsService.setActiveConversation(groupChat);
+            }
+
+            pending.error(new Error('older read failed'));
+
+            expect(cachedUnreadCount(channel.id)).toBe(3);
+            if (!navigate) {
+                expect(courseConversationsService['activeConversation']?.hasUnreadMessage).toBe(true);
+                expect(courseConversationsService['isMarkedAsUnread']).toBe(true);
+            }
+        });
+
         it('does not clear another conversation when a previous read completes after navigation', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
             courseConversationsService.setConversationViewOpen(true);

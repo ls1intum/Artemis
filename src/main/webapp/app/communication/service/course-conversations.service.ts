@@ -69,7 +69,7 @@ export class CourseConversationsService implements OnDestroy {
     private isConversationViewOpen = false;
     // Per conversation, the number of the last read request sent, and the numbers of the newest one that succeeded and that failed. Read requests of
     // the same conversation can complete out of order, and only the newest outcome describes the count the server holds.
-    private readRequests = new Map<number, { sent: number; succeeded: number; failed: number }>();
+    private readRequests = new Map<number, { sent: number; succeeded: number; failed: number; unreadRevision: number }>();
     // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -241,6 +241,10 @@ export class CourseConversationsService implements OnDestroy {
     }
 
     public updateConversationUnreadState(conversationId: number | undefined, lastReadDate: dayjs.Dayjs | undefined, unreadMessagesCount: number | undefined) {
+        if (conversationId !== undefined) {
+            // The server recalculated this count. Earlier automatic reads must not alter its new baseline.
+            this.readRequestsOf(conversationId).unreadRevision++;
+        }
         if (this.activeConversation && this.activeConversation?.id === conversationId) {
             this.activeConversation.lastReadDate = lastReadDate;
             this.activeConversation.unreadMessagesCount = unreadMessagesCount;
@@ -542,7 +546,7 @@ export class CourseConversationsService implements OnDestroy {
     private readRequestsOf(conversationId: number) {
         let readRequest = this.readRequests.get(conversationId);
         if (!readRequest) {
-            readRequest = { sent: 0, succeeded: 0, failed: 0 };
+            readRequest = { sent: 0, succeeded: 0, failed: 0, unreadRevision: 0 };
             this.readRequests.set(conversationId, readRequest);
         }
         return readRequest;
@@ -598,8 +602,12 @@ export class CourseConversationsService implements OnDestroy {
                     const conversationId = conversationDTO.id!;
                     const readRequest = this.readRequestsOf(conversationId);
                     const requestNumber = ++readRequest.sent;
+                    const unreadRevision = readRequest.unreadRevision;
                     this.conversationService.markAsRead(this._courseId, conversationId).subscribe({
                         next: () => {
+                            if (readRequest.unreadRevision !== unreadRevision) {
+                                return;
+                            }
                             readRequest.succeeded = Math.max(readRequest.succeeded, requestNumber);
                             // A newer read that failed left a count on the server, which a delayed older success must not hide.
                             const isSupersededByFailure = readRequest.failed > requestNumber;
@@ -614,7 +622,7 @@ export class CourseConversationsService implements OnDestroy {
                         error: () => {
                             // A newer read, or the messages request that covers this one, already reset the count on the server, so this failure no
                             // longer describes it. A request cannot both succeed and fail, so its own number is never recorded as succeeded.
-                            if (readRequest.succeeded >= requestNumber) {
+                            if (readRequest.unreadRevision !== unreadRevision || readRequest.succeeded >= requestNumber) {
                                 return;
                             }
                             readRequest.failed = Math.max(readRequest.failed, requestNumber);
