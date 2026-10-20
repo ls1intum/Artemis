@@ -153,7 +153,7 @@ public class ProgrammingTriggerService {
      * waits keeps its thread for as long as that takes.
      * <p>
      * The clients learn that the run is done through a message that names it, also if it fails, so that their retry action can stay
-     * busy until then without mistaking the end of another run of the exercise for it. The end is also recorded, see
+     * busy until then without mistaking the end of another run of the exercise for it. The run is also recorded while it goes on, see
      * {@link SelectedBuildRunStatusService}, for a client that was disconnected when the message was sent.
      *
      * @param triggerData what a trigger reads off each participation that is to be built, newest submission included
@@ -170,14 +170,9 @@ public class ProgrammingTriggerService {
             triggerBuildForParticipationData(triggerData, exercise);
         }
         finally {
-            // The status first: a client that gets the message and asks for the status must find the run completed. A store that cannot be
-            // written must not keep the message from the clients that are connected.
-            try {
-                selectedBuildRunStatusService.markCompleted(runId, exercise.getId());
-            }
-            catch (RuntimeException e) {
-                log.warn("Could not record that the run {} of the exercise {} is completed, clients that miss the message cannot find out", runId, exercise.getId(), e);
-            }
+            // The status first: a client that gets the message and asks for the status must find the run ended. The status service does not throw,
+            // so the message is sent even if the store cannot be written.
+            selectedBuildRunStatusService.markEnded(runId);
             programmingMessagingService.notifyAboutCompletedSelectedBuildRun(exercise, runId);
         }
     }

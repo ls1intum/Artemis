@@ -19,10 +19,10 @@ export interface SelectedBuildRun {
 }
 
 /**
- * Whether a run that queues the builds of selected participations has queued its last build. A run the server does not know, because it is still going on or ended long ago, is not completed.
+ * Whether a run that queues the builds of selected participations is still going on. A run the server does not know, because it ended or was forgotten, is not running.
  */
 export interface SelectedBuildRunStatus {
-    completed: boolean;
+    running: boolean;
 }
 
 export interface IProgrammingBuildRunService {

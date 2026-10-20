@@ -98,7 +98,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 getBuildRunStateSubject = new Subject<BuildRunState>();
                 vi.spyOn(buildRunService, 'getBuildRunUpdates').mockReturnValue(getBuildRunStateSubject);
 
-                getSelectedBuildRunStatusStub = vi.spyOn(submissionService, 'getSelectedBuildRunStatus').mockReturnValue(of({ completed: false }));
+                getSelectedBuildRunStatusStub = vi.spyOn(submissionService, 'getSelectedBuildRunStatus').mockReturnValue(of({ running: true }));
                 connectionStateSubject = new Subject<ConnectionState>();
                 vi.spyOn(TestBed.inject(WebsocketService), 'connectionState', 'get').mockReturnValue(connectionStateSubject);
 
@@ -383,9 +383,9 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 await vi.advanceTimersByTimeAsync(0);
             };
 
-            it('should ask the server for the status of the run when the websocket connection is back and become available if it completed', async () => {
+            it('should ask the server for the status of the run when the websocket connection is back and become available if it is not running any more', async () => {
                 await startRun();
-                getSelectedBuildRunStatusStub.mockReturnValue(of({ completed: true } as SelectedBuildRunStatus));
+                getSelectedBuildRunStatusStub.mockReturnValue(of({ running: false } as SelectedBuildRunStatus));
 
                 connectionStateSubject.next(new ConnectionState(true, true));
                 await vi.advanceTimersByTimeAsync(0);
@@ -394,7 +394,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 expect(comp.isBuildingFailedSubmissions()).toBe(false);
             });
 
-            it('should stay busy when the status says that the run is still going on, and ask again after a while', async () => {
+            it('should stay busy when the status says that the run is still running, and ask again after a while', async () => {
                 await startRun();
 
                 connectionStateSubject.next(new ConnectionState(true, true));
@@ -402,7 +402,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 expect(getSelectedBuildRunStatusStub).toHaveBeenCalledTimes(1);
                 expect(comp.isBuildingFailedSubmissions()).toBe(true);
 
-                getSelectedBuildRunStatusStub.mockReturnValue(of({ completed: true } as SelectedBuildRunStatus));
+                getSelectedBuildRunStatusStub.mockReturnValue(of({ running: false } as SelectedBuildRunStatus));
                 await vi.advanceTimersByTimeAsync(30000);
 
                 expect(getSelectedBuildRunStatusStub).toHaveBeenCalledTimes(2);
@@ -416,7 +416,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 await vi.advanceTimersByTimeAsync(30000);
                 expect(comp.isBuildingFailedSubmissions()).toBe(true);
 
-                getSelectedBuildRunStatusStub.mockReturnValue(of({ completed: true } as SelectedBuildRunStatus));
+                getSelectedBuildRunStatusStub.mockReturnValue(of({ running: false } as SelectedBuildRunStatus));
                 await vi.advanceTimersByTimeAsync(30000);
 
                 expect(comp.isBuildingFailedSubmissions()).toBe(false);

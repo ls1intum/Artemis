@@ -350,9 +350,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
             verify(websocketMessagingService).sendMessage(topic(completionTopic), eq(secondRun));
         });
 
-        // A client that missed the message can ask for the status, and finds both runs completed.
-        assertThat(selectedBuildRunStatus(firstRun.runId()).completed()).isTrue();
-        assertThat(selectedBuildRunStatus(secondRun.runId()).completed()).isTrue();
+        // A client that missed the message can ask for the status, and finds both runs ended.
+        assertThat(selectedBuildRunStatus(firstRun.runId()).running()).isFalse();
+        assertThat(selectedBuildRunStatus(secondRun.runId()).running()).isFalse();
 
         // Note: the participations above have no submissions, so the builds will not be triggered
         assertThat(submissionRepository.findAllByParticipationIdWithResults(participation1.getId())).isEmpty();
@@ -361,24 +361,28 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getSelectedBuildRunStatus_ofARunThatIsNotKnown_isNotCompleted() throws Exception {
-        assertThat(selectedBuildRunStatus("a-run-nobody-started").completed()).isFalse();
+    void getSelectedBuildRunStatus_ofARunThatIsNotKnown_isNotRunning() throws Exception {
+        // A run that ended, expired or never existed must not keep a client waiting.
+        assertThat(selectedBuildRunStatus("a-run-nobody-started").running()).isFalse();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getSelectedBuildRunStatus_ofACompletedRun_isCompleted() throws Exception {
-        selectedBuildRunStatusService.markCompleted("a-finished-run", exercise.getId());
+    void getSelectedBuildRunStatus_ofARunThatGoesOn_isRunningUntilItEnds() throws Exception {
+        selectedBuildRunStatusService.markStarted("a-running-run", exercise.getId());
+        assertThat(selectedBuildRunStatus("a-running-run").running()).isTrue();
 
-        assertThat(selectedBuildRunStatus("a-finished-run").completed()).isTrue();
+        selectedBuildRunStatusService.markEnded("a-running-run");
+
+        assertThat(selectedBuildRunStatus("a-running-run").running()).isFalse();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getSelectedBuildRunStatus_ofARunOfAnotherExercise_isNotCompleted() throws Exception {
-        selectedBuildRunStatusService.markCompleted("a-run-of-another-exercise", exercise.getId() + 1);
+    void getSelectedBuildRunStatus_ofARunOfAnotherExercise_isNotRunning() throws Exception {
+        selectedBuildRunStatusService.markStarted("a-run-of-another-exercise", exercise.getId() + 1);
 
-        assertThat(selectedBuildRunStatus("a-run-of-another-exercise").completed()).isFalse();
+        assertThat(selectedBuildRunStatus("a-run-of-another-exercise").running()).isFalse();
     }
 
     @Test

@@ -471,10 +471,10 @@ class ProgrammingTriggerServiceTest {
         // The retry action of the client stays busy until its own run has queued the last build, which it learns from this message.
         programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1");
 
-        // The status is recorded before the message, so a client that gets the message and asks for the status finds the run completed.
+        // The end is recorded before the message, so a client that gets the message and asks for the status finds the run ended.
         InOrder inOrder = inOrder(programmingMessagingService, continuousIntegrationTriggerService, selectedBuildRunStatusService);
         inOrder.verify(continuousIntegrationTriggerService).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
-        inOrder.verify(selectedBuildRunStatusService).markCompleted("run-1", EXERCISE_ID);
+        inOrder.verify(selectedBuildRunStatusService).markEnded("run-1");
         inOrder.verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
         // The run of all builds sends the notification to the instructors, a rebuild of a few participations does not.
         verify(programmingMessagingService, never()).notifyInstructorAboutStartedExerciseBuildRun(any());
@@ -500,16 +500,7 @@ class ProgrammingTriggerServiceTest {
                 .isThrownBy(() -> programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1"));
 
         verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
-        verify(selectedBuildRunStatusService).markCompleted("run-1", EXERCISE_ID);
-    }
-
-    @Test
-    void triggerInstructorBuildForParticipations_stillAnnouncesTheEndOfTheRunWhenTheStatusCannotBeRecorded() {
-        doThrow(new IllegalStateException("the distributed store is unreachable")).when(selectedBuildRunStatusService).markCompleted("run-1", EXERCISE_ID);
-
-        programmingTriggerService.triggerInstructorBuildForParticipations(List.of(triggerData(1L, false)), exercise, "run-1");
-
-        verify(programmingMessagingService).notifyAboutCompletedSelectedBuildRun(exercise, "run-1");
+        verify(selectedBuildRunStatusService).markEnded("run-1");
     }
 
     @Test

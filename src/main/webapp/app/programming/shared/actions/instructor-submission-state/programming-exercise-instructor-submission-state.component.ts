@@ -117,7 +117,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
                                       catchError(() => EMPTY),
                                   ),
                               ),
-                              filter((status) => status.completed),
+                              filter((status) => !status.running),
                               take(1),
                               map(() => runId),
                           ),

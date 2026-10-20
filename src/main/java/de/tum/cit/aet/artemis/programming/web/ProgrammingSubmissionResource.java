@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -280,25 +282,29 @@ public class ProgrammingSubmissionResource {
                 programmingExercise.getId());
         var triggerData = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseIdAndParticipationIds(exerciseId, participationIds);
         var run = new SelectedBuildRunDTO(UUID.randomUUID().toString());
+        // Before the run is handed over, so that a client that polls right after the response finds it going on.
+        selectedBuildRunStatusService.markStarted(run.runId(), exerciseId);
         programmingTriggerService.triggerInstructorBuildForParticipations(triggerData, programmingExercise, run.runId());
 
         return ResponseEntity.ok(run);
     }
 
     /**
-     * GET programming-exercises/:exerciseId/selected-build-runs/:selectedBuildRunId : tells whether a run that queues the builds of selected participations has ended.
+     * GET programming-exercises/:exerciseId/selected-build-runs/:selectedBuildRunId : tells whether a run that queues the builds of selected participations is still going on.
      * <p>
      * The end of a run is also announced with a websocket message. A client that was disconnected at that moment asks here instead.
-     * The server remembers an ended run for a limited time, so a run that is unknown is reported as not completed.
+     * Only a run that is going on is running, so a run that ended or that the server does not know is reported as not running.
      *
      * @param exerciseId         the programming exercise the run belongs to.
      * @param selectedBuildRunId the run, as returned by the request that started it.
      * @return the status of the run, forbidden (403) if the user is not an instructor of the exercise.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("programming-exercises/{exerciseId}/selected-build-runs/{selectedBuildRunId}")
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<SelectedBuildRunStatusDTO> getSelectedBuildRunStatus(@PathVariable Long exerciseId, @PathVariable String selectedBuildRunId) {
-        return ResponseEntity.ok(new SelectedBuildRunStatusDTO(selectedBuildRunStatusService.isCompleted(selectedBuildRunId, exerciseId)));
+        return ResponseEntity.ok(new SelectedBuildRunStatusDTO(selectedBuildRunStatusService.isActive(selectedBuildRunId, exerciseId)));
     }
 
     /**
