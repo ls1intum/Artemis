@@ -55,6 +55,14 @@ contract suite `AbstractDistributedDataTest`, which every provider runs:
 `putIfAbsent`, `remove(key, value)` and `computeIfAbsent` on a map are genuine atomics and are the right way to claim a
 job slot from exactly one node.
 
+Redis implements `replace(key, expected, replacement)` and `remove(key, value)` by comparing the encoded bytes of
+`expected` with the stored bytes, while Hazelcast and the local provider use `equals`. A value that was read from the map
+therefore only works as `expected` if encoding it again reproduces the stored bytes. `Map.copyOf`, `Map.of` and the
+other immutable maps do not: their iteration order depends on a random per-JVM salt, so a map with two or more entries
+is written in another order after a round trip, and the operation fails every time. A retry loop around it never ends.
+Copy a `Map` component of such a value with `CanonicalMaps.copyOf`, which sorts by key, and do not use a `Set` or a
+`HashMap` there. `DistributedValueEncodingStabilityTest` checks the live-save slot and the generation baseline.
+
 <Callout variant={CalloutVariant.warning}>
   A provider-level map configuration is not a substitute for asking for what you need. A Hazelcast <code>MapConfig</code>
   time-to-live applies on Hazelcast only, and silently does nothing on Redis. Request the lifetime at the call site with
