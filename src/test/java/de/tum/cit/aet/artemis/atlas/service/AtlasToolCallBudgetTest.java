@@ -267,6 +267,59 @@ class AtlasToolCallBudgetTest {
         assertThat(extracts).hasValue(2);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "[]", "{\"error\":\"index unavailable\"}", "{\"competencies\":[]}" })
+    void onlySuccessfulObjectIndexCanVerifyCompletion(String index) {
+        var budget = new AtlasToolCallBudget();
+        decorate(callback("listCompetencyIndex", () -> index), budget).call("{}");
+        if (index.equals("{\"competencies\":[]}")) {
+            budget.complete(true, "Verified empty course");
+            assertThat(budget.completion().verified()).isTrue();
+            assertThat(budget.completion().message()).isEqualTo("Verified empty course");
+        }
+        else {
+            assertThatThrownBy(() -> budget.complete(true, "Verified")).isInstanceOf(IllegalStateException.class).hasMessageContaining("successful index refresh");
+            assertThat(budget.completion()).isNull();
+            budget.complete(false, "Could not refresh index");
+            assertThat(budget.completion().verified()).isFalse();
+        }
+    }
+
+    @Test
+    void completionWaitsForActiveMutationAndUnbudgetedContentIsNotCached() {
+        var budget = new AtlasToolCallBudget();
+        var mutation = decorate(callback("createCompetency", () -> {
+            assertThatThrownBy(() -> budget.complete(false, "Still writing")).isInstanceOf(IllegalStateException.class).hasMessageContaining("Wait for active work");
+            return "created";
+        }), budget);
+        assertThat(mutation.call("{}")).contains("created");
+        assertThat(budget.completion()).isNull();
+        budget.complete(false, "Applied but not verified");
+        assertThat(budget.completion().message()).isEqualTo("Applied but not verified");
+        AtomicInteger extracts = new AtomicInteger();
+        Supplier<ExtractedContentDTO> extract = () -> new ExtractedContentDTO("Content " + extracts.incrementAndGet(), "text", Map.of());
+        var first = AtlasToolCallBudget.content(null, "exercise:1", extract);
+        var second = AtlasToolCallBudget.content(null, "exercise:1", extract);
+        assertThat(extracts).hasValue(2);
+        assertThat(first.title()).isEqualTo("Content 1");
+        assertThat(second.title()).isEqualTo("Content 2");
+    }
+
+    @Test
+    void blockedWorkWithoutModelWrapUpUsesDeterministicBudgetSummary() {
+        Map<String, Object> context = new HashMap<>();
+        var budget = AtlasToolCallBudget.budgetForContext(context);
+        var write = decorate(callback("createCompetency", new AtomicInteger(), false), budget);
+        for (int i = 0; i <= AtlasToolCallBudget.WRAP_UP_AT; i++) {
+            write.call("{}");
+        }
+        assertThatThrownBy(() -> AtlasToolCallBudget.checkResponse(null, context)).isInstanceOfSatisfying(AtlasToolCallBudget.LimitReachedException.class,
+                failure -> assertThat(failure.summary()).contains("Applied changes are retained", "No automatic replay"));
+        assertThatThrownBy(() -> AtlasToolCallBudget.checkResponse(new ChatResponse(List.of()), context)).isInstanceOfSatisfying(AtlasToolCallBudget.LimitReachedException.class,
+                failure -> assertThat(failure.summary()).contains("Applied changes are retained"));
+        assertThat(new AtlasToolCallBudget.LimitReachedException("  ").summary()).contains("Applied changes are retained");
+    }
+
     private static ToolCallback decorate(ToolCallback callback, AtlasToolCallBudget budget) {
         return AtlasToolCallBudget.decorate(ToolCallbackProvider.from(callback), budget).getToolCallbacks()[0];
     }
