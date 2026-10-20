@@ -232,15 +232,20 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     private getAiFeedbackCodeReference(feedback: Feedback): FeedbackItemCodeReference | undefined {
         const filePath = Feedback.getReferenceFilePath(feedback);
         const lineRange = Feedback.getReferenceLineRange(feedback);
-        // AI feedback numbers its lines from 1 (the server and the Athena service only create references with a line above 0),
-        // unlike the 0-based inline feedback of the code editor, so line 0 is no line of an AI feedback
-        if (!filePath || !lineRange || lineRange.start < 1) {
+        // A non-graded suggestion keeps Athena's 0-based lines, like the inline feedback of the code editor, so line 0 is its first line.
+        // Graded AI feedback numbers its lines from 1 (the Athena service only creates references with a line above 0).
+        // The panel counts from 1.
+        const isNonGraded = Feedback.isNonGradedFeedbackSuggestion(feedback);
+        const firstLine = isNonGraded ? 0 : 1;
+        if (!filePath || !lineRange || lineRange.start < firstLine) {
             return undefined;
         }
-        const legacyLineEnd = Feedback.isNonGradedFeedbackSuggestion(feedback) ? this.getLegacyAiFeedbackLineEnd(feedback, filePath, lineRange.start) : undefined;
-        const lineEnd = legacyLineEnd ?? lineRange.end;
-        const codeReference: FeedbackItemCodeReference = { filePath, line: lineRange.start };
-        if (lineEnd !== lineRange.start) {
+        const legacyLineEnd = isNonGraded ? this.getLegacyAiFeedbackLineEnd(feedback, filePath, lineRange.start) : undefined;
+        const offset = 1 - firstLine;
+        const line = lineRange.start + offset;
+        const lineEnd = (legacyLineEnd ?? lineRange.end) + offset;
+        const codeReference: FeedbackItemCodeReference = { filePath, line };
+        if (lineEnd !== line) {
             codeReference.lineEnd = lineEnd;
         }
         return codeReference;

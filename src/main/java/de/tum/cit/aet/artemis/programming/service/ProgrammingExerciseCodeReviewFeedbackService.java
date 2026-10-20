@@ -163,7 +163,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         else {
                             feedbackText = "File %s".formatted(filePath);
                         }
-                        feedback.setText(NON_GRADED_FEEDBACK_SUGGESTION + feedbackText);
+                        feedback.setText(StringUtils.abbreviate(NON_GRADED_FEEDBACK_SUGGESTION + feedbackText, MAX_FEEDBACK_TEXT_LENGTH));
                         feedback.setDetailText(individualFeedbackItem.description());
                         feedback.setHasLongFeedbackText(false);
                         feedback.setType(FeedbackType.AUTOMATIC);
