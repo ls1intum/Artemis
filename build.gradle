@@ -206,6 +206,11 @@ modernizer {
 }
 
 gitProperties {
+    if (project.hasProperty('reproducible')) {
+        // Keep stable revision/author information used at runtime; omit machine and builder identity.
+        keys = ['git.branch', 'git.commit.id', 'git.commit.id.abbrev', 'git.commit.id.describe', 'git.commit.time', 'git.commit.user.name', 'git.commit.user.email', 'git.build.version']
+        dateFormatTimeZone = 'UTC'
+    }
     // Only override branch when CI (= env variable present)
     def ciBranch = System.getenv('GIT_BRANCH')
     if (ciBranch) {
@@ -218,6 +223,10 @@ gitProperties {
         customProperty 'git.commit.id', ciCommit
         customProperty 'git.commit.id.abbrev', ciCommit.take(7)
     }
+}
+
+tasks.named('generateGitProperties') {
+    inputs.property('reproducible', project.hasProperty('reproducible'))
 }
 
 // Override Spring Boot BOM versions to patched releases addressing known CVEs:
