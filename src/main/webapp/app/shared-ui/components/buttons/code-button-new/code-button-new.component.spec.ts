@@ -135,6 +135,18 @@ describe('CodeButtonNewComponent', () => {
         expect(component['showAlternatives']()).toBe(false);
     });
 
+    it('should disable only trigger if disabled input is set', async () => {
+        createComponent(false);
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button-new"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.disabled).toBe(true);
+
+        fixture.componentRef.setInput('disabled', false);
+        fixture.detectChanges();
+        expect(trigger.disabled).toBe(false);
+    });
+
     describe('VCS access token', () => {
         const createdToken = 'new-vcpat-test-token';
         const repositoryTokenCases: {

@@ -52,6 +52,7 @@ export class CodeButtonNewComponent {
     readonly repositoryViewLink = input.required<(string | number)[]>();
     readonly allowOnlineIde = input.required<boolean>();
     readonly programmingLanguage = input<ProgrammingLanguage>();
+    readonly disabled = input(false);
 
     private readonly theiaDisabled = computed(() => !this.allowOnlineIde() || !this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA));
     protected readonly loadingState = computed(() => this.getLoadingState());

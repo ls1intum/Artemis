@@ -3,19 +3,15 @@
         type="button"
         tumAetUiButton
         [attr.aria-label]="'artemisApp.exerciseActions.code' | artemisTranslate"
-        [disabled]="loading() || !programmingExercisesEnabled()"
+        [disabled]="disabled() || !programmingExercisesEnabled()"
         [size]="smallButtons() ? 'small' : 'default'"
         [tumAetUiPopoverTrigger]="popoverContent"
         data-testid="code-button"
         (click)="onClick()"
     >
-        @if (loading()) {
-            <fa-icon [icon]="faCircleNotch" animation="spin" />
-        } @else {
-            <fa-icon [icon]="faCode" />
-            @if (displayLabel()) {
-                {{ 'artemisApp.exerciseActions.code' | artemisTranslate }}
-            }
+        <fa-icon [icon]="faCode" />
+        @if (displayLabel()) {
+            {{ 'artemisApp.exerciseActions.code' | artemisTranslate }}
         }
     </button>
     <tumaet-ui-popover #popoverContent [ariaLabel]="'artemisApp.exerciseActions.codePopoverAriaLabel' | artemisTranslate" placement="bottom">

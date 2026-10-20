@@ -149,7 +149,7 @@
                 @if (shouldDisplayIDEButtons()) {
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
-                            [loading]="isLoading()"
+                            [disabled]="isLoading()"
                             [smallButtons]="smallButtons()"
                             [programmingLanguage]="programmingExercise()?.programmingLanguage"
                             [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
@@ -160,6 +160,7 @@
                             [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"
                         />
                         <jhi-code-button-new
+                            [disabled]="isLoading()"
                             [exerciseId]="exercise().id!"
                             [repositoryUri]="repositoryUriForCodeButton()"
                             [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"

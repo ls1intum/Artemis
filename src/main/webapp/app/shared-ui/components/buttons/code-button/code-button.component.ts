@@ -13,7 +13,7 @@ import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 
-import { faCircleNotch, faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
@@ -92,7 +92,6 @@ export class CodeButtonComponent implements OnInit {
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
 
     // Icons
-    readonly faCircleNotch = faCircleNotch;
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
     readonly faLaptopCode = faLaptopCode;
@@ -120,7 +119,7 @@ export class CodeButtonComponent implements OnInit {
     hideLabelMobile = input<boolean>(false);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
     smallButtons = input.required<boolean>();
-    loading = input<boolean>(false);
+    disabled = input<boolean>(false);
 
     isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
     user = signal<User | undefined>(undefined);

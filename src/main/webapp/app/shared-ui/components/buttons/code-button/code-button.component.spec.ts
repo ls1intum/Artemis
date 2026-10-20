@@ -136,6 +136,14 @@ describe('CodeButtonComponent', () => {
         expect(getCachedSshKeysSpy).toHaveBeenCalled();
     });
 
+    it('should disable the code button', () => {
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+
+        const button = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+        expect(button.disabled).toBe(true);
+    });
+
     it('should default to token authentication when password was stored in local storage', async () => {
         localStorageState = RepositoryAuthenticationMethod.Password;
         fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: participation.id!, isOwnParticipation: true });

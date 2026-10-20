@@ -2,6 +2,7 @@
     type="button"
     tumAetUiButton
     [attr.aria-label]="'artemisApp.exerciseActions.code' | artemisTranslate"
+    [disabled]="disabled()"
     [tumAetUiPopoverTrigger]="popoverContent"
     data-testid="code-button-new"
 >
