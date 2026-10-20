@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.web.CoreWebsocketTopics.FEATURE_TOGGLES;
 
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,8 +59,8 @@ public class FeatureToggleService {
     /**
      * Features whose functionality was removed. Each one stays in {@link Feature} only so that the constants after it keep
      * their position, because Redis stores the feature map keys by enum position. A retired feature is removed from the map
-     * at startup and is never reported as enabled, whatever an older node or an API call stored for it. Remove the
-     * constant itself together with the next {@code DistributedDataSchema} version bump.
+     * at startup, writes for it are ignored, and it is never reported as enabled, whatever an older node stored for it.
+     * Remove the constant itself together with the next {@code DistributedDataSchema} version bump.
      */
     private static final Set<Feature> RETIRED_FEATURES = EnumSet.of(Feature.Memiris);
 
@@ -181,6 +182,9 @@ public class FeatureToggleService {
      * @param feature The feature that should be enabled
      */
     public void enableFeature(Feature feature) {
+        if (RETIRED_FEATURES.contains(feature)) {
+            return;
+        }
         getFeatures().ifPresent(features -> {
             getFeaturesMap().put(feature, true);
             sendUpdate();
@@ -193,6 +197,9 @@ public class FeatureToggleService {
      * @param feature The feature that should be disabled
      */
     public void disableFeature(Feature feature) {
+        if (RETIRED_FEATURES.contains(feature)) {
+            return;
+        }
         getFeatures().ifPresent(features -> {
             getFeaturesMap().put(feature, false);
             sendUpdate();
@@ -206,8 +213,10 @@ public class FeatureToggleService {
      * @param updatedFeatures A map of features (feature -> shouldBeActivated)
      */
     public void updateFeatureToggles(final Map<Feature, Boolean> updatedFeatures) {
+        Map<Feature, Boolean> activeFeatures = new HashMap<>(updatedFeatures);
+        activeFeatures.keySet().removeAll(RETIRED_FEATURES);
         getFeatures().ifPresent(features -> {
-            getFeaturesMap().putAll(updatedFeatures);
+            getFeaturesMap().putAll(activeFeatures);
             sendUpdate();
         });
     }

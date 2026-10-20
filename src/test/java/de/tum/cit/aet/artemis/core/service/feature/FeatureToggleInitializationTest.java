@@ -74,7 +74,7 @@ class FeatureToggleInitializationTest {
 
     /**
      * Memiris was removed but keeps its enum position for the Redis key encoding. A value an older node stored for it is
-     * dropped at startup, and nothing written afterwards makes it look enabled again.
+     * dropped at startup, writes for it are ignored, and a value an older node writes later never makes it look enabled.
      */
     @Test
     void aRetiredFeatureIsRemovedAtStartupAndNeverReportedAsEnabled() {
@@ -88,9 +88,16 @@ class FeatureToggleInitializationTest {
         assertThat(map.containsKey(Feature.Memiris)).isFalse();
 
         service.enableFeature(Feature.Memiris);
+        service.disableFeature(Feature.Memiris);
+        service.updateFeatureToggles(Map.of(Feature.Memiris, true, Feature.Science, true));
+        assertThat(map.containsKey(Feature.Memiris)).isFalse();
+        assertThat(service.isFeatureEnabled(Feature.Science)).isTrue();
+
+        // An older node that still knows the feature can write it directly to the shared map
+        map.put(Feature.Memiris, true);
         assertThat(service.isFeatureEnabled(Feature.Memiris)).isFalse();
         assertThat(service.enabledFeatures()).doesNotContain(Feature.Memiris);
-        service.disableFeature(Feature.Memiris);
+        map.put(Feature.Memiris, false);
         assertThat(service.disabledFeatures()).doesNotContain(Feature.Memiris);
     }
 
