@@ -24,8 +24,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 /**
  * Spring Data repository for the quiz question pool.
  * <p>
- * State transitions out of a claimed state go through conditional updates that name the state they expect, so two nodes
- * working the same pool never act on the same item twice.
+ * Claims name the state and the version they expect, and every write increments the version, so a worker whose claim another
+ * node released as stale and took over cannot overwrite the newer state. A model call that outlasts the stale-claim age can still
+ * be repeated by the node that took the item over; the earlier worker's result is then discarded.
  */
 @Lazy
 @Repository
