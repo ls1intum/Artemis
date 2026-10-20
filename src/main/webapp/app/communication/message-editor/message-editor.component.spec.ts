@@ -9,6 +9,7 @@ import { MessageEditorResources } from './message-editor-resources';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { By } from '@angular/platform-browser';
 import { OverlayRef } from '@angular/cdk/overlay';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('Formatted message composer', () => {
     let fixture: ComponentFixture<MessageEditorComponent>;
@@ -77,6 +78,16 @@ describe('Formatted message composer', () => {
         toggleToolbar();
         expect(button.getAttribute('aria-expanded')).toBe('false');
         expect(advanced.hidden).toBe(true);
+    });
+
+    it('gives every toolbar button a visible tooltip instead of relying on the native title attribute', () => {
+        toggleToolbar();
+        const buttons = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="message-editor-toolbar"] button')) as HTMLButtonElement[];
+        const tooltips = fixture.debugElement.queryAll(By.directive(TumAetUiTooltipDirective)).map((debugElement) => debugElement.nativeElement as HTMLElement);
+
+        expect(buttons.length).toBeGreaterThan(10);
+        expect(tooltips).toEqual(expect.arrayContaining(buttons));
+        buttons.forEach((button) => expect(button.hasAttribute('title')).toBe(false));
     });
 
     it('keeps advanced control IDs unique for simultaneously mounted composers', () => {

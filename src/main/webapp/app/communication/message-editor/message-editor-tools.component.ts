@@ -17,7 +17,7 @@ import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFaceSmile, faFileArrowUp, faFileCircleQuestion, faFilePowerpoint } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -38,7 +38,17 @@ export interface MessageResourceInsertion {
 @Component({
     selector: 'jhi-message-editor-tools',
     templateUrl: './message-editor-tools.component.html',
-    imports: [ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, CdkConnectedOverlay, CdkOverlayOrigin, CdkTrapFocus, EmojiPickerComponent],
+    imports: [
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiTooltipDirective,
+        CdkConnectedOverlay,
+        CdkOverlayOrigin,
+        CdkTrapFocus,
+        EmojiPickerComponent,
+    ],
     providers: [MessageEditorResources],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

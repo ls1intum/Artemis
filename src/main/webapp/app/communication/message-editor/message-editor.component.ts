@@ -17,7 +17,7 @@ import {
     faUnderline,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { MessageCompletion, MessageEditorDom } from './message-editor-dom';
@@ -30,7 +30,7 @@ import { MessageEditorToolsComponent, MessageResourceInsertion } from './message
     selector: 'jhi-message-editor',
     templateUrl: './message-editor.component.html',
     styleUrl: './message-editor.component.scss',
-    imports: [ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, CdkConnectedOverlay, MessageEditorToolsComponent],
+    imports: [ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective, CdkConnectedOverlay, MessageEditorToolsComponent],
     providers: [MessageEditorSuggestions],
     encapsulation: ViewEncapsulation.None,
     host: { '(keydown)': 'toolbarKeydown($event)', '(document:selectionchange)': 'updateSelectionState()', '(window:resize)': 'dismissSuggestions()' },
