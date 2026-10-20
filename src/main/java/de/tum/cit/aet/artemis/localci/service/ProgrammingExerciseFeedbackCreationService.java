@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.TEST_CASES;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -34,13 +36,17 @@ import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
@@ -48,6 +54,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
@@ -106,9 +113,23 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final FeedbackMessageService feedbackMessageService;
 
+    private final Optional<HyperionExerciseMutationApi> mutationApi;
+
+    private final GitService gitService;
+
+    private final String defaultBranch;
+
+    private final ProgrammingExerciseBuildConfigRepository buildConfigs;
+
     public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService,
+            Optional<HyperionExerciseMutationApi> mutationApi, GitService gitService, ProgrammingExerciseBuildConfigRepository buildConfigs,
+            @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+        this.defaultBranch = defaultBranch;
+        this.mutationApi = mutationApi;
+        this.gitService = gitService;
+        this.buildConfigs = buildConfigs;
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -331,6 +352,36 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param exercise    the programming exercise for which the test cases should be extracted from the new result
      */
     public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        if (mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled).isPresent() && buildResult instanceof BuildResult localResult
+                && (exercise.getReleaseDate() == null || exercise.getReleaseDate().isAfter(ZonedDateTime.now()))
+                && !programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exercise.getId())) {
+            if (StringUtils.isBlank(buildResult.assignmentRepoCommitHash()) || StringUtils.isBlank(buildResult.testsRepoCommitHash())) {
+                return;
+            }
+            boolean synchronizationBuildSuccessful = Integer.valueOf(0).equals(localResult.buildScriptExitCode())
+                    && localResult.jobs().stream().anyMatch(job -> !job.successfulTests().isEmpty()) && localResult.jobs().stream().allMatch(job -> job.failedTests().isEmpty());
+            boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash(),
+                    synchronizationBuildSuccessful, () -> {
+                        ProgrammingExercise current = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        String configuredBranch = buildConfigs.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
+                        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
+                        if (!buildResult.assignmentRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.SOLUTION), branch))
+                                || !buildResult.testsRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.TESTS), branch))) {
+                            return false;
+                        }
+                        extractCurrentTestCases(buildResult, current);
+                        return true;
+                    });
+            if (!synchronizedCases) {
+                log.info("Skipped canonical test discovery for exercise {}: the draft is being saved or the build revisions are superseded; the result is still graded",
+                        exercise.getId());
+            }
+            return;
+        }
+        extractCurrentTestCases(buildResult, exercise);
+    }
+
+    private void extractCurrentTestCases(BuildResultNotification buildResult, ProgrammingExercise exercise) {
         boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases

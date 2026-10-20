@@ -18,7 +18,7 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
 
 @Component({
     selector: 'jhi-course-import-standardized-competencies',
-    templateUrl: './course-import-standardized-competencies.component.html',
+    templateUrl: './course-import-standardized-course-competencies.component.html',
     imports: [
         StandardizedCompetencyFilterComponent,
         StandardizedCompetencyDetailComponent,

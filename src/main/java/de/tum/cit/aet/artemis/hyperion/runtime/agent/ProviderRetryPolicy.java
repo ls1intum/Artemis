@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.model.openai.autoconfigure.AbstractOpenAiProperties;
 
 /**
  * Sends a provider request again after a failure that provably produced no completion ({@link ProviderFailureClass#retryable()}).
@@ -34,6 +35,17 @@ public final class ProviderRetryPolicy {
     public ProviderRetryPolicy(long baseMillis, long capMillis) {
         this.baseMillis = baseMillis;
         this.capMillis = capMillis;
+    }
+
+    /**
+     * Matches Spring AI's chat retry override: a default-valued chat setting falls back to the common setting.
+     *
+     * @param commonRetries common SDK retry setting
+     * @param chatRetries   optional chat-specific SDK retry setting
+     * @return the effective SDK retry count
+     */
+    public static int effectiveSdkRetries(int commonRetries, @Nullable Integer chatRetries) {
+        return chatRetries == null || chatRetries == AbstractOpenAiProperties.DEFAULT_MAX_RETRIES ? commonRetries : chatRetries;
     }
 
     /**

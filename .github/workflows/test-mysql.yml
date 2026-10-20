@@ -20,7 +20,6 @@ env:
 
 permissions:
   contents: read
-  checks: write
   actions: read
 
 jobs:
@@ -28,6 +27,10 @@ jobs:
   server-tests-mysql:
     runs-on: aet-large-ubuntu
     timeout-minutes: 80
+    permissions:
+      contents: read
+      actions: read
+      checks: write # dorny/test-reporter creates the MySQL test check.
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

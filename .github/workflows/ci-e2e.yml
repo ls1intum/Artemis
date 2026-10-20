@@ -106,12 +106,14 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     env:
       PLAYWRIGHT_REPORT_PHASE: phase1
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     outputs:
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
       tests: ${{ steps.run-tests-phase1.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-phase1.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -123,6 +125,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: "Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
 
@@ -284,13 +287,15 @@ jobs:
   run-e2e-remaining:
     name: 'Phase 2: Remaining E2E Tests'
     needs: [determine-tests, run-e2e-relevant]
+    # Evaluate skipped dependencies, but release the runner and PR concurrency slot on cancellation.
     if: |
-      always() &&
+      !cancelled() &&
       inputs.is_pr &&
       needs.determine-tests.result == 'success' &&
       needs.determine-tests.outputs.run_all_tests != 'true' &&
       needs.determine-tests.outputs.remaining_tests != '' &&
       ((needs.run-e2e-relevant.result == 'success' &&
+        needs.run-e2e-relevant.outputs.infrastructure_failed == 'false' &&
         contains(fromJSON('["clean","flaky"]'), needs.run-e2e-relevant.outputs.phase_result)) || needs.run-e2e-relevant.result == 'skipped')
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
@@ -299,10 +304,12 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       reporter_failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
       phase2_notes: ${{ steps.update-comment.outputs.phase2_notes }}
       tests: ${{ steps.run-tests-phase2.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-phase2.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     env:
       PLAYWRIGHT_REPORT_PHASE: phase2
@@ -317,6 +324,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
 
@@ -492,9 +500,11 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       reporter_failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
       tests: ${{ steps.run-tests-all-pr.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-all-pr.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     env:
       PLAYWRIGHT_REPORT_PHASE: all
@@ -509,6 +519,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: 'Running all tests (infrastructure/config changes detected)'
 
@@ -669,8 +680,10 @@ jobs:
     permissions:
       contents: read
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       tests: ${{ steps.run-tests-all-non-pr.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-all-non-pr.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     env:
       PLAYWRIGHT_REPORT_PHASE: all
@@ -684,6 +697,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Redis (Valkey) is the distributed data provider of this run, not the embedded Hazelcast cluster, so no Hazelcast
@@ -744,7 +758,7 @@ jobs:
   report-results:
     name: Report E2E Overall Status
     needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -762,6 +776,11 @@ jobs:
           REMAINING_RESULT: ${{ needs.run-e2e-remaining.outputs.tests }}
           ALL_PR_RESULT: ${{ needs.run-e2e-all-pr.outputs.tests }}
           ALL_NON_PR_RESULT: ${{ needs.run-e2e-all-non-pr.outputs.tests }}
+          # Positive completion proof is separate from the optional classification of surviving JUnit failures.
+          RELEVANT_INFRA: ${{ needs.run-e2e-relevant.outputs.infrastructure_failed }}
+          REMAINING_INFRA: ${{ needs.run-e2e-remaining.outputs.infrastructure_failed }}
+          ALL_PR_INFRA: ${{ needs.run-e2e-all-pr.outputs.infrastructure_failed }}
+          ALL_NON_PR_INFRA: ${{ needs.run-e2e-all-non-pr.outputs.infrastructure_failed }}
           # Per-phase classification: real | flaky | unknown | clean (empty
           # when skipped). `real` = a non-flaky test failed; `flaky` = failures, all known-flaky.
           RELEVANT_CLASS: ${{ needs.run-e2e-relevant.outputs.phase_result }}
@@ -816,6 +835,15 @@ jobs:
             case "$r" in
               success|skipped) ;;
               *) any_job_failed=true ;;
+            esac
+          done
+
+          # Every attempted phase must positively establish complete runner execution. Missing outputs
+          # (including a pull/setup/container crash) cannot be exonerated by surviving known-flaky JUnit cases.
+          for phase in RELEVANT REMAINING ALL_PR ALL_NON_PR; do
+            result_var="${phase}_RESULT"; infra_var="${phase}_INFRA"
+            case "${!result_var}" in
+              success|failure) [ "${!infra_var}" = false ] || any_job_failed=true ;;
             esac
           done
 
