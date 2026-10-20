@@ -123,7 +123,8 @@ describe('image launched by every E2E configuration', () => {
         for (const file of files) {
             const { services } = parse(readFileSync(path.join(dockerDirectory, file), 'utf8'), { merge: true });
             for (const [name, service] of Object.entries(services)) {
-                nodes[name] = { ...service, ...nodes[name] };
+                // Compose applies files in order, so a later file overrides an earlier one.
+                nodes[name] = { ...nodes[name], ...service };
             }
         }
         const artemisNodes = Object.entries(nodes).filter(([, service]) => service.extends?.service === 'artemis-app');
