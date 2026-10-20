@@ -9,9 +9,9 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { HttpResponse } from '@angular/common/http';
 import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
@@ -111,6 +111,22 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(comp.latestResult()?.id).toBe(72);
             expect(comp.loadingParticipation()).toBe(false);
             expect(comp.participationCouldNotBeFetched()).toBe(false);
+        });
+
+        it('should still load the next navigation after a submission could not be found', () => {
+            const params = new Subject<Params>();
+            TestBed.inject(ActivatedRoute).params = params;
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockImplementation(() => of(participationWithAllResults()));
+            vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: [] })));
+
+            comp.ngOnInit();
+            params.next({ participationId: studentParticipation.id, submissionId: '9', resultId: '72' });
+            expect(comp.participationCouldNotBeFetched()).toBe(true);
+
+            params.next({ participationId: studentParticipation.id, submissionId: '7', resultId: '72' });
+            expect(comp.participationCouldNotBeFetched()).toBe(false);
+            expect(comp.loadingParticipation()).toBe(false);
+            expect(comp.viewedSubmission()?.id).toBe(7);
         });
 
         it('should list the AI feedback about a whole file of an earlier result, but not its feedback on a line or of the tests', () => {

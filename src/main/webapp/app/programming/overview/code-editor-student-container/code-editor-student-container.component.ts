@@ -2,8 +2,8 @@ import { Component, OnDestroy, OnInit, inject, input, signal, viewChild } from '
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
-import { Observable, Subscription, of, throwError } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -97,52 +97,52 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
      * names a submission and result, with that earlier submission and result.
      */
     ngOnInit(): void {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.loadingParticipation.set(true);
-            this.participationCouldNotBeFetched.set(false);
-            this.viewedSubmission.set(undefined);
-            const participationId = this.participationId() ?? Number(params['participationId']);
-            const submissionId = params['submissionId'] === undefined ? undefined : Number(params['submissionId']);
-            const participation$ =
-                submissionId === undefined
-                    ? this.loadParticipationWithLatestResult(participationId)
-                    : this.loadParticipationWithSubmissionAndResult(participationId, submissionId, Number(params['resultId']));
-            participation$
-                .pipe(
-                    tap((participationWithResults) => {
-                        this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
-                        this.participation.set(participationWithResults);
-                        const exercise = participationWithResults.exercise as ProgrammingExercise;
-                        this.exercise.set(exercise);
-                        this.lightweight.set(!exercise?.exerciseGroup);
-                        const dueDateHasPassed = hasExerciseDueDatePassed(exercise, participationWithResults);
-                        // TODO: load this information from the server in case submission policies are enabled for programming exercises
-                        this.repositoryIsLocked.set(dueDateHasPassed && !isPracticeMode(participationWithResults));
-                        const allResults = getAllResultsOfAllSubmissions(participationWithResults.submissions);
-                        this.latestResult.set(allResults.length >= 1 ? allResults.first() : undefined);
-                        this.checkForTutorAssessment(dueDateHasPassed);
-                        this.course.set(getCourseFromExercise(exercise));
-                        this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exercise.id!).subscribe((submissionPolicy) => {
-                            if (submissionPolicy?.active) {
-                                this.exercise().submissionPolicy = submissionPolicy;
-                                this.getNumberOfSubmissionsForSubmissionPolicy();
+        // switchMap drops a load that a newer navigation replaced, and each load handles its own error, so later navigations still load
+        this.paramSub = this.route.params
+            .pipe(
+                switchMap((params) => {
+                    this.loadingParticipation.set(true);
+                    this.participationCouldNotBeFetched.set(false);
+                    this.viewedSubmission.set(undefined);
+                    const participationId = this.participationId() ?? Number(params['participationId']);
+                    const submissionId = params['submissionId'] === undefined ? undefined : Number(params['submissionId']);
+                    const participation$ =
+                        submissionId === undefined
+                            ? this.loadParticipationWithLatestResult(participationId)
+                            : this.loadParticipationWithSubmissionAndResult(participationId, submissionId, Number(params['resultId']));
+                    return participation$.pipe(
+                        tap((participationWithResults) => {
+                            this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
+                            this.participation.set(participationWithResults);
+                            const exercise = participationWithResults.exercise as ProgrammingExercise;
+                            this.exercise.set(exercise);
+                            this.lightweight.set(!exercise?.exerciseGroup);
+                            const dueDateHasPassed = hasExerciseDueDatePassed(exercise, participationWithResults);
+                            // TODO: load this information from the server in case submission policies are enabled for programming exercises
+                            this.repositoryIsLocked.set(dueDateHasPassed && !isPracticeMode(participationWithResults));
+                            const allResults = getAllResultsOfAllSubmissions(participationWithResults.submissions);
+                            this.latestResult.set(allResults.length >= 1 ? allResults.first() : undefined);
+                            this.checkForTutorAssessment(dueDateHasPassed);
+                            this.course.set(getCourseFromExercise(exercise));
+                            this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exercise.id!).subscribe((submissionPolicy) => {
+                                if (submissionPolicy?.active) {
+                                    this.exercise().submissionPolicy = submissionPolicy;
+                                    this.getNumberOfSubmissionsForSubmissionPolicy();
+                                }
+                            });
+                            if (allResults && allResults[0] && allResults[0].feedbacks) {
+                                checkSubsequentFeedbackInAssessment(allResults[0].feedbacks);
                             }
-                        });
-                        if (allResults && allResults[0] && allResults[0].feedbacks) {
-                            checkSubsequentFeedbackInAssessment(allResults[0].feedbacks);
-                        }
-                    }),
-                )
-                .subscribe({
-                    next: () => {
-                        this.loadingParticipation.set(false);
-                    },
-                    error: () => {
-                        this.participationCouldNotBeFetched.set(true);
-                        this.loadingParticipation.set(false);
-                    },
-                });
-        });
+                        }),
+                        catchError(() => {
+                            this.participationCouldNotBeFetched.set(true);
+                            this.loadingParticipation.set(false);
+                            return EMPTY;
+                        }),
+                    );
+                }),
+            )
+            .subscribe(() => this.loadingParticipation.set(false));
     }
 
     submitExercise(): void {

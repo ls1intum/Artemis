@@ -276,8 +276,8 @@ public class CourseOverviewExerciseService {
             Optional<ParticipationOverviewRowDTO> latestAiFeedbackRow = submissionRows.stream()
                     .filter(row -> row.resultId() != null && row.resultAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && Boolean.TRUE.equals(row.resultRated()))
                     .max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId));
-            return visibleProgrammingSubmission(submissionRow, gradedRows, exercise, calculationTime).map(submission -> latestAiFeedbackRow
-                    .map(aiFeedbackRow -> withResult(submission, aiFeedbackRow.toResultOverviewDTO())).orElse(submission));
+            return visibleProgrammingSubmission(submissionRow, gradedRows, exercise, calculationTime)
+                    .map(submission -> latestAiFeedbackRow.map(aiFeedbackRow -> withResult(submission, aiFeedbackRow.toResultOverviewDTO())).orElse(submission));
         }
 
         if (latestResultRow == null || !Boolean.TRUE.equals(latestResultRow.resultRated()) || !isAssessmentDone(exercise, calculationTime)) {

@@ -413,7 +413,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExerciseRepository.save(programmingExercise);
         Result testResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
-        Result aiFeedback = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now(), testResult.getSubmission());
+        // the overload that only saves the result: the submission's results are not loaded here
+        Result aiFeedback = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now(), testResult.getSubmission(), true, true, 100);
         aiFeedback.setSuccessful(successful);
         resultRepository.save(aiFeedback);
 

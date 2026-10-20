@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -746,6 +747,23 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         long studentId = userUtilService.getUserByLogin(login).getId();
         assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exercise.getId(), studentId)).extracting(Result::getId)
                 .containsExactly(gradedResult.getId());
+    }
+
+    @Test
+    void testCourseOverviewRowsKeepTheGradingResultsBehindALaterAiFeedback() {
+        // The overview grades a programming submission by its results other than AI feedback, so a newer AI feedback must not
+        // be the only row: the test result is the fallback until the manual result is released, the manual result after that.
+        String login = TEST_PREFIX + "student8";
+        ZonedDateTime now = ZonedDateTime.now();
+        var submission = saveProgrammingSubmission(participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login));
+        Result testResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusHours(3), submission, true, true, 60);
+        Result manualResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, now.minusHours(2), submission, true, true, 70);
+        Result aiFeedback = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusHours(1), submission, true, true, 60);
+
+        long studentId = userUtilService.getUserByLogin(login).getId();
+        var rows = studentParticipationRepository.findIndividualRowsForCourseOverview(studentId, Set.of(exercise.getId()), false);
+
+        assertThat(rows).extracting(ParticipationOverviewRowDTO::resultId).containsExactlyInAnyOrder(testResult.getId(), manualResult.getId(), aiFeedback.getId());
     }
 
     private ProgrammingSubmission saveProgrammingSubmission(Participation participation) {
