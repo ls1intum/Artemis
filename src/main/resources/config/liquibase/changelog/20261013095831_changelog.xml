@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        The experience level students start at in the online IDE. Artemis writes it into .vscode/eduide.json of every student repository
+        it creates from the template. Nullable: existing exercises have none, and no file is written for them.
+    -->
+    <changeSet id="20261013095831-01-add-online-ide-experience-level" author="spethso">
+        <addColumn tableName="programming_exercise_build_config">
+            <column name="online_ide_experience_level" type="VARCHAR(16)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

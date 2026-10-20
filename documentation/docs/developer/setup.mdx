@@ -483,6 +483,27 @@ If you want to run the application via the command line instead, make sure to pa
 ./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling'
 ```
 
+### Demo data (Optional)
+
+To start Artemis with a demo course, add the `demo` profile to the active profiles. Seeding only runs on a node that is also active with `core` and `scheduling`, so in a multi-node setup exactly one node seeds:
+
+```
+--spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,demo
+```
+
+On startup, Artemis creates whatever is missing of the following, and leaves everything that already exists untouched:
+
+- the course `demo`
+- the users `demo_student` and `demo_instructor`, both with the password `demo1234`, enrolled as student and instructor
+- the lecture `Demo Lecture` with the text unit `Demo Text Unit`
+- the competency `Demo Competency`, linked to that text unit
+
+Restarting never duplicates the demo data, and deleted demo content is recreated on the next start.
+
+<Callout variant={CalloutVariant.warning}>
+    The demo credentials are publicly known. Only use the `demo` profile on demo and manual testing instances, never on a production instance.
+</Callout>
+
 ### Hyperion (Optional)
 
 Hyperion provides AI-assisted exercise creation features via Spring AI. No external Edutelligence service is required, only a LLM provider such as OpenAI or Azure OpenAI.
