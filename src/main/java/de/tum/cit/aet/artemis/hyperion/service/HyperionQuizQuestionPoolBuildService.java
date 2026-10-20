@@ -555,9 +555,13 @@ public class HyperionQuizQuestionPoolBuildService {
     }
 
     private static String competencyBlock(CourseCompetency competency) {
-        String taxonomy = competency.getTaxonomy() != null ? competency.getTaxonomy().name() : "UNDERSTAND";
         String description = competency.getDescription() != null && !competency.getDescription().isBlank() ? "\n" + sanitizeInput(competency.getDescription()) : "";
-        return "Competency: " + sanitizeInput(competency.getTitle()) + "\nIntended cognitive level: " + taxonomy + description;
+        return "Competency: " + sanitizeInput(competency.getTitle()) + "\nIntended cognitive level: " + cognitiveLevel(competency) + description;
+    }
+
+    /** The competency's Bloom level as the prompts name it; a competency without a level counts as UNDERSTAND. */
+    private static String cognitiveLevel(CourseCompetency competency) {
+        return competency.getTaxonomy() != null ? competency.getTaxonomy().name() : "UNDERSTAND";
     }
 
     private static String groundingBlock(LectureUnit unit, String text) {
