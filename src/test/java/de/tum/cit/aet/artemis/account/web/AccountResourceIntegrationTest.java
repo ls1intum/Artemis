@@ -863,6 +863,33 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountSaml2PreservesConcurrentAccountChanges() {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        UserDTO update = new UserDTO(user);
+        update.setLangKey("de");
+        Mockito.doAnswer(invocation -> {
+            // The settings service already read its detached account before asking whether SAML is active.
+            User concurrentAccount = userTestRepository.findById(user.getId()).orElseThrow();
+            concurrentAccount.setEmail("confirmed-concurrently@example.org");
+            concurrentAccount.setActivated(false);
+            userTestRepository.saveAndFlush(concurrentAccount);
+            return true;
+        }).when(profileService).isSaml2Active();
+        try {
+            accountService.updateBasicInformationOfCurrentUser(update);
+
+            User stored = userTestRepository.findById(user.getId()).orElseThrow();
+            assertThat(stored.getLangKey()).isEqualTo("de");
+            assertThat(stored.getEmail()).isEqualTo("confirmed-concurrently@example.org");
+            assertThat(stored.getActivated()).isFalse();
+        }
+        finally {
+            Mockito.doCallRealMethod().when(profileService).isSaml2Active();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
     void saveAccountSaml2ActiveReturnsOk() throws Throwable {
         testWithSaml2Active(() -> {
             User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
