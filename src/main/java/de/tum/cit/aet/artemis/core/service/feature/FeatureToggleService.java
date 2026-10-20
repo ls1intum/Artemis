@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.core.service.feature;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.web.CoreWebsocketTopics.FEATURE_TOGGLES;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,14 @@ public class FeatureToggleService {
     private final DistributedDataProvider distributedDataProvider;
 
     private final ProfileService profileService;
+
+    /**
+     * Features whose functionality was removed. Each one stays in {@link Feature} only so that the constants after it keep
+     * their position, because Redis stores the feature map keys by enum position. A retired feature is removed from the map
+     * at startup and is never reported as enabled, whatever an older node or an API call stored for it. Remove the
+     * constant itself together with the next {@code DistributedDataSchema} version bump.
+     */
+    private static final Set<Feature> RETIRED_FEATURES = EnumSet.of(Feature.Memiris);
 
     private DistributedMap<Feature, Boolean> features;
 
@@ -104,13 +114,15 @@ public class FeatureToggleService {
         features = distributedDataProvider.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, Memiris, RateLimit, GlobalSearch, AutonomousTutor, and Deimos) are enabled once
+        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, RateLimit, GlobalSearch, AutonomousTutor, Deimos, and the retired ones) are
+        // enabled once
         // the
         // system starts up
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.AtlasAgent
-                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor
-                    && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile && feature != Feature.GlobalSearchReconcileOrphan) {
+            if (!features.containsKey(feature) && !RETIRED_FEATURES.contains(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions
+                    && feature != Feature.AtlasML && feature != Feature.AtlasAgent && feature != Feature.RateLimit && feature != Feature.GlobalSearch
+                    && feature != Feature.AutonomousTutor && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile
+                    && feature != Feature.GlobalSearchReconcileOrphan) {
                 features.put(feature, true);
             }
         }
@@ -131,9 +143,7 @@ public class FeatureToggleService {
             features.put(Feature.AtlasML, false);
         }
 
-        if (!features.containsKey(Feature.Memiris)) {
-            features.put(Feature.Memiris, false);
-        }
+        RETIRED_FEATURES.forEach(features::remove);
 
         if (!features.containsKey(Feature.GlobalSearch)) {
             features.put(Feature.GlobalSearch, globalSearchEnabledOnStart);
@@ -221,7 +231,7 @@ public class FeatureToggleService {
      */
     public boolean isFeatureEnabled(Feature feature) {
         try {
-            if (isDistributedDataAvailable()) {
+            if (isDistributedDataAvailable() && !RETIRED_FEATURES.contains(feature)) {
                 Boolean isEnabled = getFeaturesMap().get(feature);
                 return Boolean.TRUE.equals(isEnabled);
             }
@@ -240,7 +250,8 @@ public class FeatureToggleService {
     public List<Feature> enabledFeatures() {
         try {
             if (isDistributedDataAvailable()) {
-                return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
+                return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey)
+                        .filter(feature -> !RETIRED_FEATURES.contains(feature)).toList();
             }
         }
         catch (RuntimeException e) {
@@ -257,7 +268,8 @@ public class FeatureToggleService {
     public List<Feature> disabledFeatures() {
         try {
             if (isDistributedDataAvailable()) {
-                return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
+                return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey)
+                        .filter(feature -> !RETIRED_FEATURES.contains(feature)).toList();
             }
         }
         catch (RuntimeException e) {

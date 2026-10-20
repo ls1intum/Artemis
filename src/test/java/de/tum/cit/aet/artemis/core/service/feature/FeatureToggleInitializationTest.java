@@ -72,6 +72,28 @@ class FeatureToggleInitializationTest {
         verify(websocket).sendMessage(eq(FEATURE_TOGGLES.at()), eq(List.of(Feature.Science)));
     }
 
+    /**
+     * Memiris was removed but keeps its enum position for the Redis key encoding. A value an older node stored for it is
+     * dropped at startup, and nothing written afterwards makes it look enabled again.
+     */
+    @Test
+    void aRetiredFeatureIsRemovedAtStartupAndNeverReportedAsEnabled() {
+        var provider = new LocalDataProviderService();
+        DistributedMap<Feature, Boolean> map = provider.getMap("features");
+        map.put(Feature.Memiris, true);
+        var service = new FeatureToggleService(mock(WebsocketMessagingService.class), provider, mock(ProfileService.class), mock(RateLimitConfigurationService.class), false, false,
+                false, false);
+
+        assertThat(service.enabledFeatures()).doesNotContain(Feature.Memiris);
+        assertThat(map.containsKey(Feature.Memiris)).isFalse();
+
+        service.enableFeature(Feature.Memiris);
+        assertThat(service.isFeatureEnabled(Feature.Memiris)).isFalse();
+        assertThat(service.enabledFeatures()).doesNotContain(Feature.Memiris);
+        service.disableFeature(Feature.Memiris);
+        assertThat(service.disabledFeatures()).doesNotContain(Feature.Memiris);
+    }
+
     @Test
     void unavailableStoreAndFailedBroadcastDoNotLeakExceptionsOrInventChanges() {
         var provider = mock(DistributedDataProvider.class);

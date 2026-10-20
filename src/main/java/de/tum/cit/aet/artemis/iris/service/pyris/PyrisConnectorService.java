@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -27,16 +26,10 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.dto.FaqCensusDTO;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
-import de.tum.cit.aet.artemis.iris.dto.MemirisLearningDTO;
-import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryConnectionDTO;
-import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDataDTO;
-import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
@@ -47,10 +40,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWe
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisLearningDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnectionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
@@ -75,11 +64,6 @@ public class PyrisConnectorService {
     private static final String LECTURE_UNIT_NOT_INGESTED_DETAIL = "Lecture unit has not been ingested";
 
     private static final Logger log = LoggerFactory.getLogger(PyrisConnectorService.class);
-
-    /**
-     * A Memiris memory id as it may appear in a Pyris URL: one opaque path segment, no separators and no dot segments.
-     */
-    private static final Pattern MEMIRIS_MEMORY_ID_PATTERN = Pattern.compile("[A-Za-z0-9_-]{1,64}");
 
     private final RestTemplate restTemplate;
 
@@ -137,137 +121,6 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.warn("Ingestion census for course {} failed: {}", courseId, e.getMessage());
             return null;
-        }
-    }
-
-    /**
-     * Lists all Memiris memories for a user.
-     *
-     * @param userId the Artemis user id
-     * @return list of memories (can be empty)
-     */
-    public MemirisMemoryDataDTO listMemirisMemoryData(long userId) {
-        try {
-            var response = restTemplate.getForEntity(pyrisUrl + "/api/v2/memiris/user/" + userId, MemirisMemoryDataDTO.class);
-            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
-                return new MemirisMemoryDataDTO(List.of(), List.of(), List.of());
-            }
-            return response.getBody();
-        }
-        catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().value() == 404) {
-                throw new EntityNotFoundException("Memiris resource not found");
-            }
-            throw toIrisException(e);
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to list Memiris memory data for user {}", userId, e);
-            throw new PyrisConnectorException("Could not fetch memories from Pyris");
-        }
-    }
-
-    /**
-     * Retrieves a specific Memiris memory with its relations (learnings and connections) for a user.
-     *
-     * @param userId   the Artemis user id
-     * @param memoryId the memory id
-     * @return flattened DTO with memory fields at top-level and relations attached
-     */
-    public MemirisMemoryWithRelationsDTO getMemirisMemoryWithRelations(long userId, String memoryId) {
-        validateMemoryId(memoryId);
-        try {
-            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/memiris/user/" + userId + "/" + memoryId, PyrisMemoryWithRelationsDTO.class);
-            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
-                throw new PyrisConnectorException("Could not fetch memory from Pyris");
-            }
-            PyrisMemoryWithRelationsDTO body = response.getBody();
-            PyrisMemoryDTO m = body.memory();
-            var learnings = body.learnings().stream().map(this::mapLearning).toList();
-            var connections = body.connections().stream().map(this::mapConnection).toList();
-            return new MemirisMemoryWithRelationsDTO(m.id(), m.title(), m.content(), m.sleptOn(), m.deleted(), learnings, connections);
-        }
-        catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().value() == 404) {
-                throw new EntityNotFoundException("Memiris memory", memoryId);
-            }
-            throw toIrisException(e);
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to fetch Memiris memory {} for user {}", memoryId, userId, e);
-            throw new PyrisConnectorException("Could not fetch memory from Pyris");
-        }
-    }
-
-    /**
-     * Rejects a Memiris memory id that is not a single opaque path segment.
-     *
-     * <p>
-     * The id arrives as a {@code @PathVariable} from any signed-in student and is interpolated into the Pyris URL, so
-     * what it may contain is a security boundary rather than a formatting concern. The user id in front of it is the
-     * only thing scoping a request to its own memories, and a {@code ../} inside the id walks straight past it:
-     * {@code .../memiris/user/42/../../99/some-memory} normalizes to another user's memory before the request is even
-     * sent. Percent-encoding alone does not close this, because a literal {@code ..} is an unreserved path segment and
-     * survives encoding intact - so the id is validated rather than escaped.
-     *
-     * <p>
-     * Memiris ids are opaque tokens (Weaviate UUIDs in production), which the accepted character set covers.
-     *
-     * @param memoryId the memory id to validate
-     * @throws BadRequestAlertException if the id could address anything other than a single memory
-     */
-    private static void validateMemoryId(String memoryId) {
-        if (memoryId == null || !MEMIRIS_MEMORY_ID_PATTERN.matcher(memoryId).matches()) {
-            throw new BadRequestAlertException("Invalid Memiris memory id", "memiris", "invalidMemoryId");
-        }
-    }
-
-    private MemirisLearningDTO mapLearning(PyrisLearningDTO l) {
-        return new MemirisLearningDTO(l.id(), l.title(), l.content(), l.reference(), l.memories());
-    }
-
-    private MemirisMemoryConnectionDTO mapConnection(PyrisMemoryConnectionDTO c) {
-        var memoryIds = c.memories().stream().map(PyrisMemoryDTO::id).toList();
-        return new MemirisMemoryConnectionDTO(c.id(), c.connectionType(), memoryIds, c.description(), c.weight());
-    }
-
-    /**
-     * Deletes a specific Memiris memory for a user.
-     *
-     * @param userId   the Artemis user id
-     * @param memoryId the memory id to delete
-     */
-    public void deleteMemirisMemory(long userId, String memoryId) {
-        validateMemoryId(memoryId);
-        try {
-            restTemplate.delete(pyrisUrl + "/api/v1/memiris/user/" + userId + "/" + memoryId);
-        }
-        catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().value() == 404) {
-                throw new EntityNotFoundException("Memiris memory", memoryId);
-            }
-            throw toIrisException(e);
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to delete Memiris memory {} for user {}", memoryId, userId, e);
-            throw new PyrisConnectorException("Could not delete memory in Pyris");
-        }
-    }
-
-    /**
-     * Deletes all Memiris memories for a user.
-     *
-     * @param userId the Artemis user id
-     */
-    public void deleteAllMemirisMemories(long userId) {
-        try {
-            restTemplate.delete(pyrisUrl + "/api/v1/memiris/user/" + userId + "/delete-all");
-        }
-        catch (HttpStatusCodeException e) {
-            throw toIrisException(e);
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to delete all Memiris memories for user {}", userId, e);
-            throw new PyrisConnectorException("Could not delete all memories in Pyris");
         }
     }
 
