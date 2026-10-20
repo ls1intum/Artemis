@@ -90,7 +90,7 @@ describe('CodeEditorStudentContainerComponent', () => {
         expect(participation.submissions![0].results).toEqual([buildResult]);
     });
 
-    it('should keep inline feedback on the newest submission when older AI feedback arrives late', () => {
+    it.each([false, true])('should keep inline feedback on the newest submission when older AI feedback arrives late (editor reopened: %s)', (editorReopened) => {
         const participation: ProgrammingExerciseStudentParticipation = { ...studentParticipation, submissions: [] };
         const olderSubmission = { id: 10, participation: { id: participation.id } };
         const newerSubmission = { id: 11, participation: { id: participation.id } };
@@ -98,12 +98,14 @@ describe('CodeEditorStudentContainerComponent', () => {
         const buildFeedback = { id: 3, type: FeedbackType.AUTOMATIC, reference: 'file:Main.java_line:0', detailText: 'Latest build feedback' };
         const buildResult: Result = { id: 3, assessmentType: AssessmentType.AUTOMATIC, submission: newerSubmission, feedbacks: [buildFeedback] };
         const aiFeedback = { id: 4, type: FeedbackType.AUTOMATIC, reference: 'file:Main.java_line:0', detailText: 'Older AI feedback' };
-        comp.participation.set(participation);
+        comp.participation.set(editorReopened ? { ...participation, submissions: [{ ...newerSubmission, results: [buildResult] }] } : participation);
         comp.exercise.set(new ProgrammingExercise(undefined, undefined));
         vi.spyOn(submissionPolicyService, 'getParticipationSubmissionCount').mockReturnValue(of(2));
 
-        comp.receivedNewResult(pendingAIResult);
-        comp.receivedNewResult(buildResult);
+        if (!editorReopened) {
+            comp.receivedNewResult(pendingAIResult);
+            comp.receivedNewResult(buildResult);
+        }
         comp.receivedNewResult({ ...pendingAIResult, successful: true, feedbacks: [aiFeedback] });
 
         const submissions = comp.participation().submissions!;
