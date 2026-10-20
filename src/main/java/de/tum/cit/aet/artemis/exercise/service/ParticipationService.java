@@ -686,12 +686,13 @@ public class ParticipationService {
 
     /**
      * Copies the repository behind the source URI to create the repository of the given participation, unless the participation already has a repository.
-     * The source URI is provided as a supplier so that its resolution (which might involve repairing a broken template repository URI, see
-     * {@link #resolveTemplateRepositoryUri}) only happens when the repository actually needs to be copied.
+     * The source URI, the branch and the additional files are provided as suppliers, so that they are only resolved when the repository actually needs to be
+     * copied: resolving the source URI might involve repairing a broken template repository URI (see {@link #resolveTemplateRepositoryUri}), and the branch
+     * and the online IDE configuration each need a query.
      *
      * @param programmingExercise     the programming exercise the participation belongs to
      * @param sourceUriSupplier       supplies the URI of the repository to copy from, only evaluated if the copy is actually performed
-     * @param templateBranchSupplier  supplies the branch of the repository to copy from
+     * @param templateBranchSupplier  supplies the branch of the repository to copy from, only evaluated if the copy is actually performed
      * @param additionalFilesSupplier supplies files to add to the copy, such as the online IDE configuration, only evaluated if the copy is actually performed
      * @param participation           the participation for which the repository should be created
      * @return the updated participation
@@ -750,7 +751,10 @@ public class ParticipationService {
             return Map.of();
         }
         OnlineIdeExperienceLevel level = programmingExerciseBuildConfigRepository.getOnlineIdeExperienceLevelByProgrammingExerciseId(programmingExercise.getId());
-        return level == null ? Map.of() : Map.of(OnlineIdeExperienceLevel.EDU_IDE_CONFIGURATION_PATH, level.toEduIdeConfiguration());
+        if (level == null) {
+            return Map.of();
+        }
+        return Map.of(OnlineIdeExperienceLevel.EDU_IDE_CONFIGURATION_PATH, level.toEduIdeConfiguration());
     }
 
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {
