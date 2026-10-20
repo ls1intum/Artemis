@@ -200,7 +200,7 @@ export class ExerciseHeaderActionsComponent {
     readonly repositoryUriForCodeButton = computed(() => this.getRepositoryUriForCodeButton());
     readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
-    readonly routerLinkForRepositoryView = computed(() => {
+    readonly repositoryViewLink = computed(() => {
         const participation = this.activeParticipationForCode();
         if (!participation?.id) {
             return ['/courses', this.courseId(), 'exercises', this.exercise().id!];

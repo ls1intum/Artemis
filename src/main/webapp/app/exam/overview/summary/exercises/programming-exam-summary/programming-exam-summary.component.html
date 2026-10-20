@@ -11,7 +11,7 @@
                         [allowOnlineIde]="false"
                         [exerciseId]="exercise().id!"
                         [repositoryUri]="participation()?.repositoryUri ?? participation()?.userIndependentRepositoryUri ?? ''"
-                        [routerLinkForRepositoryView]="routerLinkForRepositoryView"
+                        [repositoryViewLink]="repositoryViewLink"
                         [vcsAccessTokenData]="{
                             type: 'participation',
                             participationId: participation().id!,

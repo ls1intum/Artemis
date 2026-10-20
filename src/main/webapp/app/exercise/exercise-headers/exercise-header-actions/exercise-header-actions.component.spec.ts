@@ -534,12 +534,12 @@ describe('ExerciseHeaderActionsComponent', () => {
             const practice = { id: 20, testRun: true } as StudentParticipation;
             createComponent(programmingExercise([practice]));
 
-            expect(fixture.componentInstance.routerLinkForRepositoryView()).toEqual(['/courses', 1, 'exercises', 7]);
+            expect(fixture.componentInstance.repositoryViewLink()).toEqual(['/courses', 1, 'exercises', 7]);
 
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.routerLinkForRepositoryView()).toEqual(['/courses', 1, 'exercises', 7, 'repository', 20]);
+            expect(fixture.componentInstance.repositoryViewLink()).toEqual(['/courses', 1, 'exercises', 7, 'repository', 20]);
         });
 
         it('should fall back to the graded participation in the practice mode as long as no practice participation exists', () => {

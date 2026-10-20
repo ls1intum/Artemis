@@ -33,7 +33,7 @@
                                 [allowOnlineIde]="false"
                                 [exerciseId]="exerciseId()"
                                 [repositoryUri]="item.repositoryURI"
-                                [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exerciseId(), 'repository', item.participationId]"
+                                [repositoryViewLink]="['/courses', courseId(), 'exercises', exerciseId(), 'repository', item.participationId]"
                                 [vcsAccessTokenData]="{
                                     type: 'student-repository',
                                     participationId: item.participationId,

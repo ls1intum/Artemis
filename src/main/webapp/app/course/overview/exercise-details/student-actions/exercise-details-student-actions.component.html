@@ -128,7 +128,7 @@
                             [programmingLanguage]="programmingExercise()?.programmingLanguage"
                             [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
                             [exerciseId]="exercise().id!"
-                            [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', studentParticipations()[0]!.id!]"
+                            [repositoryViewLink]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', studentParticipations()[0]!.id!]"
                             [hideLabelMobile]="true"
                             [repositoryUri]="gradedRepositoryUri()"
                             [vcsAccessTokenData]="{

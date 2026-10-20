@@ -195,7 +195,7 @@
             [allowOnlineIde]="false"
             [exerciseId]="exercise()!.id!"
             [repositoryUri]="cell.data.repositoryUri"
-            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
+            [repositoryViewLink]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
             [vcsAccessTokenData]="{
                 type: 'student-repository',
                 participationId: cell.data.participationId,

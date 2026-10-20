@@ -110,14 +110,18 @@ export class CodeButtonComponent implements OnInit {
     private theiaImage?: string;
 
     // Input
+    exerciseId = input.required<number>();
+    repositoryUri = input.required<string>();
+    vcsAccessTokenData = input.required<VcsAccessTokenData>();
+    repositoryViewLink = input.required<(string | number)[]>();
+    allowOnlineIde = input.required<boolean>();
+    programmingLanguage = input<ProgrammingLanguage>();
+
     hideLabelMobile = input<boolean>(false);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
     smallButtons = input.required<boolean>();
-    repositoryUri = input.required<string>();
-    exerciseId = input.required<number>();
-    vcsAccessTokenData = input.required<VcsAccessTokenData>();
-    programmingLanguage = input<ProgrammingLanguage>();
-    allowOnlineIde = input.required<boolean>();
+    loading = input<boolean>(false);
+
     isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
     user = signal<User | undefined>(undefined);
     private participationIdForVcsAccessToken = computed(() => this.getParticipationIdForVcsAccessToken());
@@ -157,8 +161,6 @@ export class CodeButtonComponent implements OnInit {
     sshKeyMissingTip = signal('');
     sshKeysExpiredTip = signal('');
 
-    loading = input<boolean>(false);
-    routerLinkForRepositoryView = input.required<(string | number)[]>();
     // Signals (we ideally declare everything related to change detection/UI to signals and leave component fields
     // as they are
     wasCopied = signal(false);

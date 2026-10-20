@@ -154,7 +154,7 @@
                             [programmingLanguage]="programmingExercise()?.programmingLanguage"
                             [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
                             [exerciseId]="exercise().id!"
-                            [routerLinkForRepositoryView]="routerLinkForRepositoryView()"
+                            [repositoryViewLink]="repositoryViewLink()"
                             [hideLabelMobile]="true"
                             [repositoryUri]="repositoryUriForCodeButton()"
                             [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"
@@ -163,7 +163,7 @@
                             [exerciseId]="exercise().id!"
                             [repositoryUri]="repositoryUriForCodeButton()"
                             [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"
-                            [repositoryViewLink]="routerLinkForRepositoryView()"
+                            [repositoryViewLink]="repositoryViewLink()"
                             [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
                             [programmingLanguage]="programmingExercise()?.programmingLanguage"
                         />

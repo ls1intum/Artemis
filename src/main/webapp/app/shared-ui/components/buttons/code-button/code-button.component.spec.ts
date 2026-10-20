@@ -110,7 +110,7 @@ describe('CodeButtonComponent', () => {
                 // Reset input properties
                 fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
                 fixture.componentRef.setInput('smallButtons', true);
-                fixture.componentRef.setInput('routerLinkForRepositoryView', []);
+                fixture.componentRef.setInput('repositoryViewLink', []);
                 fixture.componentRef.setInput('exerciseId', 1);
                 fixture.componentRef.setInput('allowOnlineIde', false);
                 fixture.componentRef.setInput('vcsAccessTokenData', { type: 'student-repository', participationId: 1 });

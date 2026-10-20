@@ -214,7 +214,7 @@
                             [smallButtons]="true"
                             [allowOnlineIde]="false"
                             [repositoryUri]="programmingExercise().solutionParticipation?.repositoryUri || ''"
-                            [routerLinkForRepositoryView]="['/course-management', courseId(), 'programming-exercises', exerciseId(), 'repository', 'SOLUTION']"
+                            [repositoryViewLink]="['/course-management', courseId(), 'programming-exercises', exerciseId(), 'repository', 'SOLUTION']"
                             [exerciseId]="exerciseId()"
                             [vcsAccessTokenData]="{ type: 'base-repository', repositoryType: RepositoryType.SOLUTION }"
                         />

@@ -96,7 +96,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
         return !!userLogin && this.participation()?.student?.login === userLogin;
     }
 
-    get routerLinkForRepositoryView(): (string | number)[] {
+    get repositoryViewLink(): (string | number)[] {
         if (this.isInCourseManagement) {
             return ['..', 'programming-exercises', this.exercise().id!, 'repository', 'USER', this.participation().id!];
         }

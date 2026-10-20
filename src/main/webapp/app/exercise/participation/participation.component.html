@@ -120,7 +120,7 @@
             [smallButtons]="true"
             [allowOnlineIde]="false"
             [exerciseId]="exercise()!.id!"
-            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
+            [repositoryViewLink]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
             [repositoryUri]="cell.data.repositoryUri"
             [vcsAccessTokenData]="{
                 type: 'student-repository',
