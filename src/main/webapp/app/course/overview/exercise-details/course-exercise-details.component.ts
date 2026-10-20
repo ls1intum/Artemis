@@ -325,24 +325,27 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * The participation id in the URL, read from the child route and, while that route is not activated yet, from the
-     * URL itself.
+     * The participation id in the navigation target, or in the active child route once navigation has completed.
      * <p>
      * Both are needed. Angular activates a child route only after this component has initialised, so during the first
-     * pass `route.firstChild` is still empty, and reading it alone left the mode on `graded` until the details
+     * pass `route.firstChild` is still empty or belongs to the outgoing navigation. Reading it alone left the mode on `graded` until the details
      * response arrived - by which time the split panel had redirected the editor to the graded participation and the
      * URL no longer named the one the student had asked for. The URL of the running navigation is what covers that
      * first pass; the child route covers every later evaluation.
      */
     private routedParticipationId(): number | undefined {
+        // Until child activation, firstChild still addresses the outgoing participation. A late details response
+        // must follow the navigation target, otherwise it switches the mode back and redirects the editor again.
+        const navigationUrl = this.router.currentNavigation()?.finalUrl?.toString();
+        const fromNavigation = navigationUrl && /\/(?:code-editor|participate)\/(\d+)/.exec(navigationUrl);
+        if (fromNavigation) {
+            return Number(fromNavigation[1]);
+        }
         const fromChildRoute = this.route.firstChild?.snapshot.paramMap.get('participationId');
         if (fromChildRoute) {
             return Number(fromChildRoute);
         }
-        // While a navigation is in flight - which is exactly when this component is being created for the editor route
-        // - `router.url` still holds the URL being left. The target is only in the navigation itself.
-        const navigationUrl = this.router.currentNavigation()?.finalUrl?.toString() ?? this.router.url;
-        const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(navigationUrl);
+        const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(this.router.url);
         return fromUrl ? Number(fromUrl[1]) : undefined;
     }
 

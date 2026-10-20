@@ -2,7 +2,7 @@ import { test } from '../../support/fixtures';
 import { Commands } from '../../support/commands';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, users } from '../../support/users';
-import { addE2EInitScript, asAdmin, generateUUID } from '../../support/utils';
+import { addE2EInitScript, generateUUID } from '../../support/utils';
 import cAllSuccessfulSubmission from '../../fixtures/exercise/programming/c/all_successful/submission.json';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -48,7 +48,7 @@ test.describe('Exam participation', () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+        test.beforeEach('Create exam', async ({ login, adminExamAPIRequests: examAPIRequests, examExerciseGroupCreation }) => {
             await login(admin);
             exam = await examAPIRequests.createRunningExam({ course, title: examTitle, examMaxPoints: 40, numberOfExercisesInExam: 4 });
             const textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
@@ -145,9 +145,8 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
 
-        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-            await login(admin);
-            await examAPIRequests.deleteExam(exam);
+        test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+            await adminExamAPIRequests.deleteExam(exam);
         });
     });
 
@@ -155,7 +154,7 @@ test.describe('Exam participation', () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+        test.beforeEach('Create exam', async ({ login, adminExamAPIRequests: examAPIRequests, examExerciseGroupCreation }) => {
             exerciseArray = [];
 
             await login(admin);
@@ -275,9 +274,8 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
 
-        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-            await login(admin);
-            await examAPIRequests.deleteExam(exam);
+        test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+            await adminExamAPIRequests.deleteExam(exam);
         });
     });
 
@@ -285,7 +283,7 @@ test.describe('Exam participation', () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+        test.beforeEach('Create exam', async ({ login, adminExamAPIRequests: examAPIRequests, examExerciseGroupCreation }) => {
             exerciseArray = [];
 
             await login(admin);
@@ -299,10 +297,10 @@ test.describe('Exam participation', () => {
         });
 
         test('Participates as a student in a registered exam', async ({
-            browser,
             page,
             login,
             examAPIRequests,
+            adminExamAPIRequests,
             examParticipation,
             examNavigation,
             examStartEnd,
@@ -316,7 +314,7 @@ test.describe('Exam participation', () => {
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
 
             // The student works until the exam runs out: its deadline is set now that the student is working, so a slow setup cannot cut it short.
-            await asAdmin(browser, (adminExamRequests) => adminExamRequests.endExamIn(exam, 20));
+            await adminExamAPIRequests.endExamIn(exam, 20);
             const workingTimeDialog = new ModalDialogBox(page);
             await workingTimeDialog.checkDialogMessage('The working time of the exam has been changed.');
             await workingTimeDialog.closeDialog();
@@ -337,9 +335,8 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
 
-        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-            await login(admin);
-            await examAPIRequests.deleteExam(exam);
+        test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+            await adminExamAPIRequests.deleteExam(exam);
         });
     });
 
@@ -348,7 +345,7 @@ test.describe('Exam participation', () => {
             let exam: Exam;
             let programmingExercise: ProgrammingExercise;
 
-            test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+            test.beforeEach('Create exam', async ({ login, adminExamAPIRequests: examAPIRequests, examExerciseGroupCreation }) => {
                 await login(admin);
                 exam = await examAPIRequests.createRunningExam({ course, title: 'exam' + generateUUID(), endDate: dayjs().add(5, 'minutes') });
                 const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
@@ -407,9 +404,8 @@ test.describe('Exam participation', () => {
                 });
             }
 
-            test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-                await login(admin);
-                await examAPIRequests.deleteExam(exam);
+            test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+                await adminExamAPIRequests.deleteExam(exam);
             });
         });
     }
@@ -419,7 +415,7 @@ test.describe('Exam participation', () => {
         const students = [studentOne, studentTwo];
         let exercise: Exercise;
 
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+        test.beforeEach('Create exam', async ({ login, adminExamAPIRequests: examAPIRequests, examExerciseGroupCreation }) => {
             await login(admin);
             exam = await examAPIRequests.createRunningExam({ course });
             exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
@@ -562,9 +558,8 @@ test.describe('Exam participation', () => {
             },
         );
 
-        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-            await login(admin);
-            await examAPIRequests.deleteExam(exam);
+        test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+            await adminExamAPIRequests.deleteExam(exam);
         });
     });
 });
