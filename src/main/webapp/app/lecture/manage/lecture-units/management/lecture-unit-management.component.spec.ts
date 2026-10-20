@@ -32,6 +32,7 @@ import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Course } from 'app/course/shared/entities/course.model';
+import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { throwError } from 'rxjs';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
@@ -109,6 +110,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(LectureService),
                 MockProvider(AlertService),
                 MockProvider(AttachmentVideoUnitService),
+                MockProvider(TumLiveUploadService, { getUploadedUnits: () => of([{ lectureId: 1, lectureUnitId: 3 }]) }),
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -182,6 +184,16 @@ describe('LectureUnitManagementComponent', () => {
         }
         lectureUnitManagementComponentFixture.changeDetectorRef.detectChanges();
         expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length);
+    });
+
+    it('asks about the TUM.Live video only for units that show an uploaded one, and passes the answer on', () => {
+        expect(lectureUnitManagementComponent.tumLiveUploadedUnitIds()).toEqual(new Set([3]));
+
+        lectureUnitManagementComponent.deleteLectureUnit(3, { deleteTumLiveRecordings: true });
+        lectureUnitManagementComponent.deleteLectureUnit(1);
+
+        expect(deleteLectureUnitSpy).toHaveBeenCalledWith(3, expect.any(Number), true);
+        expect(deleteLectureUnitSpy).toHaveBeenCalledWith(1, expect.any(Number), false);
     });
 
     it('should show loadData on delete', () => {
@@ -496,6 +508,10 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     describe('isAwaitingProcessing', () => {
+        beforeEach(() => {
+            attachmentVideoUnit.videoSource = 'https://tum.live/w/algo/1';
+        });
+
         it('should return true when status is IDLE and course is active', () => {
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.IDLE, retryCount: 0 },
@@ -514,6 +530,16 @@ describe('LectureUnitManagementComponent', () => {
             currentLecture.course!.endDate = undefined;
             lectureUnitManagementComponent.lecture.set(currentLecture);
             expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(true);
+        });
+
+        it('should return false for a unit without a file and a video', () => {
+            attachmentVideoUnit.videoSource = undefined;
+            lectureUnitManagementComponent.processingStatus.set({});
+            const currentLecture = lectureUnitManagementComponent.lecture()!;
+            currentLecture.course!.startDate = undefined;
+            currentLecture.course!.endDate = undefined;
+            lectureUnitManagementComponent.lecture.set(currentLecture);
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(false);
         });
 
         it('should return false when processing is in progress', () => {

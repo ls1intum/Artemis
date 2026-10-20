@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.videosource.config.GocastEnabled;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
+import de.tum.cit.aet.artemis.videosource.dto.GocastRecordingDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastUploadConnectionDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastUploadTargetDTO;
 import de.tum.cit.aet.artemis.videosource.repository.GocastConnectionRepository;
 
 /**
@@ -69,6 +72,33 @@ public class GocastRecordingService {
             log.warn("Could not read stream {} through the grant of course {}: {}", streamId.get(), courseId, exception.getUpstreamStatus());
             return Optional.of(TumLivePlaylistLookup.failed(TumLivePlaylistLookup.Outcome.TEMPORARILY_UNAVAILABLE));
         }
+    }
+
+    /**
+     * The active connection of a course, as uploads need it.
+     *
+     * @param courseId the Artemis course
+     * @return the connection, or empty if the course is not connected
+     */
+    public Optional<GocastUploadConnectionDTO> findUploadConnection(long courseId) {
+        return connectionRepository.getBindingSnapshot(courseId).filter(snapshot -> snapshot.status() == GocastBindingStatus.ACTIVE)
+                .map(snapshot -> new GocastUploadConnectionDTO(snapshot.integrationId(), snapshot.grantId(), snapshot.courseSlug()));
+    }
+
+    public GocastUploadTargetDTO createUpload(long grantId, String externalRef, String title) {
+        return connectorService.createUpload(grantId, externalRef, title);
+    }
+
+    public GocastRecordingDTO getRecording(long grantId, long streamId) {
+        return connectorService.getRecording(grantId, streamId);
+    }
+
+    public void deleteUpload(long grantId, String externalRef) {
+        connectorService.deleteUpload(grantId, externalRef);
+    }
+
+    public String watchUrl(String courseSlug, long streamId) {
+        return connectorService.watchUrl(courseSlug, streamId);
     }
 
     private static Optional<Long> parseId(String digits) {

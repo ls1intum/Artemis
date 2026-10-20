@@ -148,7 +148,10 @@
                                             [entityTitle]="lecture.title || ''"
                                             deleteQuestion="artemisApp.lecture.delete.question"
                                             deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
-                                            (delete)="deleteLecture(lecture.id!)"
+                                            [additionalChecks]="
+                                                tumLiveUploadLectureIds().has(lecture.id!) ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecordings' } : {}
+                                            "
+                                            (delete)="deleteLecture(lecture.id!, $event)"
                                             [dialogError]="dialogError$"
                                         >
                                             <fa-icon [icon]="faTrash" />

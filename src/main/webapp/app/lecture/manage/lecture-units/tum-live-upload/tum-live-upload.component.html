@@ -1,0 +1,50 @@
+@let current = state();
+@if (current && (current.connected || current.pendingRef || current.attachedRef)) {
+    <section class="mt-4 flex flex-col gap-2 rounded border border-surface-300 p-3" data-testid="tum-live-upload">
+        <h3 class="text-base font-semibold" jhiTranslate="artemisApp.tumLiveUpload.title"></h3>
+        @if (transferProgress() !== undefined) {
+            <span jhiTranslate="artemisApp.tumLiveUpload.uploading"></span>
+            <tumaet-ui-progress-bar [value]="transferProgress()!" />
+            <div>
+                <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" data-testid="tum-live-upload-cancel" (click)="cancel()">
+                    {{ 'artemisApp.tumLiveUpload.cancel' | artemisTranslate }}
+                </button>
+            </div>
+        } @else if (current.pendingRef) {
+            <span jhiTranslate="artemisApp.tumLiveUpload.processing"></span>
+            @if (current.converting) {
+                <tumaet-ui-progress-bar [value]="current.progress ?? 0" />
+            }
+            <div>
+                <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" data-testid="tum-live-upload-discard" (click)="discardPending()">
+                    {{ 'artemisApp.tumLiveUpload.discard' | artemisTranslate }}
+                </button>
+            </div>
+        } @else if (current.connected) {
+            <span [jhiTranslate]="current.attachedRef ? 'artemisApp.tumLiveUpload.replaceDescription' : 'artemisApp.tumLiveUpload.description'"></span>
+            <div class="flex flex-wrap items-center gap-2">
+                <input
+                    type="file"
+                    accept="video/mp4"
+                    data-testid="tum-live-upload-file"
+                    [attr.aria-label]="'artemisApp.tumLiveUpload.chooseFile' | artemisTranslate"
+                    (change)="onFileChosen($event)"
+                />
+                <button tumAetUiButton type="button" size="small" data-testid="tum-live-upload-start" [disabled]="!file() || busy()" (click)="upload()">
+                    {{ (current.attachedRef ? 'artemisApp.tumLiveUpload.replace' : 'artemisApp.tumLiveUpload.upload') | artemisTranslate }}
+                </button>
+            </div>
+        }
+        @if (attachedNow()) {
+            <tumaet-ui-message severity="success" [text]="'artemisApp.tumLiveUpload.attached' | artemisTranslate" />
+        }
+        @if (transferError() === 'network') {
+            <!-- Also an expired or used upload link: TUM.Live answers it without CORS headers, so the browser reports no more than a network error. -->
+            <tumaet-ui-message severity="error" [text]="'artemisApp.tumLiveUpload.unreachable' | artemisTranslate" />
+        } @else if (transferError()) {
+            <tumaet-ui-message severity="error" [text]="'artemisApp.tumLiveUpload.transferFailed' | artemisTranslate: { reason: transferError() }" />
+        } @else if (current.lastError && !current.pendingRef) {
+            <tumaet-ui-message severity="warn" [text]="'artemisApp.tumLiveUpload.lastError' | artemisTranslate: { reason: current.lastError }" />
+        }
+    </section>
+}

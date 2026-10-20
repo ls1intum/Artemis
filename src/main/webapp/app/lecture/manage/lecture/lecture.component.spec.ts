@@ -219,10 +219,20 @@ describe('Lecture', () => {
         await lectureComponentFixture.whenStable();
 
         expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!);
+        expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!, false);
         expect(lectureComponent.lectures()).toHaveLength(7);
         expect(lectureComponent.lectures()).not.toContain(pastLecture);
         expect(lectureComponent.filteredLectures()).toEqual(lectureComponent.lectures());
+    });
+
+    it('passes the answer about TUM.Live videos on when deleting a lecture', async () => {
+        const deleteSpy = vi.spyOn(lectureService, 'delete');
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+
+        lectureComponent.deleteLecture(pastLecture.id!, { deleteTumLiveRecordings: true });
+
+        expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!, true);
     });
 
     it('should import lecture', async () => {

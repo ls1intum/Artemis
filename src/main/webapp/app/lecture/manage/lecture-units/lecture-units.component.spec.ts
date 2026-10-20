@@ -587,6 +587,24 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(createStub).not.toHaveBeenCalled();
     });
 
+    it('should create an attachment video unit with only a name, so its video can be uploaded to TUM.Live afterwards', async () => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const createStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: new AttachmentVideoUnit(), status: 201 })));
+
+        wizardUnitComponentFixture.detectChanges();
+        await wizardUnitComponentFixture.whenStable();
+
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+        wizardUnitComponent.createAttachmentVideoUnit({ formProperties: { name: 'Recording' }, fileProperties: {} });
+        await wizardUnitComponentFixture.whenStable();
+
+        expect(createStub).toHaveBeenCalledTimes(1);
+        const sent = createStub.mock.calls[0][0] as FormData;
+        expect(sent.has('file')).toBe(false);
+        expect(sent.has('attachment')).toBe(false);
+        expect(JSON.parse(await (sent.get('attachmentVideoUnit') as Blob).text())).toMatchObject({ name: 'Recording' });
+    });
+
     it('should close the exercise form once its items are created and reload the list when their requests completed', async () => {
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -665,6 +683,60 @@ describe('LectureUpdateUnitsComponent', () => {
 
         expect(wizardUnitComponent).not.toBeNull();
         expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBe(true);
+    });
+
+    it('takes an attached TUM.Live video into the edited unit, its form and the list, but not into another unit', () => {
+        mockUnitManagementComponent();
+        const unit = new AttachmentVideoUnit();
+        unit.id = 4;
+        wizardUnitComponent.editingUnit.set(unit);
+        const response = new Subject<HttpResponse<AttachmentVideoUnit>>();
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(response);
+        const form = { applyServerVideoSource: vi.fn() };
+        wizardUnitComponent.attachmentVideoUnitForm = signal(form as unknown as AttachmentVideoUnitFormComponent).asReadonly() as Signal<
+            AttachmentVideoUnitFormComponent | undefined
+        >;
+
+        wizardUnitComponent.onTumLiveVideoAttached(4);
+        response.next(new HttpResponse({ body: { ...unit, videoSource: 'https://tum.live/w/algo/55' } as AttachmentVideoUnit }));
+
+        expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).videoSource).toBe('https://tum.live/w/algo/55');
+        expect(form.applyServerVideoSource).toHaveBeenCalledWith('https://tum.live/w/algo/55');
+        expect(unitManagementComponentMock.loadData).toHaveBeenCalledOnce();
+
+        const other = new AttachmentVideoUnit();
+        other.id = 5;
+        wizardUnitComponent.onTumLiveVideoAttached(4);
+        wizardUnitComponent.editingUnit.set(other);
+        response.next(new HttpResponse({ body: { ...unit, videoSource: 'https://tum.live/w/algo/56' } as AttachmentVideoUnit }));
+
+        expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).videoSource).toBeUndefined();
+        expect(form.applyServerVideoSource).toHaveBeenCalledOnce();
+    });
+
+    it('keeps an attached TUM.Live video when the response of a save that ran meanwhile arrives', () => {
+        mockUnitManagementComponent();
+        const unit = new AttachmentVideoUnit();
+        unit.id = 4;
+        unit.name = 'Unit';
+        wizardUnitComponent.editingUnit.set(unit);
+        const save = new Subject<AttachmentVideoUnit>();
+        const sent = new AttachmentVideoUnit();
+        sent.id = 4;
+        sent.name = 'Renamed';
+        // A save of the details is running.
+        const runningSave = { key: 'k', request: () => save } as never;
+        wizardUnitComponent['pendingDetails'].set(runningSave);
+        wizardUnitComponent['flushAutosave']();
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
+            of(new HttpResponse({ body: { ...unit, videoSource: 'https://tum.live/w/algo/55' } as AttachmentVideoUnit })),
+        );
+
+        wizardUnitComponent.onTumLiveVideoAttached(4);
+        save.next(sent);
+
+        expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).name).toBe('Renamed');
+        expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).videoSource).toBe('https://tum.live/w/algo/55');
     });
 
     describe('PDF drop zone', () => {

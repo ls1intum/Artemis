@@ -6,6 +6,7 @@ import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from '../attachment-video-unit-form/attachment-video-unit-form.component';
+import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { AttachmentVideoUnitService } from '../services/attachment-video-unit.service';
 import { EditAttachmentVideoUnitComponent } from './edit-attachment-video-unit.component';
 import { AttachmentUpdateIntent, AttachmentVideoUnit } from '../../../shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -44,6 +45,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
             providers: [
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
+                MockProvider(TumLiveUploadService, { getState: () => of({ connected: true }) }),
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
                 {
@@ -181,6 +183,19 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(attachmentVideoUnitFormComponent.formData()?.formProperties.videoSource).toEqual(attachmentVideoUnit.videoSource);
         expect(attachmentVideoUnitFormComponent.formData()?.fileProperties.fileName).toEqual(attachment.link);
         expect(attachmentVideoUnitFormComponent.formData()?.fileProperties.file).toBeUndefined();
+    });
+
+    it('shows the video link of a video uploaded to TUM.Live once it is attached', () => {
+        fixture.detectChanges();
+        const form: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
+            of(new HttpResponse({ body: { ...attachmentVideoUnit, videoSource: 'https://tum.live/w/algo/55' } as AttachmentVideoUnit })),
+        );
+
+        fixture.componentInstance.onTumLiveVideoAttached(attachmentVideoUnit.id!);
+
+        expect(form.videoSourceControl!.value).toBe('https://tum.live/w/algo/55');
+        expect(fixture.componentInstance.attachmentVideoUnit()?.videoSource).toBe('https://tum.live/w/algo/55');
     });
 
     it('should update attachment video unit with file change without notification', async () => {

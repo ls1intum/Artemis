@@ -163,6 +163,77 @@ class GocastConnectorServiceTest {
         server.verify();
     }
 
+    @Test
+    void createsUploadsWithAnAbsoluteUrlOnTheWebHostAndDeletesThem() {
+        String ticket = "BQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU";
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/uploads")).andExpect(method(HttpMethod.POST)).andExpect(header(HttpHeaders.AUTHORIZATION, AUTHORIZATION))
+                .andExpect(content().json("{\"externalRef\":\"reference-a-0000\",\"title\":\"Lecture 3\"}", JsonCompareMode.STRICT))
+                .andRespond(withSuccess("{\"streamId\":55,\"uploadPath\":\"/api/v2/integration/uploads/%s\"}".formatted(ticket), MediaType.APPLICATION_JSON));
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/uploads/reference-a-0000")).andExpect(method(HttpMethod.DELETE)).andRespond(withSuccess());
+
+        var target = connector.createUpload(23, "reference-a-0000", "Lecture 3");
+        connector.deleteUpload(23, "reference-a-0000");
+
+        assertThat(target.streamId()).isEqualTo(55);
+        assertThat(target.uploadUrl()).isEqualTo("http://localhost:18081/api/v2/integration/uploads/" + ticket);
+        assertThat(target.toString()).doesNotContain(ticket);
+        server.verify();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "{\"streamId\":55,\"uploadPath\":\"https://evil.example/api/v2/integration/uploads/BQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU\"}",
+            "{\"streamId\":55,\"uploadPath\":\"/api/v2/other\"}", "{\"streamId\":0,\"uploadPath\":\"/api/v2/integration/uploads/BQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU\"}" })
+    void rejectsUploadTargetsOutsideTheTicketRoute(String responseBody) {
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/uploads")).andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> connector.createUpload(23, "reference-a-0000", "Lecture")).isInstanceOf(GocastIntegrationException.class)
+                .satisfies(error -> assertThat(((GocastIntegrationException) error).getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
+        assertThatThrownBy(() -> connector.createUpload(23, "short", "Lecture")).isInstanceOf(IllegalArgumentException.class);
+        server.verify();
+    }
+
+    @Test
+    void onlyASuccessConfirmsTheDeletionOfAnUpload() {
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/uploads/reference-a-0000")).andRespond(withStatus(HttpStatus.FOUND));
+
+        assertThatThrownBy(() -> connector.deleteUpload(23, "reference-a-0000")).isInstanceOf(GocastIntegrationException.class)
+                .satisfies(error -> assertThat(((GocastIntegrationException) error).getUpstreamStatus()).isEqualTo(HttpStatus.FOUND));
+        server.verify();
+    }
+
+    @Test
+    void readsTheConversionStateOfAnUpload() {
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/recordings/55"))
+                .andRespond(withSuccess("{\"failed\":true,\"error\":\"The file is not a video.\",\"progress\":70}", MediaType.APPLICATION_JSON));
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/recordings/55")).andRespond(withSuccess("{\"converting\":true,\"progress\":40}", MediaType.APPLICATION_JSON));
+        server.expect(requestTo(BASE_URL + "/integration/grants/23/recordings/55"))
+                .andRespond(withSuccess("{\"playlistUrl\":\"https://edge.example/vod/55/COMB/playlist.m3u8?jwt=x\"}", MediaType.APPLICATION_JSON));
+
+        var failed = connector.getRecording(23, 55);
+        var converting = connector.getRecording(23, 55);
+        var ready = connector.getRecording(23, 55);
+
+        assertThat(failed.failed()).isTrue();
+        assertThat(failed.error()).isEqualTo("The file is not a video.");
+        assertThat(failed.ready()).isFalse();
+        assertThat(converting.converting()).isTrue();
+        assertThat(converting.progress()).isEqualTo(40);
+        assertThat(converting.ready()).isFalse();
+        assertThat(ready.ready()).isTrue();
+        assertThat(ready.toString()).doesNotContain("jwt");
+        server.verify();
+    }
+
+    @Test
+    void buildsWatchPagesThatArtemisResolvesAsTumLiveVideos() {
+        var tumLiveService = new TumLiveService(RestClient.builder(), BASE_URL);
+
+        String watchUrl = connector.watchUrl("algorithmen-üben", 55);
+
+        assertThat(watchUrl).isEqualTo("http://localhost:18081/w/algorithmen-%C3%BCben/55");
+        assertThat(tumLiveService.findWatchPage(watchUrl)).hasValueSatisfying(page -> assertThat(page.streamId()).isEqualTo("55"));
+    }
+
     @ParameterizedTest
     @MethodSource("invalidIntegrationResponses")
     void rejectsInvalidIntegrationIdentity(String responseBody) {

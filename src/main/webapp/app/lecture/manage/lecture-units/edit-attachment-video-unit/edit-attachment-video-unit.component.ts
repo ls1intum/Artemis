@@ -12,12 +12,13 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
+import { TumLiveUploadComponent } from 'app/lecture/manage/lecture-units/tum-live-upload/tum-live-upload.component';
 
 @Component({
     selector: 'jhi-edit-attachment-video-unit',
     templateUrl: './edit-attachment-video-unit.component.html',
-    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
+    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent, TumLiveUploadComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditAttachmentVideoUnitComponent implements OnInit {
@@ -90,6 +91,31 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             });
     }
 
+    /**
+     * Shows the video link of a video uploaded to TUM.Live, which Artemis set on the unit, so saving the form keeps it.
+     * @param unitId the unit
+     */
+    onTumLiveVideoAttached(unitId: number): void {
+        const lectureId = this.lectureId();
+        if (lectureId === undefined) {
+            return;
+        }
+        this.attachmentVideoUnitService
+            .findById(unitId, lectureId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    const videoSource = response.body?.videoSource;
+                    const unit = this.attachmentVideoUnit();
+                    if (unit) {
+                        this.attachmentVideoUnit.set(cloneWith(unit, { videoSource }));
+                    }
+                    this.attachmentVideoUnitForm()?.applyServerVideoSource(videoSource);
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
@@ -121,6 +147,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             releaseDate,
             competencyLinks,
             videoSource,
+            loadedVideoSource: currentUnit.videoSource,
             attachmentUpdateIntent: hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
 

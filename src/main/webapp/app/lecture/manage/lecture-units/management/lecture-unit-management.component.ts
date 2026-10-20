@@ -45,6 +45,7 @@ import {
 import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
 import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -86,6 +87,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     protected readonly lectureUnitService = inject(LectureUnitService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly tumLiveUploadService = inject(TumLiveUploadService);
     private readonly websocketService = inject(WebsocketService);
 
     protected readonly faTrash = faTrash;
@@ -193,6 +195,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         return; // superseded by a newer load
                     }
                     this.lecture.set(lecture);
+                    this.loadTumLiveUploads(lecture?.course?.id);
                     if (lecture?.lectureUnits) {
                         this.lectureUnits.set(lecture.lectureUnits);
                         const viewAvailable: Record<number, boolean> = {};
@@ -296,8 +299,21 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
-    deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.resolvedLectureId!).subscribe({
+    /** The units that show a video Artemis uploaded to TUM.Live; deleting one asks whether to delete the video there too. */
+    readonly tumLiveUploadedUnitIds = signal<Set<number>>(new Set());
+
+    private loadTumLiveUploads(courseId: number | undefined) {
+        if (courseId === undefined) {
+            return;
+        }
+        this.tumLiveUploadService.getUploadedUnits(courseId).subscribe({
+            next: (units) => this.tumLiveUploadedUnitIds.set(new Set(units.map((unit) => unit.lectureUnitId))),
+            error: () => this.tumLiveUploadedUnitIds.set(new Set()),
+        });
+    }
+
+    deleteLectureUnit(lectureUnitId: number, checks: { [key: string]: boolean } = {}) {
+        this.lectureUnitService.delete(lectureUnitId, this.resolvedLectureId!, !!checks.deleteTumLiveRecordings).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -564,6 +580,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         const phase = this.processingStatus()[lectureUnit.id!]?.phase;
         // If processing is in progress or done, it's not awaiting
         if (phase !== undefined && phase !== ProcessingPhase.IDLE) {
+            return false;
+        }
+        // A unit without a file and a video, such as one waiting for its TUM.Live upload, has nothing to process
+        if (!lectureUnit.attachment && !lectureUnit.videoSource) {
             return false;
         }
         // IDLE or no status yet - show "awaiting" only if the course is active (backfill scheduler only processes active courses)

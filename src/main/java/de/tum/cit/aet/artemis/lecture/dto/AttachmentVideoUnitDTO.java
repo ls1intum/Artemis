@@ -21,15 +21,18 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
  * DTO for the {@link AttachmentVideoUnit} REST boundary.
  * <p>
  * It is used both as the request part on create/update (the client only populates {@code name}, {@code releaseDate},
- * {@code description}, {@code videoSource}, {@code competencyLinks}, and {@code attachmentUpdateIntent}) and as the response body (additionally carrying
- * the mapped {@link AttachmentDTO} and {@link SlideDTO}s). Lazy associations are mapped defensively so the DTO can also
+ * {@code description}, {@code videoSource}, {@code loadedVideoSource}, {@code competencyLinks}, and {@code attachmentUpdateIntent}) and as the response body
+ * (additionally carrying the mapped {@link AttachmentDTO} and {@link SlideDTO}s). Lazy associations are mapped defensively so the DTO can also
  * be created right after persisting, before all associations are initialized.
+ * <p>
+ * On update, {@code loadedVideoSource} is the video URL the client's form was loaded with. The unit's video URL changes only if {@code videoSource} differs
+ * from it, and only if the unit still has it.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime releaseDate, @Size(max = 1000) String description, String videoSource,
         Set<CompetencyLinkDTO> competencyLinks, AttachmentDTO attachment, List<SlideDTO> slides, boolean slideMetadataPending, boolean completed, boolean visibleToStudents,
-        LectureReferenceDTO lecture, AttachmentUpdateIntent attachmentUpdateIntent, @JsonProperty("type") String type) implements LectureUnitDTO {
+        LectureReferenceDTO lecture, AttachmentUpdateIntent attachmentUpdateIntent, String loadedVideoSource, @JsonProperty("type") String type) implements LectureUnitDTO {
 
     public AttachmentVideoUnitDTO {
         type = "attachment";
@@ -82,6 +85,6 @@ public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime release
         // The PDF preview reads attachmentVideoUnit.lecture.id when saving/updating, so keep the lightweight lecture reference.
         LectureReferenceDTO lecture = LectureReferenceDTO.of(unit.getLecture());
         return new AttachmentVideoUnitDTO(unit.getId(), unit.getName(), unit.getReleaseDate(), unit.getDescription(), unit.getVideoSource(), competencyLinks, attachment, slides,
-                slideMetadataPending, unit.isCompleted(), unit.isVisibleToStudents(), lecture, intent, unit.getType());
+                slideMetadataPending, unit.isCompleted(), unit.isVisibleToStudents(), lecture, intent, null, unit.getType());
     }
 }

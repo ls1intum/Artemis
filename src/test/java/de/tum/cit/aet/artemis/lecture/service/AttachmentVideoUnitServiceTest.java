@@ -607,6 +607,24 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
+    void updateAttachmentVideoUnitKeepsAnUploadedVideoAgainstAFormOpenedBeforeIt() {
+        var unit = attachmentVideoUnit("Unit", null);
+        // A TUM.Live upload was attached after the form was loaded without a video.
+        unit.setVideoSource("https://tum.live/w/algo/9");
+
+        service.updateAttachmentVideoUnit(unit, attachmentVideoUnitDTO(unit, "Renamed", unit.getReleaseDate(), null, null), null, null, null, false, null, null, Set.of());
+
+        assertThat(unit.getVideoSource()).isEqualTo("https://tum.live/w/algo/9");
+        verify(attachmentVideoUnitRepository, never()).updateVideoSourceIfUnchanged(anyLong(), any(), any());
+        verify(contentProcessingService, never()).triggerProcessing(any());
+
+        service.updateAttachmentVideoUnit(unit, attachmentVideoUnitDTO(unit, "Renamed", unit.getReleaseDate(), "https://video.example/other", null), null, null, null, false, null,
+                null, Set.of());
+
+        verify(attachmentVideoUnitRepository).updateVideoSourceIfUnchanged(LECTURE_UNIT_ID, null, "https://video.example/other");
+    }
+
+    @Test
     void updateAttachmentVideoUnitMarksMetadataDirtyWhenContentProcessingIsUnavailable() {
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.empty(), lectureUnitService,
                 Optional.empty(), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService, attachmentService);
@@ -656,9 +674,15 @@ class AttachmentVideoUnitServiceTest {
     }
 
     private static AttachmentVideoUnitDTO attachmentVideoUnitDTO(AttachmentVideoUnit unit, String name, ZonedDateTime releaseDate, String videoSource) {
+        return attachmentVideoUnitDTO(unit, name, releaseDate, videoSource, unit.getVideoSource());
+    }
+
+    /** An update from a form that was loaded with {@code loadedVideoSource}. */
+    private static AttachmentVideoUnitDTO attachmentVideoUnitDTO(AttachmentVideoUnit unit, String name, ZonedDateTime releaseDate, String videoSource, String loadedVideoSource) {
         var current = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.NO_FILE_CHANGE);
         return new AttachmentVideoUnitDTO(current.id(), name, releaseDate, current.description(), videoSource, current.competencyLinks(), current.attachment(), current.slides(),
-                current.slideMetadataPending(), current.completed(), current.visibleToStudents(), current.lecture(), current.attachmentUpdateIntent(), current.type());
+                current.slideMetadataPending(), current.completed(), current.visibleToStudents(), current.lecture(), current.attachmentUpdateIntent(), loadedVideoSource,
+                current.type());
     }
 
     private static Attachment attachment() {

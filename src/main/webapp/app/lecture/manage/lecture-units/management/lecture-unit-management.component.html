@@ -220,7 +220,10 @@
                                         [entityTitle]="unitName"
                                         [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
                                         [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
-                                        (delete)="deleteLectureUnit(lectureUnit.id!)"
+                                        [additionalChecks]="
+                                            tumLiveUploadedUnitIds().has(lectureUnit.id!) ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecording' } : {}
+                                        "
+                                        (delete)="deleteLectureUnit(lectureUnit.id!, $event)"
                                         [dialogError]="dialogError$"
                                     >
                                         <fa-icon [icon]="faTrash" />

@@ -274,8 +274,9 @@ export class AttachmentVideoUnitFormComponent {
     readonly nextFileVersion = computed(() => (this.currentFileVersion() ?? 0) + 1);
     readonly hasSavedVideoSource = computed(() => !!this.savedVideoSource());
 
+    /** A unit may be saved without a file and a video, so its video can be uploaded to TUM.Live afterwards. */
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.isReleaseDateTextValid() && (!!this.fileName() || !!this.videoSourceSignal());
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.isReleaseDateTextValid();
     });
 
     /** Whether the details that an item edited in place saves automatically can be saved; a new video link or its helper do not count. */
@@ -373,6 +374,17 @@ export class AttachmentVideoUnitFormComponent {
         this.applyingFormData = true;
         this.urlHelperControl?.setValue(undefined);
         this.applyingFormData = false;
+    }
+
+    /**
+     * Shows a video link the server set on its own, such as a video uploaded to TUM.Live, as the item's saved link, without counting it as a change of the user.
+     * @param videoSource the item's video link now
+     */
+    applyServerVideoSource(videoSource: string | undefined): void {
+        this.applyingFormData = true;
+        this.videoSourceControl?.setValue(videoSource);
+        this.applyingFormData = false;
+        this.takeOverSavedVideoSource(videoSource);
     }
 
     /** Goes back to the video link the item has, and takes back a confirmation of the new one that was not saved yet. */

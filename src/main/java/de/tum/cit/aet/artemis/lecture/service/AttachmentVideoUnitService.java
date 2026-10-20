@@ -182,7 +182,11 @@ public class AttachmentVideoUnitService {
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
-        existingAttachmentVideoUnit.setVideoSource(updateUnitDTO.videoSource());
+        // The video URL changes only if the client changed it, and only if the unit still has the URL the client loaded: a TUM.Live upload may have been attached
+        // meanwhile, and a form opened before must not take it away.
+        String formVideoSource = blankToNull(updateUnitDTO.loadedVideoSource());
+        boolean videoSourceEdited = !Objects.equals(blankToNull(updateUnitDTO.videoSource()), formVideoSource);
+        existingAttachmentVideoUnit.setVideoSource(videoSourceEdited ? blankToNull(updateUnitDTO.videoSource()) : existingAttachmentVideoUnit.getVideoSource());
         boolean hasUploadedFile = updateFile != null && !updateFile.isEmpty();
         // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
@@ -201,6 +205,11 @@ public class AttachmentVideoUnitService {
         }
 
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(existingAttachmentVideoUnit);
+        // The save does not write the video URL (see AttachmentVideoUnit#videoSource).
+        if (videoSourceEdited
+                && !attachmentVideoUnitRepository.updateVideoSourceIfUnchanged(savedAttachmentVideoUnit.getId(), formVideoSource, savedAttachmentVideoUnit.getVideoSource())) {
+            attachmentVideoUnitRepository.findById(savedAttachmentVideoUnit.getId()).ifPresent(current -> savedAttachmentVideoUnit.setVideoSource(current.getVideoSource()));
+        }
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedAttachmentVideoUnit));
 
@@ -293,6 +302,10 @@ public class AttachmentVideoUnitService {
             }
         }
         return new AppliedUpdate(savedAttachmentVideoUnit, usesSubmittedStudentVersion);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     /**
