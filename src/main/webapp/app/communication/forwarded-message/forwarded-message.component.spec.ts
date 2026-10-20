@@ -373,6 +373,45 @@ describe('ForwardedMessageComponent', () => {
         expect(fixture.nativeElement.querySelector('button')).not.toBeNull();
     });
 
+    it.each([mockPost, mockAnswerPost])('preserves an expanded source when posting $id is refetched as a fresh object', (original) => {
+        const source = { ...original, content: 'Long source content' };
+        fixture.componentRef.setInput('originalPostDetails', source);
+        fixture.detectChanges();
+        const body = fixture.nativeElement.querySelector('#messageContent');
+        Object.defineProperty(body, 'scrollHeight', { value: 400, configurable: true });
+        Object.defineProperty(body, 'clientHeight', { value: 100, configurable: true });
+        component.checkIfContentOverflows();
+        component.toggleShowFullForwardedMessage();
+        fixture.detectChanges();
+        expect(component.showFullForwardedMessage()).toBe(true);
+
+        fixture.componentRef.setInput('originalPostDetails', { ...source, content: 'Updated content from the same source' });
+        fixture.detectChanges();
+
+        expect(component.showFullForwardedMessage()).toBe(true);
+        expect(component.isContentLong()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="forwarded-message-expand"]').getAttribute('aria-expanded')).toBe('true');
+        component.toggleShowFullForwardedMessage();
+        fixture.detectChanges();
+        expect(component.showFullForwardedMessage()).toBe(false);
+    });
+
+    it.each([
+        ['a different post', { ...mockPost, id: 99 }],
+        ['a reply with the same numeric id', { ...mockAnswerPost, id: mockPost.id }],
+        ['a missing source', undefined],
+    ])('collapses the preview when the source changes to %s', (_description, replacement) => {
+        fixture.componentRef.setInput('originalPostDetails', mockPost);
+        fixture.detectChanges();
+        component.toggleShowFullForwardedMessage();
+        expect(component.showFullForwardedMessage()).toBe(true);
+
+        fixture.componentRef.setInput('originalPostDetails', replacement);
+        fixture.detectChanges();
+
+        expect(component.showFullForwardedMessage()).toBe(false);
+    });
+
     it('should stop observing forwarded content after the component is destroyed', () => {
         fixture.detectChanges();
         expect(resizeObservers.length).toBeGreaterThan(0);

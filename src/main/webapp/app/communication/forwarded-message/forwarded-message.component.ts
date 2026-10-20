@@ -42,16 +42,22 @@ export class ForwardedMessageComponent {
 
     private conversation: Conversation | undefined;
     private isAnswerPost = false;
+    private sourceId: number | undefined;
 
+    /** Keeps source metadata reactive while preserving the reader's expansion across refetches of the same post or reply. */
     constructor() {
         effect(() => {
             const post = this.originalPostDetails();
             untracked(() => {
-                this.isContentLong.set(false);
-                this.showFullForwardedMessage.set(false);
+                const isAnswerPost = !!post && 'post' in post;
+                if (post?.id === undefined || post.id !== this.sourceId || isAnswerPost !== this.isAnswerPost) {
+                    this.isContentLong.set(false);
+                    this.showFullForwardedMessage.set(false);
+                }
+                this.sourceId = post?.id;
+                this.isAnswerPost = isAnswerPost;
                 try {
                     if (post) {
-                        this.isAnswerPost = 'post' in post;
                         this.conversation = this.isAnswerPost ? (post as AnswerPost).post?.conversation : (post as Post).conversation;
                         this.updateSourceName();
                         this.isChannel();

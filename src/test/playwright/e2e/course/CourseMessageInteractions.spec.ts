@@ -537,6 +537,21 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             const card = page.getByTestId('conversation-thread-card');
             const scrollBody = page.getByTestId('conversation-thread-scroll-body');
             await expect(card.getByTestId('forwarded-message-body')).toContainText('Design by contract');
+            await expand.click();
+            const threadExpand = card.getByTestId('forwarded-message-expand');
+            await threadExpand.click();
+            await expect(expand).toHaveAttribute('aria-expanded', 'true');
+            await expect(threadExpand).toHaveAttribute('aria-expanded', 'true');
+            const update = await communicationAPIRequests.createCourseMessage(
+                course!,
+                destination.id!,
+                'channel',
+                'For the tutorial, compare the loop invariant with the method postcondition.',
+            );
+            // Rendering the new row waits for the real forwarded-source refetch to finish.
+            await expect(courseMessages.getSinglePost(update.id!)).toContainText(update.content!);
+            await expect(expand).toHaveAttribute('aria-expanded', 'true');
+            await expect(threadExpand).toHaveAttribute('aria-expanded', 'true');
             await expectInside(mainPost.getByRole('button', { name: 'View conversation', exact: true }), mainPost, ['left', 'right'], {
                 name: 'Forwarded conversation link in the narrow message column',
             });
