@@ -21,7 +21,7 @@
     </div>
 }
 @if (exam()) {
-    @if (isVisible() && !isGracePeriodOver() && !this.studentExam()?.submitted && !examStartConfirmed()) {
+    @if (isVisible() && !isGracePeriodOver() && !this.studentExam()?.submitted && !examStartConfirmed() && !resumingStartedExam()) {
         <jhi-exam-participation-cover
             [startView]="true"
             [exam]="exam()"

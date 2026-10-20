@@ -1100,6 +1100,169 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
+    describe('resume a started exam after a reload', () => {
+        const now = dayjs();
+
+        /** The student exam as `own-student-exam` returns it on a reload: without exercises, marked started by the server. */
+        const buildOwnStudentExam = (overrides: { started?: boolean; startDate?: dayjs.Dayjs; testExam?: boolean; ended?: boolean } = {}) => {
+            const studentExam = new StudentExam();
+            studentExam.id = 7;
+            studentExam.workingTime = 3600;
+            studentExam.started = overrides.started ?? true;
+            studentExam.ended = overrides.ended;
+            studentExam.exam = new Exam();
+            studentExam.exam.visibleDate = now.subtract(1, 'hours');
+            studentExam.exam.startDate = overrides.startDate ?? now.subtract(10, 'minutes');
+            studentExam.exam.gracePeriod = 180;
+            studentExam.exam.testExam = overrides.testExam ?? false;
+            return studentExam;
+        };
+
+        /** The exam as the conduction endpoint returns it: the same student exam, now with its exercises and the answers saved so far. */
+        const buildConductionStudentExam = () => {
+            const studentExam = buildOwnStudentExam();
+            studentExam.exercises = [];
+            return studentExam;
+        };
+
+        let conductionSpy: ReturnType<typeof vi.spyOn>;
+        let loadLocalSpy: ReturnType<typeof vi.spyOn>;
+        let storeSpy: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+            conductionSpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(buildConductionStudentExam()));
+            loadLocalSpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage');
+            storeSpy = vi.spyOn(examParticipationService, 'saveStudentExamToLocalStorage').mockImplementation(() => {});
+            vi.spyOn(examParticipationService, 'setExamLayout').mockImplementation(() => {});
+        });
+
+        // The start cover is what a student sees when the page is opened for the first time, so what is asserted is that
+        // the exam is being conducted (examStartConfirmed) and that nothing is left loading.
+        const expectResumedFromServer = () => {
+            expect(conductionSpy).toHaveBeenCalledExactlyOnceWith(1, 2, 7);
+            expect(comp.examStartConfirmed()).toBe(true);
+            expect(comp.resumingStartedExam()).toBe(false);
+            expect(comp.loadingExam()).toBe(false);
+            expect(storeSpy).toHaveBeenCalledOnce();
+            expect(loadLocalSpy).not.toHaveBeenCalled();
+        };
+
+        const expectStartCoverKept = () => {
+            expect(conductionSpy).not.toHaveBeenCalled();
+            expect(comp.examStartConfirmed()).toBe(false);
+            expect(comp.resumingStartedExam()).toBe(false);
+            expect(comp.loadingExam()).toBe(false);
+        };
+
+        const openExamPage = (ownStudentExam: StudentExam) => {
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ownStudentExam));
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            comp.ngOnInit();
+        };
+
+        it('should take a student who started the exam back into it when the last save had completed', () => {
+            // A save that is cut off by the reload leaves the failed-save flag set, one that had completed does not. Both
+            // must end up in the running exam, so that the outcome does not depend on the timing of the reload.
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+
+            openExamPage(buildOwnStudentExam());
+
+            expectResumedFromServer();
+        });
+
+        it('should restore the cached exam instead when the last save failed', () => {
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(true);
+            loadLocalSpy.mockReturnValue(of(buildConductionStudentExam()));
+
+            openExamPage(buildOwnStudentExam());
+
+            // the cached exam keeps the answers the server never received, which are re-sent from there
+            expect(loadLocalSpy).toHaveBeenCalledOnce();
+            expect(conductionSpy).not.toHaveBeenCalled();
+            expect(comp.examStartConfirmed()).toBe(true);
+        });
+
+        it('should hide the start cover while the started exam is being fetched', () => {
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+            const pendingConduction = new Subject<StudentExam | undefined>();
+            conductionSpy.mockReturnValue(pendingConduction);
+
+            openExamPage(buildOwnStudentExam());
+
+            expect(comp.resumingStartedExam()).toBe(true);
+            expect(comp.examStartConfirmed()).toBe(false);
+            fixture.changeDetectorRef.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-exam-participation-cover')).toBeNull();
+
+            pendingConduction.next(buildConductionStudentExam());
+
+            expect(comp.resumingStartedExam()).toBe(false);
+            expect(comp.examStartConfirmed()).toBe(true);
+        });
+
+        it('should show the start cover when nothing could be loaded for the started exam', () => {
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+            conductionSpy.mockReturnValue(of(undefined));
+
+            openExamPage(buildOwnStudentExam());
+
+            expect(conductionSpy).toHaveBeenCalledOnce();
+            expect(comp.examStartConfirmed()).toBe(false);
+            expect(comp.resumingStartedExam()).toBe(false);
+            expect(comp.loadingExam()).toBe(false);
+            expect(storeSpy).not.toHaveBeenCalled();
+            fixture.changeDetectorRef.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-exam-participation-cover')).not.toBeNull();
+        });
+
+        it('should stop resuming when the route changes before the exam arrived', () => {
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+            conductionSpy.mockReturnValue(new Subject<StudentExam | undefined>());
+            openExamPage(buildOwnStudentExam());
+            expect(comp.resumingStartedExam()).toBe(true);
+
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '3' });
+            comp.ngOnInit();
+
+            expect(comp.resumingStartedExam()).toBe(false);
+        });
+
+        it('should show the start cover to a student who has not started the exam', () => {
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+
+            openExamPage(buildOwnStudentExam({ started: false }));
+
+            expectStartCoverKept();
+        });
+
+        it('should keep the start cover when the exam has not begun yet', () => {
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+
+            // The student may have started it from the waiting screen before the exam began.
+            openExamPage(buildOwnStudentExam({ startDate: now.add(10, 'minutes') }));
+
+            expectStartCoverKept();
+        });
+
+        it('should not resume an exam that is over for the student', () => {
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+
+            openExamPage(buildOwnStudentExam({ ended: true }));
+
+            expectStartCoverKept();
+        });
+
+        it('should keep the start cover of a test exam', () => {
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+
+            openExamPage(buildOwnStudentExam({ testExam: true }));
+
+            expectStartCoverKept();
+        });
+    });
+
     it('should submit exam when end confirmed', () => {
         comp.studentExam.set(new StudentExam());
         comp.studentExam().submitted = false;

@@ -204,6 +204,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     readonly examStartConfirmed = signal(false);
+    // True while a student who had already started the exam is being taken back into it after a reload, see resumeStartedExam.
+    // The start cover stays hidden meanwhile: it would offer a second start of an exam that is being resumed.
+    readonly resumingStartedExam = signal(false);
 
     // autoTimerInterval in seconds
     readonly autoSaveTimer = signal(0);
@@ -399,6 +402,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private cancelPendingExamLoad(): void {
         this.examLoadSubscription?.unsubscribe();
         this.examLoadSubscription = undefined;
+        this.resumingStartedExam.set(false);
     }
 
     /**
@@ -889,10 +893,43 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             this.alertService.info('artemisApp.examParticipation.answersRestoredFromLocalStorage');
                         }
                     });
+            } else if (this.shouldResumeStartedExam()) {
+                this.resumeStartedExam();
             } else {
                 this.loadingExam.set(false);
             }
         }
+    }
+
+    /**
+     * Whether a student who opens the exam page has to be taken straight back into a running exam instead of seeing the
+     * start cover again. That is the case once the server has marked their student exam as started (which happens when
+     * the conduction view is fetched) while the exam is still running for them: a reload or a return to the page must
+     * not send them back to the start cover. Test exams are left out, there the student chooses the attempt to start.
+     */
+    private shouldResumeStartedExam(): boolean {
+        return !this.exam().testExam && !!this.studentExam().started && this.isVisible() && this.isActive() && !this.isOver();
+    }
+
+    /**
+     * Takes a student who already started the exam back into it, exactly as the start button does: the exam is fetched
+     * from the server, which also holds every answer saved so far, and then conducted. Whether the last save reached the
+     * server does not matter for this. A failed save is a separate case, which resumes from the exam cached on this device
+     * so that the answers the server never received are re-sent, see {@link handleStudentExam}.
+     * Without a server response, and with nothing cached on this device, the start cover stays so the student can start by hand.
+     */
+    private resumeStartedExam(): void {
+        this.resumingStartedExam.set(true);
+        this.examLoadSubscription = this.examParticipationService
+            .loadStudentExamWithExercisesForConduction(this.courseId(), this.examId(), this.studentExam().id!)
+            .subscribe((studentExam: StudentExam | undefined) => {
+                this.resumingStartedExam.set(false);
+                this.loadingExam.set(false);
+                if (studentExam) {
+                    this.examParticipationService.saveStudentExamToLocalStorage(this.courseId(), this.examId(), studentExam);
+                    this.examStarted(studentExam);
+                }
+            });
     }
 
     /**
