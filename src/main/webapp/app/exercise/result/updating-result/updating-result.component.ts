@@ -54,7 +54,7 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
      */
     readonly personalParticipation = input(true);
 
-    readonly onParticipationChange = output<Result>();
+    readonly onParticipationChange = output<void>();
 
     readonly result = signal<Result | undefined>(undefined);
     readonly isBuilding = signal(false);
@@ -176,7 +176,7 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
                     } else {
                         this.result.set(getLatestResultOfStudentParticipation(this.participation(), showUngradedResults, false));
                     }
-                    this.onParticipationChange.emit(result);
+                    this.onParticipationChange.emit();
                     if (result) {
                         this.showResult.emit();
                     }

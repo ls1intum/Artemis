@@ -196,11 +196,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, someDate, pastDate, true),
                 Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, null, futureDate, true),
                 Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC, null, pastDate, true),
-                // Formative AI feedback is available before the assessment due date, including its pending status
-                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC_ATHENA, someDate, futureDate, true),
-                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC_ATHENA, futureDate, futureDate, true),
-                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC_ATHENA, null, futureDate, true),
-                Arguments.of(startDate, releaseDate, AssessmentType.AUTOMATIC_ATHENA, someDate, null, true),
                 // Manual result without completion date (assessment was only saved but no submitted) is not returned
                 Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, null, null, false),
                 Arguments.of(startDate, releaseDate, AssessmentType.SEMI_AUTOMATIC, null, futureDate, false),

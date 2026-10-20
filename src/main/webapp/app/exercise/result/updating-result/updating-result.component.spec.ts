@@ -131,17 +131,6 @@ describe('UpdatingResultComponent', () => {
         expect(comp.result()!.id).toBe(ungradedResult2.id);
     });
 
-    it('should forward the received result with its inline feedback to the parent', () => {
-        cleanInitializeGraded();
-        const onParticipationChange = vi.fn();
-        comp.onParticipationChange.subscribe(onParticipationChange);
-        const result: Result = { ...newGradedResult, feedbacks: [{ reference: 'file:Main.java_line:0', detailText: 'AI feedback' }] };
-
-        subscribeForLatestResultOfParticipationSubject.next(result);
-
-        expect(onParticipationChange).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: result.id, feedbacks: result.feedbacks }));
-    });
-
     it('should react to rated, but not to unrated results if showUngradedResults is false', () => {
         cleanInitializeGraded();
         const currentResult = comp.result();
