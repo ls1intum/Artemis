@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
@@ -73,6 +74,8 @@ public class GitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(GitService.class);
 
+    private static final int WORKING_COPY_LOCK_STRIPES = 128;
+
     /** The exercise name inside a repository folder name, which a JPlag checkout replaces with the participation id. */
     private static final Pattern EXERCISE_NAME_IN_FOLDER_NAME = Pattern.compile("/[a-zA-Z0-9]*-");
 
@@ -89,6 +92,22 @@ public class GitService extends AbstractGitService {
     private String artemisGitEmail;
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
+
+    /**
+     * Serializes the checkout, pull and clone of a working copy. Requests for the same repository arrive concurrently (a page reload, a second tab, a status poll next to a
+     * file listing), and two pulls in one working copy fail on the pack lock of the other. A failed pull then deletes the working copy, so the failure of one request also
+     * takes away the repository of the other. The locks are striped by path, which keeps their number fixed: two paths sharing a lock only wait for each other, and
+     * a lock is never held while another one is requested.
+     */
+    private final ReentrantLock[] workingCopyLocks = createWorkingCopyLocks();
+
+    private static ReentrantLock[] createWorkingCopyLocks() {
+        ReentrantLock[] locks = new ReentrantLock[WORKING_COPY_LOCK_STRIPES];
+        for (int i = 0; i < locks.length; i++) {
+            locks[i] = new ReentrantLock();
+        }
+        return locks;
+    }
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -269,6 +288,18 @@ public class GitService extends AbstractGitService {
     }
 
     private Repository checkoutRepository(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
+            boolean writeAccess, boolean selectCloneBranch) throws GitAPIException {
+        ReentrantLock workingCopyLock = workingCopyLocks[Math.floorMod(localPath.toAbsolutePath().normalize().hashCode(), workingCopyLocks.length)];
+        workingCopyLock.lock();
+        try {
+            return checkoutRepositoryLocked(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch, writeAccess, selectCloneBranch);
+        }
+        finally {
+            workingCopyLock.unlock();
+        }
+    }
+
+    private Repository checkoutRepositoryLocked(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
             boolean writeAccess, boolean selectCloneBranch) throws GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
