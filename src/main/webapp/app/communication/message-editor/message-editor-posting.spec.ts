@@ -89,6 +89,29 @@ describe('Message editor content in the actual posting view', () => {
         });
     }
 
+    it('renders a numeric entity typed literally without turning it into a post reference', async () => {
+        editor.load('');
+        selectAll();
+        editor.insertText('Literal &#169; stays text');
+        const message = editorToMessage(host);
+        await render(message, (view) => {
+            expect(view.textContent).toContain('Literal &#169; stays text');
+            expect(view.querySelector('a.reference')).toBeNull();
+        });
+        editor.load(message);
+        expect(host.textContent).toBe('Literal &#169; stays text');
+    });
+
+    it.each(['`#123`', '```\n#123\n```'])('renders numeric references literally inside code: %s', async (message) => {
+        editor.load(message);
+        await render(editorToMessage(host), (view) => {
+            expect(view.querySelector('code')?.textContent).toContain('#123');
+            expect(view.querySelector('a.reference')).toBeNull();
+        });
+        editor.load(editorToMessage(host));
+        expect(host.querySelector('code')?.textContent).toContain('#123');
+    });
+
     it('renders a mention accepted while bold is active without stray Markdown delimiters', async () => {
         editor.load('');
         selectAll();
