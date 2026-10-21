@@ -5,7 +5,7 @@ import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -20,6 +20,8 @@ import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
 import { BehaviorSubject } from 'rxjs';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
 
 describe('CourseSidebarComponent', () => {
     let component: CourseSidebarComponent;
@@ -102,7 +104,7 @@ describe('CourseSidebarComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                MockProvider(ScienceService),
+                { provide: ScienceService, useClass: MockScienceService },
             ],
         }).compileComponents();
 
@@ -246,5 +248,59 @@ describe('CourseSidebarComponent', () => {
         for (const item of items) {
             expect(['UL', 'OL', 'MENU']).toContain(item.parentElement?.tagName);
         }
+    });
+
+    it('should log an Iris selection in the course overview', () => {
+        const logEventSpy = vi.spyOn(TestBed.inject(ScienceService), 'logEvent');
+
+        component.onSidebarItemClick(mockSidebarItems[0]);
+
+        expect(logEventSpy).toHaveBeenCalledWith(ScienceEventType.IRIS__OPENED_SIDEBAR, course1.id, course1.id);
+    });
+
+    it('should count the Iris impression only once it was sent, retrying when the consent arrives', () => {
+        // The consent of the course loads after the sidebar has rendered; an impression dropped before that must not count.
+        const scienceService = TestBed.inject(ScienceService) as unknown as MockScienceService;
+        const logEventSpy = vi.spyOn(scienceService, 'logEvent').mockImplementation(() => scienceService.courseConsent() !== undefined);
+        // A course the sidebar has not counted an impression for yet.
+        const otherCourse = { ...course1, id: 999 } as Course;
+        fixture.componentRef.setInput('course', otherCourse);
+        fixture.detectChanges();
+        component.updateVisibleNavbarItems(10000);
+        const attemptsBeforeConsent = logEventSpy.mock.calls.filter(([type]) => type === ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION).length;
+        expect(attemptsBeforeConsent).toBeGreaterThan(0);
+
+        // Only the effect on the consent can send it here: nothing renders the sidebar items again.
+        scienceService.courseConsent.set({ courseId: 999, scienceEnabled: true, active: true });
+        fixture.detectChanges();
+
+        const impressions = logEventSpy.mock.calls.filter(([type]) => type === ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION);
+        expect(impressions.length).toBe(attemptsBeforeConsent + 1);
+        expect(impressions.at(-1)).toEqual([ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, 999, 999]);
+
+        // Counted now: rendering again sends no second impression.
+        component.updateVisibleNavbarItems(10000);
+        expect(logEventSpy.mock.calls.filter(([type]) => type === ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION)).toHaveLength(impressions.length);
+    });
+
+    it('should work without a ScienceService, as in course management', () => {
+        // Only the course overview provides the ScienceService; course management collects no science data.
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({
+            imports: [CourseSidebarComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
+        });
+        const sidebarFixture = TestBed.createComponent(CourseSidebarComponent);
+        sidebarFixture.componentRef.setInput('course', course1);
+        sidebarFixture.componentRef.setInput('sidebarItems', mockSidebarItems);
+        sidebarFixture.componentRef.setInput('courseActionItems', mockActionItems);
+
+        expect(() => {
+            sidebarFixture.detectChanges();
+            sidebarFixture.componentInstance.onSidebarItemClick(mockSidebarItems[0]);
+        }).not.toThrow();
     });
 });

@@ -17,6 +17,8 @@ import { Authority } from 'app/foundation/constants/authority.constants';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 
 describe('UserRouteAccessService', () => {
     const routeStateMock: any = { snapshot: {}, url: '/courses/20/exercises/4512' };
@@ -51,6 +53,8 @@ describe('UserRouteAccessService', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
+                // Provided by the course overview in the application, which this spec does not render.
+                { provide: ScienceService, useClass: MockScienceService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

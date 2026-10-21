@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -163,6 +165,23 @@ public class ScienceCourseService {
             }
             return new ScienceCourseConsentDTO(course.getId(), course.getTitle(), course.getShortName(), consent == null ? null : consent.isActive(), enabledCourse.isActive());
         }).filter(Objects::nonNull).toList();
+    }
+
+    /**
+     * Returns the current user's science consent state for one course, without loading the course itself.
+     *
+     * @param courseId the id of the course
+     * @return the consent state, with {@code active} absent while the user has not decided yet
+     */
+    public ScienceCourseConsentDTO getConsentForCurrentUser(long courseId) {
+        User user = userRepository.getUserWithAuthorities();
+        ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElse(null);
+        // Mirrors mayAccessConsent: an existing consent stays readable after unenrollment, so it can still be withdrawn.
+        if (consent == null && !authorizationCheckService.isAtLeastStudentInCourse(courseId, user)) {
+            throw new AccessForbiddenException("Course", courseId);
+        }
+        boolean scienceEnabled = scienceEnabledCourseRepository.existsByCourseIdAndActiveTrue(courseId);
+        return new ScienceCourseConsentDTO(courseId, null, null, consent == null ? null : consent.isActive(), scienceEnabled);
     }
 
     private boolean mayAccessConsent(Course course, User user, ScienceCourseConsent consent) {
@@ -360,5 +379,44 @@ public class ScienceCourseService {
     }
 
     public record ScienceResearchExport(Path path, String fileChecksum, long contentLength) {
+
+        /**
+         * Opens the export for streaming. Closing the stream deletes the file.
+         *
+         * @return the stream over the export
+         * @throws IOException if the file cannot be opened, in which case it is deleted
+         */
+        public InputStream open() throws IOException {
+            try {
+                return new AutoDeletingFileInputStream(path);
+            }
+            catch (IOException e) {
+                // The stream deletes the file when it is closed, so a file whose stream was never opened has nothing to
+                // delete it. Interaction data must not be what is left lying in the temporary directory.
+                deleteQuietly(path);
+                throw e;
+            }
+        }
+    }
+
+    /** Streams the generated export and removes the temporary file once the response has been written. */
+    private static final class AutoDeletingFileInputStream extends FilterInputStream {
+
+        private final Path path;
+
+        private AutoDeletingFileInputStream(Path path) throws IOException {
+            super(Files.newInputStream(path));
+            this.path = path;
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                super.close();
+            }
+            finally {
+                Files.deleteIfExists(path);
+            }
+        }
     }
 }

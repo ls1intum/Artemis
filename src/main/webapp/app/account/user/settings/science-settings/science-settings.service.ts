@@ -1,12 +1,9 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
-import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { Observable, ReplaySubject, catchError, map, of, tap, throwError } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
-
-export const SCIENCE_SETTING_LOCAL_STORAGE_KEY = 'artemisapp.science.settings';
 
 export interface ScienceCourseConsent {
     courseId: number;
@@ -16,97 +13,46 @@ export interface ScienceCourseConsent {
     scienceEnabled: boolean;
 }
 
+/**
+ * Talks to the science consent endpoints. It keeps no state: every page loads what it shows and owns the result, so
+ * nothing outlives the page or the session of the user who loaded it.
+ */
 @Service()
 export class ScienceSettingsService {
     private readonly httpClient = inject(HttpClient);
-    private readonly localStorageService = inject(LocalStorageService);
     private readonly profileService = inject(ProfileService);
 
     private readonly resourceURL = 'api/atlas/science';
-    private readonly currentScienceSettingsSubject = new ReplaySubject<ScienceCourseConsent[]>(1);
-
-    constructor() {
-        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
-            // Keeps a second tab in step: consent is cached in local storage so that logging an interaction event does
-            // not need a round trip, and a decision taken elsewhere has to invalidate that cache here too.
-            addEventListener('storage', (event) => {
-                // LocalStorageService writes the key as given, so this compares against the bare key. It used to look
-                // for a 'jhi-' prefix that nothing writes, which meant a decision taken in one tab never reached another.
-                if (event.key === SCIENCE_SETTING_LOCAL_STORAGE_KEY) {
-                    this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
-                }
-            });
-            this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
-        }
-    }
-
-    private getStoredScienceSettings(): ScienceCourseConsent[] {
-        return this.localStorageService.retrieve<ScienceCourseConsent[]>(SCIENCE_SETTING_LOCAL_STORAGE_KEY) || [];
-    }
-
-    private storeScienceSettings(consents?: ScienceCourseConsent[]): void {
-        if (consents) {
-            this.localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, consents);
-        } else {
-            this.localStorageService.remove(SCIENCE_SETTING_LOCAL_STORAGE_KEY);
-        }
-        this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
-    }
 
     /**
-     * Reloads the consents into the shared cache. Every caller handles a failure itself - the background callers by
-     * keeping the cache as it was, the settings page with its own message - so the global error alert is skipped.
+     * Loads the consent history of every course the user may decide for, for the settings page. Each caller handles a
+     * failure itself, so the global error alert is skipped.
      */
-    refreshScienceSettings(): Observable<ScienceCourseConsent[]> {
+    getConsents(): Observable<ScienceCourseConsent[]> {
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
             return of([]);
         }
-
         const context = new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true);
-        return this.httpClient.get<ScienceCourseConsent[]>(`${this.resourceURL}/consents`, { observe: 'response', context }).pipe(
-            map((res: HttpResponse<ScienceCourseConsent[]>) => res.body ?? []),
-            tap((currentScienceSettings) => {
-                this.storeScienceSettings(currentScienceSettings);
-            }),
-            catchError((error) => {
-                this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
-                return throwError(() => error);
-            }),
-        );
+        return this.httpClient.get<ScienceCourseConsent[]>(`${this.resourceURL}/consents`, { context });
     }
 
     /**
-     * Forgets the cached consents, so that the decisions of a user who signed out cannot answer for the next one.
+     * Loads the consent state of one course, on course entry. A failure is the caller's to handle, so the global error
+     * alert is skipped: the student cannot act on it.
      */
-    clearScienceSettings(): void {
-        this.storeScienceSettings(undefined);
-    }
-
-    getScienceSettingsUpdates(): Observable<ScienceCourseConsent[]> {
-        return this.currentScienceSettingsSubject.asObservable();
+    getConsentForCourse(courseId: number): Observable<ScienceCourseConsent | undefined> {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
+            return of(undefined);
+        }
+        const context = new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true);
+        return this.httpClient.get<ScienceCourseConsent>(`${this.resourceURL}/courses/${courseId}/consent`, { context });
     }
 
     saveConsentForCourse(courseId: number, active: boolean): Observable<ScienceCourseConsent> {
-        return this.httpClient.put<ScienceCourseConsent>(`${this.resourceURL}/courses/${courseId}/consent`, { active }).pipe(
-            tap((updatedConsent) => {
-                // Replaced in place rather than prepended, so a toggle does not reorder the list under the cursor. A
-                // course the cache has not seen yet is appended, which only happens when it was enabled mid-session.
-                const stored = this.getStoredScienceSettings();
-                const known = stored.some((consent) => consent.courseId === courseId);
-                this.storeScienceSettings(known ? stored.map((consent) => (consent.courseId === courseId ? updatedConsent : consent)) : [...stored, updatedConsent]);
-            }),
-        );
+        return this.httpClient.put<ScienceCourseConsent>(`${this.resourceURL}/courses/${courseId}/consent`, { active });
     }
 
     deleteScienceDataForCourse(courseId: number): Observable<void> {
         return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/data`);
-    }
-
-    eventLoggingAllowed(courseId?: number): boolean {
-        if (!courseId) {
-            return false;
-        }
-        const consent = this.getStoredScienceSettings().find((storedConsent) => storedConsent.courseId === courseId);
-        return !!consent && consent.scienceEnabled === true && consent.active === true;
     }
 }

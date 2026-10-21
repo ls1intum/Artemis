@@ -2,163 +2,194 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockProvider } from 'ng-mocks';
-import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/account/user/user.model';
-import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
-import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 
 describe('ScienceService', () => {
+    const consented = (courseId: number): ScienceCourseConsent => ({ courseId, active: true, scienceEnabled: true });
+
     let scienceService: ScienceService;
-    let httpService: HttpClient;
     let putStub: ReturnType<typeof vi.spyOn>;
+    let featureActive: BehaviorSubject<boolean>;
+    let getConsentForCourse: ReturnType<typeof vi.fn<(courseId: number) => Observable<ScienceCourseConsent | undefined>>>;
+    let router: { url: string };
 
     beforeEach(() => {
+        featureActive = new BehaviorSubject(true);
+        getConsentForCourse = vi.fn((courseId: number) => of(courseId === 1 ? consented(1) : { courseId, scienceEnabled: true }));
+        router = { url: '/courses/1/exercises' };
         TestBed.configureTestingModule({
             providers: [
                 ScienceService,
                 { provide: HttpClient, useClass: MockHttpService },
-                MockProvider(AccountService, { getAuthenticationState: () => of({} as User) }),
-                MockProvider(FeatureToggleService, { getFeatureToggleActive: (feature: FeatureToggle) => of(feature === FeatureToggle.Science) }),
-                MockProvider(ScienceSettingsService, {
-                    getScienceSettingsUpdates: () => of([]),
-                    refreshScienceSettings: () => of([]),
-                    eventLoggingAllowed: (courseId?: number) => courseId === 1,
-                }),
-                MockProvider(Router, { url: '/courses/1/exercises' }),
+                MockProvider(FeatureToggleService, { getFeatureToggleActive: () => featureActive.asObservable() }),
+                MockProvider(ScienceSettingsService, { getConsentForCourse }),
+                { provide: Router, useValue: router },
             ],
         });
 
-        httpService = TestBed.inject(HttpClient);
+        putStub = vi.spyOn(TestBed.inject(HttpClient), 'put');
         scienceService = TestBed.inject(ScienceService);
-        putStub = vi.spyOn(httpService, 'put');
     });
 
-    it('should send a course-scoped request to the server to log event', () => {
-        const type = ScienceEventType.LECTURE__OPEN;
+    it('should log a course-scoped event for the loaded course with active consent', () => {
+        scienceService.loadConsent(1);
 
-        scienceService.logEvent(type);
+        scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
 
+        expect(getConsentForCourse).toHaveBeenCalledWith(1);
         expect(putStub).toHaveBeenCalledOnce();
-        expect(putStub).toHaveBeenCalledWith('api/atlas/science', expect.objectContaining({ type, courseId: 1 }), expect.objectContaining({ observe: 'response' }));
+        expect(putStub).toHaveBeenCalledWith(
+            'api/atlas/science',
+            expect.objectContaining({ type: ScienceEventType.LECTURE__OPEN, courseId: 1 }),
+            expect.objectContaining({ observe: 'response' }),
+        );
         // A failed log must never raise the global error alert over what the student is doing.
         const options = putStub.mock.calls[0][2] as { context: HttpContext };
         expect(options.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
     });
 
     it('should prefer the course the caller names over the one in the route', () => {
-        // Consent is per course, so an event attributed to the course that happens to be in the URL rather than the one
-        // it belongs to is a consent violation, not a reporting inaccuracy.
+        router.url = '/courses/2/lectures';
+        scienceService.loadConsent(1);
+
         scienceService.logEvent(ScienceEventType.LECTURE__OPEN, 5, 1);
 
         expect(putStub).toHaveBeenCalledWith('api/atlas/science', expect.objectContaining({ courseId: 1, resourceId: 5 }), expect.objectContaining({ observe: 'response' }));
     });
 
-    it('should drop an event for a named course the student has not consented to', () => {
+    it('should drop an event for a course other than the loaded one', () => {
+        scienceService.loadConsent(1);
+
         scienceService.logEvent(ScienceEventType.LECTURE__OPEN, 5, 2);
 
         expect(putStub).not.toHaveBeenCalled();
     });
 
+    it('should drop an event before any consent was loaded', () => {
+        scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
+
+        expect(putStub).not.toHaveBeenCalled();
+    });
+
     it('should not send an event outside a course route', () => {
-        TestBed.resetTestingModule();
-        TestBed.configureTestingModule({
-            providers: [
-                ScienceService,
-                { provide: HttpClient, useClass: MockHttpService },
-                MockProvider(AccountService, { getAuthenticationState: () => of({} as User) }),
-                MockProvider(FeatureToggleService, { getFeatureToggleActive: (feature: FeatureToggle) => of(feature === FeatureToggle.Science) }),
-                MockProvider(ScienceSettingsService, { refreshScienceSettings: () => of([]), eventLoggingAllowed: (courseId?: number) => courseId === 1 }),
-                MockProvider(Router, { url: '/admin/science' }),
-            ],
-        });
-        const put = vi.spyOn(TestBed.inject(HttpClient), 'put');
-
-        TestBed.inject(ScienceService).logEvent(ScienceEventType.LECTURE__OPEN);
-
-        expect(put).not.toHaveBeenCalled();
-    });
-
-    it('should not send an event when the science feature is disabled', () => {
-        TestBed.resetTestingModule();
-        TestBed.configureTestingModule({
-            providers: [
-                ScienceService,
-                { provide: HttpClient, useClass: MockHttpService },
-                MockProvider(AccountService, { getAuthenticationState: () => of({} as User) }),
-                MockProvider(FeatureToggleService, { getFeatureToggleActive: () => of(false) }),
-                MockProvider(ScienceSettingsService, { refreshScienceSettings: () => of([]), eventLoggingAllowed: () => true }),
-                MockProvider(Router, { url: '/courses/1/exercises' }),
-            ],
-        });
-        const put = vi.spyOn(TestBed.inject(HttpClient), 'put');
-
-        TestBed.inject(ScienceService).logEvent(ScienceEventType.LECTURE__OPEN);
-
-        expect(put).not.toHaveBeenCalled();
-    });
-
-    it('should not send an event when course consent is not active', () => {
-        vi.spyOn(TestBed.inject(ScienceSettingsService), 'eventLoggingAllowed').mockReturnValue(false);
+        scienceService.loadConsent(1);
+        router.url = '/course-management/1/exercises';
 
         scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
 
         expect(putStub).not.toHaveBeenCalled();
     });
 
-    describe('consent refresh', () => {
-        // The consents endpoint is behind the feature toggle, so loading them while it is off answers every sign-in
-        // with a 403 - and the error alert it raised covered the top of every course page for its full timeout.
-        const clearScienceSettings = vi.fn();
-        const setUp = (user: User | undefined, scienceActive: BehaviorSubject<boolean>) => {
-            const refreshScienceSettings = vi.fn(() => of([]));
-            TestBed.resetTestingModule();
-            TestBed.configureTestingModule({
-                providers: [
-                    ScienceService,
-                    { provide: HttpClient, useClass: MockHttpService },
-                    MockProvider(AccountService, { getAuthenticationState: () => of(user) }),
-                    MockProvider(FeatureToggleService, { getFeatureToggleActive: () => scienceActive.asObservable() }),
-                    MockProvider(ScienceSettingsService, { refreshScienceSettings, clearScienceSettings, eventLoggingAllowed: () => true }),
-                    MockProvider(Router, { url: '/courses/1/exercises' }),
-                ],
-            });
-            TestBed.inject(ScienceService);
-            return refreshScienceSettings;
-        };
+    it('should not log while the student has not decided, has opted out or the course stopped collecting', () => {
+        for (const consent of [
+            { courseId: 1, scienceEnabled: true },
+            { courseId: 1, active: false, scienceEnabled: true },
+            { courseId: 1, active: true, scienceEnabled: false },
+        ]) {
+            getConsentForCourse.mockReturnValueOnce(of(consent));
+            scienceService.loadConsent(1);
 
-        it('should not load consents while the science feature is disabled', () => {
-            const refreshScienceSettings = setUp({} as User, new BehaviorSubject(false));
+            scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
+        }
 
-            expect(refreshScienceSettings).not.toHaveBeenCalled();
-        });
+        expect(putStub).not.toHaveBeenCalled();
+    });
 
-        it('should not load consents while nobody is signed in', () => {
-            const refreshScienceSettings = setUp(undefined, new BehaviorSubject(true));
+    it('should not log after switching to a course without consent', () => {
+        scienceService.loadConsent(1);
+        router.url = '/courses/2/exercises';
 
-            expect(refreshScienceSettings).not.toHaveBeenCalled();
-        });
+        scienceService.loadConsent(2);
+        scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
 
-        it('should forget the cached consents once the user signs out', () => {
-            // Otherwise the decisions of the previous user would answer for the next one until the next refresh.
-            clearScienceSettings.mockClear();
-            setUp(undefined, new BehaviorSubject(true));
+        expect(scienceService.courseConsent()).toEqual({ courseId: 2, scienceEnabled: true });
+        expect(putStub).not.toHaveBeenCalled();
+    });
 
-            expect(clearScienceSettings).toHaveBeenCalledOnce();
-        });
+    it('should clear the previous course and ignore its late response after a switch', () => {
+        const courseOneResponse = new Subject<ScienceCourseConsent>();
+        const courseTwoResponse = new Subject<ScienceCourseConsent>();
+        getConsentForCourse
+            .mockReturnValueOnce(of(consented(3)))
+            .mockReturnValueOnce(courseOneResponse)
+            .mockReturnValueOnce(courseTwoResponse);
+        scienceService.loadConsent(3);
 
-        it('should load consents once the feature is switched on while signed in', () => {
-            const scienceActive = new BehaviorSubject(false);
-            const refreshScienceSettings = setUp({} as User, scienceActive);
+        scienceService.loadConsent(1);
+        expect(scienceService.courseConsent()).toBeUndefined();
+        scienceService.loadConsent(2);
+        courseOneResponse.next(consented(1));
 
-            scienceActive.next(true);
+        expect(courseOneResponse.observed).toBe(false);
+        expect(scienceService.courseConsent()).toBeUndefined();
+        courseTwoResponse.next(consented(2));
+        expect(scienceService.courseConsent()).toEqual(consented(2));
+    });
 
-            expect(refreshScienceSettings).toHaveBeenCalledOnce();
-        });
+    it('should leave the course without consent when the load fails', () => {
+        getConsentForCourse.mockReturnValueOnce(throwError(() => new Error('boom')));
+
+        scienceService.loadConsent(1);
+        scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
+
+        expect(scienceService.courseConsent()).toBeUndefined();
+        expect(putStub).not.toHaveBeenCalled();
+    });
+
+    it('should adopt a stored decision for the current course', () => {
+        scienceService.loadConsent(2);
+
+        scienceService.setConsent(consented(2));
+        scienceService.logEvent(ScienceEventType.LECTURE__OPEN, undefined, 2);
+
+        expect(scienceService.courseConsent()).toEqual(consented(2));
+        expect(putStub).toHaveBeenCalledOnce();
+    });
+
+    it('should drop a stored decision that answers after a switch to another course', () => {
+        scienceService.loadConsent(2);
+        scienceService.loadConsent(1);
+
+        scienceService.setConsent({ courseId: 2, active: false, scienceEnabled: true });
+
+        expect(scienceService.courseConsent()).toEqual(consented(1));
+    });
+
+    it('should not load or log while the science feature is disabled', () => {
+        featureActive.next(false);
+        scienceService.loadConsent(1);
+
+        scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
+
+        expect(getConsentForCourse).not.toHaveBeenCalled();
+        expect(putStub).not.toHaveBeenCalled();
+    });
+
+    it('should load the consent once the feature is switched on mid-session', () => {
+        featureActive.next(false);
+        scienceService.loadConsent(1);
+
+        featureActive.next(true);
+        scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
+
+        expect(getConsentForCourse).toHaveBeenCalledOnce();
+        expect(putStub).toHaveBeenCalledOnce();
+    });
+
+    it('should forget the consent and stop logging once the feature is switched off', () => {
+        scienceService.loadConsent(1);
+
+        featureActive.next(false);
+        scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
+
+        expect(scienceService.courseConsent()).toBeUndefined();
+        expect(putStub).not.toHaveBeenCalled();
     });
 });

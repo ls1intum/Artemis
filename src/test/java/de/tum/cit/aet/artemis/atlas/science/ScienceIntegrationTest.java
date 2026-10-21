@@ -3,19 +3,27 @@ package de.tum.cit.aet.artemis.atlas.science;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntPredicate;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,19 +32,26 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceCourseConsent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceConsentUpdateDTO;
+import de.tum.cit.aet.artemis.atlas.dto.ScienceCourseConsentDTO;
+import de.tum.cit.aet.artemis.atlas.dto.ScienceEnabledCourseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceEventDTO;
+import de.tum.cit.aet.artemis.atlas.dto.ScienceResearchExportAuditDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceResearchExportRequestDTO;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceCourseConsentRepository;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceEnabledCourseRepository;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceResearchExportAuditRepository;
 import de.tum.cit.aet.artemis.atlas.service.ScienceCourseService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -58,6 +73,9 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Autowired
     private ScienceCourseConsentRepository scienceCourseConsentRepository;
+
+    @Autowired
+    private ScienceEnabledCourseRepository scienceEnabledCourseRepository;
 
     @BeforeEach
     void enableFeatureToggle() {
@@ -379,7 +397,18 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
         try {
             List<String> rows = Files.readAllLines(export.path(), StandardCharsets.UTF_8).stream().skip(1).toList();
             assertThat(rows).hasSize(events.size()).doesNotHaveDuplicates();
-            assertThat(rows).filteredOn(row -> row.contains("," + secondCourse.getId() + ",")).hasSize(2);
+            // The CSV has no id column, so the order shows in the resource ids: the first course's marker, its events in
+            // keyset order across the page boundary, then the second course.
+            List<Long> expectedCourseIds = new ArrayList<>();
+            List<Long> expectedResourceIds = new ArrayList<>();
+            LongStream.rangeClosed(0, 1001).forEach(resourceId -> {
+                expectedCourseIds.add(course.getId());
+                expectedResourceIds.add(resourceId);
+            });
+            expectedCourseIds.addAll(List.of(secondCourse.getId(), secondCourse.getId()));
+            expectedResourceIds.addAll(List.of(0L, 1L));
+            assertThat(rows).extracting(row -> Long.parseLong(row.split(",")[3])).containsExactlyElementsOf(expectedCourseIds);
+            assertThat(rows).extracting(row -> Long.parseLong(row.split(",")[4])).containsExactlyElementsOf(expectedResourceIds);
         }
         finally {
             Files.deleteIfExists(export.path());
@@ -434,9 +463,10 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
         var export = scienceCourseService.createResearchExport(new ScienceResearchExportRequestDTO(Set.of(course.getId()), null, null, null, "Consent-gated study"));
 
         try {
-            List<String> lines = Files.readAllLines(export.path(), StandardCharsets.UTF_8);
-            // Two events for two students, only one of whom ever decided, plus that student's marker.
-            assertThat(lines).hasSize(3);
+            // Two events for two students, only one of whom ever decided, plus that student's marker: one identity with
+            // both of its rows, and none for the student without a decision.
+            assertThat(eventTypesPerIdentity(export.path()).values()).singleElement()
+                    .satisfies(types -> assertThat(types).containsExactlyInAnyOrder(ScienceEventType.SCIENCE__OPT_IN.name(), ScienceEventType.EXERCISE__OPEN.name()));
             assertThat(scienceEventRepository.existsById(legacyEvent.getId())).isTrue();
         }
         finally {
@@ -455,11 +485,10 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
         var export = scienceCourseService.createResearchExport(new ScienceResearchExportRequestDTO(Set.of(course.getId()), null, null, null, "Declined study"));
 
         try {
-            List<String> lines = Files.readAllLines(export.path(), StandardCharsets.UTF_8);
             // The refusal itself is exported - it is what distinguishes "did not interact" from "did not agree" - but
             // nothing collected before it is.
-            assertThat(lines).hasSize(2);
-            assertThat(lines.get(1)).contains(ScienceEventType.SCIENCE__OPT_OUT.name());
+            assertThat(eventTypesPerIdentity(export.path()).values()).singleElement()
+                    .satisfies(types -> assertThat(types).containsExactly(ScienceEventType.SCIENCE__OPT_OUT.name()));
         }
         finally {
             Files.deleteIfExists(export.path());
@@ -607,5 +636,265 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         assertThat(scienceEventRepository.existsById(scienceEvent.getId())).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteCourseDeletesEnablementAndConsentButKeepsTheExportAudit() throws Exception {
+        scienceCourseService.enableCourse(course.getId());
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        scienceCourseService.saveConsentForCurrentUser(course.getId(), true);
+        userUtilService.changeUser("admin");
+        var export = scienceCourseService.createResearchExport(new ScienceResearchExportRequestDTO(Set.of(course.getId()), null, null, null, "Deleted course study"));
+        Files.deleteIfExists(export.path());
+        var audit = scienceResearchExportAuditRepository.findAllByOrderByCreatedDateDesc().stream().filter(entry -> export.fileChecksum().equals(entry.getFileChecksum()))
+                .findFirst().orElseThrow();
+        assertThat(consentsOfStudent()).hasSize(1);
+
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+
+        assertThat(scienceEnabledCourseRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(consentsOfStudent()).isEmpty();
+        // The audit records what was handed out, which stays true after the course is gone.
+        assertThat(scienceResearchExportAuditRepository.findById(audit.getId())).isPresent();
+    }
+
+    // Admin endpoints over HTTP
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testEnableAndDisableCourseOverHttp() throws Exception {
+        String path = "/api/atlas/admin/science/courses/" + course.getId();
+
+        var enabled = request.putWithResponseBody(path, null, ScienceEnabledCourseDTO.class, HttpStatus.OK);
+        assertThat(enabled.courseId()).isEqualTo(course.getId());
+        assertThat(enabled.courseTitle()).isEqualTo(course.getTitle());
+        assertThat(enabled.courseShortName()).isEqualTo(course.getShortName());
+        assertThat(enabled.active()).isTrue();
+        assertThat(enabled.createdBy()).isEqualTo("admin");
+        assertThat(historyEntryOf(course.getId()).active()).isTrue();
+
+        var disabled = request.delete(path, new LinkedMultiValueMap<>(), null, ScienceEnabledCourseDTO.class, HttpStatus.OK);
+        assertThat(disabled.courseId()).isEqualTo(course.getId());
+        assertThat(disabled.courseTitle()).isEqualTo(course.getTitle());
+        assertThat(disabled.active()).isFalse();
+        assertThat(disabled.lastModifiedBy()).isEqualTo("admin");
+        // Disabling keeps the entry in the history, so the earlier activation stays visible.
+        var history = historyEntryOf(course.getId());
+        assertThat(history.active()).isFalse();
+        assertThat(history.createdBy()).isEqualTo("admin");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDisablingACourseThatWasNeverEnabledIsRejected() throws Exception {
+        request.delete("/api/atlas/admin/science/courses/" + course.getId(), HttpStatus.BAD_REQUEST);
+    }
+
+    private ScienceEnabledCourseDTO historyEntryOf(long courseId) throws Exception {
+        var entries = request.getList("/api/atlas/admin/science/courses", HttpStatus.OK, ScienceEnabledCourseDTO.class).stream().filter(entry -> entry.courseId() == courseId)
+                .toList();
+        assertThat(entries).hasSize(1);
+        return entries.getFirst();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateResearchExportOverHttpStreamsTheAuditedFile() throws Exception {
+        persistEvent(ScienceEventType.SCIENCE__OPT_IN, ZonedDateTime.now().minusDays(2));
+        persistEvent(ScienceEventType.EXERCISE__OPEN, ZonedDateTime.now().minusDays(1));
+        persistEvent(ScienceEventType.LECTURE__OPEN, ZonedDateTime.now().minusDays(1));
+        var exportRequest = new ScienceResearchExportRequestDTO(Set.of(course.getId()), null, null, Set.of(ScienceEventType.SCIENCE__OPT_IN, ScienceEventType.EXERCISE__OPEN),
+                "HTTP study");
+        Set<Path> exportFilesBefore = scienceExportFiles();
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/atlas/admin/science/exports", exportRequest, HttpStatus.OK, null);
+
+        assertThat(response.getContentType()).startsWith("text/csv");
+        assertThat(response.getHeader(HttpHeaders.CONTENT_DISPOSITION)).matches("attachment; filename=\"science-research-export-\\d+\\.csv\"");
+        byte[] body = response.getContentAsByteArray();
+        List<String> lines = new String(body, StandardCharsets.UTF_8).lines().toList();
+        assertThat(lines.getFirst()).isEqualTo("identity,timestamp,event_type,course_id,resource_id");
+        List<String> rows = lines.subList(1, lines.size());
+        assertThat(rows).extracting(line -> line.split(",")[2]).containsExactly(ScienceEventType.SCIENCE__OPT_IN.name(), ScienceEventType.EXERCISE__OPEN.name());
+        assertThat(rows).allSatisfy(line -> assertThat(line).endsWith("," + course.getId() + ",3").doesNotContain(TEST_PREFIX));
+        // The response stream was closed inside the request, which deletes the temporary file it was read from.
+        assertThat(scienceExportFiles()).isEqualTo(exportFilesBefore);
+
+        String checksum = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(body));
+        var audits = request.getList("/api/atlas/admin/science/export-audits", HttpStatus.OK, ScienceResearchExportAuditDTO.class);
+        assertThat(audits).filteredOn(audit -> checksum.equals(audit.fileChecksum())).singleElement().satisfies(audit -> {
+            assertThat(audit.purpose()).isEqualTo("HTTP study");
+            assertThat(audit.createdBy()).isEqualTo("admin");
+            assertThat(audit.filter().courseIds()).containsExactly(course.getId());
+            assertThat(audit.filter().eventTypes()).containsExactlyInAnyOrder(ScienceEventType.SCIENCE__OPT_IN, ScienceEventType.EXERCISE__OPEN);
+        });
+    }
+
+    private Set<Path> scienceExportFiles() throws IOException {
+        try (Stream<Path> files = Files.list(tempPath)) {
+            return files.filter(file -> file.getFileName().toString().matches("science-research-export-.*\\.csv")).collect(Collectors.toSet());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testRejectsAnExportWithAnOverlongPurpose() throws Exception {
+        request.postWithoutLocation("/api/atlas/admin/science/exports", new ScienceResearchExportRequestDTO(Set.of(course.getId()), null, null, null, "a".repeat(1001)),
+                HttpStatus.BAD_REQUEST, null);
+    }
+
+    // Student endpoints over HTTP
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testGetConsentsListsAccessibleCoursesOnly() throws Exception {
+        scienceCourseService.enableCourse(course.getId());
+        Course foreignCourse = courseUtilService.addEmptyCourse();
+        scienceCourseService.enableCourse(foreignCourse.getId());
+
+        var consents = request.getList("/api/atlas/science/consents", HttpStatus.OK, ScienceCourseConsentDTO.class);
+
+        assertThat(consents).filteredOn(consent -> course.getId().equals(consent.courseId())).singleElement().satisfies(consent -> {
+            assertThat(consent.courseTitle()).isEqualTo(course.getTitle());
+            assertThat(consent.active()).isNull();
+            assertThat(consent.scienceEnabled()).isTrue();
+        });
+        assertThat(consents).noneMatch(consent -> foreignCourse.getId().equals(consent.courseId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testGetConsentForCourse() throws Exception {
+        String path = "/api/atlas/science/courses/" + course.getId() + "/consent";
+        var neverEnabled = request.get(path, HttpStatus.OK, ScienceCourseConsentDTO.class);
+        assertThat(neverEnabled.courseId()).isEqualTo(course.getId());
+        assertThat(neverEnabled.active()).isNull();
+        assertThat(neverEnabled.scienceEnabled()).isFalse();
+
+        scienceCourseService.enableCourse(course.getId());
+        var undecided = request.get(path, HttpStatus.OK, ScienceCourseConsentDTO.class);
+        assertThat(undecided.active()).isNull();
+        assertThat(undecided.scienceEnabled()).isTrue();
+        // Course entry only needs the decision, so the course itself is not loaded.
+        assertThat(undecided.courseTitle()).isNull();
+
+        scienceCourseService.saveConsentForCurrentUser(course.getId(), true);
+        var active = request.get(path, HttpStatus.OK, ScienceCourseConsentDTO.class);
+        assertThat(active.active()).isTrue();
+        assertThat(active.scienceEnabled()).isTrue();
+
+        scienceCourseService.disableCourse(course.getId());
+        var disabled = request.get(path, HttpStatus.OK, ScienceCourseConsentDTO.class);
+        assertThat(disabled.active()).isTrue();
+        assertThat(disabled.scienceEnabled()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testGetConsentForAForeignCourseIsForbidden() throws Exception {
+        Course foreignCourse = courseUtilService.addEmptyCourse();
+        scienceCourseService.enableCourse(foreignCourse.getId());
+
+        request.get("/api/atlas/science/courses/" + foreignCourse.getId() + "/consent", HttpStatus.FORBIDDEN, ScienceCourseConsentDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testAStudentWhoLeftTheCourseCanStillSeeTheirConsent() throws Exception {
+        // A decision made before leaving the course must stay visible, so that the student can still withdraw it.
+        Course leftCourse = courseUtilService.addEmptyCourse();
+        scienceCourseService.enableCourse(leftCourse.getId());
+        var consent = new ScienceCourseConsent();
+        consent.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        consent.setCourse(leftCourse);
+        consent.setActive(true);
+        scienceCourseConsentRepository.save(consent);
+
+        var courseConsent = request.get("/api/atlas/science/courses/" + leftCourse.getId() + "/consent", HttpStatus.OK, ScienceCourseConsentDTO.class);
+        assertThat(courseConsent.active()).isTrue();
+        var consents = request.getList("/api/atlas/science/consents", HttpStatus.OK, ScienceCourseConsentDTO.class);
+        assertThat(consents).anyMatch(listed -> leftCourse.getId().equals(listed.courseId()) && Boolean.TRUE.equals(listed.active()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testSaveConsentAndDeleteDataOverHttp() throws Exception {
+        scienceCourseService.enableCourse(course.getId());
+
+        var consent = request.putWithResponseBody("/api/atlas/science/courses/" + course.getId() + "/consent", new ScienceConsentUpdateDTO(true), ScienceCourseConsentDTO.class,
+                HttpStatus.OK);
+        assertThat(consent.courseId()).isEqualTo(course.getId());
+        assertThat(consent.courseTitle()).isEqualTo(course.getTitle());
+        assertThat(consent.active()).isTrue();
+        assertThat(consent.scienceEnabled()).isTrue();
+        assertThat(consentsOfStudent()).singleElement().satisfies(stored -> assertThat(stored.isActive()).isTrue());
+
+        sendPutRequest(new ScienceEventDTO(ScienceEventType.EXERCISE__OPEN, 3L, course.getId()));
+        assertThat(markersOfType(ScienceEventType.EXERCISE__OPEN)).hasSize(1);
+
+        request.delete("/api/atlas/science/courses/" + course.getId() + "/data", HttpStatus.OK);
+        assertThat(markersOfType(ScienceEventType.EXERCISE__OPEN)).isEmpty();
+        assertThat(markersOfType(ScienceEventType.SCIENCE__DATA_DELETED)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testLogEventWithoutCourseStoresNothing() throws Exception {
+        sendPutRequest(new ScienceEventDTO(ScienceEventType.EXERCISE__OPEN, 3L, null));
+
+        assertThat(scienceEventRepository.findAllByType(ScienceEventType.EXERCISE__OPEN))
+                .noneMatch(event -> (TEST_PREFIX + "student1").equals(event.getIdentity()) && event.getCourseId() == null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testConsentForADisabledCourseCanOnlyBeWithdrawn() throws Exception {
+        scienceCourseService.enableCourse(course.getId());
+        scienceCourseService.saveConsentForCurrentUser(course.getId(), true);
+        scienceCourseService.disableCourse(course.getId());
+        String path = "/api/atlas/science/courses/" + course.getId() + "/consent";
+
+        var optedOut = request.putWithResponseBody(path, new ScienceConsentUpdateDTO(false), ScienceCourseConsentDTO.class, HttpStatus.OK);
+        assertThat(optedOut.active()).isFalse();
+        assertThat(optedOut.scienceEnabled()).isFalse();
+
+        request.put(path, new ScienceConsentUpdateDTO(true), HttpStatus.BAD_REQUEST);
+        assertThat(consentsOfStudent()).singleElement().satisfies(stored -> assertThat(stored.isActive()).isFalse());
+    }
+
+    // Feature toggle off
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testStudentEndpointsAreForbiddenWhileTheToggleIsOff() throws Exception {
+        scienceCourseService.enableCourse(course.getId());
+        featureToggleService.disableFeature(Feature.Science);
+        String coursePath = "/api/atlas/science/courses/" + course.getId();
+
+        request.put("/api/atlas/science", new ScienceEventDTO(ScienceEventType.EXERCISE__OPEN, 3L, course.getId()), HttpStatus.FORBIDDEN);
+        request.getList("/api/atlas/science/consents", HttpStatus.FORBIDDEN, ScienceCourseConsentDTO.class);
+        request.get(coursePath + "/consent", HttpStatus.FORBIDDEN, ScienceCourseConsentDTO.class);
+        request.put(coursePath + "/consent", new ScienceConsentUpdateDTO(true), HttpStatus.FORBIDDEN);
+        request.delete(coursePath + "/data", HttpStatus.FORBIDDEN);
+        assertThat(consentsOfStudent()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAdminEndpointsAreForbiddenWhileTheToggleIsOff() throws Exception {
+        featureToggleService.disableFeature(Feature.Science);
+
+        request.getList("/api/atlas/admin/science/courses", HttpStatus.FORBIDDEN, ScienceEnabledCourseDTO.class);
+        request.put("/api/atlas/admin/science/courses/" + course.getId(), null, HttpStatus.FORBIDDEN);
+        assertThat(scienceEnabledCourseRepository.findByCourseId(course.getId())).isEmpty();
+    }
+
+    /**
+     * Reads an export and groups its event types by the pseudonymized identity in the first column.
+     */
+    private static Map<String, ArrayList<String>> eventTypesPerIdentity(Path export) throws IOException {
+        return Files.readAllLines(export, StandardCharsets.UTF_8).stream().skip(1).map(line -> line.split(","))
+                .collect(Collectors.groupingBy(columns -> columns[0], Collectors.mapping(columns -> columns[2], Collectors.toCollection(ArrayList::new))));
     }
 }

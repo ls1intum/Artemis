@@ -81,6 +81,8 @@ The confirmation dialog then lists the affected entity types with their counts (
 Courses are **never deleted** by these operations. The old-course operation only **resets** the student data and keeps all course material so the course can be reused. Exam submission versions are not affected by the submission-version cleanup because exam exercises are not attached to a course.
 :::
 
+None of these operations removes science data collection events, and resetting an old course keeps them. The not-enrolled-user deletion removes an account's consent decisions and renames its events, as described in [Deleting User Accounts](/admin/user-deletion). Events are deleted together with the course, or per course by the students themselves; see [Science Data Collection](/admin/science-data-collection#deleting-science-data).
+
 ### Grade-relevance and retention periods
 
 Each course carries a **grade-relevance** flag (stored in a lazily-loaded `CourseConfiguration`, so it does not widen the course record and is only loaded when needed). Instructors set it in the course settings; it defaults to **grade-relevant** so a course is always treated with the longer retention unless someone explicitly opts out.

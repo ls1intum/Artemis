@@ -148,6 +148,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.PlagiarismChecks]: 'https://docs.artemis.tum.de/instructor/assessment-grading/plagiarism-check',
         [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/course-management/exports',
         [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning',
+        [FeatureToggle.Science]: 'https://docs.artemis.tum.de/admin/science-data-collection',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
         [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication-support/communication#tutor-suggestions',
         [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',

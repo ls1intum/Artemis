@@ -5,7 +5,13 @@
     </tumaet-ui-message>
 </div>
 
-@if (scienceFeatureActive()) {
+@if (!scienceFeatureActive()) {
+    <div class="mt-4" data-testid="science-consent-feature-disabled" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.featureDisabled"></div>
+} @else if (loading()) {
+    <div class="mt-4 flex justify-center">
+        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" data-testid="science-consent-loading" />
+    </div>
+} @else {
     <tumaet-ui-list class="mt-4 block" [ariaLabel]="'artemisApp.userSettings.scienceSettingsPage.title' | artemisTranslate" data-testid="science-consent-list">
         @for (consent of consents(); track consent.courseId) {
             <li tumAetUiListItem inline data-testid="science-consent-row">
@@ -49,13 +55,9 @@
                 </div>
             </li>
         } @empty {
-            @if (!loading()) {
-                <li tumAetUiListItem data-testid="science-consent-empty" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.empty"></li>
-            }
+            <li tumAetUiListItem data-testid="science-consent-empty" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.empty"></li>
         }
     </tumaet-ui-list>
-} @else {
-    <div class="mt-4" data-testid="science-consent-feature-disabled" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.featureDisabled"></div>
 }
 
 <tumaet-ui-confirm-dialog />

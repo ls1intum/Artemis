@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { EMPTY, Subject, catchError, switchMap } from 'rxjs';
 import { faInfoCircle, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +18,7 @@ import {
     TumAetUiListComponent,
     TumAetUiListItemDirective,
     TumAetUiMessageComponent,
+    TumAetUiProgressSpinnerComponent,
     TumAetUiToggleSwitchComponent,
 } from '@tumaet/ui-angular';
 
@@ -35,6 +37,7 @@ import {
         TumAetUiListComponent,
         TumAetUiListItemDirective,
         TumAetUiMessageComponent,
+        TumAetUiProgressSpinnerComponent,
         TumAetUiToggleSwitchComponent,
     ],
 })
@@ -47,51 +50,58 @@ export class ScienceSettingsComponent implements OnInit {
     private readonly confirmationService = inject(TumAetUiConfirmationService);
 
     readonly consents = signal<ScienceCourseConsent[]>([]);
-    readonly loading = signal(false);
+    /** True until this page's own response arrived, so nothing but the spinner shows before it. */
+    readonly loading = signal(true);
     readonly scienceFeatureActive = signal(true);
+
+    /** Every load goes through here, so only the latest one answers and none answers after the page is gone. */
+    private readonly loads = new Subject<boolean>();
 
     protected readonly faInfoCircle = faInfoCircle;
     protected readonly faTrash = faTrash;
 
     ngOnInit(): void {
-        // Subscribed once rather than per feature-toggle emission: the updates stream is a ReplaySubject that never
-        // completes, so re-subscribing on every push would accumulate live subscribers for the life of the page.
-        this.scienceSettingsService
-            .getScienceSettingsUpdates()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((consents) => this.consents.set(consents));
+        this.loads
+            .pipe(
+                switchMap((featureActive) =>
+                    featureActive
+                        ? this.scienceSettingsService.getConsents().pipe(
+                              // Inside the switchMap, so a failed load does not end the stream and a later reload still works.
+                              catchError((error) => {
+                                  this.loading.set(false);
+                                  this.alertService.error('error.unexpectedError', { error: error.message });
+                                  return EMPTY;
+                              }),
+                          )
+                        : EMPTY,
+                ),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((consents) => {
+                this.consents.set(consents);
+                this.loading.set(false);
+            });
 
         this.featureToggleService
             .getFeatureToggleActive(FeatureToggle.Science)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((active) => {
                 this.scienceFeatureActive.set(active);
-                if (active) {
-                    this.loadConsents();
-                } else {
-                    this.loading.set(false);
-                }
+                this.loadConsents();
             });
     }
 
+    /** Loads the consents while the feature is on; switched off, it cancels a running load and shows the message. */
     private loadConsents(): void {
-        this.loading.set(true);
-        this.scienceSettingsService
-            .refreshScienceSettings()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: () => this.loading.set(false),
-                error: (error) => {
-                    this.loading.set(false);
-                    this.alertService.error('error.unexpectedError', { error: error.message });
-                },
-            });
+        const featureActive = this.scienceFeatureActive();
+        this.loading.set(featureActive);
+        this.loads.next(featureActive);
     }
 
     /**
      * Stores the decision the switch has just moved to.
      *
-     * The new state comes from the switch rather than from inverting the row, so a row the cache refreshed underneath
+     * The new state comes from the switch rather than from inverting the row, so a row reloaded underneath
      * the click cannot send the opposite of what the student saw. The row is updated before the request, because the
      * switch keeps its own visual state and would otherwise keep showing a decision the server never stored.
      *
@@ -100,16 +110,19 @@ export class ScienceSettingsComponent implements OnInit {
      */
     toggleConsent(consent: ScienceCourseConsent, active: boolean): void {
         this.applyConsentLocally(consent.courseId, active);
-        this.scienceSettingsService.saveConsentForCourse(consent.courseId, active).subscribe({
-            next: () => this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert'),
-            error: (error) => {
-                // Re-read rather than put the row back: a withdrawal stores the decision before recording it, so a
-                // failure can still have changed the stored state, and guessing at it would show consent the server
-                // does not have.
-                this.loadConsents();
-                this.alertService.error('error.unexpectedError', { error: error.message });
-            },
-        });
+        this.scienceSettingsService
+            .saveConsentForCourse(consent.courseId, active)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert'),
+                error: (error) => {
+                    // Re-read rather than put the row back: a withdrawal stores the decision before recording it, so a
+                    // failure can still have changed the stored state, and guessing at it would show consent the server
+                    // does not have.
+                    this.loadConsents();
+                    this.alertService.error('error.unexpectedError', { error: error.message });
+                },
+            });
     }
 
     private applyConsentLocally(courseId: number, active?: boolean): void {
@@ -130,14 +143,17 @@ export class ScienceSettingsComponent implements OnInit {
     }
 
     private confirmDeleteData(consent: ScienceCourseConsent, courseTitle: string): void {
-        this.scienceSettingsService.deleteScienceDataForCourse(consent.courseId).subscribe({
-            // The deletion removes interaction events only, so the consent row itself survives; it is reloaded so the
-            // page cannot keep showing state from before the deletion.
-            next: () => {
-                this.alertService.success('artemisApp.userSettings.scienceSettingsPage.deleteDataSuccess', { courseTitle });
-                this.loadConsents();
-            },
-            error: (error) => this.alertService.error('error.unexpectedError', { error: error.message }),
-        });
+        this.scienceSettingsService
+            .deleteScienceDataForCourse(consent.courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                // The deletion removes interaction events only, so the consent row itself survives; it is reloaded so the
+                // page cannot keep showing state from before the deletion.
+                next: () => {
+                    this.alertService.success('artemisApp.userSettings.scienceSettingsPage.deleteDataSuccess', { courseTitle });
+                    this.loadConsents();
+                },
+                error: (error) => this.alertService.error('error.unexpectedError', { error: error.message }),
+            });
     }
 }

@@ -31,11 +31,11 @@ describe('ScienceSettingsComponent', () => {
         scienceEnabled: true,
     };
 
-    let consentUpdates: BehaviorSubject<ScienceCourseConsent[]>;
     let featureActive: BehaviorSubject<boolean>;
 
+    const query = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+
     beforeEach(async () => {
-        consentUpdates = new BehaviorSubject<ScienceCourseConsent[]>([]);
         featureActive = new BehaviorSubject<boolean>(true);
 
         await TestBed.configureTestingModule({
@@ -52,40 +52,82 @@ describe('ScienceSettingsComponent', () => {
         alertService = TestBed.inject(AlertService);
         const featureToggleService = TestBed.inject(FeatureToggleService);
 
-        vi.spyOn(scienceSettingsService, 'getScienceSettingsUpdates').mockReturnValue(consentUpdates.asObservable());
-        vi.spyOn(scienceSettingsService, 'refreshScienceSettings').mockReturnValue(of([]));
+        vi.spyOn(scienceSettingsService, 'getConsents').mockReturnValue(of([activeConsent, undecidedConsent]));
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(featureActive.asObservable());
 
         fixture = TestBed.createComponent(ScienceSettingsComponent);
         component = fixture.componentInstance;
     });
 
-    it('should publish consents from the shared cache', () => {
+    it('should show the consents the page loaded itself', () => {
         fixture.detectChanges();
-        consentUpdates.next([activeConsent, undecidedConsent]);
 
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledOnce();
         expect(component.consents()).toEqual([activeConsent, undecidedConsent]);
+        expect(component.loading()).toBe(false);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="science-consent-row"]')).toHaveLength(2);
+    });
+
+    it('should show nothing but the spinner until its own response arrived', () => {
+        const pendingLoad = new Subject<ScienceCourseConsent[]>();
+        vi.spyOn(scienceSettingsService, 'getConsents').mockReturnValue(pendingLoad.asObservable());
+
+        fixture.detectChanges();
+        expect(query('science-consent-loading')).not.toBeNull();
+        expect(query('science-consent-list')).toBeNull();
+        expect(query('science-consent-empty')).toBeNull();
+
+        pendingLoad.next([]);
+        fixture.detectChanges();
+        expect(query('science-consent-loading')).toBeNull();
+        expect(query('science-consent-empty')).not.toBeNull();
+    });
+
+    it('should keep only the latest load when an earlier one answers late', () => {
+        const firstLoad = new Subject<ScienceCourseConsent[]>();
+        const secondLoad = new Subject<ScienceCourseConsent[]>();
+        vi.spyOn(scienceSettingsService, 'getConsents').mockReturnValueOnce(firstLoad.asObservable()).mockReturnValueOnce(secondLoad.asObservable());
+        vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+
+        // The deletion reloads while the first load is still running.
+        component.deleteData(activeConsent);
+        fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)!.accept();
+        firstLoad.next([activeConsent]);
+        expect(component.loading()).toBe(true);
+
+        secondLoad.next([undecidedConsent]);
+        expect(component.consents()).toEqual([undecidedConsent]);
         expect(component.loading()).toBe(false);
     });
 
-    it('should subscribe to the updates stream only once across feature toggle emissions', () => {
+    it('should ignore a load that answers after the page was destroyed', () => {
+        const pendingLoad = new Subject<ScienceCourseConsent[]>();
+        vi.spyOn(scienceSettingsService, 'getConsents').mockReturnValue(pendingLoad.asObservable());
+        const alertSpy = vi.spyOn(alertService, 'error');
         fixture.detectChanges();
-        featureActive.next(false);
-        featureActive.next(true);
 
-        expect(scienceSettingsService.getScienceSettingsUpdates).toHaveBeenCalledOnce();
+        fixture.destroy();
+        pendingLoad.error(new Error('late'));
+
+        expect(pendingLoad.observed).toBe(false);
+        expect(component.consents()).toEqual([]);
+        expect(alertSpy).not.toHaveBeenCalled();
     });
 
-    it('should stop following the shared cache once the page is destroyed', () => {
-        // The updates stream never completes, so a subscription that outlived the page would keep a dead component alive.
+    it('should ignore a deletion that answers after the page was destroyed', () => {
+        const pendingDelete = new Subject<void>();
+        vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(pendingDelete.asObservable());
+        const successSpy = vi.spyOn(alertService, 'success');
         fixture.detectChanges();
-        consentUpdates.next([activeConsent]);
+        component.deleteData(activeConsent);
+        fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)!.accept();
+
         fixture.destroy();
+        pendingDelete.next();
 
-        consentUpdates.next([activeConsent, undecidedConsent]);
-
-        expect(component.consents()).toEqual([activeConsent]);
-        expect(consentUpdates.observed).toBe(false);
+        expect(successSpy).not.toHaveBeenCalled();
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledOnce();
     });
 
     it('should not load consents while the science feature is disabled', () => {
@@ -93,23 +135,42 @@ describe('ScienceSettingsComponent', () => {
         fixture.detectChanges();
 
         expect(component.scienceFeatureActive()).toBe(false);
-        expect(scienceSettingsService.refreshScienceSettings).not.toHaveBeenCalled();
+        expect(component.loading()).toBe(false);
+        expect(scienceSettingsService.getConsents).not.toHaveBeenCalled();
+        expect(query('science-consent-feature-disabled')).not.toBeNull();
     });
 
-    it('should report a failed load with the error text', () => {
-        const alertSpy = vi.spyOn(alertService, 'error');
-        vi.spyOn(scienceSettingsService, 'refreshScienceSettings').mockReturnValue(throwError(() => new Error('boom')));
-
+    it('should load the consents once the feature is switched on', () => {
+        featureActive.next(false);
         fixture.detectChanges();
 
+        featureActive.next(true);
+
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledOnce();
+        expect(component.consents()).toEqual([activeConsent, undecidedConsent]);
+    });
+
+    it('should report a failed load and still show the list after a later reload', () => {
+        const alertSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(scienceSettingsService, 'getConsents')
+            .mockReturnValueOnce(throwError(() => new Error('boom')))
+            .mockReturnValueOnce(of([activeConsent]));
+
+        fixture.detectChanges();
         expect(alertSpy).toHaveBeenCalledWith('error.unexpectedError', { error: 'boom' });
         expect(component.loading()).toBe(false);
+
+        featureActive.next(false);
+        featureActive.next(true);
+        fixture.detectChanges();
+
+        expect(component.consents()).toEqual([activeConsent]);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="science-consent-row"]')).toHaveLength(1);
     });
 
     it('should store the state the switch moved to, not the inverse of a possibly stale row', () => {
         vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(of(activeConsent));
         fixture.detectChanges();
-        consentUpdates.next([activeConsent]);
 
         component.toggleConsent(activeConsent, false);
 
@@ -120,7 +181,6 @@ describe('ScienceSettingsComponent', () => {
     it('should treat an undecided course as an opt-in when toggled on', () => {
         vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(of(undecidedConsent));
         fixture.detectChanges();
-        consentUpdates.next([undecidedConsent]);
 
         component.toggleConsent(undecidedConsent, true);
 
@@ -133,13 +193,12 @@ describe('ScienceSettingsComponent', () => {
         const alertSpy = vi.spyOn(alertService, 'error');
         vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(throwError(() => new Error('nope')));
         fixture.detectChanges();
-        consentUpdates.next([activeConsent]);
-        const refreshesBefore = vi.mocked(scienceSettingsService.refreshScienceSettings).mock.calls.length;
 
         component.toggleConsent(activeConsent, false);
 
         expect(alertSpy).toHaveBeenCalledWith('error.unexpectedError', { error: 'nope' });
-        expect(vi.mocked(scienceSettingsService.refreshScienceSettings).mock.calls.length).toBe(refreshesBefore + 1);
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledTimes(2);
+        expect(component.consents()[0].active).toBe(true);
     });
 
     it('should not delete science data before the confirmation is accepted', () => {
@@ -155,13 +214,12 @@ describe('ScienceSettingsComponent', () => {
         const successSpy = vi.spyOn(alertService, 'success');
         vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(of(undefined));
         fixture.detectChanges();
-        const refreshCallsBeforeDelete = vi.mocked(scienceSettingsService.refreshScienceSettings).mock.calls.length;
 
         component.deleteData(activeConsent);
         fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)!.accept();
 
         expect(scienceSettingsService.deleteScienceDataForCourse).toHaveBeenCalledWith(activeConsent.courseId);
-        expect(vi.mocked(scienceSettingsService.refreshScienceSettings).mock.calls.length).toBe(refreshCallsBeforeDelete + 1);
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledTimes(2);
         expect(successSpy).toHaveBeenCalledWith('artemisApp.userSettings.scienceSettingsPage.deleteDataSuccess', { courseTitle: activeConsent.courseTitle });
     });
 
@@ -178,22 +236,7 @@ describe('ScienceSettingsComponent', () => {
         expect(successSpy).not.toHaveBeenCalled();
     });
 
-    it('should not claim that no course collects data while the consents are still loading', () => {
-        const pendingRefresh = new Subject<ScienceCourseConsent[]>();
-        vi.spyOn(scienceSettingsService, 'refreshScienceSettings').mockReturnValue(pendingRefresh.asObservable());
-
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-testid="science-consent-empty"]')).toBeNull();
-
-        pendingRefresh.next([]);
-        pendingRefresh.complete();
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-testid="science-consent-empty"]')).not.toBeNull();
-    });
-
     it('should name each switch after its course, not just "Contribute"', () => {
-        fixture.detectChanges();
-        consentUpdates.next([activeConsent]);
         fixture.detectChanges();
 
         const labelledBy = fixture.nativeElement.querySelector(`#science-course-${activeConsent.courseId}`).getAttribute('aria-labelledby');

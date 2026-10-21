@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web.admin;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -136,37 +133,7 @@ public class AdminScienceResource {
         String filename = "science-research-export-" + ZonedDateTime.now().toInstant().toEpochMilli() + ".csv";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDisposition(ContentDisposition.attachment().filename(filename).build());
-        InputStreamResource body;
-        try {
-            body = new InputStreamResource(new AutoDeletingFileInputStream(export.path()));
-        }
-        catch (IOException e) {
-            // The stream deletes the file when it is closed, so a file whose stream was never opened has nothing to
-            // delete it. Interaction data must not be what is left lying in the temporary directory.
-            Files.deleteIfExists(export.path());
-            throw e;
-        }
+        InputStreamResource body = new InputStreamResource(export.open());
         return ResponseEntity.ok().headers(headers).contentLength(export.contentLength()).contentType(new MediaType("text", "csv")).body(body);
-    }
-
-    /** Streams the generated export and removes the temporary file once the response has been written. */
-    private static final class AutoDeletingFileInputStream extends FilterInputStream {
-
-        private final Path path;
-
-        private AutoDeletingFileInputStream(Path path) throws IOException {
-            super(Files.newInputStream(path));
-            this.path = path;
-        }
-
-        @Override
-        public void close() throws IOException {
-            try {
-                super.close();
-            }
-            finally {
-                Files.deleteIfExists(path);
-            }
-        }
     }
 }

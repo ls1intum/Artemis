@@ -12,7 +12,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { By } from '@angular/platform-browser';
-import { ScienceService } from 'app/foundation/science/science.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { FaIconComponent, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -51,7 +50,6 @@ describe('LearningPathsTableComponent', () => {
                     useClass: MockTranslateService,
                 },
                 { provide: AlertService, useClass: MockAlertService },
-                MockProvider(ScienceService),
                 MockProvider(DialogService),
             ],
         })

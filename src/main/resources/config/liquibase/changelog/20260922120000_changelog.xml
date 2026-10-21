@@ -62,6 +62,8 @@
             WHERE event_type IN (10, 11) AND course_id IS NULL
               AND EXISTS (SELECT 1 FROM course WHERE course.id = science_event.resource_id);
         </sql>
+        <!-- Nothing to undo here: the rollback of 20260922120000-1 drops course_id, which discards the backfilled values. -->
+        <rollback/>
     </changeSet>
 
     <changeSet id="20260922120000-2-science-event-course-fk" author="maximiliananzinger">
@@ -176,14 +178,52 @@
             <column name="identity"/>
             <column name="course_id"/>
         </createIndex>
+        <!--
+            On MySQL the export index can take over as the index backing FKScienceEventCourseId: the implicit index the
+            foreign key created on course_id is dropped once another index starts with that column. Dropping the export
+            index would then fail with error 1553, so a plain course_id index is created first to back the foreign key.
+            The rollback of 20260922120000-2-science-event-course-fk drops the foreign key, and that of 20260922120000-1
+            drops course_id together with this index.
+        -->
+        <rollback>
+            <createIndex indexName="IDXScienceEventCourseId" tableName="science_event">
+                <column name="course_id"/>
+            </createIndex>
+            <dropIndex indexName="IDXScienceEventCourseIdTimestampId" tableName="science_event"/>
+            <dropIndex indexName="IDXScienceEventIdentityCourseId" tableName="science_event"/>
+        </rollback>
     </changeSet>
     <changeSet id="20260922120000-7" author="maximiliananzinger">
         <comment>
-            Drops the superseded global science opt-in. Consent is now recorded per course in science_course_consent,
-            and nothing read this table: the server never consulted it before storing an event, so its only effect was
-            a client-side switch that no longer exists.
+            Drops the superseded global science opt-in. Consent is now recorded per course in science_course_consent.
+            The previous release still reads this table through GET science-settings, so the rollback recreates it.
         </comment>
         <dropTable tableName="science_setting"/>
+        <!--
+            Recreates the table and its unique index as defined in baseline/v10_initial_schema.xml, so that the previous
+            release starts again. The recorded preferences cannot come back: restore them from a backup taken right before
+            this migration. Consent now lives per course in science_course_consent.
+        -->
+        <rollback>
+            <createTable tableName="science_setting">
+                <column name="id" type="bigint" autoIncrement="true">
+                    <constraints nullable="false" primaryKey="true"/>
+                </column>
+                <column name="setting_id" type="varchar(255)">
+                    <constraints nullable="false"/>
+                </column>
+                <column name="active" type="boolean" defaultValueBoolean="true">
+                    <constraints nullable="false"/>
+                </column>
+                <column name="user_id" type="bigint">
+                    <constraints nullable="false"/>
+                </column>
+            </createTable>
+            <createIndex indexName="UKScienceSettingTableUserIdSettingId" tableName="science_setting" unique="true">
+                <column name="user_id"/>
+                <column name="setting_id"/>
+            </createIndex>
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>

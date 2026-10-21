@@ -1,6 +1,7 @@
-import { Observable, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
+import { ScienceCourseConsent } from 'app/account/user/settings/science-settings/science-settings.service';
 
 export class MockScienceService {
-    logEvent = (type: string, resourceId?: number) => of({}) as Observable<HttpResponse<void>>;
+    readonly courseConsent = signal<ScienceCourseConsent | undefined>(undefined);
+    logEvent = (_type: string, _resourceId?: number, _courseId?: number) => true;
 }

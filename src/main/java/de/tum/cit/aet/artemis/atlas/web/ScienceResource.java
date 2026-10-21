@@ -82,17 +82,29 @@ public class ScienceResource {
 
     /**
      * GET science/consents : Returns the current user's course-level science consent states.
-     * <p>
-     * The client loads them on every course entry to decide whether it may log learning events, so a call says nothing
-     * about anyone opening the consent settings.
      *
      * @return the ResponseEntity with status 200 (OK) and the consent states
      */
-    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("science/consents")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ScienceCourseConsentDTO>> getConsentsForCurrentUser() {
         return ResponseEntity.ok(scienceCourseService.getConsentsForCurrentUser());
+    }
+
+    /**
+     * GET science/courses/{courseId}/consent : Returns the current user's consent state for one course.
+     * <p>
+     * The client loads it on every course entry to decide whether it may log learning events, so a call says nothing
+     * about anyone opening the consent settings.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the consent state
+     */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("science/courses/{courseId}/consent")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ScienceCourseConsentDTO> getConsentForCurrentUser(@PathVariable long courseId) {
+        return ResponseEntity.ok(scienceCourseService.getConsentForCurrentUser(courseId));
     }
 
     /**
