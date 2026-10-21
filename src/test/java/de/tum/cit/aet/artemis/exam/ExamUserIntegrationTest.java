@@ -415,6 +415,30 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         request.getList(pagedUrl(exam1), HttpStatus.FORBIDDEN, ExamStudentDTO.class, pageParams(""));
     }
 
+    /**
+     * A page above the bound, including one whose offset would overflow {@code int} in the JPA pagination pipeline, is rejected with 400 instead of a 500.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_rejectsPageAboveBound() throws Exception {
+        var params = pageParams("");
+        params.set("page", "100001");
+        request.getList(pagedUrl(exam1), HttpStatus.BAD_REQUEST, ExamStudentDTO.class, params);
+
+        params.set("page", String.valueOf(Integer.MAX_VALUE));
+        params.set("pageSize", "200");
+        request.getList(pagedUrl(exam1), HttpStatus.BAD_REQUEST, ExamStudentDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_acceptsPageAtBound() throws Exception {
+        var params = pageParams("");
+        params.set("page", "100000");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(exam1), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).isEmpty();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamStudentsPaged_filterSubmitted_returnsOnlySubmittedStudents() throws Exception {
@@ -541,6 +565,24 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
                 searchParams(TEST_PREFIX + "student", 0, 10));
         assertThat(result).hasSize(4);
         assertThat(result).allMatch(u -> u.login().startsWith(TEST_PREFIX + "student"));
+    }
+
+    /**
+     * A part of the login that is not its start finds the user. Name and email are set so that they do not contain the login and cannot produce the
+     * match instead.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchUsersForExamRegistration_matchesLoginInfix() throws Exception {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "examinfixlogin");
+        user.setFirstName("Unrelated");
+        user.setLastName("Person");
+        user.setEmail("unrelated.person.exam@test.de");
+        userTestRepository.save(user);
+
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams("examinfixlogin", 0, 10));
+        assertThat(result).extracting(UserForRegistrationDTO::id).containsExactly(user.getId());
     }
 
     @Test

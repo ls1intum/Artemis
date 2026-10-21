@@ -21,7 +21,7 @@
             "userSearch": {
                 "usersPerPage": "{{number}} Nutzer:innen pro Seite",
                 "showAllUsers": "Alle Nutzer:innen anzeigen",
-                "searchForUsers": "Nutzer:in zu dieser Organisation hinzufügen durch Suchen nach Login oder Namen",
+                "searchForUsers": "Mitglieder nach Login, Namen, E-Mail oder Matrikelnummer suchen",
                 "searchNoResults": "Nutzer:in nicht gefunden",
                 "addUsersButton": "Nutzer:innen hinzufügen",
                 "removeFromOrganization": {
