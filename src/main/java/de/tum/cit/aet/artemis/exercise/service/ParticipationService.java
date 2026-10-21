@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -71,6 +72,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -115,6 +117,8 @@ public class ParticipationService {
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final Optional<HyperionExerciseMutationApi> liveSaveApi;
 
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -122,7 +126,7 @@ public class ParticipationService {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
             ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            Optional<HyperionExerciseMutationApi> liveSaveApi) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<HyperionExerciseMutationApi> liveSaveApi) {
         this.liveSaveApi = liveSaveApi;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -136,6 +140,7 @@ public class ParticipationService {
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -375,7 +380,8 @@ public class ParticipationService {
         Supplier<ProgrammingExercise> exerciseWithTemplateParticipation = memoize(() -> programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(exercise.getId()));
         Supplier<String> branch = memoize(() -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()));
         // Step 1a) create the student repository (based on the template repository).
-        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get, participation);
+        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get, () -> getOnlineIdeFiles(exercise),
+                participation);
         return startProgrammingParticipation(participation);
     }
 
@@ -480,12 +486,13 @@ public class ParticipationService {
         // Step 1a) create the student repository (based on the template repository or graded participation)
         if (useGradedParticipation && optionalGradedStudentParticipation.isPresent()
                 && optionalGradedStudentParticipation.get() instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
+            // the graded repository already carries the online IDE configuration, and the student may have changed it since
             participation = copyRepository(exercise, programmingExerciseStudentParticipation::getVcsRepositoryUri,
-                    () -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()), participation);
+                    () -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()), Map::of, participation);
         }
         else {
             participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exercise), () -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()),
-                    participation);
+                    () -> getOnlineIdeFiles(exercise), participation);
         }
 
         // For practice mode 1 is always set. For more information see Participation.class
@@ -540,6 +547,8 @@ public class ParticipationService {
             }
             else {
                 participation = new StudentParticipation();
+                // The initial insert must already use the practice attempt, distinct from an in-flight live attempt 0.
+                participation.setAttempt(1);
             }
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
@@ -620,7 +629,8 @@ public class ParticipationService {
             programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case they want to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, () -> resolveTemplateRepositoryUri(programmingExercise),
-                    () -> programmingExerciseRepository.findBranchByExerciseId(programmingExercise.getId()), programmingParticipation);
+                    () -> programmingExerciseRepository.findBranchByExerciseId(programmingExercise.getId()), () -> getOnlineIdeFiles(programmingExercise),
+                    programmingParticipation);
             programmingParticipation = configureRepository(programmingParticipation);
             participation = programmingParticipation;
         }
@@ -677,16 +687,19 @@ public class ParticipationService {
 
     /**
      * Copies the repository behind the source URI to create the repository of the given participation, unless the participation already has a repository.
-     * The source URI is provided as a supplier so that its resolution (which might involve repairing a broken template repository URI, see
-     * {@link #resolveTemplateRepositoryUri}) only happens when the repository actually needs to be copied.
+     * The source URI, the branch and the additional files are provided as suppliers, so that they are only resolved when the repository actually needs to be
+     * copied: resolving the source URI might involve repairing a broken template repository URI (see {@link #resolveTemplateRepositoryUri}), and the branch
+     * and the online IDE configuration each need a query.
      *
-     * @param programmingExercise the programming exercise the participation belongs to
-     * @param sourceUriSupplier   supplies the URI of the repository to copy from, only evaluated if the copy is actually performed
-     * @param participation       the participation for which the repository should be created
+     * @param programmingExercise     the programming exercise the participation belongs to
+     * @param sourceUriSupplier       supplies the URI of the repository to copy from, only evaluated if the copy is actually performed
+     * @param templateBranchSupplier  supplies the branch of the repository to copy from, only evaluated if the copy is actually performed
+     * @param additionalFilesSupplier supplies files to add to the copy, such as the online IDE configuration, only evaluated if the copy is actually performed
+     * @param participation           the participation for which the repository should be created
      * @return the updated participation
      */
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, Supplier<LocalVCRepositoryUri> sourceUriSupplier,
-            Supplier<String> templateBranchSupplier, ProgrammingExerciseStudentParticipation participation) {
+            Supplier<String> templateBranchSupplier, Supplier<Map<String, byte[]>> additionalFilesSupplier, ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
             try (var reservation = programmingExercise.isExamExercise() ? null : liveSaveApi.map(api -> api.reserveParticipation(programmingExercise.getId())).orElse(null)) {
@@ -706,7 +719,8 @@ public class ParticipationService {
                 VersionControlService vcs = versionControlService.orElseThrow();
                 String templateBranch = templateBranchSupplier.get();
                 // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
-                var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt());
+                var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt(),
+                        additionalFilesSupplier.get());
                 // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
                 if (participation.getStudent().isPresent()) {
                     newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
@@ -722,6 +736,26 @@ public class ParticipationService {
         else {
             return participation;
         }
+    }
+
+    /**
+     * Gets the files that configure the online IDE (EduIDE) for a student repository created from the template of the given exercise.
+     * <p>
+     * EduIDE only applies the level in the file to students who have not chosen a level themselves, so it sets where a student starts, not
+     * where they have to stay.
+     *
+     * @param programmingExercise the exercise the student repository belongs to
+     * @return the files by repository-relative path; empty unless the online IDE is allowed and an experience level was selected
+     */
+    private Map<String, byte[]> getOnlineIdeFiles(ProgrammingExercise programmingExercise) {
+        if (!programmingExercise.isAllowOnlineIde()) {
+            return Map.of();
+        }
+        OnlineIdeExperienceLevel level = programmingExerciseBuildConfigRepository.getOnlineIdeExperienceLevelByProgrammingExerciseId(programmingExercise.getId());
+        if (level == null) {
+            return Map.of();
+        }
+        return Map.of(OnlineIdeExperienceLevel.EDU_IDE_CONFIGURATION_PATH, level.toEduIdeConfiguration());
     }
 
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {

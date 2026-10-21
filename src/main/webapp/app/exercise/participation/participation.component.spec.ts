@@ -210,36 +210,27 @@ describe('ParticipationComponent', () => {
     });
 
     describe('Live repository actions', () => {
-        it('hides the online editor for tutors after the manual deadline and in exams', () => {
-            component.exercise.set({
-                ...exercise,
-                type: ExerciseType.PROGRAMMING,
-                isAtLeastTutor: true,
-                assessmentType: AssessmentType.SEMI_AUTOMATIC,
-                dueDate: dayjs().subtract(1, 'hour'),
-            });
-            expect(component.canAccessLiveRepository()).toBe(false);
-            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, exerciseGroup: { id: 1 } });
-            expect(component.canAccessLiveRepository()).toBe(false);
-        });
+        it.each([
+            ['tutor', false, false],
+            ['editor', true, false],
+            ['instructor', true, true],
+        ])('shows the online editor only to editors and instructors (%s)', async (_role, isAtLeastEditor, isAtLeastInstructor) => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: { ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, isAtLeastEditor, isAtLeastInstructor, dueDate: dayjs().add(1, 'day') },
+                    }),
+                ),
+            );
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(
+                of({ content: [{ ...sampleDto, repositoryUri: 'https://localhost/git/EX/alice.git' }], totalElements: 1 }),
+            );
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
 
-        it('keeps the online editor for automatic assessment and tutors before the manual deadline', () => {
-            component.exercise.set({
-                ...exercise,
-                type: ExerciseType.PROGRAMMING,
-                isAtLeastTutor: true,
-                assessmentType: AssessmentType.AUTOMATIC,
-                dueDate: dayjs().subtract(1, 'hour'),
-            });
-            expect(component.canAccessLiveRepository()).toBe(true);
-            component.exercise.set({
-                ...exercise,
-                type: ExerciseType.PROGRAMMING,
-                isAtLeastTutor: true,
-                assessmentType: AssessmentType.SEMI_AUTOMATIC,
-                dueDate: dayjs().add(1, 'hour'),
-            });
-            expect(component.canAccessLiveRepository()).toBe(true);
+            expect(!!componentFixture.nativeElement.querySelector('a[href*="code-editor"]')).toBe(isAtLeastEditor || isAtLeastInstructor);
+            expect(componentFixture.nativeElement.querySelector('jhi-code-button')).not.toBeNull();
         });
 
         it('preserves editor and instructor access while identities are masked', () => {
@@ -281,7 +272,7 @@ describe('ParticipationComponent', () => {
             expect(component.columns()[0].field).toBe('participantName');
             expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.repository')).toBe(true);
             expect(componentFixture.nativeElement.querySelector('jhi-code-button')).not.toBeNull();
-            expect(componentFixture.nativeElement.querySelector('a[href*="code-editor"]')).not.toBeNull();
+            expect(componentFixture.nativeElement.querySelector('a[href*="code-editor"]')).toBeNull();
             const notice = componentFixture.nativeElement.querySelector('[data-testid="tutor-participation-access-notice"]');
             expect(notice).not.toBeNull();
             expect(notice.textContent).toContain(assessmentType === AssessmentType.AUTOMATIC ? 'tutorAccess.available' : 'tutorAccess.untilDueDate');

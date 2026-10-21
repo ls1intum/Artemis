@@ -182,8 +182,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     ];
     readonly rangeFilter = signal<Range | undefined>(undefined);
     readonly hideParticipantInformation = computed(() => this.privacyService.isParticipantInformationHidden(this.exercise()));
-    /** Editors retain live repository access even when participant identities are masked. */
-    readonly canAccessLiveRepository = computed(() => !!this.exercise()?.isAtLeastEditor || !!this.exercise()?.isAtLeastInstructor || !this.hideParticipantInformation());
+    /** Only editors and instructors may open the editable student repository. */
+    readonly canAccessLiveRepository = computed(() => !!this.exercise()?.isAtLeastEditor || !!this.exercise()?.isAtLeastInstructor);
     readonly participations = signal<ParticipationManagementDTO[]>([]);
     readonly totalRows = signal(0);
     readonly isLoading = signal(false);
