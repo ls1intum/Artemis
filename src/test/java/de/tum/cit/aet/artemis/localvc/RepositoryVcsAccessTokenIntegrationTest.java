@@ -260,8 +260,9 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     void getRepositoryVcsAccessToken_isRefusedForASessionThatPredatesTheCredentialsChange() throws Exception {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
-        userActivityService.recordCredentialsChanged(tutor.getId(), Instant.now());
-        SessionTestUtil.actAsSessionStartedAt(tutor.getLogin(), Instant.now().minus(Duration.ofHours(1)));
+        Instant credentialsChangedAt = Instant.parse("2026-01-01T12:00:00Z");
+        userActivityService.recordCredentialsChanged(tutor.getId(), credentialsChangedAt);
+        SessionTestUtil.actAsSessionStartedAt(tutor.getLogin(), credentialsChangedAt.minus(Duration.ofHours(1)));
         String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
 
         request.get(url, HttpStatus.UNAUTHORIZED, String.class);
