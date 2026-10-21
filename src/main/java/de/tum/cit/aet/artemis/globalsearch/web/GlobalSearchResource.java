@@ -204,11 +204,14 @@ public class GlobalSearchResource {
         }
         Map<Long, String> courseNameById = new HashMap<>();
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
-        List<Map<String, Object>> rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
+        // A channel is found only by its name: a match by meaning alone, such as the channel of a lecture whose description
+        // fits the query, confuses more than it helps.
+        List<Map<String, Object>> rankedResults = GlobalSearchResultRanker.rank(GlobalSearchResultRanker.withoutChannelsNotNamedBy(rawResults, query), hasQuery, coursesById,
+                ZonedDateTime.now());
         if (hasQuery && rankedResults.size() < effectiveLimit && rawResults.size() == candidateLimit && candidateLimit < MAX_CANDIDATES) {
-            // Merging semester copies shrank a cut-off candidate set below the limit, so more distinct matches may lie
-            // beyond it. Reading the larger set keeps a short result list meaning "no more matches", which is what the
-            // client relies on to offer more results.
+            // Merging semester copies or dropping channels shrank a cut-off candidate set below the limit, so more distinct
+            // matches may lie beyond it. Reading the larger set keeps a short result list meaning "no more matches", which is
+            // what the client relies on to offer more results.
             rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), MAX_CANDIDATES);
             if (filterResult.accessibleCoursesById() == null) {
                 coursesById = resolveCoursesById(rawResults);
@@ -217,7 +220,7 @@ public class GlobalSearchResource {
                 staffCourseIds = coursesById.keySet();
                 editorCourseIds = coursesById.keySet();
             }
-            rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
+            rankedResults = GlobalSearchResultRanker.rank(GlobalSearchResultRanker.withoutChannelsNotNamedBy(rawResults, query), hasQuery, coursesById, ZonedDateTime.now());
         }
         rawResults = rankedResults.subList(0, Math.min(rankedResults.size(), effectiveLimit));
 
