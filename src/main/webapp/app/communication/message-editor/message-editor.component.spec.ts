@@ -536,9 +536,11 @@ describe('Formatted message composer', () => {
         caretAtEnd();
         (fixture.nativeElement.querySelector('[data-testid="message-format-strong"]') as HTMLButtonElement).click();
         vi.useFakeTimers();
-        const input = new InputEvent('beforeinput', { inputType: 'insertText', data: ' @ann', bubbles: true, cancelable: true });
-        editable.dispatchEvent(input);
-        expect(input.defaultPrevented).toBe(true);
+        for (const character of ' @ann') {
+            const input = new InputEvent('beforeinput', { inputType: 'insertText', data: character, bubbles: true, cancelable: true });
+            editable.dispatchEvent(input);
+            expect(input.defaultPrevented).toBe(true);
+        }
         expect(editable.querySelector('strong')?.textContent).toBe(' @ann');
         await vi.advanceTimersByTimeAsync(150);
         expect(search).toHaveBeenCalledWith('@', 'ann', 1, undefined, false);

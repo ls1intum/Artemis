@@ -138,6 +138,45 @@ describe('Message editor editing transactions', () => {
         expect(changed).toHaveBeenLastCalledWith('@ann and @ann');
     });
 
+    it.each([
+        ['@', 'ann', '[user]Anna(anna)[/user] ', 'Hello @Anna '],
+        ['#', 'general', '[channel]general(7)[/channel] ', 'Hello #general '],
+        [':', 'smi', '😄 ', 'Hello 😄 '],
+    ])('completes a formatted %s query typed one character at a time', (trigger, query, replacement, expected) => {
+        editor.load('');
+        select(root, 0);
+        editor.format('strong');
+        for (const character of `Hello ${trigger}${query}`) {
+            editor.insertText(character);
+        }
+        const html = root.innerHTML;
+        const completion = editor.completion();
+        expect(root.innerHTML).toBe(html);
+        expect(completion?.trigger).toBe(trigger);
+        expect(completion?.query).toBe(query);
+        expect(completion?.range.toString()).toBe(trigger + query);
+
+        editor.insertMarkdown(replacement, completion!.range);
+
+        expect(root.textContent).toBe(expected);
+        editor.undo();
+        expect(root.textContent).toBe(`Hello ${trigger}${query}`);
+    });
+
+    it.each(['**@**ann', '@**ann**', '@\nann', '@\n\nann', '[@](https://example.org)ann', '[user]Anna(anna)[/user]ann', '`@ann`'])(
+        'does not collect a completion across a protected or structural boundary: %s',
+        (source) => {
+            editor.load(source);
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+            let last: Node | null = null;
+            let current: Node | null;
+            while ((current = walker.nextNode())) last = current;
+            select(last!, last!.textContent!.length);
+
+            expect(editor.completion()).toBeUndefined();
+        },
+    );
+
     it.each(['Email anna@example.org', 'C#', 'https://example.org/#anchor', '`@anna`'])('does not offer completion in %s', (text) => {
         editor.load(text);
         const node = root.querySelector('code, a')?.firstChild ?? root.querySelector('p')!.lastChild!;

@@ -92,7 +92,9 @@ describe('Message editor content in the actual posting view', () => {
         editor.load('');
         selectAll();
         editor.format('strong');
-        editor.insertText('Hello @ann');
+        for (const character of 'Hello @ann') {
+            editor.insertText(character);
+        }
         const beforeAcceptance = editorToMessage(host);
         const completion = editor.completion()!;
         expect(completion.query).toBe('ann');

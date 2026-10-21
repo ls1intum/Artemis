@@ -727,13 +727,29 @@ export class MessageEditorDom {
         if (!range.collapsed || node?.nodeType !== Node.TEXT_NODE || this.parentElement(node)?.closest('code, pre, a, [data-message-reference]')) {
             return undefined;
         }
-        const before = node.textContent!.slice(0, offset);
+        // Managed formatted typing can leave one text node per character. Read the same inline run without normalizing
+        // the live editing DOM or crossing marks, breaks, links, references or block boundaries.
+        const prefix: Node[] = [];
+        for (let previous: Node | null = node; previous?.nodeType === Node.TEXT_NODE; previous = previous.previousSibling) {
+            prefix.push(previous);
+        }
+        prefix.reverse();
+        const before = prefix.map((part) => (part === node ? part.textContent!.slice(0, offset) : part.textContent!)).join('');
         const match = /(?:^|[\s(])([@#:])([^\s@#:]*)$/.exec(before);
         if (!match || (match[1] === ':' && (!/^[A-Za-z0-9_+-]+$/.test(match[2]) || EMOTICON_TO_EMOJI[`:${match[2]}`]))) {
             return undefined;
         }
+        let startOffset = before.length - match[2].length - 1;
+        let startNode = node;
+        for (const candidate of prefix) {
+            if (candidate === node || startOffset < candidate.textContent!.length) {
+                startNode = candidate;
+                break;
+            }
+            startOffset -= candidate.textContent!.length;
+        }
         const replacement = range.cloneRange();
-        replacement.setStart(node, offset - match[2].length - 1);
+        replacement.setStart(startNode, startOffset);
         replacement.setEnd(node, offset);
         return { trigger: match[1] as '@' | '#' | ':', query: match[2], range: replacement };
     }
