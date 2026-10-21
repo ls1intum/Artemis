@@ -7,6 +7,7 @@ import {
     OnInit,
     ViewEncapsulation,
     afterRenderEffect,
+    computed,
     effect,
     inject,
     input,
@@ -145,6 +146,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private readonly search$ = new Subject<string>();
     searchText = '';
     readonly _activeConversation = signal<ConversationDTO | undefined>(undefined);
+    // Keep the opening divider stable while successful reads advance the shared conversation cache.
+    private readonly openingLastReadDate = computed(() => this._activeConversation()?.lastReadDate);
     readonly onNavigateToPost = output<Posting>();
     readonly forwardedMessagesLoaded = output<Post[]>();
 
@@ -287,6 +290,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 return;
             }
             this._activeConversation.set(conversation);
+            // Capture before loading posts can update the same DTO's lastReadDate.
+            this.openingLastReadDate();
             this.onActiveConversationChange();
         });
     }
@@ -406,7 +411,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      */
     private firstUnreadPostIdToOpenAt(): number | undefined {
         const firstUnreadPostId = this.firstUnreadPostId();
-        const lastReadDate = this._activeConversation()?.lastReadDate;
+        const lastReadDate = this.displayedLastReadDate();
         if (this.canStartSaving || this.searchText || firstUnreadPostId === undefined || !lastReadDate) {
             return undefined;
         }
@@ -1018,12 +1023,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * and were not authored by the current user (i.e. true unread posts).
      */
     private getUnreadPosts(): Post[] {
-        const lastReadDate = this._activeConversation()?.lastReadDate;
+        const lastReadDate = this.displayedLastReadDate();
         if (!lastReadDate || !this.allPosts()?.length) {
             return [];
         }
 
         return getUnreadPostsByLastReadDate(this.currentUser, this.allPosts(), lastReadDate);
+    }
+
+    private displayedLastReadDate() {
+        const conversation = this._activeConversation();
+        return this.courseConversationsService.isConversationMarkedAsUnread(conversation?.id) ? conversation?.lastReadDate : this.openingLastReadDate();
     }
 
     /**

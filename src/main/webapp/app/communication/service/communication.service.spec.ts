@@ -231,7 +231,7 @@ describe('CommunicationService', () => {
 
             olderResponse.next(new HttpResponse({ body: [post] }));
 
-            expect(loaded).toHaveBeenCalledExactlyOnceWith(7, 4);
+            expect(loaded).toHaveBeenCalledExactlyOnceWith(7, 4, expect.anything());
         });
 
         it.each([

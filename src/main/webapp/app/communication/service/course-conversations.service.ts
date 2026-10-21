@@ -509,7 +509,8 @@ export class CourseConversationsService implements OnDestroy {
     private subscribeToRouteChange() {
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
-                // Keep the opening timestamp until messages arrive: it locates the first unread post.
+                // Navigation clears badges; only successful reads advance the cached timestamp.
+                // The message view retains its opening timestamp for initial positioning.
                 if (this.isReadingConversation(this.activeConversation?.id) && !this.isMarkedAsUnread) {
                     this.clearActiveConversationUnreadBadge();
                     this.hasUnreadMessagesCheck();
@@ -543,6 +544,15 @@ export class CourseConversationsService implements OnDestroy {
         this.isConversationViewOpen = isOpen;
     }
 
+    /**
+     * Whether an explicit unread mark currently determines this conversation's read boundary.
+     * @param conversationId the conversation shown by the message view
+     * @returns whether its current timestamp should replace the opening boundary
+     */
+    public isConversationMarkedAsUnread(conversationId: number | undefined): boolean {
+        return conversationId !== undefined && this.activeConversation?.id === conversationId && this.isMarkedAsUnread;
+    }
+
     private readRequestsOf(conversationId: number) {
         let readRequest = this.readRequests.get(conversationId);
         if (!readRequest) {
@@ -569,10 +579,25 @@ export class CourseConversationsService implements OnDestroy {
      *
      * @param conversationId the conversation whose messages arrived
      * @param coveredRequests the value {@link messagesRequested} returned for that request
+     * @param readAt          when the successful read was requested, so later arrivals remain unread on return
      */
-    public messagesLoaded(conversationId: number, coveredRequests: number) {
+    public messagesLoaded(conversationId: number, coveredRequests: number, readAt = dayjs()) {
         const readRequest = this.readRequestsOf(conversationId);
         readRequest.succeeded = Math.max(readRequest.succeeded, coveredRequests);
+        this.advanceConversationReadDate(conversationId, readAt);
+    }
+
+    private advanceConversationReadDate(conversationId: number, readAt: dayjs.Dayjs) {
+        if (this.activeConversation?.id === conversationId && this.isMarkedAsUnread) {
+            return;
+        }
+        const cached = this.conversationsOfUser.find((conversation) => conversation.id === conversationId);
+        if (cached && (!cached.lastReadDate || readAt.isAfter(cached.lastReadDate))) {
+            cached.lastReadDate = readAt;
+        }
+        if (this.activeConversation?.id === conversationId && (!this.activeConversation.lastReadDate || readAt.isAfter(this.activeConversation.lastReadDate))) {
+            this.activeConversation.lastReadDate = readAt;
+        }
     }
 
     // The selected conversation only counts as read while the view that shows it is open.
@@ -603,6 +628,7 @@ export class CourseConversationsService implements OnDestroy {
                     const readRequest = this.readRequestsOf(conversationId);
                     const requestNumber = ++readRequest.sent;
                     const unreadRevision = readRequest.unreadRevision;
+                    const readAt = dayjs();
                     this.conversationService.markAsRead(this._courseId, conversationId).subscribe({
                         next: () => {
                             if (readRequest.unreadRevision !== unreadRevision) {
@@ -611,10 +637,12 @@ export class CourseConversationsService implements OnDestroy {
                             readRequest.succeeded = Math.max(readRequest.succeeded, requestNumber);
                             // A newer read that failed left a count on the server, which a delayed older success must not hide.
                             const isSupersededByFailure = readRequest.failed > requestNumber;
+                            if (!isSupersededByFailure) {
+                                this.advanceConversationReadDate(conversationId, readAt);
+                            }
                             // A delayed read must not clear a different selection or an explicit unread mark.
                             if (!isSupersededByFailure && selectionVersion === this.selectionVersion && this.isReadingConversation(conversationId) && !this.isMarkedAsUnread) {
-                                // Preserve the opening timestamp used by the initial posts response and its New divider.
-                                // Advancing it here can hide unread posts while that response is still pending.
+                                // The message view keeps its own opening timestamp for the New divider.
                                 this.clearActiveConversationUnreadBadge();
                                 this.hasUnreadMessagesCheck();
                             }
@@ -711,6 +739,14 @@ export class CourseConversationsService implements OnDestroy {
             return of();
         }
 
+        const readAt = dayjs();
+        const coveredReads = this.conversationsOfUser
+            .filter((conversation) => conversation.id !== undefined)
+            .map((conversation) => {
+                const state = this.readRequestsOf(conversation.id!);
+                return { conversationId: conversation.id!, requests: state.sent, unreadRevision: state.unreadRevision };
+            });
+
         this.conversationsOfUser = this.conversationsOfUser.map((conversation) => {
             conversation.hasUnreadMessage = false;
             conversation.unreadMessagesCount = 0;
@@ -720,6 +756,13 @@ export class CourseConversationsService implements OnDestroy {
         this._conversationsOfUser$.next(this.conversationsOfUser);
 
         return this.conversationService.markAllChannelsAsRead(course.id).pipe(
+            tap(() => {
+                for (const read of coveredReads) {
+                    if (this.readRequestsOf(read.conversationId).unreadRevision === read.unreadRevision) {
+                        this.messagesLoaded(read.conversationId, read.requests, readAt);
+                    }
+                }
+            }),
             catchError((errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
                 return of();

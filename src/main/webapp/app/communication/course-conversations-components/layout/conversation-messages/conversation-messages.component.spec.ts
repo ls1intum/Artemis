@@ -1339,6 +1339,44 @@ examples.forEach((activeConversation) => {
             expect(unreadPosts).toHaveLength(2);
             expect(unreadPosts.map((p: Post) => p.id)).toEqual([1, 4]);
         });
+        it('keeps the opening New divider when the shared read timestamp advances before posts arrive', () => {
+            const openingReadDate = dayjs('2026-01-01T10:00:00Z');
+            const conversation: ConversationDTO = { id: 987, type: activeConversation.type, lastReadDate: openingReadDate };
+            const selected = new Subject<ConversationDTO>();
+            Object.defineProperty(courseConversationsService, 'activeConversation$', { get: () => selected.asObservable() });
+            component['subscribeToActiveConversation']();
+            selected.next(conversation);
+            conversation.lastReadDate = dayjs('2026-01-01T12:00:00Z');
+            component.currentUser = { id: 99, internal: false };
+            component.allPosts.set([{ id: 42, creationDate: dayjs('2026-01-01T11:00:00Z'), author: { id: 100 } } as Post]);
+
+            component['computeLastReadState']();
+
+            expect(component.firstUnreadPostId()).toBe(42);
+            expect(component.unreadPostsCount()).toBe(1);
+        });
+
+        it('moves the New divider when an already displayed message is explicitly marked unread', () => {
+            const conversation: ConversationDTO = { id: 987, type: activeConversation.type, lastReadDate: dayjs('2026-01-01T12:00:00Z') };
+            const selected = new Subject<ConversationDTO>();
+            Object.defineProperty(courseConversationsService, 'activeConversation$', { get: () => selected.asObservable() });
+            component['subscribeToActiveConversation']();
+            selected.next(conversation);
+            component.currentUser = { id: 99, internal: false };
+            const post = { id: 42, creationDate: dayjs('2026-01-01T11:00:00Z'), author: { id: 100 } } as Post;
+            component.allPosts.set([post]);
+            component['computeLastReadState']();
+            expect(component.firstUnreadPostId()).toBeUndefined();
+
+            // The existing mark-as-unread action updates this shared DTO and republishes the posts.
+            conversation.lastReadDate = post.creationDate!.subtract(1, 'millisecond');
+            Object.defineProperty(courseConversationsService, 'isConversationMarkedAsUnread', { value: (id: number) => id === conversation.id });
+            component['computeLastReadState']();
+
+            expect(component.firstUnreadPostId()).toBe(42);
+            expect(component.unreadPostsCount()).toBe(1);
+        });
+
         it('should compute unreadPosts, unreadPostsCount, and firstUnreadPostId correctly', () => {
             const lastReadDate = dayjs().subtract(10, 'minutes');
             const currentUser = { id: 99, internal: false };

@@ -648,6 +648,9 @@ describe('CourseConversationsService', () => {
                         courseConversationsService.setConversationViewOpen(true);
                         courseConversationsService.setActiveConversation(channel);
                         courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 1);
+                        expect(courseConversationsService.isConversationMarkedAsUnread(channel.id)).toBe(true);
+                        expect(courseConversationsService.isConversationMarkedAsUnread(groupChat.id)).toBe(false);
+                        expect(courseConversationsService.isConversationMarkedAsUnread(undefined)).toBe(false);
                         const markAsRead = vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of(new HttpResponse<void>()));
 
                         receiveMockSubject.next(eventFor(channel));
@@ -707,7 +710,7 @@ describe('CourseConversationsService', () => {
             subscription.unsubscribe();
         });
 
-        it('preserves the opening read timestamp when a live reply is marked read before posts finish loading', () => {
+        it('advances the cached read timestamp when a live reply is marked read before posts finish loading', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
             const openingReadDate = dayjs().subtract(10, 'minutes');
             channel.lastReadDate = openingReadDate;
@@ -719,8 +722,8 @@ describe('CourseConversationsService', () => {
             receiveMockSubject.next(eventFor(channel));
             pendingRead.next(new HttpResponse<void>());
 
-            expect(courseConversationsService['activeConversation']?.lastReadDate).toBe(openingReadDate);
-            expect(channel.lastReadDate).toBe(openingReadDate);
+            expect(courseConversationsService['activeConversation']?.lastReadDate?.isAfter(openingReadDate)).toBe(true);
+            expect(channel.lastReadDate?.isAfter(openingReadDate)).toBe(true);
             expect(cachedUnreadCount(channel.id)).toBe(0);
             expect(courseConversationsService['hasUnreadMessages']).toBe(false);
             pendingRead.complete();
@@ -761,6 +764,70 @@ describe('CourseConversationsService', () => {
             successfulRead.complete();
             countSubscription.unsubscribe();
             unreadSubscription.unsubscribe();
+        });
+
+        it('keeps the successful read timestamp when leaving and reopening Communication through another course tab', async () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            const openingReadDate = dayjs('2026-01-01T10:00:00Z');
+            channel.lastReadDate = openingReadDate;
+            courseConversationsService.setActiveConversation(channel);
+            courseConversationsService.setConversationViewOpen(true);
+            await TestBed.inject(Router).navigateByUrl('/courses/1/communication?conversationId=3');
+            const coveredRequests = courseConversationsService.messagesRequested(channel.id!);
+            courseConversationsService.messagesLoaded(channel.id!, coveredRequests);
+
+            courseConversationsService.setConversationViewOpen(false);
+            await TestBed.inject(Router).navigateByUrl('/courses/1/exercises');
+            courseConversationsService.setConversationViewOpen(true);
+            await TestBed.inject(Router).navigateByUrl('/courses/1/communication?conversationId=3');
+
+            expect(channel.lastReadDate?.isAfter(openingReadDate)).toBe(true);
+            expect(courseConversationsService['activeConversation']?.lastReadDate).toBe(channel.lastReadDate);
+        });
+
+        it('ignores automatic read failures covered by a successful bulk read and refresh for every conversation', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            const pendingChannelRead = new Subject<HttpResponse<void>>();
+            const pendingGroupRead = new Subject<HttpResponse<void>>();
+            const bulkRead = new Subject<void>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(pendingChannelRead).mockReturnValueOnce(pendingGroupRead);
+            vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(bulkRead);
+            courseConversationsService.setActiveConversation(channel);
+            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService.setActiveConversation(groupChat);
+            receiveMockSubject.next(eventFor(groupChat));
+
+            courseConversationsService.markAllChannelsAsRead(course).subscribe();
+            bulkRead.next();
+            courseConversationsService.forceRefresh().subscribe();
+            pendingChannelRead.error(new Error('older channel read failed'));
+            pendingGroupRead.error(new Error('older group read failed'));
+
+            expect(cachedUnreadCount(channel.id)).toBe(0);
+            expect(cachedUnreadCount(groupChat.id)).toBe(0);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
+        });
+
+        it('keeps a newer failed read unread when a bulk read only covered an older request', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const olderRead = new Subject<HttpResponse<void>>();
+            const newerRead = new Subject<HttpResponse<void>>();
+            const bulkRead = new Subject<void>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(olderRead).mockReturnValueOnce(newerRead);
+            vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(bulkRead);
+            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService.markAllChannelsAsRead(course).subscribe();
+            receiveMockSubject.next(eventFor(channel));
+
+            bulkRead.next();
+            newerRead.error(new Error('newer read failed'));
+            olderRead.error(new Error('older read failed'));
+
+            expect(cachedUnreadCount(channel.id)).toBe(1);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
         });
 
         it('ignores a read failure that a newer successful read has superseded', () => {
