@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Random;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -35,8 +36,8 @@ import io.netty.buffer.Unpooled;
  * That is how {@code GenerationJobServiceRedisTest} hung a whole CI shard for an hour.
  *
  * <p>
- * Each case repeats with random keys because the failing layouts depend on the key hashes; with the unstable maps
- * a few hundred repetitions fail in practice every time, whatever the JVM salt is.
+ * Each case repeats with varied keys from a fixed seed because failing layouts depend on the key hashes. The samples
+ * are reproducible, while a few hundred repetitions expose the unstable maps regardless of the JVM salt.
  */
 class DistributedValueEncodingStabilityTest {
 
@@ -46,25 +47,27 @@ class DistributedValueEncodingStabilityTest {
 
     @Test
     void liveSaveSlotEncodesToTheSameBytesAfterARoundTrip() throws IOException {
+        Random random = new Random(0x5eedL);
         for (int attempt = 0; attempt < REPETITIONS; attempt++) {
             var readers = new HashMap<String, String>();
             for (int reader = 0; reader <= attempt % 7; reader++) {
-                readers.put("live-reader:" + UUID.randomUUID(), "node-" + reader % 2);
+                readers.put("live-reader:" + new UUID(random.nextLong(), random.nextLong()), "node-" + reader % 2);
             }
-            assertEncodingIsStable(new LiveSaveSlot("live-copy:" + UUID.randomUUID(), "node-0", Instant.now(), readers));
+            assertEncodingIsStable(new LiveSaveSlot("live-copy:" + new UUID(random.nextLong(), random.nextLong()), "node-0", Instant.parse("2026-01-01T00:00:00Z"), readers));
         }
     }
 
     @Test
     void generationBaselineEncodesToTheSameBytesAfterARoundTrip() throws IOException {
+        Random random = new Random(0x5eedL);
         for (int attempt = 0; attempt < REPETITIONS; attempt++) {
             var heads = new EnumMap<RepositoryType, String>(RepositoryType.class);
-            heads.put(RepositoryType.TEMPLATE, UUID.randomUUID().toString());
-            heads.put(RepositoryType.SOLUTION, UUID.randomUUID().toString());
-            heads.put(RepositoryType.TESTS, UUID.randomUUID().toString());
+            heads.put(RepositoryType.TEMPLATE, new UUID(random.nextLong(), random.nextLong()).toString());
+            heads.put(RepositoryType.SOLUTION, new UUID(random.nextLong(), random.nextLong()).toString());
+            heads.put(RepositoryType.TESTS, new UUID(random.nextLong(), random.nextLong()).toString());
             var tests = new LinkedHashMap<String, GenerationGrading.Grading>();
             for (int test = 0; test <= attempt % 12; test++) {
-                tests.put("test" + UUID.randomUUID(), new GenerationGrading.Grading(1.0 + test, Visibility.ALWAYS, null));
+                tests.put("test" + new UUID(random.nextLong(), random.nextLong()), new GenerationGrading.Grading(1.0 + test, Visibility.ALWAYS, null));
             }
             var grading = new GenerationGrading.Snapshot(tests);
             assertEncodingIsStable(
