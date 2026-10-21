@@ -227,11 +227,6 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             expect(input.getAttribute('aria-invalid')).toBe('true');
             expect(input.getAttribute('aria-describedby')).toBe('text-maxlength-error');
         });
-
-        it('should have the maxlength attribute bound to TEXT_LIMIT', () => {
-            const input = fixture.nativeElement.querySelector('#text') as HTMLInputElement;
-            expect(input.getAttribute('maxlength')).toBe('2000');
-        });
     });
 
     describe('date pickers', () => {

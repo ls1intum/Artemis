@@ -90,10 +90,11 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
         { validators: this.validateDates.bind(this) },
     );
 
+    protected readonly textControl = this.form.get('text') as FormControl<string | null | undefined>;
+
     /** Icons */
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
-    protected readonly TEXT_LIMIT = 2000;
 
     /**
      * Loads notification from route data and initializes the form.

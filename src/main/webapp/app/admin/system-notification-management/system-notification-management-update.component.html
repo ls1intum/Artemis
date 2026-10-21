@@ -16,11 +16,10 @@
                         class="w-full"
                         name="text"
                         formControlName="text"
-                        [attr.maxlength]="TEXT_LIMIT"
-                        [attr.aria-invalid]="form.get('text')?.hasError('maxlength') && (form.get('text')?.dirty || form.get('text')?.touched) ? 'true' : null"
-                        [attr.aria-describedby]="form.get('text')?.hasError('maxlength') && (form.get('text')?.dirty || form.get('text')?.touched) ? 'text-maxlength-error' : null"
+                        [attr.aria-invalid]="textControl.hasError('maxlength') && (textControl.dirty || textControl.touched) ? 'true' : null"
+                        [attr.aria-describedby]="textControl.hasError('maxlength') && (textControl.dirty || textControl.touched) ? 'text-maxlength-error' : null"
                     />
-                    @if (form.get('text')?.hasError('maxlength') && (form.get('text')?.dirty || form.get('text')?.touched)) {
+                    @if (textControl.hasError('maxlength') && (textControl.dirty || textControl.touched)) {
                         <small id="text-maxlength-error" class="text-state-danger text-sm" jhiTranslate="artemisApp.systemNotification.textMaxlength"></small>
                     }
                 </div>
