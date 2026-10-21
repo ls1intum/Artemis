@@ -94,7 +94,7 @@
                             @if (groupStart) {
                                 @if (!column.exerciseGroupPointsEqual) {
                                     <fa-icon
-                                        [tumAetUiTooltip]="'artemisApp.examManagement.checklist.textitems.nototalpointsduetomismatch' | artemisTranslate"
+                                        [tumAetUiTooltip]="'artemisApp.examManagement.checklist.textitems.pointsinexercisegroupnotequal' | artemisTranslate"
                                         [icon]="faExclamationTriangle"
                                         class="text-state-warning"
                                     />
@@ -104,11 +104,7 @@
                             }
                         </td>
                         <td class="max-w-8 variants-start">
-                            @if (!column.noExercises) {
-                                <span>{{ variant.indexExercise }}</span>
-                            } @else {
-                                <jhi-no-data />
-                            }
+                            <span>{{ variant.indexExercise }}</span>
                         </td>
                         <td>
                             @if (variant.exerciseTitle) {
