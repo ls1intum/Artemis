@@ -237,7 +237,7 @@ describe('ImportTableComponent', () => {
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
 
-        const titleColumnHeader = fixture.debugElement.nativeElement.querySelector('thead th:nth-child(' + columnIndex + ') div');
+        const titleColumnHeader = fixture.debugElement.nativeElement.querySelector('thead th:nth-child(' + columnIndex + ') button');
 
         expect(component.sortedColumn()).toBe('ID');
         expect(component.sortingOrder()).toBe(SortingOrder.ASCENDING);

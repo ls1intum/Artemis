@@ -255,7 +255,7 @@ public class ExerciseService {
         int numberOfCorrectionRounds = 1;
         if (examMode) {
             // set number of corrections specific to each correction round
-            numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            numberOfCorrectionRounds = exercise.getExamElseThrow().getNumberOfCorrectionRoundsInExam();
             numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds);
         }
         else {
@@ -407,6 +407,21 @@ public class ExerciseService {
      */
     @Async
     public void updatePointsInRelatedParticipantScores(Double originalMaxPoints, Double originalBonusPoints, Exercise updatedExercise) {
+        updatePointsInRelatedParticipantScoresInternal(originalMaxPoints, originalBonusPoints, updatedExercise);
+    }
+
+    /**
+     * Updates related participant scores on the calling thread.
+     *
+     * @param originalMaxPoints   the original maximum points
+     * @param originalBonusPoints the original bonus points
+     * @param updatedExercise     the updated exercise
+     */
+    public void updatePointsInRelatedParticipantScoresSynchronously(Double originalMaxPoints, Double originalBonusPoints, Exercise updatedExercise) {
+        updatePointsInRelatedParticipantScoresInternal(originalMaxPoints, originalBonusPoints, updatedExercise);
+    }
+
+    private void updatePointsInRelatedParticipantScoresInternal(Double originalMaxPoints, Double originalBonusPoints, Exercise updatedExercise) {
         boolean arePointsStillCorrect = Objects.equals(originalMaxPoints, updatedExercise.getMaxPoints()) && Objects.equals(originalBonusPoints, updatedExercise.getBonusPoints());
         if (arePointsStillCorrect) {
             return;

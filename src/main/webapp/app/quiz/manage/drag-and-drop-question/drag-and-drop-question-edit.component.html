@@ -12,6 +12,7 @@
             </button>
             <div class="question-title">
                 <input
+                    [attr.aria-label]="'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate"
                     pInputText
                     data-testid="drag-and-drop-question-title"
                     [(ngModel)]="question().title"
@@ -135,7 +136,13 @@
                 <div class="col-12 col-md-4">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                        <select class="form-select" [(ngModel)]="question().scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
+                        <select
+                            [attr.aria-label]="'artemisApp.quizQuestion.scoringType' | artemisTranslate"
+                            class="form-select"
+                            [(ngModel)]="question().scoringType"
+                            (ngModelChange)="questionUpdated.emit()"
+                            title="scoring type"
+                        >
                             <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
                             <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
                             <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
@@ -146,7 +153,15 @@
                 <div class="col-12 col-md-2">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                        <input class="form-control point-input" title="score" type="number" [value]="question().points" disabled style="width: 100%" />
+                        <input
+                            [attr.aria-label]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                            class="form-control point-input"
+                            title="score"
+                            type="number"
+                            [value]="question().points"
+                            disabled
+                            style="width: 100%"
+                        />
                     </div>
                 </div>
                 <div class="col-12 col-md-3">
@@ -426,7 +441,34 @@
                             }
                             @if (!dragItem.pictureFilePath) {
                                 <div>
-                                    <textarea id="drag-item-{{ i }}-text" [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
+                                    <div class="drag-item-text-field">
+                                        <textarea
+                                            id="drag-item-{{ i }}-text"
+                                            [(ngModel)]="dragItem.text"
+                                            [customMaxLength]="MAX_DRAG_ITEM_TEXT_LENGTH"
+                                            [attr.aria-invalid]="(dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH"
+                                            [attr.aria-describedby]="
+                                                (dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH ? 'drag-item-text-limit-' + questionIndex() + '-' + i : undefined
+                                            "
+                                            (ngModelChange)="questionUpdated.emit()"
+                                        ></textarea>
+                                        <span
+                                            class="pointer-events-none absolute bottom-2 right-3 z-[4] text-xs leading-none"
+                                            [class.text-state-danger]="(dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH"
+                                            [class.text-muted-color]="(dragItem.text?.length ?? 0) <= MAX_DRAG_ITEM_TEXT_LENGTH"
+                                            data-testid="drag-item-character-count"
+                                        >
+                                            {{ dragItem.text?.length ?? 0 }}/{{ MAX_DRAG_ITEM_TEXT_LENGTH }}
+                                        </span>
+                                    </div>
+                                    @if ((dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH) {
+                                        <small
+                                            id="drag-item-text-limit-{{ questionIndex() }}-{{ i }}"
+                                            class="drag-item-text-limit block max-w-[150px] whitespace-normal text-state-danger"
+                                            jhiTranslate="entity.validation.maxlength"
+                                            [translateValues]="{ max: MAX_DRAG_ITEM_TEXT_LENGTH }"
+                                        ></small>
+                                    }
                                 </div>
                             }
                             @if (!reEvaluationInProgress()) {
@@ -472,7 +514,14 @@
                                         (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                         (keyup.space)="$event.target === $event.currentTarget ? keyboardAction383.click() : undefined"
                                     >
-                                        <input #reevalChangeToImageInput [hidden]="true" type="file" accept="image/*" (change)="changeToPictureDragItem(dragItem, $event)" />
+                                        <input
+                                            [attr.aria-label]="'accessibility.uploadDragItemImage' | artemisTranslate"
+                                            #reevalChangeToImageInput
+                                            [hidden]="true"
+                                            type="file"
+                                            accept="image/*"
+                                            (change)="changeToPictureDragItem(dragItem, $event)"
+                                        />
                                         <fa-icon [icon]="farFileImage" size="lg" />
                                     </div>
                                     @if (!dragItem.invalid) {
@@ -564,7 +613,12 @@
                                     }
                                     @if (!dragItem.pictureFilePath) {
                                         <div>
-                                            <textarea disabled [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
+                                            <textarea
+                                                [attr.aria-label]="'accessibility.dragItemText' | artemisTranslate"
+                                                disabled
+                                                [(ngModel)]="dragItem.text"
+                                                (ngModelChange)="questionUpdated.emit()"
+                                            ></textarea>
                                         </div>
                                     }
                                 </div>

@@ -38,8 +38,8 @@ on:
         description: 'Raw aggregated E2E test outcome (success|failure|error), for the CI Summary
           table. This is the unexonerated signal — `failure` here includes known-flaky-only runs
           that report-results exonerates. The caller `e2e` job conclusion is the exonerated verdict
-          (red only on a real regression). `e2e` is part of the required `all-required-ci-passed`
-          gate, so a real regression blocks merging while a known-flaky-only run stays green.'
+          (failures without history also remain blocking). `e2e` is part of the required
+          `all-required-ci-passed` gate; only failures with known-flaky history are exonerated.'
         value: ${{ jobs.report-results.outputs.status }}
 
 permissions: {}  # default-deny; each job grants only what it needs
@@ -77,7 +77,7 @@ jobs:
       relevant_count: ${{ steps.determine.outputs.RELEVANT_COUNT }}
       remaining_count: ${{ steps.determine.outputs.REMAINING_COUNT }}
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 0
@@ -89,7 +89,7 @@ jobs:
           git fetch origin "$BASE_BRANCH:base_branch"
       - name: Determine relevant tests
         id: determine
-        run: .ci/E2E-tests/determine-relevant-tests.sh base_branch
+        run: supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh base_branch
 
   run-e2e-relevant:
     name: 'Phase 1: Relevant E2E Tests'
@@ -106,15 +106,17 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     env:
       PLAYWRIGHT_REPORT_PHASE: phase1
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     outputs:
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
       tests: ${{ steps.run-tests-phase1.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-phase1.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -123,6 +125,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: "Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
 
@@ -141,7 +144,7 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
           RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
-        run: .ci/E2E-tests/execute.sh postgres-localci playwright "$RELEVANT_TESTS"
+        run: supporting_scripts/ci/E2E-tests/execute.sh postgres-localci playwright "$RELEVANT_TESTS"
 
       - name: Calculate wall-clock duration
         id: wall-clock
@@ -284,13 +287,16 @@ jobs:
   run-e2e-remaining:
     name: 'Phase 2: Remaining E2E Tests'
     needs: [determine-tests, run-e2e-relevant]
+    # Evaluate skipped dependencies, but release the runner and PR concurrency slot on cancellation.
     if: |
-      always() &&
+      !cancelled() &&
       inputs.is_pr &&
       needs.determine-tests.result == 'success' &&
       needs.determine-tests.outputs.run_all_tests != 'true' &&
       needs.determine-tests.outputs.remaining_tests != '' &&
-      ((needs.run-e2e-relevant.result == 'success' && needs.run-e2e-relevant.outputs.phase_result != 'real') || needs.run-e2e-relevant.result == 'skipped')
+      ((needs.run-e2e-relevant.result == 'success' &&
+        needs.run-e2e-relevant.outputs.infrastructure_failed == 'false' &&
+        contains(fromJSON('["clean","flaky"]'), needs.run-e2e-relevant.outputs.phase_result)) || needs.run-e2e-relevant.result == 'skipped')
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
     environment: playwright-e2e-tests
@@ -298,16 +304,18 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       reporter_failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
       phase2_notes: ${{ steps.update-comment.outputs.phase2_notes }}
       tests: ${{ steps.run-tests-phase2.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-phase2.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     env:
       PLAYWRIGHT_REPORT_PHASE: phase2
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -316,6 +324,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
 
@@ -331,7 +340,7 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
           REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
-        run: .ci/E2E-tests/execute.sh postgres-localci playwright "$REMAINING_TESTS"
+        run: supporting_scripts/ci/E2E-tests/execute.sh postgres-localci playwright "$REMAINING_TESTS"
 
       - name: Calculate wall-clock duration
         id: wall-clock
@@ -491,15 +500,17 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       reporter_failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
       tests: ${{ steps.run-tests-all-pr.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-all-pr.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     env:
       PLAYWRIGHT_REPORT_PHASE: all
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -508,6 +519,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: 'Running all tests (infrastructure/config changes detected)'
 
@@ -522,7 +534,7 @@ jobs:
         continue-on-error: true
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
-        run: .ci/E2E-tests/execute.sh postgres-localci playwright
+        run: supporting_scripts/ci/E2E-tests/execute.sh postgres-localci playwright
 
       - name: Calculate wall-clock duration
         id: wall-clock
@@ -541,14 +553,14 @@ jobs:
 
       - name: Download all tests results
         if: ${{ !cancelled() }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ steps.teardown.outputs.junit-artifact-name }}
           path: all-test-results
 
       - name: All Tests Report (PR)
         id: test-report
-        uses: mikepenz/action-junit-report@3a81627bfac62268172037048872e8ebd4207e6d  # v6.4.1
+        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d  # v6.6.1
         if: ${{ !cancelled() }}
         with:
           commit: ${{ inputs.commit_sha }}
@@ -668,13 +680,15 @@ jobs:
     permissions:
       contents: read
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       tests: ${{ steps.run-tests-all-non-pr.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-all-non-pr.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     env:
       PLAYWRIGHT_REPORT_PHASE: all
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -683,15 +697,19 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node)
+      # Redis (Valkey) is the distributed data provider of this run, not the embedded Hazelcast cluster, so no Hazelcast
+      # instance is created. The suite runs once: the E2E cleanup stops every container on its host, so a second run
+      # on the other provider would have to be serialized behind this one and double the duration.
+      - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node, Redis)
         id: run-tests-all-non-pr
         # Advisory: a failed test must not fail the phase job. Real outcome via the `tests` output.
         continue-on-error: true
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
-        run: .ci/E2E-tests/execute.sh multi-node playwright
+        run: supporting_scripts/ci/E2E-tests/execute.sh multi-node-redis playwright
 
       - name: E2E Teardown
         id: teardown
@@ -702,13 +720,13 @@ jobs:
 
       - name: Download all tests results
         if: ${{ !cancelled() }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ steps.teardown.outputs.junit-artifact-name }}
           path: all-test-results
 
       - name: All Tests Report (Non-PR)
-        uses: mikepenz/action-junit-report@3a81627bfac62268172037048872e8ebd4207e6d  # v6.4.1
+        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d  # v6.6.1
         if: ${{ !cancelled() }}
         with:
           commit: ${{ inputs.commit_sha }}
@@ -732,15 +750,15 @@ jobs:
 
   # Aggregates the E2E outcome and is the single E2E gate. `e2e` IS part of the required
   # `all-required-ci-passed` gate (ci.yml), so a real regression here reds the run and blocks
-  # merging — but a known-flaky-only run is exonerated and passes green, so ambient flakiness never
-  # blocks a good PR (only a genuine, reproducible regression does). The real-vs-flaky split
-  # comes from classify-failures.js via Helios. The three-state nuance (pass / exonerated / real)
-  # is surfaced in the PR comment, where per-test detail belongs. Phase test steps are
+  # merging — but a known-flaky-only run is exonerated and passes green. The real-vs-flaky split
+  # comes from classify-failures.js via Helios when available. Missing history falls back to
+  # Playwright: failures after retries remain blocking and are reported as unclassified.
+  # The verdict is surfaced in the PR comment, where per-test detail belongs. Phase test steps are
   # continue-on-error, so a failed test never fails a phase job; the honest verdict is decided here.
   report-results:
     name: Report E2E Overall Status
     needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -758,7 +776,12 @@ jobs:
           REMAINING_RESULT: ${{ needs.run-e2e-remaining.outputs.tests }}
           ALL_PR_RESULT: ${{ needs.run-e2e-all-pr.outputs.tests }}
           ALL_NON_PR_RESULT: ${{ needs.run-e2e-all-non-pr.outputs.tests }}
-          # Per-phase failure classification from classify-failures.js: real | flaky | clean (empty
+          # Positive completion proof is separate from the optional classification of surviving JUnit failures.
+          RELEVANT_INFRA: ${{ needs.run-e2e-relevant.outputs.infrastructure_failed }}
+          REMAINING_INFRA: ${{ needs.run-e2e-remaining.outputs.infrastructure_failed }}
+          ALL_PR_INFRA: ${{ needs.run-e2e-all-pr.outputs.infrastructure_failed }}
+          ALL_NON_PR_INFRA: ${{ needs.run-e2e-all-non-pr.outputs.infrastructure_failed }}
+          # Per-phase classification: real | flaky | unknown | clean (empty
           # when skipped). `real` = a non-flaky test failed; `flaky` = failures, all known-flaky.
           RELEVANT_CLASS: ${{ needs.run-e2e-relevant.outputs.phase_result }}
           REMAINING_CLASS: ${{ needs.run-e2e-remaining.outputs.phase_result }}
@@ -791,6 +814,16 @@ jobs:
             [ "$c" = real ] && any_real=true
             [ "$c" = flaky ] && any_flaky=true
           done
+          # A missing Helios record is not proof of a regression or of flakiness. Preserve the
+          # ordinary Playwright verdict for that phase, even if another phase was known-flaky.
+          any_unknown=false; any_unclassified=false
+          for phase in RELEVANT REMAINING ALL_PR ALL_NON_PR; do
+            result_var="${phase}_RESULT"; class_var="${phase}_CLASS"
+            [ "${!class_var}" = unknown ] && any_unknown=true
+            if [ "${!result_var}" = failure ] && [ "${!class_var}" != real ] && [ "${!class_var}" != flaky ]; then
+              any_unclassified=true
+            fi
+          done
           # Treat ANY needed-job result other than `success` or `skipped` as a blocking infra verdict —
           # not just `failure`. A `cancelled` phase (e.g. Phase 2 timing out with no outputs) would
           # otherwise leave `any_job_failed=false` and its empty test outcome would be ignored by the
@@ -805,25 +838,40 @@ jobs:
             esac
           done
 
+          # Every attempted phase must positively establish complete runner execution. Missing outputs
+          # (including a pull/setup/container crash) cannot be exonerated by surviving known-flaky JUnit cases.
+          for phase in RELEVANT REMAINING ALL_PR ALL_NON_PR; do
+            result_var="${phase}_RESULT"; infra_var="${phase}_INFRA"
+            case "${!result_var}" in
+              success|failure) [ "${!infra_var}" = false ] || any_job_failed=true ;;
+            esac
+          done
+
           # The E2E verdict. `neutral` (exonerate) ONLY on positive proof of flakiness (a phase
-          # classified `flaky`, none `real`, and no job broke) — it maps to a passing (green) run.
+          # classified `flaky`, none `real`/`unknown`/unclassified, and no job broke).
           # A real regression, an infra job failure, or a failure we could not classify (test step
           # failed but produced no failure element — e.g. a global-setup crash) all become `failure`
           # (red): the run must never go green on a failure it cannot explain. The gate step below
           # turns `failure` into a non-zero exit; `success`/`neutral` pass. The comment renders all
           # three states (✅ / ⚪ exonerated / ❌) so the flaky-vs-real nuance is never lost.
-          if [ "$any_real" = true ]; then
+          if [ "$any_job_failed" = true ]; then
+            conclusion=failure
+            description="E2E infrastructure failure"
+          elif [ "$any_real" = true ]; then
             conclusion=failure
             description="E2E: real (non-flaky) test failure"
+          elif [ "$any_unknown" = true ]; then
+            conclusion=failure
+            description="E2E tests failed after retries (flakiness history unavailable)"
+          elif [ "$any_unclassified" = true ]; then
+            conclusion=failure
+            description="E2E failed and could not be classified"
           elif [ "$status" = success ] && [ "$any_job_failed" = false ]; then
             conclusion=success
             description="E2E tests passed"
           elif [ "$any_flaky" = true ] && [ "$any_job_failed" = false ] && [ "$status" != error ]; then
             conclusion=neutral
             description="E2E: only known-flaky tests failed (exonerated)"
-          elif [ "$any_job_failed" = true ]; then
-            conclusion=failure
-            description="E2E infrastructure failure"
           else
             conclusion=failure
             description="E2E failed and could not be classified"
@@ -835,7 +883,7 @@ jobs:
 
       # Sparse-checkout the local composite action used by find-e2e-comment below (PR-only); the
       # composite must be on disk before its `uses:` resolves.
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: always()
         with:
           sparse-checkout: .github/actions
@@ -933,5 +981,5 @@ jobs:
             echo "E2E verdict: ${DESCRIPTION:-passed} — not a real regression, run stays green."
             exit 0
           fi
-          echo "::error title=E2E real failure::${DESCRIPTION:-E2E failed}. E2E is part of the required all-required-ci-passed gate, so a real (non-flaky) regression blocks merging; see the E2E PR comment for the per-test breakdown and Helios flakiness scores. A known-flaky-only run would have been exonerated and stayed green."
+          echo "::error title=E2E failure::${DESCRIPTION:-E2E failed}. See the E2E PR comment for details. When Helios history is unavailable, the Playwright verdict applies: failures after retries remain blocking."
           exit 1

@@ -39,6 +39,18 @@
                     min-width: 0;
                 }
             }
+
+            // A row with a date field: the field never gets narrower than its text needs, so on a narrow screen the two
+            // columns stack instead of overlapping.
+            .label-and-input-row--wrap {
+                flex-wrap: wrap;
+                gap: 1rem 3rem;
+
+                .label-and-input,
+                .spacer {
+                    flex: 1 1 15rem;
+                }
+            }
         }
 
         .controls-footer {

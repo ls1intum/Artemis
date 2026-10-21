@@ -53,7 +53,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -206,7 +205,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
-        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
@@ -345,7 +344,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @ValueSource(booleans = { true, false })
     void testStartPracticeMode(boolean useGradedParticipation) throws URISyntaxException {
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusMinutes(2));
-        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
         participationUtilService.mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult, programmingExercise, uriService, versionControlService,
@@ -468,7 +467,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
 
-        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL"));
+        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
 
         assertThat(page.getContent()).as("the participation is listed").hasSize(1);
         var dto = page.getContent().getFirst();
@@ -485,16 +484,15 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void findParticipationScoresForExercise_reportsTheScoreOfTheLatestResult() {
+    void findParticipationsForExercise_reportsTheScoreOfTheLatestResult() {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
-        // A submission can be assessed more than once, for instance after a complaint. The scores view has to show what counts now, not what counted first.
+        // A submission can be assessed more than once, for instance after a complaint. The participation view has to show what counts now, not what counted first.
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, FIXED_EXERCISE_DUE_DATE.minusMinutes(10), submission, false, true, 40.0);
         Result latestResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, FIXED_EXERCISE_DUE_DATE.minusMinutes(1), submission, true, true, 85.0);
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
 
-        var page = participationService.findParticipationScoresForExercise(programmingExercise,
-                new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
 
         assertThat(page.getContent()).as("the participation is listed").hasSize(1);
         var dto = page.getContent().getFirst();
@@ -523,7 +521,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         var participation = participationUtilService.addTeamParticipationForExercise(teamExercise, team.getId());
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        var managementPage = participationService.findParticipationsForExercise(teamExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL"));
+        var managementPage = participationService.findParticipationsForExercise(teamExercise,
+                new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
 
         assertThat(managementPage.getContent()).as("the team participation is listed").hasSize(1);
         var managementDto = managementPage.getContent().getFirst();
@@ -534,11 +533,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
                 .containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
         assertThat(managementDto.studentId()).as("a team participation has no single student").isNull();
         assertThat(managementDto.studentLogin()).isNull();
-
-        var scorePage = participationService.findParticipationScoresForExercise(teamExercise,
-                new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
-        assertThat(scorePage.getContent()).hasSize(1);
-        assertThat(scorePage.getContent().getFirst().participantName()).as("the score row names the team").isEqualTo(team.getName());
 
         var exportNames = participationService.getParticipationNamesForExport(teamExercise);
         assertThat(exportNames).hasSize(1);

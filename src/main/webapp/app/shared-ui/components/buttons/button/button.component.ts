@@ -54,6 +54,9 @@ export enum TooltipPlacement {
     selector: 'jhi-button',
     templateUrl: './button.component.html',
     imports: [NgClass, NgbTooltip, FeatureToggleDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    // `title` is a translation key. A static `title="..."` in a parent template is also written to this host element,
+    // where the browser would show the untranslated key as a native tooltip on hover.
+    host: { '[attr.title]': 'null' },
 })
 export class ButtonComponent {
     protected readonly faCircleNotch = faCircleNotch;

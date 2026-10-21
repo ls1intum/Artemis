@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
+import org.springframework.test.context.bean.override.mockito.MockReset;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.weaviate.WeaviateContainer;
@@ -33,9 +34,11 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.localci.service.BuildAgentConfigurationOverrides;
 import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIService;
 import de.tum.cit.aet.artemis.localci.service.LocalCITriggerService;
@@ -131,8 +134,15 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @MockitoSpyBean
     protected LocalCITriggerService localCITriggerService;
 
-    @MockitoSpyBean
+    /**
+     * Stubbed once when the context is built and never reset, because the build agent calls it from scheduled and build threads while tests run: stubbing or resetting a
+     * spy while another thread calls it corrupts the pending stubbing. Tests change what it returns through {@link #buildAgentConfigurationOverrides}.
+     */
+    @MockitoSpyBean(reset = MockReset.NONE)
     protected BuildAgentConfiguration buildAgentConfiguration;
+
+    @Autowired
+    protected BuildAgentConfigurationOverrides buildAgentConfigurationOverrides;
 
     @MockitoSpyBean
     protected ResourceLoaderService resourceLoaderService;
@@ -148,6 +158,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
 
     @MockitoSpyBean
     protected IrisCitationService irisCitationService;
+
+    @MockitoSpyBean
+    protected IrisSessionPresenceService irisSessionPresenceService;
 
     @MockitoSpyBean
     protected PyrisPipelineService pyrisPipelineService;
@@ -240,9 +253,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService,
-                programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, pyrisPipelineService, pyrisEventService,
+        Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService,
+                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService, pyrisPipelineService, pyrisEventService,
                 ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
+        buildAgentConfigurationOverrides.reset();
+        // Preserve startup answers while discarding calls recorded by scheduled and build threads.
+        Mockito.clearInvocations(buildAgentConfiguration);
         super.resetSpyBeans();
     }
 

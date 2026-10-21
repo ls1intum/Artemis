@@ -26,6 +26,7 @@ import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/shared/entities/iris-session-context.model';
 import { IrisChatContextService } from 'app/iris/overview/services/iris-chat-context.service';
+import { contextFromSwitchMarker, parseContextSwitchMarker } from 'app/iris/overview/context-selection/iris-context.util';
 import { parseJson } from 'app/foundation/util/json.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
@@ -83,6 +84,13 @@ export class IrisChatService implements OnDestroy {
     public set sessionId(id: number | undefined) {
         this.currentSessionIdSubject.next(id);
     }
+
+    /**
+     * The session a link asked {@link openChat} for by id, while that session is the one open or loading. Asking for it again
+     * does not reload it. Asking for a session the page opened on its own does, since a link may have just changed it. Cleared
+     * by {@link close}, so switching sessions, starting a new chat or deleting the open one makes a later link reload as asked.
+     */
+    private requestedSessionId?: number;
 
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject<IrisMessage[]>([]);
     newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject<IrisMessage | undefined>(undefined);
@@ -208,6 +216,7 @@ export class IrisChatService implements OnDestroy {
      */
     private resetState(): void {
         this.stateGeneration++;
+        this.requestedSessionId = undefined;
         // Tear down session-level subscriptions before clearing subjects so no late `next` can race.
         if (this.sessionId !== undefined) {
             this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
@@ -300,7 +309,12 @@ export class IrisChatService implements OnDestroy {
         this.authenticationStateSubscription.unsubscribe();
     }
 
-    protected start() {
+    /**
+     * Loads the session of the page context, or the given session instead.
+     *
+     * @param sessionId an existing session of the current course to open instead of the page context's current one
+     */
+    protected start(sessionId?: number) {
         const sessionContext = this.contextService.page();
         const requiresAcceptance = sessionContext ? this.modeRequiresLLMAcceptance.get(sessionContext.mode) : true;
         if (
@@ -310,7 +324,8 @@ export class IrisChatService implements OnDestroy {
             this.hasJustAcceptedLLMUsage
         ) {
             this.sessionLoadingSubscription?.unsubscribe();
-            this.sessionLoadingSubscription = this.getCurrentSessionOrCreate().subscribe(cloneWith(this.handleNewSession(), { complete: () => this.loadChatSessions() }));
+            const session$ = sessionId === undefined ? this.getCurrentSessionOrCreate() : this.getCourseSessionById(sessionId);
+            this.sessionLoadingSubscription = session$.subscribe(cloneWith(this.handleNewSession(), { complete: () => this.loadChatSessions() }));
         }
     }
 
@@ -400,6 +415,9 @@ export class IrisChatService implements OnDestroy {
     }
 
     private replaceOrAddMessage(message: IrisMessage, announceNewAssistantMessage = true) {
+        if (message.sender === IrisSender.SUMMARY) {
+            return;
+        }
         const messageWasReplaced = this.replaceMessage(message);
         if (!messageWasReplaced) {
             if (message.sender === IrisSender.LLM && announceNewAssistantMessage) {
@@ -618,7 +636,8 @@ export class IrisChatService implements OnDestroy {
 
                 this.sessionId = newIrisSession.id;
                 this.citationInfo.next(newIrisSession.citationInfo || []);
-                this.messages.next(newIrisSession.messages || []);
+                // Summaries are for Iris only; the student keeps seeing the original messages.
+                this.messages.next((newIrisSession.messages || []).filter((message) => message.sender !== IrisSender.SUMMARY));
                 this.parseLatestSuggestions(newIrisSession.latestSuggestions);
                 this.resetLiveAssistantDraftTracking();
                 this.resetRunTracking();
@@ -758,6 +777,9 @@ export class IrisChatService implements OnDestroy {
                 this.activities.next([]);
             }
         }
+        if (payload.message?.sender === IrisSender.CTXSWAP) {
+            this.adoptSwitchedContext(this.mapMessageDTO(payload.message));
+        }
         if (payload.message?.id) {
             this.replaceOrAddMessage(this.mapMessageDTO(payload.message), !isIntermediateMessage);
         }
@@ -769,6 +791,26 @@ export class IrisChatService implements OnDestroy {
 
     private isIntermediateMessagePayload(payload: IrisChatWebsocketDTO): boolean {
         return payload.final === false || payload.message?.final === false;
+    }
+
+    /**
+     * The server pushes a CTXSWAP marker for every context switch, including switches it applied
+     * without a client-staged pending context (automatic context switching by the pipeline).
+     * Adopt the marker's target as the committed context so the selector chip and the sidebar
+     * entry follow such switches; for a client-staged switch this re-commits the same context.
+     */
+    private adoptSwitchedContext(message: IrisMessage): void {
+        const ctx = contextFromSwitchMarker(parseContextSwitchMarker(message.content), this.getCourseId());
+        if (!ctx) {
+            return;
+        }
+        this.contextService.commitSentContext(ctx);
+        const updatedSessions = this.chatSessions
+            .getValue()
+            .map((session) =>
+                session.id === this.sessionId ? cloneWith(session, { mode: ctx.mode, entityId: ctx.entityId, entityName: ctx.entityName ?? session.entityName }) : session,
+            );
+        this.chatSessions.next(updatedSessions);
     }
 
     private handlePartialWebsocketMessage(payload: IrisChatWebsocketDTO): void {
@@ -847,7 +889,13 @@ export class IrisChatService implements OnDestroy {
     }
 
     protected close(): void {
+        this.requestedSessionId = undefined;
         this.markerVersionSubscription?.unsubscribe();
+        // Every caller opens another session, or none, next; a load still on its way must not open its session over that choice.
+        this.sessionLoadingSubscription?.unsubscribe();
+        this.sessionLoadingSubscription = undefined;
+        this.chatSessionByIdSubscription?.unsubscribe();
+        this.chatSessionByIdSubscription = undefined;
         if (this.sessionId) {
             this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
             this.websocketSessionSubscription?.unsubscribe();
@@ -886,6 +934,15 @@ export class IrisChatService implements OnDestroy {
             }),
             catchError(() => throwError(() => new Error(IrisErrorMessageKey.SESSION_LOAD_FAILED))),
         );
+    }
+
+    private getCourseSessionById(sessionId: number): Observable<IrisSession> {
+        const courseId = this.getCourseId();
+        if (!courseId) {
+            throw new Error('Course ID not set');
+        }
+
+        return this.irisChatHttpService.getChatSessionById(courseId, sessionId).pipe(catchError(() => throwError(() => new Error(IrisErrorMessageKey.SESSION_LOAD_FAILED))));
     }
 
     private createCourseSession(): Observable<IrisSession> {
@@ -949,12 +1006,24 @@ export class IrisChatService implements OnDestroy {
      * session via {@link start}; no-op when the page context is unchanged. The server resolves the session:
      * an existing lecture/exercise chat with history is resumed, otherwise it falls back to the course session
      * and the page context is staged as pending (see {@link IrisChatContextService.adoptServerContext}).
+     *
+     * @param mode      the mode of the page
+     * @param entityId  the course, lecture or exercise the page shows
+     * @param sessionId an existing session of the course to open instead of resolving one, e.g. the chat a global
+     *                  search answer was continued in; opened even when the page context is unchanged
      */
-    public openChat(mode: ChatServiceMode, entityId: number): void {
+    public openChat(mode: ChatServiceMode, entityId: number, sessionId?: number): void {
         const ctx: SessionContext = { mode: mode, entityId: entityId };
-        if (sameSessionContext(ctx, this.contextService.page())) return;
+        if (sameSessionContext(ctx, this.contextService.page()) && (sessionId === undefined || this.isRequestedSessionOpenOrLoading(sessionId))) return;
         this.contextService.setPageContext(ctx);
-        this.closeAndStart();
+        this.close();
+        this.requestedSessionId = sessionId;
+        this.start(sessionId);
+    }
+
+    /** Whether the session a link asked for is still the one open, or still loading, because of that link. */
+    private isRequestedSessionOpenOrLoading(sessionId: number): boolean {
+        return sessionId === this.requestedSessionId && (sessionId === this.sessionId || this.sessionLoadingSubscription?.closed === false);
     }
 
     /**

@@ -164,6 +164,10 @@ Follow these tips to write performant tests:
 * Avoid database access as much as possible. It is very time-consuming, especially when running tests against MySQL or Postgres.
 * Avoid unnecessary mocked requests by directly setting up the data and saving it in the database.
 * Use the [Awaitility](https://github.com/awaitility) library for asserting async code.
+  Await the exact condition the following assertion depends on.
+  A wait that another test's data can also satisfy, such as a keyword search over a title prefix shared by the whole class, returns before the entity under test is indexed and makes the test flaky under load.
+  The global search index is written asynchronously through an outbox, so wait for the entity's own document (for example with `assertExamExistsInWeaviate` from `WeaviateTestUtil`) before searching for it.
+  Wrap any other wait for that dispatcher in `WeaviateTestUtil.awaitIndexing`, which uses `INDEXING_TIMEOUT` (150 seconds, the dispatcher's worst case recovery after a hung Weaviate write) and reports what the dispatcher was doing when it times out, instead of hard coding 30 seconds.
 * Limit object creation in tests and the test setup.
 
 After a server test run, Artemis prints a `Test Bucket Timing Summary` for the integration-test buckets.
@@ -239,9 +243,17 @@ Only the following abstract base test classes are permitted to define context-af
    class that never touches the bean — it inherits a stub from a class that ran earlier. `LocalVCFetchAndPushIntegrationTest`
    left `doReturn(true).when(ldapTemplate).compare(...)` behind, which had LDAP accepting every password for the rest
    of the run.
+   A spy that scheduled or build threads of the application call while tests run, such as `BuildAgentConfiguration`,
+   must not be stubbed or reset by a test at all: Mockito keeps the pending stubbing in the mock, so a call from
+   another thread between `doReturn(...)` and `.when(spy).method()` fails the test's `@BeforeEach` with
+   `WrongTypeOfReturnValue` or stubs the wrong method. Declare it with `@MockitoSpyBean(reset = MockReset.NONE)`, stub it
+   once when the context is built with answers that read an `AtomicReference`, and let tests change that holder
+   (`BuildAgentConfigurationOverrides`).
+   Install the answers in a bean post-processor after Mockito creates the spy, before it reaches consumers.
+   `SmartInitializingSingleton` is too late when a consumer schedules work in `@PostConstruct`.
 9. An architecture test (`SpringContextConfigurationArchitectureTest`) enforces these rules automatically, including
    the reset above: a bean counts as reset when the class declaring it reads it in an `@AfterEach` method, or in one
-   named `resetSpyBeans`.
+   named `resetSpyBeans`. A spy declared with `reset = MockReset.NONE` is exempt.
 
 ### Why This Matters
 

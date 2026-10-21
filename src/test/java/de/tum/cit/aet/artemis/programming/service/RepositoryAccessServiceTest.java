@@ -7,12 +7,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -23,6 +27,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -40,7 +46,7 @@ class RepositoryAccessServiceTest {
     @BeforeEach
     void setUp() {
         authorizationCheckService = mock(AuthorizationCheckService.class);
-        repositoryAccessService = new RepositoryAccessService(Optional.empty(), authorizationCheckService, mock(ExerciseDateService.class),
+        repositoryAccessService = new RepositoryAccessService(Optional.empty(), authorizationCheckService, new ExerciseDateService(null, Optional.empty(), Optional.empty()),
                 mock(ParticipationAuthorizationCheckService.class));
     }
 
@@ -56,6 +62,7 @@ class RepositoryAccessServiceTest {
     private static ProgrammingExercise exerciseWithCourse(Course course) {
         var exercise = new ProgrammingExercise();
         exercise.setCourse(course);
+        exercise.setId(1L);
         return exercise;
     }
 
@@ -161,4 +168,92 @@ class RepositoryAccessServiceTest {
 
         assertThat(repositoryAccessService.checkHasAccessToForcePush(exercise, user, RepositoryType.TEMPLATE.toString())).isTrue();
     }
+
+    @Test
+    void checkHasAccessToPlagiarismSubmission_withoutExercise_failsClosed() {
+        var participation = new ProgrammingExerciseStudentParticipation();
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> repositoryAccessService.checkHasAccessToPlagiarismSubmission(participation, user, RepositoryActionType.READ));
+        verifyNoInteractions(authorizationCheckService);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "AUTOMATIC,-1,true", "AUTOMATIC,1,true", "SEMI_AUTOMATIC,-1,false", "SEMI_AUTOMATIC,1,true", "MANUAL,-1,false", "MANUAL,1,true", "SEMI_AUTOMATIC,0,true",
+            "AUTOMATIC,0,true" })
+    void tutorSupportAccessIsReadOnlyAndRecheckedForEveryGitOperation(AssessmentType assessmentType, int dueDateOffset, boolean readable) {
+        var course = new Course();
+        course.setId(1L);
+        var exercise = exerciseWithCourse(course);
+        exercise.setAssessmentType(assessmentType);
+        exercise.setDueDate(dueDateOffset == 0 ? null : ZonedDateTime.now().plusDays(dueDateOffset));
+        var participation = new ProgrammingExerciseStudentParticipation();
+        var projection = GitRepositoryAccessDTO.of(exercise);
+        when(authorizationCheckService.isTeachingAssistantInCourse(course, user)).thenReturn(true);
+        when(authorizationCheckService.isTeachingAssistantInCourse(course.getId(), user)).thenReturn(true);
+
+        for (var action : RepositoryActionType.values()) {
+            if (readable && action == RepositoryActionType.READ) {
+                assertThatCode(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, action)).doesNotThrowAnyException();
+                assertThatCode(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, projection, action)).doesNotThrowAnyException();
+            }
+            else {
+                assertThatExceptionOfType(AccessForbiddenException.class)
+                        .isThrownBy(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, action));
+                assertThatExceptionOfType(AccessForbiddenException.class)
+                        .isThrownBy(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, projection, action));
+            }
+        }
+        // Exercise repositories remain available for preparing assessments, even when student repositories close.
+        var template = new TemplateProgrammingExerciseParticipation();
+        assertThatCode(() -> repositoryAccessService.checkAccessRepositoryElseThrow(template, user, exercise, RepositoryActionType.READ)).doesNotThrowAnyException();
+        assertThatCode(() -> repositoryAccessService.checkAccessRepositoryElseThrow(template, user, projection, RepositoryActionType.READ)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void anonymousAssessmentKeepsSnapshotAccessButNotLiveRepositoryAccess() {
+        var course = new Course();
+        var exercise = exerciseWithCourse(course);
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        var participation = new ProgrammingExerciseStudentParticipation();
+        when(authorizationCheckService.isTeachingAssistantInCourse(course, user)).thenReturn(true);
+        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(true);
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, RepositoryActionType.READ));
+        assertThatCode(() -> repositoryAccessService.checkAccessRepositoryForAssessmentElseThrow(participation, user, exercise)).doesNotThrowAnyException();
+
+        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
+        when(authorizationCheckService.isTeachingAssistantInCourse(course, user)).thenReturn(false);
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> repositoryAccessService.checkAccessRepositoryForAssessmentElseThrow(participation, user, exercise));
+    }
+
+    @Test
+    void instructorsAndParticipationOwnersKeepRepositoryAccessAfterTheDeadline() {
+        var course = new Course();
+        course.setId(1L);
+        var exercise = exerciseWithCourse(course);
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        var participation = new ProgrammingExerciseStudentParticipation();
+        var projection = GitRepositoryAccessDTO.of(exercise);
+        when(authorizationCheckService.isAtLeastEditorInCourse(course, user)).thenReturn(true);
+        when(authorizationCheckService.isAtLeastEditorInCourse(course.getId(), user)).thenReturn(true);
+        for (var action : RepositoryActionType.values()) {
+            assertThatCode(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, action)).doesNotThrowAnyException();
+            assertThatCode(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, projection, action)).doesNotThrowAnyException();
+        }
+        when(authorizationCheckService.isAtLeastEditorInCourse(course, user)).thenReturn(false);
+        when(authorizationCheckService.isAtLeastEditorInCourse(course.getId(), user)).thenReturn(false);
+        when(authorizationCheckService.isTeachingAssistantInCourse(course, user)).thenReturn(true);
+        when(authorizationCheckService.isTeachingAssistantInCourse(course.getId(), user)).thenReturn(true);
+        when(authorizationCheckService.isAtLeastStudentInCourse(course, user)).thenReturn(true);
+        when(authorizationCheckService.isAtLeastStudentInCourse(course.getId(), user)).thenReturn(true);
+        when(authorizationCheckService.isOwnerOfParticipation(participation, user)).thenReturn(true);
+        assertThatCode(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, RepositoryActionType.READ)).doesNotThrowAnyException();
+        assertThatCode(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, projection, RepositoryActionType.READ)).doesNotThrowAnyException();
+    }
+
 }

@@ -266,6 +266,30 @@ class IrisCitationServiceTest {
         verify(materialVersionService).getSnapshot("job");
     }
 
+    @Test
+    void stampCitationVersionsForGlobalSearch_pinsTheVersionsCapturedForTheSearchRun() {
+        when(materialVersionService.getGlobalSearchSnapshot("run", "student"))
+                .thenReturn(Map.of(LECTURE_UNIT_ID, ingested(LECTURE_UNIT_ID, 3, 2), SECOND_LECTURE_UNIT_ID, ingested(SECOND_LECTURE_UNIT_ID, 8, null)));
+
+        var stamped = citationService.stampCitationVersionsForGlobalSearch("A [cite:L:42::30::Locks:] and B [cite:L:7:2:::Threads:]", "run", "student");
+
+        // Pinned to the material the answer was written from, never to the versions the material has now.
+        assertThat(stamped).isEqualTo("A [cite:L:42::30::Locks::vt2] and B [cite:L:7:2:::Threads::va8]");
+        verifyNoInteractions(lectureUnitRepositoryApi);
+    }
+
+    @Test
+    void stampCitationVersionsForGlobalSearch_marksCitationsUnverifiedWithoutASearchRun() {
+        assertThat(citationService.stampCitationVersionsForGlobalSearch("[cite:L:42:7:::Deadlocks:]", null, "student")).isEqualTo("[cite:L:42:7:::Deadlocks::va0]");
+        verifyNoInteractions(materialVersionService, lectureUnitRepositoryApi);
+    }
+
+    @Test
+    void stampCitationVersionsForGlobalSearch_loadsNoVersionsWithoutACitation() {
+        assertThat(citationService.stampCitationVersionsForGlobalSearch("No citations here.", "run", "student")).isEqualTo("No citations here.");
+        verifyNoInteractions(materialVersionService, lectureUnitRepositoryApi);
+    }
+
     /**
      * The citation pattern accepts any run of digits, so a model inventing an ID beyond {@code long} produces a well-formed citation that cannot name a lecture unit. It
      * has to be skipped rather than throw: the lookup already ignores it, and a valid citation next to it is enough to reach the stamping loop, where an escaping
@@ -328,5 +352,61 @@ class IrisCitationServiceTest {
 
     private static LectureUnitIngestedVersionsDTO ingested(long lectureUnitId, Integer attachmentVersion, Integer videoVersion) {
         return new LectureUnitIngestedVersionsDTO(lectureUnitId, attachmentVersion, videoVersion);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "lecture", "lectureTitle", "blankLectureTitle", "unitTitle", "blankUnitTitle", "course", "courseId" })
+    void incompleteLectureMetadataIsSkippedWithoutDiscardingValidCitations(String missingField) {
+        var incomplete = lectureUnit(42L, 1L, 1L, "Lecture", "Unit");
+        switch (missingField) {
+            case "lecture" -> incomplete.setLecture(null);
+            case "lectureTitle" -> incomplete.getLecture().setTitle(null);
+            case "blankLectureTitle" -> incomplete.getLecture().setTitle(" ");
+            case "unitTitle" -> incomplete.setName(null);
+            case "blankUnitTitle" -> incomplete.setName(" ");
+            case "course" -> incomplete.getLecture().setCourse(null);
+            case "courseId" -> incomplete.getLecture().getCourse().setId(null);
+            default -> throw new IllegalArgumentException(missingField);
+        }
+        var valid = lectureUnit(7L, 2L, 1L, "Valid lecture", "Valid unit");
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(incomplete, valid));
+        assertThat(citationService.resolveCitationInfo("[cite:L:42:::::] [cite:L:7:::::] [cite:L:999:::::]"))
+                .containsExactly(new IrisCitationMetaDTO(7L, "Valid lecture", "Valid unit", 2L, 1L));
+    }
+
+    @Test
+    void emptyMessageCollectionsAndTextContentsNeedNoLookup() {
+        assertThat(citationService.resolveCitationInfoFromMessages(null)).isEmpty();
+        assertThat(citationService.resolveCitationInfoFromMessages(List.of())).isEmpty();
+        var message = new IrisMessage();
+        message.addContent(new IrisTextMessageContent(null));
+        message.addContent(new IrisTextMessageContent(" "));
+        assertThat(citationService.resolveCitationInfoFromMessages(List.of(message))).isEmpty();
+        verifyNoInteractions(lectureUnitRepositoryApi);
+    }
+
+    @Test
+    void enrichmentReloadsUninitializedMessagesAndWritesResolvedMetadataToOriginalSession() {
+        var original = new de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession();
+        original.setId(12L);
+        original.setMessages(new org.hibernate.collection.spi.PersistentBag<>());
+        var loaded = new de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession();
+        var message = new IrisMessage();
+        message.addContent(new IrisTextMessageContent("[cite:L:42:::::]"));
+        loaded.setMessages(List.of(message));
+        when(irisSessionRepository.findByIdWithMessagesAndContents(12L)).thenReturn(loaded);
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(lectureUnit(42L, 1L, 1L, "Lecture", "Unit")));
+        citationService.enrichSessionWithCitationInfo(original);
+        assertThat(original.getCitationInfo()).containsExactly(new IrisCitationMetaDTO(42L, "Lecture", "Unit", 1L, 1L));
+        verify(irisSessionRepository).findByIdWithMessagesAndContents(12L);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = { 0, -1 })
+    void absentPositionDoesNotInventVersionAndNonpositiveVersionsRemainUnverified(int version) {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(42L, version, version)));
+        String text = "[cite:L:42::::Keyword:Summary] [cite:L:42:7:::Keyword:Summary] [cite:L:42::1:2:Keyword:Summary]";
+        assertThat(citationService.stampCitationVersions(text, "job"))
+                .isEqualTo("[cite:L:42::::Keyword:Summary] [cite:L:42:7:::Keyword:Summary:va0] [cite:L:42::1:2:Keyword:Summary:vt0]");
     }
 }

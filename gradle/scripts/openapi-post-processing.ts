@@ -13,7 +13,7 @@ const getAllOpenApiFiles = (dir: string): string[] => {
             results.push(fullPath);
         }
     }
-    results.push('openapi/openapi.yaml')
+    results.push('config/openapi/openapi.yaml')
     return results;
 };
 

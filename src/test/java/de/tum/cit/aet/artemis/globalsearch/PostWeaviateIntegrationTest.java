@@ -4,14 +4,14 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertAn
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertAnswerPostNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryPostProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
@@ -100,7 +102,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        doNothing().when(pyrisFaqApi).deleteFaq(any());
+        doNothing().when(pyrisFaqApi).deleteFaq(anyLong(), anyLong());
     }
 
     private Channel createPublicChannel(String name) {
@@ -190,7 +192,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryPostProperties(weaviateService, post.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)).isEqualTo(post.getContent());
@@ -213,7 +215,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             postRepository.save(post);
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryPostProperties(weaviateService, post.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)).isEqualTo("Updated content");
@@ -414,6 +416,53 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
     }
 
+    /**
+     * Posts and answer posts stay indexed but are not searchable: the reconcile passes do not manage them, so their rows
+     * drift from the database. The palette must never return them, whatever types the request names.
+     */
+    @Nested
+    class SearchExclusionTests {
+
+        private static final String SEARCH_TOKEN = "hiddenpostprobe";
+
+        private List<GlobalSearchResultDTO> search(String query) throws Exception {
+            return request.getList("/api/search?" + query, HttpStatus.OK, GlobalSearchResultDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testSearchNeverReturnsIndexedPostsOrReplies() throws Exception {
+            Channel channel = createPublicChannel(SEARCH_TOKEN + "-channel");
+            Post post = ConversationFactory.createBasicPost(0, instructor);
+            post.setContent(SEARCH_TOKEN + " message");
+            post.setConversation(channel);
+            post = postRepository.save(post);
+            AnswerPost answer = createAndSaveAnswerPost(post);
+            searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
+            searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel));
+
+            // Both message rows are in the index, so their absence below is the search's doing and not a missing document.
+            assertPostExistsInWeaviate(weaviateService, post.getId());
+            assertAnswerPostExistsInWeaviate(weaviateService, answer.getId());
+
+            String scope = "&courseIds=" + course.getId();
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(search("q=" + SEARCH_TOKEN + scope)).extracting(GlobalSearchResultDTO::type).contains(SearchableEntitySchema.TypeValues.CHANNEL);
+            });
+
+            assertThat(search("q=" + SEARCH_TOKEN + scope)).extracting(GlobalSearchResultDTO::type).doesNotContain(SearchableEntitySchema.TypeValues.POST,
+                    SearchableEntitySchema.TypeValues.ANSWER_POST);
+            assertThat(search("q=" + SEARCH_TOKEN)).as("unscoped").extracting(GlobalSearchResultDTO::type).doesNotContain(SearchableEntitySchema.TypeValues.POST,
+                    SearchableEntitySchema.TypeValues.ANSWER_POST);
+            // Naming them is accepted rather than rejected, so a client built while they were searchable keeps its channels.
+            assertThat(search("q=" + SEARCH_TOKEN + "&types=post,answer_post" + scope)).isEmpty();
+            assertThat(search("q=" + SEARCH_TOKEN + "&types=channel,post,answer_post" + scope)).isNotEmpty().extracting(GlobalSearchResultDTO::type)
+                    .containsOnly(SearchableEntitySchema.TypeValues.CHANNEL);
+        }
+    }
+
     @Nested
     class ResolverProjectionTests {
 
@@ -461,7 +510,9 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
             Optional<Map<String, Object>> resolved = searchableEntityResolver.resolve(SearchableEntitySchema.TypeValues.POST, post.getId());
 
-            assertThat(resolved).contains(PostSearchableEntityDTO.fromPost(post, channel).toPropertyMap());
+            // The resolver adds the chunk metadata to the scalar projection.
+            assertThat(resolved).hasValueSatisfying(properties -> assertThat(properties).containsAllEntriesOf(PostSearchableEntityDTO.fromPost(post, channel).toPropertyMap())
+                    .containsKeys(SearchableEntitySchema.Properties.CHUNK_HASHES, SearchableEntitySchema.Properties.CHUNKER_VERSION));
             assertThat(statistics.getEntityStatistics(Post.class.getName()).getLoadCount()).as("resolving a post must not load the Post entity").isZero();
             assertThat(statistics.getEntityStatistics(AnswerPost.class.getName()).getLoadCount()).as("resolving a post must not load its answers").isZero();
             assertThat(statistics.getEntityStatistics(Reaction.class.getName()).getLoadCount()).as("resolving a post must not load its reactions").isZero();
@@ -482,7 +533,10 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
             Optional<Map<String, Object>> resolved = searchableEntityResolver.resolve(SearchableEntitySchema.TypeValues.ANSWER_POST, answer.getId());
 
-            assertThat(resolved).contains(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel).toPropertyMap());
+            // The resolver adds the chunk metadata to the scalar projection.
+            assertThat(resolved)
+                    .hasValueSatisfying(properties -> assertThat(properties).containsAllEntriesOf(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel).toPropertyMap())
+                            .containsKeys(SearchableEntitySchema.Properties.CHUNK_HASHES, SearchableEntitySchema.Properties.CHUNKER_VERSION));
             assertThat(statistics.getEntityStatistics(AnswerPost.class.getName()).getLoadCount()).as("resolving an answer post must not load the AnswerPost entity").isZero();
             assertThat(statistics.getEntityStatistics(Post.class.getName()).getLoadCount()).as("resolving an answer post must not load its parent Post entity").isZero();
             assertThat(statistics.getEntityStatistics(Reaction.class.getName()).getLoadCount()).as("resolving an answer post must not load its reactions").isZero();

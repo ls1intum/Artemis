@@ -20,6 +20,12 @@
                 </span>
             }
             <input
+                [attr.aria-label]="
+                    (selectedConversations().length > 0
+                        ? 'artemisApp.communication.globalSearch.searchBarWithConversationSelected'
+                        : 'artemisApp.communication.globalSearch.searchBarDefault'
+                    ) | artemisTranslate
+                "
                 #searchInput
                 name="searchText"
                 id="search"

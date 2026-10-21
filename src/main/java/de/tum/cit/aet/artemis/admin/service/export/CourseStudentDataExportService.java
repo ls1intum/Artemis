@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -475,7 +476,8 @@ public class CourseStudentDataExportService {
             }
 
             List<String> lines = new ArrayList<>();
-            lines.add("TraceId,ServiceType,UserId,ExerciseId,Time,Model,Pipeline,NumInputTokens,NumOutputTokens,CostPerMillionInputTokens,CostPerMillionOutputTokens");
+            lines.add("TraceId,ServiceType,UserId,ExerciseId,Time,Model,Pipeline,NumInputTokens,NumOutputTokens,CostPerMillionInputTokens,CostPerMillionOutputTokens,"
+                    + "NumCachedInputTokens,CostPerMillionCachedInputTokens,NumCacheWriteInputTokens,CostPerMillionCacheWriteInputTokens");
 
             for (var trace : traces) {
                 String traceId = String.valueOf(trace.getId());
@@ -492,9 +494,13 @@ public class CourseStudentDataExportService {
                     String numOutputTokens = String.valueOf(request.getNumOutputTokens());
                     String costPerMillionInputTokens = String.valueOf(request.getCostPerMillionInputTokens());
                     String costPerMillionOutputTokens = String.valueOf(request.getCostPerMillionOutputTokens());
+                    String numCachedInputTokens = String.valueOf(request.getNumCachedInputTokens());
+                    String costPerMillionCachedInputTokens = String.valueOf(request.getCostPerMillionCachedInputTokens());
+                    String numCacheWriteInputTokens = String.valueOf(request.getNumCacheWriteInputTokens());
+                    String costPerMillionCacheWriteInputTokens = String.valueOf(request.getCostPerMillionCacheWriteInputTokens());
 
                     lines.add(String.join(",", traceId, serviceType, userId, exerciseId, time, model, pipeline, numInputTokens, numOutputTokens, costPerMillionInputTokens,
-                            costPerMillionOutputTokens));
+                            costPerMillionOutputTokens, numCachedInputTokens, costPerMillionCachedInputTokens, numCacheWriteInputTokens, costPerMillionCacheWriteInputTokens));
                 }
             }
 
@@ -559,8 +565,9 @@ public class CourseStudentDataExportService {
 
             // Add exercise columns
             for (Exercise exercise : exercises) {
-                headerParts.add(escapeCSV(exercise.getTitle()) + " Points");
-                headerParts.add(escapeCSV(exercise.getTitle()) + " Score");
+                String exerciseTitle = Objects.toString(exercise.getTitle(), "");
+                headerParts.add(escapeCSV(exerciseTitle + " Points"));
+                headerParts.add(escapeCSV(exerciseTitle + " Score"));
             }
 
             // Check if presentation points are configured
@@ -732,9 +739,10 @@ public class CourseStudentDataExportService {
 
             // Add exercise group columns
             for (ExamScoresDTO.ExerciseGroupDTO exerciseGroup : examScores.exerciseGroups()) {
-                headerParts.add(escapeCSV(exerciseGroup.title()) + " Exercise");
-                headerParts.add(escapeCSV(exerciseGroup.title()) + " Points");
-                headerParts.add(escapeCSV(exerciseGroup.title()) + " Score");
+                String exerciseGroupTitle = Objects.toString(exerciseGroup.title(), "");
+                headerParts.add(escapeCSV(exerciseGroupTitle + " Exercise"));
+                headerParts.add(escapeCSV(exerciseGroupTitle + " Points"));
+                headerParts.add(escapeCSV(exerciseGroupTitle + " Score"));
             }
 
             headerParts.add("Overall Points");
@@ -1265,7 +1273,7 @@ public class CourseStudentDataExportService {
             int count = gradeCountMap.getOrDefault(gradeName, 0);
             double percentage = totalStudents > 0 ? (double) count / totalStudents * 100.0 : 0.0;
             lines.add(String.join(",", "GRADE", escapeCSV(gradeName), String.valueOf(step.getLowerBoundPercentage()), String.valueOf(step.getUpperBoundPercentage()),
-                    String.valueOf(step.getIsPassingGrade()), String.valueOf(count), "%.1f".formatted(percentage)));
+                    String.valueOf(step.getIsPassingGrade()), String.valueOf(count), String.format(Locale.ROOT, "%.1f", percentage)));
         }
     }
 
@@ -1290,7 +1298,7 @@ public class CourseStudentDataExportService {
             String intervalName = lowerBound + "-" + upperBound + "%";
             double percentage = totalStudents > 0 ? (double) intervalCounts[i] / totalStudents * 100.0 : 0.0;
             lines.add(String.join(",", "INTERVAL", intervalName, String.valueOf(lowerBound), String.valueOf(upperBound), "", String.valueOf(intervalCounts[i]),
-                    "%.1f".formatted(percentage)));
+                    String.format(Locale.ROOT, "%.1f", percentage)));
         }
     }
 
@@ -1329,7 +1337,7 @@ public class CourseStudentDataExportService {
      * @return formatted string like "42 (84.0%)"
      */
     private String formatCountWithPercentage(int count, int total) {
-        String percentage = total > 0 ? "%.1f".formatted((double) count / total * 100.0) : "0.0";
+        String percentage = total > 0 ? String.format(Locale.ROOT, "%.1f", (double) count / total * 100.0) : "0.0";
         return count + " (" + percentage + "%)";
     }
 

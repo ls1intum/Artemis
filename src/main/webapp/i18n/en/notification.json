@@ -190,6 +190,7 @@
             }
         },
         "courseNotification": {
+            "messagePreviewUnavailable": "No message preview available.",
             "newPostNotification": {
                 "title": "New message",
                 "content": "{{postMarkdownContent}}",
@@ -204,6 +205,11 @@
                 "title": "Iris reply needs review",
                 "content": "{{replyMarkdownContent}}",
                 "settingsTitle": "Iris reply needs review"
+            },
+            "atlasCompetencyUpdateNotification": {
+                "title": "Automatic competency update",
+                "content": "Automatic competency update after changes to {{exerciseCount}} learning object(s): {{appliedCount}} change(s) applied. The details were sent by email.",
+                "settingsTitle": "Automatic competency updates (instructors)"
             },
             "newMentionNotification": {
                 "title": "You were mentioned",
@@ -233,6 +239,7 @@
             "exerciseUpdatedNotification": {
                 "title": "Exercise updated",
                 "content": "{{exerciseTitle}} was updated.",
+                "contentWithNotificationText": "{{exerciseTitle}}: {{notificationText}}",
                 "settingsTitle": "Exercise updated"
             },
             "quizExerciseStartedNotification": {
@@ -243,6 +250,7 @@
             "attachmentChangedNotification": {
                 "title": "Attachment changed",
                 "content": "An attachment in {{unitName}} changed.",
+                "contentWithNotificationText": "{{unitName}}: {{notificationText}}",
                 "settingsTitle": "Attachment changed"
             },
             "newManualFeedbackRequestNotification": {
@@ -319,6 +327,11 @@
                 "title": "Tutorial deleted",
                 "content": "Tutorial group {{groupTitle}} was deleted.",
                 "settingsTitle": "Tutorial deleted"
+            },
+            "irisResponseNotification": {
+                "title": "Iris responded - {{chatTitle}}",
+                "content": "{{messagePreview}}",
+                "settingsTitle": "Iris response"
             },
             "temporal": {
                 "now": "Now",

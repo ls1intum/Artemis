@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -9,7 +9,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import {
     faChair,
@@ -54,13 +53,12 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
 import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ExamStudentsMenuButtonComponent, ExamStudentsMenuItem } from 'app/exam/manage/students/exam-students-menu-button/exam-students-menu-button.component';
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
@@ -97,7 +95,7 @@ const SEARCH_DEBOUNCE_MS = 300;
         StudentsUploadImagesDialogComponent,
         StudentsRoomDistributionDialogComponent,
         FaIconComponent,
-        DeleteButtonDirective,
+        ExamDeleteDialogComponent,
         ArtemisTranslatePipe,
         StudentsReseatingDialogComponent,
         ExamStudentsMenuButtonComponent,
@@ -128,7 +126,6 @@ export class ExamStudentsComponent implements OnDestroy {
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
     private accountService = inject(AccountService);
-    private deleteDialogService = inject(DeleteDialogService);
     private confirmationService = inject(TumAetUiConfirmationService);
     private router = inject(Router);
     private alertService = inject(AlertService);
@@ -240,7 +237,13 @@ export class ExamStudentsComponent implements OnDestroy {
     // examData$ tap replay exactly that one skipped load and nothing more (issue #13063).
     private lazyEventPending = false;
 
-    private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
+    readonly removeStudentDialogVisible = signal(false);
+    readonly removeAllDialogVisible = signal(false);
+    readonly studentToRemove = signal<ExamStudentDTO | undefined>(undefined);
+    /** The extra check of both removal dialogs: whether the participations and submissions of the students are deleted as well. */
+    protected readonly removeStudentChecks = {
+        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
+    };
     private examData$ = new Subject<Exam>();
 
     readonly exercisePreparationStatus = signal<ExamExerciseStartPreparationStatus | undefined>(undefined);
@@ -380,11 +383,6 @@ export class ExamStudentsComponent implements OnDestroy {
     constructor() {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.isAdmin.set(this.accountService.isAdmin());
-
-        this.removeAllStudentsEmitter.pipe(takeUntilDestroyed()).subscribe({
-            next: (event) => this.removeAllStudents(event),
-            error: (err) => onError(this.alertService, err),
-        });
 
         this.examData$
             .pipe(
@@ -549,20 +547,12 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     openRemoveAllStudentsDialog() {
-        this.deleteDialogService.openDeleteDialog({
-            entityTitle: this.exam()?.title || '',
-            deleteQuestion: 'artemisApp.studentExams.removeAllStudents.question',
-            translateValues: {},
-            deleteConfirmationText: 'artemisApp.studentExams.removeAllStudents.confirmationText',
-            additionalChecks: {
-                deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
-            },
-            actionType: ActionType.Remove,
-            buttonType: ButtonType.ERROR,
-            delete: this.removeAllStudentsEmitter,
-            dialogError: this.dialogError$,
-            requireConfirmationOnlyForAdditionalChecks: false,
-        });
+        this.removeAllDialogVisible.set(true);
+    }
+
+    openRemoveStudentDialog(examUser: ExamStudentDTO) {
+        this.studentToRemove.set(examUser);
+        this.removeStudentDialogVisible.set(true);
     }
 
     openUploadImagesDialog() {
@@ -592,7 +582,7 @@ export class ExamStudentsComponent implements OnDestroy {
      * Unregister student from exam
      *
      * @param examUser User that should be removed from the exam
-     * @param event generated by the jhiDeleteButton. Has the property deleteParticipationsAndSubmission, reflecting the checkbox choice of the user
+     * @param event emitted by the removal dialog. Has the property deleteParticipationsAndSubmission, reflecting the checkbox choice of the user
      */
     removeFromExam(examUser: ExamStudentDTO, event: { [key: string]: boolean }) {
         const examId = this.exam().id;

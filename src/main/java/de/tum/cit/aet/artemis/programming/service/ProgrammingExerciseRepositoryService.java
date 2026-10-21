@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -243,6 +244,17 @@ public class ProgrammingExerciseRepositoryService {
         final Path repositoryTypeTemplateDir = getTemplateDirectoryForRepositoryType(repositoryType);
 
         final LocalVCRepositoryUri repoUri = programmingExercise.getRepositoryURI(repositoryType);
+        // These repositories have just been created. A checkout at the same path can only belong to an older exercise with the same project key.
+        final Path localPath = gitService.getDefaultLocalCheckOutPathOfRepo(repoUri);
+        final Repository existingRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri);
+        if (existingRepository != null) {
+            try {
+                gitService.deleteLocalRepository(existingRepository);
+            }
+            catch (IOException ex) {
+                throw new GitException("Could not clear stale checkout for newly created repository " + repoUri, ex);
+            }
+        }
         final Repository repo = gitService.getOrCheckoutRepository(repoUri, false, true);
 
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
@@ -433,7 +445,10 @@ public class ProgrammingExerciseRepositoryService {
         if (auxiliaryRepository.getId() == null) {
             throw new IllegalArgumentException("Cannot delete auxiliary repository without id");
         }
-        versionControlService.orElseThrow().deleteRepository(auxiliaryRepository.getVcsRepositoryUri());
+        var repositoryUri = auxiliaryRepository.getVcsRepositoryUri();
+        if (repositoryUri != null) {
+            versionControlService.orElseThrow().deleteRepository(repositoryUri);
+        }
     }
 
     /**

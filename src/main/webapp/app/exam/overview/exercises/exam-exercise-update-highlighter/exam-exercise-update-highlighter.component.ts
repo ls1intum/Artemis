@@ -7,12 +7,12 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import diff from 'html-diff-ts';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-exercise-update-highlighter',
     templateUrl: './exam-exercise-update-highlighter.component.html',
-    styleUrls: ['./exam-exercise-update-highlighter.component.scss'],
-    imports: [ArtemisTranslatePipe],
+    imports: [ArtemisTranslatePipe, TumAetUiButtonDirective],
 })
 export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);

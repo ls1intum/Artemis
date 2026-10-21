@@ -194,7 +194,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     exportPlagiarismCases(): void {
         const headers = ['Student Login', 'Matr. Nr.', 'Exercise', 'Verdict', 'Verdict Date', 'Verdict By'];
         const blobParts: string[] = [headers.join(';') + '\n'];
-        this.plagiarismCases().reduce((acc, plagiarismCase) => {
+        this.plagiarismCases().forEach((plagiarismCase) => {
             const fields = [
                 this.sanitizeCSVField(plagiarismCase.student?.login),
                 this.sanitizeCSVField(plagiarismCase.student?.visibleRegistrationNumber),
@@ -209,9 +209,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             } else {
                 fields.push('No verdict yet', '-', '-');
             }
-            acc.push(fields.join(';') + '\n');
-            return acc;
-        }, blobParts);
+            blobParts.push(fields.join(';') + '\n');
+        });
 
         try {
             downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');

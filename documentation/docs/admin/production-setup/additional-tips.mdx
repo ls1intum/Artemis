@@ -217,7 +217,7 @@ If you use the production Docker Compose Setups (`artemis-prod-*.yml`) with bind
 the file permissions accordingly:
 
 ```bash
-sudo chown -R $(id -u):70 docker/.docker-data/artemis-postgres-data
-sudo chown -R $(id -u):999 docker/.docker-data/artemis-mysql-data
-sudo chown -R $(id -u):1337 docker/.docker-data/artemis-data
+sudo chown -R $(id -u):70 deployment/docker/.docker-data/artemis-postgres-data
+sudo chown -R $(id -u):999 deployment/docker/.docker-data/artemis-mysql-data
+sudo chown -R $(id -u):1337 deployment/docker/.docker-data/artemis-data
 ```

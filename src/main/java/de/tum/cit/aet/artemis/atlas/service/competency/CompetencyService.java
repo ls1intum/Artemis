@@ -147,8 +147,11 @@ public class CompetencyService extends CourseCompetencyService {
         exerciseUnits.forEach(exerciseUnit -> {
             var exercise = exerciseUnit.getExercise();
             List<CompetencyExerciseLink> competencyExerciseLinksForUnit = linksByExerciseId.getOrDefault(exercise.getId(), List.of());
-            Set<CompetencyLectureUnitLink> competencyLectureUnitLinks = competencyExerciseLinksForUnit.stream()
-                    .map(link -> new CompetencyLectureUnitLink(link.getCompetency(), exerciseUnit, link.getWeight())).collect(Collectors.toSet());
+            Set<CompetencyLectureUnitLink> competencyLectureUnitLinks = competencyExerciseLinksForUnit.stream().map(link -> {
+                CompetencyLectureUnitLink lectureUnitLink = new CompetencyLectureUnitLink(link.getCompetency(), exerciseUnit, link.getWeight());
+                lectureUnitLink.setGeneratedByAi(link.isGeneratedByAi());
+                return lectureUnitLink;
+            }).collect(Collectors.toSet());
             competencyExerciseLinksForUnit.forEach(competencyLink -> {
                 if (competencyLink.getCompetency() != null && Hibernate.isInitialized(competencyLink.getCompetency())) {
                     competencyLink.getCompetency().setCourse(null); // Avoid sending the course to the client multiple times in the response to save data

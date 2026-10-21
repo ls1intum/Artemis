@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -73,7 +73,7 @@ public class CourseMaterialImportResource {
      * @return the ResponseEntity with status 200 (OK) and the course summary in the body
      */
     @GetMapping("courses/{courseId}/import-summary")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<CourseSummaryDTO> getImportSummary(@PathVariable long courseId, @RequestParam long sourceCourseId) {
         log.debug("REST request to get import summary for source course {}", sourceCourseId);
 
@@ -100,7 +100,7 @@ public class CourseMaterialImportResource {
      * @return the ResponseEntity with status 200 (OK) and the import result in the body
      */
     @PostMapping("courses/{courseId}/import-material")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<CourseMaterialImportResultDTO> importCourseMaterial(@PathVariable long courseId, @RequestBody CourseMaterialImportOptionsDTO options) {
         log.info("REST request to import course material from course {} to course {}", options.sourceCourseId(), courseId);
 

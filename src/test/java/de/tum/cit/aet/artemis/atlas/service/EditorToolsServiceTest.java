@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -25,10 +27,13 @@ import org.springframework.ai.chat.model.ToolContext;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.OrchestratorToolContextKeys.AppliedActionsBuffer;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
@@ -55,6 +60,9 @@ class EditorToolsServiceTest {
     @Mock
     private CompetencyAtlasMLNotificationService atlasMLNotificationService;
 
+    @Mock
+    private CompetencyRelationRepository competencyRelationRepository;
+
     private final CompetencyValidationService competencyValidator = new CompetencyValidationService();
 
     private EditorToolsService service;
@@ -67,7 +75,8 @@ class EditorToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new EditorToolsService(new JsonMapper(), courseCompetencyRepository, courseCompetencyService, competencyValidator, atlasMLNotificationService);
+        service = new EditorToolsService(new JsonMapper(), courseCompetencyRepository, courseCompetencyService, competencyValidator, atlasMLNotificationService,
+                competencyRelationRepository);
         appliedActions = Collections.synchronizedList(new ArrayList<>());
         appliedActionsBuffer = new AppliedActionsBuffer(appliedActions);
         Map<String, Object> ctx = new HashMap<>();
@@ -169,14 +178,54 @@ class EditorToolsServiceTest {
 
         String result = service.deleteCompetency(7L, JUSTIFICATION, toolContext);
 
-        assertThat(result).contains("\"deletedId\":7");
+        assertThat(result).contains("\"deletedId\":7").contains("\"removedRelationCount\":0");
         verify(courseCompetencyService).deleteCourseCompetency(competency, course);
         assertThat(appliedActions).singleElement().satisfies(a -> {
             assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.DELETE);
+            assertThat(a.detail()).isEqualTo("Deleted competency Remove Me.");
             assertThat(a.justification()).isEqualTo(JUSTIFICATION);
         });
         // The successful delete must mirror the removal to AtlasML as a DELETE (production sends a detached
         // snapshot copy of the competency, so the list contents are matched by type/message, not identity).
+        verify(atlasMLNotificationService).notifyAtlasML(anyList(), eq(OperationTypeDTO.DELETE), eq("orchestrator competency deletion"));
+    }
+
+    @Test
+    void deleteCompetency_exerciseLinks_refusesWithoutSideEffects() {
+        CourseCompetency competency = newCompetency(7L, "Keep", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(7L)).thenReturn(Optional.of(competency));
+        competency.getExerciseLinks().add(mock(CompetencyExerciseLink.class));
+        assertThat(service.deleteCompetency(7L, JUSTIFICATION, toolContext)).contains("linked learning objects");
+        verifyNoInteractions(courseCompetencyService, atlasMLNotificationService);
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void deleteCompetency_lectureLinks_refusesWithoutSideEffects() {
+        CourseCompetency competency = newCompetency(7L, "Keep", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(7L)).thenReturn(Optional.of(competency));
+        competency.getLectureUnitLinks().add(mock(CompetencyLectureUnitLink.class));
+        assertThat(service.deleteCompetency(7L, JUSTIFICATION, toolContext)).contains("linked learning objects");
+        verifyNoInteractions(courseCompetencyService, atlasMLNotificationService);
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void deleteCompetency_withRelations_deletesAndReportsRemovedRelations() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(7L, "Remove Me", "Desc", CompetencyTaxonomy.UNDERSTAND, course);
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(7L)).thenReturn(Optional.of(competency));
+        when(competencyRelationRepository.countByHeadCompetencyIdOrTailCompetencyId(7L, 7L)).thenReturn(2L);
+
+        String result = service.deleteCompetency(7L, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("\"deletedId\":7").contains("\"removedRelationCount\":2");
+        // Relations do not block deletion: the cascading service delete removes them together with the competency.
+        verify(courseCompetencyService).deleteCourseCompetency(competency, course);
+        assertThat(appliedActions).singleElement().satisfies(a -> {
+            assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.DELETE);
+            assertThat(a.detail()).isEqualTo("Deleted competency Remove Me. Removed 2 competency relations.");
+        });
         verify(atlasMLNotificationService).notifyAtlasML(anyList(), eq(OperationTypeDTO.DELETE), eq("orchestrator competency deletion"));
     }
 
@@ -216,6 +265,45 @@ class EditorToolsServiceTest {
         assertThat(deleteResult).contains("Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ")");
         verify(courseCompetencyRepository, never()).save(any());
         verify(courseCompetencyService, never()).deleteCourseCompetency(any(), any());
+    }
+
+    @Test
+    void missingContextIdsAndEntitiesFailWithoutMutation() {
+        assertThat(service.editCompetency(10L, "Title", null, null, JUSTIFICATION, null)).contains("No course context");
+        assertThat(service.deleteCompetency(10L, JUSTIFICATION, null)).contains("No course context");
+        assertThat(service.editCompetency(null, "Title", null, null, JUSTIFICATION, toolContext)).contains("competencyId is required");
+        assertThat(service.deleteCompetency(null, JUSTIFICATION, toolContext)).contains("competencyId is required");
+        assertThat(service.editCompetency(10L, "Title", null, null, JUSTIFICATION, toolContext)).contains("Competency not found");
+        assertThat(service.deleteCompetency(10L, JUSTIFICATION, toolContext)).contains("Competency not found");
+        assertThat(appliedActions).isEmpty();
+        verifyNoInteractions(courseCompetencyService, atlasMLNotificationService);
+    }
+
+    @Test
+    void taxonomyEditsRejectInvalidValuesAndAvoidSavingEquivalentFields() {
+        var existing = newCompetency(10L, "Title", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findById(10L)).thenReturn(Optional.of(existing));
+        assertThat(service.editCompetency(10L, " Title ", " Desc ", " apply ", JUSTIFICATION, toolContext)).contains("noop");
+        assertThat(service.editCompetency(10L, null, null, "invented", JUSTIFICATION, toolContext)).contains("taxonomy must be one of");
+        verify(courseCompetencyRepository, never()).save(any());
+        when(courseCompetencyRepository.save(any())).thenAnswer(call -> call.getArgument(0));
+        assertThat(service.editCompetency(10L, null, null, " analyze ", JUSTIFICATION, toolContext)).contains("taxonomy");
+        assertThat(existing.getTaxonomy()).isEqualTo(CompetencyTaxonomy.ANALYZE);
+        assertThat(appliedActions).hasSize(1);
+    }
+
+    @Test
+    void persistenceFailuresReturnErrorAndDoNotPublishAuditOrMlNotifications() {
+        var existing = newCompetency(10L, "Title", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findById(10L)).thenReturn(Optional.of(existing));
+        when(courseCompetencyRepository.save(any())).thenThrow(new org.springframework.dao.DataAccessResourceFailureException("database unavailable"));
+        assertThat(service.editCompetency(10L, "New title", null, null, JUSTIFICATION, toolContext)).contains("Failed to update competency");
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(10L)).thenReturn(Optional.of(existing));
+        org.mockito.Mockito.doThrow(new org.springframework.dao.DataAccessResourceFailureException("database unavailable")).when(courseCompetencyService)
+                .deleteCourseCompetency(existing, existing.getCourse());
+        assertThat(service.deleteCompetency(10L, JUSTIFICATION, toolContext)).contains("Failed to delete competency");
+        assertThat(appliedActions).isEmpty();
+        verifyNoInteractions(atlasMLNotificationService);
     }
 
     private static Course courseWithId(long id) {

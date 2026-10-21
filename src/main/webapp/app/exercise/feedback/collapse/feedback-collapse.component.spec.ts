@@ -23,6 +23,17 @@ describe('FeedbackCollapseComponent', () => {
         component = fixture.componentInstance;
     });
 
+    it('should render the feedback text in the monospace font stack of the application', () => {
+        fixture.componentRef.setInput('feedback', getFeedbackItem('a'));
+        fixture.changeDetectorRef.detectChanges();
+
+        const wrapper: HTMLElement = fixture.nativeElement.firstElementChild;
+        // font-mono resolves to ui-monospace, SFMono-Regular, Menlo, ...; the generic `monospace` keyword renders as Courier on macOS
+        expect(wrapper.classList).toContain('font-mono');
+        expect(wrapper.classList).toContain('text-sm');
+        expect(wrapper.className).not.toContain('font-[monospace]');
+    });
+
     it('should not truncate if not necessary', () => {
         fixture.componentRef.setInput('feedback', getFeedbackItem('a'.repeat(FEEDBACK_PREVIEW_CHARACTER_LIMIT - 1)));
         fixture.changeDetectorRef.detectChanges();

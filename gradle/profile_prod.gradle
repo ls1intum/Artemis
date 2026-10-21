@@ -4,7 +4,11 @@ if (project.hasProperty("no-liquibase")) {
 }
 
 springBoot {
-    buildInfo()
+    buildInfo {
+        if (project.hasProperty('reproducible')) {
+            excludes.add('time')
+        }
+    }
 }
 
 bootJar {
@@ -63,7 +67,7 @@ if (prebuiltWebappDir.exists()) {
         inputs.files("pnpm-lock.yaml")
             .withPropertyName("pnpm-lock")
             .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files("package.json", "pnpm-workspace.yaml", "prebuild.mjs", ".postcssrc.json", ".browserslistrc")
+        inputs.files("package.json", "pnpm-workspace.yaml", "supporting_scripts/client/prebuild.mjs", ".postcssrc.json", ".browserslistrc")
             .withPropertyName("client-build-config")
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files("build.gradle")
@@ -72,7 +76,7 @@ if (prebuiltWebappDir.exists()) {
         inputs.files("angular.json")
             .withPropertyName("angular.json")
             .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files("tsconfig.json", "tsconfig.app.json")
+        inputs.files("tsconfig.json", "config/client/tsconfig.app.json")
             .withPropertyName("tsconfig")
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.dir("src/main/webapp/")
@@ -98,6 +102,24 @@ if (prebuiltWebappDir.exists()) {
         outputs.dir(webappBuildDir).withPropertyName("webapp-build-dir")
         args = ["run", "webapp:prod"]
         environment = [APP_VERSION: project.version]
+    }
+}
+
+tasks.named('webapp') {
+    inputs.property('reproducible', project.hasProperty('reproducible'))
+    if (project.hasProperty('reproducible')) {
+        def sourceEpochMillis = providers.environmentVariable('SOURCE_DATE_EPOCH').orElse(providers.exec {
+            commandLine 'git', 'log', '-1', '--format=%ct'
+        }.standardOutput.asText.map { it.trim() }).map { Math.multiplyExact(it.toLong(), 1000L) }
+        inputs.property('sourceEpochMillis', sourceEpochMillis)
+        def serviceWorkerManifest = new File(webappBuildDir, 'ngsw.json')
+        doLast {
+            // Angular writes Date.now(); retain the manifest and its content hashes, using
+            // the source revision's time (or the explicitly supplied source epoch) instead.
+            def manifest = new groovy.json.JsonSlurper().parse(serviceWorkerManifest)
+            manifest.timestamp = sourceEpochMillis.get()
+            serviceWorkerManifest.setText(groovy.json.JsonOutput.toJson(manifest), 'UTF-8')
+        }
     }
 }
 

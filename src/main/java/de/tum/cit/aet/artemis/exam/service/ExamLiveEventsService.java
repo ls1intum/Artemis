@@ -139,7 +139,7 @@ public class ExamLiveEventsService {
      * @param message  The message to send
      */
     public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message) {
-        Exam exam = exercise.getExam();
+        Exam exam = exercise.getExamElseThrow();
         studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
                 .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message));
     }

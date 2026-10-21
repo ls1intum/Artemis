@@ -5,6 +5,9 @@ inputs:
   workflow-run-id:
     description: 'Run ID that holds the `docker-tag` artifact (the umbrella run id under workflow_call).'
     required: true
+  commit-sha:
+    description: 'Exact source revision the image must contain.'
+    required: true
   github-token:
     description: 'Token for the cross-job artifact download.'
     required: true
@@ -16,6 +19,14 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    # Clear evidence before downloads or validation can fail, so teardown cannot publish a previous run's manifests.
+    - name: Clear stale Playwright execution evidence
+      shell: bash
+      run: |
+        rm -f src/test/playwright/test-reports/collection-*.json \
+              src/test/playwright/test-reports/completion-*.json \
+              src/test/playwright/test-reports/runner-status.env
+
     - name: Add link to triggering workflow
       shell: bash
       env:
@@ -31,7 +42,7 @@ runs:
         fi
 
     - name: Download Docker tag
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         name: docker-tag
         github-token: ${{ inputs.github-token }}
@@ -39,35 +50,39 @@ runs:
 
     - name: Set Docker Tag Environment Variable
       shell: bash
+      env:
+        EXPECTED_COMMIT_SHA: ${{ inputs.commit-sha }}
       run: |
-        if [ -f "docker-tag.txt" ]; then
-          ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
-          # Defense-in-depth: the tag is a machine-generated docker/metadata-action slug, but it
-          # flows into $GITHUB_ENV and a later `docker pull`, so reject anything outside the Docker
-          # tag charset before trusting it — matching the release-tag validation in ci-build.yml.
-          case "$ARTEMIS_DOCKER_TAG" in
-            ""|*[!A-Za-z0-9._-]*)
-              echo "::error::Refusing invalid Docker tag from build artifact: '${ARTEMIS_DOCKER_TAG}'"
-              exit 1
-              ;;
-          esac
-          echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> "$GITHUB_ENV"
-          echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
-        else
-          echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
+        set -Eeuo pipefail
+        if ! [[ "$EXPECTED_COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+          echo "::error::Expected a full source commit SHA."
           exit 1
         fi
+        if [ ! -f docker-tag.txt ]; then
+          echo "::error::Missing docker-tag.txt build artifact."
+          exit 1
+        fi
+        ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
+        if [ "$ARTEMIS_DOCKER_TAG" != "sha-${EXPECTED_COMMIT_SHA}" ]; then
+          echo "::error::Docker tag artifact does not identify expected commit ${EXPECTED_COMMIT_SHA}."
+          exit 1
+        fi
+        {
+          echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}"
+          echo "ARTEMIS_EXPECTED_COMMIT_SHA=${EXPECTED_COMMIT_SHA}"
+        } >> "$GITHUB_ENV"
+        echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
 
     - name: Run cleanup script (before E2E)
       shell: bash
-      run: .ci/E2E-tests/cleanup.sh
+      run: supporting_scripts/ci/E2E-tests/cleanup.sh
 
     # Must run after the cleanup (which stops containers but leaves images) and before the tests, so
     # no build job ever races a multi-gigabyte on-demand pull. See the script header for the failure
     # this prevents.
     - name: Pre-pull exercise images
       shell: bash
-      run: .ci/E2E-tests/prepull-exercise-images.sh
+      run: supporting_scripts/ci/E2E-tests/prepull-exercise-images.sh
 
     - name: Clean old test results
       shell: bash

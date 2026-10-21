@@ -118,7 +118,7 @@
         </div>
 
         @if (configureSessionPlan()) {
-            <div class="label-and-input-row">
+            <div class="label-and-input-row label-and-input-row--wrap">
                 @let firstSessionStartValidation = firstSessionStartValidationResult();
                 <tumaet-ui-form-field
                     #firstSessionStartField
@@ -172,7 +172,7 @@
                 </tumaet-ui-form-field>
             </div>
 
-            <div class="label-and-input-row">
+            <div class="label-and-input-row label-and-input-row--wrap">
                 <tumaet-ui-form-field
                     class="label-and-input"
                     controlId="repetition-frequency-input"

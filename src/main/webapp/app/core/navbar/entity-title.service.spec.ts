@@ -77,6 +77,22 @@ describe('EntityTitleService', () => {
         subscription.unsubscribe();
     });
 
+    it('does not overwrite a renamed tutorial group with an older fallback response', () => {
+        vi.useFakeTimers();
+        try {
+            const response = new Subject<HttpResponse<string>>();
+            vi.spyOn(TestBed.inject(HttpClient), 'get').mockReturnValue(response);
+            const titles: string[] = [];
+            service.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
+            vi.advanceTimersByTime(3000);
+            service.setTitle(EntityType.TUTORIAL_GROUP, [17], 'Renamed group');
+            response.next(new HttpResponse({ body: 'Previous group title' }));
+            expect(titles).toEqual(['Renamed group']);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('waits for a title to be set if not present and does not fire the request if it arrives within 3 seconds', async () => {
         const http = TestBed.inject(HttpClient);
         const httpSpy = vi.spyOn(http, 'get').mockReturnValue(of(new HttpResponse<string>({ body: 'Test Hint' })));
@@ -194,6 +210,25 @@ describe('EntityTitleService - authentication state changes', () => {
         scoped = TestBed.inject(EntityTitleService);
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should cancel pending title fetches when the injector is destroyed', () => {
+        vi.useFakeTimers();
+        const http = TestBed.inject(HttpClient);
+        const httpSpy = vi.spyOn(http, 'get').mockReturnValue(of(new HttpResponse<string>({ body: 'Late Title' })));
+
+        scoped.getTitle(EntityType.COURSE, [1]).subscribe();
+
+        // Destroys the injector, like the TestBed teardown after each test
+        TestBed.resetTestingModule();
+        vi.advanceTimersByTime(3000);
+
+        expect(httpSpy).not.toHaveBeenCalled();
+    });
+
     it('should clear cached titles on logout', async () => {
         scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
         const before = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
@@ -234,8 +269,7 @@ describe('EntityTitleService - authentication state changes', () => {
         const inFlight = new Subject<HttpResponse<string>>();
         vi.spyOn(http, 'get').mockReturnValue(inFlight.asObservable());
 
-        // Bypass the 3s fallback timer and exercise fetchTitle directly to keep the test
-        // synchronous and immune to injector teardown between tests.
+        // Bypass the 3s fallback timer and exercise fetchTitle directly to keep the test synchronous.
         (scoped as unknown as { fetchTitle: (type: EntityType, ids: number[]) => void }).fetchTitle(EntityType.COURSE, [1]);
 
         authState.next(undefined);

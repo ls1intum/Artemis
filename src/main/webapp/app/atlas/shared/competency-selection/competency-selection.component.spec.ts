@@ -20,7 +20,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiCheckboxComponent, TumAetUiSelectComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
@@ -83,9 +83,19 @@ describe('CompetencySelection', () => {
         expect(component.selectedCompetencyLinks).toBeUndefined();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(2);
         expect(selector).not.toBeNull();
+    });
+
+    it('should give the focusable help icon the localized tooltip as its accessible name', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'Programming Basics' } as Competency] });
+        fixture.componentRef.setInput('labelTooltip', 'Select the competencies linked to this exercise');
+
+        fixture.detectChanges();
+
+        const helpIcon = fixture.nativeElement.querySelector('legend fa-icon[tabindex="0"]') as HTMLElement;
+        expect(helpIcon.getAttribute('role')).toBe('img');
+        expect(helpIcon.getAttribute('aria-label')).toBe('Select the competencies linked to this exercise');
     });
 
     it('should get competencies from service', () => {
@@ -98,7 +108,6 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(2);
         expect(component.competencyLinks()?.first()?.competency?.course).toBeUndefined();
         expect(component.competencyLinks()?.first()?.competency?.userProgress).toBeUndefined();
@@ -112,7 +121,6 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.disabled()).toBeTruthy();
     });
 
@@ -125,7 +133,6 @@ describe('CompetencySelection', () => {
         const select = fixture.debugElement.query(By.css('select'));
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(0);
         expect(select).toBeNull();
     });
@@ -203,9 +210,57 @@ describe('CompetencySelection', () => {
         expect(component.disabled()).toBeFalsy();
     });
 
+    it('should report the number of available competencies to consuming forms', () => {
+        const counts: number[] = [];
+        component.availableCount.subscribe((count) => counts.push(count));
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1 }, { id: 2 }] });
+        fixture.detectChanges();
+        expect(counts).toEqual([2]);
+    });
+
+    it('should keep selection, disabled controls and touched state connected to the form', async () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'Test' }] });
+        const onTouched = vi.fn();
+        const onChange = vi.fn();
+        component.registerOnTouched(onTouched);
+        component.registerOnChange(onChange);
+        fixture.detectChanges();
+        component.writeValue([new CompetencyLearningObjectLink({ id: 1 }, 0.5)]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent)).componentInstance.checked()).toBe(true);
+        const weightSelect = fixture.debugElement.query(By.directive(TumAetUiSelectComponent));
+        expect(weightSelect).not.toBeNull();
+        const checkbox = fixture.nativeElement.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        checkbox.click();
+        fixture.detectChanges();
+        expect(onChange).toHaveBeenCalledWith(undefined);
+        expect(onTouched).toHaveBeenCalled();
+
+        component.writeValue([new CompetencyLearningObjectLink({ id: 1 }, 0.5)]);
+        component.setDisabledState?.(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(checkbox.disabled).toBe(true);
+        expect(fixture.debugElement.query(By.directive(TumAetUiSelectComponent)).componentInstance.disabled()).toBe(true);
+    });
+
     describe('refreshWithLinks', () => {
         const competency1 = { id: 1, title: 'first' } as Competency;
         const competency2 = { id: 2, title: 'second' } as Competency;
+
+        it('should reveal a consuming form section when a refresh adds the first available competency', () => {
+            const counts: number[] = [];
+            component.availableCount.subscribe((count) => counts.push(count));
+            fixture.detectChanges();
+
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 0.5)]);
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 1)]);
+
+            expect(counts).toEqual([0, 1]);
+            expect(component.competencyLinks()).toHaveLength(1);
+        });
 
         it('should not emit valueChange (regression: infinite valueChange loop with a parent that refreshes on valueChange)', () => {
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2] });
@@ -231,6 +286,32 @@ describe('CompetencySelection', () => {
             expect(component.selectedCompetencyLinks?.first()?.weight).toBe(0.5);
             expect(component.checkboxStates()).toEqual({ 1: true, 2: false, 3: true });
             expect(onChangeSpy).toHaveBeenCalledWith(component.selectedCompetencyLinks);
+        });
+
+        it('should keep the AI provenance of refreshed links when the selection is edited afterwards', () => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2] });
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.valueChange, 'emit');
+
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 0.5, true)]);
+            const competency2Link = component.competencyLinks()!.find((link) => link.competency?.id === competency2.id)!;
+            component.toggleCompetency(competency2Link);
+
+            const emittedLinks = emitSpy.mock.lastCall![0]!;
+            expect(emittedLinks.find((link) => link.competency?.id === competency1.id)?.generatedByAi).toBe(true);
+            expect(emittedLinks.find((link) => link.competency?.id === competency2.id)?.generatedByAi).toBe(false);
+        });
+
+        it('should mark a link as manual when an AI-selected competency is ticked again by hand', () => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2] });
+            fixture.detectChanges();
+
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 0.5, true)]);
+            const competency1Link = component.competencyLinks()!.find((link) => link.competency?.id === competency1.id)!;
+            component.toggleCompetency(competency1Link);
+            component.toggleCompetency(competency1Link);
+
+            expect(component.selectedCompetencyLinks?.first()?.generatedByAi).toBe(false);
         });
 
         it('should apply links that arrived while loading without emitting valueChange (regression: infinite valueChange loop)', () => {
@@ -262,7 +343,7 @@ describe('CompetencySelection', () => {
 
         it('should show lightbulb button for competency suggestions', () => {
             fixture.changeDetectorRef.detectChanges();
-            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
+            const btnDe = fixture.debugElement.query(By.css('[data-testid="suggest-competencies"]'));
             expect(btnDe).not.toBeNull();
             // Disabled state is controlled by input binding
             const cmp = btnDe.componentInstance;
@@ -273,7 +354,7 @@ describe('CompetencySelection', () => {
             fixture.componentRef.setInput('exerciseDescription', '');
             fixture.changeDetectorRef.detectChanges();
 
-            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
+            const btnDe = fixture.debugElement.query(By.css('[data-testid="suggest-competencies"]'));
             const cmp = btnDe.componentInstance;
             expect(cmp.disabled()).toBeTruthy();
         });
@@ -304,9 +385,9 @@ describe('CompetencySelection', () => {
             component.isSuggesting.set(true);
             fixture.changeDetectorRef.detectChanges();
 
-            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
-            const spinnerIcon = btnDe?.query(By.css('.jhi-btn__loading'));
-            const lightbulbIcon = btnDe?.query(By.css('.jhi-btn__icon'));
+            const btnDe = fixture.debugElement.query(By.css('[data-testid="suggest-competencies"]'));
+            const spinnerIcon = btnDe?.query(By.css('[data-icon="spinner"]'));
+            const lightbulbIcon = btnDe?.query(By.css('[data-icon="lightbulb"]'));
 
             expect(spinnerIcon).not.toBeNull();
             expect(lightbulbIcon).toBeNull(); // Should not show lightbulb icon when showing spinner
@@ -326,7 +407,7 @@ describe('CompetencySelection', () => {
             expect(component.isSuggested(2)).toBeFalsy();
 
             // Check for lightbulb icons with warning color next to competencies
-            const suggestedLightbulbs = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
+            const suggestedLightbulbs = fixture.debugElement.queryAll(By.css('[data-testid="suggested-competency"]'));
             expect(suggestedLightbulbs.length).toBeGreaterThan(0);
         });
 
@@ -394,16 +475,15 @@ describe('CompetencySelection', () => {
             component.isSuggesting.set(true);
             fixture.changeDetectorRef.detectChanges();
 
-            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
+            const btnDe = fixture.debugElement.query(By.css('[data-testid="suggest-competencies"]'));
             const cmp = btnDe.componentInstance;
             expect(cmp.disabled()).toBeTruthy();
         });
 
         it('should show lightbulb tooltip', () => {
             fixture.changeDetectorRef.detectChanges();
-            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
-            const cmp = btnDe.componentInstance;
-            expect(cmp.tooltip()).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
+            const btnDe = fixture.debugElement.query(By.css('[data-testid="suggest-competencies"]'));
+            expect(btnDe.injector.get(TumAetUiTooltipDirective).content()).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
         });
 
         it('should show AI suggested competency tooltip', () => {
@@ -416,11 +496,13 @@ describe('CompetencySelection', () => {
             component.suggestCompetencies();
             fixture.changeDetectorRef.detectChanges();
 
-            const suggestedIcon = fixture.debugElement.query(By.css('fa-icon.text-warning.ms-2'));
+            const suggestedIcon = fixture.debugElement.query(By.css('[data-testid="suggested-competency"]'));
             expect(suggestedIcon).toBeTruthy();
-            const tooltip = suggestedIcon.injector.get(NgbTooltip, null);
+            const tooltip = suggestedIcon.injector.get(TumAetUiTooltipDirective, null);
             expect(tooltip).toBeTruthy();
-            expect(tooltip?.ngbTooltip).toBe('artemisApp.competency.suggestion.tooltip');
+            expect(tooltip?.content()).toBe('artemisApp.competency.suggestion.tooltip');
+            expect(suggestedIcon.nativeElement.getAttribute('role')).toBe('img');
+            expect(suggestedIcon.nativeElement.getAttribute('aria-label')).toBe('artemisApp.competency.suggestion.tooltip');
         });
 
         it('should match competencies by ID when processing suggestions', () => {
@@ -476,7 +558,7 @@ describe('CompetencySelection', () => {
 
                 // Button should be enabled for non-empty descriptions
                 fixture.changeDetectorRef.detectChanges();
-                const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
+                const lightbulbButton = fixture.debugElement.query(By.css('[data-testid="suggest-competencies"] button'));
                 expect(lightbulbButton?.nativeElement.disabled).toBeFalsy();
             });
         });

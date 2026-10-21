@@ -144,6 +144,32 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.location()).toBe('');
     });
 
+    it('clears optional fields and the schedule when switching to another group', async () => {
+        await createComponentWithLanguageValues(of(['English']));
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupDetailData());
+        fixture.componentRef.setInput('schedule', createTutorialGroupSchedule());
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.componentRef.setInput(
+            'tutorialGroup',
+            createTutorialGroupDetailData({ id: 18, title: 'TG 2', campus: undefined, capacity: undefined, additionalInformation: undefined }),
+        );
+        fixture.componentRef.setInput('schedule', undefined);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.title()).toBe('TG 2');
+        expect(component.campus()).toBe('');
+        expect(component.capacity()).toBeUndefined();
+        expect(component.additionalInformation()).toBe('');
+        expect(component.configureSessionPlan()).toBe(false);
+        expect(component.firstSessionStart()).toBeUndefined();
+        expect(component.firstSessionEnd()).toBeUndefined();
+        expect(component.tutorialPeriodEnd()).toBeUndefined();
+        expect(component.location()).toBe('');
+    });
+
     it('should initialize in edit mode from tutorial group and schedule inputs', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
@@ -533,6 +559,92 @@ describe('TutorialCreateOrEditComponent', () => {
                     location: 'Room 202',
                 },
             },
+        });
+    });
+    describe('session plan date pickers', () => {
+        function field(id: string): HTMLInputElement {
+            return fixture.nativeElement.querySelector(`#${id}`);
+        }
+
+        function type(input: HTMLInputElement, text: string) {
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        }
+
+        function errorOf(id: string): HTMLElement {
+            return field(id).closest('tumaet-ui-form-field')!.querySelector('.tumaet-ui-form-field-error')!;
+        }
+
+        function blur(input: HTMLInputElement) {
+            input.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+        }
+
+        async function createWithSessionPlan() {
+            await createComponentWithLanguageValues(of(['English', 'German']));
+            component.configureSessionPlan.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        it('should render a labelled picker for each date with its stable id', async () => {
+            await createWithSessionPlan();
+
+            for (const id of ['first-session-start-input', 'first-session-end-input', 'tutorial-period-end-input']) {
+                expect(field(id)).not.toBeNull();
+                expect(fixture.nativeElement.querySelector(`label[for="${id}"]`)).not.toBeNull();
+            }
+        });
+
+        it('should write typed values into the signals', async () => {
+            await createWithSessionPlan();
+
+            type(field('first-session-start-input'), '20.04.2026 10:15');
+            type(field('first-session-end-input'), '20.04.2026 11:45');
+            type(field('tutorial-period-end-input'), '20.07.2026');
+
+            expect(component.firstSessionStart()?.format('YYYY-MM-DDTHH:mm')).toBe('2026-04-20T10:15');
+            expect(component.firstSessionEnd()?.format('YYYY-MM-DDTHH:mm')).toBe('2026-04-20T11:45');
+            expect(component.tutorialPeriodEnd()?.format('YYYY-MM-DD HH:mm')).toBe('2026-07-20 00:00');
+        });
+
+        it('should show the stored schedule in the pickers', async () => {
+            await createComponentWithLanguageValues(of(['English']));
+            fixture.componentRef.setInput('tutorialGroup', createTutorialGroupDetailData());
+            fixture.componentRef.setInput('schedule', createTutorialGroupSchedule());
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(field('first-session-start-input').value).toBe('20.04.2026 10:15');
+            expect(field('first-session-end-input').value).toBe('20.04.2026 11:45');
+            expect(field('tutorial-period-end-input').value).toBe('20.07.2026');
+        });
+
+        it('should explain a missing first session start once the field was touched', async () => {
+            await createWithSessionPlan();
+            expect(errorOf('first-session-start-input').hidden).toBe(true);
+
+            blur(field('first-session-start-input'));
+
+            const error = errorOf('first-session-start-input');
+            expect(error.hidden).toBe(false);
+            expect(error.textContent).toContain('firstSessionStartRequired');
+            expect(field('first-session-start-input').getAttribute('aria-describedby')).toBe(error.id);
+        });
+
+        it('should explain an end that is not on the start day', async () => {
+            await createWithSessionPlan();
+
+            type(field('first-session-start-input'), '20.04.2026 10:15');
+            type(field('first-session-end-input'), '21.04.2026 11:45');
+            blur(field('first-session-end-input'));
+
+            const error = errorOf('first-session-end-input');
+            expect(error.hidden).toBe(false);
+            expect(error.textContent).toContain('firstSessionEndNotOnSameDayAsStart');
         });
     });
 });

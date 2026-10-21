@@ -38,6 +38,7 @@
             }
             <jhi-programming-exercise-language
                 [(programmingExercise)]="programmingExercise"
+                [allowOnlineIde]="!!programmingExercise.allowOnlineIde"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
@@ -81,6 +82,7 @@
                 [switchEditMode]="switchEditMode"
                 [areAuxiliaryRepositoriesValid]="isAuxiliaryRepositoryInputValid()"
                 [invalidReasons]="getInvalidReasons()"
+                [revalidate]="revalidate"
                 (save)="save()"
                 (generateWithAi)="saveWithAi()"
                 (onCancel)="previousState()"

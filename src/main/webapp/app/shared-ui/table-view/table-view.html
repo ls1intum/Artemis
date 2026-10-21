@@ -69,13 +69,14 @@
             </ng-template>
             <tr>
                 @if (resolvedOptions().selectionMode === 'multiple') {
-                    <th style="width: 3rem">
+                    <th scope="col" style="width: 3rem">
                         <p-tableHeaderCheckbox [disabled]="!hasSelectableRows()" />
                     </th>
                 }
                 @for (col of columns; track col) {
                     @if (col?.frozen) {
                         <th
+                            scope="col"
                             pFrozenColumn
                             [alignFrozen]="col?.alignFrozen ?? 'left'"
                             [pSortableColumn]="col?.sort ? col.field : undefined"
@@ -87,6 +88,7 @@
                         </th>
                     } @else {
                         <th
+                            scope="col"
                             [pSortableColumn]="col?.sort ? col.field : undefined"
                             [style]="{ 'min-width': col?.width ?? 'auto' }"
                             [pTooltip]="col?.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined"
@@ -98,9 +100,9 @@
                 }
                 @if (rowActions()) {
                     @if (resolvedOptions().rowActionsFrozen) {
-                        <th pFrozenColumn alignFrozen="right"></th>
+                        <th scope="col" pFrozenColumn alignFrozen="right"></th>
                     } @else {
-                        <th></th>
+                        <th scope="col"></th>
                     }
                 }
             </tr>

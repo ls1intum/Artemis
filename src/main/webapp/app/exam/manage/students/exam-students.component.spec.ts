@@ -9,13 +9,12 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
+import dayjs from 'dayjs/esm';
 import { Observable, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -82,7 +81,6 @@ describe('ExamStudentsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DeleteDialogService, useClass: MockDialogService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ExamChecklistService, {
                     getExamStatistics: (_exam: Exam) => of(mockChecklist),
@@ -821,5 +819,83 @@ describe('ExamStudentsComponent', () => {
         component['setExercisePreparationStatus']({ finished: 1, failed: 0, overall: 1 } as ExamExerciseStartPreparationStatus);
 
         expect(fetchExamDataSpy).toHaveBeenCalledOnce();
+    });
+});
+
+describe('ExamStudentsComponent accessible names', () => {
+    const course = { id: 1 } as Course;
+    const exam = { course, id: 2, title: 'Test Exam', endDate: dayjs().subtract(1, 'hour'), examUsers: [{ id: 10 } as any] } as Exam;
+    const route = {
+        snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
+        url: new Observable<UrlSegment[]>(),
+        data: of({ exam }),
+    } as any as ActivatedRoute;
+
+    const baseDto: ExamStudentDTO = { id: 1, userId: 1, login: 'student1', name: 'Student One', studentExamId: 123, progress: 'submitted' };
+    const failedDto: ExamStudentDTO = { ...baseDto, id: 1, login: 'failed', didExamUserAttendExam: true, didCheckLogin: false };
+    const passedDto: ExamStudentDTO = {
+        ...baseDto,
+        id: 2,
+        login: 'passed',
+        didExamUserAttendExam: true,
+        didCheckLogin: true,
+        didCheckImage: true,
+        didCheckName: true,
+        didCheckRegistrationNumber: true,
+        signingImagePath: '/path/to/image',
+    };
+    const absentDto: ExamStudentDTO = { ...baseDto, id: 3, login: 'absent', studentExamId: undefined, didExamUserAttendExam: false };
+
+    let fixture: ComponentFixture<ExamStudentsComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExamStudentsComponent],
+            providers: [
+                provideRouter([]),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                MockProvider(ExamChecklistService, { getExamStatistics: () => of({ numberOfGeneratedStudentExams: 3 } as ExamChecklist) }),
+                MockProvider(AlertService),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        const examManagementService = TestBed.inject(ExamManagementService);
+        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(new HttpResponse({ body: null as any })));
+        vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [failedDto, passedDto, absentDto], totalElements: 3 }));
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
+
+        fixture = TestBed.createComponent(ExamStudentsComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        fixture?.destroy();
+    });
+
+    it('should name each attendance status icon for screen readers and hide the decorative icon', () => {
+        const cells = Array.from(fixture.nativeElement.querySelectorAll('[data-column="didExamUserAttendExam"]')) as HTMLElement[];
+        const labels = cells.map((cell) => cell.querySelector('.sr-only')?.textContent?.trim());
+
+        expect(labels).toEqual(['artemisApp.exam.examUsers.attendanceCheckFailed', 'artemisApp.exam.examUsers.attendanceCheckPassed', 'artemisApp.exam.examUsers.didNotAttend']);
+        cells.forEach((cell) => expect(cell.querySelector('fa-icon')?.getAttribute('aria-hidden')).toBe('true'));
+    });
+
+    it('should give the icon-only row action controls an accessible name', () => {
+        const reseatButtons = fixture.nativeElement.querySelectorAll('[data-testid="reseat-student-button"]') as NodeListOf<HTMLElement>;
+        const removeButtons = fixture.nativeElement.querySelectorAll('[data-testid="remove-student-button"]') as NodeListOf<HTMLElement>;
+        const viewControls = fixture.nativeElement.querySelectorAll('[aria-label="artemisApp.examManagement.examStudents.table.viewExam"]') as NodeListOf<HTMLElement>;
+
+        expect(reseatButtons).toHaveLength(3);
+        reseatButtons.forEach((button) => expect(button.getAttribute('aria-label')).toBe('artemisApp.exam.examUsers.changeLocationButton'));
+        removeButtons.forEach((button) => expect(button.getAttribute('aria-label')).toBe('artemisApp.examManagement.examStudents.table.remove'));
+        expect(viewControls).toHaveLength(3);
+        viewControls.forEach((control) => expect(control.getAttribute('aria-label')).toBe('artemisApp.examManagement.examStudents.table.viewExam'));
     });
 });

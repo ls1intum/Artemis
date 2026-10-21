@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -54,11 +53,12 @@ import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -101,6 +101,10 @@ public class TextExerciseResource {
 
     private final TextExerciseRepository textExerciseRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final UserRepository userRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -119,7 +123,10 @@ public class TextExerciseResource {
             ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, CourseRepository courseRepository, ChannelRepository channelRepository,
-            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi) {
+            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.textBlockRepository = textBlockRepository;
@@ -159,12 +166,12 @@ public class TextExerciseResource {
     }
 
     private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+        var textExercise = textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId);
         if (includePlagiarismDetectionConfig) {
-            var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId);
-            textExercise.ifPresent(it -> PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(it, textExerciseRepository));
-            return textExercise;
+            // The plagiarism detection configuration is not part of the exercise, so it is read here.
+            textExercise.ifPresent(plagiarismDetectionConfigRepository::attachTo);
         }
-        return textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId);
+        return textExercise;
     }
 
     /**
@@ -190,11 +197,14 @@ public class TextExerciseResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
         }
         if (textExercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(textExercise.getId());
-            if (channel != null) {
-                textExercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(textExercise.getId());
+            if (channelName != null) {
+                textExercise.setChannelName(channelName);
             }
         }
+
+        // The response reports the team assignment configuration, which an exercise does not carry by itself.
+        teamAssignmentConfigRepository.attachTo(textExercise);
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);

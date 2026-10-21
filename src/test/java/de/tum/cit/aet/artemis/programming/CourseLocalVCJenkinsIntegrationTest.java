@@ -494,6 +494,18 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAssessmentDashboardStats_assessmentCounterMatchesSubmissionsOfManualExercises() throws Exception {
+        courseTestService.testGetAssessmentDashboardStats_assessmentCounterMatchesSubmissionsOfManualExercises();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseManagementDetailData_assessmentCounterMatchesSubmissionsOfManualExercises() throws Exception {
+        courseTestService.testGetCourseManagementDetailData_assessmentCounterMatchesSubmissionsOfManualExercises();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAssessmentDashboardStats_withAssessments() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_withAssessments();
     }
@@ -567,10 +579,10 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
-        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
-        course = courseRepository.save(course);
+        var course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course = courseRepository.saveWithDefaultConfigurations(course);
 
-        request.performMvcRequest(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
+        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
 
     }
 

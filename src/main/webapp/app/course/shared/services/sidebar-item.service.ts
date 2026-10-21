@@ -13,6 +13,7 @@ import {
     faFileAlt,
     faList,
     faNetworkWired,
+    faPersonChalkboard,
     faPuzzlePiece,
     faQuestion,
     faRobot,
@@ -20,6 +21,7 @@ import {
     faTableCells,
     faUserCheck,
     faUsers,
+    faVideo,
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -249,6 +251,18 @@ export class CourseSidebarItemService {
         };
     }
 
+    getPresentationAssessmentsItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/presentations`,
+            icon: faPersonChalkboard,
+            iconColor: 'var(--primary)',
+            title: 'Presentations',
+            translation: 'artemisApp.presentationAssessment.home.title',
+            testId: 'presentations',
+            hidden: false,
+        };
+    }
+
     getScoresItem(courseId: number): SidebarItem {
         return {
             routerLink: `${courseId}/scores`,
@@ -276,6 +290,17 @@ export class CourseSidebarItemService {
             title: 'LTI Configuration',
             translation: 'global.menu.admin.lti',
             testId: 'lti-settings',
+            hidden: false,
+        };
+    }
+
+    getGocastBindingItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/gocast-binding`,
+            icon: faVideo,
+            title: 'TUM.Live',
+            translation: 'artemisApp.gocast.title',
+            testId: 'gocast-binding',
             hidden: false,
         };
     }

@@ -179,6 +179,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly markdown = input<string>();
     /** Emitted whenever the user edits the content in the editor (not for programmatic/binding updates). */
     readonly markdownChange = output<string>();
+    // A parent can acknowledge a debounced edit after Monaco has already accepted more keystrokes.
+    // That acknowledgement must not replace the live model with the older emitted snapshot.
+    private pendingMarkdownEcho: string | undefined;
+
     /**
      * The live markdown content. Updated by the {@link markdown} input binding, by user edits ({@link onTextChanged}),
      * and by imperative {@link setMarkdown} calls. Replaces the former private `_markdown` field.
@@ -289,9 +293,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly inPreviewMode = signal<boolean>(false);
     readonly inVisualMode = signal<boolean>(false);
     readonly inEditMode = signal<boolean>(true);
-    /** Tracks whether the visual/preview content has been activated at least once, mirroring ngbNav's lazy `destroyOnHide=false` behavior. */
+    /** Tracks whether the visual content has been activated at least once. It is rendered on first activation and kept in the DOM afterwards. */
     protected readonly visualTabActivated = signal<boolean>(false);
-    protected readonly previewTabActivated = signal<boolean>(false);
     readonly uniqueMarkdownEditorId = signal<string>(undefined!);
     resizeObserver?: ResizeObserver;
     /** Disposable for the selection change listener */
@@ -388,6 +391,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // is set in {@link ngAfterViewInit}).
         effect(() => {
             const value = this.markdown();
+            if (value !== undefined && value === this.pendingMarkdownEcho) {
+                this.pendingMarkdownEcho = undefined;
+                return;
+            }
+            this.pendingMarkdownEcho = undefined;
             this.currentMarkdown.set(value);
             untracked(() => this.applyMarkdownToEditor(value));
         });
@@ -735,7 +743,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // emit, preserving the legacy distinction between binding updates and user edits.
         this.currentMarkdown.set(event.text);
         this.applyMarkdownToEditor(event.text);
+        this.pendingMarkdownEcho = event.text;
         this.markdownChange.emit(event.text);
+    }
+
+    /**
+     * Emits a user edit that is still inside the textChanged debounce window as {@link markdownChange} right away.
+     * Call this before reading the bound value for an immediate action such as submitting a message.
+     */
+    flushPendingTextChange(): void {
+        this.monacoEditor()?.flushPendingTextChange();
     }
 
     /**
@@ -766,7 +783,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     updateEditorActionsVisibility(selection: EditorRange | undefined): void {
         const isEmpty = !selection || (selection.startLineNumber == selection.endLineNumber && selection.startColumn == selection.endColumn);
-        if (!isEmpty === this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
+        if (isEmpty !== this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
             return;
         }
         this.showTextStyleActions.set(!isEmpty);
@@ -866,9 +883,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.inEditMode.set(newId === this.TAB_EDIT);
         if (newId === this.TAB_VISUAL) {
             this.visualTabActivated.set(true);
-        }
-        if (newId === this.TAB_PREVIEW) {
-            this.previewTabActivated.set(true);
         }
 
         if (this.inEditMode()) {

@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
@@ -23,6 +24,8 @@ import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Distributed per-course accumulator for Atlas content-change events. Exercise version created
@@ -62,13 +65,17 @@ public class ContentChangeAccumulatorService {
 
     private final CourseConfigurationRepository courseConfigurationRepository;
 
+    /** Source of persisted lecture-unit state for re-checking requeued ids; absent when the lecture module is disabled. */
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
+
     public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider, Clock clock, AtlasOrchestratorProperties properties,
-            CourseConfigurationRepository courseConfigurationRepository) {
+            CourseConfigurationRepository courseConfigurationRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.distributedDataProvider = distributedDataProvider;
         this.clock = clock;
         this.defaultDebounceWindowSeconds = properties.debounceWindowSeconds();
         this.defaultDailyCap = properties.maxDailyOrchestrations();
         this.courseConfigurationRepository = courseConfigurationRepository;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
 
     /**
@@ -147,6 +154,35 @@ public class ContentChangeAccumulatorService {
             ContentChangeAccumulator current = currentMap.get(courseId);
             ContentChangeAccumulator next = current == null ? ContentChangeAccumulator.empty(now, today) : current;
             currentMap.put(courseId, next.with(exerciseId, now));
+        }
+        finally {
+            currentMap.unlock(courseId);
+        }
+    }
+
+    /**
+     * Refresh a buffered lecture unit using its current persisted eligibility. Evaluate the lookup
+     * inside the course lock so delayed asynchronous events cannot overwrite newer eligibility.
+     * Ineligible units are removed without resetting quota or dropping other queued content.
+     *
+     * @param courseId      the owning course
+     * @param lectureUnitId the changed lecture unit
+     * @param isEligible    lookup of the current persisted state, evaluated under the course lock
+     */
+    public void refreshLectureUnit(long courseId, long lectureUnitId, BooleanSupplier isEligible) {
+        Instant now = Instant.now(clock);
+        LocalDate today = LocalDate.now(clock);
+        DistributedMap<Long, ContentChangeAccumulator> currentMap = map();
+        currentMap.lock(courseId);
+        try {
+            ContentChangeAccumulator current = currentMap.get(courseId);
+            if (isEligible.getAsBoolean()) {
+                ContentChangeAccumulator next = current == null ? ContentChangeAccumulator.empty(now, today) : current;
+                currentMap.put(courseId, next.withLectureUnit(lectureUnitId, now));
+            }
+            else if (current != null && current.lectureUnitIds().contains(lectureUnitId)) {
+                currentMap.put(courseId, current.withoutLectureUnit(lectureUnitId));
+            }
         }
         finally {
             currentMap.unlock(courseId);
@@ -253,7 +289,7 @@ public class ContentChangeAccumulatorService {
             if (countQuota && effectiveDailyCount >= cap) {
                 return Optional.empty();
             }
-            BatchClaim claim = new BatchClaim(current.exerciseIds());
+            BatchClaim claim = new BatchClaim(current.exerciseIds(), current.lectureUnitIds());
             currentMap.put(courseId, current.claim(today, countQuota));
             return Optional.of(claim);
         }
@@ -273,7 +309,21 @@ public class ContentChangeAccumulatorService {
      * @param exerciseIds the exercise ids to re-add to the accumulator
      */
     public void requeueAfterConcurrentRun(long courseId, Set<Long> exerciseIds) {
-        requeue(courseId, exerciseIds, true);
+        requeue(courseId, exerciseIds, Set.of(), true);
+    }
+
+    /**
+     * Lecture-unit-aware variant of {@link #requeueAfterConcurrentRun(long, Set)}: re-merges both the
+     * exercise and lecture-unit ids of a claimed batch that could not run because a concurrent
+     * orchestration held the per-course run lock, refunding the single daily-run reservation. Lecture
+     * units that were deleted or became ineligible since the claim are dropped instead of restored.
+     *
+     * @param courseId       the course whose batch is being requeued
+     * @param exerciseIds    the exercise ids to re-add to the accumulator
+     * @param lectureUnitIds the lecture-unit ids to re-add to the accumulator
+     */
+    public void requeueAfterConcurrentRun(long courseId, Set<Long> exerciseIds, Set<Long> lectureUnitIds) {
+        requeue(courseId, exerciseIds, lectureUnitIds, true);
     }
 
     /**
@@ -292,35 +342,83 @@ public class ContentChangeAccumulatorService {
      * @param exerciseIds the exercise ids to re-add to the accumulator
      */
     public void requeueAfterFailedRun(long courseId, Set<Long> exerciseIds) {
-        requeue(courseId, exerciseIds, false);
+        requeue(courseId, exerciseIds, Set.of(), false);
+    }
+
+    /**
+     * Lecture-unit-aware variant of {@link #requeueAfterFailedRun(long, Set)}: re-merges both the
+     * exercise and lecture-unit ids of a claimed batch that failed before committing any mutation,
+     * keeping the daily-run reservation so failed retries stay bounded by the per-course cap. Lecture
+     * units that were deleted or became ineligible since the claim are dropped instead of restored.
+     *
+     * @param courseId       the course whose batch is being requeued
+     * @param exerciseIds    the exercise ids to re-add to the accumulator
+     * @param lectureUnitIds the lecture-unit ids to re-add to the accumulator
+     */
+    public void requeueAfterFailedRun(long courseId, Set<Long> exerciseIds, Set<Long> lectureUnitIds) {
+        requeue(courseId, exerciseIds, lectureUnitIds, false);
     }
 
     /**
      * Re-merge claimed ids atomically under the per-key lock. When {@code refundDailyRun} is set
      * (concurrent-run requeue) one daily-run reservation is released so a retry-only tick does not
      * burn automatic quota; when unset (failed-run requeue) the reservation is kept so the per-day
-     * cap bounds how many failed retries a course can attempt.
+     * cap bounds how many failed retries a course can attempt. A no-op when both id sets are empty.
+     * <p>
+     * Exercise ids are restored unchanged. Lecture-unit ids are re-checked against their persisted
+     * state first and only restored while they still exist, belong to the course, and are eligible:
+     * the claim cleared the buffered ids, so an edit made while the run was in flight (e.g. blanking
+     * a text unit) found nothing to remove in {@link #refreshLectureUnit}, and restoring the claimed
+     * id blindly would let the next claim spend a daily slot on a unit that batch resolution drops.
+     * The lookup runs under the course lock, like {@link #refreshLectureUnit}, so a later edit's
+     * refresh serialises behind this requeue and always sees the restored id.
      */
-    private void requeue(long courseId, Set<Long> exerciseIds, boolean refundDailyRun) {
-        if (exerciseIds.isEmpty()) {
+    private void requeue(long courseId, Set<Long> exerciseIds, Set<Long> lectureUnitIds, boolean refundDailyRun) {
+        if (exerciseIds.isEmpty() && lectureUnitIds.isEmpty()) {
             return;
         }
         Instant now = Instant.now(clock);
         LocalDate today = LocalDate.now(clock);
-        Set<Long> idsToRequeue = new HashSet<>(exerciseIds);
+        Set<Long> exerciseIdsToRequeue = new HashSet<>(exerciseIds);
         DistributedMap<Long, ContentChangeAccumulator> currentMap = map();
         currentMap.lock(courseId);
         try {
+            Set<Long> lectureUnitIdsToRequeue = findEligibleLectureUnitIds(courseId, lectureUnitIds);
             ContentChangeAccumulator current = currentMap.get(courseId);
+            if (exerciseIdsToRequeue.isEmpty() && lectureUnitIdsToRequeue.isEmpty() && (!refundDailyRun || current == null)) {
+                // Every claimed unit became ineligible: nothing to restore and no reservation to release.
+                return;
+            }
             ContentChangeAccumulator next = current == null ? ContentChangeAccumulator.empty(now, today) : current;
-            for (Long exerciseId : idsToRequeue) {
+            for (Long exerciseId : exerciseIdsToRequeue) {
                 next = next.with(exerciseId, now);
+            }
+            for (Long lectureUnitId : lectureUnitIdsToRequeue) {
+                next = next.withLectureUnit(lectureUnitId, now);
             }
             currentMap.put(courseId, refundDailyRun ? next.refundDailyRun(today) : next);
         }
         finally {
             currentMap.unlock(courseId);
         }
+    }
+
+    /**
+     * Load the given lecture units in one query and keep the ids whose persisted state still passes
+     * {@link ContentExtractionService#isCourseLectureUnitEligibleForOrchestration}; deleted units are
+     * absent from the result and therefore dropped, as is everything when the lecture module is disabled.
+     */
+    private Set<Long> findEligibleLectureUnitIds(long courseId, Set<Long> lectureUnitIds) {
+        if (lectureUnitIds.isEmpty() || lectureUnitRepositoryApi.isEmpty()) {
+            return Set.of();
+        }
+        Set<Long> eligible = new HashSet<>();
+        for (LectureUnit lectureUnit : lectureUnitRepositoryApi.get().findAllByIdsWithLecture(lectureUnitIds)) {
+            if (lectureUnitIds.contains(lectureUnit.getId()) && ContentExtractionService.isCourseLectureUnitEligibleForOrchestration(lectureUnit, courseId)) {
+                eligible.add(lectureUnit.getId());
+            }
+        }
+        return eligible;
     }
 
     /**
@@ -357,11 +455,19 @@ public class ContentChangeAccumulatorService {
         return clock;
     }
 
-    /** The completion snapshot returned by {@link #claimDueBatch(long)}. */
-    public record BatchClaim(Set<Long> exerciseIds) implements Serializable {
+    /**
+     * The drained batch returned by {@link #claimDueBatch(long)}: the exercise ids and lecture-unit ids
+     * buffered for the course. Both sets are guarded against {@code null} for rolling-upgrade safety.
+     */
+    public record BatchClaim(Set<Long> exerciseIds, Set<Long> lectureUnitIds) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
+
+        public BatchClaim {
+            exerciseIds = exerciseIds == null ? Set.of() : exerciseIds;
+            lectureUnitIds = lectureUnitIds == null ? Set.of() : lectureUnitIds;
+        }
     }
 
     /** Hook for tests: reset the map between cases without touching private state. */

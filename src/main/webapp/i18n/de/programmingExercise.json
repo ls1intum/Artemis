@@ -62,6 +62,7 @@
                     "branch": "Branch",
                     "dockerFlags": "Docker-Flags",
                     "theiaImage": "Online-IDE-Image",
+                    "onlineIdeExperienceLevel": "Online-IDE-Erfahrungsstufe",
                     "postDueDateHandling": "Verhalten nach Abgabefrist",
                     "assignmentCheckoutPath": "Aufgaben-Checkout-Pfad",
                     "solutionCheckoutPath": "Lösungs-Checkout-Pfad",
@@ -161,7 +162,7 @@
                 "resultPaths": "Ergebnispfade",
                 "resultPathsHelp": "Füge Glob-Muster für Testergebnisdateien hinzu, die in dieser Phase erzeugt werden, zum Beispiel JUnit-XML-Berichte.",
                 "testsExpected": "Tests erwartet",
-                "expectedTestsBeforeDueDateWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden. Um dies zu beheben, drücke auf \"Bearbeiten\", wechsle in den \"erweiterten Modus\", aktiviere \"Build Konfiguration anpassen\" und suche nach \"Build Phasen\".",
+                "expectedTestsBeforeDueDateWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden. Um dies zu beheben, klicke oben auf dieser Seite auf \"Build-Plan bearbeiten\", setze die \"Inklusionsbedingung\" der Phase auf \"Nach Abgabefrist\" und klicke auf \"Absenden\".",
                 "expectedTestsBeforeDueDateEditorWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden.",
                 "resultPathPlaceholder": "z. B. **/results/*.xml",
                 "addResultPath": "Ergebnispfad hinzufügen",
@@ -274,6 +275,16 @@
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
                 "alert": "Es muss eine gültige Konfiguration für die Online IDE ausgewählt werden."
             },
+            "onlineIdeExperienceLevel": {
+                "title": "Anfängliche Erfahrungsstufe in der Online IDE",
+                "notSet": "Nicht festgelegt (Artemis fügt keine Konfiguration hinzu)",
+                "description": "Studierende starten mit dieser Erfahrungsstufe, wenn sie die Aufgabe in der Online IDE öffnen. Artemis schreibt sie in die Datei .vscode/eduide.json jedes Repositorys, das es für Studierende aus der Vorlage erstellt, und ersetzt dabei eine gleichnamige Datei der Vorlage. Ohne Festlegung fügt Artemis keine Datei hinzu: Studierende starten mit der Stufe aus der .vscode/eduide.json der Vorlage, falls diese eine enthält, sonst mit der Standardstufe der Online IDE. Studierende können weiterhin eine andere Stufe wählen, und bereits bestehende Repositorys werden nicht verändert.",
+                "levels": {
+                    "BEGINNER": "Anfänger",
+                    "ADVANCED": "Fortgeschritten",
+                    "EXPERT": "Experte"
+                }
+            },
             "appName": "App-Name",
             "templateResult": "Ergebnis der Vorlage",
             "solutionResult": "Ergebnis der Musterlösung",
@@ -282,6 +293,7 @@
             "checkPlagiarism": "Plagiatsprüfung",
             "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
             "repositoryFilesError": "Repository-Dateien konnten nicht abgerufen werden.",
+            "problemStatementCouldNotBeUpdated": "Die Aufgabenstellung der Übung konnte nicht aktualisiert werden.",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",

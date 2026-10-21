@@ -36,7 +36,7 @@ import { User } from 'app/account/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, finalize, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -60,6 +60,8 @@ export class CommunicationService implements OnDestroy {
     private pinnedPosts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
 
     private currentPostContextFilter: PostContextFilter = {};
+    private filteredPostsRequestId = 0;
+    private filteredPostsRequestFailed = false;
     private currentConversation?: ConversationDTO = undefined;
     private user!: User; // set in constructor from accountService.identity()
     private pageType!: PageType; // set via setPageType() before use
@@ -198,11 +200,18 @@ export class CommunicationService implements OnDestroy {
      * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
      * @param forceUpdate if true, forces a re-fetch even if filter property did not change
      * @param conversation active conversation if available
+     * @param requestCallbacks hooks for this request only; shared WebSocket emissions do not invoke them
      */
-    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, conversation: ConversationDTO | undefined = undefined): void {
+    getFilteredPosts(
+        postContextFilter: PostContextFilter,
+        forceUpdate = true,
+        conversation: ConversationDTO | undefined = undefined,
+        requestCallbacks?: { beforeApply: () => void; complete: (applied: boolean) => void },
+    ): void {
         // check if the post context did change
         if (
             forceUpdate ||
+            this.filteredPostsRequestFailed ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
             postContextFilter?.conversationIds !== this.currentPostContextFilter?.conversationIds ||
             this.hasDifferentContexts(postContextFilter) ||
@@ -211,25 +220,57 @@ export class CommunicationService implements OnDestroy {
         ) {
             this.currentPostContextFilter = postContextFilter;
             this.currentConversation = conversation;
-            this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
-                if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {
-                    // if infinite scroll enabled, add fetched posts to the end of cachedPosts
-                    this.cachedPosts.push(...res.body!);
-                } else {
-                    // if the context changed, we need to fetch posts and dismiss cached posts
-                    this.cachedPosts = res.body!;
-                }
-                this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
-                this.posts$.next(this.cachedPosts);
-                this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
-                this.createSubscriptionFromPostContextFilter();
-            });
+            const requestId = ++this.filteredPostsRequestId;
+            this.filteredPostsRequestFailed = false;
+            let applied = false;
+            this.postService
+                .getPosts(this.courseId, postContextFilter)
+                .pipe(
+                    finalize(() => {
+                        // A failed page is not cached. Ignore older failures after a newer request has taken ownership.
+                        if (requestId === this.filteredPostsRequestId) this.filteredPostsRequestFailed = !applied;
+                        requestCallbacks?.complete(applied);
+                    }),
+                )
+                .subscribe((res) => {
+                    // A newer request owns the shared cache, including its messages, total and subscription context.
+                    if (requestId !== this.filteredPostsRequestId) {
+                        return;
+                    }
+                    requestCallbacks?.beforeApply();
+                    if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {
+                        // if infinite scroll enabled, add fetched posts to the end of cachedPosts
+                        const cachedIds = new Set(this.cachedPosts.map((post) => post.id));
+                        for (const post of res.body!) {
+                            // Live inserts can shift offset-based page boundaries; keep overlapping rows only once.
+                            if (!cachedIds.has(post.id)) {
+                                this.cachedPosts.push(post);
+                                cachedIds.add(post.id);
+                            }
+                        }
+                    } else {
+                        // if the context changed, we need to fetch posts and dismiss cached posts
+                        this.cachedPosts = res.body!;
+                    }
+                    this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
+                    this.posts$.next(this.cachedPosts);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+                    this.createSubscriptionFromPostContextFilter();
+                    applied = true;
+                });
         } else {
+            requestCallbacks?.beforeApply();
             // if we do not require force update, e.g. because only the post title or content changed,
             // we can emit the previously cached posts
-            this.posts$.next(this.cachedPosts);
-            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+            this.publishCachedPosts();
+            requestCallbacks?.complete(true);
         }
+    }
+
+    /** Publishes live cache changes without issuing a request or consuming a pending failed-page retry. */
+    private publishCachedPosts(): void {
+        this.posts$.next(this.cachedPosts);
+        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
     }
 
     /**
@@ -828,20 +869,7 @@ export class CommunicationService implements OnDestroy {
             default:
                 break;
         }
-        // emit updated version of cachedPosts to subscribing components...
-        if (PageType.OVERVIEW === this.pageType) {
-            const oldPage = this.currentPostContextFilter.page;
-            const oldPageSize = this.currentPostContextFilter.pageSize;
-            this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
-            this.currentPostContextFilter.page = 0;
-            // ...by invoking the getFilteredPosts method with forceUpdate set to true iff receiving a new Q&A post, i.e. fetching posts from server only in this case
-            this.getFilteredPosts(this.currentPostContextFilter, !postConvId, this.currentConversation);
-            this.currentPostContextFilter.pageSize = oldPageSize;
-            this.currentPostContextFilter.page = oldPage;
-        } else {
-            // ...by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
-            this.getFilteredPosts(this.currentPostContextFilter, false);
-        }
+        this.publishCachedPosts();
     };
 
     /**

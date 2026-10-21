@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.localci.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.doReturn;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -113,8 +112,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         userUtilService.addAdmin(TEST_PREFIX);
         // Create a test executor with a single thread
         testExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
-        // Mock the getBuildExecutor() method to return our test executor
-        doReturn(testExecutor).when(buildAgentConfiguration).getBuildExecutor();
+        // Let the build agent configuration hand out our test executor
+        buildAgentConfigurationOverrides.useBuildExecutor(testExecutor);
 
         buildJobRepository.deleteAll();
         // temporarily remove listener to avoid triggering build job processing
