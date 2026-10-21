@@ -9,12 +9,27 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ClassPathResource;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 
 class ProblemStatementBindingCheckerTest {
+
+    @ParameterizedTest
+    @CsvSource({ "testSort, [task][Sort](testSortAscending)", "testSort, [task][Sort](testSortDescending)", "testSort, prefix_testSort", "testSort, testSort$Suffix",
+            "test$Sort, [task][Sort](test$SortAscending)", "testSort, ätestSort", "testSort, testSorté" })
+    void hiddenTestMentions_doesNotRejectLongerIdentifiers(String hiddenName, String statement) {
+        assertThat(ProblemStatementBindingChecker.hiddenTestMentions(statement, Set.of(hiddenName))).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "testSort, [task][Sort](testSort)", "testSort, SortTests.testSort()", "testSort, SortTests#testSort", "testSort, Use testSort to verify sorting.",
+            "testSort, <color:testsColor(testSort)>sort()</color>", "test$Sort, SortTests#test$Sort()", "testSort[0], The case testSort[0] must remain hidden." })
+    void hiddenTestMentions_rejectsCompleteNamesInEveryStatementContext(String hiddenName, String statement) {
+        assertThat(ProblemStatementBindingChecker.hiddenTestMentions(statement, Set.of(hiddenName))).containsExactly(hiddenName);
+    }
 
     @Test
     void diagramBindingListsResolveEachBehavioralAndStructuralTest() {

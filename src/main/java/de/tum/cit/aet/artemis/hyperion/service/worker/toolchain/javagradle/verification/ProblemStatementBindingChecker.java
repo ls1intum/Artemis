@@ -406,7 +406,8 @@ final class ProblemStatementBindingChecker {
         }
         List<String> offenders = new ArrayList<>();
         for (String hiddenName : hiddenTestNames) {
-            if (problemStatement.contains(hiddenName) && !offenders.contains(hiddenName)) {
+            Pattern completeName = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})" + Pattern.quote(hiddenName) + "(?!\\p{javaJavaIdentifierPart})");
+            if (completeName.matcher(problemStatement).find() && !offenders.contains(hiddenName)) {
                 offenders.add(hiddenName);
             }
         }

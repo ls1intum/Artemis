@@ -272,6 +272,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.hasBoundedStrictTimeout(java.lang.String, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.hasTrustedAnnotation(java.lang.String, java.util.Set, java.lang.String, java.lang.String, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.sourceDeclaresType(java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ProblemStatementBindingChecker.hiddenTestMentions(java.lang.String, java.util.Set)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantExecution.declaresMethod(java.util.Map, java.lang.String)");
 
     /**
