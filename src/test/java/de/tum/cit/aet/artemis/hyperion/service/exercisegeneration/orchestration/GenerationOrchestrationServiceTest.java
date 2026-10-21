@@ -103,7 +103,7 @@ class GenerationOrchestrationServiceTest {
         exercise.setShortName("stack");
         exercise.setPackageName("de.example.stack");
         user.setLogin("editor");
-        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(snapshot, Map.of(), new GradingContext(false, Set.of())));
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(snapshot, Map.of(), new GradingContext(false, Set.of(), Set.of())));
         when(workers.claim("job", 42, GenerationToolchain.JAVA_GRADLE)).thenReturn(claim);
         when(workers.renew(claim)).thenReturn(true);
         when(jobs.isOwnedActiveJob(42, "job")).thenReturn(true);
@@ -143,7 +143,7 @@ class GenerationOrchestrationServiceTest {
         var oldSolution = new WorkspaceFile("solution/src/old.class", new byte[] { 0, 2 }, false);
         var oldTest = new WorkspaceFile("tests/test/old.bin", new byte[] { 0, 3 }, false);
         when(seeds.capture(exercise))
-                .thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(harness, oldSolution, oldTest)), Map.of(), new GradingContext(false, Set.of())));
+                .thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(harness, oldSolution, oldTest)), Map.of(), new GradingContext(false, Set.of(), Set.of())));
         var candidateFiles = new ArrayList<>(List.of(harness, new WorkspaceFile("solution/src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8), false)));
         if (mode == GenerationMode.ADAPT) {
             candidateFiles.addAll(List.of(oldSolution, oldTest));
@@ -176,7 +176,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void rejectsRegeneratedOutputThatReintroducesAnExcludedBinary() {
         var binary = new WorkspaceFile("solution/src/old.class", new byte[] { 0, 2 }, false);
-        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of())));
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of(), Set.of())));
         var candidate = new WorkspaceSnapshot(List.of(binary));
         var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
                 GenerationOutput.AccountingState.INCOMPLETE, "draft");
@@ -315,7 +315,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void earlySpecificationFailurePreservesCompleteAccountingWithoutRepositoryCapture() {
         var binary = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false);
-        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of())));
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of(), Set.of())));
         var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true);
         var status = mock(ExerciseGenerationStatusDTO.class);
         when(status.usage()).thenReturn(new ExerciseGenerationUsageDTO(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true));

@@ -758,6 +758,32 @@ examples.forEach((activeConversation) => {
             expect(component.canStartSaving).toBe(true);
         });
 
+        it('should publish forwarded sources when they finish loading for an already open thread', () => {
+            const sources = new Subject<Post[]>();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(
+                of(new HttpResponse({ body: [{ id: 1, messages: [{ sourceId: 10, sourceType: PostingType.POST }] }] })),
+            );
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(sources);
+            const wrapper = new Post();
+            wrapper.id = 1;
+            wrapper.hasForwardedMessages = true;
+            component.allPosts.set([wrapper]);
+            let preparedPosts: Post[] = [];
+            component.forwardedMessagesLoaded.subscribe((posts: Post[]) => (preparedPosts = posts));
+            component.setPosts();
+            expect(preparedPosts).toEqual([]);
+            const original = new Post();
+            original.id = 10;
+            original.content = 'Loaded original';
+            original.conversation = { id: activeConversation.id, type: activeConversation.type };
+
+            sources.next([original]);
+            sources.complete();
+
+            expect(preparedPosts[0].id).toBe(1);
+            expect(preparedPosts[0].forwardedPosts).toEqual([original]);
+        });
+
         it('should handle posts without forwarded messages gracefully', () => {
             vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [] })));
 

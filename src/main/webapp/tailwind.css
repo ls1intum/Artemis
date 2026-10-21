@@ -66,6 +66,7 @@
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
 @source './app/exercise/result';
+@source './app/exercise/participation-submission';
 @source './app/exercise/import';
 @source './app/exercise/review';
 @source './app/programming/manage/code-editor/instructor-and-editor-container';

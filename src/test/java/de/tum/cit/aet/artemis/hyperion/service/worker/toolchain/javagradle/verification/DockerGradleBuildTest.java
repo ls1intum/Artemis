@@ -55,7 +55,7 @@ class DockerGradleBuildTest {
 
     private final GenerationWorkspace workspace = new GenerationWorkspace(commands, resources);
 
-    private final GenerationInput exercise = new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of());
+    private final GenerationInput exercise = new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of());
 
     private static final ContractWitness HIGH_SCORE_WITNESS = new ContractWitness("R1", "testScoreAboveOneHundred", """
             @org.junit.jupiter.api.Test
@@ -223,6 +223,50 @@ class DockerGradleBuildTest {
         assertThat(restored.solutionFiles()).containsExactlyInAnyOrderEntriesOf(seed.repositoryTextFiles().get(RepositoryRole.SOLUTION));
         assertThat(restored.templateFiles()).containsExactlyInAnyOrderEntriesOf(seed.repositoryTextFiles().get(RepositoryRole.TEMPLATE));
         assertThat(restored.testsFiles().keySet()).noneMatch(path -> path.contains(ContractWitnessProbe.PROBE_CLASS_NAME));
+    }
+
+    @Test
+    void specificationDerivedEnumGraderAcceptsImplicitGenericSuperclassButRejectsErasedMember() throws IOException {
+        String session = sandbox.createSession();
+        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
+        specifications.approve(session, """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | RoastProfile | Declare the profile and its labels | student-creates |
+                ## Public API
+                ```java
+                public enum RoastProfile { LIGHT; public java.util.List<String> labels(); }
+                ```
+                """);
+        SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, exercise);
+        assertThat(seeded.testNames()).contains("testClass[GenericApi:RoastProfile]");
+        String path = "solution/src/de/tum/cit/aet/reference/RoastProfile.java";
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
+                package de.tum.cit.aet.reference;
+                public enum RoastProfile {
+                    LIGHT;
+                    public java.util.List<String> labels() { return java.util.List.of("light"); }
+                }
+                """), Map.of()));
+        var correct = build(session, "solution");
+        assertThat(correct.exitCode()).as(correct.buildDiagnostic()).isZero();
+        assertThat(correct.testNames()).contains("testClass[GenericApi:RoastProfile]");
+
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
+                package de.tum.cit.aet.reference;
+                public enum RoastProfile {
+                    LIGHT;
+                    public java.util.List labels() { return java.util.List.of("light"); }
+                }
+                """), Map.of()));
+        var erased = build(session, "solution");
+        assertThat(erased.exitCode()).isNotZero();
+        assertThat(erased.testFailedNames()).contains("testClass[GenericApi:RoastProfile]");
+        assertThat(erased.testFailedNames()).doesNotContain("testMethods[RoastProfile]");
     }
 
     @Test

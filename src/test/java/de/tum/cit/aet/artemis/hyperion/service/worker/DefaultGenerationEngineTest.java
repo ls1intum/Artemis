@@ -79,6 +79,7 @@ class DefaultGenerationEngineTest {
         var identity = new ExecutionIdentity("job", 1, UUID.randomUUID(), "worker", UUID.randomUUID());
         var brief = new ExerciseBrief("Title", "short", "my-package", null, "Create", ExerciseBrief.Mode.GENERATE, null, toolchain);
         var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
-        return new GenerationAssignment(identity, brief, parameters, new WorkspaceSnapshot(List.of()), Instant.now().plusSeconds(300), IMAGE, new GradingContext(false, Set.of()));
+        return new GenerationAssignment(identity, brief, parameters, new WorkspaceSnapshot(List.of()), Instant.now().plusSeconds(300), IMAGE,
+                new GradingContext(false, Set.of(), Set.of()));
     }
 }

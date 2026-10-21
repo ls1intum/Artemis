@@ -148,11 +148,15 @@ class GenerationSeedServiceTest {
                 .visibility(de.tum.cit.aet.artemis.assessment.domain.Visibility.NEVER);
         var invisibleBonus = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("hiddenBonus").active(true).weight(0.0).bonusPoints(1.0)
                 .visibility(de.tum.cit.aet.artemis.assessment.domain.Visibility.NEVER);
-        when(testCases.findByExerciseId(42L)).thenReturn(java.util.Set.of(testCase, inactive, structural, preservation, bonus, disabledCredit, invisible, invisibleBonus));
+        var afterDue = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("afterDue").active(true).weight(1.0)
+                .visibility(de.tum.cit.aet.artemis.assessment.domain.Visibility.AFTER_DUE_DATE);
+        when(testCases.findByExerciseId(42L))
+                .thenReturn(java.util.Set.of(testCase, inactive, structural, preservation, bonus, disabledCredit, invisible, invisibleBonus, afterDue));
         when(exercise.getDueDate()).thenReturn(java.time.ZonedDateTime.parse("2026-10-01T12:00:00Z"));
         var grading = service.capture(exercise).gradingContext();
         assertThat(grading.hasDueDate()).isTrue();
-        assertThat(grading.baselineGradedTestNames()).containsExactlyInAnyOrder("testPush", "bonusOnly");
+        assertThat(grading.baselineGradedTestNames()).containsExactlyInAnyOrder("testPush", "bonusOnly", "afterDue");
+        assertThat(grading.baselineHiddenTestNames()).containsExactly("afterDue");
     }
 
     @Test

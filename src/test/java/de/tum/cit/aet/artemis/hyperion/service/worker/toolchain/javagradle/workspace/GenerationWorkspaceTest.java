@@ -31,7 +31,7 @@ class GenerationWorkspaceTest {
 
     private final GenerationWorkspace service = new GenerationWorkspace(new SandboxBuildCommands(resources), resources);
 
-    private final GenerationInput exercise = new GenerationInput(1, "de.test", "Existing statement", false, Set.of());
+    private final GenerationInput exercise = new GenerationInput(1, "de.test", "Existing statement", false, Set.of(), Set.of());
 
     private final RecordingSandbox sandbox = new RecordingSandbox();
 
@@ -109,7 +109,7 @@ class GenerationWorkspaceTest {
 
     @Test
     void missingStatementSeedsAnEmptyFile() {
-        service.seedWorkspace(sandbox, "session", new GenerationInput(1, "de.test", null, false, Set.of()), Mode.ADAPT, new WorkspaceSnapshot(List.of()), true);
+        service.seedWorkspace(sandbox, "session", new GenerationInput(1, "de.test", null, false, Set.of(), Set.of()), Mode.ADAPT, new WorkspaceSnapshot(List.of()), true);
 
         assertThat(sandbox.contents.textFiles()).containsEntry("problem-statement.md", "");
     }

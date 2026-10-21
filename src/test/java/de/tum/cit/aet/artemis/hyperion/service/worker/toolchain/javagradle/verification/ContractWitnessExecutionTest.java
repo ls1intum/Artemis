@@ -166,7 +166,7 @@ class ContractWitnessExecutionTest {
     }
 
     private static GenerationInput javaExercise() {
-        return new GenerationInput(42, "de.tum", "", false, Set.of());
+        return new GenerationInput(42, "de.tum", "", false, Set.of(), Set.of());
     }
 
     private static InteractiveSandbox sandbox(TarArchiveInputStream first, TarArchiveInputStream... remaining) {

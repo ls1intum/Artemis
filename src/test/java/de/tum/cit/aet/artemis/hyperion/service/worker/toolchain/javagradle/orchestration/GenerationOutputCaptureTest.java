@@ -45,7 +45,8 @@ class GenerationOutputCaptureTest {
                 new WorkspaceFile("tests/deleted.java", "removed".getBytes(StandardCharsets.UTF_8), false), new WorkspaceFile("solution/src/old.class", new byte[] { 0, 3 }, false),
                 new WorkspaceFile("template/src/old.class", new byte[] { 0, 4 }, false), new WorkspaceFile("tests/test/old.bin", new byte[] { 0, 5 }, false),
                 new WorkspaceFile("tests/behavior/test/old.bin", new byte[] { 0, 6 }, false), new WorkspaceFile("tests/structural/test/old.bin", new byte[] { 0, 7 }, false)));
-        return new GenerationAssignment(identity, brief, parameters, seed, Instant.now().plusSeconds(300), "sha256:" + "a".repeat(64), new GradingContext(false, Set.of()));
+        return new GenerationAssignment(identity, brief, parameters, seed, Instant.now().plusSeconds(300), "sha256:" + "a".repeat(64),
+                new GradingContext(false, Set.of(), Set.of()));
     }
 
     private static WorkerUsageRecorder usage() {

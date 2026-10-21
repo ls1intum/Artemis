@@ -111,6 +111,6 @@ class WorkerRetryConfigurationTest {
         var brief = new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE);
         var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
         return new GenerationAssignment(identity, brief, parameters, new WorkspaceSnapshot(List.of()), Instant.MAX, "sha256:" + "a".repeat(64),
-                new GradingContext(false, Set.of()));
+                new GradingContext(false, Set.of(), Set.of()));
     }
 }

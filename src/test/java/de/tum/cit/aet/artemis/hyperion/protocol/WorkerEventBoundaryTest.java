@@ -98,7 +98,7 @@ class WorkerEventBoundaryTest {
         var parameters = new GenerationParameters(null, 10, 100000, Duration.ofMinutes(5), 128000, null, null, null, null, null, true, "CONTINUOUS");
         var deadline = Instant.parse("2030-01-01T00:00:00Z");
         var assignment = new GenerationAssignment(ID, new ExerciseBrief("Title", "short", "de.example", null, "Generate", ExerciseBrief.Mode.GENERATE), parameters,
-                new WorkspaceSnapshot(List.of()), deadline, IMAGE, new GradingContext(false, java.util.Set.of()));
+                new WorkspaceSnapshot(List.of()), deadline, IMAGE, new GradingContext(false, java.util.Set.of(), java.util.Set.of()));
         var authorized = new ExecutionAssignmentDTO(WorkerMessageCodec.toWire(ID), WorkerMessageCodec.capability(GenerationToolchain.JAVA_GRADLE), deadline, IMAGE,
                 codec.encodePayload(assignment));
         var envelope = new ExecutionAssignmentDTO(

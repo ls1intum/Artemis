@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.Gener
 
 class SandboxBuildCommandsTest {
 
-    private final GenerationInput input = new GenerationInput(1, "de.example", null, false, Set.of());
+    private final GenerationInput input = new GenerationInput(1, "de.example", null, false, Set.of(), Set.of());
 
     @Test
     void disposableGradleCachesNeverUsePersistentDaemons() {

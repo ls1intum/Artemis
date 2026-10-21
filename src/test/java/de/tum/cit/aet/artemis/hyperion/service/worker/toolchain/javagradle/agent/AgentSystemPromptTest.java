@@ -18,7 +18,7 @@ class AgentSystemPromptTest {
     private final AgentSystemPrompt prompts = new AgentSystemPrompt(new SandboxBuildCommands(new GenerationResources()));
 
     private static GenerationInput input(boolean hasDueDate) {
-        return new GenerationInput(1, "de.example", null, hasDueDate, Set.of());
+        return new GenerationInput(1, "de.example", null, hasDueDate, Set.of(), Set.of());
     }
 
     @Test
