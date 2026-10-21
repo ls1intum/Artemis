@@ -1,3 +1,5 @@
+import { repairMessageCaret } from './message-editor-caret';
+import { replaceMessageRange, replaceRichMessageRange } from './message-editor-replacement';
 import { MESSAGE_CLIPBOARD_TYPE, clipboardToEditorFragment, decodeMessageClipboard, encodeMessageClipboard } from './message-editor-clipboard';
 import { captureMessageBookmark, messageBookmarkText, restoreMessageBookmark } from './message-editor-bookmarks';
 import { preserveMessageSelection, restoreMessageSelectionBoundaries } from './message-editor-selection';
@@ -236,64 +238,9 @@ export class MessageEditorDom {
     }
 
     private ensureCaret(native = false): void {
-        // Browsers need a second, invisible break to keep typing after a trailing line break.
-        // Include inline parents too: Shift+Enter can be inserted inside a formatted run.
-        const containers = new Set([
-            ...this.element.querySelectorAll('p, li, pre > code'),
-            ...Array.from(this.element.querySelectorAll('br'), (lineBreak) => lineBreak.parentElement!),
-        ]);
-        for (const container of containers) {
-            let placeholder = container.querySelector(':scope > br[data-message-placeholder]');
-            let last = placeholder?.previousSibling ?? container.lastChild;
-            while (last?.nodeType === Node.TEXT_NODE && !last.textContent) {
-                last = last.previousSibling;
-            }
-            // A browser-created empty item/paragraph already has its layout break. A second break becomes a real,
-            // deletable empty line and prevents Backspace from merging the paragraph back into its preceding item.
-            if (native && last instanceof HTMLBRElement && !placeholder && !container.textContent && container.childNodes.length === 1) {
-                last.setAttribute('data-message-placeholder', '');
-                continue;
-            }
-            if (!container.childNodes.length) {
-                const empty = this.element.ownerDocument.createElement('br');
-                empty.setAttribute('data-message-placeholder', '');
-                container.append(empty);
-                const selection = this.element.ownerDocument.getSelection();
-                const range = selection?.rangeCount ? selection.getRangeAt(0) : undefined;
-                if (range?.collapsed && container.contains(range.startContainer)) {
-                    range.setStartBefore(empty);
-                    range.collapse(true);
-                    this.select(range);
-                }
-                continue;
-            }
-            if (last instanceof HTMLBRElement || last?.textContent?.endsWith('\n')) {
-                if (!placeholder) {
-                    const end = this.element.ownerDocument.createElement('br');
-                    end.setAttribute('data-message-placeholder', '');
-                    container.append(end);
-                    placeholder = end;
-                }
-                const selection = this.element.ownerDocument.getSelection();
-                const range = selection?.rangeCount ? selection.getRangeAt(0) : undefined;
-                if (range?.collapsed && container.contains(range.startContainer)) {
-                    const suffix = range.cloneRange();
-                    suffix.selectNodeContents(container);
-                    suffix.setStart(range.startContainer, range.startOffset);
-                    const remaining = suffix.cloneContents();
-                    remaining.querySelectorAll('[data-message-placeholder]').forEach((item) => item.remove());
-                    if (!remaining.textContent && !remaining.querySelector('br, img, [data-message-reference]')) {
-                        // Select the visible blank line after its layout placeholder exists. Keeping the old boundary
-                        // before an empty text node can leave the browser painting the caret on the preceding line.
-                        range.setStartBefore(placeholder);
-                        range.collapse(true);
-                        this.select(range);
-                    }
-                }
-            } else {
-                placeholder?.remove();
-            }
-        }
+        const selection = this.element.ownerDocument.getSelection();
+        const caret = repairMessageCaret(this.element, selection?.rangeCount ? selection.getRangeAt(0) : undefined, native);
+        if (caret) this.select(caret);
     }
 
     private transact(change: () => void): void {
@@ -478,7 +425,7 @@ export class MessageEditorDom {
             if (trailingSpace) {
                 fragment.append(this.element.ownerDocument.createTextNode(trailingSpace));
             }
-            this.replaceRichContent(fragment);
+            this.select(replaceRichMessageRange(this.element, this.range(), fragment));
             this.revision++;
             if (
                 Array.from(this.element.querySelectorAll('[data-message-reference]')).some((reference) =>
@@ -492,104 +439,8 @@ export class MessageEditorDom {
         });
     }
 
-    /** Splits a surrounding paragraph for block paste, merging its text into the first/last pasted paragraphs. */
-    private replaceRichContent(fragment: DocumentFragment): void {
-        const blockContent = Array.from(fragment.children).some((child) => child.matches('p, ul, ol, blockquote, pre'));
-        const originalParagraph = this.parentElement(this.range().startContainer)?.closest('p');
-        if (!blockContent || !originalParagraph) {
-            // Pasted content owns its marks/links. Split the surrounding inline wrappers instead of nesting links or
-            // making the pasted text inherit unrelated formatting. Both sides keep their original wrappers.
-            const caret = this.element.ownerDocument.createTextNode('');
-            this.replace(caret);
-            let parent = caret.parentElement;
-            while (parent?.matches('strong, b, em, i, ins, u, s, del, a')) {
-                const following = this.element.ownerDocument.createRange();
-                following.selectNodeContents(parent);
-                following.setStartAfter(caret);
-                const after = parent.cloneNode(false) as HTMLElement;
-                after.append(following.extractContents());
-                parent.after(caret, after);
-                if (!parent.textContent && !parent.querySelector('[data-message-reference], img')) parent.remove();
-                if (!after.textContent && !after.querySelector('[data-message-reference], img')) after.remove();
-                parent = caret.parentElement;
-            }
-            const range = this.range();
-            range.setStartBefore(caret);
-            range.collapse(true);
-            this.select(range);
-            caret.remove();
-            this.replace(fragment);
-            return;
-        }
-        // Reuse selection deletion/paragraph merging before splitting the surviving paragraph at its caret.
-        const deletionPoint = this.element.ownerDocument.createTextNode('');
-        this.replace(deletionPoint);
-        const range = this.range();
-        let paragraph = this.parentElement(range.startContainer)?.closest('p');
-        if (!paragraph && this.element.contains(originalParagraph)) {
-            // Cross-block deletion can collapse at the host boundary; keep the surviving paragraph's prefix.
-            paragraph = originalParagraph;
-            range.setStart(paragraph, paragraph.childNodes.length);
-            range.collapse(true);
-            this.select(range);
-        }
-        deletionPoint.remove();
-        if (!paragraph) {
-            this.replace(fragment);
-            return;
-        }
-        const suffixRange = range.cloneRange();
-        suffixRange.selectNodeContents(paragraph);
-        suffixRange.setStart(range.startContainer, range.startOffset);
-        const suffix = suffixRange.extractContents();
-        const first = fragment.firstElementChild;
-        if (first?.matches('p')) {
-            paragraph.append(...Array.from(first.childNodes));
-            first.remove();
-        }
-        const last = fragment.lastElementChild;
-        const after = last?.matches('p') ? last : this.element.ownerDocument.createElement('p');
-        const caret = this.element.ownerDocument.createTextNode('');
-        after.append(caret, suffix);
-        if (after !== last) fragment.append(after);
-        paragraph.after(fragment);
-        if (!paragraph.textContent && !paragraph.querySelector('[data-message-reference], img')) paragraph.remove();
-        range.setStartBefore(caret);
-        range.collapse(true);
-        this.select(range);
-        caret.remove();
-    }
-
     private replace(node: Node): void {
-        const range = this.range();
-        const firstParagraph = this.parentElement(range.startContainer)?.closest('p');
-        const lastParagraph = this.parentElement(range.endContainer)?.closest('p');
-        const mergeParagraphs = firstParagraph && lastParagraph && firstParagraph !== lastParagraph && firstParagraph.parentNode === lastParagraph.parentNode;
-        range.deleteContents();
-        if (mergeParagraphs) {
-            range.setStart(firstParagraph, firstParagraph.childNodes.length);
-            range.collapse(true);
-        }
-        const last = node instanceof DocumentFragment ? node.lastChild : node;
-        range.insertNode(node);
-        if (mergeParagraphs) {
-            firstParagraph.append(...Array.from(lastParagraph.childNodes));
-            lastParagraph.remove();
-        }
-        if (last) {
-            if (last.nodeType === Node.TEXT_NODE) {
-                if (last.textContent) {
-                    range.setStart(last, last.textContent.length);
-                } else {
-                    // WebKit resolves an empty text-node caret before the preceding line break.
-                    range.setStartBefore(last);
-                }
-            } else {
-                range.setStartAfter(last);
-            }
-        }
-        range.collapse(true);
-        this.select(range);
+        this.select(replaceMessageRange(this.range(), node));
     }
 
     private selectedTextNodes(range: Range): Node[] {

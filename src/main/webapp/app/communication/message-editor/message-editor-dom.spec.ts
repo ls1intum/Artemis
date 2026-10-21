@@ -671,6 +671,50 @@ describe('Message editor editing transactions', () => {
         expect(root.querySelector('[data-message-reference]')!.getAttribute('data-message-reference')).toBe('[user]Anna(anna)[/user]');
     });
 
+    it('pastes blocks across selected paragraphs with one transaction, preserved edge marks and a caret before the suffix', () => {
+        const original = '**First keep** old\n\nold *last keep*';
+        editor.load(original);
+        const paragraphs = root.querySelectorAll('p');
+        const range = document.createRange();
+        range.setStart(paragraphs[0].lastChild!, 1);
+        range.setEnd(paragraphs[1].firstChild!, 3);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        changed.mockClear();
+        editor.insertClipboard('<p>new <strong>A</strong></p><ul><li>item</li></ul><p>last</p>', 'new A\nitem\nlast');
+        expect(changed).toHaveBeenCalledExactlyOnceWith('**First keep** new **A**\n\n- item\n\nlast *last keep*');
+        expect(Array.from(root.children, (child) => child.tagName)).toEqual(['P', 'UL', 'P']);
+        expect(root.querySelector('strong')?.textContent).toBe('First keep');
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith(original);
+        expect(window.getSelection()!.toString()).toBe('oldold');
+        editor.redo();
+        editor.insertText('!');
+        expect(changed).toHaveBeenLastCalledWith('**First keep** new **A**\n\n- item\n\nlast! *last keep*');
+    });
+
+    it('pastes a link inside nested marks without inheriting wrappers or nesting anchors and restores the original caret on undo', () => {
+        const original = '**Before [old](https://old.example) after**';
+        editor.load(original);
+        select(root.querySelector('a')!.firstChild!, 2);
+        editor.insertClipboard('<a href="https://new.example"><em>new</em></a>', 'new');
+        expect(root.textContent).toBe('Before olnewd after');
+        expect(Array.from(root.querySelectorAll('a'), (link) => link.getAttribute('href'))).toEqual(['https://old.example', 'https://new.example', 'https://old.example']);
+        const pasted = root.querySelector('a[href="https://new.example"]')!;
+        expect(pasted.closest('strong')).toBeNull();
+        expect(pasted.querySelector('em')?.textContent).toBe('new');
+        expect(root.querySelector('a a')).toBeNull();
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith(original);
+        const caret = window.getSelection()!.getRangeAt(0);
+        expect(caret.collapsed).toBe(true);
+        expect(caret.startContainer.textContent).toBe('old');
+        const prefix = document.createRange();
+        prefix.selectNodeContents(root);
+        prefix.setEnd(caret.startContainer, caret.startOffset);
+        expect(prefix.toString()).toBe('Before ol');
+    });
+
     it('keeps native cross-paragraph typing and merges paragraph boundaries when pasting plain text', () => {
         editor.load('First paragraph\n\nSecond paragraph');
         const paragraphs = root.querySelectorAll('p');
