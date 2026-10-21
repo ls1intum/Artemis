@@ -943,6 +943,109 @@ describe('CourseConversationsService', () => {
             expect(cachedUnreadCount(channel.id)).toBe(baseline === 'manual' ? 3 : 1);
         });
 
+        it.each(['channel', 'group', 'direct'] as const)('reconciles an earlier failed PATCH when a later PATCH succeeds after leaving a %s', (kind) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            const conversation = kind === 'channel' ? channel : kind === 'group' ? groupChat : oneToOneChat;
+            courseConversationsService.setActiveConversation(conversation);
+            const first = new Subject<HttpResponse<void>>();
+            const second = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(first).mockReturnValueOnce(second);
+            receiveMockSubject.next(eventFor(conversation));
+            receiveMockSubject.next(eventFor(conversation));
+            courseConversationsService.setActiveConversation(conversation === channel ? groupChat : channel);
+            first.error(new Error('earlier read failed after navigation'));
+            expect(cachedUnreadCount(conversation.id)).toBe(1);
+
+            second.next(new HttpResponse<void>());
+
+            expect(cachedUnreadCount(conversation.id)).toBe(0);
+            expect(conversation.hasUnreadMessage).toBe(false);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
+        });
+
+        it('keeps an arrival after navigation when a later PATCH reconciles an earlier failure', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const first = new Subject<HttpResponse<void>>();
+            const second = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(first).mockReturnValueOnce(second);
+            receiveMockSubject.next(eventFor(channel));
+            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService.setActiveConversation(groupChat);
+            first.error(new Error('older read failed'));
+            receiveMockSubject.next(eventFor(channel));
+            expect(cachedUnreadCount(channel.id)).toBe(2);
+
+            second.next(new HttpResponse<void>());
+
+            expect(cachedUnreadCount(channel.id)).toBe(1);
+            expect(channel.hasUnreadMessage).toBe(true);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+        });
+
+        it.each([
+            [0, 'failure'],
+            [1, 'failure'],
+            [1, 'success'],
+            [1, 'success-after-message'],
+            [1, 'success-after-manual-unread'],
+        ] as const)('reconciles a pending read against refreshed count %s on %s', (count, outcome) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const pending = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
+            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService.setActiveConversation(groupChat);
+            const refreshedChannel = { ...channel, unreadMessagesCount: count, hasUnreadMessage: count > 0 };
+            vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, refreshedChannel] })));
+            vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            courseConversationsService.markAllChannelsAsRead(course).subscribe();
+            expect(cachedUnreadCount(channel.id)).toBe(count);
+            if (outcome === 'success-after-message') {
+                receiveMockSubject.next(eventFor(channel));
+            } else if (outcome === 'success-after-manual-unread') {
+                courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 3);
+            }
+
+            if (outcome === 'failure') {
+                pending.error(new Error('read failure already represented by refresh'));
+            } else {
+                pending.next(new HttpResponse<void>());
+            }
+
+            const expected = outcome === 'failure' ? count : outcome === 'success-after-message' ? 1 : outcome === 'success-after-manual-unread' ? 3 : 0;
+            expect(cachedUnreadCount(channel.id)).toBe(expected);
+            expect(refreshedChannel.hasUnreadMessage).toBe(expected > 0);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(expected > 0);
+        });
+
+        it('reconciles both pending reads after repeated recovery refreshes', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const first = new Subject<HttpResponse<void>>();
+            const second = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(first).mockReturnValueOnce(second);
+            receiveMockSubject.next(eventFor(channel));
+            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService.setActiveConversation(groupChat);
+            const refreshedChannel = { ...channel, unreadMessagesCount: 2, hasUnreadMessage: true };
+            vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, refreshedChannel] })));
+            vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            courseConversationsService.markAllChannelsAsRead(course).subscribe({ complete: () => courseConversationsService.forceRefresh(false).subscribe() });
+            first.error(new Error('read failure already represented by both refreshes'));
+            expect(cachedUnreadCount(channel.id)).toBe(2);
+
+            second.next(new HttpResponse<void>());
+
+            expect(cachedUnreadCount(channel.id)).toBe(0);
+            expect(refreshedChannel.hasUnreadMessage).toBe(false);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
+        });
+
         it('preserves a manual unread boundary when an older messages response arrives after navigation', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
             courseConversationsService.setConversationViewOpen(true);
