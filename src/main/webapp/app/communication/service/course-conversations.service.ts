@@ -86,6 +86,7 @@ export class CourseConversationsService implements OnDestroy {
     // Per conversation, the number of the last read request sent, and the numbers of the newest one that succeeded and that failed. Read requests of
     // the same conversation can complete out of order, and only the newest outcome describes the count the server holds.
     private readRequests = new Map<number, ConversationReadState>();
+    private automaticReadVersion = 0;
     // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -313,6 +314,7 @@ export class CourseConversationsService implements OnDestroy {
             throw new Error('Course is not set. The service does not seem to be initialized.');
         }
         this.setIsLoading(true);
+        const automaticReadVersion = this.automaticReadVersion;
         const readSnapshots = Array.from(this.readRequests, ([conversationId, reads]) => ({
             conversationId,
             request: this.messagesRequested(conversationId),
@@ -332,6 +334,14 @@ export class CourseConversationsService implements OnDestroy {
                 // The error is passed on rather than swallowed, so that subscribers acting in their completion handler
                 // do not mistake a failed refresh for an up to date list.
                 return throwError(() => res);
+            }),
+            switchMap((conversations: ConversationDTO[]) => {
+                // A reply observed during this GET may already be in its count. Start a new snapshot after
+                // that reply instead of guessing its coverage and counting a delayed PATCH failure twice.
+                if (automaticReadVersion !== this.automaticReadVersion) {
+                    return this.forceRefresh(notifyActiveConversationSubscribers, notifyConversationsSubscribers);
+                }
+                return of(conversations);
             }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
@@ -703,6 +713,7 @@ export class CourseConversationsService implements OnDestroy {
                     const conversationId = conversationDTO.id!;
                     const readRequest = this.readRequestsOf(conversationId);
                     const requestNumber = ++readRequest.sent;
+                    this.automaticReadVersion++;
                     readRequest.pending.add(requestNumber);
                     const unreadRevision = readRequest.unreadRevision;
                     const readAt = dayjs();

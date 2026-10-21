@@ -1046,6 +1046,46 @@ describe('CourseConversationsService', () => {
             expect(courseConversationsService['hasUnreadMessages']).toBe(false);
         });
 
+        it.each([
+            [0, 'failure'],
+            [1, 'failure'],
+            [0, 'success'],
+            [1, 'success'],
+        ] as const)('replaces refreshed count %s when an automatic read starts during the GET before %s', (initialCount, outcome) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const initialRefresh = new Subject<HttpResponse<ConversationDTO[]>>();
+            const replacementRefresh = new Subject<HttpResponse<ConversationDTO[]>>();
+            const getConversations = vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValueOnce(initialRefresh).mockReturnValueOnce(replacementRefresh);
+            getConversations.mockClear();
+            const pendingRead = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pendingRead);
+            courseConversationsService.forceRefresh(false, false).subscribe();
+            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService.setActiveConversation(groupChat);
+            const activeNotifications = vi.spyOn(courseConversationsService['_activeConversation$'], 'next');
+
+            initialRefresh.next(new HttpResponse({ body: [groupChat, oneToOneChat, { ...channel, unreadMessagesCount: initialCount, hasUnreadMessage: initialCount > 0 }] }));
+            initialRefresh.complete();
+            expect(getConversations).toHaveBeenCalledTimes(2);
+            replacementRefresh.next(new HttpResponse({ body: [groupChat, oneToOneChat, { ...channel, unreadMessagesCount: 1, hasUnreadMessage: true }] }));
+            replacementRefresh.complete();
+            expect(cachedUnreadCount(channel.id)).toBe(1);
+
+            if (outcome === 'failure') {
+                pendingRead.error(new Error('read failed after replacement refresh'));
+            } else {
+                pendingRead.next(new HttpResponse<void>());
+            }
+
+            expect(cachedUnreadCount(channel.id)).toBe(outcome === 'failure' ? 1 : 0);
+            // A reply after the accepted baseline remains new; the replacement must not absorb it.
+            receiveMockSubject.next(eventFor(channel));
+            expect(cachedUnreadCount(channel.id)).toBe(outcome === 'failure' ? 2 : 1);
+            expect(activeNotifications).not.toHaveBeenCalled();
+        });
+
         it('preserves a manual unread boundary when an older messages response arrives after navigation', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
             courseConversationsService.setConversationViewOpen(true);
