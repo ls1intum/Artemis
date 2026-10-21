@@ -67,6 +67,18 @@ A scheduled task that rewrites shared state a test also writes (the `dockerImage
 cleared and refilled every five minutes) is switched off in the test contexts by its interval
 property instead.
 
+Two mechanisms keep background work out of the next test:
+
+- Mail goes through the `mailTaskExecutor`, which is synchronous under the `test` profile. An `@Async`
+  method that reaches `MailSendingService` has to name it (`@Async("mailTaskExecutor")`); on the shared
+  pool the mail would be sent from a pool thread. `AsyncMailArchitectureTest` rejects such a method.
+- `AsyncWorkDrainExtension`, registered on `AbstractArtemisIntegrationTest`, waits after each test
+  until every shared `taskExecutor` submission has actually completed, before the `@AfterEach`
+  methods reset the spies. `AsyncWorkTrackingConfiguration` wraps the initialized executor before
+  consumers receive it and counts work through completion; pool active/queue snapshots cannot
+  prove completion because a worker can be paused between dequeueing and execution. A task that does not finish within 30 seconds is logged and the context is no
+  longer awaited, so look for that warning when a test leaves a task behind.
+
 ## Coverage
 
 CI enforces coverage thresholds per module. A new class with no test can fail the build even when
