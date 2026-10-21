@@ -1,8 +1,7 @@
-import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, finalize, take } from 'rxjs';
 import { faChartBar, faClipboardList, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -14,6 +13,8 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -21,11 +22,11 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
-import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
+import { supportsAiVariantGeneration, variantGenerationBlocker } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
 
 /**
  * Builds the course-exercise `ActionItem[]` (course-scoped routes, role and feature-toggle gates, delete wiring) and
@@ -41,6 +42,8 @@ import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-vari
 })
 export class ExerciseActionsComponent {
     private readonly destroyRef = inject(DestroyRef);
+    private readonly alertService = inject(AlertService);
+    private readonly capabilityRequests = inject(GenerationCapabilityRequestsService);
     private readonly textExerciseService = inject(TextExerciseService);
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
     private readonly quizExerciseService = inject(QuizExerciseService);
@@ -64,14 +67,20 @@ export class ExerciseActionsComponent {
      */
     readonly quizActionsMinWidth = output<number>();
 
-    private readonly generationCapabilities = injectGenerationCapabilities(
-        this.exercise,
-        computed(() => this.exercise().isAtLeastEditor ?? false),
-    );
-
     private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */
     private readonly hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    private readonly programmingGenerationEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
+    private readonly aiVariantSupported = computed(() => {
+        const exercise = this.exercise();
+        return (
+            this.hyperionEnabled &&
+            (exercise.isAtLeastEditor ?? false) &&
+            supportsAiVariantGeneration(exercise) &&
+            (exercise.type !== ExerciseType.PROGRAMMING || this.programmingGenerationEnabled)
+        );
+    });
+    private readonly variantPreflightPending = signal(false);
     /**
      * Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. Actions
      * are data, not markup, so this folds into `ActionItem.disabled` instead of a `jhiFeatureToggle` directive.
@@ -212,21 +221,16 @@ export class ExerciseActionsComponent {
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
             });
         }
-        // Sits between the info/success-colored buttons above and the warning-colored edit buttons below, matching its
-        // own warning color. Programming exercises also require the server's generation capability.
-        if (
-            this.hyperionEnabled &&
-            ex.isAtLeastEditor &&
-            supportsAiVariantGeneration(ex) &&
-            (ex.type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true)
-        ) {
+        // Repository eligibility is checked on click, not once for every row rendered in the course table.
+        if (this.aiVariantSupported()) {
             items.push({
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
                 icon: faRobot,
                 severity: 'warn',
                 kind: 'button',
-                onClick: () => this.aiVariantModalVisible.set(true),
+                disabled: this.variantPreflightPending() || undefined,
+                onClick: () => this.openAiVariantWizard(),
             });
         }
         // Programming-only actions stay visible but go inert while the feature toggle is off.
@@ -301,6 +305,36 @@ export class ExerciseActionsComponent {
         }
         return items;
     });
+
+    private openAiVariantWizard(): void {
+        const exercise = this.exercise();
+        if (!exercise.id || !this.aiVariantSupported() || this.variantPreflightPending() || this.aiVariantModalVisible()) return;
+        if (exercise.type !== ExerciseType.PROGRAMMING) {
+            this.aiVariantModalVisible.set(true);
+            return;
+        }
+        this.variantPreflightPending.set(true);
+        this.capabilityRequests
+            .describe(exercise.id)
+            .pipe(
+                take(1),
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.variantPreflightPending.set(false)),
+            )
+            .subscribe({
+                next: (capabilities) => {
+                    if (this.exercise().id !== exercise.id || !this.aiVariantSupported()) return;
+                    const blocker = variantGenerationBlocker(this.exercise(), capabilities);
+                    if (blocker) this.alertService.warning(blocker);
+                    else this.aiVariantModalVisible.set(true);
+                },
+                error: () => {
+                    if (this.exercise().id === exercise.id && this.aiVariantSupported()) {
+                        this.alertService.warning('artemisApp.hyperion.generation.blocker.capabilitiesUnavailable');
+                    }
+                },
+            });
+    }
 
     /**
      * Relays an optimistic quiz update to the parent, recomputing the client-derived `status` / `quizStarted` flags first
