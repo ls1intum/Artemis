@@ -1,12 +1,15 @@
+import dayjs from 'dayjs/esm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizExerciseApi } from 'app/openapi/api/quiz-exercise-api';
+import { QuizExerciseBatchApi } from 'app/openapi/api/quiz-exercise-batch-api';
+import type { QuizBatch as GeneratedQuizBatch } from 'app/openapi/model/quiz-batch';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -19,7 +22,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 describe('QuizExercise Lifecycle Buttons Component', () => {
     let comp: QuizExerciseLifecycleButtonsComponent;
     let fixture: ComponentFixture<QuizExerciseLifecycleButtonsComponent>;
-    let quizExerciseService: QuizExerciseService;
+    let quizExerciseApi: QuizExerciseApi;
+    let quizExerciseBatchApi: QuizExerciseBatchApi;
     let alertService: AlertService;
 
     const course = { id: 123 } as Course;
@@ -29,6 +33,8 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     quizExercise.quizQuestions = [];
     const quizBatch = new QuizBatch();
     quizBatch.id = 567;
+    // The generated models carry ISO strings where the class carries dayjs, so the wire fixture is its own object.
+    const generatedQuizBatch: GeneratedQuizBatch = { id: 567 };
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -48,7 +54,8 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
 
         fixture = TestBed.createComponent(QuizExerciseLifecycleButtonsComponent);
         comp = fixture.componentInstance;
-        quizExerciseService = TestBed.inject(QuizExerciseService);
+        quizExerciseApi = TestBed.inject(QuizExerciseApi);
+        quizExerciseBatchApi = TestBed.inject(QuizExerciseBatchApi);
         alertService = TestBed.inject(AlertService);
     });
 
@@ -57,106 +64,69 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should start quiz', () => {
-        vi.spyOn(quizExerciseService, 'start').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: quizExercise,
-                }),
-            ),
-        );
+        vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.startQuiz();
-        expect(quizExerciseService.start).toHaveBeenCalledWith(456);
-        expect(quizExerciseService.start).toHaveBeenCalledOnce();
+        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledWith(456, 'start-now');
+        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledOnce();
     });
 
     it('should not start quiz on error', () => {
-        vi.spyOn(quizExerciseService, 'start').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
+        vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
         vi.spyOn(alertService, 'error');
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.startQuiz();
-        expect(quizExerciseService.start).toHaveBeenCalledWith(456);
-        expect(quizExerciseService.start).toHaveBeenCalledOnce();
+        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledWith(456, 'start-now');
+        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledOnce();
         expect(alertService.error).toHaveBeenCalledOnce();
     });
 
     it('should end quiz', () => {
-        vi.spyOn(quizExerciseService, 'end').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: quizExercise,
-                }),
-            ),
-        );
+        vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.endQuiz();
-        expect(quizExerciseService.end).toHaveBeenCalledWith(456);
-        expect(quizExerciseService.end).toHaveBeenCalledOnce();
+        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledWith(456, 'end-now');
+        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledOnce();
     });
 
     it('should add quiz batch', () => {
-        vi.spyOn(quizExerciseService, 'addBatch').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: quizBatch,
-                }),
-            ),
-        );
+        vi.spyOn(quizExerciseBatchApi, 'addBatch').mockReturnValue(of(generatedQuizBatch));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.addBatch();
-        expect(quizExerciseService.addBatch).toHaveBeenCalledWith(456);
-        expect(quizExerciseService.addBatch).toHaveBeenCalledOnce();
+        expect(quizExerciseBatchApi.addBatch).toHaveBeenCalledWith(456);
+        expect(quizExerciseBatchApi.addBatch).toHaveBeenCalledOnce();
     });
 
     it('should start quiz batch', () => {
-        vi.spyOn(quizExerciseService, 'startBatch').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: quizBatch,
-                }),
-            ),
-        );
+        vi.spyOn(quizExerciseBatchApi, 'startBatch_').mockReturnValue(of(generatedQuizBatch));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.startBatch(567);
-        expect(quizExerciseService.startBatch).toHaveBeenCalledWith(567);
-        expect(quizExerciseService.startBatch).toHaveBeenCalledOnce();
+        expect(quizExerciseBatchApi.startBatch_).toHaveBeenCalledWith(567);
+        expect(quizExerciseBatchApi.startBatch_).toHaveBeenCalledOnce();
     });
 
     it('should make quiz visible', () => {
-        vi.spyOn(quizExerciseService, 'setVisible').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: quizExercise,
-                }),
-            ),
-        );
+        vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.showQuiz();
-        expect(quizExerciseService.setVisible).toHaveBeenCalledWith(456);
-        expect(quizExerciseService.setVisible).toHaveBeenCalledOnce();
+        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledWith(456, 'set-visible');
+        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledOnce();
     });
 
     it('should not make quiz visible on error', () => {
-        vi.spyOn(quizExerciseService, 'find').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: quizExercise,
-                }),
-            ),
-        );
-        vi.spyOn(quizExerciseService, 'setVisible').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
+        vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
         vi.spyOn(alertService, 'error');
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.showQuiz();
-        expect(quizExerciseService.setVisible).toHaveBeenCalledWith(456);
-        expect(quizExerciseService.setVisible).toHaveBeenCalledOnce();
+        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledWith(456, 'set-visible');
+        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledOnce();
         expect(alertService.error).toHaveBeenCalledOnce();
     });
 
@@ -227,9 +197,23 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     describe('optimistic state updates', () => {
+        it('converts the dates the server returns into dayjs before emitting', () => {
+            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({ releaseDate: '2026-05-01T10:00:00Z', dueDate: '2026-05-01T11:00:00Z' }));
+            fixture.componentRef.setInput('quizExercise', buildQuiz({}));
+            const emitted: QuizExercise[] = [];
+            comp.handleNewQuizExercise.subscribe((quiz) => emitted.push(quiz));
+
+            comp.showQuiz();
+
+            expect(dayjs.isDayjs(emitted[0].releaseDate)).toBe(true);
+            expect(emitted[0].releaseDate!.toISOString()).toBe('2026-05-01T10:00:00.000Z');
+            expect(emitted[0].dueDate!.toISOString()).toBe('2026-05-01T11:00:00.000Z');
+            expect(emitted[0].startDate).toBeUndefined();
+        });
+
         it('marks the first existing batch as started when starting a quiz', () => {
             const batch = { id: 1, started: false } as QuizBatch;
-            vi.spyOn(quizExerciseService, 'start').mockReturnValue(of(new HttpResponse({ body: {} })));
+            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
             fixture.componentRef.setInput('quizExercise', buildQuiz({ quizBatches: [batch] }));
             const emitted: QuizExercise[] = [];
             comp.handleNewQuizExercise.subscribe((quiz) => emitted.push(quiz));
@@ -242,7 +226,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('creates a started batch when starting a quiz without batches', () => {
-            vi.spyOn(quizExerciseService, 'start').mockReturnValue(of(new HttpResponse({ body: {} })));
+            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
             fixture.componentRef.setInput('quizExercise', buildQuiz({ quizBatches: undefined }));
             const emitted: QuizExercise[] = [];
             comp.handleNewQuizExercise.subscribe((quiz) => emitted.push(quiz));
@@ -254,7 +238,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('marks the quiz as ended and clears the dialog error on end', () => {
-            vi.spyOn(quizExerciseService, 'end').mockReturnValue(of(new HttpResponse({ body: {} })));
+            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
             fixture.componentRef.setInput('quizExercise', buildQuiz({}));
             const emitted: QuizExercise[] = [];
             comp.handleNewQuizExercise.subscribe((quiz) => emitted.push(quiz));
@@ -268,7 +252,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('routes an end failure into the dialog error stream', () => {
-            vi.spyOn(quizExerciseService, 'end').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
+            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
             fixture.componentRef.setInput('quizExercise', buildQuiz({}));
             const errors: string[] = [];
             comp.dialogError$.subscribe((e) => errors.push(e));
@@ -280,7 +264,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('marks only the matching batch as started', () => {
-            vi.spyOn(quizExerciseService, 'startBatch').mockReturnValue(of(new HttpResponse({ body: {} })));
+            vi.spyOn(quizExerciseBatchApi, 'startBatch_').mockReturnValue(of({}));
             fixture.componentRef.setInput(
                 'quizExercise',
                 buildQuiz({
@@ -299,7 +283,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('does not emit when starting a batch on a quiz without batches', () => {
-            vi.spyOn(quizExerciseService, 'startBatch').mockReturnValue(of(new HttpResponse({ body: {} })));
+            vi.spyOn(quizExerciseBatchApi, 'startBatch_').mockReturnValue(of({}));
             fixture.componentRef.setInput('quizExercise', buildQuiz({ quizBatches: undefined }));
             const emitted: QuizExercise[] = [];
             comp.handleNewQuizExercise.subscribe((quiz) => emitted.push(quiz));
@@ -310,7 +294,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('appends the new batch on addBatch', () => {
-            vi.spyOn(quizExerciseService, 'addBatch').mockReturnValue(of(new HttpResponse({ body: { id: 9 } as QuizBatch })));
+            vi.spyOn(quizExerciseBatchApi, 'addBatch').mockReturnValue(of({ id: 9 }));
             fixture.componentRef.setInput('quizExercise', buildQuiz({ quizBatches: [{ id: 1 }] }));
             const emitted: QuizExercise[] = [];
             comp.handleNewQuizExercise.subscribe((quiz) => emitted.push(quiz));
@@ -321,7 +305,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('alerts and requests a reload when a mutation fails', () => {
-            vi.spyOn(quizExerciseService, 'addBatch').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
+            vi.spyOn(quizExerciseBatchApi, 'addBatch').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
             vi.spyOn(alertService, 'error');
             fixture.componentRef.setInput('quizExercise', buildQuiz({}));
             const reloads: number[] = [];

@@ -208,8 +208,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             quizExercise.id = 1;
             const quizQuestion = new MultipleChoiceQuestion();
             quizExercise.quizQuestions = [quizQuestion];
-            const findForCourseSpy = vi.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
-            const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            const findForCourseSpy = vi.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(of([quizExercise]));
+            const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
             const applyFilterSpy = vi.spyOn(component, 'applyFilter').mockImplementation(() => {});
             component.onCourseSelect();
             expect(findForCourseSpy).toHaveBeenCalledExactlyOnceWith(course0.id);
@@ -245,8 +245,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             quizExercise.id = 1;
             const quizQuestion = new MultipleChoiceQuestion();
             quizExercise.quizQuestions = [quizQuestion];
-            const findForExamSpy = vi.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
-            const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            const findForExamSpy = vi.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of([quizExercise]));
+            const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
             const applyFilterSpy = vi.spyOn(component, 'applyFilter').mockImplementation(() => {});
             component.onExamSelect();
             expect(findForExamSpy).toHaveBeenCalledExactlyOnceWith(exam0.id);
