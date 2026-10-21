@@ -140,8 +140,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     @CsvSource({ "POST, POST", "POST, ANSWER", "ANSWER, POST", "ANSWER, ANSWER" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldAllowChannelForwardingWithCommunicationOnly(PostingType sourceType, PostingType destinationType) throws Exception {
-        exampleCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
-        courseRepository.save(exampleCourse);
+        courseUtilService.setCourseInformationSharingConfiguration(exampleCourse, CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
         long sourceId = sourceType == PostingType.POST ? testPost2.getId() : createAnswer(testPost2, "Channel reply to forward").getId();
         ForwardedMessageDTO dto = new ForwardedMessageDTO(null, sourceId, sourceType, destinationType == PostingType.POST ? testPost.getId() : null,
                 destinationType == PostingType.ANSWER ? testAnswerPost.getId() : null);
@@ -160,8 +159,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     @EnumSource(PostingType.class)
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRejectChannelForwardingWhenCommunicationIsDisabled(PostingType destinationType) throws Exception {
-        exampleCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
-        courseRepository.save(exampleCourse);
+        courseUtilService.setCourseInformationSharingConfiguration(exampleCourse, CourseInformationSharingConfiguration.DISABLED);
         ForwardedMessageDTO dto = new ForwardedMessageDTO(null, testPost2.getId(), PostingType.POST, destinationType == PostingType.POST ? testPost.getId() : null,
                 destinationType == PostingType.ANSWER ? testAnswerPost.getId() : null);
 
@@ -180,8 +178,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
                 : conversationUtilService.createOneToOneChat(exampleCourse, testUser, otherUser);
         Post destinationPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", destination);
         AnswerPost destinationAnswer = destinationType == PostingType.ANSWER ? createAnswer(destinationPost, "Private chat reply") : null;
-        exampleCourse.setCourseInformationSharingConfiguration(configuration);
-        courseRepository.save(exampleCourse);
+        courseUtilService.setCourseInformationSharingConfiguration(exampleCourse, configuration);
         ForwardedMessageDTO dto = new ForwardedMessageDTO(null, testPost2.getId(), PostingType.POST, destinationAnswer == null ? destinationPost.getId() : null,
                 destinationAnswer == null ? null : destinationAnswer.getId());
 
