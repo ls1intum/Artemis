@@ -380,6 +380,11 @@ describe('CodeButtonComponent', () => {
             fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
 
+            const popover = document.querySelector('[data-testid="code-popover"]');
+            expect(popover).not.toBeNull();
+            expect(popover?.querySelector('[data-testid="clone-url"]')?.textContent?.trim()).toBe(component.getHttpOrSshRepositoryUri());
+            expect(popover?.querySelector('[data-testid="open-repository"]')).not.toBeNull();
+
             const useHTTPSButton = authenticationButton('#useHTTPSButton');
             expect(useHTTPSButton).not.toBeNull();
             useHTTPSButton.click();
@@ -962,6 +967,23 @@ describe('CodeButtonComponent', () => {
         });
     });
 
+    it('keeps the external application iframe mounted when the code popover closes', () => {
+        fixture.componentRef.setInput('participations', [participation]);
+        fixture.detectChanges();
+        const frame = fixture.nativeElement.querySelector('iframe[name="hidden-iframe"]') as HTMLIFrameElement;
+        expect(frame).not.toBeNull();
+        const trigger: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="code-button"]');
+        trigger.click();
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="code-popover"]')).not.toBeNull();
+        trigger.click();
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="code-popover"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('iframe[name="hidden-iframe"]')).toBe(frame);
+        expect(frame.getAttribute('aria-hidden')).toBe('true');
+        expect(frame.tabIndex).toBe(-1);
+    });
+
     it('should fetch and store ssh preference', () => {
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('participations', [participation]);
@@ -979,9 +1001,11 @@ describe('CodeButtonComponent', () => {
 
         const useSSHButton = authenticationButton('#useSSHButton');
         expect(useSSHButton).not.toBeNull();
+        expect(useSSHButton.getAttribute('role')).toBe('menuitemradio');
+        expect(useSSHButton.hasAttribute('aria-pressed')).toBe(false);
         useSSHButton.click();
         fixture.detectChanges();
-        expect(['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) => authenticationButton(selector).getAttribute('aria-pressed'))).toEqual([
+        expect(['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) => authenticationButton(selector).getAttribute('aria-checked'))).toEqual([
             'false',
             'false',
             'true',
@@ -993,7 +1017,7 @@ describe('CodeButtonComponent', () => {
         expect(useHTTPSButton).not.toBeNull();
         useHTTPSButton.click();
         fixture.detectChanges();
-        expect(['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) => authenticationButton(selector).getAttribute('aria-pressed'))).toEqual([
+        expect(['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) => authenticationButton(selector).getAttribute('aria-checked'))).toEqual([
             'true',
             'false',
             'false',
@@ -1005,7 +1029,7 @@ describe('CodeButtonComponent', () => {
         expect(useHTTPSWithTokenButton).not.toBeNull();
         useHTTPSWithTokenButton.click();
         fixture.detectChanges();
-        expect(['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) => authenticationButton(selector).getAttribute('aria-pressed'))).toEqual([
+        expect(['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) => authenticationButton(selector).getAttribute('aria-checked'))).toEqual([
             'false',
             'true',
             'false',

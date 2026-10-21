@@ -16,7 +16,7 @@
 </button>
 <tumaet-ui-popover #codePopover placement="right" [ariaLabel]="clonedHeadline() | artemisTranslate">
     @if (codePopover.isOpen() && userLogin()) {
-        <div class="flex max-w-[min(38rem,80vw)] flex-col gap-2">
+        <div data-testid="code-popover" class="flex max-w-[min(38rem,80vw)] flex-col gap-2">
             @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && !doesUserHaveSSHkeys()) {
                 <tumaet-ui-message severity="warn" data-testid="ssh-key-missing-alert"><span [innerHTML]="sshKeyMissingTip()"></span></tumaet-ui-message>
             }
@@ -59,7 +59,8 @@
                                         tumAetUiMenuItem
                                         id="useHTTPSButton"
                                         (triggered)="useHttpsPassword()"
-                                        [attr.aria-pressed]="selectedAuthenticationMechanism() === mechanism"
+                                        menuItemRole="menuitemradio"
+                                        [checked]="selectedAuthenticationMechanism() === mechanism"
                                     >
                                         HTTPS
                                     </button>
@@ -70,7 +71,8 @@
                                         tumAetUiMenuItem
                                         id="useHTTPSWithTokenButton"
                                         (triggered)="useHttpsToken()"
-                                        [attr.aria-pressed]="selectedAuthenticationMechanism() === mechanism"
+                                        menuItemRole="menuitemradio"
+                                        [checked]="selectedAuthenticationMechanism() === mechanism"
                                     >
                                         Token
                                     </button>
@@ -81,7 +83,8 @@
                                         tumAetUiMenuItem
                                         id="useSSHButton"
                                         (triggered)="useSshUrl()"
-                                        [attr.aria-pressed]="selectedAuthenticationMechanism() === mechanism"
+                                        menuItemRole="menuitemradio"
+                                        [checked]="selectedAuthenticationMechanism() === mechanism"
                                     >
                                         SSH
                                     </button>
@@ -92,6 +95,7 @@
                     </tumaet-ui-menu>
                 </ng-template>
                 <pre
+                    data-testid="clone-url"
                     class="m-0! min-w-0 flex-1 truncate"
                     [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                     (cdkCopyToClipboardCopied)="copyEnabled() ? onCopyFinished($event) : null"
@@ -140,13 +144,7 @@
                 <a tumAetUiButton size="small" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneSourceTree.button"></a>
                 <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneSourceTree.helpIcon" />
             </div>
-            <iframe
-                name="hidden-iframe"
-                [title]="'accessibility.externalApplicationLauncher' | artemisTranslate"
-                aria-hidden="true"
-                tabindex="-1"
-                class="invisible absolute"
-            ></iframe>
         </div>
     }
 </tumaet-ui-popover>
+<iframe name="hidden-iframe" [title]="'accessibility.externalApplicationLauncher' | artemisTranslate" aria-hidden="true" tabindex="-1" class="invisible absolute"></iframe>

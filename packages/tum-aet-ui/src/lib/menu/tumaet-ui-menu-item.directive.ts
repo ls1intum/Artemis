@@ -1,4 +1,4 @@
-import { Directive, ElementRef, inject, output } from '@angular/core';
+import { Directive, ElementRef, inject, input, output } from '@angular/core';
 import { MenuItem } from '@angular/aria/menu';
 
 /**
@@ -13,10 +13,11 @@ import { MenuItem } from '@angular/aria/menu';
  */
 @Directive({
     selector: '[tumAetUiMenuItem]',
-    hostDirectives: [{ directive: MenuItem, inputs: ['disabled'] }],
+    hostDirectives: [{ directive: MenuItem, inputs: ['disabled', 'role: menuItemRole'] }],
     host: {
         // Lets the Angular Aria test harnesses (`@angular/aria/menu/testing`) find the entry.
         ngMenuItem: '',
+        '[attr.aria-checked]': 'menuItem.role() === "menuitemradio" ? checked() : null',
         class:
             'tumaet-ui-menu-item tumaet:flex tumaet:cursor-pointer tumaet:items-center tumaet:gap-2 tumaet:border-0 tumaet:bg-transparent tumaet:px-3 tumaet:py-2 tumaet:text-start tumaet:text-base tumaet:text-text tumaet:no-underline ' +
             'tumaet:hover:bg-hover-background tumaet:hover:text-text-hover tumaet:focus-visible:bg-highlight-focus-background tumaet:focus-visible:text-highlight tumaet:focus-visible:outline-none ' +
@@ -25,8 +26,11 @@ import { MenuItem } from '@angular/aria/menu';
     },
 })
 export class TumAetUiMenuItemDirective {
-    private readonly menuItem = inject<MenuItem<unknown>>(MenuItem);
+    protected readonly menuItem = inject<MenuItem<unknown>>(MenuItem);
     private readonly element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+
+    /** Selected state for a `menuItemRole="menuitemradio"` entry. */
+    readonly checked = input(false);
 
     /** Emits when the entry is chosen with a click, Enter, or Space; never while it is disabled. */
     readonly triggered = output<void>();

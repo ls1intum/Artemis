@@ -194,6 +194,8 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(comp.hasFailedSubmissions()).toBe(false);
         expect(comp.isBuildingFailedSubmissions()).toBe(false);
         expect(comp.buildingSummary()).toEqual(compressedSummary);
+        expect(debugElement.query(By.css('#build-state-failed')).componentInstance.severity()).toBe('success');
+        expect(debugElement.query(By.css('#build-state-failed')).nativeElement.textContent).toContain('0');
 
         expect(getTriggerAllButton()).not.toBeNull();
         expect(getTriggerAllButton().disabled).toBe(false);
@@ -229,6 +231,9 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(comp.hasFailedSubmissions()).toBe(true);
         expect(comp.isBuildingFailedSubmissions()).toBe(false);
         expect(comp.buildingSummary()).toEqual(compressedSummary);
+        expect(debugElement.query(By.css('#build-state-failed')).componentInstance.severity()).toBe('danger');
+        expect(debugElement.query(By.css('#build-state-failed')).nativeElement.textContent).toContain('1');
+        expect(debugElement.query(By.css('#build-state-building')).nativeElement.textContent).toContain('1');
 
         expect(getResultEtaContainer()).not.toBeNull();
         expect(getTriggerAllButton()).not.toBeNull();
