@@ -1,4 +1,4 @@
-import { Injector, Signal, inject } from '@angular/core';
+import { Injector, Signal, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
@@ -26,17 +26,18 @@ export function hasSupportedProgrammingConfiguration(exercise: Exercise | undefi
 export function injectGenerationCapabilities(exercise: Signal<Exercise | undefined>, authorized: Signal<boolean>) {
     const injector = inject(Injector);
     const profiles = inject(ProfileService);
+    const exerciseId = computed(() => {
+        const current = exercise();
+        return authorized() && profiles.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION) && hasSupportedProgrammingConfiguration(current) && current?.id
+            ? current.id
+            : undefined;
+    });
     return rxResource({
-        params: () => {
-            const current = exercise();
-            return authorized() && profiles.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION) && hasSupportedProgrammingConfiguration(current) && current?.id
-                ? { exerciseId: current.id, exercise: current }
-                : undefined;
-        },
+        params: exerciseId,
         stream: ({ params }) =>
             injector
                 .get(GenerationCapabilityRequestsService)
-                .describe(params.exerciseId)
+                .describe(params)
                 .pipe(catchError(() => of(undefined))),
     });
 }

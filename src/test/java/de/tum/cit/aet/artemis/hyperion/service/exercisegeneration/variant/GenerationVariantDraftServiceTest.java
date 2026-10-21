@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
@@ -55,6 +56,9 @@ class GenerationVariantDraftServiceTest {
     private TeamAssignmentConfigRepository teamConfigs;
 
     @Mock
+    private PlagiarismDetectionConfigRepository plagiarismConfigs;
+
+    @Mock
     private de.tum.cit.aet.artemis.localvc.service.GitService git;
 
     private GenerationVariantDraftService service;
@@ -65,8 +69,8 @@ class GenerationVariantDraftServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GenerationVariantDraftService(exercises, buildConfigs, imports, capabilities, teamConfigs, git, tools.jackson.databind.json.JsonMapper.builder().build(),
-                "main");
+        service = new GenerationVariantDraftService(exercises, buildConfigs, imports, capabilities, teamConfigs, plagiarismConfigs, git,
+                tools.jackson.databind.json.JsonMapper.builder().build(), "main");
         source = new ProgrammingExercise();
         source.setId(1L);
         source.setTitle("Source");

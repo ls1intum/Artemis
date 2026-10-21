@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmittedEvent;
@@ -52,6 +53,9 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
 
     @Autowired
     private TeamAssignmentConfigRepository teamConfigurations;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismConfigurations;
 
     @Autowired
     private de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService imports;
@@ -93,15 +97,16 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
                 .thenReturn(Map.of("build.gradle", "testImplementation 'de.tum.cit.ase:ares:2.2.1'\napply from: 'gradle/AresReservedPackages.gradle'",
                         "gradle/AresReservedPackages.gradle", "de/tum/cit/ase/ares/** org/junit/**", "SecurityPolicy.yaml", "trustedPackages: []"));
         capabilities = new GenerationCapabilityService(generationRequests, auxiliaries, generationJobs, workerRegistry, seeds);
-        drafts = new GenerationVariantDraftService(programmingExerciseRepository, configurations, imports, capabilities, teamConfigurations, gitServiceSpy, mapper, defaultBranch);
+        drafts = new GenerationVariantDraftService(programmingExerciseRepository, configurations, imports, capabilities, teamConfigurations, plagiarismConfigurations,
+                gitServiceSpy, mapper, defaultBranch);
     }
 
     @Test
     void sourceBaselineSurvivesRealDraftImportAndRejectsLaterMetadataChanges() {
         var git = org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.GitService.class);
         org.mockito.Mockito.when(git.getLastCommitHash(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString())).thenReturn("source-head");
-        var optimisticDrafts = new GenerationVariantDraftService(programmingExerciseRepository, configurations, imports, capabilities, teamConfigurations, git, mapper,
-                defaultBranch);
+        var optimisticDrafts = new GenerationVariantDraftService(programmingExerciseRepository, configurations, imports, capabilities, teamConfigurations, plagiarismConfigurations,
+                git, mapper, defaultBranch);
         var baseline = optimisticDrafts.captureSource(source.getId());
 
         var destinationId = optimisticDrafts.prepare(source.getId(), request, ProgrammingExercise::getId);
@@ -118,8 +123,8 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
     void changedSourceAtReservationRollsBackTheImportedDraft() {
         var git = org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.GitService.class);
         org.mockito.Mockito.when(git.getLastCommitHash(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString())).thenReturn("source-head");
-        var optimisticDrafts = new GenerationVariantDraftService(programmingExerciseRepository, configurations, imports, capabilities, teamConfigurations, git, mapper,
-                defaultBranch);
+        var optimisticDrafts = new GenerationVariantDraftService(programmingExerciseRepository, configurations, imports, capabilities, teamConfigurations, plagiarismConfigurations,
+                git, mapper, defaultBranch);
         var baseline = optimisticDrafts.captureSource(source.getId());
         var destinationId = new AtomicLong();
         org.mockito.Mockito.when(git.getLastCommitHash(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString())).thenReturn("changed-head");
@@ -176,6 +181,40 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
         assertThat(configurations.getProgrammingExerciseBuildConfigElseThrow(result).getBranch()).isEqualTo(defaultBranch);
         assertThat(configurations.getProgrammingExerciseBuildConfigElseThrow(source.getId()).getBranch()).isEqualTo("teaching");
         assertThat(programmingExerciseRepository.findByIdElseThrow(source.getId()).getTitle()).isEqualTo(source.getTitle());
+    }
+
+    @Test
+    void variantPersistsCustomPlagiarismSettingsWithoutChangingTheSource() {
+        var sourceConfig = plagiarismConfigurations.findByExerciseId(source.getId()).orElseThrow();
+        sourceConfig.setContinuousPlagiarismControlEnabled(true);
+        sourceConfig.setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
+        sourceConfig.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(13);
+        sourceConfig.setSimilarityThreshold(73);
+        sourceConfig.setMinimumScore(21);
+        sourceConfig.setMinimumSize(37);
+        plagiarismConfigurations.saveAndFlush(sourceConfig);
+        Long sourceConfigId = sourceConfig.getId();
+
+        Long destinationId = drafts.prepare(source.getId(), request, ProgrammingExercise::getId);
+
+        var destinationConfig = plagiarismConfigurations.findByExerciseId(destinationId).orElseThrow();
+        assertThat(destinationConfig.getId()).isNotEqualTo(sourceConfigId);
+        assertThat(destinationConfig.getExerciseId()).isEqualTo(destinationId);
+        assertThat(destinationConfig.isContinuousPlagiarismControlEnabled()).isTrue();
+        assertThat(destinationConfig.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isTrue();
+        assertThat(destinationConfig.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(13);
+        assertThat(destinationConfig.getSimilarityThreshold()).isEqualTo(73);
+        assertThat(destinationConfig.getMinimumScore()).isEqualTo(21);
+        assertThat(destinationConfig.getMinimumSize()).isEqualTo(37);
+        var unchangedSource = plagiarismConfigurations.findByExerciseId(source.getId()).orElseThrow();
+        assertThat(unchangedSource.getId()).isEqualTo(sourceConfigId);
+        assertThat(unchangedSource.getExerciseId()).isEqualTo(source.getId());
+        assertThat(unchangedSource.isContinuousPlagiarismControlEnabled()).isTrue();
+        assertThat(unchangedSource.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isTrue();
+        assertThat(unchangedSource.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(13);
+        assertThat(unchangedSource.getSimilarityThreshold()).isEqualTo(73);
+        assertThat(unchangedSource.getMinimumScore()).isEqualTo(21);
+        assertThat(unchangedSource.getMinimumSize()).isEqualTo(37);
     }
 
     @Test

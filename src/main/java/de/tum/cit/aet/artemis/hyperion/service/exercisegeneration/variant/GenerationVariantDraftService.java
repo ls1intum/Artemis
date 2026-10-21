@@ -19,12 +19,14 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationVariantPreparation.SourceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -43,6 +45,8 @@ public class GenerationVariantDraftService {
 
     private final TeamAssignmentConfigRepository teamConfigs;
 
+    private final PlagiarismDetectionConfigRepository plagiarismConfigs;
+
     private final ProgrammingExerciseImportService imports;
 
     private final GenerationCapabilityService capabilities;
@@ -54,13 +58,14 @@ public class GenerationVariantDraftService {
     private final String defaultBranch;
 
     public GenerationVariantDraftService(ProgrammingExerciseRepository exercises, ProgrammingExerciseBuildConfigRepository buildConfigs, ProgrammingExerciseImportService imports,
-            GenerationCapabilityService capabilities, TeamAssignmentConfigRepository teamConfigs, GitService git, JsonMapper mapper,
-            @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+            GenerationCapabilityService capabilities, TeamAssignmentConfigRepository teamConfigs, PlagiarismDetectionConfigRepository plagiarismConfigs, GitService git,
+            JsonMapper mapper, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
         this.exercises = exercises;
         this.buildConfigs = buildConfigs;
         this.imports = imports;
         this.capabilities = capabilities;
         this.teamConfigs = teamConfigs;
+        this.plagiarismConfigs = plagiarismConfigs;
         this.git = git;
         this.mapper = mapper;
         this.defaultBranch = defaultBranch;
@@ -141,6 +146,7 @@ public class GenerationVariantDraftService {
     private ProgrammingExercise loadSource(long sourceId) {
         ProgrammingExercise source = exercises.findForAuthoringImportById(sourceId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", sourceId));
         teamConfigs.attachTo(source);
+        plagiarismConfigs.attachTo(source);
         return source;
     }
 
@@ -157,6 +163,9 @@ public class GenerationVariantDraftService {
         draft.setBonusPoints(source.getBonusPoints());
         draft.setMode(source.getMode());
         draft.setTeamAssignmentConfig(source.getTeamAssignmentConfig());
+        if (source.getPlagiarismDetectionConfig() != null) {
+            draft.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(source.getPlagiarismDetectionConfig()));
+        }
         draft.setDifficulty(request.targetDifficulty() != null ? request.targetDifficulty() : source.getDifficulty());
         return draft;
     }

@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
@@ -9,7 +11,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/progr
 import { generationCapabilityBlocker, injectGenerationCapabilities } from './hyperion-generation-capabilities';
 
 describe('Shared programming authoring capabilities', () => {
-    const exercise = signal<Exercise | undefined>(undefined);
+    const exercise = signal<Exercise | undefined>(undefined, { equal: () => false });
     const authorized = signal(true);
     const enabled = signal(true);
     const describe = vi.fn();
@@ -52,6 +54,53 @@ describe('Shared programming authoring capabilities', () => {
         expect(capabilities.value()).toBeUndefined();
     });
 
+    it('keeps a pending request when statement edits republish the same exercise or a fresh object', async () => {
+        TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+        TestBed.overrideProvider(HyperionExerciseGenerationApi, { useFactory: () => new HyperionExerciseGenerationApi() });
+        const http = TestBed.inject(HttpTestingController);
+        const url = '/api/hyperion/programming-exercises/12/generation/capabilities';
+        const capabilities = TestBed.runInInjectionContext(() => injectGenerationCapabilities(exercise, authorized));
+        TestBed.tick();
+        const pending = http.expectOne(url);
+        expect(pending.request.method).toBe('GET');
+
+        for (const statement of ['First edit', 'Second edit', 'Third edit']) {
+            const current = exercise()!;
+            current.problemStatement = statement;
+            exercise.set(current);
+            TestBed.tick();
+            exercise.set(Object.assign(supported(), { problemStatement: statement }));
+            TestBed.tick();
+        }
+
+        http.expectNone(url);
+        expect(capabilities.isLoading()).toBe(true);
+        expect(pending.cancelled).toBe(false);
+        pending.flush({ canAdapt: true });
+        await Promise.resolve();
+        TestBed.tick();
+        expect(capabilities.value()?.canAdapt).toBe(true);
+        http.verify();
+    });
+
+    it.each(['configuration', 'authorization', 'module feature'])('requests current capabilities again when %s eligibility returns', (reason) => {
+        const capabilities = TestBed.runInInjectionContext(() => injectGenerationCapabilities(exercise, authorized));
+        TestBed.tick();
+        expect(describe).toHaveBeenCalledExactlyOnceWith(12);
+        if (reason === 'configuration') exercise.set(Object.assign(supported(), { staticCodeAnalysisEnabled: true }));
+        if (reason === 'authorization') authorized.set(false);
+        if (reason === 'module feature') enabled.set(false);
+        TestBed.tick();
+        expect(capabilities.value()).toBeUndefined();
+        expect(describe).toHaveBeenCalledTimes(1);
+        exercise.set(supported());
+        authorized.set(true);
+        enabled.set(true);
+        TestBed.tick();
+        expect(describe).toHaveBeenCalledTimes(2);
+        expect(describe).toHaveBeenLastCalledWith(12);
+    });
+
     it('discards a late response for the previous exercise', () => {
         const previous = new Subject<ExerciseGenerationCapabilities>();
         describe.mockReturnValueOnce(previous).mockReturnValueOnce(of({ supported: true, canAdapt: false, restriction: 'examAlreadyAssigned' }));
@@ -59,6 +108,8 @@ describe('Shared programming authoring capabilities', () => {
         TestBed.tick();
         exercise.set(Object.assign(supported(), { id: 14 }));
         TestBed.tick();
+        expect(describe).toHaveBeenCalledTimes(2);
+        expect(describe).toHaveBeenLastCalledWith(14);
         previous.next({ canAdapt: true });
         expect(capabilities.value()?.canAdapt).toBe(false);
         expect(generationCapabilityBlocker(capabilities.value())).toMatch(/preparationOnly$/);
