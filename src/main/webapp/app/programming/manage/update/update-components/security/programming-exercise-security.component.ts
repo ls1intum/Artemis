@@ -15,23 +15,22 @@ import {
     SecurityActivationStatus,
     SecurityFrameworkConfig,
     SecurityFrameworkVersionOption,
-    SecurityStagedActivation,
+    SecurityStagedChoice,
     TRANSIENT_SECURITY_STATUSES,
     isSecurityActive,
 } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 
 /**
- * "Activate Security Framework" card in the simple-mode create/edit form of a programming exercise
- * (Objective 1: automatic security policy generation on activation).
+ * "Activate Security Framework" card in the create/edit form of a programming exercise, shown in both
+ * simple and advanced mode.
  *
  * Design principles:
- * - The card is rendered only for {@link SUPPORTED_LANGUAGES}; today just Java. Adding a language
- *   later is a one-line change here, nothing else - the rest of the component is language-agnostic.
+ * - The card is rendered only for {@link SUPPORTED_LANGUAGES}; today just Java, whose templates ship with
+ *   Ares enabled. Hence a new exercise starts out ACTIVE, and turning it off is the explicit choice.
  * - A single {@link SecurityActivationStatus} drives every visual (tint, pill, toggle, sync line,
  *   warning); the card can never show two contradictory states at once.
- * - It talks only to {@link SecurityFrameworkService} (a mock today). When the real server endpoints
- *   exist, only that service changes - this component does not.
+ * - It talks only to {@link SecurityFrameworkService}; the server commits every change to the tests repository.
  */
 @Component({
     selector: 'jhi-programming-exercise-security',
@@ -68,10 +67,10 @@ export class ProgrammingExerciseSecurityComponent {
      * place, which a read through the exercise input alone would not pick up in a zoneless app).
      */
     readonly selectedProgrammingLanguage = input<ProgrammingLanguage | undefined>(undefined);
-    /** Create-mode activation the parent form holds, passed back in so it survives a mode switch that destroys this card. */
-    readonly stagedActivation = input<SecurityStagedActivation | undefined>(undefined);
-    /** Emits the create-mode staged activation (or undefined when cleared) so the parent can persist it on save even if this card is gone. */
-    readonly stagedActivationChange = output<SecurityStagedActivation | undefined>();
+    /** Create-mode choice the parent form holds, passed back in so it survives this card being re-created. */
+    readonly stagedChoice = input<SecurityStagedChoice | undefined>(undefined);
+    /** Emits the create-mode choice so the parent can apply it once the exercise has been created. */
+    readonly stagedChoiceChange = output<SecurityStagedChoice>();
     /** True while the parent form is saving the exercise and running the follow-up activation, so this card's controls stay locked - a staged change made mid-save would disagree with what gets persisted. */
     readonly isSaving = input<boolean>(false);
 
@@ -81,20 +80,28 @@ export class ProgrammingExerciseSecurityComponent {
         return language !== undefined && ProgrammingExerciseSecurityComponent.SUPPORTED_LANGUAGES.has(language);
     });
 
-    readonly frameworkVersions = computed<SecurityFrameworkVersionOption[]>(() =>
-        this.securityService
-            .getFrameworkVersions()
-            .map((option) =>
-                option.latest ? cloneWith(option, { label: `${option.version} ${this.translateService.instant('artemisApp.programmingExercise.security.latestSuffix')}` }) : option,
-            ),
-    );
+    /** The Ares versions the server supports, newest first. */
+    readonly supportedVersions = signal<string[]>([]);
+    /** The newest supported version, which a new exercise and a version-less activation use. */
+    readonly defaultVersion = computed(() => this.supportedVersions()[0]);
 
-    /** The one source of truth. Every derived value below reads from this. */
-    readonly config = signal<SecurityFrameworkConfig>(this.securityService.getInitialConfigForCreate());
+    /** Dropdown options: the supported versions, plus the version the exercise currently pins if it is no longer supported. */
+    readonly frameworkVersions = computed<SecurityFrameworkVersionOption[]>(() => {
+        const versions = [...this.supportedVersions()];
+        const current = this.config().frameworkVersion;
+        if (current && !versions.includes(current)) {
+            versions.push(current);
+        }
+        const latestSuffix = this.translateService.instant('artemisApp.programmingExercise.security.latestSuffix');
+        return versions.map((version) => ({ version, label: version === this.defaultVersion() ? `${version} ${latestSuffix}` : version }));
+    });
+
+    /** The one source of truth. Every derived value below reads from this. A new Java exercise starts ACTIVE, as its template does. */
+    readonly config = signal<SecurityFrameworkConfig>({ status: SecurityActivationStatus.ACTIVE });
     readonly status = computed(() => this.config().status);
 
     /** Whether the last *settled* state was active. Used so an ERROR (which can follow an activate or a deactivate) shows the toggle correctly. */
-    private readonly lastSettledActive = signal(false);
+    private readonly lastSettledActive = signal(true);
     /** True when loading the persisted config failed, so the card shows a load-error + retry instead of a misleading INACTIVE state. */
     readonly loadFailed = signal(false);
     /** True while the persisted config is loading (edit mode). Keeps the toggle and version selector disabled until it settles, so an early toggle cannot be overwritten by a late load. */
@@ -109,7 +116,9 @@ export class ProgrammingExerciseSecurityComponent {
      * re-runs the previously failed operation for the old version - so the shown selection could silently diverge
      * from what Retry actually does.
      */
-    readonly isVersionSelectDisabled = computed(() => this.isBusy() || this.isSaving() || this.status() === SecurityActivationStatus.ERROR);
+    readonly isVersionSelectDisabled = computed(
+        () => this.isBusy() || this.isSaving() || this.status() === SecurityActivationStatus.ERROR || this.frameworkVersions().length === 0,
+    );
     /** The toggle sits "on" whenever the sandbox is on or being turned on (or errored while on). */
     readonly isToggleOn = computed(() => {
         const status = this.status();
@@ -129,9 +138,22 @@ export class ProgrammingExerciseSecurityComponent {
     private pendingOperation?: { transientPatch: Partial<SecurityFrameworkConfig>; run: () => Observable<SecurityFrameworkConfig> };
 
     constructor() {
-        // Seed once: an existing exercise loads its persisted config from the server; a not-yet-created
-        // exercise keeps the local INACTIVE default (a create-mode activation is persisted by the parent
-        // update component via commitStagedActivation() once the exercise has been created and has an id).
+        this.securityService.getSupportedVersions().subscribe({
+            next: (versions) => this.supportedVersions.set(versions),
+            // Without versions the selector stays disabled; activation still works with the version the exercise pins.
+            error: () => this.supportedVersions.set([]),
+        });
+
+        // Create mode: show the default version once it is known, unless the instructor already chose one.
+        effect(() => {
+            const defaultVersion = this.defaultVersion();
+            if (defaultVersion && this.programmingExercise().id === undefined && !untracked(() => this.config().frameworkVersion)) {
+                untracked(() => this.patchConfig({ frameworkVersion: defaultVersion }));
+            }
+        });
+
+        // Seed once: an existing exercise loads its config from the server; a not-yet-created exercise keeps the
+        // template default (ACTIVE). The parent applies a create-mode choice once the exercise has been created.
         effect(() => {
             const exerciseId = this.programmingExercise().id;
             if (this.hasSeededInitialConfig) {
@@ -141,29 +163,26 @@ export class ProgrammingExerciseSecurityComponent {
             if (exerciseId !== undefined) {
                 this.loadConfig(exerciseId);
             } else {
-                // Create mode: restore an activation staged before a simple <-> advanced mode switch destroyed this card.
-                const staged = this.stagedActivation();
+                // Create mode: restore a choice made before this card was re-created.
+                const staged = untracked(() => this.stagedChoice());
                 if (staged) {
-                    this.config.set({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: staged.frameworkVersion });
-                    this.lastSettledActive.set(true);
+                    this.config.set({ status: staged.active ? SecurityActivationStatus.ACTIVE : SecurityActivationStatus.INACTIVE, frameworkVersion: staged.frameworkVersion });
+                    this.lastSettledActive.set(staged.active);
                 }
             }
         });
 
-        // Create mode only: the parent owns the staged activation. When it clears the staged value (e.g. the
-        // instructor switches the exercise to a non-Java language, which hides but does not destroy this card),
-        // reset the local state so switching back to Java cannot resurrect a staged ACTIVE that the parent will
-        // not commit - otherwise the exercise would be created without the sandbox and with no warning.
+        // Create mode only: the parent owns the staged choice. When it clears it (e.g. the instructor switches the
+        // exercise to a non-Java language, which hides but does not destroy this card), go back to the template
+        // default, so the card never shows a choice the parent will not apply.
         effect(() => {
-            const staged = this.stagedActivation();
+            const staged = this.stagedChoice();
             if (this.programmingExercise().id !== undefined || staged) {
                 return;
             }
             untracked(() => {
-                if (this.config().status === SecurityActivationStatus.ACTIVE) {
-                    this.patchConfig({ status: SecurityActivationStatus.INACTIVE });
-                    this.lastSettledActive.set(false);
-                }
+                this.config.set({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: this.defaultVersion() });
+                this.lastSettledActive.set(true);
             });
         });
     }
@@ -198,35 +217,37 @@ export class ProgrammingExerciseSecurityComponent {
     }
 
     /**
-     * Create mode has no repository yet, so toggling only stages ACTIVE/INACTIVE locally (committed on
-     * Generate). Edit mode runs the real transient flow: GENERATING/DELETING immediately, settling to
-     * ACTIVE/INACTIVE when the (mock) server responds.
+     * Create mode has no repository yet, so toggling only stages ACTIVE/INACTIVE locally (applied once the
+     * exercise is created). Edit mode runs the real transient flow: GENERATING/DELETING immediately, settling to
+     * ACTIVE/INACTIVE when the server has committed the change.
      */
     onToggleChanged(checked: boolean): void {
         const exerciseId = this.programmingExercise().id;
         if (exerciseId === undefined) {
-            // Create mode: no exercise/repository yet, so stage locally (committed when the exercise is generated).
             this.patchConfig({ status: checked ? SecurityActivationStatus.ACTIVE : SecurityActivationStatus.INACTIVE });
             this.lastSettledActive.set(checked);
-            this.stagedActivationChange.emit(checked ? { frameworkVersion: this.config().frameworkVersion } : undefined);
+            this.emitStagedChoice();
             return;
         }
         if (checked) {
-            this.runOperation({ status: SecurityActivationStatus.GENERATING }, () => this.securityService.activate(exerciseId, this.config().frameworkVersion));
+            const version = this.config().frameworkVersion ?? this.defaultVersion();
+            if (!version) {
+                return;
+            }
+            this.runOperation({ status: SecurityActivationStatus.GENERATING, frameworkVersion: version }, () => this.securityService.activate(exerciseId, version));
         } else {
             this.runOperation({ status: SecurityActivationStatus.DELETING }, () => this.securityService.deactivate(exerciseId));
         }
     }
 
-    /** Only an already-active exercise in edit mode has a real policy to re-sync on a version change. */
+    /** Only an already-active exercise in edit mode has a repository to commit a version change to. */
     onFrameworkVersionChanged(version: unknown): void {
         const newVersion = String(version);
         const exerciseId = this.programmingExercise().id;
         if (exerciseId === undefined || !this.isActive()) {
             this.patchConfig({ frameworkVersion: newVersion });
-            // Keep the parent's staged copy in sync when a create-mode activation is already staged.
-            if (exerciseId === undefined && this.config().status === SecurityActivationStatus.ACTIVE) {
-                this.stagedActivationChange.emit({ frameworkVersion: newVersion });
+            if (exerciseId === undefined) {
+                this.emitStagedChoice();
             }
             return;
         }
@@ -266,12 +287,17 @@ export class ProgrammingExerciseSecurityComponent {
         });
     }
 
+    private emitStagedChoice(): void {
+        const config = this.config();
+        this.stagedChoiceChange.emit({ active: isSecurityActive(config), frameworkVersion: config.frameworkVersion ?? this.defaultVersion() });
+    }
+
     private patchConfig(patch: Partial<SecurityFrameworkConfig>): void {
         this.config.set(cloneWith(this.config(), patch));
     }
 
     private settle(next: SecurityFrameworkConfig): void {
-        // The server already persisted this state; the returned config is the source of truth.
+        // The server has committed this state to the tests repository; the returned config is the source of truth.
         this.config.set(next);
         this.lastSettledActive.set(isSecurityActive(next));
     }

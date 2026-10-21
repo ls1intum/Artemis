@@ -1,0 +1,295 @@
+package de.tum.cit.aet.artemis.programming.service.security;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+/**
+ * Reads and rewrites the Ares 2 security setup inside a checked-out exercise-tests repository.
+ * <p>
+ * The Java templates ship Ares 2 already enabled: the test classes carry {@code @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")}, the
+ * repository root contains {@code SecurityPolicy.yaml}, and the build file pins the Ares version ({@code aresVersion} in Gradle, {@code ares.version} in
+ * Maven). This class is the single place that knows that layout:
+ * <ul>
+ * <li>the Security Framework is <em>active</em> when {@code SecurityPolicy.yaml} exists,</li>
+ * <li>deactivating deletes the policy file and switches every {@code @Policy} annotation to {@code activated = false}, so Ares stops enforcing a sandbox
+ * (removing the annotation alone would not do that, because Ares then applies its strict default policy),</li>
+ * <li>activating writes a policy file and switches the annotations back on.</li>
+ * </ul>
+ * The Ares library itself stays on the test classpath, because the template tests also use its non-security APIs (structural tests, reflection helpers,
+ * timeouts). All methods are side-effect free apart from the files they are asked to write.
+ */
+public final class SecurityPolicyRepositoryFiles {
+
+    /** Name of the policy file at the root of the exercise-tests repository, as referenced by the template test classes. */
+    public static final String POLICY_FILE_NAME = "SecurityPolicy.yaml";
+
+    private static final String GRADLE_BUILD_FILE = "build.gradle";
+
+    private static final String MAVEN_BUILD_FILE = "pom.xml";
+
+    private static final Pattern GRADLE_ARES_VERSION = Pattern.compile("(aresVersion\\s*=\\s*['\"])([^'\"]+)(['\"])");
+
+    private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<]+)(</ares\\.version>)");
+
+    /** Matches the fully qualified {@code @Policy} annotation together with its arguments. */
+    private static final Pattern QUALIFIED_POLICY_ANNOTATION = Pattern.compile("@de\\.tum\\.cit\\.ase\\.ares\\.api\\.Policy\\s*(\\([^)]*\\))?");
+
+    /** Matches the simple-name {@code @Policy} annotation; only applied to files that import the Ares annotation. */
+    private static final Pattern SIMPLE_POLICY_ANNOTATION = Pattern.compile("@Policy\\b\\s*(\\([^)]*\\))?");
+
+    private static final Pattern ARES_POLICY_IMPORT = Pattern.compile("^\\s*import\\s+de\\.tum\\.cit\\.ase\\.ares\\.api\\.Policy\\s*;", Pattern.MULTILINE);
+
+    private static final Pattern DEACTIVATED_ARGUMENT = Pattern.compile("activated\\s*=\\s*false");
+
+    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w.]+)\\s*;", Pattern.MULTILINE);
+
+    private static final Pattern TEST_CLASS_MARKER = Pattern.compile("@(org\\.junit\\.jupiter\\.api\\.)?Test\\b|@(de\\.tum\\.cit\\.ase\\.ares\\.api\\.)?Policy\\b");
+
+    static final String ACTIVE_ANNOTATION = "@de.tum.cit.ase.ares.api.Policy(value = \"" + POLICY_FILE_NAME + "\")";
+
+    static final String INACTIVE_ANNOTATION = "@de.tum.cit.ase.ares.api.Policy(activated = false)";
+
+    /** Directories of a checked-out repository that never contain test sources of the exercise. */
+    private static final Set<String> IGNORED_DIRECTORIES = Set.of(".git", "build", "target", ".gradle", ".idea", "node_modules");
+
+    /** The build tool of the exercise-tests repository, which selects the Ares language configuration of a generated policy. */
+    public enum BuildTool {
+
+        GRADLE("JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ"), MAVEN("JAVA_USING_MAVEN_ARCHUNIT_AND_ASPECTJ");
+
+        private final String aresLanguageConfiguration;
+
+        BuildTool(String aresLanguageConfiguration) {
+            this.aresLanguageConfiguration = aresLanguageConfiguration;
+        }
+    }
+
+    private SecurityPolicyRepositoryFiles() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
+    /**
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @return whether the repository contains the Ares security policy file, i.e. whether the Security Framework is active
+     */
+    public static boolean isPolicyPresent(Path repositoryRoot) {
+        return Files.isRegularFile(repositoryRoot.resolve(POLICY_FILE_NAME));
+    }
+
+    /**
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @return the build tool of the repository, if it has a Gradle or Maven build file that pins an Ares version
+     */
+    public static Optional<BuildTool> detectBuildTool(Path repositoryRoot) {
+        if (readFileIfPresent(repositoryRoot.resolve(GRADLE_BUILD_FILE)).map(content -> GRADLE_ARES_VERSION.matcher(content).find()).orElse(false)) {
+            return Optional.of(BuildTool.GRADLE);
+        }
+        if (readFileIfPresent(repositoryRoot.resolve(MAVEN_BUILD_FILE)).map(content -> MAVEN_ARES_VERSION.matcher(content).find()).orElse(false)) {
+            return Optional.of(BuildTool.MAVEN);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @return the Ares version pinned in the build file, if any
+     */
+    public static Optional<String> readAresVersion(Path repositoryRoot) {
+        return detectBuildTool(repositoryRoot).flatMap(buildTool -> readFileIfPresent(buildFile(repositoryRoot, buildTool)).map(content -> {
+            Matcher matcher = versionPattern(buildTool).matcher(content);
+            return matcher.find() ? matcher.group(2).trim() : null;
+        }));
+    }
+
+    /**
+     * Pins the given Ares version in the build file of the repository.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param aresVersion    the Ares version to pin
+     * @return whether the build file changed
+     */
+    public static boolean writeAresVersion(Path repositoryRoot, String aresVersion) {
+        Optional<BuildTool> buildTool = detectBuildTool(repositoryRoot);
+        if (buildTool.isEmpty()) {
+            return false;
+        }
+        Path buildFile = buildFile(repositoryRoot, buildTool.get());
+        String content = readFile(buildFile);
+        String updated = versionPattern(buildTool.get()).matcher(content).replaceAll(match -> Matcher.quoteReplacement(match.group(1) + aresVersion + match.group(3)));
+        return writeIfChanged(buildFile, content, updated);
+    }
+
+    /**
+     * Writes the policy file.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param policy         the policy content
+     */
+    public static void writePolicy(Path repositoryRoot, String policy) {
+        writeIfChanged(repositoryRoot.resolve(POLICY_FILE_NAME), readFileIfPresent(repositoryRoot.resolve(POLICY_FILE_NAME)).orElse(null), policy);
+    }
+
+    /**
+     * Deletes the policy file, if present.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     */
+    public static void deletePolicy(Path repositoryRoot) {
+        try {
+            Files.deleteIfExists(repositoryRoot.resolve(POLICY_FILE_NAME));
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Switches every Ares {@code @Policy} annotation in the Java files of the repository on (pointing at {@link #POLICY_FILE_NAME}) or off
+     * ({@code activated = false}).
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param active         whether the annotations should enforce the policy
+     * @return the number of files that changed
+     */
+    public static int setPolicyAnnotationsActive(Path repositoryRoot, boolean active) {
+        String replacement = active ? ACTIVE_ANNOTATION : INACTIVE_ANNOTATION;
+        int changedFiles = 0;
+        for (Path javaFile : javaFiles(repositoryRoot)) {
+            String content = readFile(javaFile);
+            String updated = QUALIFIED_POLICY_ANNOTATION.matcher(content).replaceAll(match -> Matcher.quoteReplacement(rewriteAnnotation(match, replacement, active)));
+            if (ARES_POLICY_IMPORT.matcher(updated).find()) {
+                updated = SIMPLE_POLICY_ANNOTATION.matcher(updated).replaceAll(match -> Matcher.quoteReplacement(rewriteAnnotation(match, replacement, active)));
+            }
+            if (writeIfChanged(javaFile, content, updated)) {
+                changedFiles++;
+            }
+        }
+        return changedFiles;
+    }
+
+    /**
+     * Keeps an annotation that already has the requested state untouched, so an instructor's own policy path survives a re-activation.
+     */
+    private static String rewriteAnnotation(MatchResult match, String replacement, boolean active) {
+        String arguments = match.group(1) == null ? "" : match.group(1);
+        boolean currentlyInactive = DEACTIVATED_ARGUMENT.matcher(arguments).find();
+        return currentlyInactive != active ? match.group() : replacement;
+    }
+
+    /**
+     * Generates the default policy for the repository: no resource access is permitted, and every class that contains tests is registered as a test class
+     * so Ares does not treat it as student code.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param buildTool      the build tool of the repository
+     * @param packageName    the package of the supervised student code, if the exercise has one
+     * @return the YAML content of the policy
+     */
+    public static String generateDefaultPolicy(Path repositoryRoot, BuildTool buildTool, Optional<String> packageName) {
+        StringBuilder policy = new StringBuilder();
+        policy.append("# Ares 2 security policy for the tests of this repository, generated by Artemis when the Security Framework was activated.\n");
+        policy.append("# Docs: https://ls1intum.github.io/Ares2/instructor/policy-reference\n");
+        policy.append("# Add every new test class below, otherwise Ares treats it like student code and blocks it.\n");
+        policy.append("thisPolicyFileCompliesToThePolicyVersion: 1\n");
+        policy.append("regardingTheSupervisedCode:\n");
+        policy.append("  theFollowingProgrammingLanguageConfigurationIsUsed: ").append(buildTool.aresLanguageConfiguration).append('\n');
+        packageName.filter(name -> !name.isBlank()).ifPresent(name -> policy.append("  theSupervisedCodeUsesTheFollowingPackage: \"").append(name).append("\"\n"));
+        List<String> testClasses = findTestClasses(repositoryRoot);
+        if (testClasses.isEmpty()) {
+            policy.append("  theFollowingClassesAreTestClasses: [ ]\n");
+        }
+        else {
+            policy.append("  theFollowingClassesAreTestClasses:\n");
+            testClasses.forEach(testClass -> policy.append("    - \"").append(testClass).append("\"\n"));
+        }
+        policy.append("  theFollowingResourceAccessesArePermitted:\n");
+        for (String resource : List.of("regardingFileSystemInteractions", "regardingNetworkConnections", "regardingCommandExecutions", "regardingThreadCreations",
+                "regardingPackageImports", "regardingTimeouts")) {
+            policy.append("    ").append(resource).append(": [ ]\n");
+        }
+        return policy.toString();
+    }
+
+    /**
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @return the fully qualified names of all classes in the repository that contain tests, sorted
+     */
+    static List<String> findTestClasses(Path repositoryRoot) {
+        List<String> testClasses = new ArrayList<>();
+        for (Path javaFile : javaFiles(repositoryRoot)) {
+            String content = readFile(javaFile);
+            if (!TEST_CLASS_MARKER.matcher(content).find()) {
+                continue;
+            }
+            String simpleName = javaFile.getFileName().toString().replaceFirst("\\.java$", "");
+            Matcher packageMatcher = PACKAGE_DECLARATION.matcher(content);
+            testClasses.add(packageMatcher.find() ? packageMatcher.group(1) + "." + simpleName : simpleName);
+        }
+        testClasses.sort(String::compareTo);
+        return testClasses;
+    }
+
+    private static List<Path> javaFiles(Path repositoryRoot) {
+        try (Stream<Path> files = Files.walk(repositoryRoot)) {
+            return files.filter(path -> repositoryRoot.relativize(path).toString().isEmpty() || isNotInIgnoredDirectory(repositoryRoot, path))
+                    .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".java")).sorted().toList();
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static boolean isNotInIgnoredDirectory(Path repositoryRoot, Path path) {
+        for (Path segment : repositoryRoot.relativize(path)) {
+            if (IGNORED_DIRECTORIES.contains(segment.toString())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Path buildFile(Path repositoryRoot, BuildTool buildTool) {
+        return repositoryRoot.resolve(buildTool == BuildTool.GRADLE ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE);
+    }
+
+    private static Pattern versionPattern(BuildTool buildTool) {
+        return buildTool == BuildTool.GRADLE ? GRADLE_ARES_VERSION : MAVEN_ARES_VERSION;
+    }
+
+    private static Optional<String> readFileIfPresent(Path file) {
+        return Files.isRegularFile(file) ? Optional.of(readFile(file)) : Optional.empty();
+    }
+
+    private static String readFile(Path file) {
+        try {
+            return Files.readString(file, StandardCharsets.UTF_8);
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static boolean writeIfChanged(Path file, String previousContent, String newContent) {
+        if (newContent.equals(previousContent)) {
+            return false;
+        }
+        try {
+            Files.writeString(file, newContent, StandardCharsets.UTF_8);
+            return true;
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+}

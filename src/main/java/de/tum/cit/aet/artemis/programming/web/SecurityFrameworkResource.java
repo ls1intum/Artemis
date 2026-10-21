@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SECURITY_FRAMEWORK;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -30,11 +32,11 @@ import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkServ
 /**
  * REST controller for the Security Framework activation state of a programming exercise (Objective 1).
  * <p>
- * Reads are open to editors; every mutation requires an instructor. The transient GENERATING/DELETING
- * states are a client concern - each endpoint here returns the settled config once the (mocked) Ares2
- * sync completes.
+ * Reads are open to editors; every mutation requires an instructor. Each mutation commits to the exercise-tests
+ * repository and returns the settled state once the commit has been pushed; the transient GENERATING/DELETING
+ * states are a client concern.
  */
-@Profile(PROFILE_SECURITY_FRAMEWORK)
+@Profile(PROFILE_CORE)
 @Lazy
 @FeatureUsage(UserFeature.PROGRAMMING_SECURITY_FRAMEWORK)
 @RestController
@@ -49,11 +51,14 @@ public class SecurityFrameworkResource {
 
     private final SecurityFrameworkService securityFrameworkService;
 
+    private final UserRepository userRepository;
+
     public SecurityFrameworkResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authorizationCheckService,
-            SecurityFrameworkService securityFrameworkService) {
+            SecurityFrameworkService securityFrameworkService, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.securityFrameworkService = securityFrameworkService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -72,64 +77,65 @@ public class SecurityFrameworkResource {
     }
 
     /**
-     * GET programming-exercises/:exerciseId/security-framework/supported-versions : the selectable framework versions.
+     * GET security-framework/supported-versions : the Ares versions an instructor can pin, newest first. Not exercise-specific, so the create form can
+     * offer them before the exercise exists.
      *
-     * @param exerciseId of the programming exercise
      * @return 200 (OK) with the supported framework versions in the body
      */
-    @GetMapping("programming-exercises/{exerciseId}/security-framework/supported-versions")
+    @GetMapping("security-framework/supported-versions")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getSupportedFrameworkVersions(@PathVariable Long exerciseId) {
-        log.debug("REST request to get the supported Security Framework versions for programming exercise {}", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+    public ResponseEntity<List<String>> getSupportedFrameworkVersions() {
+        log.debug("REST request to get the supported Security Framework versions");
         return ResponseEntity.ok(securityFrameworkService.getSupportedFrameworkVersions());
     }
 
     /**
-     * PUT programming-exercises/:exerciseId/security-framework/activate : activates the sandbox and generates the policy.
+     * PUT programming-exercises/:exerciseId/security-framework/activate : activates Ares: commits the security policy to the tests repository.
      *
      * @param exerciseId       of the programming exercise
-     * @param frameworkVersion the framework version to generate the policy with
-     * @return 200 (OK) with the resulting ACTIVE config
+     * @param frameworkVersion the Ares version to pin
+     * @return 200 (OK) with the resulting config
      */
     @PutMapping("programming-exercises/{exerciseId}/security-framework/activate")
     @EnforceAtLeastInstructor
     public ResponseEntity<SecurityFrameworkConfigDTO> activateSecurityFramework(@PathVariable Long exerciseId, @RequestParam String frameworkVersion) {
         log.debug("REST request to activate the Security Framework of programming exercise {} with framework {}", exerciseId, frameworkVersion);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return ResponseEntity.ok(securityFrameworkService.activate(exercise, frameworkVersion));
+        User user = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
+        return ResponseEntity.ok(securityFrameworkService.activate(exercise, frameworkVersion, user));
     }
 
     /**
-     * PUT programming-exercises/:exerciseId/security-framework/deactivate : deactivates the sandbox and removes the policy.
+     * PUT programming-exercises/:exerciseId/security-framework/deactivate : deactivates Ares: removes the security policy from the tests repository.
      *
      * @param exerciseId of the programming exercise
-     * @return 200 (OK) with the resulting INACTIVE config
+     * @return 200 (OK) with the resulting config
      */
     @PutMapping("programming-exercises/{exerciseId}/security-framework/deactivate")
     @EnforceAtLeastInstructor
     public ResponseEntity<SecurityFrameworkConfigDTO> deactivateSecurityFramework(@PathVariable Long exerciseId) {
         log.debug("REST request to deactivate the Security Framework of programming exercise {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return ResponseEntity.ok(securityFrameworkService.deactivate(exercise));
+        User user = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
+        return ResponseEntity.ok(securityFrameworkService.deactivate(exercise, user));
     }
 
     /**
-     * PUT programming-exercises/:exerciseId/security-framework/framework-version : re-syncs an active exercise onto another version.
+     * PUT programming-exercises/:exerciseId/security-framework/framework-version : pins another Ares version for an active exercise.
      *
      * @param exerciseId       of the programming exercise
-     * @param frameworkVersion the framework version to switch to
-     * @return 200 (OK) with the resulting ACTIVE config
+     * @param frameworkVersion the Ares version to pin
+     * @return 200 (OK) with the resulting config
      */
     @PutMapping("programming-exercises/{exerciseId}/security-framework/framework-version")
     @EnforceAtLeastInstructor
     public ResponseEntity<SecurityFrameworkConfigDTO> updateFrameworkVersion(@PathVariable Long exerciseId, @RequestParam String frameworkVersion) {
         log.debug("REST request to change the Security Framework version of programming exercise {} to {}", exerciseId, frameworkVersion);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return ResponseEntity.ok(securityFrameworkService.updateFrameworkVersion(exercise, frameworkVersion));
+        User user = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
+        return ResponseEntity.ok(securityFrameworkService.updateFrameworkVersion(exercise, frameworkVersion, user));
     }
 }

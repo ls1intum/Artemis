@@ -41,14 +41,14 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI, PROFILE_SECURITY_FRAMEWORK } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
-import { SecurityStagedActivation } from 'app/programming/shared/entities/security-framework-config.model';
+import { SecurityFrameworkConfig, SecurityStagedChoice } from 'app/programming/shared/entities/security-framework-config.model';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
@@ -154,8 +154,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
-    /** Create-mode Security Framework activation, owned here so it survives the simple <-> advanced mode switch that destroys the card. */
-    readonly stagedSecurityActivation = signal<SecurityStagedActivation | undefined>(undefined);
+    /** Create-mode Security Framework choice, owned here so it is applied after the exercise has been created. Undefined keeps the template's setting. */
+    readonly stagedSecurityChoice = signal<SecurityStagedChoice | undefined>(undefined);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
@@ -288,7 +288,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public theiaEnabled = false;
-    readonly securityFrameworkEnabled = signal(false);
     readonly securityFrameworkInstructor = computed(() => this.accountService.isAtLeastInstructorInCourseWithId(this.courseId()));
     readonly plagiarismEnabled = signal(false);
     private _hyperionEnabled = false;
@@ -672,7 +671,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
         this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
-        this.securityFrameworkEnabled.set(this.profileService.isProfileActive(PROFILE_SECURITY_FRAMEWORK));
         this.defineSupportedProgrammingLanguages();
     }
 
@@ -1028,20 +1026,27 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * Persists a Security Framework activation staged during create mode (no-op in edit mode or when
-     * nothing was staged), then runs {@link navigate}. The form stays locked (isSaving) until the
-     * activation settles, and the instructor is warned if it failed instead of navigating away as if
-     * the sandbox were active.
+     * Applies the Security Framework choice made during create mode (no-op in edit mode or when the
+     * instructor kept the template's setting), then runs {@link navigate}. The form stays locked
+     * (isSaving) until the change settles, and the instructor is warned if it failed instead of
+     * navigating away as if it had been applied.
      */
     private commitStagedSecurityThenNavigate(exercise: ProgrammingExercise, navigate: () => void) {
-        const staged = this.stagedSecurityActivation();
-        const commitStagedSecurity =
-            staged && exercise.id !== undefined
-                ? this.securityFrameworkService.activate(exercise.id, staged.frameworkVersion).pipe(
-                      map(() => true),
-                      catchError(() => of(false)),
-                  )
-                : of(true);
+        const staged = this.stagedSecurityChoice();
+        let apply: Observable<SecurityFrameworkConfig> | undefined;
+        if (staged && exercise.id !== undefined && exercise.programmingLanguage === ProgrammingLanguage.JAVA) {
+            if (!staged.active) {
+                apply = this.securityFrameworkService.deactivate(exercise.id);
+            } else if (staged.frameworkVersion) {
+                apply = this.securityFrameworkService.activate(exercise.id, staged.frameworkVersion);
+            }
+        }
+        const commitStagedSecurity = apply
+            ? apply.pipe(
+                  map(() => true),
+                  catchError(() => of(false)),
+              )
+            : of(true);
         commitStagedSecurity.subscribe((activated) => {
             this.isSaving.set(false);
             if (!activated) {
@@ -1152,11 +1157,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
         this.programmingExerciseLanguageForAi.set(language);
-        // The Security Framework only supports Java, so discard any staged activation when switching to another
-        // language. Otherwise the staged signal would survive the (hidden) security card and trigger a doomed
-        // activation request on save, which the server now also rejects.
+        // The Security Framework only supports Java, so discard any staged choice when switching to another
+        // language. Otherwise it would survive the (hidden) security card and trigger a doomed request on save.
         if (language !== ProgrammingLanguage.JAVA) {
-            this.stagedSecurityActivation.set(undefined);
+            this.stagedSecurityChoice.set(undefined);
         }
         return language;
     }

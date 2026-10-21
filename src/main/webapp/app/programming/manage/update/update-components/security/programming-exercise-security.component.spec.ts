@@ -6,15 +6,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityStagedActivation } from 'app/programming/shared/entities/security-framework-config.model';
+import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityStagedChoice } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
 
-const VERSIONS = [
-    { version: '3.4.1', label: '3.4.1', latest: true },
-    { version: '3.3.0', label: '3.3.0' },
-    { version: '3.2.2', label: '3.2.2' },
-];
+const VERSIONS = ['3.4.1', '3.3.0', '3.2.2'];
 
 const inactiveConfig = (): SecurityFrameworkConfig => ({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: '3.4.1' });
 const activeConfig = (version = '3.4.1', hash = 'abc1234'): SecurityFrameworkConfig => ({
@@ -34,8 +30,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseSecurityComponent>;
     let comp: ProgrammingExerciseSecurityComponent;
     let service: {
-        getFrameworkVersions: ReturnType<typeof vi.fn>;
-        getInitialConfigForCreate: ReturnType<typeof vi.fn>;
+        getSupportedVersions: ReturnType<typeof vi.fn>;
         getConfig: ReturnType<typeof vi.fn>;
         activate: ReturnType<typeof vi.fn>;
         deactivate: ReturnType<typeof vi.fn>;
@@ -44,8 +39,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
 
     beforeEach(() => {
         service = {
-            getFrameworkVersions: vi.fn().mockReturnValue(VERSIONS),
-            getInitialConfigForCreate: vi.fn().mockReturnValue(inactiveConfig()),
+            getSupportedVersions: vi.fn().mockReturnValue(of(VERSIONS)),
             getConfig: vi.fn().mockReturnValue(of(inactiveConfig())),
             activate: vi.fn(),
             deactivate: vi.fn(),
@@ -102,12 +96,36 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.config().frameworkVersion).toBe('3.3.0');
     });
 
+    it('create mode starts ACTIVE with the newest version, like the Java template', () => {
+        initCreate();
+        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.isToggleOn()).toBe(true);
+        expect(comp.config().frameworkVersion).toBe('3.4.1');
+    });
+
+    it('labels the newest version and keeps a no longer supported version the exercise pins', () => {
+        initEdit(activeConfig('2.0.0'));
+        expect(comp.frameworkVersions().map((option) => option.version)).toEqual(['3.4.1', '3.3.0', '3.2.2', '2.0.0']);
+        expect(comp.frameworkVersions()[0].label).toContain('3.4.1 ');
+        expect(comp.frameworkVersions()[1].label).toBe('3.3.0');
+    });
+
+    it('disables the version selector when no versions are known', () => {
+        service.getSupportedVersions.mockReturnValue(throwError(() => new Error('LOAD_FAILED')));
+        // The versions are requested on construction, so re-create the component with the failing request.
+        fixture.destroy();
+        fixture = TestBed.createComponent(ProgrammingExerciseSecurityComponent);
+        comp = fixture.componentInstance;
+        initCreate();
+        expect(comp.isVersionSelectDisabled()).toBe(true);
+    });
+
     it('create mode stages ACTIVE/INACTIVE locally without calling the server', () => {
         initCreate();
-        comp.onToggleChanged(true);
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
         comp.onToggleChanged(false);
         expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+        comp.onToggleChanged(true);
+        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
         expect(service.activate).not.toHaveBeenCalled();
         expect(service.deactivate).not.toHaveBeenCalled();
     });
@@ -265,37 +283,40 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
     });
 
-    it('emits the staged activation to the parent when toggled in create mode', () => {
+    it('emits the staged choice to the parent when changed in create mode', () => {
         initCreate();
-        const emitted: (SecurityStagedActivation | undefined)[] = [];
-        comp.stagedActivationChange.subscribe((value) => emitted.push(value));
-        comp.onToggleChanged(true);
-        expect(emitted.at(-1)).toEqual({ frameworkVersion: '3.4.1' });
+        const emitted: SecurityStagedChoice[] = [];
+        comp.stagedChoiceChange.subscribe((value) => emitted.push(value));
         comp.onToggleChanged(false);
-        expect(emitted.at(-1)).toBeUndefined();
+        expect(emitted.at(-1)).toEqual({ active: false, frameworkVersion: '3.4.1' });
+        comp.onToggleChanged(true);
+        expect(emitted.at(-1)).toEqual({ active: true, frameworkVersion: '3.4.1' });
+        comp.onFrameworkVersionChanged('3.3.0');
+        expect(emitted.at(-1)).toEqual({ active: true, frameworkVersion: '3.3.0' });
     });
 
-    it('re-seeds a staged activation provided by the parent, surviving a mode switch', () => {
-        fixture.componentRef.setInput('stagedActivation', { frameworkVersion: '3.3.0' });
+    it('re-seeds a staged choice provided by the parent when the card is re-created', () => {
+        fixture.componentRef.setInput('stagedChoice', { active: false, frameworkVersion: '3.3.0' });
         initCreate();
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
         expect(comp.config().frameworkVersion).toBe('3.3.0');
     });
 
-    it('resets a staged create-mode activation when the parent clears it on a non-Java switch', () => {
+    it('returns to the template default when the parent clears the staged choice on a non-Java switch', () => {
         initCreate();
-        comp.onToggleChanged(true);
-        // The parent mirrors the emitted staged activation back into the input.
-        fixture.componentRef.setInput('stagedActivation', { frameworkVersion: '3.4.1' });
+        comp.onToggleChanged(false);
+        // The parent mirrors the emitted choice back into the input.
+        fixture.componentRef.setInput('stagedChoice', { active: false, frameworkVersion: '3.4.1' });
         fixture.detectChanges();
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
-
-        // Switching to a non-Java language clears the staged activation in the parent; the card must not
-        // keep a stale ACTIVE that would never be committed when the language returns to Java.
-        fixture.componentRef.setInput('stagedActivation', undefined);
-        fixture.detectChanges();
-
         expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
-        expect(comp.isToggleOn()).toBe(false);
+
+        // Switching to a non-Java language clears the choice in the parent; the card must not keep a
+        // stale INACTIVE that would never be applied when the language returns to Java.
+        fixture.componentRef.setInput('stagedChoice', undefined);
+        fixture.detectChanges();
+
+        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.isToggleOn()).toBe(true);
+        expect(comp.config().frameworkVersion).toBe('3.4.1');
     });
 });
