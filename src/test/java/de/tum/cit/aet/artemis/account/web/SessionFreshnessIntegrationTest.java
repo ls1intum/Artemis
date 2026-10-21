@@ -195,8 +195,9 @@ class SessionFreshnessIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     @WithMockUser(username = LOGIN)
     void aSessionThatStartedBeforeTheCredentialsChangedCannotReadAParticipationAccessToken() throws Exception {
-        userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
-        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().minus(Duration.ofHours(1)));
+        Instant credentialsChangedAt = Instant.parse("2026-01-01T12:00:00Z");
+        userActivityService.recordCredentialsChanged(user.getId(), credentialsChangedAt);
+        SessionTestUtil.actAsSessionStartedAt(LOGIN, credentialsChangedAt.minus(Duration.ofHours(1)));
 
         request.get("/api/account/participation-vcs-access-token?participationId=1", HttpStatus.UNAUTHORIZED, String.class);
     }
