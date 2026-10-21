@@ -441,6 +441,31 @@ describe('Message editor editing transactions', () => {
         expect(window.getSelection()!.anchorOffset).toBe(2);
     });
 
+    it.each(['first', '**first**', '*first*', '`first`', '- first', '> first'])('anchors the caret on the blank line immediately after Shift+Enter in %s', (message) => {
+        editor.load(message);
+        const text = document.createTreeWalker(root, NodeFilter.SHOW_TEXT).nextNode()!;
+        select(text, 5);
+        editor.insertText('\n');
+
+        const placeholder = root.querySelector('[data-message-placeholder]')!;
+        const caret = window.getSelection()!.getRangeAt(0);
+        expect(caret.startContainer).toBe(placeholder.parentNode);
+        expect(caret.startOffset).toBe(Array.from(placeholder.parentNode!.childNodes).indexOf(placeholder));
+        expect(caret.collapsed).toBe(true);
+
+        editor.insertText('second');
+        expect(root.textContent).toBe('firstsecond');
+        editor.undo();
+        expect(root.textContent).toBe('first');
+        const middle = document.createTreeWalker(root, NodeFilter.SHOW_TEXT).nextNode()!;
+        select(middle, 2);
+        editor.afterInput();
+        expect(window.getSelection()!.anchorNode).toBe(middle);
+        expect(window.getSelection()!.anchorOffset).toBe(2);
+        editor.undo();
+        expect(root.querySelector('br')).toBeNull();
+    });
+
     it('preserves a separating space when typing after an inserted mention', () => {
         editor.load('');
         editor.insertMarkdown('[user]Anna(anna)[/user] ');

@@ -254,7 +254,7 @@ export class MessageEditorDom {
                 }
                 const selection = this.element.ownerDocument.getSelection();
                 const range = selection?.rangeCount ? selection.getRangeAt(0) : undefined;
-                if (container.matches('pre > code') && range?.collapsed && container.contains(range.startContainer)) {
+                if (range?.collapsed && container.contains(range.startContainer)) {
                     const suffix = range.cloneRange();
                     suffix.selectNodeContents(container);
                     suffix.setStart(range.startContainer, range.startOffset);

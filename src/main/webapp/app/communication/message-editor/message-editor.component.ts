@@ -7,6 +7,7 @@ import {
     faChevronUp,
     faCode,
     faEllipsis,
+    faFileCode,
     faHashtag,
     faItalic,
     faLink,
@@ -88,7 +89,7 @@ export class MessageEditorComponent {
         { tag: 'ul' as const, icon: faListUl, label: 'bulletedList' },
         { tag: 'ol' as const, icon: faListOl, label: 'orderedList' },
         { tag: 'blockquote' as const, icon: faQuoteLeft, label: 'quote' },
-        { tag: 'pre' as const, icon: faCode, label: 'codeBlock' },
+        { tag: 'pre' as const, icon: faFileCode, label: 'codeBlock' },
     ];
     protected readonly positions: ConnectedPosition[] = [
         { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
