@@ -1,3 +1,4 @@
+import { clipboardToEditorFragment } from './message-editor-clipboard';
 import { captureMessageBookmark, messageBookmarkText, restoreMessageBookmark } from './message-editor-bookmarks';
 import { preserveMessageSelection, restoreMessageSelectionBoundaries } from './message-editor-selection';
 import { formatMessageBlocks } from './message-editor-blocks';
@@ -374,29 +375,42 @@ export class MessageEditorDom {
         return (content.textContent ?? '').replace(/\u200b/g, '');
     }
 
+    /** Preserves supported clipboard formatting while code and unsupported clipboard formats retain literal text. */
+    insertClipboard(html: string, text: string): void {
+        const code = this.parentElement(this.range().startContainer)?.closest('pre, code');
+        const fragment = code ? undefined : clipboardToEditorFragment(html);
+        if (fragment === undefined) {
+            this.insertText(text);
+        } else {
+            this.insertContent(fragment);
+        }
+    }
+
     /** Inserts sanitized message content at the supplied or remembered range, retaining a trailing completion space. */
     insertMarkdown(message: string, range?: Range): void {
+        this.insertContent(messageToEditorFragment(message), range, /[ \t]+$/.exec(message)?.[0]);
+    }
+
+    private insertContent(content: DocumentFragment, range?: Range, trailingSpace?: string): void {
         this.typingMarks = undefined;
         this.typingCaret = undefined;
         this.transact(() => {
             if (range) {
                 this.select(range);
             }
-            const content = messageToEditorFragment(message);
             // Completion inserts inline content, not a paragraph inside the current paragraph.
             const paragraph = content.firstElementChild;
             const fragment = this.element.ownerDocument.createDocumentFragment();
-            if (paragraph?.tagName === 'P' && content.childElementCount === 1) {
+            if (paragraph?.tagName === 'P' && content.childNodes.length === 1) {
                 fragment.append(...Array.from(paragraph.childNodes));
             } else {
                 fragment.append(content);
             }
             // Markdown renderers trim trailing spaces. Keep an editable text position after an atomic item.
-            const trailingSpace = /[ \t]+$/.exec(message)?.[0];
             if (trailingSpace) {
                 fragment.append(this.element.ownerDocument.createTextNode(trailingSpace));
             }
-            this.replace(fragment);
+            this.replaceRichContent(fragment);
             this.revision++;
             if (
                 Array.from(this.element.querySelectorAll('[data-message-reference]')).some((reference) =>
@@ -408,6 +422,74 @@ export class MessageEditorDom {
                 this.select(restore());
             }
         });
+    }
+
+    /** Splits a surrounding paragraph for block paste, merging its text into the first/last pasted paragraphs. */
+    private replaceRichContent(fragment: DocumentFragment): void {
+        const blockContent = Array.from(fragment.children).some((child) => child.matches('p, ul, ol, blockquote, pre'));
+        const originalParagraph = this.parentElement(this.range().startContainer)?.closest('p');
+        if (!blockContent || !originalParagraph) {
+            // Pasted content owns its marks/links. Split the surrounding inline wrappers instead of nesting links or
+            // making the pasted text inherit unrelated formatting. Both sides keep their original wrappers.
+            const caret = this.element.ownerDocument.createTextNode('');
+            this.replace(caret);
+            let parent = caret.parentElement;
+            while (parent?.matches('strong, b, em, i, ins, u, s, del, a')) {
+                const following = this.element.ownerDocument.createRange();
+                following.selectNodeContents(parent);
+                following.setStartAfter(caret);
+                const after = parent.cloneNode(false) as HTMLElement;
+                after.append(following.extractContents());
+                parent.after(caret, after);
+                if (!parent.textContent && !parent.querySelector('[data-message-reference], img')) parent.remove();
+                if (!after.textContent && !after.querySelector('[data-message-reference], img')) after.remove();
+                parent = caret.parentElement;
+            }
+            const range = this.range();
+            range.setStartBefore(caret);
+            range.collapse(true);
+            this.select(range);
+            caret.remove();
+            this.replace(fragment);
+            return;
+        }
+        // Reuse selection deletion/paragraph merging before splitting the surviving paragraph at its caret.
+        const deletionPoint = this.element.ownerDocument.createTextNode('');
+        this.replace(deletionPoint);
+        const range = this.range();
+        let paragraph = this.parentElement(range.startContainer)?.closest('p');
+        if (!paragraph && this.element.contains(originalParagraph)) {
+            // Cross-block deletion can collapse at the host boundary; keep the surviving paragraph's prefix.
+            paragraph = originalParagraph;
+            range.setStart(paragraph, paragraph.childNodes.length);
+            range.collapse(true);
+            this.select(range);
+        }
+        deletionPoint.remove();
+        if (!paragraph) {
+            this.replace(fragment);
+            return;
+        }
+        const suffixRange = range.cloneRange();
+        suffixRange.selectNodeContents(paragraph);
+        suffixRange.setStart(range.startContainer, range.startOffset);
+        const suffix = suffixRange.extractContents();
+        const first = fragment.firstElementChild;
+        if (first?.matches('p')) {
+            paragraph.append(...Array.from(first.childNodes));
+            first.remove();
+        }
+        const last = fragment.lastElementChild;
+        const after = last?.matches('p') ? last : this.element.ownerDocument.createElement('p');
+        const caret = this.element.ownerDocument.createTextNode('');
+        after.append(caret, suffix);
+        if (after !== last) fragment.append(after);
+        paragraph.after(fragment);
+        if (!paragraph.textContent && !paragraph.querySelector('[data-message-reference], img')) paragraph.remove();
+        range.setStartBefore(caret);
+        range.collapse(true);
+        this.select(range);
+        caret.remove();
     }
 
     private replace(node: Node): void {

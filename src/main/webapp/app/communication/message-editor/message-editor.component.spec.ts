@@ -1,3 +1,4 @@
+import { editorCodeText } from './message-editor-conversion';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
@@ -484,6 +485,188 @@ describe('Formatted message composer', () => {
         tools.uploadingChange.emit(false);
         editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
         expect(bubbled).toHaveBeenCalledOnce();
+    });
+
+    function pasteContent(html: string, text: string): ClipboardEvent {
+        const event = new Event('paste', { bubbles: true, cancelable: true }) as ClipboardEvent;
+        Object.defineProperty(event, 'clipboardData', { value: { files: [], getData: (type: string) => (type === 'text/html' ? html : text) } });
+        editable.dispatchEvent(event);
+        return event;
+    }
+
+    it('preserves pasted inline formatting and links as one undoable replacement', () => {
+        const range = document.createRange();
+        range.selectNodeContents(editable.querySelector('p')!);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        const html = '<b>Bold</b> <i>italic</i> <u>under</u> <s>strike</s> <code>code</code> <a href="https://example.org">guide</a>';
+
+        expect(pasteContent(html, 'Bold italic under strike code guide').defaultPrevented).toBe(true);
+
+        expect(editable.querySelector('strong')?.textContent).toBe('Bold');
+        expect(editable.querySelector('em')?.textContent).toBe('italic');
+        expect(editable.querySelector('ins')?.textContent).toBe('under');
+        expect(editable.querySelector('s')?.textContent).toBe('strike');
+        expect(editable.querySelector('code')?.textContent).toBe('code');
+        expect(editable.querySelector('a')?.getAttribute('href')).toBe('https://example.org');
+        expect(emit).toHaveBeenLastCalledWith('**Bold** *italic* <ins>under</ins> ~~strike~~ `code` [guide](https://example.org)');
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
+        expect(editable.textContent).toBe('Hello');
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+        expect(editable.querySelector('strong')?.textContent).toBe('Bold');
+    });
+
+    it('retains document-style inline marks without importing source styling or fake references', () => {
+        caretAtEnd();
+        pasteContent(
+            '<b style="font-weight:normal"><span style="font-weight:700;font-style:italic;text-decoration:underline line-through;color:red" data-message-reference="[user]Other(other)[/user]" contenteditable="false"> marked</span></b>',
+            ' marked',
+        );
+        for (const mark of ['strong', 'em', 'ins', 's']) expect(editable.querySelector(mark)?.textContent?.trim()).toBe('marked');
+        expect(editable.querySelector('[style], [contenteditable="false"], [data-message-reference]')).toBeNull();
+    });
+
+    it('pastes blocks between surrounding text without nested paragraphs and preserves the suffix caret', () => {
+        const range = document.createRange();
+        range.setStart(editable.querySelector('p')!.firstChild!, 2);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const emit = vi.spyOn(component.contentChange, 'emit');
+
+        pasteContent('<p><b>first</b></p><ul><li>item</li></ul><blockquote>quote</blockquote><pre><code>a\nb</code></pre><p>last</p>', 'first\nitem\nquote\na\nb\nlast');
+
+        expect(editable.querySelector('p p, p ul, p blockquote, p pre')).toBeNull();
+        expect(Array.from(editable.children, (child) => child.tagName)).toEqual(['P', 'UL', 'BLOCKQUOTE', 'PRE', 'P']);
+        expect(editable.firstElementChild?.textContent).toBe('Hefirst');
+        expect(editable.lastElementChild?.textContent).toBe('lastllo');
+        expect(editorCodeText(editable.querySelector('pre code')!)).toBe('a\nb');
+        pasteContent('', '!');
+        expect(emit.mock.lastCall?.[0]).toContain('last!llo');
+    });
+
+    it.each(['- item', '> item', '```\nitem\n```'])('replaces a selection spanning a paragraph and another block without losing undo: %s', (lastBlock) => {
+        fixture.componentRef.setInput('content', 'Hello\n\n' + lastBlock);
+        fixture.detectChanges();
+        const start = editable.querySelector('p')!.firstChild!;
+        const end = editable.querySelector('li, blockquote p, pre code')!.firstChild!;
+        const range = document.createRange();
+        range.setStart(start, 2);
+        range.setEnd(end, 2);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const original = editable.textContent;
+        const emit = vi.spyOn(component.contentChange, 'emit');
+
+        pasteContent('<p><b>first</b></p><p>last</p>', 'first\nlast');
+
+        expect(editable.querySelector('strong')?.textContent).toBe('first');
+        expect(editable.firstElementChild?.textContent).toBe('Hefirst');
+        expect(editable.textContent).toContain('last');
+        expect(emit).toHaveBeenCalledTimes(1);
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
+        expect(editable.textContent).toBe(original);
+    });
+
+    it.each(['<table><tr><td>cell</td></tr></table>', '', '<script>alert(1)</script>'])('uses literal clipboard text when HTML is unavailable or unsupported: %s', (html) => {
+        caretAtEnd();
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        pasteContent(html, ' **literal** <img>');
+        expect(editable.textContent).toBe('Hello **literal** <img>');
+        expect(editable.querySelector('strong, img, script, table')).toBeNull();
+        expect(emit.mock.lastCall?.[0]).toContain('\\*\\*literal\\*\\*');
+    });
+
+    it.each(['`Hello`', '```\nHello\n```'])('keeps rich paste literal inside code: %s', (message) => {
+        fixture.componentRef.setInput('content', message);
+        fixture.detectChanges();
+        const code = editable.querySelector('code')!;
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        range.collapse(false);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+
+        pasteContent('<b> world</b>', ' **world**');
+
+        expect(code.textContent).toBe('Hello **world**');
+        expect(code.querySelector('strong')).toBeNull();
+    });
+
+    it('keeps clipboard boundary spaces so formatted paste does not join surrounding words', () => {
+        fixture.componentRef.setInput('content', 'Hellotail');
+        fixture.detectChanges();
+        const range = document.createRange();
+        range.setStart(editable.querySelector('p')!.firstChild!, 5);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const emit = vi.spyOn(component.contentChange, 'emit');
+
+        pasteContent('<b> world </b>', ' world ');
+
+        expect(editable.textContent).toBe('Hello world tail');
+        expect(emit).toHaveBeenLastCalledWith('Hello **world** tail');
+    });
+
+    it('splits surrounding marks and links so pasted formatting does not inherit or nest them', () => {
+        fixture.componentRef.setInput('content', '[**Hello**](https://old.example)');
+        fixture.detectChanges();
+        const text = editable.querySelector('strong')!.firstChild!;
+        const range = document.createRange();
+        range.setStart(text, 2);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+
+        pasteContent('<i>new</i> <a href="https://new.example">link</a>', 'new link');
+
+        expect(editable.querySelector('a a, strong em, strong a')).toBeNull();
+        expect(editable.querySelector('em')?.textContent).toBe('new');
+        expect(Array.from(editable.querySelectorAll('a'), (link) => [link.getAttribute('href'), link.textContent])).toEqual([
+            ['https://old.example', 'He'],
+            ['https://new.example', 'link'],
+            ['https://old.example', 'llo'],
+        ]);
+    });
+
+    it('normalizes clipboard wrappers before subsequent pastes into an imported link', () => {
+        fixture.componentRef.setInput('content', '');
+        fixture.detectChanges();
+        pasteContent('<a href="https://old.example"><span>Hello</span></a>', 'Hello');
+        const range = document.createRange();
+        range.setStart(editable.querySelector('a')!.firstChild!, 2);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        pasteContent('<a href="https://new.example">new</a>', 'new');
+        expect(editable.querySelector('a a')).toBeNull();
+        expect(Array.from(editable.querySelectorAll('a'), (link) => link.textContent)).toEqual(['He', 'new', 'llo']);
+    });
+
+    it.each(['before<p>middle</p>after', 'before<div>middle</div>after', '<span><p>before</p><p>middle</p><p>after</p></span>'])(
+        'preserves every block and inline sibling from clipboard HTML: %s',
+        (html) => {
+            fixture.componentRef.setInput('content', '');
+            fixture.detectChanges();
+            pasteContent(html, 'before\nmiddle\nafter');
+            expect(editable.textContent).toBe('beforemiddleafter');
+            expect(Array.from(editable.children, (child) => child.tagName)).toEqual(['P', 'P', 'P']);
+            expect(editable.querySelector('p p')).toBeNull();
+        },
+    );
+
+    it('drops active clipboard content and unsafe links while retaining safe text and links', () => {
+        caretAtEnd();
+        pasteContent(
+            '<script>alert(1)</script><img src="https://tracker.invalid/pixel" onerror="alert(1)"><a href="javascript:alert(1)" onclick="alert(1)">bad</a> <a href="example.org/path">good</a> <a href="/posts/1">#123</a>',
+            'bad good #123',
+        );
+        expect(editable.querySelector('script, img, [onclick], [onerror], [style]')).toBeNull();
+        expect(editable.querySelectorAll('a')).toHaveLength(1);
+        expect(editable.querySelector('a')?.getAttribute('href')).toBe('https://example.org/path');
+        expect(editable.textContent).toContain('bad good #123');
     });
 
     it('routes pasted and dropped files to the existing conversation upload flow', () => {

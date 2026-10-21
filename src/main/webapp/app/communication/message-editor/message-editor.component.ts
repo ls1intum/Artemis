@@ -363,14 +363,14 @@ export class MessageEditorComponent {
         }
     }
 
-    /** Routes clipboard files through attachment uploads and inserts other clipboard content as literal plain text. */
+    /** Routes clipboard files through uploads and preserves the supported formatting of pasted text. */
     protected paste(event: ClipboardEvent): void {
         event.preventDefault();
         const files = Array.from(event.clipboardData?.files ?? []);
         if (files.length) {
             void this.tools()?.uploadFiles(files);
         } else {
-            this.editor?.insertText(event.clipboardData?.getData('text/plain') ?? '');
+            this.editor?.insertClipboard(event.clipboardData?.getData('text/html') ?? '', event.clipboardData?.getData('text/plain') ?? '');
         }
         this.dismissSuggestions();
     }

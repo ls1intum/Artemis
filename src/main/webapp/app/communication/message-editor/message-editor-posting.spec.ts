@@ -130,6 +130,27 @@ describe('Message editor content in the actual posting view', () => {
         });
     });
 
+    it('renders pasted formatting with the actual posting renderer and reopens it without losing structure', async () => {
+        editor.load('');
+        selectAll();
+        editor.insertClipboard(
+            '<p><b>Bold</b> <i>italic</i> <a href="https://example.org">guide</a></p><ul><li>item</li></ul><pre><code>a\nb</code></pre>',
+            'Bold italic guide\nitem\na\nb',
+        );
+        const message = editorToMessage(host);
+        await render(message, (view) => {
+            expect(view.querySelector('strong')?.textContent).toBe('Bold');
+            expect(view.querySelector('em')?.textContent).toBe('italic');
+            expect(view.querySelector('a[href="https://example.org"]')?.textContent).toBe('guide');
+            expect(view.querySelector('ul li')?.textContent).toBe('item');
+            expect(view.querySelector('pre code')?.textContent).toContain('a\nb');
+        });
+        editor.load(message);
+        expect(editorToMessage(host)).toBe(message);
+        expect(host.querySelector('strong')?.textContent).toBe('Bold');
+        expect(host.querySelector('ul li')?.textContent).toBe('item');
+    });
+
     it('rejects linking a numeric post reference and keeps the actual posting view unchanged', async () => {
         editor.load('See #123 today');
         expect(host.querySelector('[data-message-reference="#123"]')?.getAttribute('contenteditable')).toBe('false');
