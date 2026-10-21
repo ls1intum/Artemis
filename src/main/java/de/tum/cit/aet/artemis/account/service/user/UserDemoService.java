@@ -2,17 +2,23 @@ package de.tum.cit.aet.artemis.account.service.user;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.api.dtos.DemoUsers;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 
 /**
- * Seeds the demo users of the {@code demo} profile, see {@code DemoDataSeedingService}.
+ * Creates the users of the demo course seeded by the {@code demo} profile.
+ * <p>
+ * Only called by the demo data seeding, see {@code DemoDataSeedingService}.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -20,14 +26,36 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 public class UserDemoService {
 
     /**
-     * Login of the demo student. Used as the idempotency key of {@link #createDemoStudent()}, so it must stay stable.
+     * Login of the demo student, the account visitors use to explore the student view. Used as the idempotency key of the user, so it must stay stable.
      */
     public static final String DEMO_STUDENT_LOGIN = "demo_student";
 
     /**
-     * Login of the demo instructor. Used as the idempotency key of {@link #createDemoInstructor()}, so it must stay stable.
+     * Login of the demo tutor. Used as the idempotency key of the user, so it must stay stable.
+     */
+    public static final String DEMO_TUTOR_LOGIN = "demo_tutor";
+
+    /**
+     * Login of the demo editor. Used as the idempotency key of the user, so it must stay stable.
+     */
+    public static final String DEMO_EDITOR_LOGIN = "demo_editor";
+
+    /**
+     * Login of the demo instructor. Used as the idempotency key of the user, so it must stay stable.
      */
     public static final String DEMO_INSTRUCTOR_LOGIN = "demo_instructor";
+
+    /**
+     * Prefix of the logins of the demo student's classmates, followed by their number starting at 1. Used as the idempotency key of the users, so it must stay stable.
+     */
+    public static final String DEMO_PEER_LOGIN_PREFIX = "demo_student_";
+
+    /**
+     * The fictional classmates of the demo student. Their submissions fill the statistics, the scores and the assessment queue of the demo course.
+     */
+    private static final List<DemoName> DEMO_PEER_NAMES = List.of(new DemoName("Amara", "Okafor"), new DemoName("Lukas", "Weber"), new DemoName("Sofia", "Rossi"),
+            new DemoName("Hiroshi", "Tanaka"), new DemoName("Leila", "Haddad"), new DemoName("Mateo", "García"), new DemoName("Priya", "Sharma"), new DemoName("Jonas", "Berg"),
+            new DemoName("Chloé", "Martin"), new DemoName("Kwame", "Mensah"));
 
     /**
      * Password of every demo user. These credentials are intentionally well known: the demo course only exists on demo and manual testing instances, which are activated through
@@ -47,25 +75,24 @@ public class UserDemoService {
     }
 
     /**
-     * Creates the demo student if it does not exist yet, identified by {@link #DEMO_STUDENT_LOGIN}.
+     * Creates the demo users that do not exist yet, identified by their logins.
      *
-     * @return the demo student, whether it already existed or was created by this call.
+     * @return all demo users with their authorities, whether they already existed or were created by this call.
      */
-    public User createDemoStudent() {
-        return createDemoUserIfMissing(DEMO_STUDENT_LOGIN, "Demo", "Student");
-    }
-
-    /**
-     * Creates the demo instructor if it does not exist yet, identified by {@link #DEMO_INSTRUCTOR_LOGIN}.
-     *
-     * @return the demo instructor, whether it already existed or was created by this call.
-     */
-    public User createDemoInstructor() {
-        return createDemoUserIfMissing(DEMO_INSTRUCTOR_LOGIN, "Demo", "Instructor");
+    public DemoUsers createDemoUsers() {
+        User student = createDemoUserIfMissing(DEMO_STUDENT_LOGIN, "Demo", "Student");
+        User tutor = createDemoUserIfMissing(DEMO_TUTOR_LOGIN, "Demo", "Tutor");
+        User editor = createDemoUserIfMissing(DEMO_EDITOR_LOGIN, "Demo", "Editor");
+        User instructor = createDemoUserIfMissing(DEMO_INSTRUCTOR_LOGIN, "Demo", "Instructor");
+        List<User> peers = IntStream.range(0, DEMO_PEER_NAMES.size())
+                .mapToObj(index -> createDemoUserIfMissing(DEMO_PEER_LOGIN_PREFIX + (index + 1), DEMO_PEER_NAMES.get(index).firstName(), DEMO_PEER_NAMES.get(index).lastName()))
+                .toList();
+        return new DemoUsers(student, tutor, editor, instructor, peers);
     }
 
     private User createDemoUserIfMissing(String login, String firstName, String lastName) {
-        return userRepository.findOneByLogin(login).orElseGet(() -> {
+        // With their authorities, so that seeding can act as the user, see SecurityUtils#runAs.
+        return userRepository.findOneWithAuthoritiesByLogin(login).orElseGet(() -> {
             User user = userCreationService.createUser(login, DEMO_PASSWORD, firstName, lastName, login + "@artemis.local", null, null, "en", true);
             // createUser leaves an internal user deactivated with an activation key, because the regular registration flow activates it via that key, which no one is going to
             // redeem for a demo user. Activate it the way an administrator would, which also discards the key.
@@ -73,5 +100,8 @@ public class UserDemoService {
             log.info("Created demo user '{}'", login);
             return user;
         });
+    }
+
+    private record DemoName(String firstName, String lastName) {
     }
 }
