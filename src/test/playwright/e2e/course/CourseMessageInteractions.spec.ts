@@ -597,7 +597,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             const deleted = await page.request.delete(`api/communication/courses/${course!.id}/messages/${original.id}`);
             expect(deleted.ok()).toBe(true);
             await page.reload();
-            await expect(page.getByText('This message has been deleted', { exact: false })).toBeVisible();
+            await expect(page.getByTestId('forwarded-message-unavailable')).toHaveText('This forwarded message is unavailable. The original may have been deleted.');
             await expect(page.getByTestId('forwarded-message-body')).toHaveCount(0);
             await expect(page.getByTestId('forwarded-message-expand')).toHaveCount(0);
             await screenshot(page, info, '05-deleted-source-placeholder');
