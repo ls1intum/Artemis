@@ -218,7 +218,8 @@ describe('CommunicationService', () => {
         it('reports the loaded messages of a single conversation as a read, also when a newer request owns the cache', () => {
             vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
             const courseConversations = TestBed.inject(CourseConversationsService);
-            const requested = vi.spyOn(courseConversations, 'messagesRequested').mockReturnValue(4);
+            const readRequest = { coveredRequests: 4, unreadRevision: 2 };
+            const requested = vi.spyOn(courseConversations, 'messagesRequested').mockReturnValue(readRequest);
             const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
             const olderResponse = new Subject<HttpResponse<Post[]>>();
             vi.spyOn(postService, 'getPosts').mockReturnValueOnce(olderResponse).mockReturnValue(new Subject<HttpResponse<Post[]>>());
@@ -231,7 +232,7 @@ describe('CommunicationService', () => {
 
             olderResponse.next(new HttpResponse({ body: [post] }));
 
-            expect(loaded).toHaveBeenCalledExactlyOnceWith(7, 4, expect.anything());
+            expect(loaded).toHaveBeenCalledExactlyOnceWith(7, readRequest, expect.anything());
         });
 
         it.each([

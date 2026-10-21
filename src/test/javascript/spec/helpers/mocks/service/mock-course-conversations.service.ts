@@ -3,6 +3,7 @@ import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import dayjs from 'dayjs';
+import type { ConversationReadRequest } from 'app/communication/service/course-conversations.service';
 
 export class MockCourseConversationsService {
     get course(): Course | undefined {
@@ -39,11 +40,15 @@ export class MockCourseConversationsService {
 
     setConversationViewOpen(isOpen: boolean): void {}
 
-    messagesRequested(conversationId: number): number {
-        return 0;
+    isConversationMarkedAsUnread(conversationId: number | undefined): boolean {
+        return false;
     }
 
-    messagesLoaded(conversationId: number, coveredRequests: number): void {}
+    messagesRequested(conversationId: number): ConversationReadRequest {
+        return { coveredRequests: 0, unreadRevision: 0 };
+    }
+
+    messagesLoaded(conversationId: number, request: ConversationReadRequest, readAt?: dayjs.Dayjs): void {}
 
     setUpConversationService = (course: Course): Observable<never> => {
         return EMPTY;

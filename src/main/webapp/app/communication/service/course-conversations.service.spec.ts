@@ -873,6 +873,23 @@ describe('CourseConversationsService', () => {
             expect(courseConversationsService['hasUnreadMessages']).toBe(false);
         });
 
+        it('preserves a manual unread boundary when an older messages response arrives after navigation', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const coveredRequests = courseConversationsService.messagesRequested(channel.id!);
+            const manualUnreadDate = dayjs('2026-01-01T10:00:00Z');
+            courseConversationsService.updateConversationUnreadState(channel.id, manualUnreadDate, 3);
+            courseConversationsService.setActiveConversation(groupChat);
+
+            // A superseded GET still reports server-side read completion before its posts are discarded.
+            courseConversationsService.messagesLoaded(channel.id!, coveredRequests, dayjs('2026-01-01T12:00:00Z'));
+            courseConversationsService.setActiveConversation(channel);
+
+            expect(channel.lastReadDate).toBe(manualUnreadDate);
+            expect(cachedUnreadCount(channel.id)).toBe(3);
+        });
+
         it('still restores the count when the failed read was sent after the messages were requested', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
             courseConversationsService.setConversationViewOpen(true);

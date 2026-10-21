@@ -20,6 +20,12 @@ import { NavigationEnd, Params, Router } from '@angular/router';
 import { PostBroadcastDTO } from 'app/communication/shared/entities/post-broadcast-dto.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 
+/** The automatic reads covered by a messages request and the manual-unread baseline it started from. */
+export interface ConversationReadRequest {
+    readonly coveredRequests: number;
+    readonly unreadRevision: number;
+}
+
 /**
  * Holds the conversations the current user is a member of in one course, the active conversation and the unread and
  * code of conduct state, and keeps them current over the conversation membership websocket topic.
@@ -567,10 +573,11 @@ export class CourseConversationsService implements OnDestroy {
      * request, which also covers every read request that was sent for the conversation before it.
      *
      * @param conversationId the conversation whose messages are requested
-     * @return the number of read requests sent so far, to be passed to {@link messagesLoaded} once the messages arrived
+     * @return the pending-read coverage and unread revision to pass to {@link messagesLoaded} once the messages arrive
      */
-    public messagesRequested(conversationId: number): number {
-        return this.readRequestsOf(conversationId).sent;
+    public messagesRequested(conversationId: number): ConversationReadRequest {
+        const state = this.readRequestsOf(conversationId);
+        return { coveredRequests: state.sent, unreadRevision: state.unreadRevision };
     }
 
     /**
@@ -578,12 +585,16 @@ export class CourseConversationsService implements OnDestroy {
      * of the server, in case one of them fails afterwards.
      *
      * @param conversationId the conversation whose messages arrived
-     * @param coveredRequests the value {@link messagesRequested} returned for that request
+     * @param request         the value {@link messagesRequested} returned when the request started
      * @param readAt          when the successful read was requested, so later arrivals remain unread on return
      */
-    public messagesLoaded(conversationId: number, coveredRequests: number, readAt = dayjs()) {
+    public messagesLoaded(conversationId: number, request: ConversationReadRequest, readAt = dayjs()) {
         const readRequest = this.readRequestsOf(conversationId);
-        readRequest.succeeded = Math.max(readRequest.succeeded, coveredRequests);
+        // Manual unread marks remain authoritative even after the user navigates to another conversation.
+        if (readRequest.unreadRevision !== request.unreadRevision) {
+            return;
+        }
+        readRequest.succeeded = Math.max(readRequest.succeeded, request.coveredRequests);
         this.advanceConversationReadDate(conversationId, readAt);
     }
 
@@ -743,8 +754,7 @@ export class CourseConversationsService implements OnDestroy {
         const coveredReads = this.conversationsOfUser
             .filter((conversation) => conversation.id !== undefined)
             .map((conversation) => {
-                const state = this.readRequestsOf(conversation.id!);
-                return { conversationId: conversation.id!, requests: state.sent, unreadRevision: state.unreadRevision };
+                return { conversationId: conversation.id!, request: this.messagesRequested(conversation.id!) };
             });
 
         this.conversationsOfUser = this.conversationsOfUser.map((conversation) => {
@@ -758,9 +768,7 @@ export class CourseConversationsService implements OnDestroy {
         return this.conversationService.markAllChannelsAsRead(course.id).pipe(
             tap(() => {
                 for (const read of coveredReads) {
-                    if (this.readRequestsOf(read.conversationId).unreadRevision === read.unreadRevision) {
-                        this.messagesLoaded(read.conversationId, read.requests, readAt);
-                    }
+                    this.messagesLoaded(read.conversationId, read.request, readAt);
                 }
             }),
             catchError((errorResponse: HttpErrorResponse) => {

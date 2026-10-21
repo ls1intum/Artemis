@@ -231,7 +231,7 @@ export class CommunicationService implements OnDestroy {
             let applied = false;
             // Loading the messages of a single conversation resets its unread count on the server, unless a search is used.
             const loadedConversationId = postContextFilter.conversationIds?.length === 1 && !postContextFilter.searchText ? postContextFilter.conversationIds[0] : undefined;
-            const coveredReadRequests = loadedConversationId !== undefined ? this.courseConversationsService.messagesRequested(loadedConversationId) : 0;
+            const readRequest = loadedConversationId !== undefined ? this.courseConversationsService.messagesRequested(loadedConversationId) : undefined;
             const readAt = dayjs();
             this.postService
                 .getPosts(this.courseId, postContextFilter)
@@ -244,8 +244,8 @@ export class CommunicationService implements OnDestroy {
                 )
                 .subscribe((res) => {
                     // The server reset the count even when a newer request has taken over the cache.
-                    if (loadedConversationId !== undefined) {
-                        this.courseConversationsService.messagesLoaded(loadedConversationId, coveredReadRequests, readAt);
+                    if (loadedConversationId !== undefined && readRequest) {
+                        this.courseConversationsService.messagesLoaded(loadedConversationId, readRequest, readAt);
                     }
                     // A newer request owns the shared cache, including its messages, total and subscription context.
                     if (requestId !== this.filteredPostsRequestId) {
