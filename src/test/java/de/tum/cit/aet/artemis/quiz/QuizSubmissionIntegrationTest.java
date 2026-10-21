@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
@@ -529,6 +530,43 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         // and the explicit save of the result must not each write a row of their own
         assertThat(resultTestRepository.findAllBySubmissionParticipationExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
 
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @EnumSource(QuizMode.class)
+    void testQuizPracticeWithUninitializedLiveParticipation(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        quizExercise.setDuration(2);
+        quizExerciseService.save(quizExercise);
+        var liveParticipation = new StudentParticipation();
+        liveParticipation.setExercise(quizExercise);
+        liveParticipation.setParticipant(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        liveParticipation.setInitializationState(InitializationState.UNINITIALIZED);
+        liveParticipation.setAttempt(0);
+        liveParticipation.setPracticeMode(false);
+        liveParticipation = participationRepository.saveAndFlush(liveParticipation);
+
+        // A live-start request has inserted its row but has not finished initializing it yet.
+        for (int attempt = 0; attempt < 2; attempt++) {
+            QuizSubmission submission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+            Result result = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", QuizSubmissionFromStudentDTO.of(submission),
+                    Result.class, HttpStatus.OK);
+            assertThat(result.getSubmission().isSubmitted()).isTrue();
+        }
+
+        var participations = participationRepository.findByExerciseId(quizExercise.getId());
+        assertThat(participations).hasSize(2);
+        var storedLive = participations.stream().filter(participation -> !participation.isPracticeMode()).findFirst().orElseThrow();
+        assertThat(storedLive.getId()).isEqualTo(liveParticipation.getId());
+        assertThat(storedLive.getInitializationState()).isEqualTo(InitializationState.UNINITIALIZED);
+        assertThat(((StudentParticipation) storedLive).getAttempt()).isZero();
+        var practice = participations.stream().filter(participation -> participation.isPracticeMode()).map(StudentParticipation.class::cast).findFirst().orElseThrow();
+        assertThat(practice.getId()).isNotEqualTo(liveParticipation.getId());
+        assertThat(practice.getAttempt()).isEqualTo(1);
+        assertThat(practice.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(2);
+        assertThat(resultTestRepository.findAllBySubmissionParticipationExerciseId(quizExercise.getId())).hasSize(2);
     }
 
     @Test

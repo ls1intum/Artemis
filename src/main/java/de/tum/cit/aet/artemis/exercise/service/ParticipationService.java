@@ -555,6 +555,8 @@ public class ParticipationService {
             }
             else {
                 participation = new StudentParticipation();
+                // The initial insert must already use the practice attempt, distinct from an in-flight live attempt 0.
+                participation.setAttempt(1);
             }
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
