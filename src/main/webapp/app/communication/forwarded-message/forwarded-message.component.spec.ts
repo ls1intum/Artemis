@@ -399,6 +399,7 @@ describe('ForwardedMessageComponent', () => {
     it.each([
         ['a different post', { ...mockPost, id: 99 }],
         ['a reply with the same numeric id', { ...mockAnswerPost, id: mockPost.id }],
+        ['a forwarded-only reply with the same numeric id', { id: mockPost.id, content: 'Shared reply', resolvesPost: false }],
         ['a missing source', undefined],
     ])('collapses the preview when the source changes to %s', (_description, replacement) => {
         fixture.componentRef.setInput('originalPostDetails', mockPost);
@@ -412,6 +413,19 @@ describe('ForwardedMessageComponent', () => {
         expect(component.showFullForwardedMessage()).toBe(false);
     });
 
+    it('preserves expansion when the same reply is returned without its private parent', () => {
+        fixture.componentRef.setInput('originalPostDetails', mockAnswerPost);
+        fixture.detectChanges();
+        component.toggleShowFullForwardedMessage();
+
+        fixture.componentRef.setInput('originalPostDetails', { id: mockAnswerPost.id, content: 'Shared reply', resolvesPost: false });
+        fixture.detectChanges();
+
+        expect(component.showFullForwardedMessage()).toBe(true);
+        expect(component.sourceName()).toBe('');
+        expect(component['viewButtonVisible']()).toBe(false);
+    });
+
     it('should stop observing forwarded content after the component is destroyed', () => {
         fixture.detectChanges();
         expect(resizeObservers.length).toBeGreaterThan(0);
@@ -419,5 +433,27 @@ describe('ForwardedMessageComponent', () => {
         fixture.destroy();
 
         expect(observer.disconnect).toHaveBeenCalledOnce();
+    });
+
+    it('allows expanding a long source that becomes available after an unavailable placeholder', () => {
+        fixture.componentRef.setInput('originalPostDetails', undefined);
+        fixture.componentRef.setInput('isSourceUnavailable', true);
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        expect(fixture.nativeElement.querySelector('[data-testid="forwarded-message-unavailable"]')).not.toBeNull();
+
+        vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(200);
+        vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(100);
+        fixture.componentRef.setInput('originalPostDetails', { id: 1, content: 'A long forwarded message' });
+        fixture.componentRef.setInput('isSourceUnavailable', false);
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        fixture.detectChanges();
+
+        const expandButton: HTMLButtonElement | null = fixture.nativeElement.querySelector('button');
+        expect(expandButton).not.toBeNull();
+        expandButton!.click();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#messageContent').classList.contains('expanded')).toBe(true);
     });
 });
