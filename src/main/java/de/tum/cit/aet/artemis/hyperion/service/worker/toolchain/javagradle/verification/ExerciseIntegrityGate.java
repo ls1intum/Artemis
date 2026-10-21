@@ -340,6 +340,11 @@ public final class ExerciseIntegrityGate {
      */
     static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames, boolean hasDueDate,
             Set<String> seededStructuralTestNames) {
+        return approvedTestPlanReasons(approvedSpec, testPlanJson, verifiedTestNames, hasDueDate, seededStructuralTestNames, Set.of());
+    }
+
+    static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames, boolean hasDueDate, Set<String> seededStructuralTestNames,
+            Set<String> baselineHiddenTestNames) {
         if (testPlanJson == null || testPlanJson.isBlank()) {
             if (approvedSpec == null || approvedSpec.isBlank()) {
                 return List.of();
@@ -437,7 +442,8 @@ public final class ExerciseIntegrityGate {
             return List.of("the final test-plan.json marks tests AFTER_DUE_DATE, but this exercise has no due date. Such tests would remain hidden indefinitely; use ALWAYS "
                     + "visibility and declare no hidden variant in the specification.");
         }
-        List<String> unexpectedHiddenSeams = hiddenPlanSeams.stream().filter(seam -> !hiddenVariantSeams.contains(seam)).sorted().toList();
+        List<String> unexpectedHiddenSeams = plan.hiddenEntries().stream().filter(entry -> !baselineHiddenTestNames.contains(entry.name())).map(GeneratedTestPlan.Entry::seam)
+                .filter(seam -> !hiddenVariantSeams.contains(seam)).distinct().sorted().toList();
         if (!unexpectedHiddenSeams.isEmpty()) {
             return List.of("the approved Testing Strategy says no hidden variant for seam(s) " + unexpectedHiddenSeams
                     + ", but the final test-plan.json hides tests mapped to them. Keep those tests ALWAYS visible.");

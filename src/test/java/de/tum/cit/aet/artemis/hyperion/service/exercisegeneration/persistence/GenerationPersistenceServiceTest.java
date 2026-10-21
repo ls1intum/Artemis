@@ -1371,7 +1371,7 @@ class GenerationPersistenceServiceTest {
         var binary = new WorkspaceFile("solution/src/main/resources/fixture.bin", bytes, false);
         var source = new WorkspaceFile("solution/src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8), false);
         var candidate = new WorkspaceSnapshot(List.of(binary, source));
-        var seed = new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of()));
+        var seed = new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of(), Set.of()));
         var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
                 GenerationOutput.AccountingState.INCOMPLETE, "default");
         GenerationOutcome outcome = ReflectionTestUtils.invokeMethod(GenerationOutcome.class, "received", output, seed, false);
@@ -1401,7 +1401,7 @@ class GenerationPersistenceServiceTest {
         var oldFile = new WorkspaceFile("solution/src/main/resources/old-solution.bin", oldBytes, false);
         var wrapper = new WorkspaceFile("solution/gradle/wrapper/gradle-wrapper.jar", wrapperBytes, false);
         var seed = new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(oldFile, wrapper)).forMode(de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode.GENERATE),
-                Map.of(), new GradingContext(false, Set.of()));
+                Map.of(), new GradingContext(false, Set.of(), Set.of()));
         var source = new WorkspaceFile("solution/src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8), false);
         var candidate = new WorkspaceSnapshot(List.of(wrapper, source));
         var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,

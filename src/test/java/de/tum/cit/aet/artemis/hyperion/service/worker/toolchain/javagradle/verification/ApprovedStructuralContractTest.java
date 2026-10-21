@@ -16,6 +16,20 @@ class ApprovedStructuralContractTest {
 
     private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
+    @Test
+    void enumGenericSuperclassRetainsItsOwnTypeArgument() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public enum RoastProfile { LIGHT; public java.util.List<String> labels(); }
+                ```
+                """, Set.of("RoastProfile"));
+
+        assertThat(parsed.errors()).isEmpty();
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example", MAPPER)).get(0);
+        assertThat(oracle.at("/genericApi/signatures").toString()).contains("superclass:Enum<RoastProfile>", "method:labels[]:List<String>");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "extends", "implements" })
     void genericSupertypesRetainTheirApprovedArguments(String relationship) {

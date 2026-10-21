@@ -70,7 +70,7 @@ class HyperionWorkloadTest {
         var identity = new ExecutionIdentity("job", 42, UUID.randomUUID(), "worker", UUID.randomUUID());
         var input = new GenerationAssignment(identity, new ExerciseBrief("Stack", "stack", "de.example", null, "Create", ExerciseBrief.Mode.GENERATE),
                 new GenerationParameters("standard", 10, 100000, Duration.ofMinutes(5), 128000, null, null, null, null, null, true, "CONTINUOUS"), new WorkspaceSnapshot(List.of()),
-                Instant.now().plusSeconds(300), "sha256:" + "a".repeat(64), new GradingContext(false, Set.of()));
+                Instant.now().plusSeconds(300), "sha256:" + "a".repeat(64), new GradingContext(false, Set.of(), Set.of()));
         return codec.toWire(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, identity, input)).assignment();
     }
 }

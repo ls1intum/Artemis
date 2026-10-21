@@ -290,7 +290,10 @@ final class ApprovedStructuralContract {
         contract.set("exerciseTypes", mapper.valueToTree(exerciseTypes.stream().sorted().toList()));
         List<String> signatures = new ArrayList<>();
         JavaType superclass = type.getSuperClass();
-        if (superclass != null && !"java.lang.Object".equals(superclass.getFullyQualifiedName())) {
+        if (type.isEnum()) {
+            signatures.add("superclass:" + canonicalTypeName("java.lang.Enum<" + type.getCanonicalName() + ">", exerciseTypes, type.getPackageName()));
+        }
+        else if (superclass != null && !"java.lang.Object".equals(superclass.getFullyQualifiedName())) {
             signatures.add("superclass:" + genericShape(superclass, type, exerciseTypes));
         }
         type.getImplements().stream().map(supertype -> "interface:" + genericShape(supertype, type, exerciseTypes)).forEach(signatures::add);

@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -27,6 +28,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
+import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
@@ -163,7 +165,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
                 transcripts, approvedSpecs);
         var brief = assignment.brief();
         var input = new GenerationInput(assignment.identity().exerciseId(), brief.namespace(), brief.problemStatement(), assignment.gradingContext().hasDueDate(),
-                assignment.gradingContext().baselineGradedTestNames());
+                assignment.gradingContext().baselineGradedTestNames(), brief.mode() == ExerciseBrief.Mode.ADAPT ? assignment.gradingContext().baselineHiddenTestNames() : Set.of());
         Consumer<GenerationProgress.FileChange> files = change -> observer.progress("Updated " + change.path(), new GenerationProgress(null, null, change, null));
         active.put(assignment.identity(), orchestrator);
         try {

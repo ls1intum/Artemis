@@ -67,7 +67,7 @@ class GenerationPayloadBoundaryTest {
         assertThatThrownBy(() -> new GenerationAssignment(field.equals("identity") ? null : identity, field.equals("brief") ? null : brief,
                 field.equals("parameters") ? null : parameters, field.equals("seed") ? null : snapshot, field.equals("deadline") ? null : Instant.now(),
                 field.equals("image") ? null : field.equals("mutableImage") ? "latest" : "sha256:" + "a".repeat(64),
-                field.equals("grading") ? null : new GradingContext(false, Set.of()))).isInstanceOf(IllegalArgumentException.class)
+                field.equals("grading") ? null : new GradingContext(false, Set.of(), Set.of()))).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining(field.equals("image") || field.equals("mutableImage") ? "immutable worker image" : "fields must be present");
     }
 
@@ -104,14 +104,18 @@ class GenerationPayloadBoundaryTest {
 
     @Test
     void gradingContextRejectsBlankOversizedAndExcessiveNamesAndCopiesItsInput() {
-        assertThatThrownBy(() -> new GradingContext(false, Set.of(" "))).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("bounds");
-        assertThatThrownBy(() -> new GradingContext(false, Set.of("x".repeat(1025)))).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("bounds");
+        assertThatThrownBy(() -> new GradingContext(false, Set.of(" "), Set.of())).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("bounds");
+        assertThatThrownBy(() -> new GradingContext(false, Set.of("x".repeat(1025)), Set.of())).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("bounds");
         var tooMany = java.util.stream.IntStream.rangeClosed(0, WorkspaceSnapshot.MAX_FILES).mapToObj(index -> "test" + index).collect(java.util.stream.Collectors.toSet());
-        assertThatThrownBy(() -> new GradingContext(false, tooMany)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("bounds");
+        assertThatThrownBy(() -> new GradingContext(false, tooMany, Set.of())).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("bounds");
+        assertThatThrownBy(() -> new GradingContext(false, Set.of(), Set.of(" "))).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("bounds");
+        assertThatThrownBy(() -> new GradingContext(false, Set.of(), Set.of("x".repeat(1025)))).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("bounds");
+        assertThatThrownBy(() -> new GradingContext(false, Set.of(), tooMany)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("bounds");
         Set<String> names = new HashSet<>(Set.of("test"));
-        var context = new GradingContext(true, names);
+        var context = new GradingContext(true, names, names);
         names.clear();
         assertThat(context.baselineGradedTestNames()).containsExactly("test");
+        assertThat(context.baselineHiddenTestNames()).containsExactly("test");
         assertThat(context.hasDueDate()).isTrue();
     }
 

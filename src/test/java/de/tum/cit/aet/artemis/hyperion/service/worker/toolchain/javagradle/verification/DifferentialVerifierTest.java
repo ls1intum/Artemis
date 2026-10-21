@@ -64,7 +64,7 @@ class DifferentialVerifierTest {
     }
 
     private static GenerationInput input() {
-        return new GenerationInput(1, "de.test", null, false, Set.of());
+        return new GenerationInput(1, "de.test", null, false, Set.of(), Set.of());
     }
 
     private static DifferentialVerifier newVerifier() {
@@ -536,6 +536,84 @@ class DifferentialVerifierTest {
                 NO_RESTORE);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void adaptationPreservesSavedHiddenTestsWithoutBindingThemOrInventingSpecificationSeams(boolean withPlan) {
+        List<String> names = List.of("visibleBehavior", "otherVisibleBehavior", "savedHiddenBehavior");
+        String statement = "[task][Implement behavior](visibleBehavior,otherVisibleBehavior)\nImplement the documented sorting behavior for the supplied input values.";
+        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"));
+        String plan = """
+                {"tests":[
+                  {"name":"visibleBehavior","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"otherVisibleBehavior","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"savedHiddenBehavior","seamWeightTier":3,"visibility":"AFTER_DUE_DATE"}
+                ]}
+                """;
+        String gradingPlan = withPlan ? plan : null;
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement).withTestPlan(gradingPlan);
+        var request = new VerificationRequest(harness(), Map.of(), Map.of(), harness(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.copyOf(names), statement,
+                gradingPlan, true);
+
+        var result = newVerifier().verify(sandbox, "s", exercise, request, NO_RESTORE);
+
+        assertThat(result.mechanicallyVerified()).as("saved visibility with plan=%s: %s", gradingPlan, result.reasons()).isTrue();
+    }
+
+    @Test
+    void adaptationStillRejectsUnboundVisibleTestsAndNewUnapprovedHiddenTests() {
+        List<String> names = List.of("visibleBehavior", "otherVisibleBehavior", "savedHiddenBehavior");
+        String statement = "[task][Implement behavior](otherVisibleBehavior)\nImplement the documented sorting behavior for the supplied input values.";
+        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"));
+        var request = new VerificationRequest(harness(), Map.of(), Map.of(), harness(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.copyOf(names), statement,
+                null, true);
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement);
+
+        var result = newVerifier().verify(sandbox, "s", exercise, request, NO_RESTORE);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anySatisfy(reason -> assertThat(reason).contains("not bound by any [task]", "visibleBehavior").doesNotContain("savedHiddenBehavior"));
+        String plan = """
+                {"tests":[
+                  {"name":"visibleBehavior","seamWeightTier":3,"visibility":"AFTER_DUE_DATE"},
+                  {"name":"otherVisibleBehavior","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"savedHiddenBehavior","seamWeightTier":3,"visibility":"AFTER_DUE_DATE"}
+                ]}
+                """;
+        var hiddenRequest = new VerificationRequest(harness(), Map.of(), Map.of(), harness(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.copyOf(names),
+                statement, plan, true);
+        var hiddenResult = newVerifier().verify(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement).withTestPlan(plan), "s",
+                exercise, hiddenRequest, NO_RESTORE);
+        assertThat(hiddenResult.mechanicallyVerified()).isFalse();
+        assertThat(hiddenResult.reasons()).anyMatch(reason -> reason.contains("no hidden variant"));
+    }
+
+    @Test
+    void savedHiddenExemptionDoesNotApplyToVisiblePlanEntriesOrGeneration() {
+        List<String> names = List.of("visibleBehavior", "savedHiddenBehavior");
+        String statement = "[task][Implement behavior](visibleBehavior)\nImplement the documented sorting behavior for the supplied input values.";
+        var exercise = new GenerationInput(42, input().packageName(), statement, true, Set.copyOf(names), Set.of("savedHiddenBehavior"));
+        String plan = """
+                {"tests":[
+                  {"name":"visibleBehavior","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"savedHiddenBehavior","seamWeightTier":3,"visibility":"ALWAYS"}
+                ]}
+                """;
+        var request = new VerificationRequest(harness(), Map.of(), Map.of(), harness(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.copyOf(names), statement,
+                plan, true);
+        var result = newVerifier().verify(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement).withTestPlan(plan), "s", exercise,
+                request, NO_RESTORE);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anySatisfy(reason -> assertThat(reason).contains("not bound by any [task]", "savedHiddenBehavior"));
+
+        var generationRequest = new VerificationRequest(harness(), Map.of(), Map.of(), harness(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.copyOf(names),
+                statement, null, false);
+        var generationResult = newVerifier().verify(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement), "s", exercise,
+                generationRequest, NO_RESTORE);
+        assertThat(generationResult.mechanicallyVerified()).isFalse();
+        assertThat(generationResult.reasons()).anySatisfy(reason -> assertThat(reason).contains("not bound by any [task]", "savedHiddenBehavior"));
+    }
+
     @Test
     void provenanceSeparatedVerificationRunsFourLanesAndMergesOnlyExactTrustedStructuralResults() {
         String structuralName = "testClass[Calculator]";
@@ -721,7 +799,7 @@ class DifferentialVerifierTest {
     @Test
     void integrityGates_adaptationPreservesUntouchedLegacyTestsButChecksNewTests() {
         GenerationInput exercise = input();
-        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of());
+        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of(), Set.of());
         String legacyTest = """
                 package de.test;
                 import org.junit.jupiter.api.Test;
@@ -755,7 +833,7 @@ class DifferentialVerifierTest {
     @Test
     void integrityGates_rejectJavaSourcesWhosePackageDoesNotMatchTheirPath() {
         GenerationInput exercise = input();
-        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of());
+        exercise = new GenerationInput(exercise.id(), "de.test", null, false, Set.of(), Set.of());
         String pom = aresGradle();
         String test = """
                 package de.test;
@@ -1376,7 +1454,7 @@ class DifferentialVerifierTest {
             Map<String, String> testsFiles = withHarness(Map.of("test/de/test/SpellTest.java", test));
             List<String> names = List.of(DEFAULT_BOUND_NAMES);
             GenerationInput javaExercise = input();
-            javaExercise = new GenerationInput(javaExercise.id(), "de.test", null, false, Set.of());
+            javaExercise = new GenerationInput(javaExercise.id(), "de.test", null, false, Set.of(), Set.of());
             DifferentialVerifier verifier = newVerifier(spec);
 
             ScriptedSandbox misleading = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)

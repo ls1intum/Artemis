@@ -81,20 +81,28 @@ public class DifferentialVerifier {
     }
 
     /**
-     * The normalized test names the workspace's grading plan hides until the due date. A missing, unreadable, or malformed {@code test-plan.json} yields an empty set, so the
-     * binding gate demands that every gradable test be bound rather than silently relaxing.
+     * Preserves core-captured hidden visibility when no new plan is available. An explicit plan entry replaces that test's saved visibility; unknown tests gain no exemption.
      */
-    private Set<String> readHiddenTestNames(InteractiveSandbox sandbox, String sessionId) {
+    private Set<String> readHiddenTestNames(InteractiveSandbox sandbox, String sessionId, Set<String> baselineHiddenTestNames) {
+        Set<String> hidden = baselineHiddenTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toCollection(LinkedHashSet::new));
         try {
             String plan = GenerationWorkspace.readRootArtifact(sandbox, sessionId, "test-plan.json");
             if (plan == null || plan.isBlank()) {
-                return Set.of();
+                return Set.copyOf(hidden);
             }
-            return GeneratedTestPlan.parse(plan).hiddenEntries().stream().map(GeneratedTestPlan.Entry::name).map(ProblemStatementBindingChecker::normalizeTestName)
-                    .collect(Collectors.toUnmodifiableSet());
+            for (GeneratedTestPlan.Entry entry : GeneratedTestPlan.parse(plan).tests()) {
+                String name = ProblemStatementBindingChecker.normalizeTestName(entry.name());
+                if (entry.visibility().equals("AFTER_DUE_DATE")) {
+                    hidden.add(name);
+                }
+                else {
+                    hidden.remove(name);
+                }
+            }
+            return Set.copyOf(hidden);
         }
         catch (RuntimeException e) {
-            return Set.of();
+            return Set.copyOf(hidden);
         }
     }
 
@@ -166,8 +174,9 @@ public class DifferentialVerifier {
      * @return the mechanical verdict (verified, solution-passed, template-failed, test count, and rejection reasons)
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, VerificationRequest request, Runnable restoreCandidate) {
+        Set<String> baselineHiddenTestNames = request.adaptation() ? exercise.baselineHiddenTestNames() : Set.of();
         DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTests(), request.producedProblemStatement(),
-                request.producedTestPlan(), restoreCandidate);
+                request.producedTestPlan(), baselineHiddenTestNames, restoreCandidate);
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
@@ -205,7 +214,7 @@ public class DifferentialVerifier {
         reasons.addAll(approvedSpecificationReasons);
         String approvedSpec = String.join("\n\n", contractSpecifications);
         List<String> approvedTestPlanReasons = ExerciseIntegrityGate.approvedTestPlanReasons(approvedSpec, request.producedTestPlan(), solution.testNames(), exercise.hasDueDate(),
-                request.seededStructuralTestNames());
+                request.seededStructuralTestNames(), baselineHiddenTestNames);
         boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
         reasons.addAll(approvedTestPlanReasons);
         List<String> statementTraceabilityReasons = ExerciseIntegrityGate.statementTraceabilityReasons(request.producedTestPlan(), request.producedProblemStatement());
@@ -260,13 +269,14 @@ public class DifferentialVerifier {
     private AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> seedTestsFiles, boolean adaptation,
             boolean includeStatementChecks, SeededStructuralTests seededStructuralTests) {
         Set<String> seededStructuralTestNames = seededStructuralTests.testNames();
+        Set<String> baselineHiddenTestNames = adaptation ? exercise.baselineHiddenTestNames() : Set.of();
         JavaSourceSnapshot sourceSnapshot = JavaSourceSnapshot.capture(sandbox, sessionId);
         Map<String, String> testsRepositoryFiles = sourceSnapshot.testsFiles();
         Map<String, String> templateFiles = sourceSnapshot.templateFiles();
         Map<String, String> solutionFiles = sourceSnapshot.solutionFiles();
         String problemStatement = readProblemStatement(sandbox, sessionId);
         String testPlanJson = readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, seededStructuralTests, problemStatement, testPlanJson,
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, seededStructuralTests, problemStatement, testPlanJson, baselineHiddenTestNames,
                 () -> sourceSnapshot.restore(sandbox, sessionId));
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
@@ -289,7 +299,7 @@ public class DifferentialVerifier {
         reasons.addAll(approvedSpecificationReasons);
         List<String> approvedTestPlanReasons = includeStatementChecks
                 ? ExerciseIntegrityGate.approvedTestPlanReasons(String.join("\n\n", contractSpecifications), testPlanJson, solution.testNames(), exercise.hasDueDate(),
-                        seededStructuralTestNames)
+                        seededStructuralTestNames, baselineHiddenTestNames)
                 : List.of();
         boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
         reasons.addAll(approvedTestPlanReasons);
@@ -306,7 +316,8 @@ public class DifferentialVerifier {
                 includeStatementChecks ? analysis.unresolvedTaskBindings() : List.of(), analysis.possiblyDeadFiles(),
                 (includeStatementChecks ? analysis.actionableGatesPass() : analysis.testArtifactGatesPass()) && javaAresConventionsHold && approvedSpecificationHolds
                         && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold,
-                reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId)), solution.buildDiagnostic(), template.buildDiagnostic(), analysis.preservationTestNames());
+                reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId, baselineHiddenTestNames)), solution.buildDiagnostic(), template.buildDiagnostic(),
+                analysis.preservationTestNames());
     }
 
     /**
@@ -383,7 +394,7 @@ public class DifferentialVerifier {
      * post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the verdict are computed by identical code.
      */
     private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, SeededStructuralTests seededStructuralTests,
-            @Nullable String producedProblemStatement, @Nullable String producedTestPlan, Runnable restoreCandidate) {
+            @Nullable String producedProblemStatement, @Nullable String producedTestPlan, Set<String> baselineHiddenTestNames, Runnable restoreCandidate) {
         List<String> reasons = new ArrayList<>();
         List<String> statementReasons = new ArrayList<>();
         Set<String> seededStructuralTestNames = seededStructuralTests.testNames();
@@ -472,7 +483,7 @@ public class DifferentialVerifier {
                             + "plain text and bind NO test (and leak the raw test names). Rewrite each as [task][Title](testName).");
         }
 
-        Set<String> hiddenTestNames = readHiddenTestNames(sandbox, sessionId);
+        Set<String> hiddenTestNames = readHiddenTestNames(sandbox, sessionId, baselineHiddenTestNames);
         Set<String> unboundTestNames = new LinkedHashSet<>(hiddenTestNames);
         preservationTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).forEach(unboundTestNames::add);
         List<String> unresolvedTaskBindings = ProblemStatementBindingChecker.unresolvedTaskBindings(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
