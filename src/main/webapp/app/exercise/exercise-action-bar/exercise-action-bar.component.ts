@@ -44,7 +44,7 @@ function widthOf(element: HTMLElement): number {
 }
 
 /**
- * Owned, data-driven collapsible action row: renders {@link ActionItem}s inline (Delete/Edit/Scores kept longest via
+ * Owned, data-driven collapsible action row: renders {@link ActionItem}s inline (Delete/Edit/Participations kept longest via
  * {@link keepPriorityIds}) and folds whatever doesn't fit into a trailing ellipsis menu, based on measured button
  * widths and the row's available width.
  *
@@ -85,9 +85,9 @@ export class ExerciseActionBarComponent {
     /**
      * Ids kept inline longest when the row runs out of width (in priority order); any id not listed shares the next
      * priority tier, in original display order (the collapse sort is stable). Defaults to the exercise-management
-     * table's convention: Delete, Edit, Scores.
+     * table's convention: Delete, Edit, Participations.
      */
-    readonly keepPriorityIds = input<string[]>(['delete', 'edit', 'scores']);
+    readonly keepPriorityIds = input<string[]>(['delete', 'edit', 'participations']);
     /**
      * Width (px) the actions column must reserve to keep this row's always-visible reserved content plus the ellipsis
      * trigger on screen; 0 when there is no reserved content. A shared table column floors itself at the max reported

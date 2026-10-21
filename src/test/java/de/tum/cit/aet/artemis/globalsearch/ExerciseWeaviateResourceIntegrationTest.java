@@ -823,10 +823,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             TextExercise finalExercise = noRegExercise;
             assertExerciseExistsInWeaviate(weaviateService, finalExercise);
 
-            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20NoReg&types=exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var titles = getResultTitles(results);
-
-            assertThat(titles).contains(SEARCH_PREFIX + " NoReg ExamExercise");
+            // Object persistence does not imply that the asynchronous BM25 index can already find the exercise.
+            awaitSearchResults("/api/search?q=" + SEARCH_PREFIX + "%20NoReg&types=exercise&courseIds=" + course.getId(),
+                    results -> assertThat(getResultTitles(results)).contains(SEARCH_PREFIX + " NoReg ExamExercise"));
         }
     }
 
@@ -1180,7 +1179,6 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             exercise.setTitle(SEARCH_PREFIX + " " + channelName);
             exercise = exerciseRepository.save(exercise);
             Channel channel = channelService.createExerciseChannel(exercise, Optional.of(channelName));
-            searchableEntityWeaviateService.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
             assertChannelExistsInWeaviate(weaviateService, channel);
             return channel;
         }

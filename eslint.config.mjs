@@ -715,6 +715,7 @@ export default tseslint.config(
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
             'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.html',
             'src/main/webapp/app/localci/build-queue/**/*.html',
+            'src/main/webapp/app/videosource/gocast/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
             // Admin-reachable global shell + delete-dialog chain (rendered on every admin page / during admin deletes).
