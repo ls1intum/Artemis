@@ -6,7 +6,8 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
  * Restricts the Iris admin dashboard to users by their AI selection.
  * <p>
  * Artemis stores the selection per user only, not per session or message, so the filter uses each user's current
- * selection. A user who switched later is counted under the current choice for all of their past activity.
+ * selection. A user who switched later is counted under the current choice for all of their past activity. Sessions and messages
+ * belong to the session's user, token costs to the user of the usage trace.
  */
 public enum IrisDashboardAiSelection {
 

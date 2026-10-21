@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.sql.Timestamp;
@@ -412,6 +413,37 @@ class IrisAdminDashboardServiceTest {
         assertThat(results).hasSize(1);
         assertThat(results.getFirst().nextSender()).isNull();
         assertThat(results.getFirst().nextSentAt()).isNull();
+    }
+
+    @Test
+    void computeOverview_passesTheSelectedDecisionToEveryQuery() {
+        stubAllRepositoryMethods();
+        Instant from = Instant.parse("2026-05-26T00:00:00Z");
+        Instant to = Instant.parse("2026-05-27T00:00:00Z");
+
+        service.computeOverview(from, to, IrisDashboardAiSelection.LOCAL);
+
+        verify(repository).countTotalSessions(from, to, "LOCAL_AI");
+        verify(repository).countUniqueUsers(from, to, "LOCAL_AI");
+        verify(repository).findUserMessagesWithNextMessageFullRange(from, to, "LOCAL_AI");
+        verify(repository).computeTokenCost(from, to, "LOCAL_AI");
+    }
+
+    /**
+     * The daily digest has no AI selection filter, so it must keep counting all users.
+     */
+    @Test
+    void computeDigestData_countsAllUsers() {
+        stubAllRepositoryMethods();
+        Instant from = Instant.parse("2026-05-26T00:00:00Z");
+        Instant to = Instant.parse("2026-05-27T00:00:00Z");
+
+        service.computeDigestData(from, to, to);
+
+        verify(repository).countTotalSessions(from, to, "ALL");
+        verify(repository).findUserMessagesWithNextMessageFullRange(from, to, "ALL");
+        verify(repository).findSessionsWithMode(from, to, "ALL");
+        verify(repository).findTopCoursesBySessionCount(from, to, "ALL", 5);
     }
 
     // -- Helpers ----------------------------------------------------------------

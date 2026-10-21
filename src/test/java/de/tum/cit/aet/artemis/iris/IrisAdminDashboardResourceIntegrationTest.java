@@ -229,7 +229,7 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void aiSelectionFilter_restrictsAllEndpointsToUsersWithThatSelection() throws Exception {
-        // a past window no other test writes to; the endpoints reject windows that end in the future
+        // a past window no other test writes to; the endpoints reject a 'to' more than one day in the future
         ZonedDateTime start = ZonedDateTime.of(2025, 2, 3, 9, 0, 0, 0, ZoneOffset.UTC);
         String window = "from=2025-02-03T00:00:00Z&to=2025-02-04T00:00:00Z";
         Course course = courseUtilService.createCourse();

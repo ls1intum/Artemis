@@ -62,7 +62,7 @@
                 "all": "All users",
                 "cloud": "Cloud AI only",
                 "local": "Local AI only",
-                "hint": "Only users whose current AI selection matches are counted. Artemis does not store which AI was used for each message, so a user who changed the selection is counted under the current choice for all of their messages."
+                "hint": "Only users whose current AI selection matches are counted. Artemis does not store which AI was used for each message, so a user who changed the selection is counted under the current choice for all of their sessions, messages and token costs."
             }
         }
     }
