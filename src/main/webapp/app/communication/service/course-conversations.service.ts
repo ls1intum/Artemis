@@ -75,7 +75,7 @@ export class CourseConversationsService implements OnDestroy {
     private isConversationViewOpen = false;
     // Per conversation, the number of the last read request sent, and the numbers of the newest one that succeeded and that failed. Read requests of
     // the same conversation can complete out of order, and only the newest outcome describes the count the server holds.
-    private readRequests = new Map<number, { sent: number; succeeded: number; failed: number; unreadRevision: number }>();
+    private readRequests = new Map<number, { sent: number; succeeded: number; failed: number; unreadRevision: number; failedContributions: Set<number> }>();
     // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -241,6 +241,7 @@ export class CourseConversationsService implements OnDestroy {
         if (indexOfCachedConversation !== -1) {
             this.conversationsOfUser[indexOfCachedConversation].lastMessageDate = dayjs();
             this.conversationsOfUser[indexOfCachedConversation].unreadMessagesCount = 0;
+            this.readRequestsOf(conversationId).failedContributions.clear();
             this._conversationsOfUser$.next(this.conversationsOfUser);
         }
         this.hasUnreadMessagesCheck();
@@ -249,7 +250,9 @@ export class CourseConversationsService implements OnDestroy {
     public updateConversationUnreadState(conversationId: number | undefined, lastReadDate: dayjs.Dayjs | undefined, unreadMessagesCount: number | undefined) {
         if (conversationId !== undefined) {
             // The server recalculated this count. Earlier automatic reads must not alter its new baseline.
-            this.readRequestsOf(conversationId).unreadRevision++;
+            const reads = this.readRequestsOf(conversationId);
+            reads.unreadRevision++;
+            reads.failedContributions.clear();
         }
         if (this.activeConversation && this.activeConversation?.id === conversationId) {
             this.activeConversation.lastReadDate = lastReadDate;
@@ -282,6 +285,9 @@ export class CourseConversationsService implements OnDestroy {
         if (this.activeConversation && !this.isMarkedAsUnread) {
             this.activeConversation.unreadMessagesCount = 0;
             this.activeConversation.hasUnreadMessage = false;
+            if (this.activeConversation.id !== undefined) {
+                this.readRequestsOf(this.activeConversation.id).failedContributions.clear();
+            }
             const cachedConversation = this.conversationsOfUser.find((conversation) => conversation.id === this.activeConversation!.id);
             if (cachedConversation) {
                 cachedConversation.unreadMessagesCount = 0;
@@ -313,6 +319,8 @@ export class CourseConversationsService implements OnDestroy {
             }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
+                // The refreshed counts are authoritative, so no earlier failure is still a local contribution.
+                this.readRequests.forEach((reads) => reads.failedContributions.clear());
                 this.conversationsLoaded = true;
                 this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this.conversationsOfUser);
@@ -403,6 +411,8 @@ export class CourseConversationsService implements OnDestroy {
             }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
+                // The refreshed counts are authoritative, so no earlier failure is still a local contribution.
+                this.readRequests.forEach((reads) => reads.failedContributions.clear());
                 this.conversationsLoaded = true;
                 this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this.conversationsOfUser);
@@ -562,7 +572,7 @@ export class CourseConversationsService implements OnDestroy {
     private readRequestsOf(conversationId: number) {
         let readRequest = this.readRequests.get(conversationId);
         if (!readRequest) {
-            readRequest = { sent: 0, succeeded: 0, failed: 0, unreadRevision: 0 };
+            readRequest = { sent: 0, succeeded: 0, failed: 0, unreadRevision: 0, failedContributions: new Set<number>() };
             this.readRequests.set(conversationId, readRequest);
         }
         return readRequest;
@@ -582,7 +592,7 @@ export class CourseConversationsService implements OnDestroy {
 
     /**
      * Notes that the messages of a conversation arrived, so the read requests sent before they were requested no longer describe the unread count
-     * of the server, in case one of them fails afterwards.
+     * of the server, whether a covered request failed before or after the messages arrived.
      *
      * @param conversationId the conversation whose messages arrived
      * @param request         the value {@link messagesRequested} returned when the request started
@@ -595,6 +605,25 @@ export class CourseConversationsService implements OnDestroy {
             return;
         }
         readRequest.succeeded = Math.max(readRequest.succeeded, request.coveredRequests);
+        let coveredFailures = 0;
+        for (const failedRequest of readRequest.failedContributions) {
+            if (failedRequest <= request.coveredRequests) {
+                readRequest.failedContributions.delete(failedRequest);
+                coveredFailures++;
+            }
+        }
+        if (coveredFailures) {
+            const cached = this.conversationsOfUser.find((conversation) => conversation.id === conversationId);
+            const active = this.activeConversation?.id === conversationId ? this.activeConversation : undefined;
+            for (const conversation of new Set([cached, active])) {
+                if (conversation) {
+                    conversation.unreadMessagesCount = Math.max(0, (conversation.unreadMessagesCount ?? 0) - coveredFailures);
+                    conversation.hasUnreadMessage = conversation.unreadMessagesCount > 0;
+                }
+            }
+            this.hasUnreadMessagesCheck();
+            this._conversationsOfUser$.next(this.conversationsOfUser);
+        }
         this.advanceConversationReadDate(conversationId, readAt);
     }
 
@@ -665,6 +694,7 @@ export class CourseConversationsService implements OnDestroy {
                                 return;
                             }
                             readRequest.failed = Math.max(readRequest.failed, requestNumber);
+                            readRequest.failedContributions.add(requestNumber);
                             // the count the server raised stays, so the badge has to show it
                             this.handleNewMessage(conversationId, conversationDTO.lastMessageDate);
                         },
@@ -760,6 +790,9 @@ export class CourseConversationsService implements OnDestroy {
         this.conversationsOfUser = this.conversationsOfUser.map((conversation) => {
             conversation.hasUnreadMessage = false;
             conversation.unreadMessagesCount = 0;
+            if (conversation.id !== undefined) {
+                this.readRequestsOf(conversation.id).failedContributions.clear();
+            }
             return conversation;
         });
 
@@ -773,7 +806,9 @@ export class CourseConversationsService implements OnDestroy {
             }),
             catchError((errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
-                return of();
+                // The failed PATCH did not confirm the optimistic reset, for any conversation type.
+                // Refresh membership state without reopening the active conversation and its messages.
+                return this.forceRefresh(false).pipe(catchError(() => EMPTY));
             }),
         );
     }
