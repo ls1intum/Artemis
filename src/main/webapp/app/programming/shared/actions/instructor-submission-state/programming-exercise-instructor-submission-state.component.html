@@ -1,4 +1,4 @@
-@if (buildingSummary(); as buildingSummary) {
+@if (buildingSummary()) {
     <div class="flex flex-wrap items-center gap-2">
         @if (hasBuildingSubmissions()) {
             <div id="result-eta" class="flex flex-col items-center text-sm">
@@ -11,9 +11,10 @@
             </div>
         }
         @let buildingLabel =
-            'artemisApp.programmingExercise.buildingSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 };
+            'artemisApp.programmingExercise.buildingSubmissions'
+                | artemisTranslate: { number: buildingSummary()?.[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0 };
         @let failedLabel =
-            'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 };
+            'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate: { number: buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0 };
         <div id="build-state" class="flex shrink-0 flex-col gap-0.5">
             <tumaet-ui-tag
                 id="build-state-building"
@@ -27,13 +28,13 @@
             >
                 <span [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''">{{ buildingLabel }}</span>
                 <span [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'inline-flex items-center gap-1 md:hidden' : 'inline-flex items-center gap-1 xl:hidden') : 'hidden'">
-                    <fa-icon [icon]="faClock" />{{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}
+                    <fa-icon [icon]="faClock" />{{ buildingSummary()?.[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0 }}
                 </span>
             </tumaet-ui-tag>
             <tumaet-ui-tag
                 id="build-state-failed"
                 class="[&>span]:w-full [&>span]:justify-center"
-                [severity]="buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0 ? 'danger' : 'success'"
+                [severity]="(buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0 ? 'danger' : 'success'"
                 size="sm"
                 role="img"
                 [attr.aria-label]="failedLabel"
@@ -42,7 +43,7 @@
             >
                 <span [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''">{{ failedLabel }}</span>
                 <span [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'inline-flex items-center gap-1 md:hidden' : 'inline-flex items-center gap-1 xl:hidden') : 'hidden'">
-                    <fa-icon [icon]="faExclamationTriangle" />{{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
+                    <fa-icon [icon]="faExclamationTriangle" />{{ buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0 }}
                 </span>
             </tumaet-ui-tag>
         </div>
