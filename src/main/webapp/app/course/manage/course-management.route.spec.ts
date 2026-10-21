@@ -167,10 +167,10 @@ describe('courseManagementRoutes', () => {
         expect(creationRoute!.data?.['usesModuleBackground']).toBe(false);
     });
 
-    it('uses tutor metadata only for preloading the nine lazy assessment and exercise subtrees', () => {
+    it('uses tutor metadata only for preloading the eight lazy assessment and exercise subtrees', () => {
         const children = containerRoute!.children?.find((route) => route.path === ':courseId' && route.children)?.children ?? [];
         const lazyRoutes = children.filter((route) => route.path === '' && route.loadChildren);
-        expect(lazyRoutes).toHaveLength(9);
+        expect(lazyRoutes).toHaveLength(8);
         for (const route of lazyRoutes) {
             expect(route.data).toEqual({ authorities: IS_AT_LEAST_TUTOR });
             expect(route.canActivate).toBeUndefined();
