@@ -2,7 +2,7 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, switchMap, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockProvider } from 'ng-mocks';
 import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
@@ -131,6 +131,56 @@ describe('ScienceService', () => {
         expect(scienceService.courseConsent()).toBeUndefined();
         courseTwoResponse.next(consented(2));
         expect(scienceService.courseConsent()).toEqual(consented(2));
+    });
+
+    it('should send an event logged while the consent loads once active consent arrives', () => {
+        // Entering a course on a deep link or a reload: the page logs its event before the lookup answers.
+        const consentResponse = new Subject<ScienceCourseConsent>();
+        getConsentForCourse.mockReturnValueOnce(consentResponse);
+        scienceService.loadConsent(1);
+
+        scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, 5, 1);
+        expect(putStub).not.toHaveBeenCalled();
+
+        consentResponse.next(consented(1));
+        expect(putStub).toHaveBeenCalledOnce();
+        expect(putStub).toHaveBeenCalledWith(
+            'api/atlas/science',
+            expect.objectContaining({ type: ScienceEventType.EXERCISE__OPEN, resourceId: 5, courseId: 1 }),
+            expect.objectContaining({ observe: 'response' }),
+        );
+
+        // Sent once: a later answer does not replay it.
+        scienceService.setConsent(consented(1));
+        expect(putStub).toHaveBeenCalledOnce();
+    });
+
+    it('should drop the events logged while the consent loads when the student has not agreed or the load fails', () => {
+        for (const answer of [of({ courseId: 1, scienceEnabled: true }), of({ courseId: 1, active: true, scienceEnabled: false }), throwError(() => new Error('boom'))]) {
+            const consentResponse = new Subject<void>();
+            getConsentForCourse.mockReturnValueOnce(consentResponse.pipe(switchMap(() => answer)));
+            scienceService.loadConsent(1);
+            scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, 5, 1);
+
+            consentResponse.next();
+        }
+
+        expect(putStub).not.toHaveBeenCalled();
+    });
+
+    it('should drop the events of a course the student left while its consent loaded', () => {
+        const courseOneResponse = new Subject<ScienceCourseConsent>();
+        const courseTwoResponse = new Subject<ScienceCourseConsent>();
+        getConsentForCourse.mockReturnValueOnce(courseOneResponse).mockReturnValueOnce(courseTwoResponse);
+        scienceService.loadConsent(1);
+        scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, 5, 1);
+        // An event for another course than the one loading is not held back.
+        scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, 6, 2);
+
+        scienceService.loadConsent(2);
+        courseTwoResponse.next(consented(2));
+
+        expect(putStub).not.toHaveBeenCalled();
     });
 
     it('should leave the course without consent when the load fails', () => {

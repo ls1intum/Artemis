@@ -258,31 +258,6 @@ describe('CourseSidebarComponent', () => {
         expect(logEventSpy).toHaveBeenCalledWith(ScienceEventType.IRIS__OPENED_SIDEBAR, course1.id, course1.id);
     });
 
-    it('should count the Iris impression only once it was sent, retrying when the consent arrives', () => {
-        // The consent of the course loads after the sidebar has rendered; an impression dropped before that must not count.
-        const scienceService = TestBed.inject(ScienceService) as unknown as MockScienceService;
-        const logEventSpy = vi.spyOn(scienceService, 'logEvent').mockImplementation(() => scienceService.courseConsent() !== undefined);
-        // A course the sidebar has not counted an impression for yet.
-        const otherCourse = { ...course1, id: 999 } as Course;
-        fixture.componentRef.setInput('course', otherCourse);
-        fixture.detectChanges();
-        component.updateVisibleNavbarItems(10000);
-        const attemptsBeforeConsent = logEventSpy.mock.calls.filter(([type]) => type === ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION).length;
-        expect(attemptsBeforeConsent).toBeGreaterThan(0);
-
-        // Only the effect on the consent can send it here: nothing renders the sidebar items again.
-        scienceService.courseConsent.set({ courseId: 999, scienceEnabled: true, active: true });
-        fixture.detectChanges();
-
-        const impressions = logEventSpy.mock.calls.filter(([type]) => type === ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION);
-        expect(impressions.length).toBe(attemptsBeforeConsent + 1);
-        expect(impressions.at(-1)).toEqual([ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, 999, 999]);
-
-        // Counted now: rendering again sends no second impression.
-        component.updateVisibleNavbarItems(10000);
-        expect(logEventSpy.mock.calls.filter(([type]) => type === ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION)).toHaveLength(impressions.length);
-    });
-
     it('should work without a ScienceService, as in course management', () => {
         // Only the course overview provides the ScienceService; course management collects no science data.
         TestBed.resetTestingModule();

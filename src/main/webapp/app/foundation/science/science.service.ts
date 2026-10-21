@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Subject, catchError, combineLatest, of, startWith, switchMap } from 'rxjs';
+import { Subject, catchError, combineLatest, map, of, startWith, switchMap } from 'rxjs';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { ScienceEventDTO, ScienceEventType } from 'app/foundation/science/science.model';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -29,6 +29,10 @@ export class ScienceService {
     private readonly courseId$ = new Subject<number>();
     private requestedCourseId?: number;
     private featureToggleActive = false;
+    /** Whether the consent of the requested course is still being looked up. */
+    private consentPending = false;
+    /** Events of the requested course logged while its consent was still being looked up. */
+    private deferredEvents: { type: ScienceEventType; resourceId?: number; courseId: number }[] = [];
 
     constructor() {
         const featureToggleActive$ = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science);
@@ -42,16 +46,27 @@ export class ScienceService {
                 switchMap(([courseId, active]) =>
                     active
                         ? this.scienceSettingsService.getConsentForCourse(courseId).pipe(
+                              map((consent) => ({ consent, pending: false })),
                               // A failure leaves the course without consent, so events are dropped and the prompt stays
                               // closed, rather than interrupting the course with an error the student cannot act on.
-                              catchError(() => of(undefined)),
-                              startWith(undefined),
+                              catchError(() => of({ consent: undefined, pending: false })),
+                              startWith({ consent: undefined, pending: true }),
                           )
-                        : of(undefined),
+                        : of({ consent: undefined, pending: false }),
                 ),
                 takeUntilDestroyed(),
             )
-            .subscribe((consent) => this.courseConsent.set(consent));
+            .subscribe(({ consent, pending }) => {
+                this.courseConsent.set(consent);
+                this.consentPending = pending;
+                // The page a student enters on logs its event before the lookup answers. Those events wait for it and are
+                // then sent or dropped by the answer; a new lookup drops the events of the one it replaces.
+                const deferredEvents = this.deferredEvents;
+                this.deferredEvents = [];
+                if (!pending) {
+                    deferredEvents.forEach((event) => this.logEvent(event.type, event.resourceId, event.courseId));
+                }
+            });
     }
 
     /**
@@ -73,7 +88,8 @@ export class ScienceService {
     }
 
     /**
-     * Records an interaction, if the course collects science data and the student has agreed to it.
+     * Records an interaction, if the course collects science data and the student has agreed to it. While the consent of
+     * the course is still loading, the event waits for it.
      *
      * @param type       what happened
      * @param resourceId the lecture, unit, exercise, competency or learning path it happened on
@@ -81,11 +97,18 @@ export class ScienceService {
      *                   event attributed to the wrong one is a consent violation rather than a reporting inaccuracy.
      *                   Omitting it falls back to reading the course out of the route.
      */
-    logEvent(type: ScienceEventType, resourceId?: number, courseId?: number): boolean {
+    logEvent(type: ScienceEventType, resourceId?: number, courseId?: number): void {
         const resolvedCourseId = courseId ?? this.inferCourseId();
+        if (!this.featureToggleActive || resolvedCourseId === undefined) {
+            return;
+        }
+        if (this.consentPending && resolvedCourseId === this.requestedCourseId) {
+            this.deferredEvents.push({ type, resourceId, courseId: resolvedCourseId });
+            return;
+        }
         const consent = this.courseConsent();
-        if (!this.featureToggleActive || resolvedCourseId === undefined || consent?.courseId !== resolvedCourseId || !consent.scienceEnabled || consent.active !== true) {
-            return false;
+        if (consent?.courseId !== resolvedCourseId || !consent.scienceEnabled || consent.active !== true) {
+            return;
         }
         const event = new ScienceEventDTO();
         event.type = type;
@@ -97,7 +120,6 @@ export class ScienceService {
         // error alert nor an unhandled error.
         const context = new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true);
         this.httpClient.put<void>(`${this.resourceURL}/science`, event, { observe: 'response', context }).subscribe({ error: () => undefined });
-        return true;
     }
 
     /**

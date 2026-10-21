@@ -115,12 +115,6 @@ export class CourseSidebarComponent {
             this.irisImpressionLoggedForCourseId.set(undefined);
         });
 
-        // The consent of the course arrives after the sidebar has rendered, so the impression is tried again once it does.
-        effect(() => {
-            this.scienceService?.courseConsent();
-            untracked(() => this.logIrisEntrypointImpression());
-        });
-
         effect(() => {
             const items = this.sidebarItems();
             untracked(() => {
@@ -200,9 +194,7 @@ export class CourseSidebarComponent {
         if (!irisItem || irisItem.hidden) {
             return;
         }
-        // Only counted once it was actually sent: before the course's consent has loaded, the event is dropped.
-        if (this.scienceService?.logEvent(ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, courseId, courseId)) {
-            this.irisImpressionLoggedForCourseId.set(courseId);
-        }
+        this.scienceService?.logEvent(ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, courseId, courseId);
+        this.irisImpressionLoggedForCourseId.set(courseId);
     }
 }
