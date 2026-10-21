@@ -585,12 +585,17 @@ describe('NavbarComponent', () => {
             expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/exercises/'))).toBe(false);
         });
 
-        it('submissions link to the scores, since there is no list of submissions only', () => {
-            router.setUrl('/course-management/1/text-exercises/2/submissions');
+        it.each([
+            '/course-management/1/text-exercises/2/submissions',
+            '/course-management/1/text-exercises/2/participations/3/submissions',
+            '/course-management/1/exams/4/exercise-groups/5/text-exercises/2/participations/3/submissions',
+        ])('submissions link to the participation page for %s', (url) => {
+            router.setUrl(url);
 
             fixture.detectChanges();
 
-            expect(component.breadcrumbs().some((crumb) => crumb.uri === '/course-management/1/text-exercises/2/scores/')).toBe(true);
+            const participationUrl = url.substring(0, url.indexOf('/text-exercises/2/') + '/text-exercises/2/'.length) + 'participations/';
+            expect(component.breadcrumbs().some((crumb) => crumb.uri === participationUrl && crumb.label === 'artemisApp.exercise.submissions')).toBe(true);
             expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/submissions/'))).toBe(false);
         });
 
