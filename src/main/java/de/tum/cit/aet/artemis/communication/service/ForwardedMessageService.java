@@ -116,7 +116,9 @@ public class ForwardedMessageService {
         Long courseId = course.getId();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         PostingType destinationType = destination instanceof Post ? PostingType.POST : PostingType.ANSWER;
-        if (!destination.getAuthor().getId().equals(user.getId()) || !course.getCourseInformationSharingConfiguration().isMessagingEnabled()
+        var sharingConfiguration = course.getCourseInformationSharingConfiguration();
+        boolean destinationEnabled = destinationConversation instanceof Channel ? sharingConfiguration.isAnyCommunicationEnabled() : sharingConfiguration.isMessagingEnabled();
+        if (!destination.getAuthor().getId().equals(user.getId()) || !destinationEnabled
                 || !findDirectlyAccessibleIds(List.of(destination), destinationType, courseId, user).contains(destination.getId())) {
             throw new AccessForbiddenException("You may only attach a forwarded message to your own accessible message.");
         }

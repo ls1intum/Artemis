@@ -136,6 +136,60 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
                 .andExpect(jsonPath("$.sourceType").value("POST"));
     }
 
+    @ParameterizedTest
+    @CsvSource({ "POST, POST", "POST, ANSWER", "ANSWER, POST", "ANSWER, ANSWER" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldAllowChannelForwardingWithCommunicationOnly(PostingType sourceType, PostingType destinationType) throws Exception {
+        exampleCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
+        courseRepository.save(exampleCourse);
+        long sourceId = sourceType == PostingType.POST ? testPost2.getId() : createAnswer(testPost2, "Channel reply to forward").getId();
+        ForwardedMessageDTO dto = new ForwardedMessageDTO(null, sourceId, sourceType, destinationType == PostingType.POST ? testPost.getId() : null,
+                destinationType == PostingType.ANSWER ? testAnswerPost.getId() : null);
+
+        request.performMvcRequest(
+                MockMvcRequestBuilders.post("/api/communication/forwarded-messages").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto)))
+                .andExpect(MockMvcResultMatchers.status().isCreated()).andExpect(jsonPath("$.id").isNumber()).andExpect(jsonPath("$.sourceId").value(sourceId))
+                .andExpect(jsonPath("$.sourceType").value(sourceType.name()))
+                .andExpect(jsonPath(destinationType == PostingType.POST ? "$.destinationPostId" : "$.destinationAnswerPostId")
+                        .value(destinationType == PostingType.POST ? testPost.getId() : testAnswerPost.getId()));
+        request.performMvcRequest(MockMvcRequestBuilders.get(sourceEndpoint(sourceType)).param(sourceParameter(sourceType), Long.toString(sourceId)))
+                .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$[0].id").value(sourceId));
+    }
+
+    @ParameterizedTest
+    @EnumSource(PostingType.class)
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRejectChannelForwardingWhenCommunicationIsDisabled(PostingType destinationType) throws Exception {
+        exampleCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+        courseRepository.save(exampleCourse);
+        ForwardedMessageDTO dto = new ForwardedMessageDTO(null, testPost2.getId(), PostingType.POST, destinationType == PostingType.POST ? testPost.getId() : null,
+                destinationType == PostingType.ANSWER ? testAnswerPost.getId() : null);
+
+        request.performMvcRequest(
+                MockMvcRequestBuilders.post("/api/communication/forwarded-messages").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto)))
+                .andExpect(MockMvcResultMatchers.status().isForbidden()).andExpect(jsonPath("$.detail").value(AccessForbiddenException.NOT_ALLOWED));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "COMMUNICATION_ONLY, false, POST", "COMMUNICATION_ONLY, false, ANSWER", "COMMUNICATION_ONLY, true, POST", "COMMUNICATION_ONLY, true, ANSWER",
+            "DISABLED, false, POST", "DISABLED, false, ANSWER", "DISABLED, true, POST", "DISABLED, true, ANSWER" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRequireMessagingForPrivateChatDestinations(CourseInformationSharingConfiguration configuration, boolean groupChat, PostingType destinationType) throws Exception {
+        User otherUser = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        Conversation destination = groupChat ? conversationUtilService.createGroupChat(exampleCourse, testUser, otherUser)
+                : conversationUtilService.createOneToOneChat(exampleCourse, testUser, otherUser);
+        Post destinationPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", destination);
+        AnswerPost destinationAnswer = destinationType == PostingType.ANSWER ? createAnswer(destinationPost, "Private chat reply") : null;
+        exampleCourse.setCourseInformationSharingConfiguration(configuration);
+        courseRepository.save(exampleCourse);
+        ForwardedMessageDTO dto = new ForwardedMessageDTO(null, testPost2.getId(), PostingType.POST, destinationAnswer == null ? destinationPost.getId() : null,
+                destinationAnswer == null ? null : destinationAnswer.getId());
+
+        request.performMvcRequest(
+                MockMvcRequestBuilders.post("/api/communication/forwarded-messages").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto)))
+                .andExpect(MockMvcResultMatchers.status().isForbidden()).andExpect(jsonPath("$.detail").value(AccessForbiddenException.NOT_ALLOWED));
+    }
+
     /**
      * A forwarded message points at exactly one destination, so naming both is malformed input rather than a server
      * fault: without this the second setter on the entity throws IllegalStateException and the request answers 500.
@@ -349,14 +403,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     void shouldNotGrantAccessThroughAnUnverifiedIrisDestination() throws Exception {
         Post source = createPrivateSource();
         AnswerPost destination = createAnswer(testPost, "Pending Iris reply");
-        // This system account survives test cleanup. Reuse it instead of overwriting its profile through the generic user factory.
-        User irisBot = userRepository.findOneWithAuthoritiesByLogin(User.IRIS_BOT_LOGIN).orElseGet(() -> {
-            User newBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
-            newBot.setFirstName("Iris");
-            newBot.setLastName("Bot");
-            return userRepository.save(newBot);
-        });
-        destination.setAuthor(irisBot);
+        destination.setAuthor(userUtilService.getOrCreateIrisBotUser());
         destination.setVerified(false);
         destination = answerPostRepository.save(destination);
         forwardedMessageRepository.save(new ForwardedMessage(source.getId(), PostingType.POST, null, destination));
