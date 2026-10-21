@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 
@@ -88,21 +89,29 @@ public class ForwardedMessageService {
     /**
      * Validates and saves a forward. Its author must be able to read the source and write their own destination message in the same course.
      * A received forward is a valid source for onward sharing without granting access to the original conversation.
+     * Missing and inaccessible source or destination IDs produce the same forbidden response.
      *
      * @param forward the requested forward, with exactly one destination
      * @param user    forwarding user
      * @return persisted forward
      */
     public ForwardedMessage create(ForwardedMessage forward, User user) {
+        try {
+            return createWithAccessChecks(forward, user);
+        }
+        catch (EntityNotFoundException | AccessForbiddenException exception) {
+            // Missing and inaccessible IDs must have the same status and detail, including course and channel denials.
+            throw new AccessForbiddenException();
+        }
+    }
+
+    private ForwardedMessage createWithAccessChecks(ForwardedMessage forward, User user) {
         Posting source = forward.getSourceType() == PostingType.POST ? postRepository.findByIdElseThrow(forward.getSourceId())
                 : answerPostRepository.findByIdElseThrow(forward.getSourceId());
         Posting destination = forward.getDestinationPost() != null ? postRepository.findByIdElseThrow(forward.getDestinationPost().getId())
                 : answerPostRepository.findByIdElseThrow(forward.getDestinationAnswerPost().getId());
         Conversation sourceConversation = conversationOf(source);
         Conversation destinationConversation = conversationOf(destination);
-        if (!sourceConversation.getCourse().getId().equals(destinationConversation.getCourse().getId())) {
-            throw new BadRequestAlertException("Forwarded messages must stay within the same course", "forwardedMessage", "invalidCourse");
-        }
         var course = destinationConversation.getCourse();
         Long courseId = course.getId();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
@@ -119,13 +128,19 @@ public class ForwardedMessageService {
                 channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, user);
             }
         }
+        Long sourceCourseId = sourceConversation.getCourse().getId();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, sourceConversation.getCourse(), user);
         // Pending Iris replies are not published to students, including through onward forwards.
-        if (source instanceof AnswerPost answer && answer.isUnverifiedIrisReply() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId)) {
+        if (source instanceof AnswerPost answer && answer.isUnverifiedIrisReply() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(sourceCourseId)) {
             throw new AccessForbiddenException("The source reply has not been published.");
         }
-        if (!findDirectlyAccessibleIds(List.of(source), forward.getSourceType(), courseId, user).contains(source.getId())
-                && !findAccessibleSourceIds(Set.of(source.getId()), forward.getSourceType(), courseId, user).contains(source.getId())) {
+        if (!findDirectlyAccessibleIds(List.of(source), forward.getSourceType(), sourceCourseId, user).contains(source.getId())
+                && !findAccessibleSourceIds(Set.of(source.getId()), forward.getSourceType(), sourceCourseId, user).contains(source.getId())) {
             throw new AccessForbiddenException("You do not have access to the source message.");
+        }
+        // A course mismatch may be reported only after both messages are known to be accessible.
+        if (!sourceCourseId.equals(courseId)) {
+            throw new BadRequestAlertException("Forwarded messages must stay within the same course", "forwardedMessage", "invalidCourse");
         }
         if (destination instanceof Post post) {
             forward.setDestinationPost(post);
@@ -149,7 +164,7 @@ public class ForwardedMessageService {
     private Conversation conversationOf(Posting posting) {
         Conversation conversation = posting instanceof Post post ? post.getConversation() : ((AnswerPost) posting).getPost().getConversation();
         if (conversation == null) {
-            throw new BadRequestAlertException("A forwarded message must belong to a conversation", "forwardedMessage", "conversationnotset");
+            throw new AccessForbiddenException();
         }
         return conversation;
     }

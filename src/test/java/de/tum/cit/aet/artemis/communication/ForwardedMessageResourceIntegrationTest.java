@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ForwardedMessageTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -274,6 +275,42 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
         request.performMvcRequest(
                 MockMvcRequestBuilders.post("/api/communication/forwarded-messages").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto)))
                 .andExpect(MockMvcResultMatchers.status().isForbidden());
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "POST, true, true", "POST, true, false", "ANSWER, true, true", "ANSWER, true, false", "POST, false, true", "POST, false, false", "ANSWER, false, true",
+            "ANSWER, false, false" })
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void shouldNotRevealWhetherAnInaccessiblePostingExists(PostingType type, boolean probeSource, boolean exists) throws Exception {
+        Post privateSource = createPrivateSource();
+        long existingId = probeSource ? (type == PostingType.POST ? privateSource.getId() : createAnswer(privateSource, "Private reply").getId())
+                : (type == PostingType.POST ? testPost.getId() : testAnswerPost.getId());
+        long probeId = exists ? existingId : Long.MAX_VALUE;
+        Post ownDestination = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", testPost.getConversation());
+        ForwardedMessageDTO dto = new ForwardedMessageDTO(null, probeSource ? probeId : testPost.getId(), probeSource ? type : PostingType.POST,
+                probeSource ? ownDestination.getId() : type == PostingType.POST ? probeId : null, !probeSource && type == PostingType.ANSWER ? probeId : null);
+        request.performMvcRequest(
+                MockMvcRequestBuilders.post("/api/communication/forwarded-messages").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto)))
+                .andExpect(MockMvcResultMatchers.status().isForbidden()).andExpect(jsonPath("$.detail").value(AccessForbiddenException.NOT_ALLOWED));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void shouldNotRevealPostingsInAnInaccessibleCourse() throws Exception {
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX + "other");
+        Conversation otherConversation = conversationRepository.save(ConversationFactory.generateCourseWideChannel(otherCourse));
+        Post otherSource = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", otherConversation);
+        Post ownDestination = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", testPost.getConversation());
+        ForwardedMessageDTO sourceProbe = new ForwardedMessageDTO(null, otherSource.getId(), PostingType.POST, ownDestination.getId(), null);
+        request.performMvcRequest(
+                MockMvcRequestBuilders.post("/api/communication/forwarded-messages").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sourceProbe)))
+                .andExpect(MockMvcResultMatchers.status().isForbidden()).andExpect(jsonPath("$.detail").value(AccessForbiddenException.NOT_ALLOWED));
+
+        Post otherDestination = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", otherConversation);
+        ForwardedMessageDTO destinationProbe = new ForwardedMessageDTO(null, testPost.getId(), PostingType.POST, otherDestination.getId(), null);
+        request.performMvcRequest(MockMvcRequestBuilders.post("/api/communication/forwarded-messages").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(destinationProbe))).andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(jsonPath("$.detail").value(AccessForbiddenException.NOT_ALLOWED));
     }
 
     @ParameterizedTest
