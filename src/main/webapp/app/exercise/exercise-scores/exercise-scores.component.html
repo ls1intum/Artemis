@@ -191,11 +191,16 @@
 <ng-template #repositoryCellTemplate let-cell>
     @if (cell.data.repositoryUri) {
         <jhi-code-button
-            [smallButtons]="true"
-            [exerciseId]="exercise()?.id"
-            [participationId]="cell.data.participationId"
+            size="small"
+            [allowOnlineIde]="false"
+            [exerciseId]="exercise()!.id!"
             [repositoryUri]="cell.data.repositoryUri"
-            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
+            [repositoryViewLink]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
+            [vcsAccessTokenData]="{
+                returnedTokenType: 'repository-token',
+                repositoryType: RepositoryType.USER,
+                participationId: cell.data.participationId,
+            }"
         />
     }
 </ng-template>

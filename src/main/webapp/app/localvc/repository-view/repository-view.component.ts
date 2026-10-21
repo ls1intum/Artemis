@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -17,7 +17,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -77,6 +77,8 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     readonly result = signal<Result>(undefined!);
     readonly resultHasInlineFeedback = signal(false);
     readonly showInlineFeedback = signal(false);
+    readonly ownsParticipationForCodeButton = computed(() => this.getOwnsParticipationForCodeButton());
+    readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub?: Subscription;
@@ -89,6 +91,25 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         this.paramSub?.unsubscribe();
         this.participationWithLatestResultSub?.unsubscribe();
         this.differentParticipationSub?.unsubscribe();
+    }
+
+    private getOwnsParticipationForCodeButton(): boolean {
+        const userLogin = this.accountService.userIdentity()?.login;
+        return this.repositoryType() === RepositoryType.USER && !!userLogin && this.participation()?.student?.login === userLogin;
+    }
+
+    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenSourceInfo {
+        const repositoryType = this.repositoryType();
+        if (repositoryType === RepositoryType.AUXILIARY) {
+            return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.AUXILIARY, auxiliaryRepositoryId: this.auxiliaryRepositoryId()! };
+        }
+        if (repositoryType === RepositoryType.TEMPLATE || repositoryType === RepositoryType.SOLUTION || repositoryType === RepositoryType.TESTS) {
+            return { returnedTokenType: 'repository-token', repositoryType };
+        }
+        if (!this.ownsParticipationForCodeButton()) {
+            return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId: this.participation().id! };
+        }
+        return { returnedTokenType: 'participation-token', participationId: this.participation().id!, isOwnParticipation: this.ownsParticipationForCodeButton() };
     }
 
     /**

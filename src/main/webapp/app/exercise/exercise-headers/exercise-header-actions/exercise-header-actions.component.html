@@ -149,14 +149,15 @@
                 @if (shouldDisplayIDEButtons()) {
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
-                            [loading]="isLoading()"
-                            [smallButtons]="smallButtons()"
-                            [participations]="studentParticipations()"
-                            [exercise]="exercise()"
-                            [routerLinkForRepositoryView]="routerLinkForRepositoryView()"
+                            [disabled]="isLoading()"
+                            [size]="smallButtons() ? 'small' : 'default'"
+                            [programmingLanguage]="programmingExercise()?.programmingLanguage"
+                            [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
+                            [exerciseId]="exercise().id!"
+                            [repositoryViewLink]="repositoryViewLink()"
                             [hideLabelMobile]="true"
-                            [repositoryUri]="''"
-                            [isPractice]="participationMode() === 'practice'"
+                            [repositoryUri]="repositoryUriForCodeButton()"
+                            [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"
                         />
                     }
                 }

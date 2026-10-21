@@ -27,7 +27,7 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -43,7 +43,8 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import {
     DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
     RequestFeedbackButtonComponent,
@@ -193,8 +194,12 @@ export class ExerciseHeaderActionsComponent {
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
     });
+    readonly programmingParticipationForCodeButton = computed(() => this.getProgrammingParticipationForCodeButton());
+    readonly ownsParticipationForCodeButton = computed(() => this.getOwnsParticipationForCodeButton());
+    readonly repositoryUriForCodeButton = computed(() => this.getRepositoryUriForCodeButton());
+    readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
-    readonly routerLinkForRepositoryView = computed(() => {
+    readonly repositoryViewLink = computed(() => {
         const participation = this.activeParticipationForCode();
         if (!participation?.id) {
             return ['/courses', this.courseId(), 'exercises', this.exercise().id!];
@@ -299,6 +304,34 @@ export class ExerciseHeaderActionsComponent {
         this._hasRatedGradedResult.set(
             !!getAllResultsOfAllSubmissions(gradedParticipation?.submissions)?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
         );
+    }
+
+    private getRepositoryUriForCodeButton(): string {
+        const participations = this.studentParticipations();
+        const participation = this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
+        return participation && this.isProgrammingExerciseStudentParticipation(participation) ? (participation.repositoryUri ?? '') : '';
+    }
+
+    private isProgrammingExerciseStudentParticipation(participation: StudentParticipation): participation is ProgrammingExerciseStudentParticipation {
+        return participation.type === ParticipationType.PROGRAMMING;
+    }
+
+    private getProgrammingParticipationForCodeButton(): ProgrammingExerciseStudentParticipation | undefined {
+        const participations = this.studentParticipations();
+        return this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
+    }
+
+    private getOwnsParticipationForCodeButton(): boolean {
+        const userLogin = this.accountService.userIdentity()?.login;
+        return !!userLogin && this.programmingParticipationForCodeButton()?.student?.login === userLogin;
+    }
+
+    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenSourceInfo {
+        const participationId = this.programmingParticipationForCodeButton()!.id!;
+        if (!this.ownsParticipationForCodeButton()) {
+            return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId };
+        }
+        return { returnedTokenType: 'participation-token', participationId, isOwnParticipation: true };
     }
 
     isStartExerciseAvailable(): boolean {

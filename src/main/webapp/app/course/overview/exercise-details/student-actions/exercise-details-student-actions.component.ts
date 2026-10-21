@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -22,6 +22,7 @@ import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { AccountService } from 'app/core/auth/account.service';
 import { RequestFeedbackButtonComponent } from '../request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
@@ -59,6 +60,7 @@ export class ExerciseDetailsStudentActionsComponent {
     private courseExerciseService = inject(CourseExerciseService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
 
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faUsers = faUsers;
@@ -122,6 +124,9 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
     readonly hasGradedSubmission = computed(() => !!this._gradedParticipation()?.submissions?.some((submission) => submission.submitted));
+    readonly programmingParticipationForCodeButton = computed(() => this.getProgrammingParticipationForCodeButton());
+    readonly ownsParticipationForCodeButton = computed(() => this.getOwnsParticipationForCodeButton());
+    readonly gradedRepositoryUri = computed(() => this.getGradedRepositoryUri());
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
@@ -169,6 +174,25 @@ export class ExerciseDetailsStudentActionsComponent {
         this._hasRatedGradedResult.set(
             !!getAllResultsOfAllSubmissions(gradedParticipation?.submissions)?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
         );
+    }
+
+    private getProgrammingParticipationForCodeButton(): ProgrammingExerciseStudentParticipation | undefined {
+        const participations = this.studentParticipations();
+        return this.participationService.getSpecificStudentParticipation(participations, false) ?? participations[0];
+    }
+
+    private getOwnsParticipationForCodeButton(): boolean {
+        const userLogin = this.accountService.userIdentity()?.login;
+        return !!userLogin && this.programmingParticipationForCodeButton()?.student?.login === userLogin;
+    }
+
+    private getGradedRepositoryUri(): string {
+        const participation = this.programmingParticipationForCodeButton();
+        return participation && this.isProgrammingExerciseStudentParticipation(participation) ? (participation.repositoryUri ?? '') : '';
+    }
+
+    private isProgrammingExerciseStudentParticipation(participation: StudentParticipation): participation is ProgrammingExerciseStudentParticipation {
+        return participation.type === ParticipationType.PROGRAMMING;
     }
 
     /**

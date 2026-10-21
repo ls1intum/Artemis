@@ -249,7 +249,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                     // race occasionally lands the main page on /courses (Angular's
                     // auth/router fall-back) instead of the exercise route. Navigate to the
                     // exercise URL explicitly so the subsequent `makeSubmission` reliably
-                    // finds `.code-button`. A direct goto is idempotent — it costs ~200ms on
+                    // finds the code button. A direct goto is idempotent — it costs ~200ms on
                     // the happy path and eliminates the drift-recovery branch.
                     const exerciseUrl = `/courses/${course.id}/exercises/${exercise.id!}`;
                     await GitExerciseParticipation.setupSSHCredentials(page.context(), sshAlgorithm);

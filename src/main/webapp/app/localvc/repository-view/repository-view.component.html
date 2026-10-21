@@ -43,14 +43,13 @@
 
                 @if (exercise()?.allowOfflineIde) {
                     <jhi-code-button
-                        [loading]="!!exercise()!.loading"
-                        [smallButtons]="false"
-                        [participations]="participation() ? [participation()] : []"
-                        [exercise]="exercise()"
+                        [disabled]="!!exercise()!.loading"
+                        [programmingLanguage]="exercise()?.programmingLanguage"
+                        [allowOnlineIde]="exercise()?.allowOnlineIde ?? false"
+                        [exerciseId]="exercise().id!"
                         [repositoryUri]="repositoryUri()"
-                        [repositoryType]="repositoryType()"
-                        [auxiliaryRepositoryId]="auxiliaryRepositoryId()"
-                        [routerLinkForRepositoryView]="[]"
+                        [repositoryViewLink]="[]"
+                        [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"
                     />
                 }
 

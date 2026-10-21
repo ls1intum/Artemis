@@ -46,7 +46,7 @@ export class ProgrammingExerciseParticipationsPage {
     async openRepositoryOnNewPage(participantName: string): Promise<RepositoryPage> {
         console.log(`[openRepositoryOnNewPage] Opening repository for participation with participant ${participantName}`);
         const participation = this.getParticipation(participantName);
-        await participation.locator('.code-button').click();
+        await participation.getByTestId('code-button').click();
         console.log('[openRepositoryOnNewPage] Clicked code button, waiting for popover...');
 
         // Wait for the popover to appear and the button to be visible

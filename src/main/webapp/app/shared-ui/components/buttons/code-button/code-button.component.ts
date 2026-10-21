@@ -1,42 +1,27 @@
-import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
-import { TranslateService } from '@ngx-translate/core';
+import { Component, type ResourceParamsContext, type ResourceSnapshot, computed, inject, input, resource, resourceFromSnapshots, signal } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AuthenticationMethodData, CodeButtonPopoverContentComponent, NonEmptyArray, SshKeyState, TheiaLinkData } from './code-button-popover-content.component';
+import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
+import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { User } from 'app/account/user/user.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { MODULE_FEATURE_THEIA } from 'app/app.constants';
-import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import dayjs from 'dayjs/esm';
-
-import { faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
-import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
-import { TooltipModule } from 'primeng/tooltip';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Router, RouterLink } from '@angular/router';
-import { HelpIconComponent } from '../../help-icon/help-icon.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SafeUrlPipe } from 'app/foundation/pipes/safe-url.pipe';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { AlertService } from 'app/foundation/service/alert.service';
+import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
+import { Router } from '@angular/router';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { TheiaService } from 'app/programming/shared/services/theia.service';
-import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { Observable, firstValueFrom } from 'rxjs';
 import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { captureException } from '@sentry/angular';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { User } from 'app/account/user/user.model';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { map } from 'rxjs/operators';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -44,645 +29,411 @@ export enum RepositoryAuthenticationMethod {
     SSH = 'ssh',
 }
 
+export type CodeButtonSize = 'small' | 'default';
+
+export type VcsAccessTokenSourceInfo =
+    | { returnedTokenType: 'participation-token'; participationId: number; isOwnParticipation: boolean }
+    | { returnedTokenType: 'repository-token'; repositoryType: RepositoryType.USER; participationId: number }
+    | { returnedTokenType: 'repository-token'; repositoryType: RepositoryType.TEMPLATE | RepositoryType.SOLUTION | RepositoryType.TESTS }
+    | { returnedTokenType: 'repository-token'; repositoryType: RepositoryType.AUXILIARY; auxiliaryRepositoryId: number };
+
+const BREAKPOINTS = {
+    md: '(min-width: 768px)',
+    xl: '(min-width: 1200px)',
+} as const;
+
+type CodeButtonLoadingState =
+    | { status: 'loading' }
+    | { status: 'error' }
+    | { status: 'complete'; authenticationMethodData: NonEmptyArray<AuthenticationMethodData>; preferredIde: Ide; theiaLinkData: TheiaLinkData | undefined };
+
 @Component({
     selector: 'jhi-code-button',
     templateUrl: './code-button.component.html',
-    styleUrls: ['./code-button.component.scss'],
-    imports: [
-        ExerciseActionButtonComponent,
-        FeatureToggleDirective,
-        NgbPopover,
-        TranslateDirective,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        CdkCopyToClipboard,
-        FaIconComponent,
-        RouterLink,
-        HelpIconComponent,
-        ArtemisTranslatePipe,
-        SafeUrlPipe,
-        TooltipModule,
-    ],
+    imports: [TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, FaIconComponent, ArtemisTranslatePipe, CodeButtonPopoverContentComponent],
 })
-export class CodeButtonComponent implements OnInit {
-    private translateService = inject(TranslateService);
-    private externalCloningService = inject(ExternalCloningService);
-    private sshUserSettingsService = inject(SshUserSettingsService);
-    private accountService = inject(AccountService);
-    private profileService = inject(ProfileService);
-    private localStorageService = inject(LocalStorageService);
-    private participationService = inject(ParticipationService);
-    private ideSettingsService = inject(IdeSettingsService);
-    private programmingExerciseService = inject(ProgrammingExerciseService);
-    private alertService = inject(AlertService);
-    private theiaService = inject(TheiaService);
-    private router = inject(Router);
+export class CodeButtonComponent {
+    private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
+    private readonly sshUserSettingsService = inject(SshUserSettingsService);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly ideSettingsService = inject(IdeSettingsService);
+    private readonly router = inject(Router);
+    private readonly breakpointObserver = inject(BreakpointObserver);
 
-    protected readonly FeatureToggle = FeatureToggle;
-    protected readonly ProgrammingLanguage = ProgrammingLanguage;
-    protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
+    protected readonly faCircleExclamation = faCircleExclamation;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faCode = faCode;
+    protected readonly showAlternatives = signal(false);
 
-    loading = input<boolean>(false);
+    private readonly isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
 
-    // Input
-    smallButtons = input.required<boolean>();
-    repositoryUri = input.required<string>();
-    routerLinkForRepositoryView = input.required<(string | number)[]>();
-    participations = input<ProgrammingExerciseStudentParticipation[]>([]);
-    exercise = input<ProgrammingExercise>();
-    hideLabelMobile = input<boolean>(false);
-    hideLabelBreakpoint = input<'md' | 'xl'>('md');
-    isPractice = input<boolean>(false);
-    // When set to a base repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY), the code button uses a repository-scoped staff VCS access token instead of a participation token.
-    repositoryType = input<RepositoryType>();
-    auxiliaryRepositoryId = input<number>();
-    // The exercise id, used as a fallback to load the repository-scoped staff token when the full exercise object is not available (e.g. in the exercise detail view).
-    exerciseId = input<number>();
-    // The student participation id, set by staff tables (scores, participations, feedback) that render the code button for an individual student repository without passing the
-    // full participation object. It lets the repository-scoped staff token be minted for exactly that student repository.
-    participationId = input<number>();
+    readonly exerciseId = input.required<number>();
+    readonly repositoryUri = input.required<string>();
+    readonly vcsAccessTokenData = input.required<VcsAccessTokenSourceInfo>();
+    readonly repositoryViewLink = input.required<(string | number)[]>();
+    readonly allowOnlineIde = input.required<boolean>();
+    readonly programmingLanguage = input<ProgrammingLanguage>();
+    readonly disabled = input(false);
+    readonly size = input<CodeButtonSize>('default');
+    readonly hideLabelMobile = input(false);
+    readonly hideLabelBreakpoint = input<'md' | 'xl'>('md');
 
-    // Fields (immutable after construction)
-    sshEnabled = false;
-    sshTemplateUrl?: string;
-    versionControlUrl!: string; // set in ngOnInit() from profile info
-    readonly isInCourseManagement = signal<boolean>(undefined!);
-    sshSettingsUrl!: string; // set in configureTooltips() from ngOnInit()
-    user!: User; // set in ngOnInit() from accountService.identity()
-    // The current user's login as a signal (set in ngOnInit alongside `user`) so the token-loading effect and the
-    // usesStudentRepositoryStaffToken computed react once the user becomes known and can detect whether a participation is the user's own.
-    private readonly userLogin = signal<string | undefined>(undefined);
-    // Guards against reporting the same missing-token anomaly repeatedly (getHttpOrSshRepositoryUri runs on every change detection).
-    private vcsAccessTokenReportedMissing = false;
-    // Set once a participation VCS token request has terminally failed to yield a token (empty response or an error that
-    // is not the 404 → create fallback). Gates the missing-token Sentry report so it never fires while a token is still
-    // in flight (an expected transient state during which the clone URL simply omits the token).
-    private readonly participationTokenLoadFailed = signal(false);
-    sshKeys?: UserSshPublicKey[];
+    private readonly theiaDisabled = computed(() => !this.allowOnlineIde() || !this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA));
+    private readonly matchesMediumBreakpoint = this.getMatchesBreakpointSignal(BREAKPOINTS.md);
+    private readonly matchesExtraLargeBreakpoint = this.getMatchesBreakpointSignal(BREAKPOINTS.xl);
+    protected readonly displayLabel = computed(() => this.computeDisplayLabel());
+    protected readonly loadingState = computed(() => this.getLoadingState());
 
-    // Signals (we ideally declare everything related to change detection/UI to signals and leave component fields
-    // as they are
-    wasCopied = signal(false);
-    copyEnabled = signal(false);
-    isTeamParticipation = computed(() => !!this.activeParticipation()?.team);
-    doesUserHaveSSHkeys = signal(false);
-    areAnySshKeysExpired = signal(false);
-    // The repository-scoped VCS access token for course staff (used for base repositories and student repositories browsed by staff).
-    repositoryAccessToken = signal<string | undefined>(undefined);
-    // The repository identity the cached repositoryAccessToken was minted for. The repository view reuses one code-button instance across base repositories (only the route
-    // params change), so a token cached for the previous repository must not be reused for the next one: repository tokens are scoped to one exact repository URI and would fail
-    // authentication. We therefore remember which repository the cached token belongs to and reload when it no longer matches the current repository.
-    private repositoryAccessTokenIdentity?: string;
-    sshKeyMissingTip = signal('');
-    sshKeysExpiredTip = signal('');
-    theiaEnabled = signal(false);
-    ideName = signal('');
-    // this is the fallback with a default order in case the server does not specify this as part of the profile info endpoint
-    authenticationMechanisms = signal<RepositoryAuthenticationMethod[]>([
-        RepositoryAuthenticationMethod.Token,
-        RepositoryAuthenticationMethod.SSH,
-        RepositoryAuthenticationMethod.Password,
-    ]);
-
-    // Computed/Derived States
-    clonedHeadline = computed(() => {
-        const participations = this.participations();
-        if (!participations.length) return 'artemisApp.exerciseActions.cloneExerciseRepository';
-
-        const exercise = this.exercise();
-        const practice = this.isPractice();
-
-        return practice && !exercise?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
+    private readonly userResource = resource({
+        loader: () => this.loadUser(),
     });
-    activeParticipation = computed<ProgrammingExerciseStudentParticipation | undefined>(() => {
-        // Filter out undefined entries: callers that render a base repository without a student participation (e.g. the
-        // staff tests/auxiliary repository view) pass `[undefined]`, which would otherwise crash getSpecificStudentParticipation.
-        const participations = this.participations().filter((participation) => !!participation);
-        if (!participations.length) {
+    private readonly tokenResource = resource({
+        params: () => ({
+            exerciseId: this.exerciseId(),
+            isInCourseManagement: this.isInCourseManagement(),
+            vcsAccessTokenData: this.vcsAccessTokenData(),
+        }),
+        loader: ({ params }) => this.getToken(params.exerciseId, params.isInCourseManagement, params.vcsAccessTokenData),
+    });
+    private readonly tokenUrlResource = resourceFromSnapshots(() => this.getTokenUrlSnapshot());
+    private readonly authenticationMethodDataResource = resource({
+        params: ({ chain }) => this.getAuthenticationMethodDataParams(chain),
+        loader: ({ params }) => {
+            return this.loadAuthenticationMethodData(params.repositoryUri, params.login, params.tokenUrl);
+        },
+    });
+    private readonly theiaLinkDataResource = resource({
+        params: ({ chain }) => this.getTheiaLinkDataParams(chain),
+        loader: ({ params }) => this.loadTheiaLinkData(params.exerciseId, params.theiaPortalURL, params.repositoryUrl, params.userName, params.userEmail),
+    });
+    private readonly preferredIdeResource = resource({
+        params: () => ({ programmingLanguage: this.programmingLanguage() }),
+        loader: ({ params }) => this.loadPreferredIde(params.programmingLanguage),
+    });
+
+    private getMatchesBreakpointSignal(breakpoint: string) {
+        return toSignal(this.breakpointObserver.observe(breakpoint).pipe(map((result) => result.matches)), {
+            initialValue: this.breakpointObserver.isMatched(breakpoint),
+        });
+    }
+
+    private computeDisplayLabel(): boolean {
+        if (!this.hideLabelMobile()) {
+            return true;
+        }
+        return this.hideLabelBreakpoint() === 'md' ? this.matchesMediumBreakpoint() : this.matchesExtraLargeBreakpoint();
+    }
+
+    private getLoadingState(): CodeButtonLoadingState {
+        if (this.authenticationMethodDataResource.isLoading() || this.theiaLinkDataResource.isLoading() || this.preferredIdeResource.isLoading()) {
+            return { status: 'loading' };
+        } else if (this.authenticationMethodDataResource.hasValue() && this.preferredIdeResource.hasValue() && (this.theiaDisabled() || this.theiaLinkDataResource.hasValue())) {
+            return {
+                status: 'complete',
+                authenticationMethodData: this.authenticationMethodDataResource.value(),
+                preferredIde: this.preferredIdeResource.value(),
+                theiaLinkData: this.theiaLinkDataResource.hasValue() ? this.theiaLinkDataResource.value() : undefined,
+            };
+        } else {
+            return { status: 'error' };
+        }
+    }
+
+    protected handleOpenChange(isOpen: boolean): void {
+        if (!isOpen) {
+            this.showAlternatives.set(false);
+        }
+    }
+
+    private async loadUser(): Promise<User> {
+        const user = await this.accountService.identity();
+        if (!user) {
+            throw new Error('Incomplete user data');
+        }
+        return user;
+    }
+
+    private getAuthenticationMethodDataParams(chain: ResourceParamsContext['chain']) {
+        const user = chain(this.userResource);
+        if (!user) {
+            throw new Error('Resolved user resource contained no user');
+        }
+        const login = user.login;
+        if (!login) {
+            throw new Error('Resolved user resource contained no login');
+        }
+        const tokenUrl = chain(this.tokenUrlResource);
+        if (!tokenUrl) {
+            throw new Error('Resolved token URL resource contained no URL');
+        }
+        return {
+            repositoryUri: this.repositoryUri(),
+            login,
+            tokenUrl,
+        };
+    }
+
+    private getTheiaLinkDataParams(chain: ResourceParamsContext['chain']) {
+        if (this.theiaDisabled()) {
             return undefined;
         }
 
-        return this.participationService.getSpecificStudentParticipation(participations, this.isPractice()) ?? participations[0];
-    });
-    selectedAuthenticationMechanism = signal<RepositoryAuthenticationMethod>(RepositoryAuthenticationMethod.Token);
-    useToken = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token);
-    useSsh = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH);
-    usePassword = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password);
-    isBaseRepository = computed(() => {
-        const type = this.repositoryType();
-        return type === RepositoryType.TEMPLATE || type === RepositoryType.SOLUTION || type === RepositoryType.TESTS || type === RepositoryType.AUXILIARY;
-    });
-    // True when the clone URL must authenticate with a repository-scoped staff token minted on demand for a *student*
-    // repository: course staff browsing another participant's assignment (or test-run) repository in course management.
-    // A staff table can hand us the student participation id directly (no full participation object); otherwise we detect
-    // another participant's repository from the active participation. The user's OWN participation (including an exam test
-    // run they conduct, served under a course-management URL) is excluded, because its participation-scoped token is used.
-    usesStudentRepositoryStaffToken = computed(() => {
-        if (!this.isInCourseManagement() || this.isBaseRepository()) {
-            return false;
+        const theiaPortalURL = this.profileService.getProfileInfo()?.theiaPortalURL;
+        const tokenUrl = chain(this.tokenUrlResource);
+        const user = chain(this.userResource);
+        const userName = user?.name;
+        const userEmail = user?.email;
+        if (!tokenUrl || !theiaPortalURL || !userName || !userEmail) {
+            throw new Error('Incomplete Theia link data');
         }
-        if (this.participationId() !== undefined) {
-            return true;
-        }
-        return !!this.activeParticipation() && !this.isOwnParticipation(this.activeParticipation());
-    });
-    // True whenever the clone URL authenticates with a repository-scoped staff token that is minted on demand: for base
-    // repositories (template/solution/tests/auxiliary) and for a student repository browsed by staff. Such tokens are
-    // exact-URI scoped and provisioned automatically, so the personal VCS access token is never needed for cloning.
-    usesRepositoryScopedToken = computed(() => this.isBaseRepository() || this.usesStudentRepositoryStaffToken());
 
-    vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
-    programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
-
-    theiaPortalURL!: string; // set in initTheia() from ngOnInit()
-
-    // Icons
-    readonly faCode = faCode;
-    readonly faExternalLink = faExternalLink;
-    readonly faLaptopCode = faLaptopCode;
-
-    constructor() {
-        this.isInCourseManagement.set(this.router.url.includes('course-management'));
-
-        // we only loadVcsAccessToken if participations exist => reduces potentially repeated HTTP calls
-        effect(() => {
-            if (this.isBaseRepository()) {
-                return;
-            }
-            const participations = this.participations();
-            if (!participations.length) {
-                return;
-            }
-            this.loadVcsAccessTokensForAllParticipations();
-        });
+        return {
+            exerciseId: this.exerciseId(),
+            theiaPortalURL,
+            repositoryUrl: tokenUrl,
+            userName,
+            userEmail,
+        };
     }
 
-    ngOnInit() {
-        void this.initializeCodeButtonComponent();
+    private async loadTheiaLinkData(exerciseId: number, theiaPortalURL: string, repositoryUrl: string, userName: string, userEmail: string): Promise<TheiaLinkData> {
+        const theiaConfig = await firstValueFrom(this.programmingExerciseService.getTheiaConfig(exerciseId));
+        if (!theiaConfig.theiaImage) {
+            throw new Error('Incomplete Theia configuration');
+        }
+        return {
+            theiaPortalURL,
+            theiaImage: theiaConfig.theiaImage,
+            repositoryUrl,
+            userName,
+            userEmail,
+        };
     }
 
-    private async initializeCodeButtonComponent(): Promise<void> {
-        // Populate the tooltip strings first. They only depend on window.location.origin and the loaded
-        // translations, not on the awaits below. The clone popover renders (and can be opened by the user)
-        // before ngOnInit's async work finishes; if the SSH-key-missing alert appears while these strings
-        // are still empty, the alert element has no text. Setting them up front guarantees the alert always
-        // renders its message as soon as it becomes visible.
-        this.configureTooltips();
+    private getTokenUrlSnapshot(): ResourceSnapshot<string | undefined> {
+        const userSnapshot = this.userResource.snapshot();
+        const tokenSnapshot = this.tokenResource.snapshot();
 
-        const user = await this.accountService.identity();
-        if (!user) {
-            return;
+        if (userSnapshot.status === 'error' || tokenSnapshot.status === 'error') {
+            return userSnapshot.status === 'error' ? userSnapshot : tokenSnapshot;
         }
-        this.user = user;
-        this.userLogin.set(user.login);
-
-        await this.checkForSshKeys();
-
-        // Get ssh information from the user
-        const profileInfo = this.profileService.getProfileInfo();
-        this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
-
-        if (profileInfo.repositoryAuthenticationMechanisms?.length) {
-            const filteredMechanisms = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
-                Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
-            );
-            if (filteredMechanisms.length) {
-                this.authenticationMechanisms.set(filteredMechanisms);
-            }
+        if (userSnapshot.status === 'loading' || userSnapshot.status === 'reloading' || tokenSnapshot.status === 'loading' || tokenSnapshot.status === 'reloading') {
+            return { status: 'loading', value: undefined };
         }
-        if (profileInfo.versionControlUrl) {
-            this.versionControlUrl = profileInfo.versionControlUrl;
+        if (userSnapshot.status === 'idle' || tokenSnapshot.status === 'idle') {
+            return { status: 'idle', value: undefined };
         }
 
-        this.initTheia(profileInfo);
+        const login = userSnapshot.value?.login;
+        const token = tokenSnapshot.value;
+        if (!login || !token) {
+            return { status: 'error', error: new Error('Incomplete token URL data') };
+        }
 
-        void this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
-            if (programmingLanguageToIde.size) {
-                this.programmingLanguageToIde = programmingLanguageToIde;
-            }
-            this.ideName.set(this.getIde().name);
-        });
+        const credentials = `://${login}:${token}@`;
+        const url = this.insertCredentialsIntoUrl(this.repositoryUri(), credentials);
+        return { status: 'resolved', value: url };
     }
 
-    public useSshUrl() {
-        this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.SSH);
-        this.copyEnabled.set(this.doesUserHaveSSHkeys());
-        this.storeToLocalStorage();
+    private async loadAuthenticationMethodData(repositoryUri: string, login: string, tokenUrl: string): Promise<NonEmptyArray<AuthenticationMethodData>> {
+        const authenticationMethods = this.getAuthenticationMethods();
+
+        const authenticationMethodData = await Promise.all(
+            authenticationMethods.map((authenticationMethod) => {
+                return this.getAuthenticationMethodData(authenticationMethod, repositoryUri, login, tokenUrl);
+            }),
+        );
+        if (authenticationMethodData.length === 0) {
+            throw new Error('Incomplete code button data');
+        }
+
+        return [authenticationMethodData[0], ...authenticationMethodData.slice(1)];
     }
 
-    public useHttpsToken() {
-        this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
-        if (this.usesRepositoryScopedToken()) {
-            // The repository-scoped staff token is minted on demand; copy is enabled as soon as it has arrived for the current repository.
-            this.copyEnabled.set(this.hasValidRepositoryAccessToken());
-        } else {
-            this.copyEnabled.set(!!this.activeParticipation()?.vcsAccessToken);
-        }
-        this.storeToLocalStorage();
-    }
-
-    public useHttpsPassword() {
-        this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
-        this.copyEnabled.set(true);
-        this.storeToLocalStorage();
-    }
-
-    private storeToLocalStorage() {
-        this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', this.selectedAuthenticationMechanism());
-    }
-
-    public formatTip(translationKey: string, url: string): string {
-        return this.translateService.instant(translationKey).replace(/{link:(.*)}/, `<a href="${url}" target="_blank">$1</a>`);
-    }
-
-    private getRepositoryUri() {
-        return this.activeParticipation()?.repositoryUri ?? this.repositoryUri();
-    }
-
-    onClick() {
-        let storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
-        if (storedState === RepositoryAuthenticationMethod.Password) {
-            storedState = RepositoryAuthenticationMethod.Token;
-        }
-        const selectedMechanism = storedState && this.authenticationMechanisms().includes(storedState) ? storedState : this.authenticationMechanisms()[0];
-        this.selectedAuthenticationMechanism.set(selectedMechanism);
-
-        // Fallback for course staff: generate the repository-scoped token on demand when the clone dialog is opened and none valid for the current repository exists yet. A token
-        // cached for a previously viewed repository (this component instance is reused across repositories) is dropped first, so it can never be embedded into another repository's
-        // clone URL. This covers both base repositories and student repositories browsed by staff, so the copy/clone button is never left disabled for a missing token.
-        if (this.usesRepositoryScopedToken() && !this.hasValidRepositoryAccessToken()) {
-            this.repositoryAccessToken.set(undefined);
-            this.loadRepositoryScopedTokenForCurrentRepository();
-        }
-
-        if (this.useSsh()) {
-            this.useSshUrl();
-        }
-        if (this.useToken()) {
-            this.useHttpsToken();
-        }
-        if (this.usePassword()) {
-            this.useHttpsPassword();
-        }
-    }
-    /**
-     * Add the credentials to the http url, if a token should be used.
-     *
-     * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
-     * @param alwaysUsetoken if true, the token authentication method is always used, even if the user has not selected to use it
-     * @param alwaysReturnHttp if true, the http url is always returned, even if ssh is selected
-     */
-    getHttpOrSshRepositoryUri(insertPlaceholder = true, alwaysUsetoken = false, alwaysReturnHttp = false): string {
-        if (!alwaysReturnHttp && this.useSsh() && this.sshTemplateUrl) {
-            return this.getSshCloneUrl(this.getRepositoryUri());
-        }
-        const url = this.getRepositoryUri();
-        const useToken = this.useToken() || alwaysUsetoken;
-        const token = insertPlaceholder ? '**********' : this.getUsedToken(alwaysUsetoken);
-
-        // Never interpolate a missing token into the clone URL: an undefined/empty token would produce a broken
-        // "://<login>:undefined@..." URL. If a token was expected but is unavailable, omit it entirely and report it.
-        if (useToken && !token) {
-            this.reportMissingVcsAccessToken();
-        }
-        const credentials = `://${this.user.login}${useToken && token ? `:${token}` : ''}@`;
-
-        if (!url.includes('@')) {
-            // the url has the format https://vcs-server.com
-            return url.replace('://', credentials);
-        } else {
-            // the url has the format https://username@vcs-server.com -> replace ://username@
-            return url.replace(/:\/\/.*@/, credentials);
-        }
-    }
-
-    /**
-     * Reports (once per component instance) that a clone URL had to be built without a VCS access token although one was
-     * expected, so the anomaly stays observable while the URL itself never leaks a literal "undefined". Repository-scoped
-     * staff tokens (base and student repositories) are intentionally excluded: they are minted on demand and have their
-     * own dedicated error handling, so a transiently missing scoped token is not an anomaly worth reporting.
-     */
-    private reportMissingVcsAccessToken(): void {
-        // Only report once a participation token request has terminally failed; never while the token is still loading
-        // (the URL correctly omits the token during that transient window, so passive render must not raise an alarm).
-        if (this.vcsAccessTokenReportedMissing || this.usesRepositoryScopedToken() || !this.participationTokenLoadFailed()) {
-            return;
-        }
-        this.vcsAccessTokenReportedMissing = true;
-        const participation = this.activeParticipation();
-        captureException(
-            new Error(
-                `A VCS access token was expected but missing while building the clone URL (participationId=${participation?.id}, isInCourseManagement=${this.isInCourseManagement()}); the token was omitted from the URL.`,
-            ),
+    private getAuthenticationMethods(): RepositoryAuthenticationMethod[] {
+        const authenticationMechanismStrings = this.profileService.getProfileInfo().repositoryAuthenticationMechanisms ?? [];
+        return authenticationMechanismStrings.filter((method): method is RepositoryAuthenticationMethod =>
+            Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
         );
     }
 
-    loadVcsAccessTokensForAllParticipations() {
-        this.participations().forEach((participation) => {
-            // Load the participation-scoped token only when the clone URL will actually use it: outside course management,
-            // or for the user's own participation inside course management (e.g. an exam test run the instructor conducts).
-            // For other participants' repositories in course management the personal staff token is used, and requesting
-            // their participation token would be forbidden server-side.
-            if ((!this.isInCourseManagement() || this.isOwnParticipation(participation)) && participation.id && !participation.vcsAccessToken) {
-                this.loadParticipationVcsAccessToken(participation);
+    private async getAuthenticationMethodData(
+        authenticationMethod: RepositoryAuthenticationMethod,
+        repositoryUri: string,
+        login: string,
+        tokenUrl: string,
+    ): Promise<AuthenticationMethodData> {
+        switch (authenticationMethod) {
+            case RepositoryAuthenticationMethod.SSH:
+                return this.getSshAuthenticationMethodData(repositoryUri);
+            case RepositoryAuthenticationMethod.Token:
+                return this.getTokenAuthenticationMethodData(tokenUrl);
+            case RepositoryAuthenticationMethod.Password:
+                return this.getPasswordAuthenticationMethodData(repositoryUri, login);
+        }
+    }
+
+    private async getSshAuthenticationMethodData(repositoryUri: string): Promise<AuthenticationMethodData> {
+        const sshCloneUrlTemplate = this.profileService.getProfileInfo().sshCloneURLTemplate;
+        const sshRepositoryUrl = this.getSshRepositoryUrl(repositoryUri, sshCloneUrlTemplate);
+
+        const sshKeyState = await this.getSshKeyState();
+        if (!sshCloneUrlTemplate || !sshKeyState) {
+            throw new Error('Incomplete SSH authentication data');
+        }
+
+        return {
+            authenticationMethod: RepositoryAuthenticationMethod.SSH,
+            url: sshRepositoryUrl,
+            sshKeyState,
+        };
+    }
+
+    /**
+     * Converts an HTTP(S) repository URI into the SSH clone URL configured by the server.
+     *
+     * For example, let `repositoryUri` be `https://artemis.example.com/scm/course/repository.git` and `sshCloneUrlTemplate`
+     * be `ssh://git@artemis.example.com:7999/`. In this example, the regular expression matches `https://artemis.example.com/`,
+     * optionally matches `scm/`, and captures `course/repository.git` as `$2`. The replacement appends
+     * `$2` to `sshCloneUrlTemplate`, producing `ssh://git@artemis.example.com:7999/course/repository.git`.
+     */
+    private getSshRepositoryUrl(repositoryUri: string, sshCloneUrlTemplate: string): string {
+        return repositoryUri.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, sshCloneUrlTemplate + '$2');
+    }
+
+    private async getSshKeyState(): Promise<SshKeyState | undefined> {
+        try {
+            const sshKeys = await this.sshUserSettingsService.getCachedSshKeys();
+            if (!sshKeys) {
+                return undefined;
             }
-        });
-    }
 
-    /**
-     * Whether the given participation belongs to the currently logged-in user. Used to decide whether the participation's
-     * own VCS access token may be used (and loaded) even inside course management — e.g. an exam test run the instructor
-     * conducts for themselves. For participations of other users (a student's, another instructor's test run) this is false,
-     * so the personal staff token is used instead. Relies on the participation's `student` being populated, which is the
-     * case for the exam test run summary/conduction flows where this distinction matters.
-     */
-    private isOwnParticipation(participation: ProgrammingExerciseStudentParticipation | undefined): boolean {
-        const userLogin = this.userLogin();
-        return !!userLogin && participation?.student?.login === userLogin;
-    }
-
-    /**
-     * Loads the vcsAccessToken for a participation from the server. If none exists, sends a request to create one
-     * (Usually the token exists, as it is created when the server creates the participation)
-     */
-    loadParticipationVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
-        this.accountService.getVcsAccessToken(participation.id!).subscribe({
-            next: (res: HttpResponse<string>) => {
-                if (res.body) {
-                    participation.vcsAccessToken = res.body;
-                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
-                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
-                    if (this.useToken()) {
-                        this.copyEnabled.set(true);
-                    }
-                } else {
-                    // The server answered without a token: terminal failure, no create fallback follows.
-                    this.participationTokenLoadFailed.set(true);
-                }
-            },
-            error: (error: HttpErrorResponse) => {
-                if (error.status == 404) {
-                    this.createNewParticipationVcsAccessToken(participation);
-                } else {
-                    if (error.status == 403) {
-                        this.alertService.warning('403 Forbidden');
-                    }
-                    this.participationTokenLoadFailed.set(true);
-                }
-            },
-        });
-    }
-
-    /**
-     * Sends the request to create a new participation VCS access token
-     */
-    createNewParticipationVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
-        this.accountService.createVcsAccessToken(participation.id!).subscribe({
-            next: (res: HttpResponse<string>) => {
-                if (res.body) {
-                    participation.vcsAccessToken = res.body;
-                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
-                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
-                    if (this.useToken()) {
-                        this.copyEnabled.set(true);
-                    }
-                } else {
-                    // Creating the token succeeded but returned no token: terminal failure.
-                    this.participationTokenLoadFailed.set(true);
-                }
-            },
-            error: (error: HttpErrorResponse) => {
-                if (error.status == 403) {
-                    this.alertService.warning('403 Forbidden');
-                }
-                this.participationTokenLoadFailed.set(true);
-            },
-        });
-    }
-
-    /**
-     * Mints (or reuses) the repository-scoped staff token for the repository the clone dialog currently targets: a base repository (identified by its type) or a student assignment
-     * repository (identified by its participation). Does nothing when the required identifiers (exercise id, and the participation id for a student repository) are unavailable.
-     */
-    private loadRepositoryScopedTokenForCurrentRepository() {
-        const exerciseId = this.exercise()?.id ?? this.exerciseId() ?? this.activeParticipation()?.exercise?.id;
-        if (!exerciseId) {
-            return;
-        }
-        if (this.isBaseRepository()) {
-            this.loadRepositoryVcsAccessToken(exerciseId, this.repositoryType()!, this.auxiliaryRepositoryId());
-            return;
-        }
-        const participationId = this.participationId() ?? this.activeParticipation()?.id;
-        if (participationId) {
-            this.loadRepositoryVcsAccessToken(exerciseId, RepositoryType.USER, undefined, participationId);
+            const now = dayjs();
+            return sshKeys.length === 0
+                ? { status: 'missing' }
+                : {
+                      status: 'configured',
+                      hasExpiredKeys: sshKeys.some((key) => !!key.expiryDate && dayjs(key.expiryDate).isBefore(now)),
+                  };
+        } catch {
+            return undefined;
         }
     }
 
-    /**
-     * Loads the repository-scoped VCS access token for a repository (a base repository — template, tests, solution or auxiliary — or a student assignment repository identified by
-     * its participation) of a programming exercise. If none exists yet, a new one is created (fallback when course staff open the clone dialog for the first time).
-     */
-    loadRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number, participationId?: number) {
-        const requestedRepositoryIdentity = this.currentRepositoryIdentity();
-        this.programmingExerciseService.getRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId, participationId).subscribe({
-            next: (res: HttpResponse<string>) => {
-                if (res.body && this.isCurrentRepositoryIdentity(requestedRepositoryIdentity)) {
-                    this.setRepositoryAccessToken(res.body, requestedRepositoryIdentity);
-                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
-                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
-                    if (this.useToken()) {
-                        this.copyEnabled.set(true);
-                    }
-                }
-            },
-            error: (error: HttpErrorResponse) => {
-                if (!this.isCurrentRepositoryIdentity(requestedRepositoryIdentity)) {
-                    return;
-                }
-                if (error.status === 404) {
-                    this.createRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId, participationId, requestedRepositoryIdentity);
-                } else if (error.status === 403) {
-                    this.alertService.warning('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
-                } else {
-                    this.alertService.error('artemisApp.exerciseActions.repositoryAccessTokenError');
-                }
-            },
-        });
+    private getTokenAuthenticationMethodData(tokenUrl: string): AuthenticationMethodData {
+        return {
+            authenticationMethod: RepositoryAuthenticationMethod.Token,
+            url: tokenUrl,
+        };
     }
 
-    /**
-     * Sends the request to create a new repository-scoped VCS access token for a repository (base or student assignment repository).
-     */
-    createRepositoryVcsAccessToken(
+    private async getToken(exerciseId: number, isInCourseManagement: boolean, vcsAccessTokenData: VcsAccessTokenSourceInfo): Promise<string> {
+        switch (vcsAccessTokenData.returnedTokenType) {
+            case 'participation-token':
+                if (!isInCourseManagement || vcsAccessTokenData.isOwnParticipation) {
+                    return this.loadOrCreateParticipationToken(vcsAccessTokenData.participationId);
+                } else {
+                    throw new Error('Invalid token fetch attempt: Tried to fetch token for participation in course-management of which the user was no owner.');
+                }
+            case 'repository-token':
+                return this.loadOrCreateRepositoryToken(
+                    exerciseId,
+                    vcsAccessTokenData.repositoryType,
+                    'auxiliaryRepositoryId' in vcsAccessTokenData ? vcsAccessTokenData.auxiliaryRepositoryId : undefined,
+                    'participationId' in vcsAccessTokenData ? vcsAccessTokenData.participationId : undefined,
+                );
+        }
+    }
+
+    private loadOrCreateParticipationToken(participationId: number): Promise<string> {
+        const loadRequest = () => {
+            return this.accountService.getVcsAccessToken(participationId);
+        };
+        const createRequest = () => {
+            return this.accountService.createVcsAccessToken(participationId);
+        };
+        return this.loadOrCreateToken(loadRequest, createRequest, 'participation');
+    }
+
+    private loadOrCreateRepositoryToken(
         exerciseId: number,
         repositoryType: RepositoryType,
-        auxiliaryRepositoryId?: number,
-        participationId?: number,
-        requestedRepositoryIdentity = this.currentRepositoryIdentity(),
-    ) {
-        this.programmingExerciseService.createRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId, participationId).subscribe({
-            next: (res: HttpResponse<string>) => {
-                if (res.body && this.isCurrentRepositoryIdentity(requestedRepositoryIdentity)) {
-                    this.setRepositoryAccessToken(res.body, requestedRepositoryIdentity);
-                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
-                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
-                    if (this.useToken()) {
-                        this.copyEnabled.set(true);
-                    }
-                }
-            },
-            error: (error: HttpErrorResponse) => {
-                if (!this.isCurrentRepositoryIdentity(requestedRepositoryIdentity)) {
-                    return;
-                }
-                if (error.status === 403) {
-                    this.alertService.warning('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
-                } else {
-                    this.alertService.error('artemisApp.exerciseActions.repositoryAccessTokenError');
-                }
-            },
-        });
+        auxiliaryRepositoryId: number | undefined,
+        participationId: number | undefined,
+    ): Promise<string> {
+        const loadRequest = () => {
+            return this.programmingExerciseService.getRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId, participationId);
+        };
+        const createRequest = () => {
+            return this.programmingExerciseService.createRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId, participationId);
+        };
+        return this.loadOrCreateToken(loadRequest, createRequest, 'repository');
     }
 
-    /**
-     * Stores a newly retrieved repository-scoped token together with the identity of the repository it was minted for, so it is only ever reused for that exact repository.
-     */
-    private setRepositoryAccessToken(token: string, repositoryIdentity: string) {
-        this.repositoryAccessToken.set(token);
-        this.repositoryAccessTokenIdentity = repositoryIdentity;
-    }
-
-    /**
-     * @return whether a cached repository-scoped token exists and still belongs to the base repository currently targeted by the clone dialog.
-     */
-    private hasValidRepositoryAccessToken(): boolean {
-        return !!this.repositoryAccessToken() && this.isCurrentRepositoryIdentity(this.repositoryAccessTokenIdentity);
-    }
-
-    /**
-     * @return whether the given repository identity still describes the repository currently targeted by this reused component instance.
-     */
-    private isCurrentRepositoryIdentity(repositoryIdentity: string | undefined): boolean {
-        return !!repositoryIdentity && repositoryIdentity === this.currentRepositoryIdentity();
-    }
-
-    /**
-     * A stable key identifying the repository the clone dialog currently targets (type, URI, exercise, optional auxiliary repository and optional student participation). Used to
-     * detect when this reused component instance switches to a different repository, so a repository-scoped token minted for the previous repository is never reused.
-     */
-    private currentRepositoryIdentity(): string {
-        return [
-            this.repositoryType(),
-            this.getRepositoryUri(),
-            this.exercise()?.id ?? this.exerciseId() ?? this.activeParticipation()?.exercise?.id,
-            this.auxiliaryRepositoryId(),
-            this.participationId() ?? this.activeParticipation()?.id,
-        ].join('|');
-    }
-
-    private getUsedToken(alwaysUseToken = false): string | undefined {
-        if (this.useToken() || alwaysUseToken) {
-            if (this.usesRepositoryScopedToken()) {
-                // Never embed a token cached for a different repository (exact-URI scoped); only the token for the current repository is valid.
-                return this.hasValidRepositoryAccessToken() ? this.repositoryAccessToken() : undefined;
+    private async loadOrCreateToken(
+        loadRequest: () => Observable<HttpResponse<string>>,
+        createRequest: () => Observable<HttpResponse<string>>,
+        tokenType: 'participation' | 'repository',
+    ): Promise<string> {
+        try {
+            return await this.requestToken(loadRequest, 'fetch', tokenType);
+        } catch (error) {
+            if (error instanceof HttpErrorResponse && error.status === 404) {
+                return this.requestToken(createRequest, 'create', tokenType);
             }
-            return this.activeParticipation()?.vcsAccessToken;
-        }
-        return '';
-    }
-
-    /**
-     * Transforms the repository uri to an ssh clone url
-     */
-    private getSshCloneUrl(url: string) {
-        return url.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
-    }
-
-    /**
-     * set wasCopied for 3 seconds on success
-     */
-    onCopyFinished(successful: boolean) {
-        if (successful) {
-            this.wasCopied.set(true);
-            setTimeout(() => {
-                this.wasCopied.set(false);
-            }, 3000);
+            throw error;
         }
     }
 
+    private async requestToken(request: () => Observable<HttpResponse<string>>, operation: 'fetch' | 'create', tokenType: 'participation' | 'repository'): Promise<string> {
+        const response = await firstValueFrom(request());
+        const token = response.body;
+        if (!token) {
+            throw new Error(`Unexpected error during valid ${operation} ${tokenType} token request: Server did not return token in response body.`);
+        }
+        return token;
+    }
+
+    private getPasswordAuthenticationMethodData(repositoryUri: string, login: string): AuthenticationMethodData {
+        const credentials = `://${login}@`;
+        const url = this.insertCredentialsIntoUrl(repositoryUri, credentials);
+
+        return {
+            authenticationMethod: RepositoryAuthenticationMethod.Password,
+            url,
+        };
+    }
+
     /**
-     * build the sourceTreeUrl from the repository uri
-     * @return sourceTreeUrl
+     * Inserts new credentials into an HTTP(S) repository URI.
+     *
+     * If the URL contains an `@`, it has the format `https://username@vcs-server.com/repository.git`. The regular expression matches
+     * the existing `://username@` part and replaces it with the new credentials.
+     *
+     * Otherwise, the URL has the format `https://vcs-server.com/repository.git`. In that case the regex matches `://`
+     * and replaces it with the new credentials.
      */
-    buildSourceTreeUrl(): string | undefined {
-        return this.externalCloningService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUri(false));
-    }
-
-    buildIdeUrl(): string | undefined {
-        return this.externalCloningService.buildIdeUrl(this.getHttpOrSshRepositoryUri(false), this.getIde());
-    }
-
-    getIde(): Ide {
-        return (
-            this.programmingLanguageToIde.get(this.exercise()?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
-            this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
-            this.vscodeFallback
-        );
-    }
-
-    /**
-     * Checks whether the user owns any SSH keys, and checks if any of them is expired
-     */
-    private async checkForSshKeys() {
-        this.sshKeys = await this.sshUserSettingsService.getCachedSshKeys();
-        if (this.sshKeys) {
-            const now = dayjs();
-            this.doesUserHaveSSHkeys.set(this.sshKeys.length > 0);
-            const areSSHkeysExpired = this.sshKeys.some((key) => {
-                if (key.expiryDate) {
-                    return dayjs(key.expiryDate).isBefore(now);
-                }
-                return false;
-            });
-            this.areAnySshKeysExpired.set(areSSHkeysExpired);
+    private insertCredentialsIntoUrl(url: string, credentials: string): string {
+        if (url.includes('@')) {
+            return url.replace(/:\/\/.*@/, credentials);
+        } else {
+            return url.replace('://', credentials);
         }
     }
 
-    private configureTooltips() {
-        this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
-        this.sshKeyMissingTip.set(this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl));
-        this.sshKeysExpiredTip.set(this.formatTip('artemisApp.exerciseActions.sshKeyExpiredTip', this.sshSettingsUrl));
-    }
+    private async loadPreferredIde(programmingLanguage: ProgrammingLanguage | undefined): Promise<Ide> {
+        const idePreferences = await this.ideSettingsService.loadIdePreferences();
+        const vsCodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
 
-    private initTheia(profileInfo: ProfileInfo) {
-        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA) && this.exercise()) {
-            const exercise = this.exercise()!;
-            // Theia requires the Build Config of the programming exercise to be set
-            this.programmingExerciseService.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {
-                // Merge the theiaConfig (containing the theiaImage) into the buildConfig
-                // The exercise may arrive without a build config; the previous spread tolerated that, so fall back to a
-                // fresh one rather than cloning undefined.
-                this.exercise()!.buildConfig = cloneWith(exercise.buildConfig ?? new ProgrammingExerciseBuildConfig(), theiaConfig);
-
-                // Set variables now, sanitize later on
-                this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
-
-                // Verify that all conditions are met
-                if (this.theiaPortalURL !== '' && exercise.allowOnlineIde && theiaConfig.theiaImage) {
-                    this.theiaEnabled.set(true);
-                }
-            });
+        let preferredIde: Ide | undefined;
+        if (programmingLanguage) {
+            preferredIde = idePreferences.get(programmingLanguage);
         }
-    }
+        if (!preferredIde) {
+            preferredIde = idePreferences.get(ProgrammingLanguage.EMPTY);
+        }
 
-    async startOnlineIDE() {
-        const theiaImage = this.exercise()?.buildConfig?.theiaImage ?? '';
-        const repositoryUri = this.getHttpOrSshRepositoryUri(false, true, true);
-        const userName = this.user.name;
-        const userEmail = this.user.email;
-
-        await this.theiaService.startOnlineIDE(this.theiaPortalURL, theiaImage, repositoryUri, userName, userEmail);
+        return preferredIde ?? vsCodeFallback;
     }
 }

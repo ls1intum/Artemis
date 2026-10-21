@@ -29,11 +29,16 @@
                         <td>
                             <jhi-code-button
                                 class="ms-2"
-                                [smallButtons]="true"
+                                size="small"
+                                [allowOnlineIde]="false"
                                 [exerciseId]="exerciseId()"
-                                [participationId]="item.participationId"
                                 [repositoryUri]="item.repositoryURI"
-                                [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exerciseId(), 'repository', item.participationId]"
+                                [repositoryViewLink]="['/courses', courseId(), 'exercises', exerciseId(), 'repository', item.participationId]"
+                                [vcsAccessTokenData]="{
+                                    returnedTokenType: 'repository-token',
+                                    repositoryType: RepositoryType.USER,
+                                    participationId: item.participationId,
+                                }"
                             />
                         </td>
                     </tr>
