@@ -3,7 +3,7 @@ import path from 'node:path';
 import { Course } from 'app/course/shared/entities/course.model';
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, readResponseJson } from '../../support/utils';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { SEED_COURSES, SEED_CHANNELS } from '../../support/seedData';
@@ -499,7 +499,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
                 (response) => response.url().endsWith('/messages') && response.request().method() === 'POST' && response.status() === 201,
             );
             await courseMessages.forwardMessageToChannel(original.id!, destination.name!, 'Please prepare these questions for the next tutorial.');
-            const forwarded: Post = await (await forwardedResponse).json();
+            const forwarded = await readResponseJson<Post>(await forwardedResponse);
             await courseMessages.openConversationAndWaitForForwardedPreview(course!.id!, destination.id!, 'Design by contract');
             const mainPost = courseMessages.getSinglePost(forwarded.id!);
             const preview = mainPost.getByTestId('forwarded-message-body');
@@ -575,7 +575,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
                 (response) => response.url().endsWith('/messages') && response.request().method() === 'POST' && response.status() === 201,
             );
             await courseMessages.forwardReplyToChannel(original.id!, reply.id!, destination.name!);
-            const forwarded: Post = await (await forwardedResponse).json();
+            const forwarded = await readResponseJson<Post>(await forwardedResponse);
             await courseMessages.openConversationAndWaitForForwardedPreview(course!.id!, destination.id!, 'The abstraction function');
             await courseMessages.openThreadForMessage(forwarded.id!);
             const card = page.getByTestId('conversation-thread-card');

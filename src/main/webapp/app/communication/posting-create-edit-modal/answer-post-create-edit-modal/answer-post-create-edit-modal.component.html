@@ -7,6 +7,8 @@
                 [maxContentLength]="maxContentLength"
                 [isInputLengthDisplayed]="false"
                 (keydown.enter)="confirm()"
+                (keydown.control.enter)="confirm()"
+                (keydown.meta.enter)="confirm()"
                 [isButtonLoading]="isLoading()"
                 [isFormGroupValid]="formGroup.valid"
                 [editType]="editType"

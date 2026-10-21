@@ -34,6 +34,10 @@ describe('AnswerPostCreateEditModalComponent', () => {
             ],
             providers: [FormBuilder, { provide: CommunicationService, useClass: MockCommunicationService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }],
         });
+        TestBed.overrideComponent(AnswerPostCreateEditModalComponent, {
+            remove: { imports: [PostingMarkdownEditorComponent, ArtemisTranslatePipe] },
+            add: { imports: [MockComponent(PostingMarkdownEditorComponent), MockPipe(ArtemisTranslatePipe)] },
+        });
         fixture = TestBed.createComponent(AnswerPostCreateEditModalComponent);
         component = fixture.componentInstance;
         communicationService = TestBed.inject(CommunicationService);
@@ -43,6 +47,24 @@ describe('AnswerPostCreateEditModalComponent', () => {
     afterEach(() => {
         vi.restoreAllMocks();
     });
+
+    for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+        it(`submits once through the embedded answer form for ${modifier}+Enter`, () => {
+            component.posting.set(communicationAnswerPostToCreateUser1);
+            fixture.detectChanges();
+            const view = component.postingEditor()!.createEmbeddedView({});
+            try {
+                view.detectChanges();
+                const form = view.rootNodes.find((node: Node) => node instanceof HTMLFormElement) as HTMLFormElement;
+                const editor = form.querySelector('jhi-posting-markdown-editor')!;
+                const confirm = vi.spyOn(component, 'confirm').mockImplementation(() => undefined);
+                editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, [modifier]: true }));
+                expect(confirm).toHaveBeenCalledOnce();
+            } finally {
+                view.destroy();
+            }
+        });
+    }
 
     it('should init modal with correct content and title for answer post with id', { timeout: 30000 }, () => {
         component.posting.set(communicationResolvingAnswerPostUser1);

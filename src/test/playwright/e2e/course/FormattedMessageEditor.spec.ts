@@ -2,7 +2,16 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { test as artemisTest } from '../../support/fixtures';
 import { admin, studentOne, studentTwo, studentThree, studentFour, UserRole } from '../../support/users';
 import { generateUUID, readResponseJson } from '../../support/utils';
-import { expectAligned, expectBelow, expectInside, expectNoHorizontalOverflow, expectNoHorizontalScrollAround, expectWithinViewport, forEachViewport } from '../../support/layout';
+import {
+    expectAligned,
+    expectBelow,
+    expectInside,
+    expectNoHorizontalOverflow,
+    expectNoHorizontalScrollAround,
+    expectWithinViewport,
+    forEachViewport,
+    LAYOUT_VIEWPORTS,
+} from '../../support/layout';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -337,6 +346,32 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         expect((await send(page, composer)).content).toBe('alpha **BETA**');
     });
 
+    for (const operation of ['copy', 'cut']) {
+        test(`native ${operation}/paste retains mentions and image attachments through save and reopen`, async ({ page, composer, communicationAPIRequests }) => {
+            const source = `**Read** [user]${studentOne.username}(${studentOne.username})[/user] ![copy.png](/api/core/files/attachments/copy.png)`;
+            await page.route('**/copy.png*', (route) =>
+                route.fulfill({
+                    contentType: 'image/png',
+                    body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aP1sAAAAASUVORK5CYII=', 'base64'),
+                }),
+            );
+            const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', source);
+            const { posting, editor } = await reopen(page, original);
+            await editor.press('ControlOrMeta+a');
+            await editor.press(operation === 'copy' ? 'ControlOrMeta+c' : 'ControlOrMeta+x');
+            if (operation === 'copy') await editor.press('Backspace');
+            await expectText(editor, '');
+            await editor.press('ControlOrMeta+v');
+            await expect(editor.locator('[data-reference-type="user"]')).toContainText(studentOne.username);
+            await expect(editor.locator('img')).toHaveAttribute('src', '/api/core/files/attachments/copy.png');
+            const saved = await saveEdited(page, composer, posting, original);
+            expect(saved.content).toBe(source);
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator('[data-reference-type="user"]')).toContainText(studentOne.username);
+            await expect(reopened.editor.locator('img')).toHaveAttribute('src', '/api/core/files/attachments/copy.png');
+        });
+    }
+
     for (const block of ['ul', 'ol', 'blockquote', 'pre']) {
         for (const shortcut of ['Enter', 'ControlOrMeta+Enter']) {
             test(`${shortcut} sends from ${block} while Shift+Enter adds a line without sending`, async ({ page, composer }) => {
@@ -348,7 +383,11 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
                 await expect(page.locator('[id^="item-"]')).toHaveCount(0);
                 const saved = await send(page, composer, shortcut);
                 expect(saved.content).toBe(
-                    block === 'pre' ? '```\nfirst\nsecond\n```' : block === 'blockquote' ? '> first\n> second' : `${block === 'ul' ? '-' : '1.'} first\n  second`,
+                    block === 'pre'
+                        ? '```\nfirst\nsecond\n```'
+                        : block === 'blockquote'
+                          ? '> first\n> second'
+                          : `${block === 'ul' ? '-' : '1.'} first\n${block === 'ul' ? '  ' : '   '}second`,
                 );
             });
         }
@@ -731,7 +770,7 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         const { editor } = composer;
         await editor.pressSequentially('<b>literal</b>');
         await page.getByTestId('message-block-pre').click();
-        await page.keyboard.press('Enter');
+        await page.keyboard.press('Shift+Enter');
         await page.keyboard.type('**not bold**');
         await expect(editor.locator('pre code')).toHaveCount(1);
         await expect(editor.locator('strong, b')).toHaveCount(0);
@@ -1702,63 +1741,68 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
         await expectText(composer.editor, 'Draft text');
     });
 
-    for (const eventType of ['paste', 'drop'] as const) {
-        test(`shows pending and failed ${eventType} uploads while the advanced controls stay collapsed`, async ({ page, composer }) => {
-            const { editor } = composer;
-            const host = page.locator('jhi-message-editor').filter({ has: editor });
-            const toggle = host.getByTestId('message-toolbar-toggle');
-            const sendButton = page.getByTestId('send-formatted-message');
-            let release!: () => void;
-            const responseGate = new Promise<void>((resolve) => (release = resolve));
-            let requested!: () => void;
-            const uploadRequested = new Promise<void>((resolve) => (requested = resolve));
-            await page.route(
-                (url) => url.pathname === `/api/core/files/courses/${composer.course.id}/conversations/${composer.channel.id}`,
-                async (route) => {
-                    requested();
-                    await responseGate;
-                    await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
-                },
-            );
-            try {
-                await editor.pressSequentially('Keep my draft');
-                await expect(sendButton).toBeEnabled();
-                await editor.evaluate((element, type) => {
-                    const data = new DataTransfer();
-                    data.items.add(new File(['attachment fixture'], 'missing-attachment-with-a-long-name-that-must-wrap-within-the-editor.png', { type: 'image/png' }));
-                    const event =
-                        type === 'paste'
-                            ? new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true })
-                            : new DragEvent('drop', { dataTransfer: data, bubbles: true, cancelable: true });
-                    // Firefox strips files from constructed ClipboardEvents; provide the synthetic clipboard payload explicitly.
-                    if (type === 'paste') Object.defineProperty(event, 'clipboardData', { value: data });
-                    element.dispatchEvent(event);
-                }, eventType);
-                await uploadRequested;
-                await expect(host.getByRole('status')).toBeVisible();
-                await expect(host.getByRole('status')).toHaveText('Uploading attachments…');
-                await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-                await expect(host.getByTestId('message-attachment-button')).toBeHidden();
-                await expect(sendButton).toBeDisabled();
-                release();
-                await expect(host.getByRole('alert')).toBeVisible();
-                await expect(host.getByRole('alert')).toContainText('Could not attach “missing-attachment-with-a-long-name-that-must-wrap-within-the-editor.png”');
-                await expect(host.getByRole('status')).toBeHidden();
-                await expect(sendButton).toBeEnabled();
-                await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-                await expect(host.getByTestId('message-attachment-button')).toBeHidden();
-                await expectText(editor, 'Keep my draft');
-                await expect(editor.locator('img')).toHaveCount(0);
-                await toggle.click();
-                await forEachViewport(page, async (viewport) => {
-                    const alert = host.getByTestId('message-upload-error');
-                    await expectBelow([alert], host.getByTestId('message-attachment-button'), { name: `upload error below controls at ${viewport.width}px` });
-                    await expectBelow([alert], toggle, { name: `upload error below basic toolbar at ${viewport.width}px` });
-                    await expectInside(alert, host.getByTestId('message-editor-toolbar'), ['left', 'right', 'top', 'bottom'], { name: 'wrapped upload error' });
-                    await expectNoHorizontalOverflow(page, [host], { name: 'upload failure' });
+    // Each viewport owns a fresh composer: the responsive conversation layout replaces it at breakpoints.
+    for (const viewport of LAYOUT_VIEWPORTS) {
+        test.describe(`Upload feedback at ${viewport.width}px`, () => {
+            test.use({ viewport });
+            for (const eventType of ['paste', 'drop'] as const) {
+                test(`shows pending and failed ${eventType} uploads while the advanced controls stay collapsed`, async ({ page, composer }) => {
+                    const { editor } = composer;
+                    const host = page.locator('jhi-message-editor').filter({ has: editor });
+                    const toggle = host.getByTestId('message-toolbar-toggle');
+                    const sendButton = page.getByTestId('send-formatted-message');
+                    let release!: () => void;
+                    const responseGate = new Promise<void>((resolve) => (release = resolve));
+                    let requested!: () => void;
+                    const uploadRequested = new Promise<void>((resolve) => (requested = resolve));
+                    await page.route(
+                        (url) => url.pathname === `/api/core/files/courses/${composer.course.id}/conversations/${composer.channel.id}`,
+                        async (route) => {
+                            requested();
+                            await responseGate;
+                            await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
+                        },
+                    );
+                    try {
+                        await editor.pressSequentially('Keep my draft');
+                        await expect(sendButton).toBeEnabled();
+                        await editor.evaluate((element, type) => {
+                            const data = new DataTransfer();
+                            data.items.add(new File(['attachment fixture'], 'missing-attachment-with-a-long-name-that-must-wrap-within-the-editor.png', { type: 'image/png' }));
+                            const event =
+                                type === 'paste'
+                                    ? new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true })
+                                    : new DragEvent('drop', { dataTransfer: data, bubbles: true, cancelable: true });
+                            // Firefox strips files from constructed ClipboardEvents; provide the synthetic clipboard payload explicitly.
+                            if (type === 'paste') Object.defineProperty(event, 'clipboardData', { value: data });
+                            element.dispatchEvent(event);
+                        }, eventType);
+                        await uploadRequested;
+                        await expect(host.getByRole('status')).toBeVisible();
+                        await expect(host.getByRole('status')).toHaveText('Uploading attachments…');
+                        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+                        await expect(host.getByTestId('message-attachment-button')).toBeHidden();
+                        await expect(sendButton).toBeDisabled();
+                        release();
+                        await expect(host.getByRole('alert')).toBeVisible();
+                        await expect(host.getByRole('alert')).toContainText('Could not attach “missing-attachment-with-a-long-name-that-must-wrap-within-the-editor.png”');
+                        await expect(host.getByRole('status')).toBeHidden();
+                        await expect(sendButton).toBeEnabled();
+                        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+                        await expect(host.getByTestId('message-attachment-button')).toBeHidden();
+                        await expectText(editor, 'Keep my draft');
+                        await expect(editor.locator('img')).toHaveCount(0);
+                        await toggle.click();
+                        await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+                        const alert = host.getByTestId('message-upload-error');
+                        await expectBelow([alert], host.getByTestId('message-attachment-button'), { name: `upload error below controls at ${viewport.width}px` });
+                        await expectBelow([alert], toggle, { name: `upload error below basic toolbar at ${viewport.width}px` });
+                        await expectInside(alert, host.getByTestId('message-editor-toolbar'), ['left', 'right', 'top', 'bottom'], { name: 'wrapped upload error' });
+                        await expectNoHorizontalOverflow(page, [host], { name: 'upload failure' });
+                    } finally {
+                        release();
+                    }
                 });
-            } finally {
-                release();
             }
         });
     }

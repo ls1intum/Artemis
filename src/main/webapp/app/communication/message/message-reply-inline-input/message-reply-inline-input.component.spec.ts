@@ -76,6 +76,17 @@ describe('MessageReplyInlineInputComponent', () => {
         communicationServiceUpdateStub = vi.spyOn(communicationService, 'updateAnswerPost');
     });
 
+    for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+        it(`submits once through the actual Angular parent binding for ${modifier}+Enter`, () => {
+            component.posting.set(communicationPostToCreateUser1);
+            fixture.detectChanges();
+            const confirm = vi.spyOn(component, 'confirm').mockImplementation(() => undefined);
+            const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).nativeElement as HTMLElement;
+            editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, [modifier]: true }));
+            expect(confirm).toHaveBeenCalledOnce();
+        });
+    }
+
     it('passes a distinct draft identity when equal-content replies change parent threads', () => {
         component.posting.set({ post: { id: 11 }, content: '' });
         fixture.detectChanges();
