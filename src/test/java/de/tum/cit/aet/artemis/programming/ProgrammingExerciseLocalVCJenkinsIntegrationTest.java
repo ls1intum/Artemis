@@ -11,6 +11,7 @@ import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestSer
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -408,7 +409,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void copyRepository_testNotCreatedError() throws Exception {
-        doThrow(new IOException("Checkout got interrupted!")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
+        doThrow(new IOException("Checkout got interrupted!")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString(), anyMap());
 
         programmingExerciseTestService.copyRepository_testNotCreatedError();
     }
@@ -416,7 +417,8 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void copyRepository_testRuntimeExceptionIsReportedLikeAnIOException() throws Exception {
-        doThrow(new JGitInternalException("Simulated JGit runtime failure!")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
+        doThrow(new JGitInternalException("Simulated JGit runtime failure!")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString(),
+                anyMap());
 
         programmingExerciseTestService.copyRepository_testNotCreatedError();
     }
@@ -438,7 +440,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     void copyRepository_withAHealthyExistingTarget_reusesItWithoutCopying() throws Exception {
         // The copy must not be attempted at all, which this stub would turn into a failed start if it were.
         doThrow(new IOException("the repository that is already there must not be copied over")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(),
-                anyString());
+                anyString(), anyMap());
 
         programmingExerciseTestService.copyRepository_withAHealthyExistingTarget_reusesIt();
     }
@@ -446,7 +448,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void configureRepository_testBadRequestError() throws Exception {
-        doThrow(new IOException()).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
+        doThrow(new IOException()).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString(), anyMap());
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 

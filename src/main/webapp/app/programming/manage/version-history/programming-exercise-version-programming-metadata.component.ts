@@ -167,6 +167,12 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             this.toTextField('artemisApp.programmingExercise.branchRegex.title', buildConfig.branchRegex),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.dockerFlags', buildConfig.dockerFlags),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.theiaImage', buildConfig.theiaImage),
+            this.toTextField(
+                'artemisApp.programmingExercise.versionHistory.snapshot.onlineIdeExperienceLevel',
+                buildConfig.onlineIdeExperienceLevel
+                    ? this.translateService.instant('artemisApp.programmingExercise.onlineIdeExperienceLevel.levels.' + buildConfig.onlineIdeExperienceLevel)
+                    : undefined,
+            ),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.assignmentCheckoutPath', buildConfig.assignmentCheckoutPath),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.solutionCheckoutPath', buildConfig.solutionCheckoutPath),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.testsCheckoutPath', buildConfig.testCheckoutPath),
@@ -193,6 +199,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
         'artemisApp.programmingExercise.versionHistory.snapshot.postDueDateHandling': 'Post Due Date Handling',
         'artemisApp.programmingExercise.versionHistory.snapshot.dockerFlags': 'Docker Flags',
         'artemisApp.programmingExercise.versionHistory.snapshot.theiaImage': 'Online IDE Image',
+        'artemisApp.programmingExercise.versionHistory.snapshot.onlineIdeExperienceLevel': 'Online IDE Experience Level',
         'artemisApp.programmingExercise.versionHistory.snapshot.assignmentCheckoutPath': 'Assignment Checkout Path',
         'artemisApp.programmingExercise.versionHistory.snapshot.solutionCheckoutPath': 'Solution Checkout Path',
         'artemisApp.programmingExercise.versionHistory.snapshot.testsCheckoutPath': 'Tests Checkout Path',
