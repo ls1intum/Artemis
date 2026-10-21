@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 153 features, 1089 REST endpoints in 29 modules, and 62 interaction overrides.
+Currently 20 product areas, 152 features, 1087 REST endpoints in 29 modules, and 63 interaction overrides.
 
 ## Courses
 
@@ -370,7 +370,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | programming | `ProgrammingExerciseGradingResource` | 1 | 0 | 0 | 0 |
 | programming | `ProgrammingExerciseUpdateResource` | 1 | 0 | 0 | 0 |
-| programming | `ProgrammingSubmissionResource` | 2 | 0 | 0 | 0 |
+| programming | `ProgrammingSubmissionResource` | 2 | 0 | 1 | 0 |
 
 ### Submission policies
 
@@ -760,6 +760,8 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | lecture | `LectureUnitResource` | 2 | 1 | 0 | 0 |
 | lecture | `OnlineUnitResource` | 2 | 2 | 0 | 0 |
 | lecture | `TextUnitResource` | 2 | 1 | 0 | 0 |
+| videosource | `GocastApprovalCallbackResource` | 0 | 1 | 0 | 0 |
+| videosource | `GocastIntegrationResource` | 2 | 1 | 0 | 0 |
 
 ### Slide splitting and hidden pages
 
@@ -980,7 +982,8 @@ Also recorded outside REST by `CourseNotificationService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| atlas | `ScienceResource` | 3 | 0 | 1 | 0 |
+| atlas | `ScienceResource` | 1 | 0 | 0 | 0 |
+| atlas | `ScienceSettingsResource` | 1 | 0 | 1 | 0 |
 
 ## AI for learners
 
@@ -1469,14 +1472,6 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 | exam | `AdminExamResource` | 0 | 1 | 0 | 0 |
 | exercise | `AdminExerciseResource` | 0 | 1 | 0 | 0 |
 
-### Research data collection administration
-
-`SCIENCE_ADMINISTRATION`: Choosing the courses that collect research data, and exporting that data.
-
-| Module | Resource | Actions | Views | Automatic | System |
-|--------|----------|--------:|------:|----------:|-------:|
-| atlas | `AdminScienceResource` | 3 | 3 | 0 | 0 |
-
 ## Interaction overrides
 
 The endpoints whose calls do not count the way their HTTP verb suggests, grouped by how they count instead.
@@ -1509,7 +1504,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/admin/organizations/{organizationId}/title` (`ORGANIZATIONS`)
 * `GET api/admin/websocket/nodes` (`MONITORING`)
 * `GET api/atlas/course-competencies/{competencyId}/title` (`COMPETENCY_PROGRESS`)
-* `GET api/atlas/science/consents` (`SCIENCE`)
+* `GET api/atlas/science-settings` (`SCIENCE`)
 * `GET api/communication/courses/{courseId}/unread-messages` (`CONVERSATION_ORGANIZATION`)
 * `GET api/core/files/courses/{courseId}/conversations/{conversationId}/{filename}` (`MESSAGING`)
 * `GET api/core/files/courses/{courseId}/icons/*` (`COURSE_DASHBOARD`)
@@ -1537,6 +1532,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/programming/plantuml/svg` (`EXERCISE_DETAILS`)
 * `GET api/programming/programming-exercise-participations/{participationId}/latest-pending-submission` (`PROGRAMMING_RESULTS`)
 * `GET api/programming/programming-exercises/{exerciseId}/latest-pending-submissions` (`PROGRAMMING_RESULTS`)
+* `GET api/programming/programming-exercises/{exerciseId}/selected-build-runs/{selectedBuildRunId}` (`PROGRAMMING_REEVALUATION`)
 * `GET api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title` (`TUTORIAL_GROUPS`)
 * `PATCH api/communication/courses/{courseId}/conversations/{conversationId}/mark-as-read` (`CONVERSATION_ORGANIZATION`)
 * `POST api/iris/chat/sessions/current` (`IRIS_CHAT`)

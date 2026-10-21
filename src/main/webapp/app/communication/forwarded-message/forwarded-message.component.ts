@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, effect, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Component, ElementRef, afterRenderEffect, effect, input, output, signal, untracked, viewChild } from '@angular/core';
 import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -11,7 +11,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -20,9 +19,9 @@ import { addPublicFilePrefix } from 'app/app.constants';
     selector: 'jhi-forwarded-message',
     templateUrl: './forwarded-message.component.html',
     styleUrls: ['./forwarded-message.component.scss'],
-    imports: [ProfilePictureComponent, TranslateDirective, NgClass, FaIconComponent, NgbTooltip, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe],
+    imports: [ProfilePictureComponent, TranslateDirective, FaIconComponent, NgbTooltip, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe],
 })
-export class ForwardedMessageComponent implements AfterViewInit {
+export class ForwardedMessageComponent {
     readonly faShare = faShare;
     readonly onNavigateToPost = output<Posting>();
 
@@ -31,7 +30,8 @@ export class ForwardedMessageComponent implements AfterViewInit {
 
     /** the forwarded post (can be a Post or AnswerPost) */
     originalPostDetails = input<Posting | undefined>();
-    messageContent = viewChild<ElementRef>('messageContent');
+    readonly messageContent = viewChild<ElementRef<HTMLElement>>('messageContent');
+    private readonly messageContentInner = viewChild<ElementRef<HTMLElement>>('messageContentInner');
     readonly isContentLong = signal(false);
     readonly showFullForwardedMessage = signal(false);
     readonly postingIsOfToday = signal(false);
@@ -42,14 +42,22 @@ export class ForwardedMessageComponent implements AfterViewInit {
 
     private conversation: Conversation | undefined;
     private isAnswerPost = false;
+    private sourceId: number | undefined;
 
+    /** Keeps source metadata reactive while preserving the reader's expansion across refetches of the same post or reply. */
     constructor() {
         effect(() => {
             const post = this.originalPostDetails();
             untracked(() => {
+                const isAnswerPost = !!post && 'post' in post;
+                if (post?.id === undefined || post.id !== this.sourceId || isAnswerPost !== this.isAnswerPost) {
+                    this.isContentLong.set(false);
+                    this.showFullForwardedMessage.set(false);
+                }
+                this.sourceId = post?.id;
+                this.isAnswerPost = isAnswerPost;
                 try {
                     if (post) {
-                        this.isAnswerPost = 'post' in post;
                         this.conversation = this.isAnswerPost ? (post as AnswerPost).post?.conversation : (post as Post).conversation;
                         this.updateSourceName();
                         this.isChannel();
@@ -69,12 +77,23 @@ export class ForwardedMessageComponent implements AfterViewInit {
                 }
             });
         });
-    }
-
-    ngAfterViewInit(): void {
-        setTimeout(() => {
-            this.checkIfContentOverflows();
-        }, 0);
+        afterRenderEffect((onCleanup) => {
+            // A refetched source may keep the same dimensions, so resize notifications alone are insufficient.
+            this.originalPostDetails();
+            const body = this.messageContent()?.nativeElement;
+            const content = this.messageContentInner()?.nativeElement;
+            if (!body || !content) {
+                return;
+            }
+            // Markdown, images and forwarded sources can arrive after the first render. Observe the natural
+            // content height as well as the clipped body so expansion stays available after those changes.
+            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- afterRenderEffect runs onCleanup below before re-running and on destruction.
+            const observer = new ResizeObserver(() => this.checkIfContentOverflows());
+            observer.observe(content);
+            observer.observe(body);
+            untracked(() => this.checkIfContentOverflows());
+            onCleanup(() => observer.disconnect());
+        });
     }
 
     /** Toggles whether full message content should be shown */
@@ -87,9 +106,10 @@ export class ForwardedMessageComponent implements AfterViewInit {
      * and sets a flag for showing the "expand" button.
      */
     checkIfContentOverflows(): void {
-        if (this.messageContent()) {
-            const nativeElement = this.messageContent()?.nativeElement;
-            this.isContentLong.set(nativeElement.scrollHeight > nativeElement.clientHeight);
+        const body = this.messageContent()?.nativeElement;
+        // Expanding removes the height limit. Keep the control visible so the user can collapse the message.
+        if (body && !this.showFullForwardedMessage()) {
+            this.isContentLong.set(body.scrollHeight > body.clientHeight);
         }
     }
 
