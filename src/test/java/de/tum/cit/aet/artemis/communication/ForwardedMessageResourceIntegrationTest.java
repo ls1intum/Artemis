@@ -349,7 +349,14 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     void shouldNotGrantAccessThroughAnUnverifiedIrisDestination() throws Exception {
         Post source = createPrivateSource();
         AnswerPost destination = createAnswer(testPost, "Pending Iris reply");
-        destination.setAuthor(userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN));
+        // This system account survives test cleanup. Reuse it instead of overwriting its profile through the generic user factory.
+        User irisBot = userRepository.findOneWithAuthoritiesByLogin(User.IRIS_BOT_LOGIN).orElseGet(() -> {
+            User newBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+            newBot.setFirstName("Iris");
+            newBot.setLastName("Bot");
+            return userRepository.save(newBot);
+        });
+        destination.setAuthor(irisBot);
         destination.setVerified(false);
         destination = answerPostRepository.save(destination);
         forwardedMessageRepository.save(new ForwardedMessage(source.getId(), PostingType.POST, null, destination));
