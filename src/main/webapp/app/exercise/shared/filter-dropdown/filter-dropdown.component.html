@@ -1,38 +1,49 @@
 <div class="flex flex-wrap items-center gap-2" role="group" [attr.aria-label]="'artemisApp.exercise.filter' | artemisTranslate">
     @for (group of groups(); track group.labelKey) {
-        <tumaet-ui-multi-select
-            [options]="group.items"
-            [ngModel]="group.selected"
-            (ngModelChange)="updateGroup(group, $event)"
-            [ariaLabel]="group.labelKey | artemisTranslate"
-            size="small"
-        >
-            <ng-template #option let-filter>
-                <span class="whitespace-normal">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
-            </ng-template>
-            <ng-template #selectedItems>
-                @if (group.selected.length) {
-                    <div class="flex min-w-0 max-w-72 flex-wrap items-center gap-1">
-                        <span class="font-normal">{{ group.labelKey | artemisTranslate }}:</span>
-                        @for (filter of group.selected; track filter) {
-                            <tumaet-ui-chip
-                                class="min-w-0 max-w-full"
-                                size="small"
-                                [removable]="true"
-                                [removeAriaLabel]="
-                                    'artemisApp.participation.filters.remove' | artemisTranslate: { filter: ('artemisApp.exercise.show' + filter | artemisTranslate) }
-                                "
-                                (removed)="removeFilter(filter, $event)"
-                            >
-                                <span class="block max-w-48 truncate">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
-                            </tumaet-ui-chip>
-                        }
-                    </div>
-                } @else {
-                    <span class="text-(--tumaet-ui-text-color)">{{ group.labelKey | artemisTranslate }}</span>
-                }
-            </ng-template>
-        </tumaet-ui-multi-select>
+        @if (group.items.length === 1) {
+            <div class="inline-flex items-center gap-2 text-sm text-(--tumaet-ui-text-color)">
+                <tumaet-ui-checkbox
+                    [inputId]="'participation-filter-' + group.items[0]"
+                    [checked]="group.selected.length > 0"
+                    (changed)="updateGroup(group, $event.checked ? group.items : [])"
+                />
+                <label [for]="'participation-filter-' + group.items[0]">{{ 'artemisApp.exercise.show' + group.items[0] | artemisTranslate }}</label>
+            </div>
+        } @else {
+            <tumaet-ui-multi-select
+                [options]="group.items"
+                [ngModel]="group.selected"
+                (ngModelChange)="updateGroup(group, $event)"
+                [ariaLabel]="group.labelKey | artemisTranslate"
+                size="small"
+            >
+                <ng-template #option let-filter>
+                    <span class="whitespace-normal">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
+                </ng-template>
+                <ng-template #selectedItems>
+                    @if (group.selected.length) {
+                        <div class="flex min-w-0 max-w-72 flex-wrap items-center gap-1">
+                            <span class="font-normal">{{ group.labelKey | artemisTranslate }}:</span>
+                            @for (filter of group.selected; track filter) {
+                                <tumaet-ui-chip
+                                    class="min-w-0 max-w-full"
+                                    size="small"
+                                    [removable]="true"
+                                    [removeAriaLabel]="
+                                        'artemisApp.participation.filters.remove' | artemisTranslate: { filter: ('artemisApp.exercise.show' + filter | artemisTranslate) }
+                                    "
+                                    (removed)="removeFilter(filter, $event)"
+                                >
+                                    <span class="block max-w-48 truncate">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
+                                </tumaet-ui-chip>
+                            }
+                        </div>
+                    } @else {
+                        <span class="text-(--tumaet-ui-text-color)">{{ group.labelKey | artemisTranslate }}</span>
+                    }
+                </ng-template>
+            </tumaet-ui-multi-select>
+        }
     }
     @if (activeFilters().length) {
         <button type="button" tumAetUiButton variant="text" size="small" (click)="filterChange.emit([])">

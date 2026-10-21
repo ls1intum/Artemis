@@ -82,6 +82,10 @@ public interface DistributedMap<K, V> {
      * <p>
      * Used to avoid clobbering an entry that another node replaced between a read and the removal.
      *
+     * <p>
+     * Redis compares the encoded bytes of {@code value}, not {@code equals}, so a value read from the map only matches
+     * if it encodes to the same bytes again; see {@link CanonicalMaps} for the {@code Map} components that break this.
+     *
      * @param key   the key
      * @param value the value the entry must currently hold
      * @return true if the entry was removed
@@ -90,6 +94,11 @@ public interface DistributedMap<K, V> {
 
     /**
      * Atomically replaces an entry only if it still has the expected value, without changing its expiry deadline.
+     *
+     * <p>
+     * Redis compares the encoded bytes of {@code expectedValue}, not {@code equals}, so a value read from the map only
+     * matches if it encodes to the same bytes again; see {@link CanonicalMaps} for the {@code Map} components that
+     * break this. A caller that retries on {@code false} spins forever on a value that never matches.
      *
      * @param key              the key
      * @param expectedValue    the value the entry must currently hold

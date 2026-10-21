@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiButtonDirective, TumAetUiChipComponent, TumAetUiMultiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiChipComponent, TumAetUiMultiSelectComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export interface FilterGroup {
@@ -11,7 +11,7 @@ export interface FilterGroup {
 @Component({
     selector: 'jhi-filter-dropdown',
     templateUrl: './filter-dropdown.component.html',
-    imports: [FormsModule, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiChipComponent, TumAetUiMultiSelectComponent],
+    imports: [FormsModule, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiChipComponent, TumAetUiMultiSelectComponent],
     host: { class: 'block max-w-full' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

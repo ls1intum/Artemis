@@ -1,6 +1,8 @@
 {
     "artemisApp": {
         "participation": {
+            "searchStudents": "Search students",
+            "searchTeams": "Search teams",
             "onlineEditor": "Online editor",
             "home": {
                 "title": "Participation",

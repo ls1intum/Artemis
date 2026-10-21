@@ -85,6 +85,35 @@ describe('Participation filter toolbar', () => {
         expect(trigger.getAttribute('aria-expanded')).toBe('false');
     });
 
+    it('renders single-option groups as labeled checkboxes and combines them with dropdown selections', async () => {
+        fixture.componentRef.setInput('groupedFilters', [
+            { labelKey: 'Results', items: ['Successful', 'Unsuccessful'] },
+            { labelKey: 'Mode', items: ['NoPracticeMode'] },
+            { labelKey: 'Assessment status', items: ['Locked'] },
+        ]);
+        fixture.componentRef.setInput('activeFilters', ['Successful', 'Locked']);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const checkboxes: NodeListOf<HTMLInputElement> = fixture.nativeElement.querySelectorAll('input[type="checkbox"]');
+        expect(fixture.nativeElement.querySelectorAll('[role="combobox"]')).toHaveLength(1);
+        expect(checkboxes).toHaveLength(2);
+        expect(checkboxes[0].checked).toBe(false);
+        expect(checkboxes[1].checked).toBe(true);
+        expect(checkboxes[0].labels?.[0].textContent).toContain('artemisApp.exercise.showNoPracticeMode');
+        (checkboxes[0].labels![0] as HTMLLabelElement).click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith(['Successful', 'Locked', 'NoPracticeMode']);
+
+        checkboxes[1].click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith(['Successful', 'NoPracticeMode']);
+        (fixture.nativeElement.querySelector('button[tumAetUiButton]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith([]);
+        expect(Array.from(checkboxes, (checkbox) => checkbox.checked)).toEqual([false, false]);
+    });
+
     it('supports keyboard selection and Escape', () => {
         const trigger = fixture.nativeElement.querySelector('[role="combobox"]') as HTMLElement;
         for (const [key, keyCode] of [

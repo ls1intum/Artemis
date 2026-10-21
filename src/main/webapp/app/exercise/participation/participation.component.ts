@@ -243,7 +243,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     readonly tableOptions = computed(() => ({
         showSearch: !this.hideParticipantInformation(),
-        searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
+        searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.participation.searchTeams' : 'artemisApp.participation.searchStudents',
     }));
 
     // Template refs
