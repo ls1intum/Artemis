@@ -220,7 +220,7 @@
     [cdkConnectedOverlayPush]="true"
     [cdkConnectedOverlayOpen]="suggestionsOpen()"
     [cdkConnectedOverlayPositions]="positions"
-    (detach)="dismissSuggestions()"
+    (detach)="completionDetached()"
 >
     <div #completionList class="message-suggestions rounded-md shadow-md" data-testid="message-completion-list">
         <div class="message-editor-muted p-2 text-xs" role="status" aria-live="polite">

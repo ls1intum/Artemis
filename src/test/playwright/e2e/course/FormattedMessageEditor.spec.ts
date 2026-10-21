@@ -475,6 +475,12 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         await editor.pressSequentially('const answer = 42;');
         await page.getByTestId('message-block-pre').click();
         await page.keyboard.press('Enter');
+        const emptyLine = await editor.locator('pre > code').evaluate((code) => ({
+            height: code.getBoundingClientRect().height,
+            lineHeight: Number.parseFloat(getComputedStyle(code).lineHeight),
+        }));
+        // The blank caret line must participate in layout before the user types the next character.
+        expect(emptyLine.height).toBeGreaterThanOrEqual(2 * emptyLine.lineHeight - 1);
         await page.keyboard.type('console.log(answer);');
         await page.keyboard.press('Shift+Enter');
         await page.keyboard.type('// done');
@@ -1127,6 +1133,35 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         expect(saved.content).not.toContain(':jo');
         expect(sentRequests).toHaveLength(1);
         await expect(postContent(page, saved.id!)).toContainText(`Nice ${glyph} thanks`);
+    });
+
+    test('course-reference suggestions filter on every typed character and backspace', async ({ page, composer }) => {
+        const overview = `**/api/communication/courses/${composer.course.id}/channels/public-overview`;
+        await page.route(overview, (route) =>
+            route.fulfill({ json: ['announcements', 'annex', 'analog', 'aside', 'alpha'].map((name, index) => ({ id: composer.channel.id! + index, name })) }),
+        );
+        try {
+            await composer.editor.pressSequentially('#');
+            const popup = page.getByTestId('message-completion-list');
+            const announcement = popup.getByRole('option').filter({ hasText: '#announcements' });
+            await expect(announcement).toBeVisible();
+            await expect(popup.getByRole('option')).toHaveCount(4);
+            for (const [index, character] of Array.from('anno').entries()) {
+                await composer.editor.pressSequentially(character);
+                // Every query has a different count, so stale rows cannot satisfy the next assertion.
+                await expect(popup.getByRole('option')).toHaveCount([5, 3, 2, 1][index]);
+                await expect(announcement).toBeVisible();
+            }
+            for (const count of [2, 3, 5, 4]) {
+                await composer.editor.press('Backspace');
+                await expect(popup.getByRole('option')).toHaveCount(count);
+                await expect(announcement).toBeVisible();
+            }
+            await composer.editor.press('Escape');
+            await expect(popup).toBeHidden();
+        } finally {
+            await page.unroute(overview);
+        }
     });
 
     test('keyboard mention navigation scrolls the active option into view in both directions and wraps', async ({

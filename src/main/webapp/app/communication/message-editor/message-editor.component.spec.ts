@@ -779,6 +779,58 @@ describe('Formatted message composer', () => {
         expect(component.suggestionsOpen()).toBe(false);
     });
 
+    it('refreshes course-reference completions on every insertion and deletion after the old overlay detaches', async () => {
+        vi.useFakeTimers();
+        search.mockResolvedValue([{ label: '#announcements', kind: 'channel', markdown: '[channel]announcements(7)[/channel]' }]);
+        fixture.componentRef.setInput('content', '\\#');
+        fixture.detectChanges();
+        caretAtEnd();
+        await component.refreshSuggestions();
+        fixture.detectChanges();
+        expect(component.suggestionsOpen()).toBe(true);
+        let previous = '';
+
+        for (const query of ['a', 'an', 'ann', 'anno', 'ann', 'an', 'a', '']) {
+            const deleting = query.length < previous.length;
+            editable.dispatchEvent(new KeyboardEvent('keydown', { key: deleting ? 'Backspace' : query.at(-1), bubbles: true, cancelable: true }));
+            editable.dispatchEvent(
+                new InputEvent('beforeinput', {
+                    inputType: deleting ? 'deleteContentBackward' : 'insertText',
+                    data: deleting ? null : query.at(-1),
+                    bubbles: true,
+                    cancelable: true,
+                }),
+            );
+            editable.querySelector('p')!.textContent = '#' + query;
+            caretAtEnd();
+            editable.dispatchEvent(new InputEvent('input', { inputType: deleting ? 'deleteContentBackward' : 'insertText', bubbles: true }));
+            // Render the closed old overlay before the debounce resolves, matching native typing in the application.
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(151);
+            fixture.detectChanges();
+
+            expect(search).toHaveBeenLastCalledWith('#', query, 1, undefined, false);
+            expect(component.suggestionsOpen()).toBe(true);
+            expect(document.querySelector('[data-testid="message-completion-list"] [role="option"]')?.textContent).toContain('#announcements');
+            previous = query;
+        }
+    });
+
+    it('dismisses the popup when the overlay is detached externally while open', async () => {
+        fixture.componentRef.setInput('content', '@ann');
+        fixture.detectChanges();
+        caretAtEnd();
+        await component.refreshSuggestions();
+        fixture.detectChanges();
+        const overlay = component['completionOverlay']()!;
+        expect(component.suggestionsOpen()).toBe(true);
+
+        overlay.overlayRef.detach();
+
+        expect(component.suggestionsOpen()).toBe(false);
+        expect(component.suggestions()).toEqual([]);
+    });
+
     it('repositions the completion overlay after loading changes its rendered size', async () => {
         let resolve!: (value: { label: string; kind: 'user'; markdown: string }[]) => void;
         search.mockReturnValue(new Promise((complete) => (resolve = complete)));

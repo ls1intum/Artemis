@@ -445,6 +445,11 @@ export class MessageEditorComponent {
         this.loading.set(false);
     }
 
+    /** An intentional close can detach the old overlay after the next query's debounce has already been scheduled. */
+    protected completionDetached(): void {
+        if (this.suggestionsOpen()) this.dismissSuggestions();
+    }
+
     /** Replaces only the active completion range, then restores focus without submitting the surrounding form. */
     protected accept(suggestion: MessageSuggestion): void {
         const range = this.completion?.range;

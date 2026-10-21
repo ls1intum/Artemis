@@ -240,7 +240,7 @@ export class MessageEditorDom {
         // Include inline parents too: Shift+Enter can be inserted inside a formatted run.
         const containers = new Set([...this.element.querySelectorAll('pre > code'), ...Array.from(this.element.querySelectorAll('br'), (lineBreak) => lineBreak.parentElement!)]);
         for (const container of containers) {
-            const placeholder = container.querySelector(':scope > br[data-message-placeholder]');
+            let placeholder = container.querySelector(':scope > br[data-message-placeholder]');
             let last = placeholder?.previousSibling ?? container.lastChild;
             while (last?.nodeType === Node.TEXT_NODE && !last.textContent) {
                 last = last.previousSibling;
@@ -250,6 +250,23 @@ export class MessageEditorDom {
                     const end = this.element.ownerDocument.createElement('br');
                     end.setAttribute('data-message-placeholder', '');
                     container.append(end);
+                    placeholder = end;
+                }
+                const selection = this.element.ownerDocument.getSelection();
+                const range = selection?.rangeCount ? selection.getRangeAt(0) : undefined;
+                if (container.matches('pre > code') && range?.collapsed && container.contains(range.startContainer)) {
+                    const suffix = range.cloneRange();
+                    suffix.selectNodeContents(container);
+                    suffix.setStart(range.startContainer, range.startOffset);
+                    const remaining = suffix.cloneContents();
+                    remaining.querySelectorAll('[data-message-placeholder]').forEach((item) => item.remove());
+                    if (!remaining.textContent && !remaining.querySelector('br, img, [data-message-reference]')) {
+                        // Select the visible blank line after its layout placeholder exists. Keeping the old boundary
+                        // before an empty text node can leave the browser painting the caret on the preceding line.
+                        range.setStartBefore(placeholder);
+                        range.collapse(true);
+                        this.select(range);
+                    }
                 }
             } else {
                 placeholder?.remove();

@@ -424,6 +424,23 @@ describe('Message editor editing transactions', () => {
         expect(changed).toHaveBeenLastCalledWith('```\nfirst\nsecond\n```');
     });
 
+    it('anchors the code caret at its visible blank line after creating the trailing break placeholder', () => {
+        editor.load('```\nfirst\n```');
+        const code = root.querySelector('pre code')!;
+        select(code.firstChild!, 5);
+        editor.insertText('\n');
+        const placeholder = code.querySelector('[data-message-placeholder]')!;
+        const caret = window.getSelection()!.getRangeAt(0);
+        expect(caret.startContainer).toBe(code);
+        expect(caret.startOffset).toBe(Array.from(code.childNodes).indexOf(placeholder));
+        expect(changed).toHaveBeenLastCalledWith('```\nfirst\n\n```');
+        // Rechecking placeholders must not drag a caret that the user has moved into the middle of the code.
+        select(code.firstChild!, 2);
+        editor.afterInput();
+        expect(window.getSelection()!.anchorNode).toBe(code.firstChild);
+        expect(window.getSelection()!.anchorOffset).toBe(2);
+    });
+
     it('preserves a separating space when typing after an inserted mention', () => {
         editor.load('');
         editor.insertMarkdown('[user]Anna(anna)[/user] ');

@@ -55,7 +55,8 @@ jhi-message-editor .message-editor-content {
 
     [data-message-reference] {
         border-radius: 0.25rem;
-        background: color-mix(in srgb, var(--primary) 12%, var(--artemis-control-background));
+        background: color-mix(in srgb, var(--primary) 24%, var(--artemis-control-background));
+        outline: 1px solid color-mix(in srgb, var(--primary) 60%, var(--artemis-control-border));
         color: var(--artemis-control-color);
         padding-inline: 0.2rem;
         box-decoration-break: clone;
@@ -99,6 +100,12 @@ jhi-message-editor .message-editor-content {
         padding: 0.5rem;
         background: var(--hover-slightly-darker-body-bg);
         white-space: pre-wrap;
+
+        > code {
+            display: block;
+            line-height: inherit;
+            background: transparent;
+        }
     }
 
     ::selection {
