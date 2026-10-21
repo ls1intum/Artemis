@@ -5,14 +5,14 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { DebugElement } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
-import { BuildRunState, ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
+import { BuildRunState, ProgrammingBuildRunService, SelectedBuildRun, SelectedBuildRunStatus } from 'app/programming/shared/services/programming-build-run.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
@@ -30,6 +30,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 
 describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let comp: ProgrammingExerciseInstructorSubmissionStateComponent;
@@ -42,6 +43,10 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let getExerciseSubmissionStateSubject: Subject<ExerciseSubmissionState>;
 
     let getBuildRunStateSubject: Subject<BuildRunState>;
+    let selectedBuildRunCompletionsSubject: Subject<string>;
+    let getSelectedBuildRunCompletionsStub: ReturnType<typeof vi.spyOn>;
+    let getSelectedBuildRunStatusStub: ReturnType<typeof vi.spyOn>;
+    let connectionStateSubject: Subject<ConnectionState>;
 
     let triggerAllStub: ReturnType<typeof vi.spyOn>;
 
@@ -92,6 +97,13 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
                 getBuildRunStateSubject = new Subject<BuildRunState>();
                 vi.spyOn(buildRunService, 'getBuildRunUpdates').mockReturnValue(getBuildRunStateSubject);
+
+                getSelectedBuildRunStatusStub = vi.spyOn(submissionService, 'getSelectedBuildRunStatus').mockReturnValue(of({ running: true }));
+                connectionStateSubject = new Subject<ConnectionState>();
+                vi.spyOn(TestBed.inject(WebsocketService), 'connectionState', 'get').mockReturnValue(connectionStateSubject);
+
+                selectedBuildRunCompletionsSubject = new Subject<string>();
+                getSelectedBuildRunCompletionsStub = vi.spyOn(buildRunService, 'getSelectedBuildRunCompletions').mockReturnValue(selectedBuildRunCompletionsSubject);
 
                 triggerAllStub = vi.spyOn(submissionService, 'triggerInstructorBuildForParticipationsOfExercise').mockReturnValue(of());
                 vi.spyOn(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').mockReturnValue(of());
@@ -226,47 +238,217 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(getBuildState()).not.toBeNull();
     });
 
-    it('should trigger the appropriate service method on trigger failed and set the isBuildingFailedSubmissionsState until the request returns a response', async () => {
-        vi.useFakeTimers();
+    describe('retry of the failed builds', () => {
         const failedSubmissionParticipationIds = [333];
-        const triggerInstructorBuildForParticipationsOfExerciseSubject = new Subject<void>();
-        triggerAllStub.mockReturnValue(triggerInstructorBuildForParticipationsOfExerciseSubject);
-        const getFailedSubmissionParticipationsForExerciseStub = vi.spyOn(submissionService, 'getSubmissionCountByType').mockReturnValue(failedSubmissionParticipationIds);
-        // Component must have at least one failed submission for the button to be enabled. buildingSummary/
-        // hasFailedSubmissions are derived from the submission-state stream now, so drive them through it.
-        const submissionStateWithFailure = {
-            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 55 },
-            4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 333 },
-        } as ExerciseSubmissionState;
-        fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
+        let triggerRequestSubject: Subject<SelectedBuildRun>;
 
-        fixture.detectChanges();
-        getExerciseSubmissionStateSubject.next(submissionStateWithFailure);
-        // Wait for the 500ms debounce.
-        await vi.advanceTimersByTimeAsync(500);
+        const showFailedSubmission = async () => {
+            vi.useFakeTimers();
+            triggerRequestSubject = new Subject<SelectedBuildRun>();
+            triggerAllStub.mockReturnValue(triggerRequestSubject);
+            vi.spyOn(submissionService, 'getSubmissionCountByType').mockReturnValue(failedSubmissionParticipationIds);
+            // Component must have at least one failed submission for the button to be enabled. buildingSummary/
+            // hasFailedSubmissions are derived from the submission-state stream now, so drive them through it.
+            const submissionStateWithFailure = {
+                1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 55 },
+                4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 333 },
+            } as ExerciseSubmissionState;
+            fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
 
-        fixture.detectChanges();
+            fixture.detectChanges();
+            getExerciseSubmissionStateSubject.next(submissionStateWithFailure);
+            // Wait for the 500ms debounce.
+            await vi.advanceTimersByTimeAsync(500);
+            fixture.detectChanges();
+        };
 
-        const triggerButton = getTriggerFailedButton();
-        expect(triggerButton).not.toBeNull();
-        expect(triggerButton.disabled).toBe(false);
+        it('should call the service on click and keep the button busy after the request returned until the server reports its own run as completed', async () => {
+            await showFailedSubmission();
+            const triggerButton = getTriggerFailedButton();
+            expect(triggerButton).not.toBeNull();
+            expect(triggerButton.disabled).toBe(false);
 
-        // Button is clicked.
-        triggerButton.click();
+            triggerButton.click();
 
-        expect(comp.isBuildingFailedSubmissions()).toBe(true);
-        expect(getFailedSubmissionParticipationsForExerciseStub).toHaveBeenCalledWith(comp.exercise()!.id, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
-        expect(triggerAllStub).toHaveBeenCalledWith(comp.exercise()!.id, failedSubmissionParticipationIds);
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+            expect(triggerAllStub).toHaveBeenCalledWith(comp.exercise()!.id, failedSubmissionParticipationIds);
 
-        fixture.detectChanges();
+            // The server answers at once and queues the builds in the background, possibly after waiting for room in the build queue.
+            triggerRequestSubject.next({ runId: 'run-1' });
+            triggerRequestSubject.complete();
+            fixture.detectChanges();
 
-        // Now the request returns a response and completes — finalize() resets the flag on completion (or error).
-        triggerInstructorBuildForParticipationsOfExerciseSubject.next(undefined);
-        triggerInstructorBuildForParticipationsOfExerciseSubject.complete();
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+            expect(getTriggerFailedButton().disabled).toBe(true);
 
-        fixture.detectChanges();
+            selectedBuildRunCompletionsSubject.next('run-1');
+            fixture.detectChanges();
 
-        expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            expect(getTriggerFailedButton().disabled).toBe(false);
+        });
+
+        it('should not take the end of a run of another instructor for its own', async () => {
+            await showFailedSubmission();
+
+            getTriggerFailedButton().click();
+            triggerRequestSubject.next({ runId: 'run-1' });
+            triggerRequestSubject.complete();
+            selectedBuildRunCompletionsSubject.next('run-2');
+            fixture.detectChanges();
+
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+            selectedBuildRunCompletionsSubject.next('run-1');
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+        });
+
+        it('should become available again when the run ended before the response that names it arrived', async () => {
+            await showFailedSubmission();
+
+            getTriggerFailedButton().click();
+            selectedBuildRunCompletionsSubject.next('run-1');
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+            triggerRequestSubject.next({ runId: 'run-1' });
+            triggerRequestSubject.complete();
+
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+        });
+
+        it('should stay busy when the request returns before the server reported the end of the run', async () => {
+            await showFailedSubmission();
+
+            getTriggerFailedButton().click();
+            triggerRequestSubject.next({ runId: 'run-1' });
+            triggerRequestSubject.complete();
+            fixture.detectChanges();
+
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+        });
+
+        it('should make the button available again when the request fails', async () => {
+            await showFailedSubmission();
+
+            getTriggerFailedButton().click();
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+            triggerRequestSubject.error(new Error('request failed'));
+            fixture.detectChanges();
+
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+        });
+
+        it('should ignore the response of a request that was started for the previous exercise', async () => {
+            await showFailedSubmission();
+
+            getTriggerFailedButton().click();
+            fixture.componentRef.setInput('exercise', { id: 21 } as ProgrammingExercise);
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+
+            // The response of exercise 20 arrives late, and must neither make the button busy for exercise 21 nor name the run it waits for.
+            triggerRequestSubject.next({ runId: 'run-of-exercise-20' });
+            await vi.advanceTimersByTimeAsync(60000);
+
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            expect(getSelectedBuildRunStatusStub).not.toHaveBeenCalled();
+        });
+
+        it('should not clear the busy state of the new exercise when the request of the previous exercise fails late', async () => {
+            await showFailedSubmission();
+            const previousRequest = triggerRequestSubject;
+            getTriggerFailedButton().click();
+            fixture.componentRef.setInput('exercise', { id: 21 } as ProgrammingExercise);
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+
+            triggerRequestSubject = new Subject<SelectedBuildRun>();
+            triggerAllStub.mockReturnValue(triggerRequestSubject);
+            vi.spyOn(submissionService, 'getSubmissionCountByType').mockReturnValue(failedSubmissionParticipationIds);
+            comp.triggerBuildOfFailedSubmissions();
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+            previousRequest.error(new Error('request of exercise 20 failed'));
+
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+        });
+
+        describe('when the message that announces the end of the run is missed', () => {
+            const startRun = async () => {
+                await showFailedSubmission();
+                getTriggerFailedButton().click();
+                triggerRequestSubject.next({ runId: 'run-1' });
+                await vi.advanceTimersByTimeAsync(0);
+            };
+
+            it('should ask the server for the status of the run when the websocket connection is back and become available if it is not running any more', async () => {
+                await startRun();
+                getSelectedBuildRunStatusStub.mockReturnValue(of({ running: false } as SelectedBuildRunStatus));
+
+                connectionStateSubject.next(new ConnectionState(true, true));
+                await vi.advanceTimersByTimeAsync(0);
+
+                expect(getSelectedBuildRunStatusStub).toHaveBeenCalledWith(20, 'run-1');
+                expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            });
+
+            it('should stay busy when the status says that the run is still running, and ask again after a while', async () => {
+                await startRun();
+
+                connectionStateSubject.next(new ConnectionState(true, true));
+                await vi.advanceTimersByTimeAsync(0);
+                expect(getSelectedBuildRunStatusStub).toHaveBeenCalledTimes(1);
+                expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+                getSelectedBuildRunStatusStub.mockReturnValue(of({ running: false } as SelectedBuildRunStatus));
+                await vi.advanceTimersByTimeAsync(30000);
+
+                expect(getSelectedBuildRunStatusStub).toHaveBeenCalledTimes(2);
+                expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            });
+
+            it('should ask again at the next tick when the status cannot be read', async () => {
+                await startRun();
+                getSelectedBuildRunStatusStub.mockReturnValue(throwError(() => new Error('server unreachable')));
+
+                await vi.advanceTimersByTimeAsync(30000);
+                expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+                getSelectedBuildRunStatusStub.mockReturnValue(of({ running: false } as SelectedBuildRunStatus));
+                await vi.advanceTimersByTimeAsync(30000);
+
+                expect(comp.isBuildingFailedSubmissions()).toBe(false);
+            });
+
+            it('should not ask while no run is awaited', async () => {
+                await showFailedSubmission();
+
+                connectionStateSubject.next(new ConnectionState(true, true));
+                await vi.advanceTimersByTimeAsync(60000);
+
+                expect(getSelectedBuildRunStatusStub).not.toHaveBeenCalled();
+            });
+        });
+
+        it('should follow the exercise when it changes and drop the run of the previous exercise', async () => {
+            await showFailedSubmission();
+            expect(getSelectedBuildRunCompletionsStub).toHaveBeenCalledOnce();
+            expect(getSelectedBuildRunCompletionsStub).toHaveBeenLastCalledWith(20);
+
+            getTriggerFailedButton().click();
+            triggerRequestSubject.next({ runId: 'run-1' });
+            expect(comp.isBuildingFailedSubmissions()).toBe(true);
+
+            fixture.componentRef.setInput('exercise', { id: 21 } as ProgrammingExercise);
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(getSelectedBuildRunCompletionsStub).toHaveBeenCalledTimes(2);
+            expect(getSelectedBuildRunCompletionsStub).toHaveBeenLastCalledWith(21);
+            expect(comp.isBuildingFailedSubmissions()).toBe(false);
+        });
     });
 
     it('should disable the trigger all button while a build is running and re-enable it when it is complete', async () => {
