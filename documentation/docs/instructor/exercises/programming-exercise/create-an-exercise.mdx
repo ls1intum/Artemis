@@ -51,7 +51,7 @@ The table below lists which settings each mode shows.
 |---|---|---|
 | General | Title, Categories, Difficulty | Short Name, Channel Name, Auxiliary Repositories, Checkout Paths |
 | Mode | — | Participation Mode, Team Size, Allow Offline IDE, Allow Online Editor, Allow Online IDE |
-| Language | Programming Language, Package Name | Project Type, Exemplary Dependency, Static Code Analysis, Sequential Test Runs, Build Plan |
+| Language | Programming Language, Package Name | Project Type, Exemplary Dependency, Online IDE Configuration and Experience Level, Static Code Analysis, Sequential Test Runs, Build Plan |
 | Version Control | — | Allow Custom Branches, Branch Name Pattern |
 | Problem | Problem Statement | Linked Competencies |
 | Grading | Score inclusion, Points, Bonus Points, Release Date, Due Date, Assessment Due Date, Grading Instructions | Submission Policy, Start Date, Run Tests after Due Date, Example Solution Publication Date, Complaints on Automatic Assessment, Show Test Names, Include Tests in Example Solution, Presentation Score, Plagiarism Control |
@@ -117,6 +117,12 @@ Three settings control how students can work on the exercise:
 - **Project Type**: The project structure of the template, for example Gradle or Maven for Java. Not available for every language.
 - **With exemplary dependency**: Java only. Adds an external Apache Commons Lang dependency as an example of using a third-party library.
 - **Package Name**: The package structure students must use. Not available for every language.
+- **Configuration for Online IDE**: The Online IDE image students work in. Shown only when **Allow Online IDE** is selected.
+- **Starting experience level in the Online IDE**: Beginner, Advanced or Expert, which decides how much of the Online IDE students see when they first
+  open the exercise there. Shown only when **Allow Online IDE** is selected. Artemis writes the level into `.vscode/eduide.json` of every student
+  repository it creates from the template, replacing a file of the template at that path. Students can still switch to another level, and once they
+  have, the file no longer applies to them. Changing the setting affects only repositories created afterwards. If you leave it unset, Artemis adds
+  no file: students start at the level in the template's own `.vscode/eduide.json` if it has one, otherwise at the Online IDE's default level.
 - **Enable Static Code Analysis**: Adds automated code quality checks to the build. **Cannot be changed after creation.** See [Configure Static Code Analysis](/instructor/exercises/programming-exercise/configure-the-build#configure-static-code-analysis).
 - **Sequential Test Runs**: Runs structural tests before behavioral ones. Not compatible with static code analysis. **Cannot be changed after creation.**
 - **Build plan**: Artemis creates a default build plan for the exercise. You adapt it after creation on the dedicated build plan editor page, see [Adapt Build Phases](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional). Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle); Jenkins exercises use their own build plan configuration.

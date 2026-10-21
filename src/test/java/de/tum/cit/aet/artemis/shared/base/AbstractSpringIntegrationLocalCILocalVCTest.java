@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
@@ -37,18 +38,25 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // NOTE: in a "single node" environment, PROFILE_BUILDAGENT must be before PROFILE_CORE to avoid issues
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC })
+// PROFILE_DEMO only adds the lazy beans that seed the demo course, which tests invoke directly: the startup event that triggers seeding is never published in tests.
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_DEMO })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { LDAP_ENABLED_PROPERTY_NAME + "=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=false",
         "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true",
         "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",
-        "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
+        // A bulk trigger waits while the build queue is full, which tests that leave jobs in a paused queue would wait on for hours.
+        // This has to be set here: application-localci.yml is a profile file and wins over the default test application.yml.
+        "artemis.continuous-integration.bulk-trigger.max-queued-jobs-per-build-slot=0", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.build.images.c.default=ls1tum/artemis-c-minimal-docker:1.0.0",
         "artemis.continuous-integration.build.images.c.fact=ls1tum/artemis-fact-minimal-docker:1.1.0", "artemis.continuous-integration.image-cleanup.enabled=true",
-        "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000", "spring.liquibase.enabled=true", "artemis.iris.enabled=true",
-        "artemis.iris.health-ttl=500", "info.contact=test@localhost", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc",
-        "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci/ssh-keys",
-        "artemis.hyperion.enabled=true", "artemis.deimos.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.atlas.atlasllm.enabled=true",
+        "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
+        // The docker image cleanup info is refreshed from the database by a scheduled task that clears the shared map first. Tests that fill that map themselves must not
+        // race with it, so the task never fires on its own here (tests call pushDockerImageCleanupInfo() directly).
+        "artemis.continuous-integration.image-cleanup.info-push-interval-seconds=31536000", "artemis.continuous-integration.image-cleanup.info-push-delay-seconds=31536000",
+        "spring.liquibase.enabled=true", "artemis.iris.enabled=true", "artemis.iris.health-ttl=500", "info.contact=test@localhost",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc", "artemis.version-control.build-agent-use-ssh=true",
+        "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci/ssh-keys", "artemis.hyperion.enabled=true", "artemis.deimos.enabled=true",
+        "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.atlas.atlasllm.enabled=true",
         // Use separate repo paths for LocalCI/LocalVC tests to isolate from other test buckets
         "artemis.failed-build-logs-path=./local/server-integration-test-localci/failed-build-logs", "artemis.repo-clone-path=./local/server-integration-test-localci/repos",
         "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci/local-vcs-repos", "artemis.lti.enabled=true",

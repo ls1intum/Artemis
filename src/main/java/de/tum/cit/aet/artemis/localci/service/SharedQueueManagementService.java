@@ -156,9 +156,11 @@ public class SharedQueueManagementService {
 
     /**
      * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo, only executed on the main node (with active scheduling)
-     * This method is scheduled to run every 5 minutes with an initial delay of 30 seconds.
+     * This method is scheduled to run every 5 minutes with an initial delay of 30 seconds. Both can be changed with
+     * {@code artemis.continuous-integration.image-cleanup.info-push-interval-seconds} and
+     * {@code artemis.continuous-integration.image-cleanup.info-push-delay-seconds}.
      */
-    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 30 * 1000)
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.info-push-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.image-cleanup.info-push-delay-seconds:30}", timeUnit = TimeUnit.SECONDS)
     public void pushDockerImageCleanupInfo() {
         if (profileService.isSchedulingActive()) {
             var startDate = System.currentTimeMillis();
