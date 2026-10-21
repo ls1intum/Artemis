@@ -3,6 +3,12 @@
 @import '../../../../../../../../node_modules/bootstrap/scss/variables';
 @import '../../../../../../../../node_modules/bootstrap/scss/mixins';
 
+:host {
+    display: block;
+    height: 100%;
+    min-height: 0;
+}
+
 .postings-container {
     display: flex;
     height: 100%;
@@ -23,8 +29,10 @@
 
     .scrollbar {
         position: relative;
-        max-height: 1000px;
+        flex: 1 1 auto;
+        min-height: 0;
         overflow-x: hidden;
+        overflow-y: auto;
     }
 
     .wrapper-scroll-y {
@@ -42,8 +50,10 @@
 
     .card {
         width: inherit;
+        min-height: 0;
 
         .card-header {
+            flex-shrink: 0;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
