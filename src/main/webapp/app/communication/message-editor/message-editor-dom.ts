@@ -220,8 +220,8 @@ export class MessageEditorDom {
     }
 
     /** Commits a browser edit without replacing its DOM or interrupting composition. */
-    afterInput(): void {
-        this.ensureCaret();
+    afterInput(native = true): void {
+        this.ensureCaret(native);
         const snapshot = this.snapshot();
         if (snapshot.html !== this.history[this.historyIndex]?.html) {
             this.history.splice(this.historyIndex + 1);
@@ -235,15 +235,37 @@ export class MessageEditorDom {
         this.changed(editorToMessage(this.element));
     }
 
-    private ensureCaret(): void {
+    private ensureCaret(native = false): void {
         // Browsers need a second, invisible break to keep typing after a trailing line break.
         // Include inline parents too: Shift+Enter can be inserted inside a formatted run.
-        const containers = new Set([...this.element.querySelectorAll('pre > code'), ...Array.from(this.element.querySelectorAll('br'), (lineBreak) => lineBreak.parentElement!)]);
+        const containers = new Set([
+            ...this.element.querySelectorAll('p, li, pre > code'),
+            ...Array.from(this.element.querySelectorAll('br'), (lineBreak) => lineBreak.parentElement!),
+        ]);
         for (const container of containers) {
             let placeholder = container.querySelector(':scope > br[data-message-placeholder]');
             let last = placeholder?.previousSibling ?? container.lastChild;
             while (last?.nodeType === Node.TEXT_NODE && !last.textContent) {
                 last = last.previousSibling;
+            }
+            // A browser-created empty item/paragraph already has its layout break. A second break becomes a real,
+            // deletable empty line and prevents Backspace from merging the paragraph back into its preceding item.
+            if (native && last instanceof HTMLBRElement && !placeholder && !container.textContent && container.childNodes.length === 1) {
+                last.setAttribute('data-message-placeholder', '');
+                continue;
+            }
+            if (!container.childNodes.length) {
+                const empty = this.element.ownerDocument.createElement('br');
+                empty.setAttribute('data-message-placeholder', '');
+                container.append(empty);
+                const selection = this.element.ownerDocument.getSelection();
+                const range = selection?.rangeCount ? selection.getRangeAt(0) : undefined;
+                if (range?.collapsed && container.contains(range.startContainer)) {
+                    range.setStartBefore(empty);
+                    range.collapse(true);
+                    this.select(range);
+                }
+                continue;
             }
             if (last instanceof HTMLBRElement || last?.textContent?.endsWith('\n')) {
                 if (!placeholder) {
@@ -277,7 +299,7 @@ export class MessageEditorDom {
     private transact(change: () => void): void {
         this.beforeInput();
         change();
-        this.afterInput();
+        this.afterInput(false);
     }
 
     /** Replaces the selection with literal text and soft line breaks, retaining applicable marks as one undoable edit. */

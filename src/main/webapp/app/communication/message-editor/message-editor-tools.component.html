@@ -74,15 +74,15 @@
     >
         <fa-icon [icon]="icons.faFaceSmile" />
     </button>
-    @if (uploading()) {
-        <span role="status" class="message-editor-muted text-xs">{{ 'artemisApp.communication.formattedEditor.uploading' | artemisTranslate }}</span>
-    }
-    @if (error(); as errorKey) {
-        <span role="alert" class="text-xs text-state-danger">{{
-            'artemisApp.communication.formattedEditor.errors.' + errorKey | artemisTranslate: { name: errorFile(), max: maxFileSize }
-        }}</span>
-    }
 </div>
+@if (uploading()) {
+    <span role="status" class="message-editor-muted text-xs">{{ 'artemisApp.communication.formattedEditor.uploading' | artemisTranslate }}</span>
+}
+@if (error(); as errorKey) {
+    <span role="alert" data-testid="message-upload-error" class="min-w-0 basis-full px-2 py-1 text-xs text-state-danger wrap-anywhere">{{
+        'artemisApp.communication.formattedEditor.errors.' + errorKey | artemisTranslate: { name: errorFile(), max: maxFileSize }
+    }}</span>
+}
 <ng-template
     cdkConnectedOverlay
     [cdkConnectedOverlayOrigin]="origin"

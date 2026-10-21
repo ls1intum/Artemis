@@ -365,6 +365,19 @@ describe('Formatted message attachment and resource controls', () => {
         expect(component['results']()).toEqual([]);
     });
 
+    it('renders an upload failure outside the resource button row so long filenames can wrap below the toolbar', async () => {
+        upload.mockRejectedValueOnce(new Error('unsupported file type'));
+        await component.uploadFiles([new File(['video'], 'a-long-video-filename.mp4')]);
+        fixture.detectChanges();
+        const alert = fixture.nativeElement.querySelector('[role="alert"]');
+        const button = fixture.nativeElement.querySelector('[data-testid="message-attachment-button"]');
+        expect(alert).not.toBeNull();
+        expect(alert.parentElement).toBe(fixture.nativeElement);
+        expect(alert.contains(button)).toBe(false);
+        expect(component.error()).toBe('upload');
+        expect(component.uploading()).toBe(false);
+    });
+
     it('opens the file chooser and handles a selected file, including an invalid upload response', async () => {
         const input = fixture.nativeElement.querySelector('[data-testid="message-file-input"]') as HTMLInputElement;
         const click = vi.spyOn(input, 'click').mockImplementation(() => {});

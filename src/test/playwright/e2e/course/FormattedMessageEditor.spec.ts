@@ -105,12 +105,14 @@ async function expectText(editor: Locator, text: string) {
     await expect.poll(() => editor.evaluate((element) => element.textContent?.replace(/\u200b/g, ''))).toBe(text);
 }
 
-async function send(page: Page, composer: Composer, keyboard = false): Promise<Post> {
+async function send(page: Page, composer: Composer, keyboard: boolean | string = false): Promise<Post> {
     const responsePromise = page.waitForResponse(
         (response) => response.url().endsWith(`/api/communication/courses/${composer.course.id}/messages`) && response.request().method() === 'POST',
     );
     await expect(page.getByTestId('send-formatted-message')).toBeEnabled();
-    if (keyboard) {
+    if (typeof keyboard === 'string') {
+        await composer.editor.press(keyboard);
+    } else if (keyboard) {
         await page.getByTestId('send-formatted-message').press('Enter');
     } else {
         await page.getByTestId('send-formatted-message').click();
@@ -335,8 +337,43 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         expect((await send(page, composer)).content).toBe('alpha **BETA**');
     });
 
+    for (const block of ['ul', 'ol', 'blockquote', 'pre']) {
+        for (const shortcut of ['Enter', 'ControlOrMeta+Enter']) {
+            test(`${shortcut} sends from ${block} while Shift+Enter adds a line without sending`, async ({ page, composer }) => {
+                await composer.editor.pressSequentially('first');
+                await page.getByTestId(`message-block-${block}`).click();
+                await composer.editor.press('Shift+Enter');
+                await composer.editor.pressSequentially('second');
+                await expectText(composer.editor, 'firstsecond');
+                await expect(page.locator('[id^="item-"]')).toHaveCount(0);
+                const saved = await send(page, composer, shortcut);
+                expect(saved.content).toBe(
+                    block === 'pre' ? '```\nfirst\nsecond\n```' : block === 'blockquote' ? '> first\n> second' : `${block === 'ul' ? '-' : '1.'} first\n  second`,
+                );
+            });
+        }
+    }
+
     for (const list of ['ul', 'ol']) {
-        test(`native Enter continues ${list} items and exits an empty item without sending`, async ({ page, composer }) => {
+        test(`repeated native ${list} item creation and two Backspaces retain the original content and height`, async ({ page, composer }) => {
+            await composer.editor.pressSequentially('first');
+            await page.getByTestId(`message-block-${list}`).click();
+            const original = await composer.editor.evaluate((element) => ({ html: element.innerHTML, height: element.getBoundingClientRect().height }));
+            for (let iteration = 0; iteration < 4; iteration++) {
+                // Mobile paragraph input has no desktop Enter keydown; exercise the browser's native editing path.
+                await composer.editor.evaluate(() => document.execCommand('insertParagraph'));
+                await expect(composer.editor.locator('li')).toHaveCount(2);
+                await composer.editor.press('Backspace');
+                await composer.editor.press('Backspace');
+                await expect(composer.editor.locator('li')).toHaveText(['first']);
+                expect(await composer.editor.innerHTML()).toBe(original.html);
+                expect(await composer.editor.evaluate((element) => element.getBoundingClientRect().height)).toBe(original.height);
+            }
+        });
+    }
+
+    for (const list of ['ul', 'ol']) {
+        test(`native paragraph input continues ${list} items and exits an empty item without sending`, async ({ page, composer }) => {
             const { editor } = composer;
             const sentRequests: string[] = [];
             page.on('request', (request) => {
@@ -345,11 +382,11 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             await editor.pressSequentially('first');
             await page.getByTestId(`message-block-${list}`).click();
             await expect(editor.locator(`${list} > li`)).toHaveText(['first']);
-            await page.keyboard.press('Enter');
+            await editor.evaluate(() => document.execCommand('insertParagraph'));
             await page.keyboard.type('second');
             await expect(editor.locator(`${list} > li`)).toHaveText(['first', 'second']);
-            await page.keyboard.press('Enter');
-            await page.keyboard.press('Enter');
+            await editor.evaluate(() => document.execCommand('insertParagraph'));
+            await page.keyboard.press('Backspace');
             await page.keyboard.type('outside');
             await expect(editor.locator(`${list} > li`)).toHaveText(['first', 'second']);
             await expectText(editor, 'firstsecondoutside');
@@ -369,7 +406,7 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             const { posting, editor } = await reopen(page, original);
             await expect(editor.locator(`${list} > li`)).toHaveText(['first']);
             await selectText(editor, 11, 11);
-            await page.keyboard.press('Enter');
+            await editor.evaluate(() => document.execCommand('insertParagraph'));
             await expect(editor.locator(`${list} > li`)).toHaveCount(2);
             await page.keyboard.press('Backspace');
             await expect(editor.locator(`${list} > li`)).toHaveText(['first']);
@@ -470,11 +507,11 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         });
     }
 
-    test('code Enter and Shift+Enter preserve literal lines when returning to a paragraph', async ({ page, composer }) => {
+    test('code Shift+Enter preserves literal lines when returning to a paragraph', async ({ page, composer }) => {
         const { editor } = composer;
         await editor.pressSequentially('const answer = 42;');
         await page.getByTestId('message-block-pre').click();
-        await page.keyboard.press('Enter');
+        await page.keyboard.press('Shift+Enter');
         const emptyLine = await editor.locator('pre > code').evaluate((code) => ({
             height: code.getBoundingClientRect().height,
             lineHeight: Number.parseFloat(getComputedStyle(code).lineHeight),
@@ -506,8 +543,7 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             await editor.press('ArrowUp');
             await page.keyboard.type('Before');
             await selectText(editor, 12, 12);
-            await editor.press('Enter');
-            await editor.press('Enter');
+            await editor.press('ArrowDown');
             await page.keyboard.type('After');
             await expect(editor.locator(kind)).toHaveText('inside');
             await expect(editor.locator(':scope > p')).toHaveText(['Before', 'After']);
@@ -1689,7 +1725,7 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
                 await expect(sendButton).toBeEnabled();
                 await editor.evaluate((element, type) => {
                     const data = new DataTransfer();
-                    data.items.add(new File(['attachment fixture'], 'missing.png', { type: 'image/png' }));
+                    data.items.add(new File(['attachment fixture'], 'missing-attachment-with-a-long-name-that-must-wrap-within-the-editor.png', { type: 'image/png' }));
                     const event =
                         type === 'paste'
                             ? new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true })
@@ -1706,13 +1742,21 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
                 await expect(sendButton).toBeDisabled();
                 release();
                 await expect(host.getByRole('alert')).toBeVisible();
-                await expect(host.getByRole('alert')).toContainText('Could not attach “missing.png”');
+                await expect(host.getByRole('alert')).toContainText('Could not attach “missing-attachment-with-a-long-name-that-must-wrap-within-the-editor.png”');
                 await expect(host.getByRole('status')).toBeHidden();
                 await expect(sendButton).toBeEnabled();
                 await expect(toggle).toHaveAttribute('aria-expanded', 'false');
                 await expect(host.getByTestId('message-attachment-button')).toBeHidden();
                 await expectText(editor, 'Keep my draft');
                 await expect(editor.locator('img')).toHaveCount(0);
+                await toggle.click();
+                await forEachViewport(page, async (viewport) => {
+                    const alert = host.getByTestId('message-upload-error');
+                    await expectBelow([alert], host.getByTestId('message-attachment-button'), { name: `upload error below controls at ${viewport.width}px` });
+                    await expectBelow([alert], toggle, { name: `upload error below basic toolbar at ${viewport.width}px` });
+                    await expectInside(alert, host.getByTestId('message-editor-toolbar'), ['left', 'right', 'top', 'bottom'], { name: 'wrapped upload error' });
+                    await expectNoHorizontalOverflow(page, [host], { name: 'upload failure' });
+                });
             } finally {
                 release();
             }

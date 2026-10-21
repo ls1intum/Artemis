@@ -12,23 +12,41 @@ interface BlockRun {
     frames: Frame[];
     code: boolean;
     selected: boolean;
+    softLines?: boolean;
 }
 
-/** Splits only the caret's soft line, retaining inline ancestors on each side of its breaks. */
-function currentSoftLine(nodes: Node[], marker: Element): Pick<BlockRun, 'nodes' | 'selected'>[] | undefined {
+/** Splits at the selected soft-line boundaries, retaining inline ancestors outside the affected lines. */
+function selectedSoftLines(nodes: Node[], markers: Element[]): Pick<BlockRun, 'nodes' | 'selected'>[] | undefined {
     const breaks = nodes.flatMap((node) =>
         node instanceof HTMLElement
             ? [...(node.matches('br:not([data-message-placeholder])') ? [node] : []), ...Array.from(node.querySelectorAll('br:not([data-message-placeholder])'))]
             : [],
     );
     if (!breaks.length) return undefined;
-    const before = breaks.findLastIndex((lineBreak) => !!(lineBreak.compareDocumentPosition(marker) & Node.DOCUMENT_POSITION_FOLLOWING));
-    const after = breaks.findIndex((lineBreak) => !!(marker.compareDocumentPosition(lineBreak) & Node.DOCUMENT_POSITION_FOLLOWING));
+    const owns = (marker: Element) => nodes.some((node) => node === marker || node.contains(marker));
+    const start = markers[0];
+    const end = markers.at(-1)!;
+    const before = owns(start) ? breaks.findLastIndex((lineBreak) => !!(lineBreak.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING)) : -1;
+    let after = owns(end) ? breaks.findIndex((lineBreak) => !!(end.compareDocumentPosition(lineBreak) & Node.DOCUMENT_POSITION_FOLLOWING)) : -1;
+    if (markers.length > 1 && owns(end)) {
+        const previous = breaks.findLastIndex((lineBreak) => !!(lineBreak.compareDocumentPosition(end) & Node.DOCUMENT_POSITION_FOLLOWING));
+        const prefix = end.ownerDocument.createRange();
+        if (previous !== -1) prefix.setStartAfter(breaks[previous]);
+        else prefix.setStartBefore(nodes[0]);
+        prefix.setEndBefore(end);
+        const content = prefix.cloneContents();
+        content.querySelectorAll('[data-message-selection-boundary], [data-message-placeholder]').forEach((node) => node.remove());
+        if (!content.textContent && !content.querySelector('br, img, [data-message-reference]')) {
+            // A selection ending at the start of a line does not include that line.
+            if (previous === -1) return [{ nodes, selected: false }];
+            after = previous;
+        }
+    }
     const part = (from: number, to: number, selected: boolean) => {
-        const container = marker.ownerDocument.createElement('div');
+        const container = start.ownerDocument.createElement('div');
         container.append(...nodes.map((node) => node.cloneNode(true)));
         const clonedBreaks = Array.from(container.querySelectorAll('br:not([data-message-placeholder])'));
-        const trim = marker.ownerDocument.createRange();
+        const trim = start.ownerDocument.createRange();
         // Trim the clone in place so a shared inline ancestor, such as <strong>, remains wrapped.
         if (to !== -1) {
             trim.selectNodeContents(container);
@@ -49,19 +67,19 @@ function currentSoftLine(nodes: Node[], marker: Element): Pick<BlockRun, 'nodes'
 export function formatMessageBlocks(root: HTMLElement, selection: Range, style: BlockStyle): Range {
     const restore = preserveMessageSelection(root, selection);
     selection = restoreMessageSelectionBoundaries(root, false);
-    const caret = selection.collapsed ? root.querySelector('[data-message-selection-boundary]') : undefined;
+    const markers = Array.from(root.querySelectorAll('[data-message-selection-boundary]'));
     const runs: BlockRun[] = [];
     const collect = (parent: HTMLElement, frames: Frame[]) => {
         let inline: Node[] = [];
-        const emit = (source: HTMLElement, nodes: Node[], code = false) => {
+        const emit = (source: HTMLElement, nodes: Node[], code = false, runFrames = frames) => {
             const lines =
-                caret && !code && !frames.length && (style === 'ul' || style === 'ol') && nodes.some((node) => node === caret || node.contains(caret))
-                    ? currentSoftLine(nodes, caret)
+                !code && (!runFrames.length || style === 'pre') && markers.some((marker) => nodes.some((node) => node === marker || node.contains(marker)))
+                    ? selectedSoftLines(nodes, markers)
                     : undefined;
             if (lines) {
-                lines.forEach((line) => runs.push({ source, nodes: line.nodes, frames, code, selected: line.selected }));
+                lines.forEach((line) => runs.push({ source, nodes: line.nodes, frames: runFrames, code, selected: line.selected, softLines: true }));
             } else {
-                runs.push({ source, nodes, frames, code, selected: false });
+                runs.push({ source, nodes, frames: runFrames, code, selected: false });
             }
         };
         const flush = () => {
@@ -87,17 +105,15 @@ export function formatMessageBlocks(root: HTMLElement, selection: Range, style: 
                                   { tag: list.tag, source: list.source, ordinal: Array.prototype.indexOf.call(parent.children, node) + Number(parent.getAttribute('start') ?? 1) },
                               ]
                             : frames;
+                    if (style === 'pre' && Array.from(node.children).some((child) => child.matches('p, div'))) {
+                        collect(node, [...itemFrames, { tag: 'li', source: node }]);
+                        continue;
+                    }
                     let body: Node[] = [];
                     let continuation = false;
                     const emitBody = () => {
                         if (body.length || !continuation) {
-                            runs.push({
-                                source: node,
-                                nodes: body,
-                                frames: continuation ? [...itemFrames, { tag: 'li', source: node }] : itemFrames,
-                                code: false,
-                                selected: false,
-                            });
+                            emit(node, body, false, continuation ? [...itemFrames, { tag: 'li', source: node }] : itemFrames);
                             body = [];
                         }
                     };
@@ -162,7 +178,9 @@ export function formatMessageBlocks(root: HTMLElement, selection: Range, style: 
             }
             return Array.from(node.childNodes).some(intersects);
         };
-        runs.forEach((run) => (run.selected = run.nodes.some(intersects)));
+        runs.forEach((run) => {
+            if (!run.softLines) run.selected = run.nodes.some(intersects);
+        });
     }
     const selected = runs.filter((run) => run.selected);
     const currentStyle = (run: BlockRun) => (run.code ? 'pre' : run.frames.at(-1)?.tag);
@@ -251,7 +269,7 @@ export function formatMessageBlocks(root: HTMLElement, selection: Range, style: 
         } else {
             precedingCode = undefined;
             const tag = frames.at(-1)?.tag;
-            if (!run.selected && tag === 'li') {
+            if (!run.selected && tag === 'li' && run.source.tagName === 'LI') {
                 parent.appendChild(cloneContent(run.nodes, run.code, false));
                 continue;
             }

@@ -325,6 +325,80 @@ describe('Message editor block formatting', () => {
         expect(Array.from(root.children, (element) => element.tagName)).toEqual(['P', 'BLOCKQUOTE', 'P']);
     });
 
+    it('formats only the current soft line as code without absorbing previous lines', () => {
+        editor.load('Before\nCurrent\nAfter');
+        select(root.querySelector('p')!.childNodes[2], 3);
+        editor.block('pre');
+        expectMessage('Before\n\n```\nCurrent\n```\n\nAfter');
+        expect(root.querySelector('pre')!.textContent).toBe('Current');
+        editor.insertText('!');
+        expect(root.querySelector('pre')!.textContent).toBe('Cur!rent');
+        editor.undo();
+        editor.undo();
+        expectMessage('Before\nCurrent\nAfter');
+    });
+
+    it('formats only the selected soft lines as code and preserves the exact selection and marks outside', () => {
+        editor.load('**Before\nFirst\nSecond\nAfter**');
+        const nodes = root.querySelector('strong')!.childNodes;
+        select(nodes[2], 1, nodes[4], 3);
+        editor.block('pre');
+        expectMessage('**Before**\n\n```\nFirst\nSecond\n```\n\n**After**');
+        expect(window.getSelection()!.toString()).toBe('irstSec');
+        editor.undo();
+        expectMessage('**Before\nFirst\nSecond\nAfter**');
+    });
+
+    it('starts an empty code line without absorbing preceding soft lines', () => {
+        editor.load('Before');
+        select(root.querySelector('p')!.firstChild!, 6);
+        editor.insertText('\n');
+        editor.block('pre');
+        editor.insertText('Code');
+        expectMessage('Before\n\n```\nCode\n```');
+    });
+
+    it.each(['Before\nCurrent\nAfter', 'Before\nCurrent\n\nAfter\nTail'])('does not format the next line when a selection ends at its start: %s', (message) => {
+        editor.load(message);
+        const paragraph = root.querySelector('p')!;
+        const after = root.querySelectorAll('p').length > 1 ? root.lastElementChild!.firstChild! : paragraph.childNodes[4];
+        select(paragraph.childNodes[2], 2, after, 0);
+        editor.block('pre');
+        expect(root.querySelector('pre')!.textContent).toBe('Current');
+        expect(root.lastElementChild!.tagName).toBe('P');
+        expect(root.lastElementChild!.textContent).toBe(message.includes('Tail') ? 'AfterTail' : 'After');
+    });
+
+    it.each(['- Before\n  Current\n  After', '> Before\n> Current\n> After'])('converts only the current soft line inside an existing structure: %s', (message) => {
+        editor.load(message);
+        const container = root.querySelector('li, blockquote p')!;
+        select(container.childNodes[2], 3);
+        editor.block('pre');
+        expect(root.querySelector('pre')!.textContent).toBe('Current');
+        expect(root.firstElementChild!.textContent).toBe('Before');
+        expect(root.lastElementChild!.textContent).toBe('After');
+        editor.insertText('!');
+        expect(root.querySelector('pre')!.textContent).toBe('Cur!rent');
+    });
+
+    it.each(['Before', 'Before\n  Previous'])('keeps preceding paragraphs in a loose list outside the current code line: %s', (before) => {
+        editor.load(`- ${before}\n\n  Current\n  After`);
+        const original = editorToMessage(root);
+        const originalHtml = root.innerHTML;
+        const current = root.querySelectorAll('li > p')[1];
+        select(current.firstChild!, 3);
+        editor.block('pre');
+        expect(root.querySelector('pre')!.textContent).toBe('Current');
+        expect(root.firstElementChild!.textContent).toBe(before.replace('\n  ', ''));
+        expect(root.lastElementChild!.textContent).toBe('After');
+        editor.insertText('!');
+        expect(root.querySelector('pre')!.textContent).toBe('Cur!rent');
+        editor.undo();
+        editor.undo();
+        expectMessage(original);
+        expect(root.innerHTML).toBe(originalHtml);
+    });
+
     it('converts all selected paragraphs to one code block with their paragraph break intact', () => {
         editor.load('Before\n\nFirst\n\nSecond\n\nAfter');
         const paragraphs = root.querySelectorAll('p');
@@ -339,7 +413,8 @@ describe('Message editor block formatting', () => {
 
     it('converts a multiline quote to code without retaining the quote wrapper', () => {
         editor.load('Before\n\n> first\n> second\n\nAfter');
-        select(root.querySelector('blockquote p')!.firstChild!, 2);
+        const quote = root.querySelector('blockquote p')!;
+        select(quote, 0, quote, quote.childNodes.length);
 
         editor.block('pre');
 

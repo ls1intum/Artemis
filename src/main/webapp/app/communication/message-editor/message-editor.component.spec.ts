@@ -1144,7 +1144,7 @@ describe('Formatted message composer', () => {
     it('owns cancellable code insertion so WebKit cannot move typing before a line break', () => {
         caretAtEnd();
         (fixture.nativeElement.querySelector('[data-testid="message-block-pre"]') as HTMLButtonElement).click();
-        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true, cancelable: true }));
         const emit = vi.spyOn(component.contentChange, 'emit');
         const input = new InputEvent('beforeinput', { inputType: 'insertText', data: 'second', bubbles: true, cancelable: true });
         editable.dispatchEvent(input);
@@ -1243,21 +1243,53 @@ describe('Formatted message composer', () => {
         fixture.nativeElement.parentElement.removeEventListener('keydown', bubbled);
     });
 
-    it('lets a normal Enter reach the send handler but keeps Enter inside lists and code', () => {
+    it.each(['Hello', '- Hello', '> Hello', '```\nHello\n```'])('sends with Enter and Cmd/Ctrl+Enter regardless of formatting: %s', (content) => {
+        fixture.componentRef.setInput('content', content);
+        fixture.detectChanges();
         const bubbled = vi.fn();
         fixture.nativeElement.addEventListener('keydown', bubbled);
+        const range = document.createRange();
+        range.selectNodeContents(editable.querySelector('li, code, p')!);
+        range.collapse(false);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const original = editable.innerHTML;
+        for (const modifiers of [{}, { ctrlKey: true }, { metaKey: true }]) {
+            const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, ...modifiers });
+            editable.dispatchEvent(enter);
+            expect(enter.defaultPrevented).toBe(true);
+            expect(editable.innerHTML).toBe(original);
+        }
+        expect(bubbled).toHaveBeenCalledTimes(3);
+        fixture.nativeElement.removeEventListener('keydown', bubbled);
+    });
+
+    it.each([{}, { ctrlKey: true }, { metaKey: true }])('preserves native newlines in callers that opt out of sending: %o', (modifiers) => {
+        fixture.componentRef.setInput('suppressNewlineOnEnter', false);
+        fixture.detectChanges();
         caretAtEnd();
-        const enter = () => editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
-        enter();
+        const bubbled = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, ...modifiers });
+        editable.dispatchEvent(enter);
+        expect(enter.defaultPrevented).toBe(false);
+        expect(bubbled).not.toHaveBeenCalled();
+        fixture.nativeElement.removeEventListener('keydown', bubbled);
+    });
+
+    it('sends with Cmd+Enter while a completion is open instead of accepting its highlighted row', async () => {
+        fixture.componentRef.setInput('content', '@ann');
+        fixture.detectChanges();
+        caretAtEnd();
+        await component.refreshSuggestions();
+        const bubbled = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, bubbles: true, cancelable: true }));
         expect(bubbled).toHaveBeenCalledOnce();
-        (fixture.nativeElement.querySelector('[data-testid="message-block-pre"]') as HTMLButtonElement).click();
-        enter();
-        expect(bubbled).toHaveBeenCalledOnce();
-        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
-        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
-        (fixture.nativeElement.querySelector('[data-testid="message-block-ul"]') as HTMLButtonElement).click();
-        enter();
-        expect(bubbled).toHaveBeenCalledOnce();
+        expect(component.suggestionsOpen()).toBe(false);
+        expect(editable.textContent).toBe('@ann');
+        expect(editable.querySelector('[data-message-reference]')).toBeNull();
+        fixture.nativeElement.removeEventListener('keydown', bubbled);
     });
 
     it('navigates and dismisses completion rows and prevents destructive shortcuts from submitting', async () => {

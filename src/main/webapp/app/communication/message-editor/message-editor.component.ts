@@ -262,6 +262,12 @@ export class MessageEditorComponent {
             return;
         }
         const command = event.ctrlKey || event.metaKey;
+        if (event.key === 'Enter' && command && this.suppressNewlineOnEnter()) {
+            this.dismissSuggestions();
+            event.preventDefault();
+            if (this.uploading()) event.stopPropagation();
+            return;
+        }
         if (event.key.startsWith('Arrow') || ['Home', 'End', 'Escape', 'Tab'].includes(event.key) || (command && event.key.toLowerCase() === 'a')) {
             this.editor?.clearItemHighlight();
         }
@@ -324,6 +330,12 @@ export class MessageEditorComponent {
             // A changed query invalidates the old rows immediately, before the debounce elapses.
             this.dismissSuggestions();
         }
+        if (event.key === 'Enter' && this.suppressNewlineOnEnter()) {
+            // The parent form sends in every block style; Shift+Enter remains a newline everywhere.
+            event.preventDefault();
+            if (this.uploading()) event.stopPropagation();
+            return;
+        }
         if (!command && !event.shiftKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'Enter') && this.editor?.leaveBlock(event.key)) {
             event.preventDefault();
             event.stopPropagation();
@@ -345,14 +357,8 @@ export class MessageEditorComponent {
             } else if (this.editor?.exitEmptyList()) {
                 event.preventDefault();
                 event.stopPropagation();
-            } else if (parent?.closest('li, blockquote') || !this.suppressNewlineOnEnter()) {
-                event.stopPropagation();
             } else {
-                // The existing parent form handles the send shortcut after the synchronous input update.
-                event.preventDefault();
-                if (this.uploading()) {
-                    event.stopPropagation();
-                }
+                event.stopPropagation();
             }
         }
     }

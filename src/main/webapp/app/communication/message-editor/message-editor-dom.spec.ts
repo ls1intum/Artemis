@@ -424,6 +424,20 @@ describe('Message editor editing transactions', () => {
         expect(changed).toHaveBeenLastCalledWith('```\nfirst\nsecond\n```');
     });
 
+    it('does not add a second break to a browser-created empty list item or paragraph', () => {
+        root.innerHTML = '<ul><li>First</li><li><br></li></ul>';
+        const empty = root.querySelector('li:last-child')!;
+        select(empty, 0);
+        editor.afterInput();
+        expect(empty.querySelectorAll('br')).toHaveLength(1);
+        expect(editor.exitEmptyList()).toBe(true);
+        const paragraph = root.querySelector('p')!;
+        expect(paragraph.querySelectorAll('br')).toHaveLength(1);
+        expect(paragraph.querySelector('[data-message-placeholder]')).not.toBeNull();
+        expect(window.getSelection()!.anchorNode).toBe(paragraph);
+        expect(window.getSelection()!.anchorOffset).toBe(0);
+    });
+
     it('anchors the code caret at its visible blank line after creating the trailing break placeholder', () => {
         editor.load('```\nfirst\n```');
         const code = root.querySelector('pre code')!;
