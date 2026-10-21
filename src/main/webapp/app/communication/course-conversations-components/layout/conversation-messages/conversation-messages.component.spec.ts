@@ -895,6 +895,34 @@ examples.forEach((activeConversation) => {
             }
         });
 
+        it('attaches forwarded content even when the recipient cannot access the original conversation', () => {
+            const sourcePost: Post = { id: 10, content: 'Forwarded private message', resolved: false };
+            const sourceAnswer: AnswerPost = { id: 11, content: 'Forwarded private reply', resolvesPost: false };
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [
+                            {
+                                id: 1,
+                                messages: [
+                                    { id: 101, sourceId: 10, sourceType: PostingType.POST },
+                                    { id: 102, sourceId: 11, sourceType: PostingType.ANSWER },
+                                ],
+                            },
+                        ],
+                    }),
+                ),
+            );
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of([sourcePost]));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of([sourceAnswer]));
+            component.allPosts.set([{ id: 1, content: 'Shared with you', hasForwardedMessages: true }]);
+
+            component.setPosts();
+
+            expect(component.posts()[0].forwardedPosts).toEqual([sourcePost]);
+            expect(component.posts()[0].forwardedAnswerPosts).toEqual([sourceAnswer]);
+        });
+
         it('should still render messages when a forwarded-source fetch fails', () => {
             const mockForwardedMessages: ForwardedMessage[] = [
                 { id: 101, sourceId: 10, sourceType: 'POST' } as unknown as ForwardedMessage,
@@ -903,7 +931,7 @@ examples.forEach((activeConversation) => {
             const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
 
             vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
-            // the source post is inaccessible to the viewer -> the server replies 403; it must not break the rest of the rendering
+            // Access may be revoked while loading; a failed source request must not break the rest of the rendering.
             vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
             vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
