@@ -2,7 +2,7 @@
     [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
     [visible]="overlay.isOpen()"
     (visibleChange)="$event ? overlay.open() : overlay.close()"
-    (onHide)="overlay.close()"
+    (onHide)="onDialogHide()"
     (onShow)="focusInput()"
     [modal]="true"
     [closable]="true"
@@ -23,6 +23,8 @@
         [operatorUnknown]="deadEnd()"
         [menuVisible]="filterMenuOpen()"
         [activeOptionId]="activeOptionId()"
+        [resultsListboxId]="resultsListboxId()"
+        [activeResultId]="activeResultId()"
         [filterShortcutLabel]="filterShortcutLabel()"
         [filterDisabled]="filterTriggerDisabled()"
         (searchInput)="onSearchInput($event)"
@@ -58,6 +60,10 @@
                 [contentSearchActive]="contentSearchActive()"
                 [courseIds]="courseIdsParam()"
                 [excludeCourseIds]="excludeCourseIdsParam()"
+                [contentPreview]="contentPreview()"
+                (showContentHits)="showContentHits()"
+                [canShowMore]="canShowMore()"
+                (showMore)="showMoreResults()"
             />
         }
     </div>

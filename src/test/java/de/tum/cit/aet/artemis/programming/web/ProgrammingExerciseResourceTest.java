@@ -21,6 +21,8 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -76,11 +78,15 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 
-class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+// Use the existing generation-disabled lane for ordinary exercise operations and their query budget.
+class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILocalVCBatchTest {
 
     private static final String TEST_PREFIX = "programmingexerciseresource";
+
+    @Value("${artemis.hyperion.exercise-generation.enabled:false}")
+    private boolean exerciseGenerationEnabled;
 
     /** The timeline a variant group owns in the tests below; its members must keep exactly these dates. */
     private static final ZonedDateTime GROUP_BASE_DATE = ZonedDateTime.parse("2099-01-01T00:00:00Z");
@@ -970,11 +976,15 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      * them itself (the links need managed competencies), so the resource resolves them through the competency link
      * service; without that call the exercise would be created with no links at all and nothing would fail loudly.
      */
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 30 })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void testCreateProgrammingExercise_withCompetencyLinks_persistsTheLinks() throws Exception {
+    void testCreateProgrammingExercise_withCompetencyLinks_persistsTheLinks(int linkCount) throws Exception {
         addInstructorToCourse();
-        Competency competency = competencyUtilService.createCompetency(course);
+        Set<Competency> competencies = new HashSet<>();
+        for (int index = 0; index < linkCount; index++) {
+            competencies.add(competencyUtilService.createCompetency(course));
+        }
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setShortName("compLinks");
@@ -984,16 +994,29 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
         var buildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
         buildConfig.setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
-        newExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newExercise, 1)));
+        Set<CompetencyExerciseLink> links = new HashSet<>();
+        competencies.forEach(competency -> links.add(new CompetencyExerciseLink(competency, newExercise, 1)));
+        newExercise.setCompetencyLinks(links);
 
-        var created = request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
-                ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        var created = assertThatDb(() -> request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
+                ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(linkCount == 1 ? 120 : 260);
 
         // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
         List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(created.id());
-        assertThat(storedLinks).hasSize(1);
-        assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
-        assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
+        Set<Long> expectedIds = new HashSet<>();
+        competencies.forEach(competency -> expectedIds.add(competency.getId()));
+        assertThat(storedLinks).hasSize(linkCount);
+        assertThat(storedLinks).extracting(link -> link.getCompetency().getId()).containsExactlyInAnyOrderElementsOf(expectedIds);
+        assertThat(storedLinks).allSatisfy(link -> {
+            assertThat(link.getWeight()).isEqualTo(1);
+            assertThat(link.isGeneratedByAi()).isFalse();
+        });
+        assertThat(created.competencyLinks()).hasSize(linkCount);
+        assertThat(created.competencyLinks()).extracting(link -> link.competency().id()).containsExactlyInAnyOrderElementsOf(expectedIds);
+        assertThat(created.competencyLinks()).allSatisfy(link -> {
+            assertThat(link.weight()).isEqualTo(1);
+            assertThat(link.generatedByAi()).isFalse();
+        });
     }
 
     @Test
@@ -1305,12 +1328,13 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_doesNotFanOutQueries() throws Exception {
+        assertThat(exerciseGenerationEnabled).isFalse();
         addInstructorToCourse();
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
 
         assertThatDb(() -> request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK))
-                .hasBeenCalledAtMostTimes(70);
+                .hasBeenCalledAtMostTimes(49);
     }
 
     /**

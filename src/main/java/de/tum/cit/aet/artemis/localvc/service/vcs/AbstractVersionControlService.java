@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service.vcs;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 import org.eclipse.jgit.api.errors.TransportException;
@@ -52,18 +53,18 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public LocalVCRepositoryUri copyRepositoryWithoutHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
-            String targetRepositoryName, Integer attempt) throws VersionControlException {
-        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, false);
+            String targetRepositoryName, Integer attempt, Map<String, byte[]> additionalFiles) throws VersionControlException {
+        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, false, additionalFiles);
     }
 
     @Override
     public LocalVCRepositoryUri copyRepositoryWithHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
             String targetRepositoryName, Integer attempt) throws VersionControlException {
-        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, true);
+        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, true, Map.of());
     }
 
     private LocalVCRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
-            Integer attempt, boolean withHistory) throws VersionControlException {
+            Integer attempt, boolean withHistory, Map<String, byte[]> additionalFiles) throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase(Locale.ROOT);
         targetRepositoryName = targetRepositoryName.toLowerCase(Locale.ROOT);
         String targetProjectKeyLowerCase = targetProjectKey.toLowerCase(Locale.ROOT);
@@ -108,7 +109,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         // A failed copy needs no cleanup here: the repository is built next to the target path and only moved there once it is complete, so a copy that failed leaves the
         // target path as it found it. Deleting it would be actively harmful, since it may hold the repository that a concurrent copy of the same participation published.
         try (Repository targetRepo = withHistory ? bareGitRepositoryService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
-                : bareGitRepositoryService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
+                : bareGitRepositoryService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch, additionalFiles)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
         catch (IOException | RuntimeException ex) {

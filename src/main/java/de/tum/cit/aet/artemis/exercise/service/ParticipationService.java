@@ -50,8 +50,6 @@ import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -59,11 +57,13 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -115,11 +116,17 @@ public class ParticipationService {
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private final Optional<HyperionExerciseMutationApi> liveSaveApi;
+
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<HyperionExerciseMutationApi> liveSaveApi) {
+        this.liveSaveApi = liveSaveApi;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -132,6 +139,7 @@ public class ParticipationService {
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -371,7 +379,8 @@ public class ParticipationService {
         Supplier<ProgrammingExercise> exerciseWithTemplateParticipation = memoize(() -> programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(exercise.getId()));
         Supplier<String> branch = memoize(() -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()));
         // Step 1a) create the student repository (based on the template repository).
-        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get, participation);
+        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get, () -> getOnlineIdeFiles(exercise),
+                participation);
         return startProgrammingParticipation(participation);
     }
 
@@ -476,12 +485,13 @@ public class ParticipationService {
         // Step 1a) create the student repository (based on the template repository or graded participation)
         if (useGradedParticipation && optionalGradedStudentParticipation.isPresent()
                 && optionalGradedStudentParticipation.get() instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
+            // the graded repository already carries the online IDE configuration, and the student may have changed it since
             participation = copyRepository(exercise, programmingExerciseStudentParticipation::getVcsRepositoryUri,
-                    () -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()), participation);
+                    () -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()), Map::of, participation);
         }
         else {
             participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exercise), () -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()),
-                    participation);
+                    () -> getOnlineIdeFiles(exercise), participation);
         }
 
         // For practice mode 1 is always set. For more information see Participation.class
@@ -536,6 +546,8 @@ public class ParticipationService {
             }
             else {
                 participation = new StudentParticipation();
+                // The initial insert must already use the practice attempt, distinct from an in-flight live attempt 0.
+                participation.setAttempt(1);
             }
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
@@ -616,7 +628,8 @@ public class ParticipationService {
             programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case they want to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, () -> resolveTemplateRepositoryUri(programmingExercise),
-                    () -> programmingExerciseRepository.findBranchByExerciseId(programmingExercise.getId()), programmingParticipation);
+                    () -> programmingExerciseRepository.findBranchByExerciseId(programmingExercise.getId()), () -> getOnlineIdeFiles(programmingExercise),
+                    programmingParticipation);
             programmingParticipation = configureRepository(programmingParticipation);
             participation = programmingParticipation;
         }
@@ -673,49 +686,75 @@ public class ParticipationService {
 
     /**
      * Copies the repository behind the source URI to create the repository of the given participation, unless the participation already has a repository.
-     * The source URI is provided as a supplier so that its resolution (which might involve repairing a broken template repository URI, see
-     * {@link #resolveTemplateRepositoryUri}) only happens when the repository actually needs to be copied.
+     * The source URI, the branch and the additional files are provided as suppliers, so that they are only resolved when the repository actually needs to be
+     * copied: resolving the source URI might involve repairing a broken template repository URI (see {@link #resolveTemplateRepositoryUri}), and the branch
+     * and the online IDE configuration each need a query.
      *
-     * @param programmingExercise the programming exercise the participation belongs to
-     * @param sourceUriSupplier   supplies the URI of the repository to copy from, only evaluated if the copy is actually performed
-     * @param participation       the participation for which the repository should be created
+     * @param programmingExercise     the programming exercise the participation belongs to
+     * @param sourceUriSupplier       supplies the URI of the repository to copy from, only evaluated if the copy is actually performed
+     * @param templateBranchSupplier  supplies the branch of the repository to copy from, only evaluated if the copy is actually performed
+     * @param additionalFilesSupplier supplies files to add to the copy, such as the online IDE configuration, only evaluated if the copy is actually performed
+     * @param participation           the participation for which the repository should be created
      * @return the updated participation
      */
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, Supplier<LocalVCRepositoryUri> sourceUriSupplier,
-            Supplier<String> templateBranchSupplier, ProgrammingExerciseStudentParticipation participation) {
+            Supplier<String> templateBranchSupplier, Supplier<Map<String, byte[]>> additionalFilesSupplier, ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
-            LocalVCRepositoryUri sourceUri = sourceUriSupplier.get();
-            if (sourceUri == null) {
-                // fail fast with a meaningful message instead of a NullPointerException deep in the git checkout (see issue #12840)
-                throw new VersionControlException("The source repository URI for copying the repository of participation " + participation.getId() + " of exercise "
-                        + programmingExercise.getId() + " is missing");
-            }
-            final var projectKey = programmingExercise.getProjectKey();
-            // An exam test run is flagged from its first insert, but its repository never carried the practice prefix. Its slug is told apart from the
-            // graded one by the attempt instead, which copyRepositoryWithoutHistory appends. The build plan name has no attempt, so it keeps the prefix.
-            final var repoName = programmingExercise.isExamExercise() ? participation.getParticipantIdentifier()
-                    : participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
-            // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
-            final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceUri);
-            VersionControlService vcs = versionControlService.orElseThrow();
-            String templateBranch = templateBranchSupplier.get();
-            // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
-            var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt());
-            // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
-            if (participation.getStudent().isPresent()) {
-                newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
-            }
-            // After copying the repository, the new participation uses the default branch
-            participation.setBranch(defaultBranch);
-            participation.setRepositoryUri(newRepoUri.toString());
-            participation.setInitializationState(InitializationState.REPO_COPIED);
+            try (var reservation = programmingExercise.isExamExercise() ? null : liveSaveApi.map(api -> api.reserveParticipation(programmingExercise.getId())).orElse(null)) {
+                LocalVCRepositoryUri sourceUri = sourceUriSupplier.get();
+                if (sourceUri == null) {
+                    // fail fast with a meaningful message instead of a NullPointerException deep in the git checkout (see issue #12840)
+                    throw new VersionControlException("The source repository URI for copying the repository of participation " + participation.getId() + " of exercise "
+                            + programmingExercise.getId() + " is missing");
+                }
+                final var projectKey = programmingExercise.getProjectKey();
+                // An exam test run is flagged from its first insert, but its repository never carried the practice prefix. Its slug is told apart from the
+                // graded one by the attempt instead, which copyRepositoryWithoutHistory appends. The build plan name has no attempt, so it keeps the prefix.
+                final var repoName = programmingExercise.isExamExercise() ? participation.getParticipantIdentifier()
+                        : participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
+                // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
+                final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceUri);
+                VersionControlService vcs = versionControlService.orElseThrow();
+                String templateBranch = templateBranchSupplier.get();
+                // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
+                var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt(),
+                        additionalFilesSupplier.get());
+                // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
+                if (participation.getStudent().isPresent()) {
+                    newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
+                }
+                // After copying the repository, the new participation uses the default branch
+                participation.setBranch(defaultBranch);
+                participation.setRepositoryUri(newRepoUri.toString());
+                participation.setInitializationState(InitializationState.REPO_COPIED);
 
-            return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+                return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+            }
         }
         else {
             return participation;
         }
+    }
+
+    /**
+     * Gets the files that configure the online IDE (EduIDE) for a student repository created from the template of the given exercise.
+     * <p>
+     * EduIDE only applies the level in the file to students who have not chosen a level themselves, so it sets where a student starts, not
+     * where they have to stay.
+     *
+     * @param programmingExercise the exercise the student repository belongs to
+     * @return the files by repository-relative path; empty unless the online IDE is allowed and an experience level was selected
+     */
+    private Map<String, byte[]> getOnlineIdeFiles(ProgrammingExercise programmingExercise) {
+        if (!programmingExercise.isAllowOnlineIde()) {
+            return Map.of();
+        }
+        OnlineIdeExperienceLevel level = programmingExerciseBuildConfigRepository.getOnlineIdeExperienceLevelByProgrammingExerciseId(programmingExercise.getId());
+        if (level == null) {
+            return Map.of();
+        }
+        return Map.of(OnlineIdeExperienceLevel.EDU_IDE_CONFIGURATION_PATH, level.toEduIdeConfiguration());
     }
 
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {
@@ -1181,10 +1220,14 @@ public class ParticipationService {
 
     /**
      * Returns a paginated list of {@link ParticipationManagementDTO} for the participation management view.
-     * Uses a 3-step approach: paginated ID query → full entity load → DTO mapping.
+     * <p>
+     * This method performs a three-step query:
+     * 1. ID query — paginated, filtered participation IDs via Criteria API (no expensive LEFT JOINs)
+     * 2. Data query — loads full entity data and the newest results for the page-sized set of IDs (FETCH JOINs, bounded)
+     * 3. DTO mapping — maps entities to flat DTOs for the REST response
      *
      * @param exercise the exercise to query
-     * @param search   search parameters including pagination, sorting, search term, and filter
+     * @param search   search parameters including pagination, sorting, search term, filter, and score range
      * @return a page of ParticipationManagementDTO
      */
     public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search) {
@@ -1199,7 +1242,7 @@ public class ParticipationService {
         }
 
         Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(), stuckBuildCutoff,
-                pageable, sortOrder, search.sortedColumn());
+                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
 
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
@@ -1209,15 +1252,31 @@ public class ParticipationService {
         List<StudentParticipation> participations = teamMode ? studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids)
                 : studentParticipationRepository.findByIdsWithLatestSubmission(ids);
 
+        Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, Result> resultBySubmissionId = Map.of();
+        // The assessment actions are rendered per correction round, so they need one entry per round on top of the
+        // newest result the score columns are built from.
+        Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId = Map.of();
+        if (!submissionIds.isEmpty()) {
+            Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
+            resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
+            correctionRoundResultsBySubmissionId = resultRepository.findCorrectionRoundResultsBySubmissionIds(submissionIds).stream()
+                    .collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
+        }
+
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
 
         Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
-        List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToManagementDTO(p, submissionCountMap)).toList();
+        final Map<Long, Result> finalResultMap = resultBySubmissionId;
+        final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
+        List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
+                .map(p -> mapToManagementDTO(p, exercise instanceof QuizExercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
-    private ParticipationManagementDTO mapToManagementDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap) {
+    private ParticipationManagementDTO mapToManagementDTO(StudentParticipation participation, boolean quizExercise, Map<Long, Integer> submissionCountMap,
+            Map<Long, Result> resultBySubmissionId, Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId) {
         String participantName;
         String participantIdentifier;
         Long studentId = null;
@@ -1245,6 +1304,7 @@ public class ParticipationService {
         }
 
         Submission latestSubmission = participation.getSubmissions().isEmpty() ? null : participation.getSubmissions().iterator().next();
+        Long submissionId = latestSubmission != null ? latestSubmission.getId() : null;
         Boolean buildFailed = null;
         if (latestSubmission instanceof ProgrammingSubmission progSubmission) {
             buildFailed = progSubmission.isBuildFailed();
@@ -1258,127 +1318,15 @@ public class ParticipationService {
             }
         }
 
-        String buildPlanId = null;
-        String repositoryUri = null;
-        if (participation instanceof ProgrammingExerciseStudentParticipation progParticipation) {
-            buildPlanId = progParticipation.getBuildPlanId();
-            repositoryUri = progParticipation.getRepositoryUri();
-        }
-
-        int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
-
-        return new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
-                participantName, participantIdentifier, studentId, studentLogin, teamId, teamStudents, participation.isTestRun(), participation.getPresentationScore(),
-                participation.getIndividualDueDate(), buildPlanId, repositoryUri, buildFailed, lastResultIsManual);
-    }
-
-    /**
-     * Finds participation scores for a given exercise using server-side pagination and filtering.
-     * <p>
-     * This method performs a three-step query:
-     * 1. ID query — paginated, filtered participation IDs via Criteria API (no expensive LEFT JOINs)
-     * 2. Data query — loads full entity data for the page-sized set of IDs (FETCH JOINs, bounded)
-     * 3. DTO mapping — maps entities to flat DTOs for the REST response
-     *
-     * @param exercise the exercise to query
-     * @param search   the search parameters including pagination, sorting, search term, filter, and score range
-     * @return a page of ParticipationScoreDTO
-     */
-    public Page<ParticipationScoreDTO> findParticipationScoresForExercise(Exercise exercise, ParticipationScoreSearchDTO search) {
-        SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
-        Pageable pageable = PageRequest.of(search.page(), search.pageSize());
-        boolean teamMode = exercise.isTeamMode();
-
-        // Step 1: Get paginated participation IDs with filters
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForScores(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(),
-                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
-        List<Long> ids = idPage.getContent();
-        if (ids.isEmpty()) {
-            return new PageImpl<>(List.of(), pageable, idPage.getTotalElements());
-        }
-
-        // Step 2: Load full entity data for those IDs
-        List<StudentParticipation> participations = teamMode ? studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids)
-                : studentParticipationRepository.findByIdsWithLatestSubmission(ids);
-
-        // Load latest results with assessment notes
-        Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
-        Map<Long, Result> resultBySubmissionId = Map.of();
-        // The scores view renders assessment actions per correction round, so it needs one entry per round on top of the
-        // newest result the score columns are built from.
-        Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId = Map.of();
-        if (!submissionIds.isEmpty()) {
-            Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
-            resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
-            correctionRoundResultsBySubmissionId = resultRepository.findCorrectionRoundResultsBySubmissionIds(submissionIds).stream()
-                    .collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
-        }
-
-        // Load submission counts for these IDs
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
-
-        // Step 3: Map to DTOs, preserving the ID query order
-        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
-        final Map<Long, Result> finalResultMap = resultBySubmissionId;
-        final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
-        List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
-                .map(p -> mapToDTO(p, exercise instanceof QuizExercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
-
-        return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
-    }
-
-    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, boolean quizExercise, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
-            Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId) {
-        // Participant info
-        String participantName;
-        String participantIdentifier;
-        Long studentId = null;
-        Long teamId = null;
-
-        if (participation.getStudent().isPresent()) {
-            User student = participation.getStudent().get();
-            participantName = student.getName();
-            participantIdentifier = student.getLogin();
-            studentId = student.getId();
-        }
-        else if (participation.getTeam().isPresent()) {
-            Team team = participation.getTeam().get();
-            participantName = team.getName();
-            participantIdentifier = team.getShortName();
-            teamId = team.getId();
-        }
-        else {
-            participantName = null;
-            participantIdentifier = null;
-        }
-
-        // Latest submission & result
-        Submission latestSubmission = participation.getSubmissions().isEmpty() ? null : participation.getSubmissions().iterator().next();
-        Result latestResult = (latestSubmission != null && latestSubmission.getId() != null) ? resultBySubmissionId.get(latestSubmission.getId()) : null;
-
-        Long resultId = latestResult != null ? latestResult.getId() : null;
-        Double score = latestResult != null ? latestResult.getScore() : null;
-        Boolean successful = latestResult != null ? latestResult.isSuccessful() : null;
+        // Newest non-Athena result of the latest submission, which the score columns describe
+        Result latestResult = submissionId != null ? resultBySubmissionId.get(submissionId) : null;
         ZonedDateTime completionDate = latestResult != null ? latestResult.getCompletionDate() : null;
-        AssessmentType assessmentType = latestResult != null ? latestResult.getAssessmentType() : null;
-        String assessmentNote = (latestResult != null && latestResult.getAssessmentNote() != null) ? latestResult.getAssessmentNote().getNote() : null;
-
-        // Duration in seconds. A quiz practice participation is reused for every attempt and the start of a single attempt is not recorded, so the time since the
-        // participation was created would include the pauses between the attempts and is not the duration of the latest one.
         Long durationInSeconds = null;
         boolean durationUnknown = quizExercise && participation.isPracticeMode();
         if (!durationUnknown && completionDate != null && participation.getInitializationDate() != null) {
             durationInSeconds = Duration.between(participation.getInitializationDate(), completionDate).getSeconds();
         }
 
-        // Submission info
-        Long submissionId = latestSubmission != null ? latestSubmission.getId() : null;
-        Boolean buildFailed = null;
-        if (latestSubmission instanceof ProgrammingSubmission progSubmission) {
-            buildFailed = progSubmission.isBuildFailed();
-        }
-
-        // Programming participation info
         String buildPlanId = null;
         String repositoryUri = null;
         if (participation instanceof ProgrammingExerciseStudentParticipation progParticipation) {
@@ -1387,16 +1335,16 @@ public class ParticipationService {
         }
 
         int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
-
-        Integer testCaseCount = latestResult != null ? latestResult.getTestCaseCount() : null;
-        Integer passedTestCaseCount = latestResult != null ? latestResult.getPassedTestCaseCount() : null;
-        Integer codeIssueCount = latestResult != null ? latestResult.getCodeIssueCount() : null;
-
         List<CorrectionRoundResultDTO> correctionRoundResults = submissionId != null ? correctionRoundResultsBySubmissionId.getOrDefault(submissionId, List.of()) : List.of();
 
-        return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
-                resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri,
-                participation.isTestRun(), testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults);
+        return new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
+                participantName, participantIdentifier, studentId, studentLogin, teamId, teamStudents, participation.isTestRun(), participation.getPresentationScore(),
+                participation.getIndividualDueDate(), buildPlanId, repositoryUri, buildFailed, lastResultIsManual, submissionId, latestResult != null ? latestResult.getId() : null,
+                latestResult != null ? latestResult.getScore() : null, latestResult != null ? latestResult.isSuccessful() : null, completionDate,
+                latestResult != null ? latestResult.getAssessmentType() : null,
+                latestResult != null && latestResult.getAssessmentNote() != null ? latestResult.getAssessmentNote().getNote() : null, durationInSeconds,
+                latestResult != null ? latestResult.getTestCaseCount() : null, latestResult != null ? latestResult.getPassedTestCaseCount() : null,
+                latestResult != null ? latestResult.getCodeIssueCount() : null, correctionRoundResults);
     }
 
     /**

@@ -147,7 +147,7 @@
         </div>
 
         @if (configureSessionPlan()) {
-            <div class="label-and-input-row">
+            <div class="label-and-input-row label-and-input-row--wrap">
                 <div class="label-and-input">
                     <label for="first-session-start-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate }} *</label>
                     @let firstSessionStartValidation = firstSessionStartValidationResult();
@@ -197,7 +197,7 @@
                 </div>
             </div>
 
-            <div class="label-and-input-row">
+            <div class="label-and-input-row label-and-input-row--wrap">
                 <div class="label-and-input">
                     <label for="repetition-frequency-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequency' | artemisTranslate }} *</label>
                     <tumaet-ui-input-group class="w-full">

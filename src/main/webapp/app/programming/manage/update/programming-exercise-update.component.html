@@ -38,6 +38,7 @@
             }
             <jhi-programming-exercise-language
                 [(programmingExercise)]="programmingExercise"
+                [allowOnlineIde]="!!programmingExercise.allowOnlineIde"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />

@@ -1,9 +1,11 @@
+import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import dayjs from 'dayjs/esm';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
@@ -41,7 +43,7 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { ElementRef, signal } from '@angular/core';
+import { ElementRef, computed, signal } from '@angular/core';
 import {
     ChannelAction,
     ChannelsOverviewDialogComponent,
@@ -76,6 +78,7 @@ examples.forEach((activeConversation) => {
         let courseSidebarService: CourseSidebarService;
         let activatedRoute: ActivatedRoute;
         let breakpoint$: BehaviorSubject<BreakpointState>;
+        let activeConversation$: BehaviorSubject<ConversationDTO | undefined>;
 
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
@@ -222,7 +225,8 @@ examples.forEach((activeConversation) => {
 
             postsSubject = new BehaviorSubject<Post[]>([]);
             vi.spyOn(courseConversationsService, 'course', 'get').mockReturnValue(course);
-            vi.spyOn(courseConversationsService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
+            activeConversation$ = new BehaviorSubject<ConversationDTO | undefined>(activeConversation);
+            vi.spyOn(courseConversationsService, 'activeConversation$', 'get').mockReturnValue(activeConversation$.asObservable());
             setActiveConversationSpy = vi.spyOn(courseConversationsService, 'setActiveConversation');
             acceptCodeOfConductSpy = vi.spyOn(courseConversationsService, 'acceptCodeOfConduct');
             vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
@@ -268,12 +272,111 @@ examples.forEach((activeConversation) => {
             vi.resetAllMocks();
         });
 
+        it('should refresh an already open thread after its forwarded sources finish loading', () => {
+            activeConversation$.next({ id: 5, type: ConversationType.CHANNEL });
+            fixture.detectChanges();
+            const openedPost = new Post();
+            openedPost.id = 42;
+            openedPost.conversation = { id: 5 };
+            component.postInThread.set(openedPost);
+            fixture.detectChanges();
+            const sidebar = fixture.debugElement.query(By.directive(ConversationThreadSidebarComponent));
+            const forwardedContent = computed(() => sidebar.componentInstance.activePost()?.forwardedPosts?.[0]?.content);
+            expect(forwardedContent()).toBeUndefined();
+
+            // Forwarded sources arrive after the user opened the bare wrapper in the thread.
+            openedPost.forwardedPosts = [{ id: 43, content: 'Loaded forwarded message' }];
+            fixture.debugElement.query(By.directive(ConversationMessagesComponent)).triggerEventHandler('forwardedMessagesLoaded', [openedPost]);
+            fixture.detectChanges();
+
+            expect(sidebar.componentInstance.activePost()).not.toBe(openedPost);
+            expect(forwardedContent()).toBe('Loaded forwarded message');
+        });
+
         it('should have service set up', () => {
             fixture.detectChanges();
             expect(component.isServiceSetUp()).toBe(true);
             expect(component.isLoading()).toBe(false);
             expect(component.conversationsOfUser()).toHaveLength(1);
             expect(component.activeConversation()).toEqual(activeConversation);
+        });
+
+        it('should open and close a thread without retaining a pending source', () => {
+            const opened = { id: 42 } as Post;
+            const setOpenPost = vi.spyOn(component['selectionState'], 'setOpenPostId');
+            component['pendingThreadPostId'] = 99;
+
+            component.openThread(opened);
+            expect(component.postInThread()).toBe(opened);
+            expect(setOpenPost).toHaveBeenCalledWith(42);
+            expect(component['pendingThreadPostId']).toBeUndefined();
+
+            component.closeThread();
+            expect(component.postInThread()).toBeUndefined();
+            expect(component['pendingThreadPostId']).toBeUndefined();
+        });
+
+        it.each(['post', 'reply'] as const)('should scroll to and temporarily highlight an existing original %s', (kind) => {
+            const host = document.createElement('div');
+            host.id = 'item-987654';
+            const target = kind === 'post' ? document.createElement('div') : host;
+            if (kind === 'post') {
+                target.className = 'post';
+                host.appendChild(target);
+            }
+            const scroll = vi.fn();
+            target.scrollIntoView = scroll;
+            document.body.appendChild(host);
+            try {
+                if (kind === 'post') component['scrollToAndHighlightPost'](987654);
+                else component['scrollToAndHighlightReply'](987654);
+
+                expect(scroll).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'center' });
+                expect(target.classList.contains('highlight-' + kind)).toBe(true);
+                vi.advanceTimersByTime(2000);
+                expect(target.classList.contains('highlight-' + kind)).toBe(false);
+            } finally {
+                host.remove();
+            }
+        });
+
+        it.each(['post', 'reply'] as const)('should wait for a lazily rendered original %s and disconnect its observer', async (kind) => {
+            if (kind === 'post') component['scrollToAndHighlightPost'](987655);
+            else component['scrollToAndHighlightReply'](987655);
+            const observer = kind === 'post' ? component['highlightPostObserver']! : component['highlightReplyObserver']!;
+            const disconnect = vi.spyOn(observer, 'disconnect');
+            const host = document.createElement('div');
+            host.id = 'item-987655';
+            const target = kind === 'post' ? document.createElement('div') : host;
+            if (kind === 'post') {
+                target.className = 'post';
+                host.appendChild(target);
+            }
+            const scroll = vi.fn();
+            target.scrollIntoView = scroll;
+            document.body.appendChild(host);
+            try {
+                // Deliver the real DOM mutation observer microtask.
+                await Promise.resolve();
+                expect(scroll).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'center' });
+                expect(target.classList.contains('highlight-' + kind)).toBe(true);
+                expect(disconnect).toHaveBeenCalled();
+                vi.advanceTimersByTime(2000);
+                expect(target.classList.contains('highlight-' + kind)).toBe(false);
+            } finally {
+                host.remove();
+            }
+        });
+
+        it('should stop waiting for an unavailable original reply after five seconds', () => {
+            component['focusReplyId'] = 987656;
+            component['scrollToAndHighlightReply'](987656);
+            const disconnect = vi.spyOn(component['highlightReplyObserver']!, 'disconnect');
+
+            vi.advanceTimersByTime(5000);
+
+            expect(disconnect).toHaveBeenCalled();
+            expect(component['focusReplyId']).toBeUndefined();
         });
 
         it('should store the highlight observers and disconnect them in ngOnDestroy', () => {
@@ -555,6 +658,124 @@ examples.forEach((activeConversation) => {
                 expect(recentsGroup).toBeDefined();
                 expect(recentsGroup.entityData).toHaveLength(1);
                 expect(recentsGroup.entityData[0].isCurrent).toBe(true);
+            });
+        });
+
+        describe('empty direct messages in the sidebar', () => {
+            const emptyChat = { id: 101, type: ConversationType.ONE_TO_ONE } as ConversationDTO;
+            const usedChat = { id: 102, type: ConversationType.ONE_TO_ONE, lastMessageDate: dayjs() } as ConversationDTO;
+            const emptyChannel = { id: 103, type: ConversationType.CHANNEL } as ConversationDTO;
+            const emptyGroupChat = { id: 104, type: ConversationType.GROUP_CHAT } as ConversationDTO;
+
+            beforeEach(() => {
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
+                component.conversationsOfUser.set([emptyChat, usedChat, emptyChannel, emptyGroupChat]);
+            });
+
+            it('should leave an empty direct message out of the sidebar when it is not open', () => {
+                component.activeConversation.set(undefined);
+
+                component.prepareSidebarData();
+
+                expect(vi.mocked(courseOverviewService.groupConversationsByChannelType).mock.lastCall?.[1]).toEqual([usedChat, emptyChannel, emptyGroupChat]);
+                expect(courseOverviewService.mapConversationsToSidebarCardElements).toHaveBeenLastCalledWith([usedChat, emptyChannel, emptyGroupChat]);
+            });
+
+            it('should keep an empty direct message in the sidebar while it is open', () => {
+                component.activeConversation.set(emptyChat);
+
+                component.prepareSidebarData();
+
+                expect(vi.mocked(courseOverviewService.groupConversationsByChannelType).mock.lastCall?.[1]).toEqual([emptyChat, usedChat, emptyChannel, emptyGroupChat]);
+            });
+
+            it('should reload the sidebar when the user leaves an empty direct message', () => {
+                fixture.detectChanges();
+                component.conversationsOfUser.set([emptyChat, usedChat]);
+                activeConversation$.next(emptyChat);
+                const prepareSidebarDataSpy = vi.spyOn(component, 'prepareSidebarData');
+
+                activeConversation$.next(usedChat);
+
+                expect(prepareSidebarDataSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should not reload the sidebar when the user leaves a direct message that has messages', () => {
+                fixture.detectChanges();
+                component.conversationsOfUser.set([emptyChat, usedChat]);
+                activeConversation$.next(usedChat);
+                const prepareSidebarDataSpy = vi.spyOn(component, 'prepareSidebarData');
+
+                activeConversation$.next(emptyChat);
+
+                expect(prepareSidebarDataSpy).not.toHaveBeenCalled();
+            });
+        });
+
+        describe('an empty direct message that receives its first message', () => {
+            let emptyChat: ConversationDTO;
+            let usedChat: ConversationDTO;
+            let conversationsOfUser$: BehaviorSubject<ConversationDTO[]>;
+
+            beforeEach(() => {
+                emptyChat = { id: 101, type: ConversationType.ONE_TO_ONE } as ConversationDTO;
+                usedChat = { id: 102, type: ConversationType.ONE_TO_ONE, lastMessageDate: dayjs() } as ConversationDTO;
+                conversationsOfUser$ = new BehaviorSubject<ConversationDTO[]>([emptyChat, usedChat]);
+                Object.defineProperty(courseConversationsService, 'conversationsOfUser$', { get: () => conversationsOfUser$.asObservable() });
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
+                vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockImplementation((conversations) =>
+                    conversations.map((conversation) => ({ id: conversation.id!, title: 'chat', size: 'S', conversation })),
+                );
+                fixture.detectChanges();
+                component.prepareSidebarData();
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockClear();
+                vi.mocked(courseOverviewService.groupConversationsByChannelType).mockClear();
+            });
+
+            it('should add the chat to the sidebar when the other participant sends the first message', () => {
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id]);
+
+                // the service updates the cached chat in place when the message event arrives
+                emptyChat.lastMessageDate = dayjs();
+                conversationsOfUser$.next([emptyChat, usedChat]);
+
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([emptyChat.id, usedChat.id]);
+                expect(vi.mocked(courseOverviewService.groupConversationsByChannelType).mock.lastCall?.[1]).toContain(emptyChat);
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('should keep the chat out of the sidebar while it is still empty', () => {
+                conversationsOfUser$.next([emptyChat, usedChat]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id]);
+            });
+        });
+
+        describe('opening a conversation that the sidebar does not list yet', () => {
+            const newChannel = { id: 201, type: ConversationType.CHANNEL } as ConversationDTO;
+            const knownChannel = { id: 202, type: ConversationType.CHANNEL } as ConversationDTO;
+
+            beforeEach(() => {
+                fixture.detectChanges();
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockClear();
+                component.conversationsOfUser.set([newChannel, knownChannel]);
+                component.sidebarConversations.set([{ id: knownChannel.id!, title: 'known', size: 'S', conversation: knownChannel }]);
+                vi.mocked(courseOverviewService.groupConversationsByChannelType).mockClear();
+            });
+
+            it('should rebuild the sidebar without asking the server again', () => {
+                activeConversation$.next(newChannel);
+
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+                expect(vi.mocked(courseOverviewService.groupConversationsByChannelType).mock.lastCall?.[1]).toContain(newChannel);
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('should leave the sidebar alone when the conversation is already listed', () => {
+                activeConversation$.next(knownChannel);
+
+                expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
             });
         });
 

@@ -46,6 +46,10 @@
         "search": {
             "title": "Search",
             "placeholder": "Search or ask a question...",
+            "contentHitsRow": "Slides & videos: {{ count }} hits in {{ lectures }}",
+            "contentHitsRowAction": "Show",
+            "showMoreResults": "Show more results",
+            "resultsLabel": "Search results",
             "noResultsFound": "No results found",
             "searchPlaceholder": "Search...",
             "tooShortQueryHint": "Please enter a longer search term.",
@@ -70,8 +74,8 @@
                 "lecturesDescription": "Search lectures and lecture units by title",
                 "slidesAndVideosTitle": "Slides & Videos",
                 "slidesAndVideosDescription": "Search lecture slides and video transcripts",
-                "communicationTitle": "Communication",
-                "communicationDescription": "Search channels and messages",
+                "channelsTitle": "Channels",
+                "channelsDescription": "Search course channels by name and description",
                 "faqsTitle": "FAQs",
                 "faqsDescription": "Search frequently asked questions",
                 "examsTitle": "Exams",
@@ -105,7 +109,8 @@
                     "faq": "FAQ",
                     "channel": "Channel",
                     "course": "Course",
-                    "message": "Message"
+                    "message": "Message",
+                    "page": "Page"
                 }
             },
             "comingSoon": "Coming soon",
@@ -152,7 +157,6 @@
             },
             "searchFailed": "Search failed. Please try again.",
             "contentSearchPrompt": "Enter a search term to search lecture slides and videos.",
-            "contentSearchDisabled": "Slides and videos cannot be searched in these courses.",
             "contentSearchUnavailable": "Searching slides and videos is currently unavailable. Please try again later.",
             "irisAnswerShowMore": "Show more",
             "irisAnswerShowLess": "Show less",
@@ -169,6 +173,8 @@
             "irisAnswerRetry": "Try again",
             "irisCollapseSources": "Show fewer sources",
             "irisAiBadge": "AI",
+            "irisHandoffFollowUp": "Have a follow-up? Continue chatting with me about",
+            "irisHandoffOpenChat": "Open chat",
             "entityType": {
                 "exercise": "Exercise",
                 "lecture": "Lecture",

@@ -15,6 +15,16 @@ artemis:
         asynchronous: true
         # The number of results that can be processed concurrently. This is used to speed up the processing of the results of the CI jobs. Adapt according to your available hardware resources and expected load on the CI system.
         concurrent-result-processing-size: 16
+        # A run that triggers many builds, such as an instructor's "Trigger All" or the rebuild of failed builds, queues builds
+        # in batches (see artemis.external-system-request) and additionally waits while the build queue is longer than the build
+        # agents can work off. Builds of students' pushes and of exams are never held back by this.
+        bulk-trigger:
+            # How many queued jobs each build slot may have before a bulk trigger waits. The number of build slots is the sum of
+            # concurrent builds of all build agents that are not paused. Builds of other runs and of students count towards the
+            # queue as well. Set 0 to turn the wait off.
+            max-queued-jobs-per-build-slot: 2
+            # The longest one bulk trigger waits in total, in minutes. After that, it queues the rest of its builds without waiting.
+            max-wait-minutes: 180
         # The prefix that is used for the Docker containers that are created by the local CI system.
         build-container-prefix: local-ci-
         # In case you need to use a proxy to access the internet from the Docker container (e.g., due to firewall constraints), set use-system-proxy to true and configure the proxy settings below.

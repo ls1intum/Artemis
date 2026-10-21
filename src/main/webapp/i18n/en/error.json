@@ -1,10 +1,13 @@
 {
     "error": {
+        "exerciseGenerationCancellationUnavailable": "The cancellation could not be confirmed. Check the current run status, then try again.",
         "title": "Error page!",
         "http": {
             "400": "Bad request.",
             "401": "You are not authenticated to access this page.",
-            "403": "You are not authorized to access this page.",
+            "403": "You do not have permission to access this content or perform this action. Contact your course team if you need access.",
+            "403Read": "You do not have permission to view the requested content. Contact your course team if you need access.",
+            "403Action": "You do not have permission to perform this action. Contact your course team if you need access.",
             "404": "The page does not exist.",
             "405": "The HTTP verb you used is not supported for this URL.",
             "409": "There was a conflict while processing your request.",
@@ -47,8 +50,11 @@
         "emptyLegalDocument": "The privacy statement or the imprint must not be empty.",
         "cantSaveFile": "The uploaded file {{ fileName }} could not be saved.",
         "emptyFile": "The uploaded file {{ fileName }} is empty. Please check the file and try again.",
+        "invalidPdf": "The uploaded PDF file is invalid or corrupted. Please upload a valid PDF.",
         "externalSubmissionBeforeDueDate": "External submissions are not supported before the exercise due date.",
         "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises.",
+        "exerciseNotInStudentExam": "The student exam of this student does not contain this exercise.",
+        "noWorkingPeriod": "This student has no working period in this exam, because no student exam exists for them. Generate the student exams first.",
         "noSubmissions": "No existing user was specified, or no submission exists.",
         "feedbackCreditsNull": "Error! If feedback is present, all elements must contain points.",
         "faqRewriteFailed": "Could not rewrite FAQ. Please try again.",

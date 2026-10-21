@@ -29,18 +29,26 @@ import { TumAetUiButtonComponent } from '../button/tumaet-ui-button.component';
 import { TumAetUiOverlayService } from '../overlay/tumaet-ui-overlay.service';
 import { TumAetUiTooltipDirective } from '../tooltip/tumaet-ui-tooltip.directive';
 import { TumAetUiCalendarComponent } from './tumaet-ui-calendar.component';
-import { TIME_REGEX, combineDateAndTime, formatDisplay, matchesDisplayFormat, parseDisplay, valuesEqual } from './tumaet-ui-date-picker.util';
+import { TIME_REGEX, combineDateAndTime, formatDisplay, matchesDisplayFormat, normalizeDisplayText, parseDisplay, valuesEqual } from './tumaet-ui-date-picker.util';
 import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 
 let nextDatePickerId = 0;
 
-/** Date-and-time field with typed input and an accessible calendar dialog; `timeOnly` reduces it to a time. */
+/**
+ * Date-and-time field with typed input and an accessible calendar dialog; `timeOnly` reduces it to a time.
+ *
+ * An element marked `tumAetUiDatePickerLabelAddon`, such as a help icon, is shown right after the visible label, so it stays on
+ * one line with the label and the time-zone indicator. It needs `labelName` and is dropped together with the label by `hideLabelName`.
+ */
 @Component({
     selector: 'tumaet-ui-date-picker',
     templateUrl: './tumaet-ui-date-picker.component.html',
     styleUrl: './tumaet-ui-date-picker.component.scss',
     host: {
         class: 'tumaet-ui-date-picker',
+        '[class.tumaet-ui-date-picker--date-only]': 'dateOnly()',
+        '[class.tumaet-ui-date-picker--time-only]': 'timeOnly()',
+        '[class.tumaet-ui-date-picker--inline]': 'inline()',
     },
     imports: [
         A11yModule,
@@ -77,6 +85,8 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     readonly hideLabelName = input(false, { transform: booleanAttribute });
     /** Hides the built-in validation message without changing validity or `aria-invalid`. */
     readonly hideValidationMessage = input(false, { transform: booleanAttribute });
+    /** Defer text errors until blur while continuing to emit validity during typing. */
+    readonly validateOnBlur = input(false, { transform: booleanAttribute });
     /** Shows the browser time-zone indicator beside the label. */
     readonly shouldDisplayTimeZoneWarning = input(true, { transform: booleanAttribute });
     /** Edit `HH:mm` without a calendar, preserving the value's date or using today when empty. */
@@ -161,8 +171,10 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     private restoreFocusElement?: HTMLElement;
     private pendingHourFocus = false;
 
-    protected readonly showErrorBorder = computed(() => this.invalid() || !this.isInputValid());
-    protected readonly showValidationMessage = computed(() => !this.hideValidationMessage() && !this.isInputValid());
+    private readonly isEditingText = signal(false);
+    private readonly showTextError = computed(() => !this.isInputValid() && (!this.validateOnBlur() || !this.isEditingText()));
+    protected readonly showErrorBorder = computed(() => this.invalid() || this.showTextError());
+    protected readonly showValidationMessage = computed(() => !this.hideValidationMessage() && this.showTextError());
     protected readonly describedBy = computed(() => {
         const ids = [this.showValidationMessage() ? `${this.inputId()}-error` : undefined, this.ariaDescribedBy()].filter(Boolean);
         return ids.length ? ids.join(' ') : null;
@@ -206,6 +218,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     readonly isValid = computed(() => !this.invalid() && this.isInputValid());
 
     protected onInput(raw: string): void {
+        this.isEditingText.set(true);
         this.inputText.set(raw);
         const parsed = parseDisplay(raw, this.timeOnly(), this.value(), this.dateOnly());
         if (parsed) {
@@ -222,9 +235,17 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     }
 
     protected onBlur(raw: string): void {
-        const trimmed = raw.trim();
+        this.isEditingText.set(false);
+        const trimmed = normalizeDisplayText(raw);
+        const current = this.value();
         if (trimmed && !matchesDisplayFormat(trimmed, this.timeOnly(), this.dateOnly())) {
             this.isInputValid.set(false);
+        } else if (trimmed && current && this.isInputValid()) {
+            // Text that only differs in whitespace leaves the displayed value unchanged, so the binding does not rewrite the field.
+            const field = this.dateInput()?.nativeElement;
+            if (field) {
+                field.value = formatDisplay(current, this.timeOnly(), this.dateOnly());
+            }
         }
         this.touch.emit();
     }

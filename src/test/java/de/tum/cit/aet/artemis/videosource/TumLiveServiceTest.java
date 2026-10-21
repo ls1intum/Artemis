@@ -15,11 +15,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO;
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO.StreamDTO;
+import de.tum.cit.aet.artemis.videosource.service.TumLivePlaylistLookup;
 import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +35,8 @@ class TumLiveServiceTest {
 
     @Mock
     private RestClient.Builder restClientBuilder;
+
+    private static final String WATCH_URL = "https://live.rbg.tum.de/w/abc-course/12345";
 
     private TumLiveService tumLiveService;
 
@@ -86,6 +93,67 @@ class TumLiveServiceTest {
 
         Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc-course/12345");
         assertThat(result).isEmpty();
+    }
+
+    /** The production case: TUM Live refuses a course that is not public. The reason is kept, so it is not mistaken for TUM Live being down. */
+    @Test
+    void lookUpPlaylist_forbidden_isNotAccessible() {
+        stubLookupThrows(HttpClientErrorException.create(HttpStatus.FORBIDDEN, "Forbidden", HttpHeaders.EMPTY, null, null));
+        assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.NOT_ACCESSIBLE);
+    }
+
+    @Test
+    void lookUpPlaylist_notFound_isNotAvailable() {
+        stubLookupThrows(HttpClientErrorException.create(HttpStatus.NOT_FOUND, "Not Found", HttpHeaders.EMPTY, null, null));
+        assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
+    }
+
+    /** A stream without a recording yet has no playlist URL. */
+    @Test
+    void lookUpPlaylist_noPlaylistUrl_isNotAvailable() {
+        when(restClient.get().uri(eq("/streams/{courseSlug}/{streamId}"), eq("abc-course"), eq("12345")).retrieve().body(eq(TumLivePlaylistDTO.class)))
+                .thenReturn(new TumLivePlaylistDTO(new StreamDTO(null)));
+        assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
+    }
+
+    /** The API sends an unset playlist as an empty string: no usable video, so the unit must not count as resolved. */
+    @Test
+    void lookUpPlaylist_blankPlaylistUrl_isNotAvailable() {
+        when(restClient.get().uri(eq("/streams/{courseSlug}/{streamId}"), eq("abc-course"), eq("12345")).retrieve().body(eq(TumLivePlaylistDTO.class)))
+                .thenReturn(new TumLivePlaylistDTO(new StreamDTO("")), new TumLivePlaylistDTO(new StreamDTO("  ")));
+        assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
+        assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
+    }
+
+    /** Rate limiting means TUM Live works but wants the client to wait, not that the recording is missing. */
+    @Test
+    void lookUpPlaylist_tooManyRequests_isTemporarilyUnavailable() {
+        stubLookupThrows(HttpClientErrorException.create(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests", HttpHeaders.EMPTY, null, null));
+        assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.TEMPORARILY_UNAVAILABLE);
+    }
+
+    @Test
+    void lookUpPlaylist_serverErrorOrConnectionFailure_isTemporarilyUnavailable() {
+        stubLookupThrows(HttpServerErrorException.create(HttpStatus.BAD_GATEWAY, "Bad Gateway", HttpHeaders.EMPTY, null, null));
+        assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.TEMPORARILY_UNAVAILABLE);
+    }
+
+    @Test
+    void lookUpPlaylist_success_isResolvedWithThePlaylist() {
+        when(restClient.get().uri(eq("/streams/{courseSlug}/{streamId}"), eq("abc-course"), eq("12345")).retrieve().body(eq(TumLivePlaylistDTO.class)))
+                .thenReturn(new TumLivePlaylistDTO(new StreamDTO("https://cdn.tum.live/pl.m3u8")));
+        TumLivePlaylistLookup lookup = tumLiveService.lookUpPlaylist(WATCH_URL);
+        assertThat(lookup.outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.RESOLVED);
+        assertThat(lookup.playlistUrl()).isEqualTo("https://cdn.tum.live/pl.m3u8");
+    }
+
+    @Test
+    void lookUpPlaylist_notATumLiveUrl_isNotApplicable() {
+        assertThat(tumLiveService.lookUpPlaylist("https://example.com/some/path").outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.NOT_APPLICABLE);
+    }
+
+    private void stubLookupThrows(RestClientException exception) {
+        when(restClient.get().uri(eq("/streams/{courseSlug}/{streamId}"), eq("abc-course"), eq("12345")).retrieve().body(eq(TumLivePlaylistDTO.class))).thenThrow(exception);
     }
 
     @Test

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -15,7 +15,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { Directive, NO_ERRORS_SCHEMA, input, output } from '@angular/core';
+import { Directive, NO_ERRORS_SCHEMA, type WritableSignal, input, output, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -23,7 +23,7 @@ import { PostCreateEditModalComponent } from 'app/communication/posting-create-e
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
+import { ForwardedMessage, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
 import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
@@ -140,6 +140,10 @@ examples.forEach((activeConversation) => {
             });
             component.canStartSaving = true;
             fixture.detectChanges();
+            // Model the response for the newly opened conversation, not cached posts from the previous context.
+            component.allPosts.set([examplePost]);
+            component.setPosts();
+            component.isFetchingPosts.set(false);
         });
 
         afterEach(() => {
@@ -160,7 +164,7 @@ examples.forEach((activeConversation) => {
         it('should fetch posts on next page fetch', () => {
             const getFilteredPostSpy = vi.spyOn(communicationService, 'getFilteredPosts');
             component.searchText = 'loremIpsum';
-            component.totalNumberOfPosts = 10;
+            component.totalNumberOfPosts.set(10);
             component.fetchNextPage();
             expect(getFilteredPostSpy).toHaveBeenCalledOnce();
         });
@@ -241,6 +245,424 @@ examples.forEach((activeConversation) => {
             component.handleNewMessageCreated();
             vi.advanceTimersByTime(300);
             expect(component.content()!.nativeElement.scrollTop).toBe(component.content()!.nativeElement.scrollHeight);
+        });
+
+        describe('scrolling when a message of another user arrives', () => {
+            const setScrollGeometry = (scrollTop: number) => {
+                const container = component.content()!.nativeElement;
+                // the container is 400px high (not the formerly hard-coded 700px) and holds 1000px of messages
+                Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+                Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+                container.scrollTop = scrollTop;
+                // the posts are loaded and the list is visible
+                component.isFetchingPosts.set(false);
+            };
+
+            it('should scroll to the bottom when the user is at the bottom, independent of the container height', () => {
+                setScrollGeometry(600);
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should scroll to the bottom when the user is within a few pixels of the bottom', () => {
+                setScrollGeometry(597);
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should not scroll when the user has scrolled up to read older messages', () => {
+                setScrollGeometry(100);
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).not.toHaveBeenCalled();
+            });
+
+            it('should not scroll when the user is at the top of the first page after the initial position was restored', () => {
+                setScrollGeometry(0);
+                component.canStartSaving = true;
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).not.toHaveBeenCalled();
+            });
+
+            it('should scroll to the bottom when the list is at the top of the first page while the initial position is not restored yet', () => {
+                setScrollGeometry(0);
+                component.canStartSaving = false;
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            });
+
+            describe('while posts are being fetched', () => {
+                // the list is hidden by `display: none` while fetching, so it reports no scroll dimensions
+                const hideContainer = () => {
+                    const container = component.content()!.nativeElement;
+                    Object.defineProperty(container, 'scrollHeight', { value: 0, configurable: true });
+                    Object.defineProperty(container, 'clientHeight', { value: 0, configurable: true });
+                    container.scrollTop = 0;
+                };
+
+                it('should not treat loading an older page as being at the bottom', () => {
+                    vi.spyOn(communicationService, 'getFilteredPosts').mockImplementation(() => {});
+                    component.page = 2;
+                    // the user scrolled up in a long conversation to load older messages
+                    setScrollGeometry(100);
+                    const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                    component.fetchPosts();
+                    expect(component.isFetchingPosts()).toBe(true);
+                    hideContainer();
+                    // the response arrives while the list is still hidden
+                    component.setPosts();
+                    component.handleScrollOnNewMessage();
+
+                    expect(scrollToBottomSpy).not.toHaveBeenCalled();
+                });
+
+                it('should keep following new messages when posts are reloaded for a user at the bottom', () => {
+                    vi.spyOn(communicationService, 'getFilteredPosts').mockImplementation(() => {});
+                    setScrollGeometry(600);
+                    const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                    const request = vi.spyOn(communicationService, 'getFilteredPosts');
+                    component.fetchPosts();
+                    const callbacks = request.mock.calls.at(-1)![3]!;
+                    hideContainer();
+                    callbacks.beforeApply();
+                    component.setPosts();
+                    expect(scrollToBottomSpy).not.toHaveBeenCalled();
+                    callbacks.complete(true);
+                    fixture.detectChanges();
+                    expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+                });
+            });
+
+            describe('with a stored scroll position', () => {
+                const storedPostId = 5;
+                const newPostId = 6;
+                let messagesSignal: WritableSignal<PostingThreadComponent[]>;
+                let container: HTMLElement;
+                let scrollToStoredIdSpy: MockInstance;
+
+                const createPostingThread = (id: number, offsetTop: number) =>
+                    ({
+                        post: () => ({ id }),
+                        elementRef: { nativeElement: { offsetTop, getBoundingClientRect: () => ({ top: 0, bottom: 0 }), querySelector: () => null } },
+                    }) as unknown as PostingThreadComponent;
+
+                beforeEach(() => {
+                    // The effects in the shared fixture ran already without a tracked dependency, so this test needs a component
+                    // whose `messages` signal is writable before the first change detection run.
+                    const sessionStorageService = TestBed.inject(SessionStorageService);
+                    vi.spyOn(sessionStorageService, 'retrieve').mockImplementation((key: string) => (key.includes('scrollPosition') ? storedPostId : undefined));
+
+                    fixture = TestBed.createComponent(ConversationMessagesComponent);
+                    component = fixture.componentInstance;
+                    fixture.componentRef.setInput('course', course);
+                    messagesSignal = signal([createPostingThread(1, 0), createPostingThread(storedPostId, 300)]);
+                    (component as any).messages = messagesSignal;
+                    container = document.createElement('div');
+                    vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ top: 0, bottom: 100 } as DOMRect);
+                    Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+                    Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+                    (component as any).content = vi.fn().mockReturnValue({ nativeElement: container });
+                    // the conversation is opened and its stored scroll position is restored
+                    component.canStartSaving = true;
+                    scrollToStoredIdSpy = vi.spyOn(component as any, 'scrollToStoredId');
+                    fixture.detectChanges();
+                    // the posts are loaded and the list is visible
+                    component.allPosts.set([examplePost]);
+                    component.setPosts();
+                    component.isFetchingPosts.set(false);
+                    messagesSignal.set([...messagesSignal()]);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+                    scrollToStoredIdSpy.mockClear();
+                });
+
+                it('should keep the user at the bottom when a message arrives although a scroll position is stored', () => {
+                    // the user scrolled to the very end of the conversation
+                    container.scrollTop = 600;
+
+                    // another user posts a message
+                    component.setPosts();
+                    messagesSignal.set([...messagesSignal(), createPostingThread(newPostId, 1000)]);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+
+                    expect(scrollToStoredIdSpy).not.toHaveBeenCalled();
+                    expect(container.scrollTop).toBe(container.scrollHeight);
+                });
+
+                it('should keep navigating to a post that is not loaded yet when the next page arrives for a user at the bottom', () => {
+                    const unloadedPostId = 99;
+                    // the user is at the bottom of an already restored conversation and follows the View action of a forwarded message
+                    container.scrollTop = 600;
+                    component.focusOnPostId = unloadedPostId;
+                    component.totalNumberOfPosts.set(100);
+                    const request = vi.spyOn(communicationService, 'getFilteredPosts');
+                    component.fetchNextPage();
+                    const callbacks = request.mock.calls.at(-1)![3]!;
+                    callbacks.beforeApply();
+                    component.setPosts();
+
+                    // the next page arrives and contains the post
+                    messagesSignal.set([createPostingThread(unloadedPostId, 500), ...messagesSignal()]);
+                    callbacks.complete(true);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+
+                    expect(scrollToStoredIdSpy).toHaveBeenCalledOnce();
+                    expect(container.scrollTop).toBe(490);
+                    expect(component.focusOnPostId).toBeUndefined();
+                });
+
+                it('should restore the stored scroll position when a message arrives while the user is not at the bottom', () => {
+                    container.scrollTop = 100;
+
+                    component.setPosts();
+                    messagesSignal.set([...messagesSignal(), createPostingThread(newPostId, 1000)]);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+
+                    expect(scrollToStoredIdSpy).toHaveBeenCalledOnce();
+                    expect(container.scrollTop).toBe(290);
+                });
+            });
+        });
+
+        it('should remember the bottom rather than a top-visible message when reopening a channel', () => {
+            const container = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+            Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+            container.scrollTop = 600;
+            component.canStartSaving = true;
+            const next = vi.spyOn(component.scrollSubject, 'next');
+
+            component.findElementsAtScrollPosition();
+            expect(next).toHaveBeenCalledWith(0);
+            const storage = TestBed.inject(SessionStorageService);
+            vi.spyOn(storage, 'retrieve').mockReturnValue(0);
+            container.scrollTop = 0;
+            component['scrollToStoredId']();
+            vi.runAllTimers();
+            expect(container.scrollTop).toBe(1000);
+        });
+
+        it('retries the same older page after a failed request', () => {
+            component.totalNumberOfPosts.set(100);
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
+            component.fetchNextPage();
+            expect(request.mock.calls.at(-1)![0].page).toBe(1);
+            request.mock.calls.at(-1)![3]!.complete(false);
+            expect(component.isFetchingPosts()).toBe(false);
+            expect(component.page).toBe(1);
+
+            component.fetchNextPage();
+            expect(request).toHaveBeenCalledTimes(2);
+            expect(request.mock.calls.at(-1)![0].page).toBe(1);
+            request.mock.calls.at(-1)![3]!.complete(true);
+            expect(component.page).toBe(2);
+        });
+
+        it('should preserve scrolling performed while older messages are loading', () => {
+            vi.runAllTimers();
+            const container = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+            container.scrollTop = 30;
+            component.canStartSaving = true;
+            component.totalNumberOfPosts.set(100);
+            const fetchPosts = vi.spyOn(component, 'fetchPosts');
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
+            component.fetchNextPage();
+            const callbacks = request.mock.calls.at(-1)?.[3];
+            expect(callbacks).toBeDefined();
+            component.setPosts(); // Intermediate WebSocket/cache update, not the requested page.
+            component.handleScrollOnNewMessage();
+            vi.runAllTimers();
+            expect(component.isFetchingPosts()).toBe(true);
+            component.fetchNextPage();
+            expect(fetchPosts).toHaveBeenCalledOnce();
+            expect(container.scrollTop).toBe(30);
+
+            container.scrollTop = 230; // The reader moves while the response is pending.
+            callbacks!.beforeApply();
+            component.setPosts();
+            Object.defineProperty(container, 'scrollHeight', { value: 1500, configurable: true });
+            callbacks!.complete(true);
+            fixture.detectChanges();
+            vi.runAllTimers();
+            expect(container.scrollTop).toBe(730);
+        });
+
+        it.each([false, true])('waits for delayed forwarded messages before restoring the page (delay sources: %s)', (delaySources) => {
+            vi.runAllTimers();
+            const container = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+            container.scrollTop = 230;
+            component.canStartSaving = true;
+            component.totalNumberOfPosts.set(100);
+            const forwarded = new Subject<HttpResponse<ForwardedMessagesGroupDTO[]>>();
+            const sources = new Subject<Post[]>();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(forwarded);
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(sources);
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
+            component.fetchNextPage();
+            const callbacks = request.mock.calls.at(-1)![3]!;
+            callbacks.beforeApply();
+            component.allPosts.set([{ id: 2, hasForwardedMessages: true, creationDate: dayjs() } as Post, { ...examplePost, creationDate: dayjs().subtract(1, 'minute') }]);
+            component.setPosts();
+            callbacks.complete(true);
+            fixture.detectChanges();
+            vi.runAllTimers();
+            // The page response is complete, but the list still contains the previous groups.
+            expect(container.scrollTop).toBe(230);
+            component.fetchNextPage();
+            expect(component.page).toBe(2);
+
+            container.scrollTop = 330; // Reader movement while forwarded metadata is still loading.
+            forwarded.next(new HttpResponse({ body: [{ id: 2, messages: delaySources ? [{ sourceType: PostingType.POST, sourceId: 10 }] : [] }] }));
+            forwarded.complete();
+            if (delaySources) {
+                fixture.detectChanges();
+                vi.runAllTimers();
+                expect(container.scrollTop).toBe(330);
+                container.scrollTop = 430; // Reader movement while source previews are still loading.
+                sources.next([{ id: 10, conversation: activeConversation } as Post]);
+                sources.complete();
+            }
+            fixture.detectChanges();
+            Object.defineProperty(container, 'scrollHeight', { value: 1500, configurable: true });
+            vi.runAllTimers();
+            expect(
+                component
+                    .groupedPosts()
+                    .flatMap((group) => group.posts)
+                    .map((post) => post.id),
+            ).toEqual([1, 2]);
+            expect(container.scrollTop).toBe(delaySources ? 930 : 830);
+        });
+
+        it('ignores a forwarded lookup superseded by a newer message list', () => {
+            const forwarded = new Subject<HttpResponse<ForwardedMessagesGroupDTO[]>>();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(forwarded);
+            const sources = vi.spyOn(communicationService, 'getSourcePostsByIds');
+            component.allPosts.set([{ id: 2, hasForwardedMessages: true } as Post]);
+            component.setPosts();
+            component.allPosts.set([{ id: 3 } as Post]);
+            component.setPosts();
+            const currentGroups = component.groupedPosts();
+
+            forwarded.next(new HttpResponse({ body: [{ id: 2, messages: [{ sourceType: PostingType.POST, sourceId: 10 }] }] }));
+            forwarded.complete();
+
+            expect(sources).not.toHaveBeenCalled();
+            expect(component.groupedPosts()).toBe(currentGroups);
+            expect(component.groupedPosts()[0].posts[0].id).toBe(3);
+        });
+
+        it('renders and positions the list when forwarded metadata cannot be loaded', () => {
+            vi.runAllTimers();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            component.allPosts.set([{ id: 2, hasForwardedMessages: true } as Post]);
+            component.setPosts();
+            component['wasScrolledToBottom'] = true;
+            const follow = vi.spyOn(component, 'scrollToBottomOfMessages');
+            fixture.detectChanges();
+
+            expect(component.groupedPosts()[0].posts[0].id).toBe(2);
+            expect(follow).toHaveBeenCalled();
+        });
+
+        it('should follow layout changes at the bottom but preserve the position after the reader scrolls up', () => {
+            let resize: (() => void) | undefined;
+            const observe = vi.fn();
+            const disconnect = vi.fn();
+            vi.stubGlobal(
+                'ResizeObserver',
+                class {
+                    constructor(callback: () => void) {
+                        resize = callback;
+                    }
+                    observe = observe;
+                    disconnect = disconnect;
+                },
+            );
+            try {
+                component.ngAfterViewInit();
+                const container = component.content()!.nativeElement;
+                let height = 1200;
+                let viewport = 400;
+                let top = 0;
+                Object.defineProperties(container, {
+                    scrollHeight: { get: () => height, configurable: true },
+                    clientHeight: { get: () => viewport, configurable: true },
+                    scrollTop: {
+                        get: () => top,
+                        set: (value: number) => {
+                            top = Math.max(0, Math.min(value, height - viewport));
+                        },
+                        configurable: true,
+                    },
+                });
+                void component.goToLastSelectedElement(0, false);
+                vi.runAllTimers();
+                expect(top).toBe(800);
+                expect(component.canStartSaving).toBe(true);
+
+                // The composer becomes taller after its draft is restored, then an image in a message loads.
+                viewport = 300;
+                component.findElementsAtScrollPosition();
+                resize!();
+                vi.runAllTimers();
+                expect(top).toBe(900);
+                height = 1400;
+                resize!();
+                vi.runAllTimers();
+                expect(top).toBe(1100);
+
+                container.scrollTop = 200;
+                container.dispatchEvent(new Event('scroll'));
+                height = 1500;
+                resize!();
+                vi.runAllTimers();
+                expect(top).toBe(200);
+
+                const historicalPost = {
+                    post: () => ({ id: 42 }),
+                    elementRef: { nativeElement: { offsetTop: 310 } },
+                } as PostingThreadComponent;
+                vi.spyOn(component, 'messages').mockReturnValue([historicalPost]);
+                component.scrollToBottomOfMessages(); // Initial positioning can still be queued when restoration begins.
+                void component.goToLastSelectedElement(42, false);
+                expect(top).toBe(300);
+                resize!(); // Delivered before the browser's scroll event.
+                vi.runAllTimers();
+                expect(top).toBe(300);
+                expect(component['wasScrolledToBottom']).toBe(false);
+                expect(observe).toHaveBeenCalledWith(container);
+                component.ngOnDestroy();
+                expect(disconnect).toHaveBeenCalledOnce();
+            } finally {
+                vi.unstubAllGlobals();
+            }
         });
 
         it('should create empty post with the correct conversation type', () => {
@@ -334,6 +756,32 @@ examples.forEach((activeConversation) => {
 
             expect(scrollToBottomSpy).toHaveBeenCalledOnce();
             expect(component.canStartSaving).toBe(true);
+        });
+
+        it('should publish forwarded sources when they finish loading for an already open thread', () => {
+            const sources = new Subject<Post[]>();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(
+                of(new HttpResponse({ body: [{ id: 1, messages: [{ sourceId: 10, sourceType: PostingType.POST }] }] })),
+            );
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(sources);
+            const wrapper = new Post();
+            wrapper.id = 1;
+            wrapper.hasForwardedMessages = true;
+            component.allPosts.set([wrapper]);
+            let preparedPosts: Post[] = [];
+            component.forwardedMessagesLoaded.subscribe((posts: Post[]) => (preparedPosts = posts));
+            component.setPosts();
+            expect(preparedPosts).toEqual([]);
+            const original = new Post();
+            original.id = 10;
+            original.content = 'Loaded original';
+            original.conversation = { id: activeConversation.id, type: activeConversation.type };
+
+            sources.next([original]);
+            sources.complete();
+
+            expect(preparedPosts[0].id).toBe(1);
+            expect(preparedPosts[0].forwardedPosts).toEqual([original]);
         });
 
         it('should handle posts without forwarded messages gracefully', () => {
@@ -447,6 +895,34 @@ examples.forEach((activeConversation) => {
             }
         });
 
+        it('attaches forwarded content even when the recipient cannot access the original conversation', () => {
+            const sourcePost: Post = { id: 10, content: 'Forwarded private message', resolved: false };
+            const sourceAnswer: AnswerPost = { id: 11, content: 'Forwarded private reply', resolvesPost: false };
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [
+                            {
+                                id: 1,
+                                messages: [
+                                    { id: 101, sourceId: 10, sourceType: PostingType.POST },
+                                    { id: 102, sourceId: 11, sourceType: PostingType.ANSWER },
+                                ],
+                            },
+                        ],
+                    }),
+                ),
+            );
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of([sourcePost]));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of([sourceAnswer]));
+            component.allPosts.set([{ id: 1, content: 'Shared with you', hasForwardedMessages: true }]);
+
+            component.setPosts();
+
+            expect(component.posts()[0].forwardedPosts).toEqual([sourcePost]);
+            expect(component.posts()[0].forwardedAnswerPosts).toEqual([sourceAnswer]);
+        });
+
         it('should still render messages when a forwarded-source fetch fails', () => {
             const mockForwardedMessages: ForwardedMessage[] = [
                 { id: 101, sourceId: 10, sourceType: 'POST' } as unknown as ForwardedMessage,
@@ -455,7 +931,7 @@ examples.forEach((activeConversation) => {
             const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
 
             vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
-            // the source post is inaccessible to the viewer -> the server replies 403; it must not break the rest of the rendering
+            // Access may be revoked while loading; a failed source request must not break the rest of the rendering.
             vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
             vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 

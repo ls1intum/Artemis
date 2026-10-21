@@ -1,10 +1,13 @@
 {
     "error": {
+        "exerciseGenerationCancellationUnavailable": "Der Abbruch konnte nicht bestätigt werden. Prüfe den aktuellen Status des Laufs und versuche es erneut.",
         "title": "Fehlerseite!",
         "http": {
             "400": "Ungültige Anfrage.",
             "401": "Du bist nicht authentifiziert, um auf diese Seite zuzugreifen.",
-            "403": "Du hast nicht die nötigen Berechtigungen, um diese Seite anzuzeigen.",
+            "403": "Du hast keine Berechtigung, auf diesen Inhalt zuzugreifen oder diese Aktion auszuführen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.",
+            "403Read": "Du hast keine Berechtigung, den angeforderten Inhalt anzusehen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.",
+            "403Action": "Du hast keine Berechtigung, diese Aktion auszuführen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.",
             "404": "Die Seite existiert nicht.",
             "405": "Die verwendete Anfrage Methode ist für diese URL nicht erlaubt.",
             "409": "Es gab einen Konflikt bei der Bearbeitung Deiner Anfrage.",
@@ -48,8 +51,11 @@
         "studentNotFound": "Studierende:r konnte in diesem Kurs nicht gefunden werden.",
         "cantSaveFile": "Die hochgeladene Datei {{ fileName }} konnte nicht gespeichert werden.",
         "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut.",
+        "invalidPdf": "Die hochgeladene PDF-Datei ist ungültig oder beschädigt. Bitte lade eine gültige PDF-Datei hoch.",
         "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Einreichungsfrist erstellt werden.",
         "externalSubmissionForQuizExercise": "Externe Einreichungen können nicht für Quiz Übungen erstellt werden.",
+        "exerciseNotInStudentExam": "Die individuelle Klausur dieser Person enthält diese Aufgabe nicht.",
+        "noWorkingPeriod": "Für diese:n Studierende:n gibt es in dieser Klausur keine Bearbeitungszeit, weil keine individuelle Klausur existiert. Erstelle zuerst die individuellen Klausuren.",
         "noSubmissions": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
         "feedbackCreditsNull": "Fehler! Wenn Feedback vorhanden ist, muss das Feedback eine Punktzahl haben.",
         "faqRewriteFailed": "FAQ konnte nicht umgeschrieben werden. Bitte versuche es erneut.",

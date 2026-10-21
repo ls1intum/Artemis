@@ -64,6 +64,27 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
+     * Serialize FAQ synchronization on a bounded worker pool. Saturation must never run a Pyris call on the request
+     * thread or reject a successful local save: reconciliation recovers tasks that do not fit in the queue.
+     * Under the test profile, run synchronously to keep shared Iris request mocks isolated between tests.
+     *
+     * @return the FAQ executor, synchronous only under the test profile
+     */
+    @Bean("faqTaskExecutor")
+    public Executor faqTaskExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(1000);
+        executor.setThreadNamePrefix("faq-sync-");
+        executor.setRejectedExecutionHandler((task, pool) -> log.warn("FAQ synchronization queue is full or shutting down; reconciliation will retry"));
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
      * Dedicated executor for Deimos batch runs to isolate long-running LLM workloads from the shared async infrastructure.
      *
      * @param corePoolSize  minimum number of threads kept in the Deimos executor
@@ -190,6 +211,31 @@ public class AsyncConfiguration implements AsyncConfigurer {
         executor.setMaxPoolSize(2);
         executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("long-running-job-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
+     * Executor for an instructor's bulk build runs: the build of all participations of an exercise and the rebuild of
+     * selected participations (see {@code ProgrammingTriggerService}).
+     * <p>
+     * A run waits for room in the build queue before it queues the next build and may do so for hours. On the shared
+     * {@code taskExecutor} a handful of such runs would occupy every core worker, and unrelated work such as websocket
+     * sends and mail would queue behind them. The runs have a pool of their own instead.
+     * <p>
+     * Four threads are enough because a run mostly sleeps and every run looks at the same build queue, so more runs at
+     * once would not queue builds faster. A run that finds all threads busy waits in the queue, which is long enough that
+     * the rejection handler is unreachable in practice. Rejecting would be the right answer if it were reached, since
+     * the caller is a request thread that must not run a bulk run itself.
+     *
+     * @return a dedicated pool for bulk build runs
+     */
+    @Bean("bulkBuildTriggerExecutor")
+    public Executor bulkBuildTriggerExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("bulk-build-trigger-");
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 

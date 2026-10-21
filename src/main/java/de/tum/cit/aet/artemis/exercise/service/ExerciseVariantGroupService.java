@@ -32,7 +32,10 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService.MutationLease;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -62,6 +65,10 @@ public class ExerciseVariantGroupService {
 
     private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
 
+    private final ProgrammingExerciseMutationGuardService mutationGuard;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final ParticipationRepository participationRepository;
 
     private final ExerciseService exerciseService;
@@ -77,7 +84,7 @@ public class ExerciseVariantGroupService {
     public ExerciseVariantGroupService(ExerciseVariantGroupRepository exerciseVariantGroupRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             ExerciseVersionService exerciseVersionService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
-            Optional<SlideApi> slideApi) {
+            Optional<SlideApi> slideApi, ProgrammingExerciseMutationGuardService mutationGuard, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
@@ -88,6 +95,8 @@ public class ExerciseVariantGroupService {
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizExerciseService = quizExerciseService;
         this.slideApi = slideApi;
+        this.mutationGuard = mutationGuard;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -110,12 +119,71 @@ public class ExerciseVariantGroupService {
      * @param group the group whose updated, validated timeline should be pushed onto its members
      */
     public void saveWithTimelineAppliedToMembers(ExerciseVariantGroup group) {
+        withProgrammingMemberReservations(group, coordinated -> applyTimelineToMembers(group, coordinated));
+    }
+
+    /**
+     * Deletes a group outside its programming members' live save/undo boundaries.
+     *
+     * @param groupId  group to delete
+     * @param courseId owning course
+     */
+    public void deleteGroup(Long groupId, Long courseId) {
+        if (!mutationGuard.isCoordinationEnabled()) {
+            exerciseVariantGroupRepository.delete(exerciseVariantGroupRepository.findByIdAndCourseIdWithoutExercisesElseThrow(groupId, courseId));
+            return;
+        }
+        var group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId);
+        withProgrammingMemberReservations(group,
+                ignored -> exerciseVariantGroupRepository.delete(exerciseVariantGroupRepository.findByIdAndCourseIdWithoutExercisesElseThrow(groupId, courseId)));
+    }
+
+    private void withProgrammingMemberReservations(ExerciseVariantGroup group, java.util.function.Consumer<Boolean> work) {
+        List<MutationLease> leases = new ArrayList<>();
+        Throwable operationFailure = null;
+        RuntimeException releaseFailure = null;
+        try {
+            // Claim every programming member before saving the group or changing any member.
+            for (long exerciseId : group.getExercises().stream().filter(ProgrammingExercise.class::isInstance).map(Exercise::getId).sorted().toList()) {
+                leases.add(mutationGuard.claimExternalMutation(exerciseId));
+            }
+            work.accept(leases.stream().anyMatch(MutationLease::coordinated));
+        }
+        catch (RuntimeException | Error exception) {
+            operationFailure = exception;
+            throw exception;
+        }
+        finally {
+            for (MutationLease lease : leases.reversed()) {
+                try {
+                    lease.close();
+                }
+                catch (RuntimeException exception) {
+                    if (releaseFailure == null) {
+                        releaseFailure = exception;
+                    }
+                    else {
+                        releaseFailure.addSuppressed(exception);
+                    }
+                }
+            }
+            if (releaseFailure != null && operationFailure != null) {
+                operationFailure.addSuppressed(releaseFailure);
+            }
+        }
+        if (releaseFailure != null) {
+            throw releaseFailure;
+        }
+    }
+
+    private void applyTimelineToMembers(ExerciseVariantGroup group, boolean coordinated) {
         List<Exercise> nonProgrammingExercises = new ArrayList<>();
         List<ProgrammingExercise> programmingExercises = new ArrayList<>();
         // Snapshot each member's old dates: the post-update side effects below compare against them.
         Map<Long, TimelineSnapshot> snapshotsByExerciseId = new HashMap<>();
         Map<Long, Duration> buildAndTestOffsetsByExerciseId = new HashMap<>();
-        group.getExercises().forEach(exercise -> {
+        group.getExercises().forEach(member -> {
+            Exercise exercise = coordinated && member instanceof ProgrammingExercise ? programmingExerciseRepository.findByIdElseThrow(member.getId()) : member;
             // Don't overwrite a started/ended quiz's dates (mirrors QuizExerciseService.checkQuizEditable). Guard only a
             // real timeline change, so a metadata-only group edit stays allowed while a member quiz is live.
             if (timelineDiffers(group, exercise)) {
@@ -138,12 +206,12 @@ public class ExerciseVariantGroupService {
         // All members valid: persist the group and the member updates together.
         exerciseVariantGroupRepository.save(group);
         exerciseRepository.saveAll(nonProgrammingExercises);
-        nonProgrammingExercises.forEach(exercise -> runPostTimelineUpdateSideEffects(exercise, snapshotsByExerciseId.get(exercise.getId())));
+        nonProgrammingExercises.forEach(exercise -> runPostTimelineUpdateSideEffects(exercise, snapshotsByExerciseId.get(exercise.getId()), false));
         // Programming timeline changes recompute the build-and-test date and reschedule jobs, so they go through the
         // dedicated update flow (which reloads and saves the exercise itself) rather than a plain saveAll.
         programmingExercises.forEach(programmingExercise -> {
             ProgrammingExercise saved = updateProgrammingExerciseTimeline(programmingExercise, group, buildAndTestOffsetsByExerciseId.get(programmingExercise.getId()));
-            runProgrammingPostTimelineUpdateSideEffects(saved);
+            runProgrammingPostTimelineUpdateSideEffects(saved, coordinated);
         });
     }
 
@@ -155,6 +223,17 @@ public class ExerciseVariantGroupService {
      * @param group    the target group, or {@code null} to remove the exercise from its current group
      */
     public void assignToGroup(Exercise exercise, @Nullable ExerciseVariantGroup group) {
+        if (exercise instanceof ProgrammingExercise) {
+            try (var lease = mutationGuard.claimExternalMutation(exercise.getId())) {
+                assignCurrentExerciseToGroup(lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(exercise.getId()) : exercise, group, lease.coordinated());
+            }
+        }
+        else {
+            assignCurrentExerciseToGroup(exercise, group, false);
+        }
+    }
+
+    private void assignCurrentExerciseToGroup(Exercise exercise, @Nullable ExerciseVariantGroup group, boolean coordinated) {
         boolean groupTimelineChanged = false;
         if (group != null) {
             // Joining stamps the group's timeline onto the exercise, so a started/ended quiz can't be added at all — there
@@ -177,7 +256,7 @@ public class ExerciseVariantGroupService {
                 exerciseVariantGroupRepository.save(group);
             }
             exerciseRepository.save(programmingExercise);
-            runProgrammingPostTimelineUpdateSideEffects(updateProgrammingExerciseTimeline(programmingExercise, group, originalBuildAndTestOffset));
+            runProgrammingPostTimelineUpdateSideEffects(updateProgrammingExerciseTimeline(programmingExercise, group, originalBuildAndTestOffset), coordinated);
             return;
         }
         if (group != null) {
@@ -188,7 +267,7 @@ public class ExerciseVariantGroupService {
             exerciseVariantGroupRepository.save(group);
         }
         Exercise saved = exerciseRepository.save(exercise);
-        runPostTimelineUpdateSideEffects(saved, snapshot);
+        runPostTimelineUpdateSideEffects(saved, snapshot, coordinated);
     }
 
     private Duration getBuildAndTestOffset(ProgrammingExercise programmingExercise) {
@@ -261,12 +340,12 @@ public class ExerciseVariantGroupService {
      * @param exercise the saved member exercise
      * @param snapshot its dates from before the group timeline was applied
      */
-    private void runPostTimelineUpdateSideEffects(Exercise exercise, TimelineSnapshot snapshot) {
+    private void runPostTimelineUpdateSideEffects(Exercise exercise, TimelineSnapshot snapshot, boolean coordinated) {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(exercise, snapshot.dueDate());
         scheduleTypeSpecificOperations(exercise);
         exerciseService.notifyAboutExerciseChanges(snapshot.releaseDate(), snapshot.assessmentDueDate(), exercise.getProblemStatement(), exercise, null);
         slideApi.ifPresent(api -> api.handleDueDateChange(snapshot.dueDate(), exercise));
-        exerciseVersionService.createExerciseVersion(exercise);
+        createMemberVersion(exercise, coordinated);
     }
 
     /**
@@ -276,8 +355,17 @@ public class ExerciseVariantGroupService {
      *
      * @param savedProgrammingExercise the exercise as returned by the programming timeline update flow
      */
-    private void runProgrammingPostTimelineUpdateSideEffects(ProgrammingExercise savedProgrammingExercise) {
-        exerciseVersionService.createExerciseVersion(savedProgrammingExercise);
+    private void runProgrammingPostTimelineUpdateSideEffects(ProgrammingExercise savedProgrammingExercise, boolean coordinated) {
+        createMemberVersion(savedProgrammingExercise, coordinated);
+    }
+
+    private void createMemberVersion(Exercise exercise, boolean coordinated) {
+        if (coordinated && exercise instanceof ProgrammingExercise) {
+            exerciseVersionService.createExerciseVersionSynchronously(exercise);
+        }
+        else {
+            exerciseVersionService.createExerciseVersion(exercise);
+        }
     }
 
     /**

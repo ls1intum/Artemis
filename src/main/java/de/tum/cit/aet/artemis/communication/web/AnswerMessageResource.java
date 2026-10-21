@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -27,13 +29,15 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
-import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
+import de.tum.cit.aet.artemis.communication.service.ForwardedMessageService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
@@ -54,12 +58,12 @@ public class AnswerMessageResource {
 
     private final UserRepository userRepository;
 
-    private final AnswerPostRepository answerPostRepository;
+    private final ForwardedMessageService forwardedMessageService;
 
-    public AnswerMessageResource(AnswerMessageService answerMessageService, UserRepository userRepository, AnswerPostRepository answerPostRepository) {
+    public AnswerMessageResource(AnswerMessageService answerMessageService, UserRepository userRepository, ForwardedMessageService forwardedMessageService) {
         this.answerMessageService = answerMessageService;
         this.userRepository = userRepository;
-        this.answerPostRepository = answerPostRepository;
+        this.forwardedMessageService = forwardedMessageService;
     }
 
     /**
@@ -72,7 +76,7 @@ public class AnswerMessageResource {
      */
     @PostMapping("courses/{courseId}/answer-messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPostResponseDTO> createAnswerMessage(@PathVariable Long courseId, @RequestBody CreateAnswerPostDTO answerMessage) throws URISyntaxException {
+    public ResponseEntity<AnswerPostResponseDTO> createAnswerMessage(@PathVariable Long courseId, @Valid @RequestBody CreateAnswerPostDTO answerMessage) throws URISyntaxException {
         log.debug("POST createAnswerMessage invoked for course {} with message {}", courseId, answerMessage.content());
         long start = System.nanoTime();
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
@@ -93,7 +97,8 @@ public class AnswerMessageResource {
      */
     @PutMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPostResponseDTO> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody UpdatePostingDTO updatedAnswer) {
+    public ResponseEntity<AnswerPostResponseDTO> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId,
+            @Valid @RequestBody UpdatePostingDTO updatedAnswer) {
         log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, updatedAnswer.content());
         long start = System.nanoTime();
         AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, updatedAnswer);
@@ -150,18 +155,24 @@ public class AnswerMessageResource {
             return ResponseEntity.notFound().build();
         }
 
-        // authorization: the caller may only retrieve answer posts they can access (course-wide channel or participant of the conversation).
-        // We check access against the posts that were actually found (not the requested IDs) so that non-existent IDs yield 404, not 403.
+        // Reading the original conversation and receiving a forward are separate permissions. Only the former
+        // permits returning conversation metadata and replies; a forward grants access to its source content alone.
         User user = userRepository.getUser();
         Set<Long> foundAnswerPostIds = answerPosts.stream().map(AnswerPost::getId).collect(Collectors.toSet());
-        answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(foundAnswerPostIds, user.getId());
+        Set<Long> directlyAccessibleIds = forwardedMessageService.findDirectlyAccessibleIds(answerPosts, PostingType.ANSWER, courseId, user);
+        Set<Long> forwardedSourceIds = directlyAccessibleIds.size() == foundAnswerPostIds.size() ? Set.of()
+                : forwardedMessageService.findAccessibleSourceIds(foundAnswerPostIds, PostingType.ANSWER, courseId, user);
+        if (foundAnswerPostIds.stream().anyMatch(id -> !directlyAccessibleIds.contains(id) && !forwardedSourceIds.contains(id))) {
+            throw new AccessForbiddenException("AnswerPost", foundAnswerPostIds);
+        }
 
         if (answerPosts.stream().anyMatch(post -> !post.getPost().getConversation().getCourse().getId().equals(courseId))) {
             throw new BadRequestAlertException("Some answer posts do not belong to the specified course", answerMessageService.getEntityName(), "invalidCourse");
         }
 
         log.debug("getSourceAnswerPostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
-        List<AnswerPostResponseDTO> body = answerPosts.stream().map(AnswerPostResponseDTO::from).toList();
+        List<AnswerPostResponseDTO> body = answerPosts.stream()
+                .map(source -> directlyAccessibleIds.contains(source.getId()) ? AnswerPostResponseDTO.from(source) : AnswerPostResponseDTO.fromForwardedSource(source)).toList();
         return ResponseEntity.ok().body(body);
     }
 
@@ -184,7 +195,7 @@ public class AnswerMessageResource {
     @PatchMapping("courses/{courseId}/answer-messages/{answerMessageId}/verify")
     @EnforceAtLeastStudent
     public ResponseEntity<AnswerMessageDTO> verifyAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId,
-            @RequestBody(required = false) VerifyAnswerMessageDTO verifyDto) {
+            @Valid @RequestBody(required = false) VerifyAnswerMessageDTO verifyDto) {
         log.debug("PATCH verifyAnswerMessage invoked for course {} on message {}", courseId, answerMessageId);
         long start = System.nanoTime();
         AnswerPost verifiedAnswer = answerMessageService.verifyAnswerMessage(courseId, answerMessageId, verifyDto);

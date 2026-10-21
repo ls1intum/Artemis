@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.iris.exception.IrisVideoSourceUnavailableException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 import de.tum.cit.aet.artemis.videosource.service.ResolvedVideo;
 import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
@@ -90,7 +92,8 @@ public class PyrisWebhookService {
         }
     }
 
-    private PyrisLectureUnitWebhookDTO processAttachmentVideoUnitForUpdate(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint, boolean forceReingest) {
+    private PyrisLectureUnitWebhookDTO processAttachmentVideoUnitForUpdate(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint, String fingerprintWithoutVideo,
+            boolean forceReingest) {
         Lecture lecture = attachmentVideoUnit.getLecture();
         Course course = attachmentVideoUnit.getLecture().getCourse();
 
@@ -126,23 +129,34 @@ public class PyrisWebhookService {
         // Resolve TUM Live watch page URLs to HLS playlist URLs for Iris/FFmpeg, and tag video source type.
         // If the type is null (unsupported source), pass null URL so Pyris doesn't try to process it.
         ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
-        if (resolved.type() == null && videoSourceResolver.isSupportedSource(attachmentVideoUnit.getVideoSource())) {
-            // A supported source that cannot be resolved right now (TUM Live unreachable) is not a unit without a video: sent without one, Iris would
-            // delete the unit's transcript. Failing the preparation retries it later instead.
-            throw new IrisInternalPyrisErrorException("The video of lecture unit " + attachmentVideoUnit.getId() + " cannot be resolved right now, retrying later");
-        }
         String videoUrl = resolved.type() != null ? resolved.url() : null;
+        String sentFingerprint = contentFingerprint;
+        if (resolved.type() == null && videoSourceResolver.isSupportedSource(attachmentVideoUnit.getVideoSource())) {
+            // A supported source that cannot be resolved right now: a TUM Live stream that is not public or has no recording yet, or TUM Live is down.
+            boolean hasCompletedTranscription = lectureTranscription.isPresent() && lectureTranscription.get().getTranscriptionStatus() == TranscriptionStatus.COMPLETED;
+            if (!hasCompletedTranscription && !PyrisLectureUnitEligibility.hasPdf(attachmentVideoUnit)) {
+                // Nothing else to ingest: sent without the video, Iris would find no content and fail the unit for good. Retry later instead.
+                throw new IrisVideoSourceUnavailableException(attachmentVideoUnit.getId());
+            }
+            // Ingest what is here now: the PDF, and the stored transcript, which is sent whenever it exists, so Iris keeps it. A completed transcript
+            // already holds everything the video adds, so the unit counts as complete (full fingerprint). Otherwise the run is stamped with the
+            // fingerprint of its content without the video, which tells the reconcile to try the video again later.
+            if (!hasCompletedTranscription) {
+                sentFingerprint = fingerprintWithoutVideo;
+            }
+            log.info("Ingesting lecture unit {} without its video, which cannot be resolved right now", attachmentVideoUnit.getId());
+        }
 
         if (lectureTranscription.isPresent()) {
             LectureTranscription transcription = lectureTranscription.get();
 
             return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1,
                     PyrisLectureTranscriptionDTO.of(transcription), lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription,
-                    lectureUnitLink, videoUrl, resolved.type(), contentFingerprint, forceReingest, courseLanguage);
+                    lectureUnitLink, videoUrl, resolved.type(), sentFingerprint, forceReingest, courseLanguage);
         }
 
         return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1, null,
-                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoUrl, resolved.type(), contentFingerprint,
+                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoUrl, resolved.type(), sentFingerprint,
                 forceReingest, courseLanguage);
     }
 
@@ -190,16 +204,17 @@ public class PyrisWebhookService {
     }
 
     /**
-     * Whether an ingestion job for this unit would actually be prepared: Iris is enabled for the
-     * course and the unit's content is eligible. The reconciler uses this to decide whether a SKIPPED
-     * unit is worth requeueing after the course's Iris settings changed.
+     * Whether an ingestion job for this unit would actually be prepared: the unit's content is eligible. The reconciler uses
+     * this to decide whether a SKIPPED unit is worth requeueing.
+     * <p>
+     * The course's Iris setting plays no role: it switches off the Iris chat and the other interactive Iris features of a
+     * course, while global search searches the lecture content of every course, so the content is ingested regardless.
      *
      * @param attachmentVideoUnit the unit to check
      * @return true if {@link #prepareLectureUnitIngestion} would prepare a job for this unit
      */
     public boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
-        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse())
-                && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit, videoSourceResolver);
+        return PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit, videoSourceResolver);
     }
 
     /**
@@ -238,16 +253,21 @@ public class PyrisWebhookService {
      * Prepare a lecture ingestion job for a pulling Pyris worker: register the job token and assemble the
      * execution payload, which the worker claim returns to Pyris.
      *
-     * @param attachmentVideoUnit the attachment video unit to ingest
-     * @param contentFingerprint  fingerprint of the unit's source content, stamped into the vector store
-     * @param forceReingest       true for quality re-ingestions bypassing Iris's structural skip checks
-     * @return the prepared job, or {@code null} when the unit is not processable (course settings or content type)
+     * @param attachmentVideoUnit     the attachment video unit to ingest
+     * @param contentFingerprint      fingerprint of the unit's source content, stamped into the vector store
+     * @param fingerprintWithoutVideo fingerprint of the same content without the video, stamped instead when the video cannot be resolved right now
+     * @param forceReingest           true for quality re-ingestions bypassing Iris's structural skip checks
+     * @return the prepared job, or {@code null} when the unit is not processable (tutorial lecture or no supported content); the payload carries the
+     *         fingerprint actually sent
+     * @throws IrisVideoSourceUnavailableException if the unit's only content is a video that cannot be resolved right now
      */
-    public PyrisPreparedLectureIngestionJobDTO prepareLectureUnitIngestion(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint, boolean forceReingest) {
+    public PyrisPreparedLectureIngestionJobDTO prepareLectureUnitIngestion(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint, String fingerprintWithoutVideo,
+            boolean forceReingest) {
         if (!isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
             return null;
         }
-        return prepareLectureAdditionJob(processAttachmentVideoUnitForUpdate(attachmentVideoUnit, contentFingerprint, forceReingest), attachmentVideoUnit.getLecture().getCourse());
+        return prepareLectureAdditionJob(processAttachmentVideoUnitForUpdate(attachmentVideoUnit, contentFingerprint, fingerprintWithoutVideo, forceReingest),
+                attachmentVideoUnit.getLecture().getCourse());
     }
 
     /**
@@ -282,20 +302,6 @@ public class PyrisWebhookService {
     }
 
     /**
-     * send the updated / created faqs to Pyris for ingestion if autoLecturesUpdate is enabled.
-     *
-     * @param newFaq the new faqs to be sent to pyris for ingestion
-     */
-    public void autoUpdateFaqInPyris(Faq newFaq) {
-        var course = newFaq.getCourse();
-        var settings = irisSettingsService.getSettingsForCourse(course);
-
-        if (settings.enabled()) {
-            addFaq(newFaq);
-        }
-    }
-
-    /**
      * adds the faq to Pyris.
      *
      * @param faq The faq that will be added to pyris
@@ -304,7 +310,7 @@ public class PyrisWebhookService {
     public String addFaq(Faq faq) {
         if (irisSettingsService.isEnabledForCourse(faq.getCourse())) {
             return executeFaqAdditionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(),
-                    faq.getCourse().getTitle(), faq.getCourse().getDescription()), faq.getCourse());
+                    faq.getCourse().getTitle(), faq.getCourse().getDescription(), faq.computeContentFingerprint()));
         }
         return null;
     }
@@ -313,15 +319,13 @@ public class PyrisWebhookService {
      * executes the faq addition webhook to add faq to the vector database on pyris
      *
      * @param toUpdateFaq The faq that got Updated as webhook DTO
-     * @param course      The course of the faq
      * @return jobToken if the job was created else null
      */
 
-    private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, Course course) {
+    private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
-        var settings = irisSettingsService.getSettingsForCourse(course);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, settings.variant().jsonValue(),
-                settings.supportLevel().jsonValue());
+        // FAQ ingestion has its own pipeline, which supports only the default variant. The course variant selects the chat pipeline.
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", IrisSupportLevel.MODERATE.jsonValue());
         PyrisWebhookFaqIngestionExecutionDTO executionDTO = new PyrisWebhookFaqIngestionExecutionDTO(toUpdateFaq, settingsDTO);
         pyrisConnectorService.executeFaqAdditionWebhook(toUpdateFaq, executionDTO);
         return jobToken;
@@ -329,15 +333,14 @@ public class PyrisWebhookService {
     }
 
     /**
-     * delete the faqs in pyris
+     * Delete an FAQ from Pyris by its ids alone, for an FAQ that no longer exists in Artemis or is not accepted anymore.
      *
-     * @param faq The faqs that gets erased
-     * @return jobToken if the job was created
+     * @param faqId    the FAQ to delete
+     * @param courseId its course
+     * @return jobToken of the deletion job
      */
-    public String deleteFaq(Faq faq) {
-        return executeFaqDeletionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(), faq.getCourse().getTitle(),
-                faq.getCourse().getDescription()));
-
+    public String deleteFaq(long faqId, long courseId) {
+        return executeFaqDeletionWebhook(new PyrisFaqWebhookDTO(faqId, null, null, courseId, null, null, null));
     }
 
     /**

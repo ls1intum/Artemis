@@ -237,6 +237,10 @@ public class ProgrammingExerciseCreationUpdateService {
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
 
+        // These values only depend on the course and short name, so persist them with the initial insert.
+        programmingExercise.generateAndSetProjectKey();
+        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
+
         // We save once in order to generate an id for the programming exercise. The build configuration names the
         // exercise, so it is written afterwards rather than before.
         var savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -247,9 +251,8 @@ public class ProgrammingExerciseCreationUpdateService {
         final var storedTeamAssignmentConfig = savedProgrammingExercise.getStoredTeamAssignmentConfig();
         final var storedPlagiarismDetectionConfig = savedProgrammingExercise.getPlagiarismDetectionConfig();
 
+        buildConfig.setBranch(defaultBranch);
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, savedProgrammingExercise);
-        savedProgrammingExercise.generateAndSetProjectKey();
-        savedBuildConfig.setBranch(defaultBranch);
 
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
         initParticipations(savedProgrammingExercise);
@@ -258,8 +261,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
-        programmingExerciseBuildConfigRepository.saveAndFlush(savedBuildConfig);
-        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        programmingExerciseRepository.updateRepositoryMetadataForCreation(savedProgrammingExercise);
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
@@ -270,9 +272,9 @@ public class ProgrammingExerciseCreationUpdateService {
             savedProgrammingExercise = setupBuildPlansAndTriggerInitialBuilds(savedProgrammingExercise);
         }
 
+        // The tasks are written by the task service itself and nothing on the exercise has changed since it was last saved or read, so there is nothing to save and read back here.
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(savedProgrammingExercise, savedBuildConfig);
             final boolean buildAndTestDateChanged = !Objects.equals(savedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
@@ -285,10 +287,13 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
-        // Restore competency links with proper exercise reference before final save
+        // Only the competency links still need writing. Keep their cascade save, but avoid merging and re-fetching
+        // the entire exercise graph when no links were selected (or none survived resolution).
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
-
-        ProgrammingExercise createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        ProgrammingExercise createdProgrammingExercise = savedProgrammingExercise;
+        if (!savedProgrammingExercise.getCompetencyLinks().isEmpty()) {
+            createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        }
         createdProgrammingExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
         createdProgrammingExercise.setPlagiarismDetectionConfig(storedPlagiarismDetectionConfig);
 
@@ -466,7 +471,8 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * Updates the timeline attributes of the given programming exercise with the values from the DTO.
+     * Loads the exercise and updates its timeline. Callers that already hold the exercise's mutation lease must load it
+     * themselves and use the overload taking the exercise, so the read happens inside the lease.
      *
      * @param timelineUpdateDTO containing the timeline changes that have to be saved
      * @param notificationText  optional text for a notification to all students about the update
@@ -493,9 +499,21 @@ public class ProgrammingExerciseCreationUpdateService {
         return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
     }
 
+    /**
+     * Updates the timeline attributes of the given programming exercise with the values from the DTO.
+     *
+     * @param programmingExercise the current exercise loaded while holding its mutation lease
+     * @param timelineUpdateDTO   containing the timeline changes that have to be saved
+     * @param notificationText    optional text for a notification to all students about the update
+     * @return the updated ProgrammingExercise object.
+     */
+    public ProgrammingExercise updateTimeline(ProgrammingExercise programmingExercise, ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
+        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
+        return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
+    }
+
     private ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText,
             @Nullable Duration originalBuildAndTestOffset, ProgrammingExercise programmingExercise) {
-
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());

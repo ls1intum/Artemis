@@ -17,13 +17,18 @@ import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { GlobalSearchFilterMenuComponent } from './filter-menu/global-search-filter-menu.component';
-import { filterOptionDomId } from '../../models/search-menu.model';
+import { SEARCH_RESULTS_LISTBOX_ID, filterOptionDomId, searchResultOptionDomId } from '../../models/search-menu.model';
 import { FilterToken } from '../../models/search-token.model';
 import { removeTokenAt } from '../../models/search-token.util';
 import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
 import { LectureSearchService } from '../../services/lecture-search.service';
-import { mapLectureContentResult } from '../../models/lecture-content-result.util';
-import { HttpErrorResponse } from '@angular/common/http';
+import { LECTURE_CONTENT_TYPE, mapLectureContentResult } from '../../models/lecture-content-result.util';
+import { TranslateService } from '@ngx-translate/core';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
+import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import { COURSE_PAGE_TYPE, matchCoursePages } from '../../models/course-page-results.util';
 
 /** Iris content search is a vector search behind a network hop, so it gets its own, longer ceiling. */
 export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
@@ -31,8 +36,14 @@ export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
 /** Number of content hits requested per search. */
 const CONTENT_SEARCH_LIMIT = 10;
 
+/** Results per page of the metadata search, and the most the server returns for one search. */
+export const DEFAULT_RESULT_LIMIT = 10;
+export const EXPANDED_RESULT_LIMIT = 25;
+
 interface SearchState {
     query: string;
+    /** How many results to ask for; the default page size when absent. */
+    limit?: number;
 }
 
 /**
@@ -62,6 +73,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly filter = inject(GlobalSearchFilterService);
     private readonly availability = inject(IrisSearchAvailabilityService);
     private readonly lectureSearchService = inject(LectureSearchService);
+    private readonly courseStorageService = inject(CourseStorageService);
+    private readonly translateService = inject(TranslateService);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly courseOverviewGuard = inject(CourseOverviewGuard);
 
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
@@ -98,12 +113,31 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly filterShortcutLabel = computed<string>(() => (this.osDetector.isMac() ? '⌘F' : 'Ctrl+F'));
     // DOM id of the highlighted filter-menu option, for the search input's aria-activedescendant (the menu now
     // renders in the results pane, so the combobox references it across components by id).
+    /** How many selectable rows the results listbox renders; it mirrors the navigation view's template. */
+    private readonly renderedResultRows = computed(() => {
+        const contentRow = !this.contentSearchActive() && this.contentPreview().length > 0 ? 1 : 0;
+        const resultRows = this.showResults() && !this.isLoading() && !this.searchError() ? this.results().length : 0;
+        return contentRow + resultRows;
+    });
+    /** The results listbox while it shows rows; the filter menu takes over the input's popup while it is open. */
+    protected readonly resultsListboxId = computed<string | undefined>(() => (!this.filterMenuOpen() && this.renderedResultRows() > 0 ? SEARCH_RESULTS_LISTBOX_ID : undefined));
+    /** The selected result row, so a screen reader announces it while the focus stays in the input; none while it is not rendered. */
+    protected readonly activeResultId = computed<string | undefined>(() => {
+        const index = this.selectedIndex();
+        return this.resultsListboxId() && index >= 0 && index < this.renderedResultRows() ? searchResultOptionDomId(index) : undefined;
+    });
     protected readonly activeOptionId = computed<string | undefined>(() => {
         const option = this.menuOptions()[this.menuActiveIndex()];
         return option ? filterOptionDomId(option.id) : undefined;
     });
     protected readonly results = signal<GlobalSearchResult[]>([]);
     protected readonly isLoading = signal<boolean>(false);
+    /** Slide and video hits for the current query, shown as one row above the results while content search is not active. */
+    protected readonly contentPreview = signal<GlobalSearchResult[]>([]);
+    private readonly contentPreviewSubject = new Subject<SearchState | null>();
+    /** The result limit of the search that produced the current results. */
+    private readonly resultLimit = signal(DEFAULT_RESULT_LIMIT);
+    protected readonly canShowMore = computed(() => !this.contentSearchActive() && this.resultLimit() < EXPANDED_RESULT_LIMIT && this.results().length >= this.resultLimit());
     protected readonly hasSearched = signal<boolean>(false);
     protected readonly searchError = signal<string | undefined>(undefined);
     protected readonly selectedIndex = signal(-1);
@@ -191,7 +225,37 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
     }
 
+    /** The element that had the focus when the palette opened, and the page it was on. */
+    private focusOrigin?: { element: HTMLElement; url: string };
+
+    /** The available tabs of the one course the search is scoped to, which decide the guarded course pages it may offer. */
+    private readonly scopedCourseTabs = signal<{ courseId: number; tabs: CourseAvailableTabs } | undefined>(undefined);
+
     constructor() {
+        // Read directly from the endpoint rather than through CourseAvailableTabsService, whose held tabs belong to the
+        // course page the user is on and must not be replaced by a course picked in the palette.
+        effect((onCleanup) => {
+            const courseIds = this.courseIdsParam();
+            if (!this.overlay.isOpen() || courseIds.length !== 1) {
+                return;
+            }
+            const courseId = courseIds[0];
+            if (untracked(this.scopedCourseTabs)?.courseId === courseId) {
+                return;
+            }
+            const subscription = this.courseManagementService
+                .getCourseAvailableTabs(courseId)
+                .pipe(catchError(() => EMPTY))
+                .subscribe((tabs) => {
+                    this.scopedCourseTabs.set({ courseId, tabs });
+                    // The tabs can arrive after the search results: offer the pages they allow next to the hits already shown.
+                    if (this.hasSearched() && !this.contentSearchActive()) {
+                        this.replaceResultsKeepingSelection([...this.coursePageResults(), ...this.results().filter((result) => result.type !== COURSE_PAGE_TYPE)]);
+                    }
+                });
+            onCleanup(() => subscription.unsubscribe());
+        });
+
         // Wire the store's side-effects: a token change re-runs the search pipeline; menu/picker actions refocus input.
         this.filter.configure({
             applyTokens: (tokens) => this.applyTokens(tokens),
@@ -267,7 +331,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
                     const courseIdsParam = courseIds.length ? courseIds : undefined;
                     const excludeCourseIdsParam = excludeCourseIds.length ? excludeCourseIds : undefined;
-                    const cacheKey = this.filterCacheKey(types, excludeTypes, courseIds, excludeCourseIds);
+                    const limit = event.limit ?? DEFAULT_RESULT_LIMIT;
+                    this.resultLimit.set(limit);
+                    const cacheKey = this.filterCacheKey(types, excludeTypes, courseIds, excludeCourseIds, limit);
 
                     // Empty query with filter — serve from cache synchronously if available
                     if (!hasValidQuery && hasFilter) {
@@ -282,7 +348,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() =>
-                            this.searchService.globalSearch(searchQuery, types, excludeTypes, courseIdsParam, excludeCourseIdsParam).pipe(
+                            this.searchService.globalSearch(searchQuery, types, excludeTypes, courseIdsParam, excludeCourseIdsParam, limit).pipe(
                                 tap((results) => {
                                     if (!hasValidQuery && hasFilter) {
                                         this.placeholderCache.set(cacheKey, results);
@@ -300,11 +366,37 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 takeUntilDestroyed(),
             )
             .subscribe((results) => {
-                this.results.set(results);
+                this.results.set([...this.coursePageResults(), ...results]);
                 this.selectedIndex.set(-1);
                 this.isLoading.set(false);
                 this.hasSearched.set(true);
             });
+
+        // A light, parallel content search: it only feeds the row that offers to switch to the slides-and-videos
+        // search, so a failure just hides the row.
+        this.contentPreviewSubject
+            .pipe(
+                switchMap((event) => {
+                    if (event === null) {
+                        return of([]);
+                    }
+                    const courseIds = this.courseIdsParam();
+                    const excludeCourseIds = this.excludeCourseIdsParam();
+                    return timer(SEARCH_DEBOUNCE_MS).pipe(
+                        switchMap(() =>
+                            this.lectureSearchService
+                                .search(event.query, CONTENT_SEARCH_LIMIT, courseIds.length ? courseIds : undefined, excludeCourseIds.length ? excludeCourseIds : undefined, true)
+                                .pipe(
+                                    timeout(CONTENT_SEARCH_TIMEOUT_MS),
+                                    map((results) => results.map(mapLectureContentResult)),
+                                    catchError(() => of([])),
+                                ),
+                        ),
+                    );
+                }),
+                takeUntilDestroyed(),
+            )
+            .subscribe((hits) => this.setContentPreview(hits));
 
         this.router.events
             .pipe(
@@ -325,6 +417,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
             const isOpen = this.overlay.isOpen();
             untracked(() => {
                 if (isOpen) {
+                    // The dialog is not rendered yet, so this is still the element the user opened the palette from.
+                    const active = this.document.activeElement;
+                    this.focusOrigin = active instanceof HTMLElement ? { element: active, url: this.router.url } : undefined;
                     this.applyContextFilters();
                     // Home screen: open the guided filter picker so filters are the first thing offered. When a course
                     // context was applied (tokens present), show its scoped results instead of the picker.
@@ -351,6 +446,78 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.tokens.set(newTokens);
         this.lastSearchText = '';
         this.searchSubject.next({ query: '' });
+    }
+
+    /**
+     * The pages of the one course the search is scoped to whose name matches the typed text, such as "grades" for the
+     * statistics page. Offered only for a plain search in a single course, where the course is unambiguous.
+     */
+    /**
+     * Replaces the shown results while keeping the selected one selected: the views select by index, and the slides-and-
+     * videos row, when shown, takes the first index before the results.
+     */
+    private replaceResultsKeepingSelection(results: GlobalSearchResult[]): void {
+        const rowOffset = this.contentPreview().length > 0 && !this.contentSearchActive() ? 1 : 0;
+        const selected = this.selectedIndex();
+        // IDs are only unique per entity type: an exercise and a lecture can both have ID 7.
+        const selectedResult = selected >= rowOffset ? this.results()[selected - rowOffset] : undefined;
+        this.results.set(results);
+        if (selectedResult !== undefined) {
+            const index = results.findIndex((result) => result.type === selectedResult.type && result.id === selectedResult.id);
+            this.selectedIndex.set(index >= 0 ? index + rowOffset : -1);
+        }
+    }
+
+    private coursePageResults(): GlobalSearchResult[] {
+        const courseIds = this.courseIdsParam();
+        if (this.contentSearchActive() || courseIds.length !== 1 || this.typesParam() !== undefined || this.excludeTypesParam() !== undefined) {
+            return [];
+        }
+        const courseId = courseIds[0];
+        const scopedTabs = this.scopedCourseTabs();
+        const tabs = scopedTabs?.courseId === courseId ? scopedTabs.tabs : undefined;
+        // The guard's own rule decides, so the palette offers exactly the tabs the course page would open.
+        const isAvailable = (segment: string) => !!tabs && this.courseOverviewGuard.decideAccess(courseId, tabs, segment) === true;
+        return matchCoursePages(this.searchText(), courseId, this.courseStorageService.getCourse(courseId)?.title, (key) => this.translateService.instant(key), isAvailable);
+    }
+
+    /**
+     * Asks for the slide and video hits of the query when the content row can be offered: the user opted into AI, the
+     * slides-and-videos search is not already active, and the query is long enough to search.
+     */
+    private requestContentPreview(query: string): void {
+        const offersRow = !this.contentSearchActive() && this.availability.contentSearchAvailable() && query.trim().length >= MIN_SEARCH_QUERY_LENGTH;
+        // The hits of the previous query or scope no longer apply; the row stays hidden until the new ones arrive.
+        this.setContentPreview([]);
+        this.contentPreviewSubject.next(offersRow ? { query: query.trim() } : null);
+    }
+
+    /**
+     * Shows new preview hits. The row is the first selectable item, so a selected result keeps its selection when the
+     * row appears or disappears instead of the selection pointing at whatever now sits at its old index.
+     */
+    private setContentPreview(hits: GlobalSearchResult[]): void {
+        const hadRow = this.contentPreview().length > 0;
+        const hasRow = hits.length > 0;
+        const selected = this.selectedIndex();
+        if (hadRow !== hasRow && selected >= 0) {
+            this.selectedIndex.set(hasRow ? selected + 1 : selected - 1);
+        }
+        this.contentPreview.set(hits);
+    }
+
+    /** Switches to the slides-and-videos search for the current query, keeping the course filters. */
+    protected showContentHits(): void {
+        // A type chip cannot stay next to the slides-and-videos chip, which reads a different index; course chips can.
+        const courseTokens = this.tokens().filter((token) => token.facet !== 'type');
+        this.applyTokens([...courseTokens, { facet: 'type', value: LECTURE_CONTENT_TYPE }]);
+        this.focusInput();
+    }
+
+    /** Loads the longer result list for the current search; the next search starts at the default page size again. */
+    protected showMoreResults(): void {
+        this.isLoading.set(true);
+        this.searchSubject.next({ query: this.lastSearchText, limit: EXPANDED_RESULT_LIMIT });
     }
 
     protected onSearchInput(query: string): void {
@@ -381,6 +548,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 this.isLoading.set(true);
             }
             this.searchSubject.next({ query: text });
+            this.requestContentPreview(text);
         }
         this.returnHomeIfEmpty();
     }
@@ -513,10 +681,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     .pipe(
                         timeout(CONTENT_SEARCH_TIMEOUT_MS),
                         map((results) => results.map(mapLectureContentResult)),
-                        catchError((error: unknown) => {
-                            const irisDisabledForScope = error instanceof HttpErrorResponse && error.status === 403;
+                        catchError(() => {
                             this.isLoading.set(false);
-                            this.searchError.set(irisDisabledForScope ? 'global.search.contentSearchDisabled' : 'global.search.contentSearchUnavailable');
+                            this.searchError.set('global.search.contentSearchUnavailable');
                             return of([]);
                         }),
                     ),
@@ -525,10 +692,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     /** Stable cache key for placeholder (empty-query) results, keyed by the active filter set. */
-    private filterCacheKey(types: string | undefined, excludeTypes: string | undefined, courseIds: number[], excludeCourseIds: number[]): string {
+    private filterCacheKey(types: string | undefined, excludeTypes: string | undefined, courseIds: number[], excludeCourseIds: number[], limit = DEFAULT_RESULT_LIMIT): string {
         const ids = [...courseIds].sort((a, b) => a - b).join('.');
         const excludeIds = [...excludeCourseIds].sort((a, b) => a - b).join('.');
-        return `${types ?? ''}_e${excludeTypes ?? ''}_${ids}_x${excludeIds}`;
+        return `${types ?? ''}_e${excludeTypes ?? ''}_${ids}_x${excludeIds}_l${limit}`;
     }
 
     /**
@@ -545,12 +712,16 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
         this.lastSearchText = query;
         this.searchSubject.next({ query });
+        this.requestContentPreview(query);
     }
 
     private resetSearch() {
+        // Tab availability can change while the palette is closed (an exam becomes visible), so each opening reads it again.
+        this.scopedCourseTabs.set(undefined);
         this.lastSearchText = '';
         this.chipKeyOrigin = undefined;
         this.searchSubject.next(null);
+        this.contentPreviewSubject.next(null);
         this.filter.reset();
         this.results.set([]);
         this.selectedIndex.set(-1);
@@ -583,6 +754,15 @@ export class GlobalSearchModalComponent implements OnDestroy {
             return;
         }
         if (!this.overlay.isOpen()) return;
+
+        if (this.isTypedBeforeInputFocus(event)) {
+            // The dialog focuses the input only after its open animation, so the first letters of a fast typist arrive
+            // while the page still has focus. They go into the search box instead of getting lost.
+            event.preventDefault();
+            this.onSearchInput(this.searchQuery() + event.key);
+            this.focusInput();
+            return;
+        }
 
         // Cmd/Ctrl+F goes to the guided filter picker (OS-appropriate modifier, consistent with Cmd/Ctrl+K).
         // Always preventDefault, including where the shortcut is inert, so the browser find bar can never open
@@ -641,7 +821,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
             case 'Enter':
                 // Enter on a keyboard-selected chip re-picks it, the same as clicking it. Once focus moved on, for example
                 // with Tab to the Filter button, Enter belongs to the focused control and the chip only stays highlighted.
-                if (event.defaultPrevented || !this.isFocusUnmovedSinceHighlight() || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+                // A modified Enter (Cmd/Ctrl+Enter) continues the Iris answer in the chat instead.
+                if (
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.defaultPrevented ||
+                    !this.isFocusUnmovedSinceHighlight() ||
+                    (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))
+                ) {
                     break;
                 }
                 if (this.selectedChip() >= 0) {
@@ -667,12 +854,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
         return arrow && (event.metaKey || event.altKey || event.ctrlKey || event.shiftKey);
     }
 
-    /** Highlights a chip from the keyboard and remembers where focus and the cursor were at that moment. */
-    private highlightChip(index: number) {
-        this.selectedChip.set(index);
-        this.recordChipKeyOrigin();
-    }
-
     private recordChipKeyOrigin() {
         const target = this.document.activeElement;
         const input = target instanceof HTMLInputElement ? target : undefined;
@@ -694,7 +875,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         return (input?.selectionStart ?? null) === origin.selectionStart && (input?.selectionEnd ?? null) === origin.selectionEnd;
     }
 
-    /** Down walks the zones: search input -> chips row -> results list. */
+    /** Down walks the zones: search input -> results list; a highlighted chip goes to the results too. */
     private moveDown() {
         if (this.selectedChip() >= 0) {
             // Chips -> results.
@@ -703,19 +884,16 @@ export class GlobalSearchModalComponent implements OnDestroy {
             return;
         }
         if (this.selectedIndex() < 0) {
-            // Search input -> chips (if any), otherwise straight to results.
-            if (this.tokens().length > 0) {
-                this.highlightChip(0);
-            } else {
-                this.selectedIndex.set(this.maxIndex() >= 0 ? 0 : -1);
-            }
+            // Search input -> results, as in other command palettes. The chips are reached with Backspace or a click, so
+            // the course chip a course page adds does not cost an extra key press before the first result.
+            this.selectedIndex.set(this.maxIndex() >= 0 ? 0 : -1);
             return;
         }
         // Within results.
         this.selectedIndex.update((i) => Math.min(i + 1, this.maxIndex()));
     }
 
-    /** Up walks the zones: results list -> chips row -> search input. */
+    /** Up walks the zones: results list -> search input; a highlighted chip goes back to the search input. */
     private moveUp() {
         if (this.selectedChip() >= 0) {
             // Chips -> search input.
@@ -727,13 +905,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
             return;
         }
         if (this.selectedIndex() === 0) {
-            // Top of results -> chips (if any), otherwise back to the search input.
+            // Top of results -> back to the search input.
             this.selectedIndex.set(-1);
-            if (this.tokens().length > 0) {
-                this.highlightChip(this.tokens().length - 1);
-            } else {
-                this.focusInput();
-            }
+            this.focusInput();
         }
     }
 
@@ -752,6 +926,29 @@ export class GlobalSearchModalComponent implements OnDestroy {
         } else {
             this.selectedChip.set(Math.min(index, remaining - 1));
         }
+    }
+
+    /**
+     * Runs when the dialog has finished closing and released its focus trap. A palette closed without opening anything
+     * (Escape, the shortcut, a click outside) gives the focus back to where the user opened it from; after opening a
+     * result, the new page owns the focus.
+     */
+    protected onDialogHide(): void {
+        this.overlay.close();
+        const origin = this.focusOrigin;
+        this.focusOrigin = undefined;
+        if (origin && origin.url === this.router.url && origin.element.isConnected && origin.element !== this.document.body) {
+            origin.element.focus();
+        }
+    }
+
+    /** A printable key typed while the focus is still outside the open palette. */
+    private isTypedBeforeInputFocus(event: KeyboardEvent): boolean {
+        if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey || this.operator()) {
+            return false;
+        }
+        const active = this.document.activeElement;
+        return !active || !active.closest('.p-dialog');
     }
 
     private isToggleShortcut(event: KeyboardEvent): boolean {

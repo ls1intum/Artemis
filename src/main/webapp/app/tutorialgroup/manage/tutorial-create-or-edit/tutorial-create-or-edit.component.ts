@@ -137,32 +137,31 @@ export class TutorialCreateOrEditComponent {
     constructor() {
         effect(() => {
             const tutorialGroup = this.tutorialGroup();
-            if (tutorialGroup) {
-                this.title.set(tutorialGroup.title);
-                this.selectedTutorId.set(tutorialGroup.tutorId);
-                this.selectedLanguage.set(tutorialGroup.language);
-                this.selectedMode.set(tutorialGroup.isOnline ? Mode.ONLINE : Mode.OFFLINE);
-                if (tutorialGroup.campus) {
-                    this.campus.set(tutorialGroup.campus);
-                }
-                if (tutorialGroup.capacity) {
-                    this.capacity.set(tutorialGroup.capacity);
-                }
-                if (tutorialGroup.additionalInformation) {
-                    this.additionalInformation.set(tutorialGroup.additionalInformation);
-                }
-            }
+            this.title.set(tutorialGroup?.title ?? '');
+            this.selectedTutorId.set(tutorialGroup?.tutorId);
+            this.selectedLanguage.set(tutorialGroup?.language ?? '');
+            this.selectedMode.set(tutorialGroup?.isOnline ? Mode.ONLINE : Mode.OFFLINE);
+            this.campus.set(tutorialGroup?.campus ?? '');
+            this.capacity.set(tutorialGroup?.capacity);
+            this.additionalInformation.set(tutorialGroup?.additionalInformation ?? '');
+            this.titleInputTouched.set(false);
+            this.tutorInputTouched.set(false);
         });
         effect(() => {
             const schedule = this.schedule();
-            if (schedule) {
-                this.firstSessionStart.set(dayjs(schedule.firstSessionStart));
-                this.firstSessionEnd.set(dayjs(schedule.firstSessionEnd));
-                this.repetitionFrequency.set(schedule.repetitionFrequency);
-                this.tutorialPeriodEnd.set(dayjs(schedule.tutorialPeriodEnd));
-                this.location.set(schedule.location);
-                this.configureSessionPlan.set(true);
-            }
+            this.firstSessionStart.set(schedule ? dayjs(schedule.firstSessionStart) : undefined);
+            this.firstSessionEnd.set(schedule ? dayjs(schedule.firstSessionEnd) : undefined);
+            this.repetitionFrequency.set(schedule?.repetitionFrequency ?? 1);
+            this.tutorialPeriodEnd.set(schedule ? dayjs(schedule.tutorialPeriodEnd) : undefined);
+            this.location.set(schedule?.location ?? '');
+            this.configureSessionPlan.set(!!schedule);
+            this.firstSessionStartInputTouched.set(false);
+            this.firstSessionEndInputTouched.set(false);
+            this.tutorialPeriodEndInputTouched.set(false);
+            this.locationInputTouched.set(false);
+            this.firstSessionStartTextValid.set(true);
+            this.firstSessionEndTextValid.set(true);
+            this.tutorialPeriodEndTextValid.set(true);
         });
         effect(() => {
             this.tutorialGroupApiService.getUniqueLanguageValues(this.courseId()).subscribe({

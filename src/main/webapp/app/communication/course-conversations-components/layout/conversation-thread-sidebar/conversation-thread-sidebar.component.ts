@@ -1,4 +1,5 @@
 import { Component, ElementRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -46,6 +47,7 @@ export class ConversationThreadSidebarComponent {
     course = input<Course>();
 
     readonly closePostThread = output<void>();
+    readonly onNavigateToPost = output<Posting>();
 
     constructor() {
         effect(() => {
@@ -62,7 +64,14 @@ export class ConversationThreadSidebarComponent {
             untracked(() => {
                 if (activePost) {
                     this.post.set(activePost);
-                    this.createdAnswerPost.set(this.createEmptyAnswerPost());
+                    const replyBeingWritten = this.createdAnswerPost();
+                    if (replyBeingWritten && replyBeingWritten.post?.id === activePost.id) {
+                        // The post of the open thread was updated, for example because a reply arrived. Replacing the reply input would reset
+                        // the editor and move the cursor of a user who is typing to the start, so only point it to the updated post.
+                        replyBeingWritten.post = activePost;
+                    } else {
+                        this.createdAnswerPost.set(this.createEmptyAnswerPost());
+                    }
                     // After the DOM renders the new post, pin the current pixel width
                     // so that removing or replacing content (e.g. rejecting / editing an
                     // Iris reply) never changes the sidebar width mid-session.

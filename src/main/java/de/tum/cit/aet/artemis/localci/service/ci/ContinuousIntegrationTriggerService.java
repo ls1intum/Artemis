@@ -32,6 +32,19 @@ public interface ContinuousIntegrationTriggerService {
     }
 
     /**
+     * Triggers a build using the operator-controlled generation network policy and without exercise-provided environment variables. CI implementations that cannot enforce this
+     * boundary must reject the request.
+     *
+     * @param participation     the participation whose build should be triggered
+     * @param commitHash        the commit hash to build
+     * @param triggeredByPushTo the repository type that triggered the build
+     * @throws ContinuousIntegrationException if the CI cannot enforce a restricted build or the build request fails
+     */
+    default void triggerRestrictedBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) throws ContinuousIntegrationException {
+        throw new ContinuousIntegrationException("This continuous integration service does not support restricted builds");
+    }
+
+    /**
      * triggers a build for the build plan in the given participation
      *
      * @param participation the participation with the id of the build plan that should be triggered
@@ -53,6 +66,18 @@ public interface ContinuousIntegrationTriggerService {
      */
     default SharedBuildTriggerData prepareSharedTriggerData(ProgrammingExercise exercise) {
         return SharedBuildTriggerData.NONE;
+    }
+
+    /**
+     * Creates the throttle for one run that triggers many builds in a row.
+     * <p>
+     * The caller awaits it before every trigger of the run, so that the run adds builds only while the CI system has room
+     * for them. An implementation without a queue to look at returns {@link BulkTriggerThrottle#NONE}.
+     *
+     * @return a throttle for one run, not shared with any other run
+     */
+    default BulkTriggerThrottle createBulkTriggerThrottle() {
+        return BulkTriggerThrottle.NONE;
     }
 
     /**
