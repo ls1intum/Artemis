@@ -1217,7 +1217,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     /**
      * Projects the requesting user's individual participations and each latest submission's visible-result candidates
-     * for the course overview. The result side is bounded to the latest result and latest automatic fallback. Unlike the
+     * for the course overview. The result side is bounded to the latest result, the latest test result as the fallback until
+     * manual results are released, and the latest result that is not a requested AI feedback, which only copies a test score
+     * and so is never what a programming submission is graded by. Unlike the
      * entity fetch used by the deprecated dashboard, this selects only the programming participation's clone URL from
      * subtype-specific data and selects no student, team, feedback, or exercise entity.
      *
@@ -1273,9 +1275,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         SELECT MAX(latestAutomaticResult.id)
                         FROM Result latestAutomaticResult
                         WHERE latestAutomaticResult.submission = submission
-                            AND latestAutomaticResult.assessmentType IN (
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+                            AND latestAutomaticResult.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                    )
+                    OR result.id = (
+                        SELECT MAX(latestGradingResult.id)
+                        FROM Result latestGradingResult
+                        WHERE latestGradingResult.submission = submission
+                            AND (latestGradingResult.assessmentType IS NULL
+                                OR latestGradingResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                     ))
             """)
     List<ParticipationOverviewRowDTO> findIndividualRowsForCourseOverview(@Param("studentId") long studentId, @Param("exerciseIds") Collection<Long> exerciseIds,
@@ -1460,9 +1467,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         SELECT MAX(latestAutomaticResult.id)
                         FROM Result latestAutomaticResult
                         WHERE latestAutomaticResult.submission = submission
-                            AND latestAutomaticResult.assessmentType IN (
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+                            AND latestAutomaticResult.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                    )
+                    OR result.id = (
+                        SELECT MAX(latestGradingResult.id)
+                        FROM Result latestGradingResult
+                        WHERE latestGradingResult.submission = submission
+                            AND (latestGradingResult.assessmentType IS NULL
+                                OR latestGradingResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                     ))
             """)
     List<ParticipationOverviewRowDTO> findTeamRowsForCourseOverview(@Param("studentId") long studentId, @Param("exerciseIds") Collection<Long> exerciseIds);

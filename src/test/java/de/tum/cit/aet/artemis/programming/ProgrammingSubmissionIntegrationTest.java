@@ -37,6 +37,7 @@ import tools.jackson.databind.JsonNode;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -754,6 +756,84 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
             assertThat(feedback.getId()).isNegative();
             assertThat(feedback.getDetailText()).isEqualTo("lock failure message");
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLockAndGetProgrammingSubmissionKeepsAutomaticFeedbackAfterRequestedAiFeedback() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), now.minusHours(1));
+        submission.setParticipation(programmingExerciseStudentParticipation);
+        submission = submissionRepository.save(submission);
+
+        Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusHours(3), submission);
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "lockAfterAiTest");
+        participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "test failure before the AI feedback");
+
+        // the student requested AI feedback after the tests ran, so it is the latest result of the submission
+        Result athenaResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusHours(2), submission);
+        var aiFeedback = new Feedback();
+        aiFeedback.setType(FeedbackType.AUTOMATIC);
+        aiFeedback.setText("NonGradedFeedbackSuggestion:File Main.java at line 3");
+        aiFeedback.setDetailText("AI hint the student read");
+        aiFeedback.setCredits(2.0);
+        participationUtilService.addFeedbackToResult(aiFeedback, athenaResult);
+
+        String url = "/api/programming/programming-submissions/" + submission.getId() + "/lock";
+        var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
+
+        Result draft = storedSubmission.getLatestResult();
+        assertThat(draft).isNotNull();
+        assertThat(draft.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        // the tutor starts from the test feedback, and the AI feedback is not part of the assessment
+        assertThat(draft.getFeedbacks()).anySatisfy(feedback -> assertThat(feedback.getDetailText()).isEqualTo("test failure before the AI feedback"));
+        assertThat(draft.getFeedbacks()).noneSatisfy(feedback -> assertThat(feedback.getDetailText()).isEqualTo("AI hint the student read"));
+    }
+
+    @Test
+    void testRatedResultsForTheGradeLeaveOutRequestedAiFeedback() {
+        // An AI feedback copies the score of a test result, so as the latest rated result it would replace the grade: with a practice
+        // score after the due date, or with the test score after a manual assessment.
+        String login = TEST_PREFIX + "student9";
+        ZonedDateTime now = ZonedDateTime.now();
+        var gradedSubmission = saveProgrammingSubmission(participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login));
+        Result gradedResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusHours(4), gradedSubmission, true, true, 60);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusHours(3), gradedSubmission, true, true, 30);
+
+        var practiceSubmission = saveProgrammingSubmission(participationUtilService.createAndSavePracticeParticipationForExercise(exercise, login));
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusHours(2), practiceSubmission, true, false, 100);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusHours(1), practiceSubmission, true, true, 100);
+
+        long studentId = userUtilService.getUserByLogin(login).getId();
+        assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exercise.getId(), studentId)).extracting(Result::getId)
+                .containsExactly(gradedResult.getId());
+    }
+
+    @Test
+    void testCourseOverviewRowsKeepTheGradingResultsBehindALaterAiFeedback() {
+        // The overview grades a programming submission by its results other than AI feedback, so a newer AI feedback must not
+        // be the only row: the test result is the fallback until the manual result is released, the manual result after that.
+        String login = TEST_PREFIX + "student8";
+        ZonedDateTime now = ZonedDateTime.now();
+        var submission = saveProgrammingSubmission(participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login));
+        Result testResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusHours(3), submission, true, true, 60);
+        Result manualResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, now.minusHours(2), submission, true, true, 70);
+        Result aiFeedback = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusHours(1), submission, true, true, 60);
+
+        long studentId = userUtilService.getUserByLogin(login).getId();
+        var rows = studentParticipationRepository.findIndividualRowsForCourseOverview(studentId, Set.of(exercise.getId()), false);
+
+        assertThat(rows).extracting(ParticipationOverviewRowDTO::resultId).containsExactlyInAnyOrder(testResult.getId(), manualResult.getId(), aiFeedback.getId());
+    }
+
+    private ProgrammingSubmission saveProgrammingSubmission(Participation participation) {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        return submissionRepository.save(submission);
     }
 
     @Test

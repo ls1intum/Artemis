@@ -405,6 +405,27 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
     }
 
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @CsvSource({ "true, true", "false, true", ", false" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithAllResultsShowsFinishedAiFeedbackBeforeTheAssessmentDueDate(Boolean successful, boolean expectAiFeedback) throws Exception {
+        // the student opens an AI feedback they just received from the result history, long before any manual assessment is due
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
+        programmingExerciseRepository.save(programmingExercise);
+        Result testResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        // the overload that only saves the result: the submission's results are not loaded here
+        Result aiFeedback = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now(), testResult.getSubmission(), true, true, 100);
+        aiFeedback.setSuccessful(successful);
+        resultRepository.save(aiFeedback);
+
+        var requestedParticipation = request.get(participationsBaseUrl + testResult.getSubmission().getParticipation().getId() + "/student-participation-with-all-results",
+                HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+
+        // an AI feedback still being generated is not offered yet
+        assertThat(participationUtilService.getResultsForParticipation(requestedParticipation).stream().anyMatch(result -> aiFeedback.getId().equals(result.getId())))
+                .isEqualTo(expectAiFeedback);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetParticipationWithAllResultsAsAnInstructor_noCompletionDate_notFound() throws Exception {

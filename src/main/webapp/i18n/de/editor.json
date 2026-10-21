@@ -47,6 +47,8 @@
             "loadingFiles": "Lade Dateien",
             "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
+            "viewingEarlierSubmission": "Du siehst eine frühere Abgabe und ihr Ergebnis an. Sie kann nicht geändert werden.",
+            "openLatestSubmission": "Zurück zu Deinem aktuellen Code",
             "tabSize": "Tabulatorweite:",
             "conflict": {
                 "resetRepository": "Setze Dein Repository zurück, um Deine Teilnahme fortzusetzen",

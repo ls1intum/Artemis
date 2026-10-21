@@ -132,13 +132,7 @@
                             [repositoryUri]="''"
                         />
                     }
-                    @if (
-                        exercise().course?.athenaFormativeFeedbackEnabled &&
-                        athenaEnabled &&
-                        gradedParticipation() &&
-                        exercise().type === ExerciseType.PROGRAMMING &&
-                        exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC
-                    ) {
+                    @if (exercise().course?.athenaFormativeFeedbackEnabled && athenaEnabled && gradedParticipation() && exercise().type === ExerciseType.PROGRAMMING) {
                         <jhi-request-feedback-button
                             [exercise]="exercise()"
                             [smallButtons]="smallButtons()"
