@@ -275,12 +275,33 @@ export function editorToMessage(element: HTMLElement): string {
 /** Treat bare external hostnames as HTTPS while retaining explicitly relative Artemis links. */
 export function normalizeMessageLink(value: string): string {
     const trimmed = value.trim();
-    return /^(?:[\p{L}\p{N}-]+\.)+[\p{L}\p{N}-]+(?::\d+)?(?:[/?#]|$)/u.test(trimmed) ? `https://${trimmed}` : trimmed;
+    let end = trimmed.length;
+    for (const delimiter of ['/', '?', '#']) {
+        const position = trimmed.indexOf(delimiter);
+        if (position >= 0) end = Math.min(end, position);
+    }
+    const [hostname, port, ...extra] = trimmed.slice(0, end).split(':');
+    const labels = hostname.split('.');
+    // Check one Unicode code point at a time. No input-length-dependent regex repetition or backtracking is needed.
+    const bareHost = labels.length > 1 && labels.every((label) => label.length > 0 && Array.from(label).every((character) => /^[\p{L}\p{N}-]$/u.test(character)));
+    const numericPort = port === undefined || (port.length > 0 && Array.from(port).every(isAsciiDigit));
+    return bareHost && numericPort && !extra.length ? `https://${trimmed}` : trimmed;
+}
+
+function isAsciiDigit(character: string): boolean {
+    return character >= '0' && character <= '9';
+}
+
+function containsPostReference(value: string): boolean {
+    for (let index = 0; index + 1 < value.length; index++) {
+        if (value[index] === '#' && isAsciiDigit(value[index + 1])) return true;
+    }
+    return false;
 }
 
 /** Accepts safe destinations and labels that the posting renderer can retain as one link. */
 export function isMessageLinkSafe(value: string, label = ''): boolean {
-    if (!value.trim() || /#\d+/.test(value) || /#\d+/.test(label) || Array.from(value).some((character) => character.charCodeAt(0) <= 32)) {
+    if (!value.trim() || containsPostReference(value) || containsPostReference(label) || Array.from(value).some((character) => character.charCodeAt(0) <= 32)) {
         return false;
     }
     try {

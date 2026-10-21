@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canEditMessageVisually, editorToMessage, messageToEditorFragment } from './message-editor-conversion';
+import { canEditMessageVisually, editorToMessage, isMessageLinkSafe, messageToEditorFragment, normalizeMessageLink } from './message-editor-conversion';
 import { renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
 
 /** Serializes the fragment only for assertions about generated markup. */
@@ -10,6 +10,35 @@ function messageToEditorHtml(source: string): string {
 }
 
 describe('Message editor conversion', () => {
+    it.each([
+        ['  example.org/path  ', 'https://example.org/path'],
+        ['example.org:8443/path', 'https://example.org:8443/path'],
+        ['日本.example/path', 'https://日本.example/path'],
+        ['ä-ö.example#section', 'https://ä-ö.example#section'],
+        ['192.168.1.1', 'https://192.168.1.1'],
+        ['./guide.pdf', './guide.pdf'],
+        ['/courses/1', '/courses/1'],
+        ['#section', '#section'],
+        ['https://example.org', 'https://example.org'],
+        ['mailto:user@example.org', 'mailto:user@example.org'],
+        ['example..org', 'example..org'],
+        ['example.org.', 'example.org.'],
+        ['example_.org', 'example_.org'],
+        ['example.org:', 'example.org:'],
+        ['example.org:abc', 'example.org:abc'],
+        ['localhost:9000', 'localhost:9000'],
+    ])('normalizes bare hosts while preserving explicit or malformed destinations: %s', (value, expected) => {
+        expect(normalizeMessageLink(value)).toBe(expected);
+    });
+
+    it('handles long malformed authorities and reference-free link fields', () => {
+        const hostname = 'a.'.repeat(32_768) + '!';
+        const label = '#x'.repeat(32_768);
+        expect(normalizeMessageLink(hostname)).toBe(hostname);
+        expect(isMessageLinkSafe('https://example.org', label)).toBe(true);
+        expect(isMessageLinkSafe('https://example.org', label + '#123')).toBe(false);
+    });
+
     const roundTrip = (message: string) => {
         const element = document.createElement('div');
         element.innerHTML = messageToEditorHtml(message);
