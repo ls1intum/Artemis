@@ -1,11 +1,14 @@
 @if (criteria()) {
-    <div class="mb-2">
+    <div class="mb-2 d-flex align-items-center gap-1">
         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
             <fa-icon [icon]="faExpand" /> <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
         </button>
         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="collapseAll()">
             <fa-icon [icon]="faCompress" /> <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
         </button>
+        @if (appliedCount(); as count) {
+            <tumaet-ui-tag class="ms-auto" severity="secondary" [value]="'artemisApp.assessmentInstructions.appliedCount' | artemisTranslate: count" />
+        }
     </div>
 }
 @if (allowDrop()) {
@@ -35,7 +38,7 @@
                     class="rounded"
                     [draggable]="isDraggable(instruction)"
                     (dragstart)="disableDrag()"
-                    (dragstart)="drag($event, instruction)"
+                    (dragstart)="drag($event, instruction, criterion.title)"
                     id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
                     [style.background-color]="setInstrColour(instruction)"
                 >

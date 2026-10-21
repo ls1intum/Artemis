@@ -17,6 +17,13 @@
             "sampleSolution": "Beispiellösung",
             "assessmentInstructions": "Bewertungsanweisungen",
             "structuredGradingInstructions": "Strukturierte Bewertungskriterien",
+            "tabs": {
+                "assessmentNote": "Anweisungen",
+                "criteria": "Kriterien",
+                "problemStatement": "Aufgabe",
+                "sampleSolution": "Lösung",
+                "training": "Training"
+            },
             "expandAll": "Alle ausklappen",
             "collapseAll": "Alle einklappen",
             "usageCount": "Anzahl Verwendung",

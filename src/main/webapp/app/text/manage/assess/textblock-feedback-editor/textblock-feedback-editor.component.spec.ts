@@ -8,7 +8,6 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -145,17 +144,17 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(confirmIcon).toBeTruthy();
     });
 
-    it('should show link icon when feedback is associated with grading instruction', () => {
+    it('should name the linked criterion when feedback is associated with grading instruction', () => {
         component.feedback().gradingInstruction = new GradingInstruction();
         fixture.changeDetectorRef.detectChanges();
-        const linkIcon = compiled.querySelector('jhi-grading-instruction-link-icon');
+        const linkIcon = compiled.querySelector('[data-testid="linked-criterion"]');
         expect(linkIcon).toBeTruthy();
     });
 
-    it('should not show link icon when feedback is not associated with grading instruction', () => {
+    it('should not name a criterion when feedback is not associated with grading instruction', () => {
         component.feedback().gradingInstruction = undefined;
         fixture.changeDetectorRef.detectChanges();
-        const linkIcon = compiled.querySelector('jhi-grading-instruction-link-icon');
+        const linkIcon = compiled.querySelector('[data-testid="linked-criterion"]');
         expect(linkIcon).toBeFalsy();
     });
 
@@ -245,13 +244,5 @@ describe('TextBlockFeedbackEditorComponent', () => {
         const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.didChange();
         expect(typeSpy).not.toHaveBeenCalled();
-    });
-
-    it('should render the grading instruction dropdown next to the feedback detail when criteria exist', () => {
-        const criterion = { id: 1, title: 'Correctness', structuredGradingInstructions: [{ id: 2, credits: 1 } as GradingInstruction] } as GradingCriterion;
-        fixture.componentRef.setInput('criteria', [criterion]);
-        fixture.detectChanges();
-
-        expect(compiled.querySelector('.unified-feedback-detail-row [ngbDropdown]')).toBeTruthy();
     });
 });

@@ -28,7 +28,6 @@
             "submitSuccessful": "Your answer was submitted successfully! You may submit again or wait for your feedback.",
             "submitDueDateMissed": "Your answer was submitted successfully! You may submit again or wait for your feedback. As you missed the due date, your score will not be counted.",
             "error": "An error occurred. Please try again later.",
-            "assessedSubmission": "Your Assessment",
             "supportedFileExtensions": "Supported file extensions: "
         }
     }

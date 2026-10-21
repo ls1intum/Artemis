@@ -1,4 +1,16 @@
+<!-- The scroll buttons only move the list, so they stay out of the tab order and the tablist's accessibility tree: the
+     keyboard already reaches every tab with the arrow keys, which scroll the focused tab into view. -->
+@if (canScrollStart()) {
+    <button type="button" class="tumaet-ui-tab-scroll tumaet-ui-tab-scroll-start" tabindex="-1" aria-hidden="true" (click)="scrollTabs('start')">
+        <fa-icon [icon]="scrollStartIcon()" />
+    </button>
+}
 <ng-content />
+@if (canScrollEnd()) {
+    <button type="button" class="tumaet-ui-tab-scroll tumaet-ui-tab-scroll-end" tabindex="-1" aria-hidden="true" (click)="scrollTabs('end')">
+        <fa-icon [icon]="scrollEndIcon()" />
+    </button>
+}
 <span
     class="tumaet-ui-tab-indicator"
     [class.tumaet-ui-tab-indicator-animated]="indicatorPosition().animate"

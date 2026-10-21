@@ -209,10 +209,6 @@ export class ExerciseHeaderActionsComponent {
     });
     readonly showFeedbackPopover = computed(() => {
         const exercise = this.exercise();
-        if (exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
-            // Athena feedback requests for programming exercises require manual assessment to be enabled
-            return false;
-        }
         return (
             !this.examMode() &&
             this.hasUserAcceptedLLM() &&

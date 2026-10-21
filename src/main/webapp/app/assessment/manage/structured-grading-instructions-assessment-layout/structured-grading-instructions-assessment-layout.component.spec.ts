@@ -289,6 +289,17 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(dragEvent.preventDefault).toHaveBeenCalledOnce();
         });
 
+        it("should hand over the instruction together with its criterion's title, which names the feedback it is dropped on", () => {
+            const dataTransfer = { setData: vi.fn() };
+            const dragEvent = { dataTransfer, preventDefault: vi.fn() } as unknown as DragEvent;
+
+            comp.drag(dragEvent, instruction, 'Bubble Sort');
+
+            const [mimeType, payload] = dataTransfer.setData.mock.calls[0];
+            expect(mimeType).toBe('text/plain');
+            expect(JSON.parse(payload)).toEqual({ ...instruction, criterionTitle: 'Bubble Sort' });
+        });
+
         it('should show an instruction applied to a referenced element as ticked but locked', () => {
             const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
             setApplicationCount(1);

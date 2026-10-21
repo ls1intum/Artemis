@@ -40,7 +40,6 @@ import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/t
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -92,7 +91,6 @@ describe('TextEditorComponent', () => {
                 MockComponent(ButtonComponent),
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsFormComponent),
-                MockComponent(ComplaintsStudentViewComponent),
                 MockDirective(MarkdownDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ResizeableContainerComponent),
@@ -524,12 +522,50 @@ describe('TextEditorComponent', () => {
 
     it('should render the textarea when there is an Athena result and isExamSummary is false', () => {
         comp.textExercise.set(textExercise);
+        // writing stays open until the due date
+        textExercise.dueDate = dayjs().add(1, 'days');
         comp.result.set({ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
         fixture.componentRef.setInput('isExamSummary', false);
         fixture.changeDetectorRef.detectChanges();
 
         const textarea = fixture.debugElement.query(By.css('#text-editor'));
         expect(textarea).toBeTruthy();
+    });
+
+    it('should still show the box to write in before the due date, whatever result exists', () => {
+        textExercise.dueDate = dayjs().add(1, 'days');
+        comp.textExercise.set(textExercise);
+        comp.result.set({ id: 1, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Result);
+        fixture.componentRef.setInput('isExamSummary', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#text-editor'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('[data-testid="assessment-pending"]')).nativeElement.hidden).toBe(true);
+    });
+
+    it('should lock the latest submission, not the one of the latest result, once the due date has passed', () => {
+        textExercise.dueDate = dayjs().subtract(1, 'days');
+        comp.textExercise.set(textExercise);
+        const latest = { id: 2, text: 'the latest text' } as TextSubmission;
+        comp.submission.set(latest);
+        comp.answer.set('the latest text');
+        comp.result.set({ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, submission: { id: 1, text: 'an older text' } } as Result);
+        fixture.componentRef.setInput('isExamSummary', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        const locked = fixture.debugElement.query(By.css('[data-testid="text-locked-submission"]')).nativeElement as HTMLElement;
+        expect(locked.textContent).toContain('the latest text');
+        expect(locked.textContent).not.toContain('an older text');
+    });
+
+    it('should show the submission read-only with the pending tag once the due date has passed', () => {
+        textExercise.dueDate = dayjs().subtract(1, 'days');
+        comp.textExercise.set(textExercise);
+        fixture.componentRef.setInput('isExamSummary', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#text-editor'))).toBeFalsy();
+        expect(fixture.debugElement.query(By.css('[data-testid="assessment-pending"]')).nativeElement.hidden).toBe(false);
     });
 
     describe('team collaboration', () => {
@@ -589,53 +625,71 @@ describe('TextEditorComponent', () => {
     describe('card layout', () => {
         const getLeftBody = (): HTMLElement => fixture.nativeElement.querySelector('[left-body]');
 
-        const renderAssessedSubmission = () => {
-            comp.textExercise.set(textExercise);
-            comp.result.set({ id: 1, feedbacks: [{ id: 1, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'feedback' } as Feedback] } as Result);
-            comp.isOwnerOfParticipation.set(true);
-            fixture.changeDetectorRef.detectChanges();
-        };
-
-        it('should keep the left padding of the left body on the participation page', () => {
+        it('should let the submission panel fill the left body on the participation page', () => {
             comp.textExercise.set(textExercise);
             fixture.componentRef.setInput('isExamSummary', false);
             fixture.changeDetectorRef.detectChanges();
 
-            expect(getLeftBody().classList).toContain('ps-2');
-        });
-
-        it('should drop the left padding of the left body in the exam summary so the body shares the card inset', () => {
-            comp.textExercise.set(textExercise);
-            fixture.componentRef.setInput('isExamSummary', true);
-            fixture.changeDetectorRef.detectChanges();
-
             expect(getLeftBody().classList).not.toContain('ps-2');
-            expect(getLeftBody().classList).toContain('pb-2');
+            expect(getLeftBody().querySelector('jhi-assessment-submission-panel')).not.toBeNull();
+        });
+    });
+
+    describe('general feedback panel', () => {
+        const generalFeedback = { id: 1, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'Well structured.', credits: 2 } as Feedback;
+        const referencedFeedback = { id: 2, type: FeedbackType.MANUAL, reference: 'text:1', detailText: 'Cite a source.', credits: -1 } as Feedback;
+
+        const render = (feedbacks: Feedback[], isExamSummary = false) => {
+            comp.textExercise.set(textExercise);
+            comp.result.set({ id: 1, assessmentType: AssessmentType.MANUAL, feedbacks } as Result);
+            fixture.componentRef.setInput('isExamSummary', isExamSummary);
+            fixture.changeDetectorRef.detectChanges();
+        };
+        const panel = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="text-general-feedback-panel"]');
+        const generalFeedbackElement = (): HTMLElement | null => fixture.nativeElement.querySelector('jhi-general-feedback');
+
+        it('should show the general feedback in a panel under the submission, as the code editor does', () => {
+            render([generalFeedback, referencedFeedback]);
+
+            expect(comp.showsGeneralFeedbackPanel).toBe(true);
+            expect(panel()).not.toBeNull();
+            expect(panel()!.querySelector('[data-testid="feedback-bottom-panel-count"]')!.textContent!.trim()).toBe('1');
+            // The feedback is in the panel only, not once more inside the submission panel
+            expect(fixture.nativeElement.querySelectorAll('jhi-general-feedback')).toHaveLength(1);
+            expect(panel()!.contains(generalFeedbackElement())).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="text-assessed-submission"]')!.contains(generalFeedbackElement())).toBe(false);
         });
 
-        it('should render the rating inside its own column so it lines up with the feedback above, without an alert box', () => {
-            renderAssessedSubmission();
+        it('should keep the general feedback below the submission in an exam summary, which is one long page', () => {
+            render([generalFeedback], true);
 
-            const rating: HTMLElement = fixture.nativeElement.querySelector('jhi-rating');
-            expect(rating).toBeTruthy();
-            // The rating is a quiet reaction to the feedback, so the page no longer wraps it in a coloured alert.
-            expect(rating.classList).not.toContain('alert');
-            expect(rating.classList).not.toContain('alert-info');
-            expect(rating.classList).not.toContain('col-xl-8');
-            const column = rating.parentElement!;
-            expect(column.classList).toContain('col-xl-8');
-            expect(column.classList).toContain('col-lg-10');
-            expect(column.classList).not.toContain('alert');
-            expect(column.parentElement!.classList).toContain('row');
+            expect(comp.showsGeneralFeedbackPanel).toBe(false);
+            expect(panel()).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="text-assessed-submission"]')!.contains(generalFeedbackElement())).toBe(true);
         });
 
-        it('should render the assessed submission label with the section heading style', () => {
-            renderAssessedSubmission();
+        it('should show no panel when the assessment has no general feedback', () => {
+            render([referencedFeedback]);
 
-            const label: HTMLElement = fixture.nativeElement.querySelector('.col-xl-8 > b');
-            expect(label).toBeTruthy();
-            expect(label.classList).toContain('text-base');
-            expect(label.classList).toContain('font-semibold!');
+            expect(comp.showsGeneralFeedbackPanel).toBe(false);
+            expect(panel()).toBeNull();
+            // The inline component stays in the page but has nothing to draw
+            expect(fixture.nativeElement.querySelector('[data-testid="general-feedback"]')).toBeNull();
+        });
+
+        it('should collapse and expand the panel from its header button', () => {
+            render([generalFeedback]);
+            const content = (): HTMLElement => panel()!.querySelector('.feedback-bottom-panel__content')!;
+            expect(content().hidden).toBe(false);
+
+            (panel()!.querySelector('[data-testid="feedback-bottom-panel-toggle"]') as HTMLButtonElement).click();
+            fixture.changeDetectorRef.detectChanges();
+            expect(comp.generalFeedbackExpanded()).toBe(false);
+            expect(content().hidden).toBe(true);
+
+            (panel()!.querySelector('[data-testid="feedback-bottom-panel-toggle"]') as HTMLButtonElement).click();
+            fixture.changeDetectorRef.detectChanges();
+            expect(content().hidden).toBe(false);
         });
     });
 
@@ -675,6 +729,20 @@ describe('TextEditorComponent', () => {
         expect(comp.isAutomaticResult).toBe(true);
         comp.result.set({ assessmentType: AssessmentType.MANUAL } as Result);
         expect(comp.isAutomaticResult).toBe(false);
+    });
+
+    it('frames only an assessed submission with feedback in the submission panel', () => {
+        comp.result.set({ assessmentType: AssessmentType.MANUAL, feedbacks: [] } as unknown as Result);
+        expect(comp.showsAssessedSubmission).toBe(false);
+
+        comp.result.set({ assessmentType: AssessmentType.MANUAL, feedbacks: [{ credits: 2 }] } as unknown as Result);
+        expect(comp.showsAssessedSubmission).toBe(true);
+
+        // Preliminary AI feedback leaves the editor open, unless the student reads it in an exam summary or a fixed submission
+        comp.result.set({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, feedbacks: [{ credits: 2 }] } as unknown as Result);
+        expect(comp.showsAssessedSubmission).toBe(false);
+        comp.isReadOnlyWithShowResult.set(true);
+        expect(comp.showsAssessedSubmission).toBe(true);
     });
 
     it('canDeactivate true when no submission or unchanged; false when changed', () => {

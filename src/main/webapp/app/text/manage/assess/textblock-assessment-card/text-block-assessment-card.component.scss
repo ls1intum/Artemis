@@ -23,47 +23,34 @@ span {
         padding: 2px 4px;
         border-radius: 4px;
 
+        // The sentence the open feedback applies to is marked by a line at its start and at its end, in the colour of its text. An inset
+        // shadow, since an inline sentence that wraps shows it only at the start of its first line and the end of its last.
         &.active {
-            text-decoration-line: underline;
+            box-shadow:
+                inset 2px 0 0 currentColor,
+                inset -2px 0 0 currentColor;
         }
 
         &.positive-feedback {
             color: var(--textblock-assessment-text-feedback-positive-color);
             background-color: var(--textblock-assessment-text-feedback-positive-background);
-
-            &.active {
-                text-decoration-style: double;
-                text-decoration-color: var(--textblock-assessment-text-feedback-positive-active-decoration);
-            }
         }
 
         &.negative-feedback {
             color: var(--textblock-assessment-text-feedback-negative-color);
             background-color: var(--textblock-assessment-text-feedback-negative-background);
-
-            &.active {
-                text-decoration-style: wavy;
-                text-decoration-color: var(--textblock-assessment-text-feedback-negative-active-decoration);
-            }
         }
 
         &.neutral-feedback {
             color: var(--textblock-assessment-text-feedback-neutral-color);
             background-color: var(--textblock-assessment-text-feedback-neutral-background);
-
-            &.active {
-                text-decoration-style: dashed;
-                text-decoration-color: var(--textblock-assessment-text-feedback-neutral-active-decoration);
-            }
         }
     }
 }
 
+// A block, so its margin counts: the feedback of a sentence sits below it with the same room around it as in the student's view of the text
 jhi-text-block-feedback-editor {
-    margin-top: 1rem;
+    display: block;
+    margin: 0.5rem 0;
     border-width: 0;
-
-    &.active {
-        border: 2px var(--textblock-assessment-textblock-feedback-editor-active-border) solid;
-    }
 }

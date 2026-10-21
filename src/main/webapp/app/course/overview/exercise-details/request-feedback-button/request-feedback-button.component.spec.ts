@@ -723,27 +723,19 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(participationWebsocketService.subscribeForLatestResultOfParticipation).toHaveBeenLastCalledWith(practiceParticipation.id, true);
     });
 
-    it('should return true for programming exercises with manual assessment enabled in assureConditionsSatisfied', () => {
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        fixture.componentRef.setInput('exercise', exercise);
+    it.each([AssessmentType.SEMI_AUTOMATIC, AssessmentType.AUTOMATIC])(
+        'should allow feedback requests for programming exercises whatever their assessment type (%s) in assureConditionsSatisfied',
+        (assessmentType: AssessmentType) => {
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+            exercise.assessmentType = assessmentType;
+            fixture.componentRef.setInput('exercise', exercise);
 
-        const result = component.assureConditionsSatisfied();
+            const result = component.assureConditionsSatisfied();
 
-        expect(result).toBe(true);
-    });
-
-    it('should return false for programming exercises without manual assessment enabled in assureConditionsSatisfied', () => {
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-        exercise.assessmentType = AssessmentType.AUTOMATIC;
-        fixture.componentRef.setInput('exercise', exercise);
-
-        const result = component.assureConditionsSatisfied();
-
-        expect(result).toBe(false);
-    });
+            expect(result).toBe(true);
+        },
+    );
 
     it('should show warning for pending changes in text exercises', () => {
         vi.useFakeTimers();
