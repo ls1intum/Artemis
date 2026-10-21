@@ -157,21 +157,8 @@ public class ExerciseDeletionService {
         }
         // Include student participation cleanup as well as the final template/solution cleanup and exercise removal.
         // A processor admitted before the marker must finish its writes before any of these deletion steps can run.
-        var resultProcessingLock = programmingExerciseDeletionService.getResultProcessingLock(exerciseId);
-        resultProcessingLock.lock();
-        try {
-            boolean ownsDeletionMarker = programmingExerciseDeletionService.beginDeletion(exerciseId);
-            try {
-                deleteExercise(exercise, deleteBaseReposBuildPlans);
-            }
-            finally {
-                if (ownsDeletionMarker) {
-                    programmingExerciseDeletionService.endDeletion(exerciseId);
-                }
-            }
-        }
-        finally {
-            resultProcessingLock.unlock();
+        try (var permit = programmingExerciseDeletionService.beginDeletionAndAwaitResults(exerciseId)) {
+            deleteExercise(exercise, deleteBaseReposBuildPlans);
         }
     }
 

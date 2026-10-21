@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -230,22 +229,19 @@ public class LocalCIResultProcessingService {
         if (resultQueueItem == null) {
             return;
         }
-        var resultProcessingLock = programmingExerciseDeletionService.getResultProcessingLock(resultQueueItem.buildJobQueueItem().exerciseId());
-        if (!resultProcessingLock.tryLock(Duration.ZERO)) {
-            // A failed deletion must not discard results. Keep them shared without occupying a worker or firing more listener events.
+        var admission = programmingExerciseDeletionService.tryAdmitResultProcessing(resultQueueItem.buildJobQueueItem().exerciseId());
+        if (admission.isEmpty()) {
+            // Preserve denied results without occupying a worker or firing more queue-listener events.
             distributedDataAccessService.getDistributedDeferredBuildResultQueue().add(resultQueueItem);
             return;
         }
-        try {
+        try (var permit = admission.get()) {
             log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
             if (log.isDebugEnabled()) {
                 log.debug("Build jobs waiting in queue: {}", distributedDataAccessService.getResultQueueSize());
                 log.debug("Queued build jobs: {}", distributedDataAccessService.getResultQueueIds());
             }
             processResultLocked(resultQueueItem);
-        }
-        finally {
-            resultProcessingLock.unlock();
         }
     }
 
@@ -263,13 +259,6 @@ public class LocalCIResultProcessingService {
 
         SecurityUtils.setSystemAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
-        boolean exerciseBeingDeleted = programmingExerciseDeletionService.isBeingDeleted(buildJob.exerciseId());
-        if (exerciseBeingDeleted && participationOptional.isPresent()) {
-            // The participation still exists because the deletion is not finished, but everything of it is about to be removed. A result written now would only
-            // be deleted again or, if it lands after the cleanup, block the deletion of the exercise. Treat it like the result of a deleted participation.
-            log.info("Exercise {} is being deleted. Dropping the result of build job {} for participation {}.", buildJob.exerciseId(), buildJob.id(), buildJob.participationId());
-            participationOptional = Optional.empty();
-        }
 
         try {
             if (participationOptional.isPresent()) {
@@ -347,7 +336,7 @@ public class LocalCIResultProcessingService {
         }
 
         // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
-        if (!exerciseBeingDeleted && isSolutionBuildOfTestOrAuxPush(buildJob)) {
+        if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
             log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
             try {
                 // Keep lifecycle-lock waits off both result workers and the shared ForkJoinPool.
@@ -420,15 +409,13 @@ public class LocalCIResultProcessingService {
     }
 
     private void runWhileExerciseExists(long exerciseId, Runnable operation) {
-        var resultProcessingLock = programmingExerciseDeletionService.getResultProcessingLock(exerciseId);
-        resultProcessingLock.lock();
-        try {
-            if (!programmingExerciseDeletionService.isBeingDeleted(exerciseId) && programmingExerciseRepository.existsById(exerciseId)) {
+        try (var permit = programmingExerciseDeletionService.awaitResultProcessing(exerciseId)) {
+            if (programmingExerciseRepository.existsById(exerciseId)) {
                 operation.run();
             }
         }
-        finally {
-            resultProcessingLock.unlock();
+        catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
         }
     }
 

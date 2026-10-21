@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
@@ -60,7 +59,7 @@ public class ProgrammingExerciseDeletionService {
 
     private final DistributedMap<Long, Boolean> deletionsInProgress;
 
-    private final DistributedDataProvider distributedDataProvider;
+    private final ProgrammingExerciseResultProcessingGate resultProcessingGate;
 
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
@@ -75,19 +74,54 @@ public class ProgrammingExerciseDeletionService {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
         this.sharedQueueManagementService = sharedQueueManagementService;
-        this.distributedDataProvider = distributedDataProvider;
+        this.resultProcessingGate = new ProgrammingExerciseResultProcessingGate(distributedDataProvider);
         this.deletionsInProgress = distributedDataProvider.getExpiringMap(DELETIONS_IN_PROGRESS, DELETION_MARKER_TIME_TO_LIVE);
     }
 
+    /** A same-thread lease covering result writes or all exercise-deletion cleanup. */
+    public interface ResultProcessingPermit extends AutoCloseable {
+
+        @Override
+        void close();
+    }
+
     /**
-     * The cluster-wide mutex shared by deletion and result persistence, including asynchronous follow-up writes.
-     * Callers must acquire it before checking the deletion marker and release it in a finally block after their writes.
+     * Tries to admit a result without waiting for another writer or a deletion.
      *
-     * @param exerciseId the programming exercise whose lifecycle is coordinated
-     * @return the mutex for this exercise
+     * @param exerciseId the programming exercise receiving the result
+     * @return a shared permit, or empty when deletion or the cluster's writer capacity prevents admission
      */
-    public DistributedLock getResultProcessingLock(long exerciseId) {
-        return distributedDataProvider.getLock("programming-exercise-result-processing-" + exerciseId);
+    public Optional<ResultProcessingPermit> tryAdmitResultProcessing(long exerciseId) {
+        return resultProcessingGate.tryAdmit(exerciseId, () -> isBeingDeleted(exerciseId));
+    }
+
+    /**
+     * Waits for shared admission on an independent follow-up thread, without occupying a result worker.
+     *
+     * @param exerciseId the programming exercise receiving the follow-up
+     * @return a shared permit held by the calling thread
+     * @throws InterruptedException if the follow-up is interrupted before admission
+     */
+    public ResultProcessingPermit awaitResultProcessing(long exerciseId) throws InterruptedException {
+        while (!Thread.currentThread().isInterrupted()) {
+            var permit = tryAdmitResultProcessing(exerciseId);
+            if (permit.isPresent()) {
+                return permit.get();
+            }
+            Thread.sleep(25);
+        }
+        throw new InterruptedException("Interrupted while awaiting result-processing admission");
+    }
+
+    /**
+     * Announces deletion and waits at most 60 seconds for all admitted writers before any deletion cleanup starts.
+     * Closing the returned permit removes this call's marker and admits results again if the exercise remains.
+     *
+     * @param exerciseId the programming exercise to delete
+     * @return an exclusive deletion permit held by the calling thread
+     */
+    public ResultProcessingPermit beginDeletionAndAwaitResults(long exerciseId) {
+        return resultProcessingGate.awaitDeletion(exerciseId, () -> beginDeletion(exerciseId), () -> endDeletion(exerciseId));
     }
 
     /**
@@ -95,7 +129,7 @@ public class ProgrammingExerciseDeletionService {
      * <p>
      * The build system keeps delivering results while the exercise is taken apart, and the deletion cannot be one transaction. A result that is written after the
      * results of a participation have been deleted but before the exercise row is removed makes that removal fail with a foreign key violation. Every node therefore
-     * drops the results of an exercise for which this marker is set, see {@link #isBeingDeleted(long)}. Queued builds are removed and running builds are cancelled.
+     * defers new results of an exercise for which this marker is set, see {@link #isBeingDeleted(long)}. Queued builds are removed and running builds are cancelled.
      * The caller must call {@link #endDeletion(long)} in a {@code finally} block if this method returned {@code true}.
      *
      * @param exerciseId the id of the programming exercise that is going to be deleted
@@ -127,7 +161,7 @@ public class ProgrammingExerciseDeletionService {
 
     /**
      * Checks whether the deletion of the programming exercise has started on any node and has not finished yet.
-     * Results of builds of such an exercise must not be written, because they would be removed again or, worse, block the deletion.
+     * New result writers must defer admission. Already admitted writers finish before deletion acquires all permits and starts cleanup.
      *
      * @param exerciseId the id of the programming exercise
      * @return true if the exercise is being deleted

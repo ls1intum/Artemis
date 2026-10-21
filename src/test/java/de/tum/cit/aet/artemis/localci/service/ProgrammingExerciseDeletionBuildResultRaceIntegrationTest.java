@@ -138,8 +138,6 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
         CountDownLatch admitted = new CountDownLatch(1);
         CountDownLatch allowPersistence = new CountDownLatch(1);
         AtomicBoolean deletionLockSeen = new AtomicBoolean();
-        // Use the provider namespace directly so the regression can run against the former implementation without a new service API.
-        var lock = distributedDataProvider.getLock("programming-exercise-result-processing-" + exerciseId);
         doAnswer(invocation -> {
             admitted.countDown();
             assertThat(allowPersistence.await(30, TimeUnit.SECONDS)).isTrue();
@@ -148,13 +146,17 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
 
         try (var workers = Executors.newCachedThreadPool()) {
             doAnswer(invocation -> {
-                // The deletion thread owns a reentrant lock, so probe from another thread while final cleanup is pending.
+                // Probe shared admission from another thread while final cleanup holds every permit.
                 boolean acquired = workers.submit(() -> {
-                    boolean available = lock.tryLock(Duration.ZERO);
-                    if (available) {
-                        lock.unlock();
+                    for (int slot = 0; slot < 256; slot++) {
+                        var lock = distributedDataProvider.getLock("programming-exercise-result-processing-" + exerciseId + "-permit-" + slot);
+                        boolean available = lock.tryLock(Duration.ZERO);
+                        if (available) {
+                            lock.unlock();
+                        }
+                        assertThat(available).as("deletion owns writer permit %s", slot).isFalse();
                     }
-                    return available;
+                    return programmingExerciseDeletionService.tryAdmitResultProcessing(exerciseId).isPresent();
                 }).get(10, TimeUnit.SECONDS);
                 deletionLockSeen.set(!acquired);
                 assertThat(acquired).as("final cleanup must exclude result persistence").isFalse();
@@ -165,13 +167,9 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
                 distributedDataAccessService.getDistributedBuildResultQueue().add(new ResultQueueItem(buildResult(), templateBuildJob(buildJobId), List.of(), null));
                 localCIResultProcessingService.processResultAsync();
                 assertThat(admitted.await(30, TimeUnit.SECONDS)).as("processing passed the marker check before deletion started").isTrue();
-                boolean acquired = lock.tryLock(Duration.ZERO);
-                if (acquired) {
-                    lock.unlock();
-                }
-                assertThat(acquired).as("an admitted processor must own the mutex until its writes finish").isFalse();
-
                 var deletion = workers.submit(() -> SecurityUtils.runAsSystem(() -> exerciseDeletionService.delete(exerciseId, false)));
+                await().atMost(Duration.ofSeconds(10)).until(() -> programmingExerciseDeletionService.isBeingDeleted(exerciseId));
+                verify(repositoryVcsAccessTokenService, never()).deleteByExerciseId(exerciseId);
                 allowPersistence.countDown();
                 deletion.get(30, TimeUnit.SECONDS);
                 assertThat(deletionLockSeen).isTrue();
