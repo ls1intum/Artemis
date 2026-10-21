@@ -465,9 +465,9 @@ coordinated upgrade when the distributed-data schema number is unchanged; do not
 3. Before recovering any reservation, stop or drain generation and build-result processing on every affected core,
    following the [save and recovery procedure](#save-cancellation-and-recovery). No remaining callback may still update
    grading. Inspect remaining reservations with the old application. For each affected exercise, an administrator can use
-   `GET /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot`. Stop its old core/worker execution and reconcile
+   `GET /api/hyperion/admin/exercises/{exerciseId}/wedged-slot`. Stop its old core/worker execution and reconcile
    repository heads, metadata and grading before using the matching
-   `DELETE /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/{token}?reason=...` recovery operation.
+   `DELETE /api/hyperion/admin/exercises/{exerciseId}/wedged-slot/{token}?reason=...` recovery operation.
    Recovery is audited but does not establish process liveness or repair incomplete writes. A legacy reservation may
    remain visible because its stored bytes prevent the recovery endpoint's conditional removal. Record the token,
    stopped execution and evidence that repository heads, metadata and grading have been reconciled. Treat this as a
@@ -593,9 +593,9 @@ request, or a network disconnect is not proof that execution has finished. Stop
 the old execution if necessary; do not start a replacement while it can still run.
 
 An administrator can inspect a stale authoring, save, or undo reservation with
-`GET /api/hyperion/admin/exercises/{id}/hyperion-wedged-slot` and release its exact
+`GET /api/hyperion/admin/exercises/{id}/wedged-slot` and release its exact
 token with
-`DELETE /api/hyperion/admin/exercises/{id}/hyperion-wedged-slots/{token}?reason=...`.
+`DELETE /api/hyperion/admin/exercises/{id}/wedged-slot/{token}?reason=...`.
 Supply an incident reason after confirming that the old executions have stopped
 and reconciling the exercise. The diagnostic can report a job or a `LIVE_SAVE` reservation, including one left
 by an ordinary write or template copy. If both remain, release and recheck each
