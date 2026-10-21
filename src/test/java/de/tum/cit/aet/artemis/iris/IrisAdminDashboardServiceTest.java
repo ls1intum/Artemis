@@ -424,8 +424,15 @@ class IrisAdminDashboardServiceTest {
         service.computeOverview(from, to, IrisDashboardAiSelection.LOCAL);
 
         verify(repository).countTotalSessions(from, to, "LOCAL_AI");
+        verify(repository).countActiveSessions(from, to, "LOCAL_AI");
+        verify(repository).countTotalMessages(from, to, "LOCAL_AI");
         verify(repository).countUniqueUsers(from, to, "LOCAL_AI");
         verify(repository).findUserMessagesWithNextMessageFullRange(from, to, "LOCAL_AI");
+        verify(repository).countThumbsUp(from, to, "LOCAL_AI");
+        verify(repository).countThumbsDown(from, to, "LOCAL_AI");
+        verify(repository).countTotalLlmMessages(from, to, "LOCAL_AI");
+        verify(repository).countSessionsWithThumbsUp(from, to, "LOCAL_AI");
+        verify(repository).countSessionsWithThumbsDown(from, to, "LOCAL_AI");
         verify(repository).computeTokenCost(from, to, "LOCAL_AI");
     }
 
