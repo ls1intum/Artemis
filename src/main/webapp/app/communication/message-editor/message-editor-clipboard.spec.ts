@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clipboardToEditorFragment } from './message-editor-clipboard';
+import { clipboardToEditorFragment, decodeMessageClipboard, encodeMessageClipboard } from './message-editor-clipboard';
 import { canEditMessageVisually, editorToMessage, messageToEditorFragment } from './message-editor-conversion';
 
 function clipboardToMessage(html: string): string | undefined {
@@ -17,6 +17,35 @@ function reopen(message: string): HTMLElement {
 }
 
 describe('Message editor clipboard conversion', () => {
+    it('round-trips internal references and attachments with surrounding whitespace through the sanitized wire format', () => {
+        const content = reopen('[user]Anna(anna)[/user] ![image.png](/api/core/files/image.png)');
+        content.querySelector('p')!.prepend('  ');
+        content.querySelector('p')!.append('\t ');
+        const copied = decodeMessageClipboard(encodeMessageClipboard(content))!;
+        expect(copied.querySelector('[data-message-reference="[user]Anna(anna)[/user]"]')).not.toBeNull();
+        expect(copied.querySelector('img')?.getAttribute('src')).toBe('/api/core/files/image.png');
+        expect(copied.textContent).toBe(content.textContent);
+    });
+
+    it.each([
+        '',
+        '{',
+        'null',
+        '42',
+        '{}',
+        '{"version":2,"markdown":"text","leading":"","trailing":""}',
+        '{"version":1,"markdown":{},"leading":"","trailing":""}',
+        '{"version":1,"markdown":"text"}',
+    ])('ignores invalid internal clipboard metadata: %s', (value) => expect(decodeMessageClipboard(value)).toBeUndefined());
+
+    it.each([
+        { markdown: '<img src=x onerror=alert(1)>', leading: '', trailing: '' },
+        { markdown: 'safe', leading: '<script>', trailing: '' },
+        { markdown: 'safe', leading: '', trailing: '\n<script>' },
+        { markdown: '> [!WARNING]\n> unsupported alert', leading: '', trailing: '' },
+    ])('rejects unsupported or injected internal clipboard content: %o', (value) => {
+        expect(decodeMessageClipboard(JSON.stringify({ version: 1, ...value }))).toBeUndefined();
+    });
     it.each([
         ['<strong>bold</strong>', '**bold**'],
         ['<em>italic</em>', '*italic*'],

@@ -201,6 +201,8 @@
             (compositionstart)="compositionStart()"
             (compositionend)="compositionEnd()"
             (paste)="paste($event)"
+            (copy)="copy($event)"
+            (cut)="copy($event, true)"
             (drop)="drop($event)"
             (dragover)="$event.preventDefault()"
             (click)="clicked($event)"

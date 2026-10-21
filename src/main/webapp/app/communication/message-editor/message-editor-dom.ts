@@ -1,4 +1,4 @@
-import { clipboardToEditorFragment } from './message-editor-clipboard';
+import { MESSAGE_CLIPBOARD_TYPE, clipboardToEditorFragment, decodeMessageClipboard, encodeMessageClipboard } from './message-editor-clipboard';
 import { captureMessageBookmark, messageBookmarkText, restoreMessageBookmark } from './message-editor-bookmarks';
 import { preserveMessageSelection, restoreMessageSelectionBoundaries } from './message-editor-selection';
 import { formatMessageBlocks } from './message-editor-blocks';
@@ -415,14 +415,43 @@ export class MessageEditorDom {
     }
 
     /** Preserves supported clipboard formatting while code and unsupported clipboard formats retain literal text. */
-    insertClipboard(html: string, text: string): void {
+    insertClipboard(html: string, text: string, internal = ''): void {
         const code = this.parentElement(this.range().startContainer)?.closest('pre, code');
-        const fragment = code ? undefined : clipboardToEditorFragment(html);
+        const fragment = code ? undefined : (decodeMessageClipboard(internal) ?? clipboardToEditorFragment(html));
         if (fragment === undefined) {
             this.insertText(text);
         } else {
             this.insertContent(fragment);
         }
+    }
+
+    /** Adds a sanitized wire-format copy for atomic items; native copying remains unchanged for ordinary text. */
+    writeClipboard(clipboard: Pick<DataTransfer, 'setData'>, cut = false): boolean {
+        const range = this.range().cloneRange();
+        if (range.collapsed) return false;
+        const startItem = this.parentElement(range.startContainer)?.closest('[data-message-reference]');
+        const endItem = this.parentElement(range.endContainer)?.closest('[data-message-reference]');
+        if (startItem) range.setStartBefore(startItem);
+        if (endItem) range.setEndAfter(endItem);
+        const content = this.element.ownerDocument.createElement('div');
+        content.append(range.cloneContents());
+        if (!content.querySelector('[data-message-reference]')) return false;
+        try {
+            clipboard.setData(MESSAGE_CLIPBOARD_TYPE, encodeMessageClipboard(content));
+            clipboard.setData('text/html', content.innerHTML);
+            clipboard.setData('text/plain', startItem || endItem ? this.rangeText(range) : (this.element.ownerDocument.getSelection()?.toString() ?? this.rangeText(range)));
+        } catch {
+            // If a browser cannot write a custom type, leave its ordinary copy/cut operation intact.
+            return false;
+        }
+        if (cut) {
+            this.transact(() => {
+                this.revision++;
+                this.select(range);
+                this.replace(this.element.ownerDocument.createTextNode(''));
+            });
+        }
+        return true;
     }
 
     /** Inserts sanitized message content at the supplied or remembered range, retaining a trailing completion space. */

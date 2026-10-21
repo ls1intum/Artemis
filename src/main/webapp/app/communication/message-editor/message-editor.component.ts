@@ -26,6 +26,7 @@ import { MessageEditorSuggestions, MessageSuggestion } from './message-editor-su
 import { revealMessageEditorOption } from './message-editor-scroll';
 import { isMessageLinkSafe, normalizeMessageLink } from './message-editor-conversion';
 import { MessageEditorToolsComponent, MessageResourceInsertion } from './message-editor-tools.component';
+import { MESSAGE_CLIPBOARD_TYPE } from './message-editor-clipboard';
 
 @Component({
     selector: 'jhi-message-editor',
@@ -370,6 +371,14 @@ export class MessageEditorComponent {
         }
     }
 
+    /** Retains internal references and attachments on copy/cut without trusting their raw HTML attributes on paste. */
+    protected copy(event: ClipboardEvent, cut = false): void {
+        if (event.clipboardData && this.editor?.writeClipboard(event.clipboardData, cut)) {
+            event.preventDefault();
+            this.dismissSuggestions();
+        }
+    }
+
     /** Routes clipboard files through uploads and preserves the supported formatting of pasted text. */
     protected paste(event: ClipboardEvent): void {
         event.preventDefault();
@@ -377,7 +386,11 @@ export class MessageEditorComponent {
         if (files.length) {
             void this.tools()?.uploadFiles(files);
         } else {
-            this.editor?.insertClipboard(event.clipboardData?.getData('text/html') ?? '', event.clipboardData?.getData('text/plain') ?? '');
+            this.editor?.insertClipboard(
+                event.clipboardData?.getData('text/html') ?? '',
+                event.clipboardData?.getData('text/plain') ?? '',
+                event.clipboardData?.getData(MESSAGE_CLIPBOARD_TYPE) ?? '',
+            );
         }
         this.dismissSuggestions();
     }

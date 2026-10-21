@@ -494,6 +494,48 @@ describe('Formatted message composer', () => {
         return event;
     }
 
+    it.each(['copy', 'cut'])('preserves mentions and image attachments through internal %s, paste, and undo', (operation) => {
+        const source = '**Read** [user]Anna(anna)[/user] ![image.png](/api/core/files/image.png)';
+        fixture.componentRef.setInput('content', source);
+        fixture.detectChanges();
+        const range = document.createRange();
+        range.selectNodeContents(editable);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const values = new Map<string, string>();
+        const clipboardData = { files: [], setData: (type: string, value: string) => values.set(type, value), getData: (type: string) => values.get(type) ?? '' };
+        const event = new Event(operation, { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'clipboardData', { value: clipboardData });
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        editable.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(true);
+        if (operation === 'cut') {
+            expect(emit).toHaveBeenLastCalledWith('');
+            editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
+            expect(emit).toHaveBeenLastCalledWith(source);
+        } else {
+            expect(emit).not.toHaveBeenCalled();
+        }
+        fixture.componentRef.setInput('content', '');
+        fixture.componentRef.setInput('draftIdentity', 'copy-target');
+        fixture.detectChanges();
+        const end = document.createRange();
+        end.selectNodeContents(editable);
+        end.collapse(false);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(end);
+        const paste = new Event('paste', { bubbles: true, cancelable: true });
+        Object.defineProperty(paste, 'clipboardData', { value: clipboardData });
+        editable.dispatchEvent(paste);
+        expect(emit).toHaveBeenLastCalledWith(source);
+        expect(editable.querySelector('[data-message-reference="[user]Anna(anna)[/user]"]')).not.toBeNull();
+        expect(editable.querySelector('img')?.getAttribute('src')).toBe('/api/core/files/image.png');
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
+        expect(emit).toHaveBeenLastCalledWith('');
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'y', ctrlKey: true, bubbles: true, cancelable: true }));
+        expect(emit).toHaveBeenLastCalledWith(source);
+    });
+
     it('preserves pasted inline formatting and links as one undoable replacement', () => {
         const range = document.createRange();
         range.selectNodeContents(editable.querySelector('p')!);
@@ -1275,6 +1317,24 @@ describe('Formatted message composer', () => {
         expect(enter.defaultPrevented).toBe(false);
         expect(bubbled).not.toHaveBeenCalled();
         fixture.nativeElement.removeEventListener('keydown', bubbled);
+    });
+
+    it('keeps Enter as literal editing inside code when a dialog opts out of sending', () => {
+        fixture.componentRef.setInput('suppressNewlineOnEnter', false);
+        fixture.componentRef.setInput('content', '```\nfirst\n```');
+        fixture.detectChanges();
+        const range = document.createRange();
+        range.selectNodeContents(editable.querySelector('code')!);
+        range.collapse(false);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const send = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', send);
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(send).not.toHaveBeenCalled();
+        expect(emit).toHaveBeenLastCalledWith('```\nfirst\n\n```');
+        fixture.nativeElement.removeEventListener('keydown', send);
     });
 
     it('sends with Cmd+Enter while a completion is open instead of accepting its highlighted row', async () => {

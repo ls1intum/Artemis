@@ -18,6 +18,7 @@ import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MessageEditorDom } from './message-editor-dom';
 import { editorToMessage } from './message-editor-conversion';
+import { MESSAGE_CLIPBOARD_TYPE } from './message-editor-clipboard';
 
 describe('Message editor content in the actual posting view', () => {
     let fixture: ComponentFixture<PostingContentComponent>;
@@ -149,6 +150,28 @@ describe('Message editor content in the actual posting view', () => {
         expect(editorToMessage(host)).toBe(message);
         expect(host.querySelector('strong')?.textContent).toBe('Bold');
         expect(host.querySelector('ul li')?.textContent).toBe('item');
+    });
+
+    it('keeps copied mentions and attachments through paste, actual posting rendering and reopening', async () => {
+        const source = '**Read** [user]Anna(anna)[/user] ![image.png](/api/core/files/image.png)';
+        editor.load(source);
+        selectAll();
+        const data = new Map<string, string>();
+        const clipboard = { setData: (type: string, value: string) => data.set(type, value) };
+        expect(editor.writeClipboard(clipboard)).toBe(true);
+        editor.load('');
+        selectAll();
+        editor.insertClipboard(data.get('text/html')!, data.get('text/plain')!, data.get(MESSAGE_CLIPBOARD_TYPE)!);
+        expect(editorToMessage(host)).toBe(source);
+        await render(source, (view) => {
+            expect(view.querySelector('strong')?.textContent).toBe('Read');
+            expect(view.querySelector('a.reference')?.textContent).toContain('Anna');
+            expect(view.querySelector('img')?.getAttribute('src')).toContain('image.png');
+            expect(view.textContent).not.toContain('[user]');
+        });
+        editor.load(editorToMessage(host));
+        expect(host.querySelector('img')?.getAttribute('src')).toBe('/api/core/files/image.png');
+        expect(host.querySelector('[data-message-reference="[user]Anna(anna)[/user]"]')).not.toBeNull();
     });
 
     it('rejects linking a numeric post reference and keeps the actual posting view unchanged', async () => {

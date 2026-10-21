@@ -270,6 +270,121 @@ describe('Message editor editing transactions', () => {
         expect(editor.deleteItem(true)).toBe(false);
     });
 
+    it('cuts a reference across paragraphs without leaving a false paragraph break and restores it with undo', () => {
+        const source = 'Before [user]Anna(anna)[/user] after\n\nNext end';
+        editor.load(source);
+        const paragraphs = root.querySelectorAll('p');
+        const range = document.createRange();
+        range.setStart(paragraphs[0].firstChild!, 6);
+        range.setEnd(paragraphs[1].firstChild!, 4);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const clipboard = { setData: vi.fn() };
+        expect(editor.writeClipboard(clipboard, true)).toBe(true);
+        expect(changed).toHaveBeenLastCalledWith('Before end');
+        expect(root.querySelectorAll('p')).toHaveLength(1);
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith(source);
+        expect(root.querySelector('[data-message-reference]')).not.toBeNull();
+    });
+
+    it('leaves ordinary text copying native and leaves cutting intact when custom clipboard writes fail', () => {
+        editor.load('plain');
+        select(root.querySelector('p')!.firstChild!, 0, 5);
+        const clipboard = { setData: vi.fn() };
+        expect(editor.writeClipboard(clipboard)).toBe(false);
+        expect(clipboard.setData).not.toHaveBeenCalled();
+        editor.load('[user]Anna(anna)[/user]');
+        const range = document.createRange();
+        range.selectNodeContents(root);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        vi.mocked(clipboard.setData).mockImplementation(() => {
+            throw new Error('custom types unavailable');
+        });
+        expect(editor.writeClipboard(clipboard, true)).toBe(false);
+        expect(root.textContent).toBe('@Anna');
+        expect(changed).not.toHaveBeenCalled();
+    });
+
+    it('copies and cuts an entire atomic reference even if a selection endpoint is inside its label', () => {
+        editor.load('Before [user]Anna(anna)[/user] after');
+        const label = root.querySelector('[data-message-reference]')!.firstChild!;
+        select(label, 1, 3);
+        const values = new Map<string, string>();
+        const clipboard = { setData: (type: string, value: string) => values.set(type, value) };
+        expect(editor.writeClipboard(clipboard, true)).toBe(true);
+        expect(values.get('text/plain')).toBe('@Anna');
+        expect(root.querySelector('[data-message-reference]')).toBeNull();
+        expect(root.textContent).toBe('Before  after');
+        expect(changed).toHaveBeenLastCalledWith('Before after');
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith('Before [user]Anna(anna)[/user] after');
+    });
+
+    it.each([true, false])('keeps a pending upload outside a reference that replaces its original plain-text position (collapsed=%s)', (collapsed) => {
+        editor.load('Before @Anna after');
+        const text = root.querySelector('p')!.firstChild!;
+        select(text, 9, collapsed ? 9 : 10);
+        const pending = editor.captureEntitySelection()!;
+        select(text, 7, 12);
+        editor.insertMarkdown('[user]Anna(anna)[/user]');
+        const reference = root.querySelector('[data-message-reference]')!;
+        const resolved = editor.resolveEntitySelection(pending)!;
+        expect(reference.contains(resolved.startContainer)).toBe(false);
+        expect(reference.contains(resolved.endContainer)).toBe(false);
+        expect(resolved.collapsed).toBe(collapsed);
+        if (!collapsed) expect(resolved.cloneContents().querySelector('[data-message-reference]')).not.toBeNull();
+        editor.insertMarkdown('![pending.png](/pending.png)', resolved);
+        expect(root.querySelector('[data-message-reference] img')?.getAttribute('src')).toBe('/pending.png');
+        expect(root.querySelector('[data-message-reference] [data-message-reference]')).toBeNull();
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith('Before [user]Anna(anna)[/user] after');
+    });
+
+    it('keeps internal reference paste literal inside code and falls back safely when metadata is invalid', () => {
+        editor.load('[user]Anna(anna)[/user]');
+        const range = document.createRange();
+        range.selectNodeContents(root);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const values = new Map<string, string>();
+        const clipboard = { setData: (type: string, value: string) => values.set(type, value) };
+        expect(editor.writeClipboard(clipboard)).toBe(true);
+        const internal = values.get('application/x-artemis-message+json')!;
+        editor.load('```\ncode\n```');
+        select(root.querySelector('code')!.firstChild!, 4);
+        editor.insertClipboard(values.get('text/html')!, '@Anna', internal);
+        expect(changed).toHaveBeenLastCalledWith('```\ncode@Anna\n```');
+        expect(root.querySelector('[data-message-reference]')).toBeNull();
+        editor.load('');
+        const end = document.createRange();
+        end.selectNodeContents(root);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(end);
+        editor.insertClipboard('<b>safe</b><span data-message-reference="[user]Admin(admin)[/user]">@Admin</span>', 'safe@Admin', '{"version":2}');
+        expect(root.querySelector('strong')?.textContent).toBe('safe');
+        expect(root.querySelector('[data-message-reference]')).toBeNull();
+        expect(changed).toHaveBeenLastCalledWith('**safe**@Admin');
+    });
+
+    it('recovers a pending upload position when cutting a reference merges its paragraph into another', () => {
+        editor.load('Before [user]Anna(anna)[/user] after\n\nNext end');
+        const paragraphs = root.querySelectorAll('p');
+        select(paragraphs[1].firstChild!, 6); // Next e|nd
+        const pending = editor.captureEntitySelection()!;
+        const cut = document.createRange();
+        cut.setStart(paragraphs[0].firstChild!, 6);
+        cut.setEnd(paragraphs[1].firstChild!, 4);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(cut);
+        expect(editor.writeClipboard({ setData: vi.fn() }, true)).toBe(true);
+        expect(changed).toHaveBeenLastCalledWith('Before end');
+        editor.insertMarkdown('![pending.png](/pending.png)', editor.resolveEntitySelection(pending));
+        expect(changed).toHaveBeenLastCalledWith('Before e![pending.png](/pending.png)nd');
+        expect(root.querySelectorAll('p')).toHaveLength(1);
+    });
+
     it('recovers a resource insertion bookmark after undo replaces the editable DOM', () => {
         editor.load('Before');
         select(root.querySelector('p')!.firstChild!, 6);

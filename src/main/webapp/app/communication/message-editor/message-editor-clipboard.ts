@@ -1,5 +1,43 @@
 import DOMPurify from 'dompurify';
+import { parseJson } from 'app/foundation/util/json.util';
 import { canEditMessageVisually, editorToMessage, isMessageLinkSafe, messageToEditorFragment, normalizeMessageLink } from './message-editor-conversion';
+
+/** Versioned Markdown, rather than trusted HTML attributes, carries references between Artemis composers. */
+export const MESSAGE_CLIPBOARD_TYPE = 'application/x-artemis-message+json';
+
+/** Serializes a copied editor fragment without losing opaque references or boundary whitespace. */
+export function encodeMessageClipboard(content: HTMLElement): string {
+    const text = content.textContent ?? '';
+    return JSON.stringify({ version: 1, markdown: editorToMessage(content), leading: boundaryWhitespace(text), trailing: boundaryWhitespace(text, true) });
+}
+
+/** Clipboard metadata is untrusted: validate its shape and supported wire format, then use the sanitized message parser. */
+export function decodeMessageClipboard(serialized: string): DocumentFragment | undefined {
+    if (!serialized) return undefined;
+    try {
+        const value = parseJson<unknown>(serialized);
+        if (
+            typeof value !== 'object' ||
+            value === null ||
+            !('version' in value) ||
+            value.version !== 1 ||
+            !('markdown' in value) ||
+            typeof value.markdown !== 'string' ||
+            !('leading' in value) ||
+            typeof value.leading !== 'string' ||
+            !('trailing' in value) ||
+            typeof value.trailing !== 'string' ||
+            boundaryWhitespace(value.leading) !== value.leading ||
+            boundaryWhitespace(value.trailing) !== value.trailing ||
+            !canEditMessageVisually(value.markdown)
+        ) {
+            return undefined;
+        }
+        return restoreClipboardWhitespace(messageToEditorFragment(value.markdown), value.leading, value.trailing);
+    } catch {
+        return undefined;
+    }
+}
 
 const canonicalTags: Partial<Record<string, string>> = { B: 'strong', I: 'em', U: 'ins', DEL: 's', STRIKE: 's', DIV: 'p' };
 
@@ -111,10 +149,12 @@ export function clipboardToEditorFragment(html: string): DocumentFragment | unde
     // Serializing an isolated fragment trims boundary spaces. Restore only the missing horizontal whitespace so a
     // formatted word cannot join the surrounding text; code-span padding that survived the round trip stays unchanged.
     const text = container.textContent ?? '';
+    return restoreClipboardWhitespace(canonical, boundaryWhitespace(text), boundaryWhitespace(text, true));
+}
+
+function restoreClipboardWhitespace(canonical: DocumentFragment, leading: string, trailing: string): DocumentFragment {
     const first = canonical.firstElementChild;
     const last = canonical.lastElementChild;
-    const leading = boundaryWhitespace(text);
-    const trailing = boundaryWhitespace(text, true);
     if (first?.matches('p')) {
         const retained = boundaryWhitespace(first.textContent ?? '').length;
         if (leading.length > retained) first.prepend(leading.slice(retained));
