@@ -169,7 +169,7 @@ describe('ScienceSettingsComponent', () => {
     });
 
     it('should store the state the switch moved to, not the inverse of a possibly stale row', () => {
-        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(of(activeConsent));
+        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(of({ ...activeConsent, active: false }));
         fixture.detectChanges();
 
         component.toggleConsent(activeConsent, false);
@@ -179,12 +179,37 @@ describe('ScienceSettingsComponent', () => {
     });
 
     it('should treat an undecided course as an opt-in when toggled on', () => {
-        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(of(undecidedConsent));
+        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(of({ ...undecidedConsent, active: true }));
         fixture.detectChanges();
 
         component.toggleConsent(undecidedConsent, true);
 
         expect(scienceSettingsService.saveConsentForCourse).toHaveBeenCalledWith(undecidedConsent.courseId, true);
+    });
+
+    it('should lock the switch of a course while its decision is being stored', () => {
+        // Two overlapping saves can reach the server in either order, so a quick on-off could leave the student
+        // contributing while the switch shows off.
+        const pendingSave = new Subject<ScienceCourseConsent>();
+        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(pendingSave);
+        fixture.detectChanges();
+
+        component.toggleConsent(undecidedConsent, true);
+        fixture.detectChanges();
+        const toggles = fixture.nativeElement.querySelectorAll('[data-testid="science-consent-toggle"] input');
+        expect(toggles[1].disabled).toBe(true);
+        // Another course stays usable.
+        expect(toggles[0].disabled).toBe(false);
+
+        component.toggleConsent(undecidedConsent, false);
+        expect(scienceSettingsService.saveConsentForCourse).toHaveBeenCalledOnce();
+
+        // The switch shows the decision the server confirmed, and is unlocked again.
+        pendingSave.next({ ...undecidedConsent, active: true });
+        pendingSave.complete();
+        fixture.detectChanges();
+        expect(component.consents()[1].active).toBe(true);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="science-consent-toggle"] input')[1].disabled).toBe(false);
     });
 
     it('should re-read the stored decision and report the error when the save fails', () => {

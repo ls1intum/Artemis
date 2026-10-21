@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { EMPTY, Subject, catchError, switchMap } from 'rxjs';
+import { EMPTY, Subject, catchError, finalize, switchMap } from 'rxjs';
 import { faInfoCircle, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -53,6 +53,8 @@ export class ScienceSettingsComponent implements OnInit {
     /** True until this page's own response arrived, so nothing but the spinner shows before it. */
     readonly loading = signal(true);
     readonly scienceFeatureActive = signal(true);
+    /** The courses whose decision is being stored. Their switch is locked, so two saves can never overtake each other. */
+    readonly savingCourseIds = signal<ReadonlySet<number>>(new Set());
 
     /** Every load goes through here, so only the latest one answers and none answers after the page is gone. */
     private readonly loads = new Subject<boolean>();
@@ -103,18 +105,36 @@ export class ScienceSettingsComponent implements OnInit {
      *
      * The new state comes from the switch rather than from inverting the row, so a row reloaded underneath
      * the click cannot send the opposite of what the student saw. The row is updated before the request, because the
-     * switch keeps its own visual state and would otherwise keep showing a decision the server never stored.
+     * switch keeps its own visual state and would otherwise keep showing a decision the server never stored. The switch
+     * stays locked until the server answered, and then shows the decision it confirmed.
      *
      * @param consent the row that was toggled
      * @param active  the state the switch moved to
      */
     toggleConsent(consent: ScienceCourseConsent, active: boolean): void {
-        this.applyConsentLocally(consent.courseId, active);
+        const courseId = consent.courseId;
+        if (this.savingCourseIds().has(courseId)) {
+            return;
+        }
+        this.savingCourseIds.update((courseIds) => new Set(courseIds).add(courseId));
+        this.applyConsentLocally(courseId, active);
         this.scienceSettingsService
-            .saveConsentForCourse(consent.courseId, active)
-            .pipe(takeUntilDestroyed(this.destroyRef))
+            .saveConsentForCourse(courseId, active)
+            .pipe(
+                finalize(() =>
+                    this.savingCourseIds.update((courseIds) => {
+                        const remaining = new Set(courseIds);
+                        remaining.delete(courseId);
+                        return remaining;
+                    }),
+                ),
+                takeUntilDestroyed(this.destroyRef),
+            )
             .subscribe({
-                next: () => this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert'),
+                next: (stored) => {
+                    this.applyConsentLocally(courseId, stored.active);
+                    this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert');
+                },
                 error: (error) => {
                     // Re-read rather than put the row back: a withdrawal stores the decision before recording it, so a
                     // failure can still have changed the stored state, and guessing at it would show consent the server

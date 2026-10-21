@@ -32,7 +32,7 @@
                             data-testid="science-consent-toggle"
                             [ngModel]="consent.active === true"
                             [ngModelOptions]="{ standalone: true }"
-                            [disabled]="!consent.scienceEnabled && consent.active !== true"
+                            [disabled]="savingCourseIds().has(consent.courseId) || (!consent.scienceEnabled && consent.active !== true)"
                             (changed)="toggleConsent(consent, $event)"
                         />
                         <span id="science-course-contribute-{{ consent.courseId }}" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.contribute"></span>
