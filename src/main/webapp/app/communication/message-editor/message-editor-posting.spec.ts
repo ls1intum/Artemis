@@ -102,6 +102,69 @@ describe('Message editor content in the actual posting view', () => {
         expect(host.textContent).toBe('Literal &#169; stays text');
     });
 
+    it.each([String.raw`Literal \#123 stays text`, 'Literal &#35;123 stays text'])(
+        'keeps a loaded literal numeric hash through unrelated edits, posting and reopening: %s',
+        async (source) => {
+            await render(source, (view) => {
+                expect(view.textContent).toContain('Literal #123 stays text');
+                expect(view.querySelector('a.reference')).toBeNull();
+            });
+            editor.load(source);
+            expect(host.querySelector('[data-message-reference]')).toBeNull();
+            const paragraph = host.querySelector('p')!;
+            const last = paragraph.lastChild!;
+            select(last, last.textContent!.length);
+            editor.insertText(' updated');
+            const saved = editorToMessage(host);
+            await render(saved, (view) => {
+                expect(view.textContent).toContain('Literal #123 stays text updated');
+                expect(view.querySelector('a.reference')).toBeNull();
+            });
+            editor.load(saved);
+            expect(host.textContent).toBe('Literal #123 stays text updated');
+            expect(host.querySelector('[data-message-reference]')).toBeNull();
+            expect(editorToMessage(host)).toBe(saved);
+        },
+    );
+
+    it('keeps an edited literal hash literal through posting and reopening', async () => {
+        editor.load(String.raw`Literal \#123 stays text`);
+        const hash = host.querySelector('[data-message-literal]')!.firstChild!;
+        select(hash, 1);
+        editor.insertText('4');
+        const saved = editorToMessage(host);
+        await render(saved, (view) => {
+            expect(view.textContent).toContain('Literal #4123 stays text');
+            expect(view.querySelector('a.reference')).toBeNull();
+        });
+        editor.load(saved);
+        expect(host.textContent).toBe('Literal #4123 stays text');
+        expect(host.querySelector('[data-message-reference]')).toBeNull();
+    });
+
+    it.each(['strong', 'code'] as const)('keeps %s formatting on a loaded literal hash through posting and reopening', async (mark) => {
+        editor.load(String.raw`Literal \#123 stays text`);
+        selectAll();
+        editor.format(mark);
+        const saved = editorToMessage(host);
+        await render(saved, (view) => {
+            expect(view.textContent).toContain('Literal #123 stays text');
+            expect(view.querySelector('a.reference')).toBeNull();
+            expect(
+                Array.from(view.querySelectorAll(mark), (node) => node.textContent)
+                    .join('')
+                    .replace(/\s/g, ''),
+            ).toBe('Literal#123staystext');
+        });
+        editor.load(saved);
+        expect(
+            Array.from(host.querySelectorAll(mark), (node) => node.textContent)
+                .join('')
+                .replace(/\s/g, ''),
+        ).toBe('Literal#123staystext');
+        expect(editorToMessage(host)).toBe(saved);
+    });
+
     it.each(['`#123`', '```\n#123\n```'])('renders numeric references literally inside code: %s', async (message) => {
         editor.load(message);
         await render(editorToMessage(host), (view) => {

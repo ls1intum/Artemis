@@ -43,6 +43,20 @@ markdown.inline.ruler.before('html_inline', 'message_reference', (state, silent)
 });
 markdown.renderer.rules.message_reference = (tokens, index) => tokens[index].content;
 
+// Markdown keeps escaped/entity characters distinct until text_join. Retain literal hashes before
+// that distinction is lost, so the DOM reference scan cannot promote them to active post references.
+markdown.core.ruler.before('text_join', 'message_literal_hash', (state) => {
+    for (const block of state.tokens) {
+        const children = block.children ?? [];
+        for (const [index, token] of children.entries()) {
+            if (token.type === 'text_special' && token.content === '#' && /^\d/.test(children[index + 1]?.content ?? '')) {
+                token.type = 'message_literal_hash';
+            }
+        }
+    }
+});
+markdown.renderer.rules.message_literal_hash = () => '<span data-message-literal="#">#</span>';
+
 const renderCode: RendererRule = (tokens, index) => {
     const token = tokens[index];
     const language = token.info.trim().split(/\s+/)[0];
@@ -86,6 +100,11 @@ const escapeBlockMarker = (text: string) =>
 // Turndown first escapes backslashes and Markdown syntax. Keep those escape pairs intact while
 // adding the HTML, entity, strikethrough, and math escapes that its defaults omit.
 serializer.escape = (text) => escapeBlockMarker(escapeMarkdown(text)).replace(/\\.|[<&~$]/gs, (token) => (token.length === 2 ? token : '\\' + token));
+serializer.addRule('message-literal-hash', {
+    filter: (node) => node.hasAttribute('data-message-literal'),
+    // Retain existing escapes when editing grows the literal marker beyond its original single hash.
+    replacement: (content) => content.replace(/\\.|#/gs, (token) => (token.length === 2 ? token : '\\#')),
+});
 serializer.addRule('message-reference', {
     filter: (node) => node.hasAttribute('data-message-reference'),
     replacement: (_content, node) => node.getAttribute('data-message-reference') ?? '',
@@ -168,7 +187,10 @@ export function protectMessagePostReferences(root: HTMLElement | DocumentFragmen
     const texts: Text[] = [];
     let node: Node | null;
     while ((node = walker.nextNode())) {
-        if (!node.parentElement?.closest('pre, code, a, [data-message-reference]') && Array.from((node.textContent ?? '').matchAll(numericPostReference)).length > 0) {
+        if (
+            !node.parentElement?.closest('pre, code, a, [data-message-reference], [data-message-literal]') &&
+            Array.from((node.textContent ?? '').matchAll(numericPostReference)).length > 0
+        ) {
             texts.push(node as Text);
         }
     }
@@ -250,7 +272,7 @@ export function messageToEditorFragment(source: string): DocumentFragment {
     const html = markdown.render(source).replace(/(<\/(?:p|li|ul|ol|blockquote|pre)>|<(?:ul|ol|blockquote|li)>|<br>)\n/g, '$1');
     const fragment = DOMPurify.sanitize(html, {
         ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'ins', 'u', 's', 'del', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'a', 'span', 'img'],
-        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'start', 'class', 'contenteditable', 'data-message-reference', 'data-reference-type'],
+        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'start', 'class', 'contenteditable', 'data-message-reference', 'data-reference-type', 'data-message-literal'],
         ALLOW_DATA_ATTR: false,
         RETURN_DOM_FRAGMENT: true,
     });

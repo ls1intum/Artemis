@@ -3,6 +3,11 @@ import { preserveMessageSelection } from './message-editor-selection';
 const inlineTags = new Set(['STRONG', 'B', 'EM', 'I', 'INS', 'U', 'S', 'DEL', 'CODE', 'A']);
 const aliases: Record<string, string> = { B: 'STRONG', I: 'EM', U: 'INS', DEL: 'S' };
 
+// Literal markers carry no formatting; nest them inside code so adjacent code runs still merge.
+function markNestingPriority(mark: HTMLElement): number {
+    return mark.hasAttribute('data-message-literal') ? 2 : Number(mark.tagName === 'CODE');
+}
+
 function canonical(tag: string): string {
     return aliases[tag] ?? tag;
 }
@@ -112,13 +117,13 @@ function changeMessageMarks(root: HTMLElement, range: Range, tag?: string, desir
             const from = Math.max(0, Math.min(value.length, start - position));
             const to = Math.max(from, Math.min(value.length, end - position));
             const selectedMarks = desired
-                ? [...marks.filter((mark) => mark.tagName === 'A'), ...desired.map((name) => root.ownerDocument.createElement(name))]
+                ? [...marks.filter((mark) => mark.tagName === 'A' || mark.hasAttribute('data-message-literal')), ...desired.map((name) => root.ownerDocument.createElement(name))]
                 : marks.filter((mark) => canonical(mark.tagName) !== target);
             if (!desired && !remove && tag) {
                 selectedMarks.unshift(root.ownerDocument.createElement(tag));
             }
             // Markdown cannot represent emphasis inside inline code; keep code innermost for a faithful round trip.
-            selectedMarks.sort((first, second) => Number(first.tagName === 'CODE') - Number(second.tagName === 'CODE'));
+            selectedMarks.sort((first, second) => markNestingPriority(first) - markNestingPriority(second));
             for (const [part, activeMarks] of [
                 [value.slice(0, from), marks],
                 [value.slice(from, to), selectedMarks],
@@ -136,7 +141,7 @@ function changeMessageMarks(root: HTMLElement, range: Range, tag?: string, desir
             } else if (node.matches('pre')) {
                 wrap(parent, node.cloneNode(true), marks);
                 position += node.textContent?.length ?? 0;
-            } else if (inlineTags.has(node.tagName)) {
+            } else if (inlineTags.has(node.tagName) || node.hasAttribute('data-message-literal')) {
                 for (const child of Array.from(node.childNodes)) {
                     render(child, parent, [...marks, node]);
                 }
