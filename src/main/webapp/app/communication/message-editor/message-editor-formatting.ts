@@ -130,7 +130,10 @@ function changeMessageMarks(root: HTMLElement, range: Range, tag?: string, desir
             }
             position += value.length;
         } else if (node instanceof HTMLElement) {
-            if (node.matches('pre, [data-message-reference]')) {
+            if (node.matches('[data-message-reference]')) {
+                append(parent, node.cloneNode(true));
+                position += node.textContent?.length ?? 0;
+            } else if (node.matches('pre')) {
                 wrap(parent, node.cloneNode(true), marks);
                 position += node.textContent?.length ?? 0;
             } else if (inlineTags.has(node.tagName)) {

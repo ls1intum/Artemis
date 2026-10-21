@@ -581,7 +581,7 @@ describe('Message editor editing transactions', () => {
         expect(changed).not.toHaveBeenCalled();
     });
 
-    for (const reference of ['[user]Anna(anna)[/user]', '[channel]general(7)[/channel]']) {
+    for (const reference of ['[user]Anna(anna)[/user]', '[channel]general(7)[/channel]', '#123']) {
         it.each(['caret', 'partial', 'sentence'] as const)(`rejects a %s link selection intersecting ${reference}`, (kind) => {
             editor.load(`Hello ${reference} today`);
             const item = root.querySelector('[data-message-reference]')!;
@@ -608,6 +608,78 @@ describe('Message editor editing transactions', () => {
             expect(changed).not.toHaveBeenCalled();
         });
     }
+
+    for (const source of ['Read course', '[Read course](https://example.org/old)']) {
+        it.each([
+            ['Read #123', 'https://example.org/guide'],
+            ['Read guide', 'https://example.org/guide#123'],
+        ])(`rejects numeric references introduced into a link label or destination when editing ${source}`, (label, url) => {
+            editor.load(source);
+            const range = document.createRange();
+            range.selectNodeContents(root);
+            window.getSelection()!.removeAllRanges();
+            window.getSelection()!.addRange(range);
+            const html = root.innerHTML;
+            const selection = range.toString();
+
+            editor.setLink(label, url, root.querySelector('a') ?? undefined);
+
+            expect(root.innerHTML).toBe(html);
+            expect(window.getSelection()!.toString()).toBe(selection);
+            expect(changed).not.toHaveBeenCalled();
+            editor.undo();
+            expect(root.innerHTML).toBe(html);
+            expect(changed).not.toHaveBeenCalled();
+        });
+    }
+
+    it('does not combine a hash and digits across paragraphs into a post reference', () => {
+        editor.load('See #\n\n123 today');
+        select(root.querySelectorAll('p')[1].firstChild!, 0, 3);
+
+        expect(editor.canLinkSelection()).toBe(true);
+        editor.setLink('123', 'https://example.org/guide');
+
+        expect(root.querySelector('a')?.textContent).toBe('123');
+    });
+
+    it('preserves a selected numeric reference split across adjacent typing nodes during formatting', () => {
+        editor.load('');
+        for (const character of 'Read #123 today') {
+            editor.insertText(character);
+        }
+        const range = document.createRange();
+        range.selectNodeContents(root);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+
+        editor.format('strong');
+
+        expect(root.querySelector('[data-message-reference="#123"]')?.textContent).toBe('#123');
+        expect(root.querySelector('strong [data-message-reference]')).toBeNull();
+        expect(window.getSelection()!.toString()).toBe('Read #123 today');
+        expect(changed).toHaveBeenLastCalledWith('**Read** #123 **today**');
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith('Read #123 today');
+    });
+
+    it('retains a pending attachment bookmark when a formatted mention splits another paragraph', () => {
+        editor.load('**Hello @ann**\n\nAttachment here');
+        const paragraphs = root.querySelectorAll('p');
+        select(paragraphs[1].firstChild!, 11);
+        const attachment = editor.captureEntitySelection()!;
+        const greeting = paragraphs[0].querySelector('strong')!.firstChild!;
+        select(greeting, greeting.textContent!.length);
+        editor.insertMarkdown('[user]Anna(anna)[/user] ', editor.completion()!.range);
+        const resolved = editor.resolveEntitySelection(attachment);
+        expect(resolved).toBeDefined();
+
+        editor.insertMarkdown('![diagram](/api/core/files/attachments/diagram.png) ', resolved);
+
+        expect(root.querySelectorAll('p')[0].querySelector('img')).toBeNull();
+        expect(root.querySelectorAll('p')[1].querySelector('img')?.getAttribute('src')).toBe('/api/core/files/attachments/diagram.png');
+        expect(root.querySelectorAll('p')[1].textContent).toBe('Attachment diagram here');
+    });
 
     it('links text beside a protected reference without embedding or changing its payload', () => {
         editor.load('Hello [user]Anna(anna)[/user] today');

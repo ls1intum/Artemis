@@ -515,7 +515,7 @@ export class MessageEditorComponent {
         if (event instanceof KeyboardEvent && (this.linkComposing() || event.isComposing || event.keyCode === 229)) return;
         event?.preventDefault();
         const url = normalizeMessageLink(this.linkUrl());
-        if (!isMessageLinkSafe(url)) {
+        if (!isMessageLinkSafe(url, this.linkText())) {
             this.linkInvalid.set(true);
             return;
         }

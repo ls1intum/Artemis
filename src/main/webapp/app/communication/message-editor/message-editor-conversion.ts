@@ -3,6 +3,9 @@ import MarkdownItKatex from '@vscode/markdown-it-katex';
 import DOMPurify from 'dompurify';
 import TurndownService from 'turndown';
 
+// A literal numeric HTML entity remains text under the editor's escaping contract.
+const numericPostReference = /(?<!&)#\d+/g;
+
 const referenceTypes = ['user', 'channel', 'programming', 'modeling', 'quiz', 'text', 'file-upload', 'lecture', 'lecture-unit', 'attachment', 'slide', 'faq'];
 // Classify formulas with the same existing grammar as the posting renderer. Duplicating
 // delimiter detection misses math spanning formatting/code and can lock out ordinary currency.
@@ -141,6 +144,10 @@ function inlineCodeSpan(line: string): string {
 }
 
 function referenceHtml(source: string, label: string, type: string, imageSource?: string): string {
+    return referenceElement(source, label, type, imageSource).outerHTML;
+}
+
+function referenceElement(source: string, label: string, type: string, imageSource?: string): HTMLSpanElement {
     const reference = document.createElement('span');
     reference.setAttribute('contenteditable', 'false');
     reference.setAttribute('data-message-reference', source);
@@ -152,7 +159,48 @@ function referenceHtml(source: string, label: string, type: string, imageSource?
         reference.append(image);
     }
     reference.append(document.createTextNode(label));
-    return reference.outerHTML;
+    return reference;
+}
+
+/** Protects numeric post references during loading or explicit formatting, without interrupting native numeric typing. */
+export function protectMessagePostReferences(root: HTMLElement | DocumentFragment): void {
+    const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const texts: Text[] = [];
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+        if (!node.parentElement?.closest('pre, code, a, [data-message-reference]') && Array.from((node.textContent ?? '').matchAll(numericPostReference)).length > 0) {
+            texts.push(node as Text);
+        }
+    }
+    for (const text of texts) {
+        const fragment = root.ownerDocument.createDocumentFragment();
+        let offset = 0;
+        for (const match of text.data.matchAll(numericPostReference)) {
+            fragment.append(text.data.slice(offset, match.index), referenceElement(match[0], match[0], 'post'));
+            offset = match.index + match[0].length;
+        }
+        fragment.append(text.data.slice(offset));
+        text.replaceWith(fragment);
+    }
+}
+
+/** Splits inline wrappers around atomic references because the posting renderer splits references before rendering Markdown. */
+export function splitProtectedMessageMarks(root: HTMLElement | DocumentFragment): void {
+    for (const reference of Array.from(root.querySelectorAll<HTMLElement>('[data-message-reference]'))) {
+        let parent = reference.parentElement;
+        while (parent?.matches('strong, b, em, i, ins, u, s, del, code')) {
+            const following = reference.ownerDocument.createRange();
+            following.selectNodeContents(parent);
+            following.setStartAfter(reference);
+            const after = parent.cloneNode(false) as HTMLElement;
+            after.append(following.extractContents());
+            parent.after(reference, after);
+            // Selection boundary spans must survive until the caller restores its selection.
+            if (!parent.hasChildNodes()) parent.remove();
+            if (!after.hasChildNodes()) after.remove();
+            parent = reference.parentElement;
+        }
+    }
 }
 
 /** Reads code without the caret placeholders that are needed by native browser editing. */
@@ -200,29 +248,39 @@ export function messageToEditorFragment(source: string): DocumentFragment {
     // Preserve user whitespace in the editing host, but remove linefeeds used only to lay out generated HTML.
     // Literal code is escaped by markdown-it and cannot match these tag boundaries.
     const html = markdown.render(source).replace(/(<\/(?:p|li|ul|ol|blockquote|pre)>|<(?:ul|ol|blockquote|li)>|<br>)\n/g, '$1');
-    return DOMPurify.sanitize(html, {
+    const fragment = DOMPurify.sanitize(html, {
         ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'ins', 'u', 's', 'del', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'a', 'span', 'img'],
         ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'start', 'class', 'contenteditable', 'data-message-reference', 'data-reference-type'],
         ALLOW_DATA_ATTR: false,
         RETURN_DOM_FRAGMENT: true,
     });
+    fragment.normalize();
+    protectMessagePostReferences(fragment);
+    splitProtectedMessageMarks(fragment);
+    return fragment;
 }
 
 /** Serializes the editable document, escaping literal text while retaining the original payloads of protected references. */
 export function editorToMessage(element: HTMLElement): string {
     // Native editing uses divs for new paragraphs in some browsers. Turndown understands them as blocks.
-    return serializer.turndown(element.innerHTML);
+    // Work on a copy: native input and IME must retain their editable DOM while numeric references are still being typed.
+    const content = element.cloneNode(true) as HTMLElement;
+    // Managed character insertion can retain adjacent text nodes within one mark; match the complete visible token.
+    content.normalize();
+    protectMessagePostReferences(content);
+    splitProtectedMessageMarks(content);
+    return serializer.turndown(content.innerHTML);
 }
 
-/** Accepts web, mail and relative Artemis links while rejecting executable schemes. */
 /** Treat bare external hostnames as HTTPS while retaining explicitly relative Artemis links. */
 export function normalizeMessageLink(value: string): string {
     const trimmed = value.trim();
     return /^(?:[\p{L}\p{N}-]+\.)+[\p{L}\p{N}-]+(?::\d+)?(?:[/?#]|$)/u.test(trimmed) ? `https://${trimmed}` : trimmed;
 }
 
-export function isMessageLinkSafe(value: string): boolean {
-    if (!value.trim() || Array.from(value).some((character) => character.charCodeAt(0) <= 32)) {
+/** Accepts safe destinations and labels that the posting renderer can retain as one link. */
+export function isMessageLinkSafe(value: string, label = ''): boolean {
+    if (!value.trim() || /#\d+/.test(value) || /#\d+/.test(label) || Array.from(value).some((character) => character.charCodeAt(0) <= 32)) {
         return false;
     }
     try {

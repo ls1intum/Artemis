@@ -232,7 +232,7 @@
                 "linkUrl": "Link URL",
                 "apply": "Apply",
                 "unlink": "Remove link",
-                "invalidLink": "Enter a valid web, email or Artemis URL.",
+                "invalidLink": "Enter a valid web, email or Artemis URL. Keep message references such as #123 outside links.",
                 "message": "Message",
                 "hint": "Type @ for people or # for channels, exercises and lectures. Shift+Enter adds a new line. Backspace selects a link or reference; press again to delete it.",
                 "loading": "Searching…",

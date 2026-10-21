@@ -137,7 +137,16 @@
         >
             <label class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
                 {{ 'artemisApp.communication.formattedEditor.linkText' | artemisTranslate }}
-                <input data-testid="message-link-text" tumAetUiInput type="text" [value]="linkText()" (input)="updateLinkField($event, false)" (keydown.enter)="saveLink($event)" />
+                <input
+                    data-testid="message-link-text"
+                    tumAetUiInput
+                    type="text"
+                    [value]="linkText()"
+                    [attr.aria-invalid]="linkInvalid()"
+                    [attr.aria-describedby]="linkInvalid() ? listId + '-link-error' : null"
+                    (input)="updateLinkField($event, false)"
+                    (keydown.enter)="saveLink($event)"
+                />
             </label>
             <label class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
                 {{ 'artemisApp.communication.formattedEditor.linkUrl' | artemisTranslate }}
@@ -147,7 +156,7 @@
                     data-testid="message-link-url"
                     [value]="linkUrl()"
                     [attr.aria-invalid]="linkInvalid()"
-                    [attr.aria-describedby]="linkInvalid() ? listId + '-url-error' : null"
+                    [attr.aria-describedby]="linkInvalid() ? listId + '-link-error' : null"
                     (input)="updateLinkField($event, true)"
                     (keydown.enter)="saveLink($event)"
                 />
@@ -164,7 +173,7 @@
                 <fa-icon [icon]="icons.faXmark" />
             </button>
             @if (linkInvalid()) {
-                <p [id]="listId + '-url-error'" class="m-0 w-full text-sm text-state-danger" role="alert">
+                <p [id]="listId + '-link-error'" class="m-0 w-full text-sm text-state-danger" role="alert">
                     {{ 'artemisApp.communication.formattedEditor.invalidLink' | artemisTranslate }}
                 </p>
             }

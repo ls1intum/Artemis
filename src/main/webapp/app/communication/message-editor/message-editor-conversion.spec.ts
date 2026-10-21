@@ -302,9 +302,9 @@ describe('Message editor conversion', () => {
         },
     );
 
-    it('preserves protected reference source inside underline markup', () => {
+    it('preserves protected reference payloads outside underline markup', () => {
         const source = '<ins>[user]Anna & <em>Friends</em>(anna)[/user]</ins>';
-        expect(roundTrip(source)).toBe(source);
+        expect(roundTrip(source)).toBe('[user]Anna & <em>Friends</em>(anna)[/user]');
         expect(canEditMessageVisually(source)).toBe(true);
     });
 

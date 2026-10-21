@@ -232,7 +232,7 @@
                 "linkUrl": "Link-URL",
                 "apply": "Übernehmen",
                 "unlink": "Verlinkung entfernen",
-                "invalidLink": "Gib eine gültige Web-, E-Mail- oder Artemis-URL ein.",
+                "invalidLink": "Gib eine gültige Web-, E-Mail- oder Artemis-URL ein. Nachrichtenreferenzen wie #123 müssen außerhalb von Links bleiben.",
                 "message": "Nachricht",
                 "hint": "Mit @ nach Personen oder mit # nach Kanälen, Aufgaben und Vorlesungen suchen. Umschalt+Enter fügt eine neue Zeile ein. Die Rücktaste wählt einen Link oder Verweis aus; erneutes Drücken löscht ihn.",
                 "loading": "Suche läuft…",

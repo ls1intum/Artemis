@@ -774,6 +774,27 @@ describe('Formatted message composer', () => {
         expect(editable.querySelector('a')?.getAttribute('href')).toBe(expected);
     });
 
+    it.each([
+        ['Read #123', 'https://example.org/guide'],
+        ['Read guide', 'https://example.org/guide#123'],
+    ])('keeps the link form open with feedback for a numeric reference in %s or %s', (label, url) => {
+        caretAtEnd();
+        component['openLink']();
+        component.linkText.set(label);
+        component.linkUrl.set(url);
+        const original = editable.innerHTML;
+        const emit = vi.spyOn(component.contentChange, 'emit');
+
+        component['saveLink']();
+        fixture.detectChanges();
+
+        expect(component.linkOpen()).toBe(true);
+        expect(component.linkInvalid()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+        expect(editable.innerHTML).toBe(original);
+        expect(emit).not.toHaveBeenCalled();
+    });
+
     it('keeps Shift+Enter as a newline after an empty completion search', async () => {
         search.mockResolvedValue([]);
         fixture.componentRef.setInput('content', 'ping @none');

@@ -1,7 +1,7 @@
 import { captureMessageBookmark, messageBookmarkText, restoreMessageBookmark } from './message-editor-bookmarks';
 import { preserveMessageSelection, restoreMessageSelectionBoundaries } from './message-editor-selection';
 import { formatMessageBlocks } from './message-editor-blocks';
-import { editorToMessage, isMessageLinkSafe, messageToEditorFragment } from './message-editor-conversion';
+import { editorToMessage, isMessageLinkSafe, messageToEditorFragment, protectMessagePostReferences, splitProtectedMessageMarks } from './message-editor-conversion';
 import { formatMessageSelection, messageSelectionOffset, restoreMessageSelection, setMessageSelectionMarks } from './message-editor-formatting';
 import { EMOTICON_TO_EMOJI } from 'app/editor/monaco-editor/model/emoticon-emoji.util';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
@@ -397,6 +397,16 @@ export class MessageEditorDom {
                 fragment.append(this.element.ownerDocument.createTextNode(trailingSpace));
             }
             this.replace(fragment);
+            this.revision++;
+            if (
+                Array.from(this.element.querySelectorAll('[data-message-reference]')).some((reference) =>
+                    reference.parentElement?.matches('strong, b, em, i, ins, u, s, del, code'),
+                )
+            ) {
+                const restore = preserveMessageSelection(this.element, this.range());
+                splitProtectedMessageMarks(this.element);
+                this.select(restore());
+            }
         });
     }
 
@@ -471,7 +481,12 @@ export class MessageEditorDom {
         this.typingCaret = undefined;
         this.transact(() => {
             this.revision++;
-            this.select(formatMessageSelection(this.element, range, tag));
+            const bookmark = captureMessageBookmark(this.element, range);
+            this.element.normalize();
+            protectMessagePostReferences(this.element);
+            splitProtectedMessageMarks(this.element);
+            const selection = restoreMessageBookmark(this.element, bookmark.start, bookmark.end);
+            this.select(formatMessageSelection(this.element, selection, tag));
         });
     }
 
@@ -527,6 +542,16 @@ export class MessageEditorDom {
         const link = existing ?? this.linkAtSelection();
         if (link) return this.element.contains(link) && !link.closest('code, pre');
         const range = this.linkRange();
+        const bookmark = captureMessageBookmark(this.element, range);
+        if (
+            Array.from(bookmark.text.matchAll(/#\d+/g)).some((match) =>
+                range.collapsed
+                    ? match.index < bookmark.start && bookmark.start < match.index + match[0].length
+                    : match.index < bookmark.end && match.index + match[0].length > bookmark.start,
+            )
+        ) {
+            return false;
+        }
         const protectedContent = 'code, pre, [data-message-reference]';
         if (this.parentElement(range.startContainer)?.closest(protectedContent) || this.parentElement(range.endContainer)?.closest(protectedContent)) return false;
         if (range.collapsed) return true;
@@ -559,7 +584,7 @@ export class MessageEditorDom {
     /** Updates an enclosing link or links the selection, rejecting unsafe URLs and new links inside literal code. */
     setLink(label: string, url: string, existing?: HTMLAnchorElement): void {
         existing ??= this.linkAtSelection();
-        if (!isMessageLinkSafe(url) || !this.canLinkSelection(existing)) {
+        if (!isMessageLinkSafe(url, label) || !this.canLinkSelection(existing)) {
             return;
         }
         this.transact(() => {
