@@ -197,8 +197,24 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         if (testsRepository != null) {
             testsRepository.deleteWorkingCopy();
         }
-        deleteDirectoryIfExists(Path.of("local/server-integration-test/repos"));
-        deleteDirectoryIfExists(Path.of("local/server-integration-test/repos-download"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "local/server-integration-test/repos", "local/server-integration-test/repos-download" })
+    void tearDownPreservesUnrelatedCheckoutDirectories(String sharedParent) throws IOException {
+        Path checkout = tempFileUtilService.createTempDirectory(Path.of(sharedParent), "unrelated-checkout-");
+        Path activePack = checkout.resolve(".git/objects/pack/in-progress.pack");
+        try {
+            FileUtils.writeStringToFile(activePack.toFile(), "another test's active clone", StandardCharsets.UTF_8);
+
+            tearDown();
+
+            assertThat(activePack).exists();
+            assertThat(studentRepository.workingCopyPath()).doesNotExist();
+        }
+        finally {
+            FileUtils.deleteDirectory(checkout.toFile());
+        }
     }
 
     @Test
@@ -1590,10 +1606,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         catch (Exception ex) {
             log.warn("Failed to delete LocalVC project {} before test execution", normalizedProjectKey, ex);
         }
-    }
-
-    private void deleteDirectoryIfExists(Path path) throws IOException {
-        RepositoryExportTestUtil.safeDeleteDirectory(path);
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {
