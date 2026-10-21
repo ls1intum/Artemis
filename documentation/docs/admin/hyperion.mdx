@@ -462,20 +462,26 @@ coordinated upgrade when the distributed-data schema number is unchanged; do not
    `GET /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot`. Stop its old core/worker execution and reconcile
    repository heads, metadata and grading before using the matching
    `DELETE /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/{token}?reason=...` recovery operation.
-   Recovery is audited but does not establish process liveness or repair incomplete writes. If a reservation cannot be
-   reconciled safely, postpone the upgrade and keep admission closed.
+   Recovery is audited but does not establish process liveness or repair incomplete writes. A legacy reservation may
+   remain visible because its stored bytes prevent the recovery endpoint's conditional removal. Record the token,
+   stopped execution and evidence that repository heads, metadata and grading have been reconciled. Treat this as a
+   reconciled reservation awaiting map cleanup in step 5; do not keep retrying recovery or reopen admission. If the
+   external mutations of any reservation cannot be reconciled safely, postpone the upgrade and keep admission closed.
 4. Stop every old core, LocalVC writer, generation worker and build agent connected to the store, prevent automatic
    restarts, and take a consistent
-   distributed-store backup. Confirm that no active operation or unresolved reservation remains before clearing any state.
+   distributed-store backup. Confirm that no active operation or reservation with unresolved external mutations remains
+   before clearing any state. Only the documented, reconciled legacy reservations from step 3 may still await map cleanup.
 5. For Redis or Valkey, remove only the live-save coordination map, using the current schema number from
    `GET artemis:distributed-data-schema`. With schema `1`, the exact key is:
 
-   ```bash
-   redis-cli DEL 'artemis:v1:{hyperion-live-save-coordination}'
-   ```
+    ```bash
+    redis-cli DEL 'artemis:v1:{hyperion-live-save-coordination}'
+    ```
 
-   Do not clear it while any writer is running. Preserve the generation baselines, job maps, build queues and results;
-   they are not part of this cleanup. A fully stopped Hazelcast cluster has no retained coordination map.
+    This also removes the reconciled legacy reservations whose conditional recovery failed in step 3. Do not clear it
+    while any writer is running or any external mutation remains unresolved. Preserve the generation baselines, job maps, build queues and results;
+    they are not part of this cleanup. A fully stopped Hazelcast cluster has no retained coordination map.
+
 6. Start all replacement processes with the same application release, verify a controlled save/copy/undo workflow,
    then reopen admission. Keep the old application stopped; rollback requires the same drain and reconciliation.
 

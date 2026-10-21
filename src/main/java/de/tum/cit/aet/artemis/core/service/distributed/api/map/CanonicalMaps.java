@@ -26,12 +26,17 @@ public final class CanonicalMaps {
     }
 
     /**
-     * @param source the entries to copy; keys must be mutually comparable and non-null
+     * @param source the entries to copy; keys must be non-null and mutually comparable, with natural ordering consistent with equality
      * @param <K>    the key type
      * @param <V>    the value type
      * @return an unmodifiable copy that iterates, and therefore serializes, in key order
+     * @throws IllegalArgumentException if distinct keys compare as equal
      */
     public static <K extends Comparable<? super K>, V> Map<K, V> copyOf(Map<K, V> source) {
-        return Collections.unmodifiableSortedMap(new TreeMap<>(source));
+        var sorted = new TreeMap<>(source);
+        if (sorted.size() != source.size()) {
+            throw new IllegalArgumentException("Map keys must have a natural ordering consistent with equality");
+        }
+        return Collections.unmodifiableSortedMap(sorted);
     }
 }
