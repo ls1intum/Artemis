@@ -327,6 +327,12 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `TutorialGroupSession` | TutorialGroup `tutorial_group_id` | Required | No |  |
 | `TutorialGroupsConfiguration` | Course `course_id` | Required | No | Cascades on course deletion, and takes its free periods along. The course carries no association to it. |
 
+### Video source
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `GocastCourseBinding` | Course `course_id` | Required | No | Pending approvals and completed connections share one row; cascades on course deletion. |
+
 ## Finding orphans
 
 A migration that makes a parent required does one of two things with the orphans it finds, and which

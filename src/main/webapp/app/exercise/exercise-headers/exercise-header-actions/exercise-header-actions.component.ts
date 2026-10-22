@@ -14,7 +14,6 @@ import {
     faPlayCircle,
     faRobot,
     faSignal,
-    faTable,
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
@@ -430,8 +429,6 @@ export class ExerciseHeaderActionsComponent {
         const tutorActionItems = [...this.getDefaultItems()];
         if (this.exercise().type === ExerciseType.QUIZ) {
             tutorActionItems.push(...this.getQuizItems());
-        } else {
-            tutorActionItems.push(this.getParticipationItem());
         }
         return tutorActionItems;
     }
@@ -443,11 +440,7 @@ export class ExerciseHeaderActionsComponent {
                 icon: faEye,
                 translation: 'entity.action.view',
             },
-            {
-                routerLink: `${this.baseResource()}scores`,
-                icon: faTable,
-                translation: 'entity.action.scores',
-            },
+            this.getParticipationItem(),
         ];
     }
 

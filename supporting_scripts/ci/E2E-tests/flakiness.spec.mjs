@@ -71,6 +71,10 @@ describe('optional Helios history', () => {
         expect(response.destroy).toHaveBeenCalled();
         expect(console.warn).toHaveBeenCalledWith(expect.stringContaining(`HTTP ${status}`));
         expect(console.warn).not.toHaveBeenCalledWith(expect.stringContaining('sensitive service response'));
+        expect(console.warn).not.toHaveBeenCalledWith(expect.stringContaining('fixture-secret'));
+        if (status === 401 || status === 403) {
+            expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Rotate HELIOS_REPO_SECRET in Helios and the GitHub repository settings'));
+        }
     });
 
     it('does not contact Helios when no secret is configured', async () => {
@@ -175,6 +179,7 @@ describe('required E2E gate', () => {
         for (const phase of ['RELEVANT', 'REMAINING', 'ALL_PR', 'ALL_NON_PR']) {
             env[`${phase}_RESULT`] = '';
             env[`${phase}_CLASS`] = '';
+            env[`${phase}_INFRA`] = 'false';
             env[`${phase}_JOB`] = 'skipped';
         }
         env.RELEVANT_JOB = 'success';
@@ -205,6 +210,13 @@ describe('required E2E gate', () => {
         expect(
             verdict({ RELEVANT_RESULT: 'failure', RELEVANT_CLASS: 'flaky', REMAINING_JOB: 'success', REMAINING_RESULT: 'failure', REMAINING_CLASS: classification }).conclusion,
         ).toBe('failure');
+    });
+
+    it.each(['true', ''])('blocks known-flaky tests when infrastructure completion is %s', (infrastructure) => {
+        expect(verdict({ RELEVANT_RESULT: 'failure', RELEVANT_CLASS: 'flaky', RELEVANT_INFRA: infrastructure })).toMatchObject({
+            conclusion: 'failure',
+            description: 'E2E infrastructure failure',
+        });
     });
 
     it('still exonerates failures known to be flaky', () => {

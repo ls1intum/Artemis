@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
@@ -32,7 +31,6 @@ import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -88,7 +86,7 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
-    private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
+    private final WorkingCopyLocks workingCopyLocks = new WorkingCopyLocks();
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -270,6 +268,12 @@ public class GitService extends AbstractGitService {
 
     private Repository checkoutRepository(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
             boolean writeAccess, boolean selectCloneBranch) throws GitAPIException {
+        return workingCopyLocks.withLock(localPath,
+                () -> checkoutRepositoryLocked(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch, writeAccess, selectCloneBranch));
+    }
+
+    private Repository checkoutRepositoryLocked(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
+            boolean writeAccess, boolean selectCloneBranch) throws GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
         deleteIncompleteWorkingCopy(localPath);
@@ -301,13 +305,10 @@ public class GitService extends AbstractGitService {
         }
         // If the git repository can't be found on our server, clone it from the remote.
         else {
-            waitUntilPathNotBusy(localPath);
-
             // Clone repository.
             try {
                 var gitUriAsString = getGitUriAsString(sourceRepoUri);
                 log.debug("Cloning from {} to {}", gitUriAsString, localPath);
-                cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
                 CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
@@ -328,47 +329,7 @@ public class GitService extends AbstractGitService {
                 }
                 throw new GitException(e);
             }
-            finally {
-                // make sure that cloneInProgress is released
-                cloneInProgressOperations.remove(localPath);
-            }
             return getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch, writeAccess);
-        }
-    }
-
-    /**
-     * Waits until no clone operation is running for the given path.
-     * <p>
-     * Retries once a second for up to {@link #JGIT_TIMEOUT_IN_SECONDS} seconds before giving up.
-     *
-     * @param localPath The path in which a clone operation should be made.
-     * @throws CanceledException If the waiting has been interrupted.
-     * @throws GitException      If the path is still busy after the maximum number of retries.
-     */
-    private void waitUntilPathNotBusy(final Path localPath) throws CanceledException, GitException {
-        int remainingSeconds = JGIT_TIMEOUT_IN_SECONDS;
-
-        while (cloneInProgressOperations.containsKey(localPath)) {
-            log.warn("Clone is already in progress. This will lead to an error. Wait for a second");
-            try {
-                Thread.sleep(1000);
-            }
-            catch (InterruptedException ex) {
-                // The interrupt status is deliberately not restored here, which is what java:S2142 would ask for.
-                // CanceledException is a GitAPIException, and callers catch it per element and carry on: the
-                // plagiarism check maps over participations in a parallel stream, and a ForkJoinPool worker does not
-                // clear a leftover flag between elements the way a ThreadPoolExecutor worker does. A restored flag
-                // would make every later clone on that worker fail inside interruptible NIO and delete its working
-                // copy, turning one abandoned clone into a whole worker's worth of them.
-                throw new CanceledException("Waiting for local path to be free for cloning got interrupted.");
-            }
-
-            if (remainingSeconds <= 0) {
-                throw new GitException("Cannot clone the same repository multiple times");
-            }
-            else {
-                remainingSeconds--;
-            }
         }
     }
 
@@ -403,10 +364,6 @@ public class GitService extends AbstractGitService {
      * @param localPath the path of the working copy
      */
     private void deleteIncompleteWorkingCopy(Path localPath) {
-        if (cloneInProgressOperations.containsKey(localPath)) {
-            // A clone in progress writes HEAD and config last, so its git directory looks incomplete until it is done
-            return;
-        }
         Path gitDirectory = localPath.resolve(".git");
         if (Files.isDirectory(gitDirectory) && (Files.notExists(gitDirectory.resolve(Constants.HEAD)) || Files.notExists(gitDirectory.resolve(Constants.CONFIG)))) {
             log.warn("Deleting the incomplete working copy {} so that it is cloned again", localPath);
