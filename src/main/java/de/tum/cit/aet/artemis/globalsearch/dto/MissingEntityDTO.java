@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.globalsearch.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * One entity the database expects to be indexed but that the index does not hold, named so an admin can act on it.
@@ -16,5 +20,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *                      stored for such a unit is indistinguishable from content whose unit the database has lost
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MissingEntityDTO(String type, long entityId, String title, Long lectureId) {
+public record MissingEntityDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type, long entityId, @Nullable @Schema(nullable = true) String title,
+        @Nullable @Schema(nullable = true) Long lectureId) {
 }

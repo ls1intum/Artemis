@@ -2,13 +2,15 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { CourseBrowserData, IndexedContentObject, IndexedEntityRecord } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 import { IndexOverview } from 'app/openapi/model/index-overview';
 import { IngestionCoverage } from 'app/openapi/model/ingestion-coverage';
+import { CourseBrowserData } from 'app/openapi/model/course-browser-data';
+import { IndexedEntityRecord } from 'app/openapi/model/indexed-entity-record';
+import { IndexedContentObject } from 'app/openapi/model/indexed-content-object';
 
 describe('CourseIngestionDashboardService', () => {
     let service: CourseIngestionDashboardService;
@@ -313,7 +315,7 @@ describe('CourseIngestionDashboardService', () => {
     it('should GET the complete browser payload for the requested course', async () => {
         const resultPromise = firstValueFrom(service.getCourseBrowserData(1));
 
-        const req = httpMock.expectOne(`${baseUrl}/courses/1/browser`);
+        const req = httpMock.expectOne(`/api/global-search/admin/courses/1/browser`);
         expect(req.request.method).toBe('GET');
         req.flush(mockBrowserData);
 
@@ -323,19 +325,109 @@ describe('CourseIngestionDashboardService', () => {
 
     it('should request indexed records and unit content with their selected fields', async () => {
         const recordsPromise = firstValueFrom(service.getIndexedEntityRecords(1, 'lecture_unit'));
-        const recordsRequest = httpMock.expectOne((r) => r.url === `${baseUrl}/courses/1/entities` && r.method === 'GET');
-        expect(recordsRequest.request.params.get('type')).toBe('lecture_unit');
+        const recordsRequest = httpMock.expectOne(
+            (r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === `/api/global-search/admin/courses/1/entities` && r.method === 'GET',
+        );
+        expect(new URL(recordsRequest.request.urlWithParams, 'https://artemis.test').searchParams.get('type')).toBe('lecture_unit');
         const records: IndexedEntityRecord[] = [{ type: 'lecture_unit', entityId: 21, title: 'Unit', properties: { course_id: 1 } }];
         recordsRequest.flush(records);
 
         const contentPromise = firstValueFrom(service.getUnitContent(1, 21, 'slides'));
-        const contentRequest = httpMock.expectOne((r) => r.url === `${baseUrl}/courses/1/units/21/content` && r.method === 'GET');
-        expect(contentRequest.request.params.get('key')).toBe('slides');
+        const contentRequest = httpMock.expectOne(
+            (r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === `/api/global-search/admin/courses/1/units/21/content` && r.method === 'GET',
+        );
+        expect(new URL(contentRequest.request.urlWithParams, 'https://artemis.test').searchParams.get('key')).toBe('slides');
         const content: IndexedContentObject[] = [{ ingestedAt: '2026-08-05T10:00:00Z', properties: { unit_id: 21 } }];
         contentRequest.flush(content);
 
         await expect(recordsPromise).resolves.toEqual(records);
         await expect(contentPromise).resolves.toEqual(content);
+        httpMock.verify();
+    });
+    describe.each([
+        {
+            path: '/api/global-search/admin/courses/7/browser',
+            query: '',
+            load: () => service.getCourseBrowserData(7),
+            body: { entities: [{ entityId: 0, expected: false }], typeCounts: [] },
+        },
+        {
+            path: '/api/global-search/admin/courses/7/entities',
+            query: 'type=lecture_unit',
+            load: () => service.getIndexedEntityRecords(7, 'lecture_unit'),
+            body: [{ type: 'lecture_unit', entityId: 0, properties: { zero: 0, flag: false, nested: { text: '東京' } } }],
+        },
+        {
+            path: '/api/global-search/admin/courses/7/units/0/content',
+            query: 'key=slides',
+            load: () => service.getUnitContent(7, 0, 'slides'),
+            body: [{ properties: { page_number: 0, flag: false } }],
+        },
+    ])('$path generated browser transport', ({ path, query, load, body }) => {
+        it('is cold and returns the JSON body with exact query/IDs and sparse values', async () => {
+            const value$ = load();
+            httpMock.expectNone((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === path);
+            const result = firstValueFrom<unknown>(value$);
+            const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === path);
+            const url = new URL(req.request.urlWithParams, 'https://artemis.test');
+            expect(url.searchParams.toString()).toBe(query);
+            expect(req.request.method).toBe('GET');
+            expect(req.request.body).toBeNull();
+            expect(req.request.responseType).toBe('json');
+            req.flush(body);
+            await expect(result).resolves.toEqual(body);
+            httpMock.verify();
+        });
+
+        it.each([400, 401, 403, 404, 503])('propagates %s without retry and allows explicit recovery', async (status) => {
+            const result = firstValueFrom<unknown>(load());
+            const rejected = expect(result).rejects.toMatchObject({ status });
+            httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === path).flush(null, { status, statusText: 'Failure' });
+            await rejected;
+            httpMock.expectNone((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === path);
+            const recovered = firstValueFrom<unknown>(load());
+            httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === path).flush(body);
+            await expect(recovered).resolves.toEqual(body);
+            httpMock.verify();
+        });
+
+        it('cancels pending HTTP when unsubscribed', () => {
+            const request$: Observable<unknown> = load();
+            const subscription = request$.subscribe();
+            const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === path);
+            expect(req.cancelled).toBe(false);
+            subscription.unsubscribe();
+            expect(req.cancelled).toBe(true);
+            httpMock.verify();
+        });
+    });
+
+    it.each(['', 'slides', 'transcript', 'unit_summary', 'segments', 'C++ & %_\\ 東京'])('preserves the required content key %s', async (key) => {
+        const result = firstValueFrom(service.getUnitContent(7, 0, key));
+        const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === '/api/global-search/admin/courses/7/units/0/content');
+        const params = new URL(req.request.urlWithParams, 'https://artemis.test').searchParams;
+        expect([...params.keys()]).toEqual(['key']);
+        expect(params.get('key')).toBe(key);
+        req.flush([]);
+        await expect(result).resolves.toEqual([]);
+        httpMock.verify();
+    });
+
+    it.each(['', 'lecture', 'lecture_unit', 'course', 'C++ & %_\\ Überprüfung'])('preserves the required entity type %s', async (type) => {
+        const result = firstValueFrom(service.getIndexedEntityRecords(7, type));
+        const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === '/api/global-search/admin/courses/7/entities');
+        const params = new URL(req.request.urlWithParams, 'https://artemis.test').searchParams;
+        expect([...params.keys()]).toEqual(['type']);
+        expect(params.get('type')).toBe(type);
+        req.flush([]);
+        await expect(result).resolves.toEqual([]);
+        httpMock.verify();
+    });
+
+    it('keeps a successful empty browser object distinct from an error', async () => {
+        const result = firstValueFrom(service.getCourseBrowserData(7));
+        httpMock.expectOne('/api/global-search/admin/courses/7/browser').flush({});
+        await expect(result).resolves.toEqual({});
         httpMock.verify();
     });
 });
