@@ -32,7 +32,6 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,12 +47,11 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -117,9 +115,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private IrisMessageService irisMessageService;
 
     @Autowired
-    private UserAiPreferenceService userAiPreferenceService;
-
-    @Autowired
     private IrisSessionRepository irisSessionRepository;
 
     @Autowired
@@ -133,9 +128,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private IrisSessionService irisSessionService;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -154,10 +146,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     private AtomicBoolean pipelineDone;
 
-    private boolean memirisFeatureEnabledBeforeTest;
-
-    private boolean student1MemirisEnabledBeforeTest;
-
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
@@ -166,20 +154,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @BeforeEach
     void initMessageTestState() {
         pipelineDone = new AtomicBoolean(false);
-        memirisFeatureEnabledBeforeTest = featureToggleService.isFeatureEnabled(Feature.Memiris);
-        student1MemirisEnabledBeforeTest = userAiPreferenceService.isMemirisEnabled(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
-    }
-
-    @AfterEach
-    void restoreFeatureToggleState() {
-        if (memirisFeatureEnabledBeforeTest) {
-            featureToggleService.enableFeature(Feature.Memiris);
-        }
-        else {
-            featureToggleService.disableFeature(Feature.Memiris);
-        }
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        userAiPreferenceService.setMemirisEnabled(user.getId(), student1MemirisEnabledBeforeTest);
     }
 
     // =========================================================================
@@ -227,25 +201,32 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         await().until(pipelineDone::get);
     }
 
+    /**
+     * A Pyris version from before the Memiris removal still sends the memory lists on its callbacks. Artemis no longer reads
+     * them, but must still accept the callback and deliver the answer.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void sendOneMessage_disablesMemirisInPyrisDtoWhenFeatureDisabled() throws Exception {
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        userUtilService.setMemirisEnabled(user, true);
-        featureToggleService.disableFeature(Feature.Memiris);
-
+    void sendOneMessage_acceptsLegacyMemoryFieldsInPyrisCallback() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
         mockChatResponse(dto -> {
-            assertThat(dto.user().memirisEnabled()).isFalse();
+            String jobId = dto.settings().authenticationToken();
+            ObjectNode body = JsonObjectMapper.get().valueToTree(new PyrisChatStatusUpdateDTO("Hello World", FINISHED, null, null, null, null));
+            body.putArray("accessedMemories").addObject().put("id", "m1").put("title", "Memory").put("content", "Content");
+            body.putArray("createdMemories").addObject().put("id", "m2").put("title", "Memory").put("content", "Content");
+            var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
+            assertThatNoException()
+                    .isThrownBy(() -> request.postStringWithoutLocation("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status", body.toString(), HttpStatus.OK, headers));
             pipelineDone.set(true);
         });
 
         request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
         await().until(pipelineDone::get);
-        // the toggle suppresses Memiris for this request without touching what the account itself chose
-        assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isTrue();
+
+        User user = userTestRepository.findByIdElseThrow(session.getUserId());
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING), messageDTO("Hello World"));
     }
 
     @Test
@@ -779,7 +760,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(null, RUNNING, null, null, null, null, null, null, "partial", 1, null, null), HttpStatus.OK, headers);
+                new PyrisChatStatusUpdateDTO(null, RUNNING, null, null, null, null, "partial", 1, null, null), HttpStatus.OK, headers);
 
         assertThat(pyrisJobService.getJob(jobId)).isNull();
     }
@@ -1705,7 +1686,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private void sendStatus(String jobId, String result, PyrisRunState runState, String sessionTitle, List<String> suggestions) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, runState, null, sessionTitle, suggestions, null, null, null), HttpStatus.OK, headers);
+                new PyrisChatStatusUpdateDTO(result, runState, null, sessionTitle, suggestions, null), HttpStatus.OK, headers);
     }
 
     private static String messagesUrl(IrisChatSession session) {
