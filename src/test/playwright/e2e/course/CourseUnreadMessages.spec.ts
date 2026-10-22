@@ -146,6 +146,52 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         });
     }
 
+    for (const kind of ['groupChat', 'oneToOneChat'] as const) {
+        test(`reads live arrivals after creating a ${kind} from a manually unread channel`, async ({ page, courseMessages }) => {
+            const original = await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'Which synchronization policy should our study group use?');
+            await page.goto(`/courses/${course!.id}/communication?conversationId=${channel.id}`);
+            await expect(courseMessages.getSinglePost(original.id!)).toContainText(original.content!);
+            await courseMessages.getSinglePost(original.id!).getByText(original.content!, { exact: true }).click({ button: 'right' });
+            await page.getByTestId('posting-menu-mark-unread').click();
+            await expect.poll(() => unread(page, channel.id!)).toBe(1);
+
+            const endpoint = kind === 'groupChat' ? '/group-chats' : '/one-to-one-chats';
+            const creation = page.waitForResponse((response) => new URL(response.url()).pathname.endsWith(endpoint) && response.request().method() === 'POST');
+            if (kind === 'groupChat') {
+                await courseMessages.createGroupChatButton();
+                await courseMessages.addUserToGroupChat(instructor.username);
+                await courseMessages.addUserToGroupChat(studentTwo.username);
+                await page.locator('#submitButton').click();
+            } else {
+                await page.getByTestId('sidebar-create-menu-button').click();
+                await page.getByRole('button', { name: 'Create direct chat', exact: true }).click();
+                await courseMessages.addUserToGroupChat(instructor.username);
+            }
+            const response = await creation;
+            expect(response.ok()).toBe(true);
+            const created: { id: number } = await response.json();
+            // Keep the same app/service instance: a page.goto here would clear the state that caused the regression.
+            await expect(page).toHaveURL(new RegExp(`conversationId=${created.id}$`));
+            await expect(page.getByTestId('conversation-name')).toContainText('Instructor User');
+            expect(await unread(page, channel.id!)).toBe(1);
+            await showGroups(page);
+            const badge = conversationLink(page, created.id).getByTestId('conversation-unread-count');
+            const incoming = await api(staff).createCourseMessage(course!, created.id, kind, 'Let us compare locking policies before the concurrency tutorial.');
+            await expect(courseMessages.getSinglePost(incoming.id!)).toContainText(incoming.content!);
+            await expect.poll(() => unread(page, created.id)).toBe(0);
+            await expect(badge).toHaveCount(0);
+
+            await courseMessages.writeMessage('Can the representation invariant span several fields?');
+            const root = await courseMessages.save();
+            await courseMessages.openThreadForMessage(root.id!);
+            const reply = await api(staff).createCourseMessageReply(course!, root, 'Yes. Protect every field involved with the same synchronization protocol.');
+            await expect(page.locator('jhi-conversation-thread-sidebar')).toContainText(reply.content!);
+            await expect.poll(() => unread(page, created.id)).toBe(0);
+            await expect(badge).toHaveCount(0);
+            expect(await unread(page, channel.id!)).toBe(1);
+        });
+    }
+
     test('preserves muted and manually unread conversations while replies arrive', async ({ page, courseMessages }, info) => {
         const root = await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'Which invariants must remain true while another thread is executing?');
         await api(page).createCourseMessageReply(course!, root, 'The object should preserve its representation invariant at the synchronization boundary.');

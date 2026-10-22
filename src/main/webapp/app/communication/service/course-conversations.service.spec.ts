@@ -674,6 +674,72 @@ describe('CourseConversationsService', () => {
             });
         });
 
+        it.each(['group', 'direct-login', 'direct-id', 'channel'] as const)('reads live arrivals after creating a %s from a manually unread conversation', (kind) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const unreadDate = dayjs('2026-01-01T10:00:00Z');
+            courseConversationsService.updateConversationUnreadState(channel.id, unreadDate, 2);
+            const created =
+                kind === 'group'
+                    ? generateExampleGroupChatDTO({ id: 99 })
+                    : kind === 'channel'
+                      ? generateExampleChannelDTO({ id: 99 } as ChannelDTO)
+                      : generateOneToOneChatDTO({ id: 99 });
+            vi.spyOn(groupChatService, 'create').mockReturnValue(of(new HttpResponse({ body: created as GroupChatDTO })));
+            vi.spyOn(oneToOneChatService, 'create').mockReturnValue(of(new HttpResponse({ body: created as OneToOneChatDTO })));
+            vi.spyOn(oneToOneChatService, 'createWithId').mockReturnValue(of(new HttpResponse({ body: created as OneToOneChatDTO })));
+            vi.spyOn(channelService, 'create').mockReturnValue(of(new HttpResponse({ body: created as ChannelDTO })));
+            vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [channel, created] })));
+            const markAsRead = vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of(new HttpResponse<void>()));
+            const result =
+                kind === 'group'
+                    ? courseConversationsService.createGroupChat(['partner'])
+                    : kind === 'channel'
+                      ? courseConversationsService.createChannel(created as ChannelDTO)
+                      : kind === 'direct-id'
+                        ? courseConversationsService.createOneToOneChatWithId(7)
+                        : courseConversationsService.createOneToOneChat('partner');
+            result.subscribe();
+
+            courseConversationsService.setActiveConversation(created.id);
+            expect(courseConversationsService.isConversationMarkedAsUnread(created.id)).toBe(false);
+            expect(courseConversationsService['activeConversation']?.id).toBe(created.id);
+            courseConversationsService.messagesLoaded(created.id!, courseConversationsService.messagesRequested(created.id!));
+            receiveMockSubject.next(eventFor(created));
+            expect(markAsRead).toHaveBeenCalledExactlyOnceWith(course.id, created.id);
+            expect(cachedUnreadCount(created.id)).toBe(0);
+            expect(cachedUnreadCount(channel.id)).toBe(2);
+            expect(channel.lastReadDate).toBe(unreadDate);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+        });
+
+        it.each(['group', 'direct-login', 'direct-id'] as const)('preserves a manual unread mark when %s creation returns the current conversation', (kind) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            const current = kind === 'group' ? groupChat : oneToOneChat;
+            courseConversationsService.setActiveConversation(current);
+            courseConversationsService.updateConversationUnreadState(current.id, dayjs(), 2);
+            const response = new HttpResponse({ body: { ...current } });
+            vi.spyOn(groupChatService, 'create').mockReturnValue(of(response as HttpResponse<GroupChatDTO>));
+            vi.spyOn(oneToOneChatService, 'create').mockReturnValue(of(response as HttpResponse<OneToOneChatDTO>));
+            vi.spyOn(oneToOneChatService, 'createWithId').mockReturnValue(of(response as HttpResponse<OneToOneChatDTO>));
+            const markAsRead = vi.spyOn(conversationService, 'markAsRead');
+            const result =
+                kind === 'group'
+                    ? courseConversationsService.createGroupChat(['partner'])
+                    : kind === 'direct-id'
+                      ? courseConversationsService.createOneToOneChatWithId(7)
+                      : courseConversationsService.createOneToOneChat('partner');
+            result.subscribe();
+            courseConversationsService.setActiveConversation(current.id);
+            expect(courseConversationsService['activeConversation']).toBe(current);
+            expect(courseConversationsService.isConversationMarkedAsUnread(current.id)).toBe(true);
+            receiveMockSubject.next(eventFor(current));
+            expect(markAsRead).not.toHaveBeenCalled();
+            expect(cachedUnreadCount(current.id)).toBe(3);
+        });
+
         it.each(['channel', 'group', 'direct'] as const)('resumes automatic reads after reopening a manually unread %s', (kind) => {
             courseConversationsService.setUpConversationService(course).subscribe();
             const conversation = kind === 'channel' ? channel : kind === 'group' ? groupChat : oneToOneChat;

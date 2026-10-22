@@ -200,11 +200,19 @@ export class CourseConversationsService implements OnDestroy {
             return;
         }
         this.requestedConversationId = undefined;
-        this.activeConversation = cachedConversation;
+        this.selectConversation(cachedConversation);
         this._activeConversation$.next(this.activeConversation);
         this.isCodeOfConductPresented = false;
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
+    }
+
+    /** Keeps the selected DTO and its view-local unread protection together for navigation, creation and clearing. */
+    private selectConversation(conversation: ConversationDTO | undefined) {
+        if (conversation && this.activeConversation?.id === conversation.id) {
+            return;
+        }
         this.isMarkedAsUnread = false;
+        this.activeConversation = conversation;
     }
 
     /**
@@ -233,7 +241,7 @@ export class CourseConversationsService implements OnDestroy {
      */
     public setCodeOfConduct() {
         this.selectionVersion++;
-        this.activeConversation = undefined;
+        this.selectConversation(undefined);
         this._activeConversation$.next(this.activeConversation);
         this.isCodeOfConductPresented = true;
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
@@ -299,7 +307,7 @@ export class CourseConversationsService implements OnDestroy {
                 if (this.activeConversation) {
                     const cachedActiveConversation = this.conversationsOfUser.find((conversationInCache) => conversationInCache.id === this.activeConversation?.id);
                     if (!cachedActiveConversation) {
-                        this.activeConversation = undefined;
+                        this.selectConversation(undefined);
                     } else {
                         // Keep the message view's DTO identity across all refreshes: its opening divider stays fixed, and a later
                         // manual unread mark must still update the object held by that view.
@@ -334,7 +342,7 @@ export class CourseConversationsService implements OnDestroy {
         return creation$.pipe(
             tap((conversation: HttpResponse<ConversationDTO>) => {
                 this.selectionVersion++;
-                this.activeConversation = conversation.body!;
+                this.selectConversation(conversation.body ?? undefined);
             }),
             catchError((res: HttpErrorResponse) => {
                 if (!res.error?.skipAlert) {
@@ -383,7 +391,7 @@ export class CourseConversationsService implements OnDestroy {
                 this.conversationsLoaded = true;
                 this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this.conversationsOfUser);
-                this.activeConversation = undefined;
+                this.selectConversation(undefined);
                 // After the reset, so the conversation the url asked for survives it. This is the reload case: the
                 // query parameters were read while this request was still in flight.
                 this.activateRequestedConversation();
@@ -634,7 +642,7 @@ export class CourseConversationsService implements OnDestroy {
         this.conversationsOfUser = conversationsCopy;
 
         if (this.activeConversation?.id === deletedConversation.id) {
-            this.activeConversation = undefined;
+            this.selectConversation(undefined);
             this._activeConversation$.next(this.activeConversation);
         }
     }
