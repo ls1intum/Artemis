@@ -7,6 +7,14 @@ import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Duration;
 import java.util.List;
@@ -22,6 +30,8 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -30,7 +40,9 @@ import de.tum.cit.aet.artemis.globalsearch.dto.CourseBrowserDataDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityRecordDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.MissingEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserWeaviateReadService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageSetLoader.ExpectedSets;
@@ -70,6 +82,9 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
     private IngestionBrowserWeaviateReadService browserReadService;
 
     @Autowired
+    private IngestionBrowserService browserService;
+
+    @Autowired
     private WeaviateClient weaviateClient;
 
     private Course course;
@@ -101,6 +116,73 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
         request.get(BASE + "courses/" + UNKNOWN_COURSE_ID + "/browser", HttpStatus.NOT_FOUND, CourseBrowserDataDTO.class);
         request.getList(BASE + "courses/" + UNKNOWN_COURSE_ID + "/entities?type=lecture", HttpStatus.NOT_FOUND, IndexedEntityRecordDTO.class);
         request.getList(BASE + "courses/" + UNKNOWN_COURSE_ID + "/units/" + UNIT_ID + "/content?key=slides", HttpStatus.NOT_FOUND, IndexedContentObjectDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void unknownCourseStopsEveryReadBeforeQueryValidation() throws Exception {
+        clearInvocations(browserService, browserReadService);
+        String path = BASE + "courses/" + UNKNOWN_COURSE_ID;
+
+        request.performMvcRequest(get(path + "/browser")).andExpect(status().isNotFound())
+                .andExpect(result -> assertThat(result.getResolvedException()).isInstanceOf(EntityNotFoundException.class));
+        request.performMvcRequest(get(path + "/entities").param("type", "")).andExpect(status().isNotFound())
+                .andExpect(result -> assertThat(result.getResolvedException()).isInstanceOf(EntityNotFoundException.class));
+        request.performMvcRequest(get(path + "/units/0/content").param("key", "")).andExpect(status().isNotFound())
+                .andExpect(result -> assertThat(result.getResolvedException()).isInstanceOf(EntityNotFoundException.class));
+
+        verifyNoInteractions(browserService, browserReadService);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void invalidTypeOrKeyNeverReachesTheIndex() throws Exception {
+        clearInvocations(browserService, browserReadService);
+        String path = BASE + "courses/" + course.getId();
+
+        for (String invalid : List.of("", "unknown", "lecture+unit")) {
+            request.performMvcRequest(get(path + "/entities").param("type", invalid)).andExpect(status().isBadRequest())
+                    .andExpect(result -> assertThat(result.getResolvedException()).isInstanceOf(BadRequestAlertException.class));
+            request.performMvcRequest(get(path + "/units/0/content").param("key", invalid)).andExpect(status().isBadRequest())
+                    .andExpect(result -> assertThat(result.getResolvedException()).isInstanceOf(BadRequestAlertException.class));
+        }
+
+        verifyNoInteractions(browserService, browserReadService);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void delegatesTheCombinedLoadAndScopedLazyReadsWithoutExtraWork() throws Exception {
+        long courseId = course.getId();
+        var counts = new IngestionTypeCountDTO("exercise", 1, 0, 1, 0);
+        var payload = new CourseBrowserDataDTO(List.of(), List.of(), List.of(), List.of(), List.of(counts));
+        doReturn(payload).when(browserService).loadCourseBrowserData(course);
+        doReturn(List.of()).when(browserReadService).listIndexedEntityRecords(courseId, "lecture_unit");
+        doReturn(List.of()).when(browserReadService).listContentObjectsForUnit(courseId, 0L, "slides");
+        clearInvocations(browserService, browserReadService);
+        String path = BASE + "courses/" + courseId;
+
+        var response = request.get(path + "/browser", HttpStatus.OK, CourseBrowserDataDTO.class);
+        assertThat(response).isEqualTo(payload);
+        assertThat(request.getList(path + "/entities?type=lecture_unit", HttpStatus.OK, IndexedEntityRecordDTO.class)).isEmpty();
+        assertThat(request.getList(path + "/units/0/content?key=slides", HttpStatus.OK, IndexedContentObjectDTO.class)).isEmpty();
+
+        verify(browserService).loadCourseBrowserData(course);
+        verify(browserReadService).listIndexedEntityRecords(courseId, "lecture_unit");
+        verify(browserReadService).listContentObjectsForUnit(courseId, 0L, "slides");
+        verifyNoMoreInteractions(browserService, browserReadService);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void unreadableContentRemainsAFailureRatherThanAnEmptySuccess() throws Exception {
+        var failure = new WeaviateException("unreadable", new IllegalStateException("unavailable"));
+        doThrow(failure).when(browserReadService).listContentObjectsForUnit(course.getId(), 0L, "slides");
+
+        var result = request.performMvcRequest(get(BASE + "courses/" + course.getId() + "/units/0/content").param("key", "slides")).andExpect(status().isInternalServerError())
+                .andReturn();
+
+        assertThat(result.getResolvedException()).isSameAs(failure);
     }
 
     @Test
@@ -173,13 +255,15 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void omitsEmptyContentPresenceAndGapsFromTheCombinedResponse() throws Exception {
+    void retainsEmptyContentPresenceAndGapsInTheCombinedResponse() throws Exception {
         long courseId = course.getId();
 
         var json = objectMapper.readTree(request.get(BASE + "courses/" + courseId + "/browser", HttpStatus.OK, String.class));
         assertThat(json.isObject()).isTrue();
-        assertThat(json.has("contentPresence")).isFalse();
-        assertThat(json.has("contentGaps")).isFalse();
+        assertThat(json.get("contentPresence").isArray()).isTrue();
+        assertThat(json.get("contentPresence")).isEmpty();
+        assertThat(json.get("contentGaps").isArray()).isTrue();
+        assertThat(json.get("contentGaps")).isEmpty();
         assertThat(json.get("missingEntities").isArray()).isTrue();
         assertThat(json.get("typeCounts").isArray()).isTrue();
     }

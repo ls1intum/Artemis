@@ -15,6 +15,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.test.context.bean.override.mockito.MockReset;
@@ -32,6 +33,8 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserService;
+import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserWeaviateReadService;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
@@ -61,6 +64,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStu
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.shared.IngestionBrowserTestConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 /**
@@ -75,6 +79,7 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
  * @see AbstractSpringIntegrationLocalCILocalVCTest
  * @see AbstractSpringIntegrationLocalCILocalVCBatchTest
  */
+@Import(IngestionBrowserTestConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends AbstractArtemisIntegrationTest {
 
     // Shared by both contexts: one container, but each context gets its own collection prefix (see the subclasses),
@@ -187,6 +192,13 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @MockitoSpyBean
     protected PyrisFaqApi pyrisFaqApi;
 
+    // The shared configuration wraps these only when Weaviate is enabled; no fallback beans are created.
+    @Autowired
+    private Optional<IngestionBrowserService> ingestionBrowserServiceSpy;
+
+    @Autowired
+    private Optional<IngestionBrowserWeaviateReadService> ingestionBrowserReadServiceSpy;
+
     // we explicitly want a mock here, as we don't want to test the actual chat model calls and avoid any autoconfiguration or instantiation of Spring AI internals
     @MockitoBean
     protected ChatModel azureOpenAiChatModel;
@@ -266,6 +278,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
         Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService,
                 competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService, pyrisPipelineService, pyrisEventService,
                 ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel, repositoryVcsAccessTokenService, fallbackBuildLogEntryService);
+        ingestionBrowserServiceSpy.ifPresent(Mockito::reset);
+        ingestionBrowserReadServiceSpy.ifPresent(Mockito::reset);
         buildAgentConfigurationOverrides.reset();
         // Preserve startup answers while discarding calls recorded by scheduled and build threads.
         Mockito.clearInvocations(buildAgentConfiguration);

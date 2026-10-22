@@ -12,15 +12,15 @@ import type { IngestionTypeCount } from './ingestion-type-count';
 
 export interface IngestionCoverage {
     courseId: number;
-    courseTitle?: string | null;
-    releaseDate?: string | null;
+    courseTitle: string | null;
+    releaseDate: string | null;
     active: boolean;
-    semester?: string | null;
+    semester: string | null;
     status: IngestionCoverageStatusEnum;
     coverageGapScore: number;
     computedAt: string;
-    lastIngestedAt?: string | null;
-    typeCounts?: Array<IngestionTypeCount>;
+    lastIngestedAt: string | null;
+    typeCounts: Array<IngestionTypeCount>;
 }
 
 export type IngestionCoverageStatusEnum = 'COMPLETE' | 'INCOMPLETE' | 'EMPTY';

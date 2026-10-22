@@ -118,9 +118,9 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
         assertThat(json.get("weaviateReachable").isBoolean()).isTrue();
         assertThat(json.get("weaviateAddress").isString()).isTrue();
         assertThat(json.get("weaviateAddress").stringValue()).isNotBlank();
-        // Iris is disabled in the integration-test configuration; false must be present on the wire.
+        // The shared LocalCI/LocalVC context enables Iris, even though no reachable Pyris instance is configured.
         assertThat(json.get("irisEnabled").isBoolean()).isTrue();
-        assertThat(json.get("irisEnabled").booleanValue()).isFalse();
+        assertThat(json.get("irisEnabled").booleanValue()).isTrue();
         assertThat(json.get("irisReachable").isBoolean()).isTrue();
         assertThat(json.get("irisReachable").booleanValue()).isFalse();
         var collections = json.get("collections");
@@ -284,7 +284,7 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void storedCoverageBindsFalseAndLiteralSearchAndOmitsEmptyMetadata() throws Exception {
+    void storedCoverageBindsFalseAndLiteralSearchAndRetainsNullMetadataAndEmptyCounts() throws Exception {
         var entry = storedEntry(IngestionCoverageStatus.EMPTY);
         entry.setCourseTitle("C++ & 50%_\\ Überprüfung 東京");
         entry.setActive(false);
@@ -310,10 +310,11 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
         assertThat(row.get("coverageGapScore").intValue()).isZero();
         assertThat(row.get("status").stringValue()).isEqualTo("EMPTY");
         assertThat(row.get("computedAt").isString()).isTrue();
-        assertThat(row.has("typeCounts")).isFalse();
-        assertThat(row.has("releaseDate")).isFalse();
-        assertThat(row.has("semester")).isFalse();
-        assertThat(row.has("lastIngestedAt")).isFalse();
+        assertThat(row.get("typeCounts").isArray()).isTrue();
+        assertThat(row.get("typeCounts")).isEmpty();
+        assertThat(row.get("releaseDate").isNull()).isTrue();
+        assertThat(row.get("semester").isNull()).isTrue();
+        assertThat(row.get("lastIngestedAt").isNull()).isTrue();
     }
 
     @Test
