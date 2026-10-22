@@ -1,3 +1,4 @@
+import { PostPageRequestState } from 'app/communication/course-conversations-components/post-page-request-state';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
     AfterViewInit,
@@ -114,9 +115,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly messageListContent = viewChild<ElementRef>('messageListContent');
     private resizeObserver?: ResizeObserver;
     private bottomScrollFrame: number | undefined;
-    private pendingPageScrollDistance: number | undefined;
-    private preserveScrollOnNextPage = false;
-    private postRequestId = 0;
+    private readonly postPageRequest = new PostPageRequestState();
     private postPreparationId = 0;
     private readonly isPreparingPosts = signal(false);
     private restoringPageScroll = false;
@@ -224,7 +223,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 if (
                     !this.isFetchingPosts() &&
                     !this.isPreparingPosts() &&
-                    this.pendingPageScrollDistance === undefined &&
+                    this.postPageRequest.pendingScrollDistance === undefined &&
                     !this.createdNewMessage &&
                     this.posts().length > 0 &&
                     !keepsFollowingNewMessages &&
@@ -331,7 +330,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         el.addEventListener('scroll', this.scrollListener);
         this.resizeObserver = new ResizeObserver(() => {
-            const isPositioned = this.canStartSaving && !this.isFetchingPosts() && this.pendingPageScrollDistance === undefined && !this.restoringPageScroll && !this.focusOnPostId;
+            const isPositioned =
+                this.canStartSaving && !this.isFetchingPosts() && this.postPageRequest.pendingScrollDistance === undefined && !this.restoringPageScroll && !this.focusOnPostId;
             if (isPositioned && this.initialAnchor) {
                 // Held before following the bottom: the list may still have been short when the post was put at the top, so that its
                 // position was clamped to the end of the list, which counts as being at the bottom although the user never went there.
@@ -356,7 +356,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     /** Invalidate pending rendering and remove scroll listeners and layout observers owned by this message view. */
     ngOnDestroy(): void {
-        this.postRequestId++;
+        this.postPageRequest.invalidate();
         this.postPreparationId++;
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
@@ -490,9 +490,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private groupPosts(preparationId = this.postPreparationId): void {
         if (preparationId !== this.postPreparationId) return;
         // Forwarded-source lookups leave the old groups visible; include reader movement during those lookups too.
-        if (this.pendingPageScrollDistance !== undefined) {
-            const element = this.content()?.nativeElement;
-            this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
+        if (this.postPageRequest.pendingScrollDistance !== undefined) {
+            this.postPageRequest.captureScrollDistance(this.content()?.nativeElement);
         }
         // If there are no posts, clear groupedPosts and exit.
         if (!this.posts() || this.posts().length === 0) {
@@ -763,7 +762,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
         // Navigation/restoration must keep looking for its target as pages arrive; only reader-driven pagination keeps a viewport anchor.
-        this.preserveScrollOnNextPage = this.canStartSaving && this.focusOnPostId === undefined;
+        this.postPageRequest.preserveScrollOnNextPage = this.canStartSaving && this.focusOnPostId === undefined;
         const previousPage = this.page;
         this.page += 1;
         this.fetchPosts(false, previousPage);
@@ -777,26 +776,21 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.captureScrolledToBottom();
             }
             this.isFetchingPosts.set(true);
-            const requestId = ++this.postRequestId;
-            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation(), {
-                beforeApply: () => {
-                    if (requestId !== this.postRequestId || !this.preserveScrollOnNextPage) return;
-                    // Capture only for the requested response, after any reader movement and intervening live updates.
-                    const element = this.content()?.nativeElement;
-                    this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
-                    this.preserveScrollOnNextPage = false;
-                },
-                complete: (applied) => {
-                    if (requestId !== this.postRequestId) return;
-                    this.isFetchingPosts.set(false);
-                    this.preserveScrollOnNextPage = false;
-                    if (!applied) {
-                        this.page = previousPage;
-                        this.pendingPageScrollDistance = undefined;
-                    }
-                    // Position only after grouped posts (including forwarded sources) have rendered.
-                },
-            });
+            this.communicationService.getFilteredPosts(
+                this.currentPostContextFilter,
+                forceUpdate,
+                this._activeConversation(),
+                this.postPageRequest.callbacks(
+                    () => this.content()?.nativeElement,
+                    (applied) => {
+                        this.isFetchingPosts.set(false);
+                        if (!applied) {
+                            this.page = previousPage;
+                        }
+                        // Position only after grouped posts (including forwarded sources) have rendered.
+                    },
+                ),
+            );
         }
     }
 
@@ -806,8 +800,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.restoringPageScroll = false;
         this.page = 1;
         this.canStartSaving = false;
-        this.pendingPageScrollDistance = undefined;
-        this.preserveScrollOnNextPage = false;
+        this.postPageRequest.pendingScrollDistance = undefined;
+        this.postPageRequest.preserveScrollOnNextPage = false;
         this.fetchPosts(true);
     }
 
@@ -851,9 +845,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!el) {
             return;
         }
-        if (this.pendingPageScrollDistance !== undefined) {
-            const distance = this.pendingPageScrollDistance;
-            this.pendingPageScrollDistance = undefined;
+        if (this.postPageRequest.pendingScrollDistance !== undefined) {
+            const distance = this.postPageRequest.pendingScrollDistance;
+            this.postPageRequest.pendingScrollDistance = undefined;
             this.restoringPageScroll = true;
             this.pageScrollFrame = requestAnimationFrame(() => {
                 this.pageScrollFrame = undefined;

@@ -41,39 +41,7 @@
         </div>
 
         <div class="mb-6 font-bold" jhiTranslate="artemisApp.exam.startConsentText"></div>
-        <div class="mb-8">
-            <div class="w-fit">
-                <input
-                    [attr.aria-label]="'accessibility.fullName' | artemisTranslate"
-                    tumAetUiInput
-                    size="40"
-                    type="text"
-                    name="fullname"
-                    id="fullname"
-                    [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
-                    [(ngModel)]="enteredName"
-                    [ngModelOptions]="{ updateOn: 'change' }"
-                    [disabled]="waitingForExamStart()"
-                />
-            </div>
-            <div id="your-name" class="mt-2 font-light">
-                <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
-            </div>
-            <div class="w-3/5">
-                @if (inserted) {
-                    @if (!confirmed) {
-                        <tumaet-ui-message severity="error" class="mt-2">
-                            <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
-                        </tumaet-ui-message>
-                    }
-                    @if (!nameIsCorrect) {
-                        <tumaet-ui-message severity="error" class="mt-2">
-                            <span jhiTranslate="artemisApp.exam.falseName"></span>
-                        </tumaet-ui-message>
-                    }
-                }
-            </div>
-        </div>
+        <ng-container [ngTemplateOutlet]="nameConfirmation" />
         <ng-container #startButton>
             <button
                 tumAetUiButton
@@ -152,39 +120,7 @@
             }
         </div>
         <div class="mb-6 font-bold" jhiTranslate="artemisApp.exam.endConsentText"></div>
-        <div class="mb-8">
-            <div class="w-fit">
-                <input
-                    [attr.aria-label]="'accessibility.fullName' | artemisTranslate"
-                    tumAetUiInput
-                    size="40"
-                    type="text"
-                    name="fullname"
-                    id="fullname"
-                    [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
-                    [(ngModel)]="enteredName"
-                    [ngModelOptions]="{ updateOn: 'change' }"
-                    [disabled]="waitingForExamStart()"
-                />
-            </div>
-            <div id="your-name" class="mt-2 font-light">
-                <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
-            </div>
-            <div class="w-3/5">
-                @if (inserted) {
-                    @if (!confirmed) {
-                        <tumaet-ui-message severity="error" class="mt-2">
-                            <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
-                        </tumaet-ui-message>
-                    }
-                    @if (!nameIsCorrect) {
-                        <tumaet-ui-message severity="error" class="mt-2">
-                            <span jhiTranslate="artemisApp.exam.falseName"></span>
-                        </tumaet-ui-message>
-                    }
-                }
-            </div>
-        </div>
+        <ng-container [ngTemplateOutlet]="nameConfirmation" />
         @if (handInEarly()) {
             <div class="mt-6!">
                 <div class="mb-2 font-bold text-(--text-body-secondary)" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarlyDescription"></div>
@@ -208,3 +144,39 @@
         </div>
     }
 </div>
+
+<ng-template #nameConfirmation>
+    <div class="mb-8">
+        <div class="w-fit">
+            <input
+                [attr.aria-label]="'accessibility.fullName' | artemisTranslate"
+                tumAetUiInput
+                size="40"
+                type="text"
+                name="fullname"
+                id="fullname"
+                [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
+                [(ngModel)]="enteredName"
+                [ngModelOptions]="{ updateOn: 'change' }"
+                [disabled]="waitingForExamStart()"
+            />
+        </div>
+        <div id="your-name" class="mt-2 font-light">
+            <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
+        </div>
+        <div class="w-3/5">
+            @if (inserted) {
+                @if (!confirmed) {
+                    <tumaet-ui-message severity="error" class="mt-2">
+                        <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
+                    </tumaet-ui-message>
+                }
+                @if (!nameIsCorrect) {
+                    <tumaet-ui-message severity="error" class="mt-2">
+                        <span jhiTranslate="artemisApp.exam.falseName"></span>
+                    </tumaet-ui-message>
+                }
+            }
+        </div>
+    </div>
+</ng-template>

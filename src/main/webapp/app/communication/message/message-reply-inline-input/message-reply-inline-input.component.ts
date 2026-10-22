@@ -3,14 +3,12 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/communication/communication.util';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
-import { PostingCreateEditDirective } from 'app/communication/directive/posting-create-edit.directive';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { DraftService } from 'app/communication/message/service/draft-message.service';
+import { DraftMessageInputDirective } from '../draft-message-input.directive';
 import { Subscription } from 'rxjs';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -19,9 +17,8 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
-export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnDestroy {
+export class MessageReplyInlineInputComponent extends DraftMessageInputDirective<AnswerPost> implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
-    private draftService = inject(DraftService);
 
     private readonly DRAFT_KEY_PREFIX = 'thread_draft_';
     private currentUserId: number | undefined;
@@ -104,24 +101,15 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        const posting = this.posting();
-        if (!posting) {
-            this.isLoading.set(false);
-            return;
-        }
-        const payload = deepClone(posting);
-        payload.content = this.formGroup.get('content')?.value;
-        this.communicationService.createAnswerPost(payload).subscribe({
-            next: (answerPost: AnswerPost) => {
+        this.submitPosting(
+            (payload) => this.communicationService.createAnswerPost(payload),
+            (answerPost: AnswerPost) => {
                 this.resetFormGroup('');
                 this.isLoading.set(false);
                 this.clearDraft();
                 this.onCreate.emit(answerPost);
             },
-            error: () => {
-                this.isLoading.set(false);
-            },
-        });
+        );
     }
 
     /**
@@ -129,22 +117,13 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        const posting = this.posting();
-        if (!posting) {
-            this.isLoading.set(false);
-            return;
-        }
-        const payload = deepClone(posting);
-        payload.content = this.formGroup.get('content')?.value;
-        this.communicationService.updateAnswerPost(payload).subscribe({
-            next: () => {
+        this.submitPosting(
+            (payload) => this.communicationService.updateAnswerPost(payload),
+            () => {
                 this.isLoading.set(false);
                 this.clearDraft();
             },
-            error: () => {
-                this.isLoading.set(false);
-            },
-        });
+        );
     }
 
     /**
@@ -153,7 +132,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      *
      * @returns A unique draft key string or empty string if required IDs are missing
      */
-    private getDraftKey(): string {
+    protected override getDraftKey(): string {
         const userId = this.currentUserId;
         const conversationId = this.activeConversation()?.id;
         const postId = this.posting()?.post?.id;
@@ -161,33 +140,6 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
             return '';
         }
         return `${this.DRAFT_KEY_PREFIX}${userId}_${conversationId}_${postId}`;
-    }
-
-    private saveDraft(content: string): void {
-        const key = this.getDraftKey();
-        if (!key) {
-            return;
-        }
-        this.draftService.saveDraft(key, content);
-    }
-
-    private loadDraft(): void {
-        const key = this.getDraftKey();
-        if (!key) {
-            return;
-        }
-        const draft = this.draftService.loadDraft(key);
-        if (draft && this.posting() && this.formGroup) {
-            this.formGroup.get('content')?.setValue(draft);
-        }
-    }
-
-    private clearDraft(): void {
-        const key = this.getDraftKey();
-        if (!key) {
-            return;
-        }
-        this.draftService.clearDraft(key);
     }
 
     ngOnDestroy(): void {
