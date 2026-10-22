@@ -22,6 +22,101 @@ describe('Message editor editing transactions', () => {
     });
     afterEach(() => root.remove());
 
+    it.each(['ul', 'ol'])('continues a %s list at the caret and exits a new empty item with one undo step each', (list) => {
+        const original = list === 'ul' ? '- first' : '1. first';
+        editor.load(original);
+        select(root.querySelector('li')!.firstChild!, 5);
+        expect(editor.insertListItem()).toBe(true);
+        expect(root.querySelectorAll(`${list} > li`)).toHaveLength(2);
+        const caret = window.getSelection()!.getRangeAt(0);
+        expect(root.querySelectorAll('li')[1].contains(caret.startContainer)).toBe(true);
+        expect(editor.insertListItem()).toBe(true);
+        expect(root.querySelectorAll('li')).toHaveLength(1);
+        expect(root.querySelector(':scope > p')).not.toBeNull();
+        editor.undo();
+        expect(root.querySelectorAll('li')).toHaveLength(2);
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith(original);
+        editor.redo();
+        editor.insertText('second');
+        expect(changed).toHaveBeenLastCalledWith(list === 'ul' ? '- first\n- second' : '1. first\n2. second');
+    });
+
+    it('splits a formatted item, preserves reference payloads and carries typing marks to the next item', () => {
+        const original = '- **first last** [user]Anna(anna)[/user]';
+        editor.load(original);
+        select(root.querySelector('strong')!.firstChild!, 6);
+        editor.insertListItem();
+        expect(Array.from(root.querySelectorAll('li'), (item) => item.textContent)).toEqual(['first ', 'last @Anna']);
+        expect(root.querySelectorAll('li')[1].querySelector('[data-message-reference]')?.getAttribute('data-message-reference')).toBe('[user]Anna(anna)[/user]');
+        editor.insertText('new ');
+        expect(changed).toHaveBeenLastCalledWith('- **first**\n- **new last** [user]Anna(anna)[/user]');
+        editor.undo();
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith(original);
+    });
+
+    it.each([6, 10])('continues a loose list inside its paragraph when splitting at offset %s', (offset) => {
+        editor.load('- first tail\n\n- second');
+        const original = root.innerHTML;
+        select(root.querySelector('li > p')!.firstChild!, offset);
+        editor.insertListItem();
+        editor.insertText('new ');
+        const next = root.querySelectorAll('li')[1];
+        expect(next.childNodes).toHaveLength(1);
+        expect(next.querySelector('p')?.textContent).toBe(offset === 6 ? 'new tail' : 'new ');
+        editor.undo();
+        editor.undo();
+        expect(root.innerHTML).toBe(original);
+        expect(changed).toHaveBeenLastCalledWith('- first tail\n- second');
+    });
+
+    it('replaces a selection across sibling items, preserving both unselected edges and subsequent items', () => {
+        editor.load('- Before old\n- old After\n- Keep');
+        const items = root.querySelectorAll('li');
+        const range = document.createRange();
+        range.setStart(items[0].firstChild!, 7);
+        range.setEnd(items[1].firstChild!, 3);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        editor.insertListItem();
+        expect(changed).toHaveBeenLastCalledWith('- Before\n- After\n- Keep');
+        expect(root.querySelectorAll('li')).toHaveLength(3);
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith('- Before old\n- old After\n- Keep');
+        expect(window.getSelection()!.toString()).toBe('oldold');
+    });
+
+    it('keeps a pending upload at its original word after another item is split', () => {
+        editor.load('- Before\n- After');
+        select(root.querySelectorAll('li')[1].firstChild!, 2);
+        const captured = editor.captureEntitySelection()!;
+        select(root.querySelector('li')!.firstChild!, 3);
+        editor.insertListItem();
+        editor.insertMarkdown('![pending.png](/pending.png)', editor.resolveEntitySelection(captured));
+        expect(changed).toHaveBeenLastCalledWith('- Bef\n- ore\n- Af![pending.png](/pending.png)ter');
+    });
+
+    it('splits a nested item without changing its parent list or unselected sibling', () => {
+        editor.load('- parent\n  - child tail\n  - sibling');
+        const item = root.querySelector('li li')!;
+        select(item.firstChild!, 6);
+        editor.insertListItem();
+        expect(Array.from(root.querySelectorAll('li > ul > li'), (child) => child.textContent)).toEqual(['child ', 'tail', 'sibling']);
+        expect(root.querySelectorAll(':scope > ul > li')).toHaveLength(1);
+        editor.undo();
+        expect(root.querySelectorAll('li > ul > li')).toHaveLength(2);
+    });
+
+    it.each(['plain text', '```\ncode\n```', '- item\n\n  ```\n  code\n  ```'])('keeps non-list or code editing on its existing path: %s', (message) => {
+        editor.load(message);
+        const text = root.querySelector('code')?.firstChild ?? root.querySelector('p')?.firstChild ?? root.querySelector('li')!.firstChild!;
+        select(text!, 0);
+        changed.mockClear();
+        expect(editor.insertListItem()).toBe(false);
+        expect(changed).not.toHaveBeenCalled();
+    });
+
     it('converts a typed list marker on a soft line and keeps undo, redo and following text', () => {
         editor.load('Introduction');
         select(root.querySelector('p')!.firstChild!, 12);

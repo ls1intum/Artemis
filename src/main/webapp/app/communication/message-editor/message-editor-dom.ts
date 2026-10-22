@@ -1,3 +1,4 @@
+import { splitMessageListItem } from './message-editor-list';
 import { repairMessageCaret } from './message-editor-caret';
 import { replaceMessageRange, replaceRichMessageRange } from './message-editor-replacement';
 import { MESSAGE_CLIPBOARD_TYPE, clipboardToEditorFragment, decodeMessageClipboard, encodeMessageClipboard } from './message-editor-clipboard';
@@ -501,7 +502,24 @@ export class MessageEditorDom {
         });
     }
 
-    /** A second Enter on a blank list item returns to normal text consistently across browsers. */
+    /** Continues the current list with one undoable item split, or leaves a blank item as normal text. */
+    insertListItem(): boolean {
+        const range = this.range();
+        const parent = this.parentElement(range.startContainer);
+        const item = parent?.closest('li');
+        const last = this.parentElement(range.endContainer)?.closest('li');
+        if (!item || !last || !item.parentElement?.matches('ul, ol') || item.parentNode !== last.parentNode || parent?.closest('pre')) return false;
+        if (this.exitEmptyList()) return true;
+        const marks = this.typingMarks ?? inlineMarks.filter((mark) => parent?.closest(mark));
+        this.transact(() => {
+            this.revision++;
+            this.typingMarks = marks;
+            this.select(splitMessageListItem(item, last, range));
+        });
+        return true;
+    }
+
+    /** Leaves a blank list item as normal text, consistently across browsers. */
     exitEmptyList(): boolean {
         const range = this.range();
         const item = this.parentElement(range.startContainer)?.closest('li');

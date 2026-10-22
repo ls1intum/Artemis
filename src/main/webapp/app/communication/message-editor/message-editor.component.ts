@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, ViewEncapsulation, afterRenderEffect, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    ViewEncapsulation,
+    afterRenderEffect,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { CdkConnectedOverlay, ConnectedPosition } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
@@ -41,6 +55,7 @@ import { MESSAGE_CLIPBOARD_TYPE } from './message-editor-clipboard';
 export class MessageEditorComponent {
     private readonly search = inject(MessageEditorSuggestions);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
     /** Serialized message content; external replacements reset history, while emitted local edits retain it. */
     readonly content = input('');
@@ -77,7 +92,8 @@ export class MessageEditorComponent {
     readonly linkAllowed = signal(true);
     protected readonly completionOrigin = signal({ x: 0, y: 0, width: 0, height: 0 });
 
-    protected readonly toolbarExpanded = signal(false);
+    private readonly toolbarDisclosure = signal<'collapsed' | 'selection' | 'manual'>('collapsed');
+    protected readonly toolbarExpanded = computed(() => this.toolbarDisclosure() !== 'collapsed');
     protected readonly icons = { faLink, faAt, faHashtag, faXmark, faEllipsis, faChevronUp };
     protected readonly basicFormats = [
         { tag: 'strong' as const, icon: faBold, label: 'bold' },
@@ -141,7 +157,7 @@ export class MessageEditorComponent {
             const changedContext = context !== this.lastContext;
             if (changedContext) {
                 this.lastContext = context;
-                this.toolbarExpanded.set(false);
+                this.toolbarDisclosure.set('collapsed');
                 this.disclosedSelection = undefined;
                 this.dismissSuggestions();
             }
@@ -180,7 +196,7 @@ export class MessageEditorComponent {
 
     /** Changes toolbar disclosure without losing the selection or interrupting pending uploads. */
     protected toggleToolbar(): void {
-        this.toolbarExpanded.update((expanded) => !expanded);
+        this.toolbarDisclosure.set(this.toolbarExpanded() ? 'collapsed' : 'manual');
         if (!this.toolbarExpanded()) this.tools()?.close(false);
         this.dismissSuggestions();
     }
@@ -259,7 +275,7 @@ export class MessageEditorComponent {
             event.preventDefault();
             event.stopPropagation();
             this.dismissSuggestions();
-            this.editor?.insertText('\n');
+            if (!this.editor?.insertListItem()) this.editor?.insertText('\n');
             return;
         }
         const command = event.ctrlKey || event.metaKey;
@@ -332,7 +348,7 @@ export class MessageEditorComponent {
             this.dismissSuggestions();
         }
         if (event.key === 'Enter' && this.suppressNewlineOnEnter()) {
-            // The parent form sends in every block style; Shift+Enter remains a newline everywhere.
+            // The parent form sends in every block style; Shift+Enter continues lists or inserts a soft newline.
             event.preventDefault();
             if (this.uploading()) event.stopPropagation();
             return;
@@ -581,11 +597,11 @@ export class MessageEditorComponent {
                     previous.endContainer !== range.endContainer ||
                     previous.endOffset !== range.endOffset
                 ) {
-                    this.toolbarExpanded.set(true);
+                    if (this.toolbarDisclosure() !== 'manual') this.toolbarDisclosure.set('selection');
                     this.disclosedSelection = range.cloneRange();
                 }
             } else {
-                this.disclosedSelection = undefined;
+                this.collapseSelectionToolbar();
             }
             if (this.linkOpen() && element.ownerDocument.activeElement === element && this.linkSelection && selection.rangeCount) {
                 const range = selection.getRangeAt(0);
@@ -599,7 +615,17 @@ export class MessageEditorComponent {
                 }
             }
             this.refreshFormatState();
+        } else {
+            const activeElement = element?.ownerDocument.activeElement;
+            const focusedControl = activeElement !== element && this.host.nativeElement.contains(activeElement ?? null);
+            // Picker overlays live outside the composer host; moving focus to their inputs must retain the editing selection.
+            if (!focusedControl && !this.tools()?.picker() && !this.linkOpen()) this.collapseSelectionToolbar();
         }
+    }
+
+    private collapseSelectionToolbar(): void {
+        this.disclosedSelection = undefined;
+        if (this.toolbarDisclosure() === 'selection') this.toolbarDisclosure.set('collapsed');
     }
 
     private refreshFormatState(): void {

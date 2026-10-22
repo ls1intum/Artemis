@@ -318,6 +318,7 @@ The ➕ emoji serves as the up-voting reaction, which influences the display ord
 In the web app, messages and replies open with their formatting visible.
 The compact toolbar shows bold, italic, underline, strikethrough, inline code, links, person mentions, course references and emojis.
 Select text or choose **More options** to show lists, quotes, code blocks, attachments, slides and FAQs. **Fewer options** hides those controls again.
+Controls opened by selecting text close when the selection is cleared. Controls opened with **More options** stay open until you choose **Fewer options**.
 The expanded controls stay in the same row when space permits and wrap on narrower screens.
 Keyboard shortcuts and pasting or dropping files also work while these options are hidden.
 
@@ -326,7 +327,7 @@ Keyboard shortcuts and pasting or dropping files also work while these options a
 <Image src={expandedMessageToolbarImg} alt={"The expanded message toolbar showing additional formatting and resource controls; Fewer options hides the additional controls"} size={ImageSize.large} />
 
 Type a list marker (`-`, `*`, `+`, `1.` or `1)`) followed by a space to start a list.
-At the beginning or end of a quote or code block, use the up or down arrow key to move to normal text outside it. Press Enter on an empty final line to continue below the block.
+At the beginning or end of a quote or code block, use the up or down arrow key to move to normal text outside it.
 
 Use the toolbar to format selected text or add a link. Bare hostnames such as `example.org` become HTTPS links; explicit relative destinations stay relative. Select the link toolbar button again to close its popup. Select an existing link to change its text or destination.
 **Remove link** keeps the text and removes its destination.
@@ -347,7 +348,7 @@ Pressing Backspace immediately after a reference or link selects only that item,
 Press Backspace again to delete it. The surrounding text stays unchanged.
 Use Ctrl+Z or Command+Z to undo edits, formatting and reference insertions.
 Enter sends a message, including inside lists, quotes and code blocks. Ctrl+Enter or Command+Enter also sends, even when suggestions are open.
-Shift+Enter inserts a line break without sending. Use the arrow keys at a quote or code block boundary to return to normal text.
+Shift+Enter inserts a line break without sending. In a list, it starts the next item; on an empty item, it returns to normal text. Use the arrow keys at a quote or code block boundary to return to normal text.
 Press Backspace on an empty list item to return to normal text on the same line.
 
 The toolbar also lets you attach images or PDFs, search lecture attachments and individual slides, reference a published FAQ, or search for an emoji.

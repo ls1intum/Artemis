@@ -87,6 +87,98 @@ describe('Formatted message composer', () => {
         expect(toggle.getAttribute('aria-expanded')).toBe('false');
     });
 
+    it.each(['caret', 'empty', 'outside'])('collapses automatically opened controls after clearing the selection via %s', (target) => {
+        const range = document.createRange();
+        range.selectNodeContents(editable.querySelector('p')!);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+        fixture.detectChanges();
+        const toggle = fixture.nativeElement.querySelector('[data-testid="message-toolbar-toggle"]');
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        const outside = document.createElement('p');
+        outside.textContent = 'Other content';
+        if (target === 'caret') range.collapse(false);
+        else {
+            window.getSelection()!.removeAllRanges();
+            if (target === 'outside') {
+                document.body.append(outside);
+                range.selectNodeContents(outside);
+                window.getSelection()!.addRange(range);
+            }
+        }
+        document.dispatchEvent(new Event('selectionchange'));
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        expect((fixture.nativeElement.querySelector('[data-testid="message-advanced-toolbar"]') as HTMLElement).hidden).toBe(true);
+        // A new selection can disclose the controls again.
+        range.selectNodeContents(editable.querySelector('p')!);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        outside.remove();
+    });
+
+    it.each(['toolbar', 'picker', 'link'])('retains selection controls while focus moves to a %s input', (target) => {
+        const range = document.createRange();
+        range.selectNodeContents(editable.querySelector('p')!);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+        fixture.detectChanges();
+        const toggle = fixture.nativeElement.querySelector('[data-testid="message-toolbar-toggle"]') as HTMLButtonElement;
+        if (target === 'toolbar') toggle.focus();
+        else if (target === 'picker') {
+            fixture.debugElement.query(By.directive(MessageEditorToolsComponent)).componentInstance.picker.set('faq');
+        } else {
+            (fixture.nativeElement.querySelector('[data-testid="message-link-button"]') as HTMLButtonElement).click();
+            fixture.detectChanges();
+            (fixture.nativeElement.querySelector('[data-testid="message-link-url"]') as HTMLInputElement).focus();
+        }
+        window.getSelection()!.removeAllRanges();
+        document.dispatchEvent(new Event('selectionchange'));
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('keeps explicitly opened controls expanded when a selected range becomes a caret', () => {
+        const toggle = toggleToolbar();
+        const range = document.createRange();
+        range.selectNodeContents(editable.querySelector('p')!);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+        range.collapse(false);
+        document.dispatchEvent(new Event('selectionchange'));
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it.each(['ul', 'ol'])('continues a %s list with Shift+Enter and sends with plain Enter', (list) => {
+        fixture.componentRef.setInput('content', list === 'ul' ? '- first' : '1. first');
+        fixture.detectChanges();
+        const text = editable.querySelector('li')!.firstChild!;
+        const range = document.createRange();
+        range.setStart(text, 5);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const bubbled = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true, cancelable: true });
+        editable.dispatchEvent(enter);
+        expect(enter.defaultPrevented).toBe(true);
+        expect(bubbled).not.toHaveBeenCalled();
+        expect(editable.querySelectorAll(`${list} > li`)).toHaveLength(2);
+        editable.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: 'second', bubbles: true, cancelable: true }));
+        expect(Array.from(editable.querySelectorAll('li'), (item) => item.textContent)).toEqual(['first', 'second']);
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(bubbled).toHaveBeenCalledOnce();
+        fixture.nativeElement.removeEventListener('keydown', bubbled);
+    });
+
     it.each(['-', '*', '+', '1.', '1)'])('turns a typed leading %s and space into a list before sending', (marker) => {
         fixture.componentRef.setInput('content', marker.replace(/[-*+.)]/g, '\\$&'));
         fixture.detectChanges();

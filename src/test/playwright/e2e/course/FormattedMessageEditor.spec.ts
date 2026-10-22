@@ -348,7 +348,7 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
 
     for (const operation of ['copy', 'cut']) {
         test(`native ${operation}/paste retains mentions and image attachments through save and reopen`, async ({ page, composer, communicationAPIRequests }) => {
-            const source = `**Read** [user]${studentOne.username}(${studentOne.username})[/user] ![copy.png](/api/core/files/attachments/copy.png)`;
+            const source = `**Read** [user]${studentOne.displayName}(${studentOne.username})[/user] ![copy.png](/api/core/files/attachments/copy.png)`;
             await page.route('**/copy.png*', (route) =>
                 route.fulfill({
                     contentType: 'image/png',
@@ -362,35 +362,55 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             if (operation === 'copy') await editor.press('Backspace');
             await expectText(editor, '');
             await editor.press('ControlOrMeta+v');
-            await expect(editor.locator('[data-reference-type="user"]')).toContainText(studentOne.username);
+            await expect(editor.locator('[data-reference-type="user"]')).toContainText(studentOne.displayName!);
             await expect(editor.locator('img')).toHaveAttribute('src', '/api/core/files/attachments/copy.png');
             const saved = await saveEdited(page, composer, posting, original);
             expect(saved.content).toBe(source);
             const reopened = await reopen(page, saved);
-            await expect(reopened.editor.locator('[data-reference-type="user"]')).toContainText(studentOne.username);
+            await expect(reopened.editor.locator('[data-reference-type="user"]')).toContainText(studentOne.displayName!);
             await expect(reopened.editor.locator('img')).toHaveAttribute('src', '/api/core/files/attachments/copy.png');
         });
     }
 
     for (const block of ['ul', 'ol', 'blockquote', 'pre']) {
         for (const shortcut of ['Enter', 'ControlOrMeta+Enter']) {
-            test(`${shortcut} sends from ${block} while Shift+Enter adds a line without sending`, async ({ page, composer }) => {
+            test(`${shortcut} sends from ${block} while Shift+Enter continues editing without sending`, async ({ page, composer }) => {
                 await composer.editor.pressSequentially('first');
                 await page.getByTestId(`message-block-${block}`).click();
                 await composer.editor.press('Shift+Enter');
                 await composer.editor.pressSequentially('second');
                 await expectText(composer.editor, 'firstsecond');
+                if (block === 'ul' || block === 'ol') await expect(composer.editor.locator(`${block} > li`)).toHaveText(['first', 'second']);
                 await expect(page.locator('[id^="item-"]')).toHaveCount(0);
                 const saved = await send(page, composer, shortcut);
                 expect(saved.content).toBe(
-                    block === 'pre'
-                        ? '```\nfirst\nsecond\n```'
-                        : block === 'blockquote'
-                          ? '> first\n> second'
-                          : `${block === 'ul' ? '-' : '1.'} first\n${block === 'ul' ? '  ' : '   '}second`,
+                    block === 'pre' ? '```\nfirst\nsecond\n```' : block === 'blockquote' ? '> first\n> second' : block === 'ul' ? '- first\n- second' : '1. first\n2. second',
                 );
             });
         }
+    }
+
+    for (const list of ['ul', 'ol']) {
+        test(`Shift+Enter exits an empty ${list} item, supports undo and persists both items`, async ({ page, composer }) => {
+            const { editor } = composer;
+            await editor.pressSequentially('first');
+            await page.getByTestId(`message-block-${list}`).click();
+            await editor.press('Shift+Enter');
+            await editor.pressSequentially('second');
+            await editor.press('Shift+Enter');
+            await expect(editor.locator('li')).toHaveCount(3);
+            await editor.press('Shift+Enter');
+            await expect(editor.locator('li')).toHaveText(['first', 'second']);
+            await editor.press('ControlOrMeta+z');
+            await expect(editor.locator('li')).toHaveCount(3);
+            await editor.press('Shift+Enter');
+            await editor.pressSequentially('after');
+            const saved = await send(page, composer);
+            expect(saved.content).toBe(list === 'ul' ? '- first\n- second\n\nafter' : '1. first\n2. second\n\nafter');
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator(`${list} > li`)).toHaveText(['first', 'second']);
+            await expect(reopened.editor.locator(':scope > p')).toHaveText('after');
+        });
     }
 
     for (const list of ['ul', 'ol']) {
@@ -1685,6 +1705,11 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
         await selectText(composer.editor, 0, 8, 'Selected');
         await expect(toggle).toHaveAttribute('aria-expanded', 'true');
         await expect(page.getByTestId('message-block-ul')).toBeVisible();
+        await composer.editor.press('ArrowRight');
+        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        await expect(page.getByTestId('message-advanced-toolbar')).toBeHidden();
+        await selectText(composer.editor, 0, 8, 'Selected');
+        await expect(toggle).toHaveAttribute('aria-expanded', 'true');
         await toggle.click();
         await expect(toggle).toHaveAttribute('aria-expanded', 'false');
         await page.getByTestId('message-format-ins').click();

@@ -234,7 +234,7 @@
                 "unlink": "Verlinkung entfernen",
                 "invalidLink": "Gib eine gültige Web-, E-Mail- oder Artemis-URL ein. Nachrichtenreferenzen wie #123 müssen außerhalb von Links bleiben.",
                 "message": "Nachricht",
-                "hint": "Mit @ nach Personen oder mit # nach Kanälen, Aufgaben und Vorlesungen suchen. Enter sendet; Umschalt+Enter fügt eine neue Zeile ein. Strg+Enter oder Command+Enter sendet ebenfalls. Die Rücktaste wählt einen Link oder Verweis aus; erneutes Drücken löscht ihn.",
+                "hint": "Mit @ nach Personen oder mit # nach Kanälen, Aufgaben und Vorlesungen suchen. Enter sendet; Umschalt+Enter fügt eine neue Zeile oder den nächsten Listeneintrag ein. Strg+Enter oder Command+Enter sendet ebenfalls. Die Rücktaste wählt einen Link oder Verweis aus; erneutes Drücken löscht ihn.",
                 "loading": "Suche läuft…",
                 "searchError": "Die Suche konnte nicht geladen werden. Dein Text bleibt erhalten.",
                 "retry": "Erneut versuchen",
