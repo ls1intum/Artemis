@@ -72,6 +72,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     /**
      * The configuration of this repository, with git hooks disabled as Artemis does not use them.
      * The hooks directory is set on every access, as the configuration may be reloaded from disk.
+     * As it is part of the configuration, a configuration file that is saved contains it as well.
      *
      * @return the configuration of this repository
      */

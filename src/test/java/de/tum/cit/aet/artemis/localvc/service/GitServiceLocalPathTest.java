@@ -56,6 +56,22 @@ class GitServiceLocalPathTest {
         assertThat(localPath).isEqualTo(repoClonePath.resolve("ABC").resolve("abc-scm"));
     }
 
+    @Test
+    void getLocalPathOfRepo_forAUriWithFurtherPathSegments_resolvesToTheFolderOfTheRepository() {
+        Path localPath = gitService.getLocalPathOfRepo(repoClonePath, new LocalVCRepositoryUri("https://artemis.example.com/git/ABC/abc-exercise.git/.."));
+
+        assertThat(localPath).isEqualTo(repoClonePath.resolve("ABC").resolve("abc-exercise"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "https://artemis.example.com/git/../..x.git", "https://artemis.example.com/git/./..git" })
+    void getLocalPathOfRepo_forAProjectKeyThatIsNotAFolderName_isRejected(String uriString) {
+        var repositoryUri = new LocalVCRepositoryUri(uriString);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).as("the URI '%s' must be rejected", uriString)
+                .isThrownBy(() -> gitService.getLocalPathOfRepo(repoClonePath, repositoryUri));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "", ".", "ABC/..", "ABC/../..", "../outside", "ABC/../../outside" })
     void getLocalPathOfRepo_forAFolderNameThatIsNotBelowTheTargetPath_isRejected(String folderName) {

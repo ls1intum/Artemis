@@ -9,6 +9,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -1094,9 +1095,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         userUtilService.addStudentToCourse(login, course);
         var slug = (programmingExercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
         createRepositoryForSlug(slug);
-        var otherParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, login);
-        otherParticipation.setRepositoryUri(buildLocalVcUri(slug));
-        studentParticipationRepository.save(otherParticipation);
+        var otherParticipation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, login, URI.create(buildLocalVcUri(slug)));
 
         var files = request.getMap(participationsBaseUrl + otherParticipation.getId() + "/repository/files", HttpStatus.OK, String.class, FileType.class);
 
