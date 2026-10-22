@@ -3,7 +3,11 @@ package de.tum.cit.aet.artemis.globalsearch.dto;
 import java.time.Instant;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * One object stored in an Iris lecture-content collection (a slide chunk, a transcript segment, a unit summary, or an
@@ -17,5 +21,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param properties the populated stored properties
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IndexedContentObjectDTO(Instant ingestedAt, Map<String, Object> properties) {
+public record IndexedContentObjectDTO(@Nullable @Schema(nullable = true) Instant ingestedAt, Map<String, Object> properties) {
 }

@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.globalsearch.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * One lecture unit that should have ingested content but does not: it has a PDF attachment with no slides indexed, or a
@@ -13,5 +17,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param kind          which content is absent: {@code slides} or {@code transcript}
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MissingContentDTO(long lectureUnitId, String title, String kind) {
+public record MissingContentDTO(long lectureUnitId, @Nullable @Schema(nullable = true) String title, @Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {
+        "slides", "transcript" }) String kind){
 }

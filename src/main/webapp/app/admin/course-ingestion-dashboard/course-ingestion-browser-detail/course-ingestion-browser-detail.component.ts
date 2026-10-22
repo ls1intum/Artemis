@@ -10,15 +10,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
 import { CourseIngestionStoredFieldsComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-stored-fields/course-ingestion-stored-fields.component';
-import {
-    BrowserSelection,
-    CourseBrowserData,
-    IndexedContentObject,
-    IndexedEntity,
-    IndexedEntityRecord,
-    MissingContent,
-} from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { BrowserSelection } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 import { IngestionTypeCount } from 'app/openapi/model/ingestion-type-count';
+import { CourseBrowserData } from 'app/openapi/model/course-browser-data';
+import { IndexedEntity } from 'app/openapi/model/indexed-entity';
+import { IndexedEntityRecord } from 'app/openapi/model/indexed-entity-record';
+import { IndexedContentObject } from 'app/openapi/model/indexed-content-object';
+import { MissingContent } from 'app/openapi/model/missing-content';
+import { MissingEntity } from 'app/openapi/model/missing-entity';
 
 /**
  * A unit can hold hundreds of content chunks, so both stored lists are paged rather than rendered whole. The default
@@ -114,7 +113,7 @@ export class CourseIngestionBrowserDetailComponent {
     /** The entities of the selected type that the index does not hold, so the pane can name them. */
     readonly missingOfType = computed(() => {
         const current = this.selection();
-        return current?.kind === 'type' ? this.data().missingEntities.filter((entity) => entity.type === current.type) : [];
+        return current?.kind === 'type' ? (this.data().missingEntities ?? []).filter((entity) => entity.type === current.type) : [];
     });
 
     /** The stored record of the selected lecture or unit, once its type's records have been read. */
@@ -133,11 +132,7 @@ export class CourseIngestionBrowserDetailComponent {
     readonly unitContentKeys = computed<string[]>(() => {
         const current = this.selection();
         const unitId = current?.kind === 'unit' ? current.unitId : undefined;
-        return unitId === undefined
-            ? []
-            : this.data()
-                  .contentPresence.filter((presence) => presence.unitIds.includes(unitId))
-                  .map((presence) => presence.key);
+        return unitId === undefined ? [] : (this.data().contentPresence ?? []).filter((presence) => (presence.unitIds ?? []).includes(unitId)).map((presence) => presence.key);
     });
 
     /**
@@ -170,7 +165,7 @@ export class CourseIngestionBrowserDetailComponent {
     readonly missingContentOfUnit = computed<MissingContent[]>(() => {
         const current = this.selection();
         const unitId = current?.kind === 'unit' ? current.unitId : undefined;
-        return unitId === undefined ? [] : this.data().contentGaps.filter((gap) => gap.lectureUnitId === unitId);
+        return unitId === undefined ? [] : (this.data().contentGaps ?? []).filter((gap) => gap.lectureUnitId === unitId);
     });
 
     /**
@@ -196,7 +191,7 @@ export class CourseIngestionBrowserDetailComponent {
     });
 
     private lectureIdOfUnit(unitId: number): number | undefined {
-        return this.entityOf('lecture_unit', unitId)?.lectureId;
+        return this.entityOf('lecture_unit', unitId)?.lectureId ?? undefined;
     }
 
     /**
@@ -207,15 +202,15 @@ export class CourseIngestionBrowserDetailComponent {
      * show, rather than a generic "untitled" placeholder that would otherwise hide exactly the lecture this pane is
      * about.
      */
-    private entityOf(type: string, entityId: number): IndexedEntity | undefined {
-        const indexed = this.data().entities.find((entity) => entity.type === type && entity.entityId === entityId);
+    private entityOf(type: string, entityId: number): IndexedEntity | MissingEntity | undefined {
+        const indexed = (this.data().entities ?? []).find((entity) => entity.type === type && entity.entityId === entityId);
         if (indexed) {
             return indexed;
         }
-        const missing = this.data().missingEntities.find((entity) => entity.type === type && entity.entityId === entityId);
+        const missing = (this.data().missingEntities ?? []).find((entity) => entity.type === type && entity.entityId === entityId);
         // The parent lecture comes across for lecture units and is what the open link and the breadcrumb are built
         // from, so dropping it here would leave a unit that the tree draws under its lecture navigating to the course.
-        return missing ? { type: missing.type, entityId: missing.entityId, title: missing.title, lectureId: missing.lectureId } : undefined;
+        return missing;
     }
 
     /**
@@ -233,9 +228,9 @@ export class CourseIngestionBrowserDetailComponent {
             case 'collection':
                 return { key: 'artemisApp.courseIngestionDashboard.browser.content_' + current.key };
             case 'lecture':
-                return { text: this.entityOf('lecture', current.lectureId)?.title, key: 'artemisApp.courseIngestionDashboard.browser.untitledLecture' };
+                return { text: this.entityOf('lecture', current.lectureId)?.title ?? undefined, key: 'artemisApp.courseIngestionDashboard.browser.untitledLecture' };
             case 'unit':
-                return { text: this.entityOf('lecture_unit', current.unitId)?.title, key: 'artemisApp.courseIngestionDashboard.browser.untitledUnit' };
+                return { text: this.entityOf('lecture_unit', current.unitId)?.title ?? undefined, key: 'artemisApp.courseIngestionDashboard.browser.untitledUnit' };
             default:
                 return {};
         }
@@ -248,19 +243,20 @@ export class CourseIngestionBrowserDetailComponent {
             const unitId = current.unitId;
             const unit = this.entityOf('lecture_unit', unitId);
             const crumbs: Crumb[] = [];
-            if (unit?.lectureId !== undefined) {
-                const lecture = this.entityOf('lecture', unit.lectureId);
+            const lectureId = unit?.lectureId ?? undefined;
+            if (lectureId !== undefined) {
+                const lecture = this.entityOf('lecture', lectureId);
                 crumbs.push({
-                    label: lecture?.title,
+                    label: lecture?.title ?? undefined,
                     fallbackKey: 'artemisApp.courseIngestionDashboard.browser.untitledLecture',
-                    selection: { kind: 'lecture', lectureId: unit.lectureId },
+                    selection: { kind: 'lecture', lectureId },
                 });
             }
             // Content whose unit is gone from the index has nothing to go back up to: the unit has no pane of its own,
             // so a crumb for it would read "untitled unit" and lead nowhere. Its content is reached from the orphaned
             // group in the tree instead.
             if (current.kind === 'collection' && unit !== undefined) {
-                crumbs.push({ label: unit.title, fallbackKey: 'artemisApp.courseIngestionDashboard.browser.untitledUnit', selection: { kind: 'unit', unitId } });
+                crumbs.push({ label: unit.title ?? undefined, fallbackKey: 'artemisApp.courseIngestionDashboard.browser.untitledUnit', selection: { kind: 'unit', unitId } });
             }
             return crumbs;
         }
@@ -299,11 +295,12 @@ export class CourseIngestionBrowserDetailComponent {
      * because labelledContent numbers repeated labels against each other and needs the resolved text to compare.
      */
     private labelOf(object: IndexedContentObject, index: number): string {
-        const page = object.properties['page_number'] ?? object.properties['display_page_number'];
+        const properties: Record<string, unknown> = object.properties ?? {};
+        const page = properties['page_number'] ?? properties['display_page_number'];
         if (typeof page === 'number') {
             return this.translateService.instant('artemisApp.courseIngestionDashboard.browser.contentLabel.page', { page });
         }
-        const segmentStart = object.properties['segment_start_time'];
+        const segmentStart = properties['segment_start_time'];
         if (typeof segmentStart === 'number') {
             return this.translateService.instant('artemisApp.courseIngestionDashboard.browser.contentLabel.segment', { seconds: segmentStart });
         }
@@ -406,10 +403,11 @@ function slice<T>(items: T[], page: number, pageSize: number): T[] {
  * one collection, so comparing the raw values orders each collection correctly. Objects without either sort last.
  */
 function positionOf(object: IndexedContentObject): number | undefined {
-    const page = object.properties['page_number'] ?? object.properties['display_page_number'];
+    const properties: Record<string, unknown> = object.properties ?? {};
+    const page = properties['page_number'] ?? properties['display_page_number'];
     if (typeof page === 'number') {
         return page;
     }
-    const segmentStart = object.properties['segment_start_time'];
+    const segmentStart = properties['segment_start_time'];
     return typeof segmentStart === 'number' ? segmentStart : undefined;
 }
