@@ -33,11 +33,6 @@ jhi-message-editor .message-editor-content {
     padding: 0.75rem;
     outline: none;
 
-    &:focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: -2px;
-    }
-
     // The editable DOM belongs to the editing adapter, so Angular does not add encapsulation attributes.
     :is(p, ul, ol, blockquote, pre) {
         margin: 0 0 0.5rem;

@@ -391,6 +391,21 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
     }
 
     for (const list of ['ul', 'ol']) {
+        test(`starts an empty ${list} from the toolbar and continues it with Shift+Enter`, async ({ page, composer }) => {
+            const { editor } = composer;
+            await editor.click();
+            await page.getByTestId(`message-block-${list}`).click();
+            await editor.pressSequentially('first');
+            await editor.press('Shift+Enter');
+            await editor.pressSequentially('second');
+            await expect(editor.locator(`${list} > li`)).toHaveText(['first', 'second']);
+            await expect(page.locator('[id^="item-"]')).toHaveCount(0);
+            const saved = await send(page, composer, 'Enter');
+            expect(saved.content).toBe(list === 'ul' ? '- first\n- second' : '1. first\n2. second');
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator(`${list} > li`)).toHaveText(['first', 'second']);
+        });
+
         test(`Shift+Enter exits an empty ${list} item, supports undo and persists both items`, async ({ page, composer }) => {
             const { editor } = composer;
             await editor.pressSequentially('first');
@@ -1586,6 +1601,23 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         });
     }
 
+    test('typing keeps a neutral message field while toolbar keyboard focus stays visible', async ({ page, composer, browserName }) => {
+        const { editor } = composer;
+        await editor.click();
+        await editor.pressSequentially('Draft');
+        await expect(editor).toBeFocused();
+        await expectText(editor, 'Draft');
+        await expect(editor).toHaveCSS('outline-style', 'none');
+        await page.getByTestId('message-format-strong').focus();
+        // Safari on macOS includes buttons in sequential keyboard navigation with Option+Tab.
+        await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
+        const emphasis = page.getByTestId('message-format-em');
+        await expect(emphasis).toBeFocused();
+        await expect(emphasis).toHaveCSS('outline-style', 'solid');
+        await expect.poll(() => emphasis.evaluate((element) => Number.parseFloat(getComputedStyle(element).outlineWidth))).toBeGreaterThan(0);
+        await expectText(editor, 'Draft');
+    });
+
     test('an empty dirty draft keeps a neutral border after native blur while sending stays disabled', async ({ page, composer }) => {
         const { editor } = composer;
         const host = page.locator('jhi-posting-markdown-editor').filter({ has: editor });
@@ -1731,10 +1763,13 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
             await composer.editor.pressSequentially(`${marker} Item`);
             const list = marker.startsWith('1') ? 'ol' : 'ul';
             await expect(composer.editor.locator(`${list} > li`)).toHaveText('Item');
+            await composer.editor.press('Shift+Enter');
+            await composer.editor.pressSequentially('Next');
+            await expect(composer.editor.locator(`${list} > li`)).toHaveText(['Item', 'Next']);
             const saved = await send(page, composer);
-            expect(saved.content).toBe(marker.startsWith('1') ? '1. Item' : '- Item');
+            expect(saved.content).toBe(marker.startsWith('1') ? '1. Item\n2. Next' : '- Item\n- Next');
             const reopened = await reopen(page, saved);
-            await expect(reopened.editor.locator(`${list} > li`)).toHaveText('Item');
+            await expect(reopened.editor.locator(`${list} > li`)).toHaveText(['Item', 'Next']);
         });
     }
 
