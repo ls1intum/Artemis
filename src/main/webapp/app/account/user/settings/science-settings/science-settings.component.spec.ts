@@ -1,159 +1,270 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { effect, isSignal } from '@angular/core';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { SettingId } from 'app/foundation/constants/user-settings.constants';
-import { AlertService } from 'app/foundation/service/alert.service';
-import { UrlSerializer } from '@angular/router';
-import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { MockProvider } from 'ng-mocks';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { ScienceSettingsComponent } from 'app/account/user/settings/science-settings/science-settings.component';
-import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
-import { ScienceSetting, scienceSettingsStructure } from 'app/account/user/settings/science-settings/science-settings-structure';
-import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
-import { of, throwError } from 'rxjs';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 describe('ScienceSettingsComponent', () => {
-    let comp: ScienceSettingsComponent;
     let fixture: ComponentFixture<ScienceSettingsComponent>;
+    let component: ScienceSettingsComponent;
+    let scienceSettingsService: ScienceSettingsService;
+    let alertService: AlertService;
 
-    let scienceSettingsServiceMock: ScienceSettingsService;
-    let userSettingsServiceMock: UserSettingsService;
+    const activeConsent: ScienceCourseConsent = {
+        courseId: 1,
+        courseTitle: 'Course 1',
+        courseShortName: 'C1',
+        active: true,
+        scienceEnabled: true,
+    };
 
-    const settingId = SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING;
-    const activeStatus = false;
+    const undecidedConsent: ScienceCourseConsent = {
+        courseId: 2,
+        courseTitle: 'Course 2',
+        courseShortName: 'C2',
+        scienceEnabled: true,
+    };
 
-    let scienceSetting: ScienceSetting;
+    let featureActive: BehaviorSubject<boolean>;
 
-    const providers = [
-        MockProvider(AlertService),
-        MockProvider(ScienceSettingsService),
-        MockProvider(UrlSerializer),
-        LocalStorageService,
-        SessionStorageService,
-        { provide: TranslateService, useClass: MockTranslateService },
-        provideHttpClient(),
-    ];
+    const query = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
 
     beforeEach(async () => {
-        scienceSetting = {
-            settingId,
-            active: activeStatus,
-            changed: false,
-        };
+        featureActive = new BehaviorSubject<boolean>(true);
 
-        TestBed.configureTestingModule({
-            imports: [ScienceSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)],
-            providers,
-        });
-        await TestBed.compileComponents();
+        await TestBed.configureTestingModule({
+            imports: [ScienceSettingsComponent],
+            providers: [
+                MockProvider(ScienceSettingsService),
+                MockProvider(AlertService),
+                MockProvider(FeatureToggleService),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+
+        scienceSettingsService = TestBed.inject(ScienceSettingsService);
+        alertService = TestBed.inject(AlertService);
+        const featureToggleService = TestBed.inject(FeatureToggleService);
+
+        vi.spyOn(scienceSettingsService, 'getConsents').mockReturnValue(of([activeConsent, undecidedConsent]));
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(featureActive.asObservable());
+
         fixture = TestBed.createComponent(ScienceSettingsComponent);
-        comp = fixture.componentInstance;
-        scienceSettingsServiceMock = TestBed.inject(ScienceSettingsService);
-        userSettingsServiceMock = TestBed.inject(UserSettingsService);
+        component = fixture.componentInstance;
     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    it('should toggle setting and save immediately', () => {
-        comp.settings.set([scienceSetting]);
-        const saveResponse = new HttpResponse<ScienceSetting[]>({ body: [{ ...scienceSetting, active: true, changed: false }] });
-        vi.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(of(saveResponse));
-        vi.spyOn(userSettingsServiceMock, 'saveSettingsSuccess').mockReturnValue(scienceSettingsStructure);
-        vi.spyOn(userSettingsServiceMock, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue([scienceSetting]);
-        comp.toggleSetting(scienceSetting, !activeStatus);
-
-        expect(scienceSetting.active).not.toEqual(activeStatus);
-        expect(scienceSetting.changed).toBe(true);
-        expect(userSettingsServiceMock.saveSettings).toHaveBeenCalledOnce();
-    });
-
-    it('should notify the settings structure after reverting a failed save', () => {
-        // The revert mutates the setting in place, so the structure signal has to notify on the same
-        // reference; otherwise the rendered switch keeps the value the user optimistically toggled to.
-        const structure = deepClone(scienceSettingsStructure);
-        const setting = structure.groups[0].settings[0];
-        setting.active = false;
-        comp.userSettings.set(structure);
-        comp.settings.set([setting]);
-
-        const errorResponse = new HttpErrorResponse({ error: { message: 'Save failed' }, status: 500 });
-        vi.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(throwError(() => errorResponse));
-        // Change detection runs ngOnInit, which reads the already-loaded settings rather than fetching them.
-        vi.spyOn(scienceSettingsServiceMock, 'getScienceSettings').mockReturnValue([setting]);
-        vi.spyOn(userSettingsServiceMock, 'loadSettingsSuccessAsSettingsStructure').mockReturnValue(structure);
-        vi.spyOn(userSettingsServiceMock, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue([setting]);
-
-        let notifications = 0;
-        TestBed.runInInjectionContext(() => {
-            effect(() => {
-                comp.userSettings();
-                notifications++;
-            });
-        });
-        TestBed.tick();
-        const before = notifications;
-
-        comp.toggleSetting(setting, true);
-        TestBed.tick();
-
-        expect(setting.active).toBe(false);
-        expect(notifications).toBeGreaterThan(before);
-    });
-
-    it('should revert toggle on save failure', () => {
-        comp.settings.set([scienceSetting]);
-        const errorResponse = new HttpErrorResponse({ error: { message: 'Save failed' }, status: 500 });
-        vi.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(throwError(() => errorResponse));
-        comp.toggleSetting(scienceSetting, !activeStatus);
-
-        expect(scienceSetting.active).toEqual(activeStatus);
-        expect(scienceSetting.changed).toBe(false);
-    });
-
-    it('should not save when setting ID is not found', () => {
-        comp.settings.set([scienceSetting]);
-        const saveSpy = vi.spyOn(userSettingsServiceMock, 'saveSettings');
-        comp.toggleSetting({ ...scienceSetting, settingId: 'NON_EXISTENT_ID' as ScienceSetting['settingId'] }, true);
-
-        expect(saveSpy).not.toHaveBeenCalled();
-        expect(scienceSetting.active).toEqual(activeStatus);
-    });
-
-    it('should reuse settings via service if they were already loaded', () => {
-        const settingGetMock = vi.spyOn(scienceSettingsServiceMock, 'getScienceSettings').mockReturnValue([scienceSetting]);
-        comp.ngOnInit();
-        expect(settingGetMock).toHaveBeenCalledOnce();
-        // check if current settings are not empty
-        expect(comp.userSettings()).toEqual(scienceSettingsStructure);
-    });
-
-    // Regression test for issue #13173: the inherited userSettings/settings signals must exist on the instance so the
-    // component actually renders. The previous spec never called detectChanges(), so a fully blank render slipped through.
-    it('should inherit the userSettings/settings signals from the base and render the settings content (issue #13173)', () => {
-        // The inherited fields must be callable signals, not undefined (a subclass field re-declaration would shadow them).
-        expect(isSignal(comp.userSettings)).toBe(true);
-        expect(isSignal(comp.settings)).toBe(true);
-
-        vi.spyOn(scienceSettingsServiceMock, 'getScienceSettings').mockReturnValue([scienceSetting]);
-        comp.ngOnInit();
+    it('should show the consents the page loaded itself', () => {
         fixture.detectChanges();
 
-        // The settings signal is populated (proving the inherited signal works, not undefined).
-        expect(comp.userSettings()).toBeTruthy();
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledOnce();
+        expect(component.consents()).toEqual([activeConsent, undecidedConsent]);
+        expect(component.loading()).toBe(false);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="science-consent-row"]')).toHaveLength(2);
+    });
 
-        const element: HTMLElement = fixture.nativeElement;
-        // The heading AND the unconditional info line below it must render. In the bug the component threw right after
-        // the heading, so only the <h2> showed and this info line (a plain sibling) was missing.
-        expect(element.querySelector('h2')).toBeTruthy();
-        expect(element.querySelector('.userSettings-info')).toBeTruthy();
+    it('should show nothing but the spinner until its own response arrived', () => {
+        const pendingLoad = new Subject<ScienceCourseConsent[]>();
+        vi.spyOn(scienceSettingsService, 'getConsents').mockReturnValue(pendingLoad.asObservable());
+
+        fixture.detectChanges();
+        expect(query('science-consent-loading')).not.toBeNull();
+        expect(query('science-consent-list')).toBeNull();
+        expect(query('science-consent-empty')).toBeNull();
+
+        pendingLoad.next([]);
+        fixture.detectChanges();
+        expect(query('science-consent-loading')).toBeNull();
+        expect(query('science-consent-empty')).not.toBeNull();
+    });
+
+    it('should keep only the latest load when an earlier one answers late', () => {
+        const firstLoad = new Subject<ScienceCourseConsent[]>();
+        const secondLoad = new Subject<ScienceCourseConsent[]>();
+        vi.spyOn(scienceSettingsService, 'getConsents').mockReturnValueOnce(firstLoad.asObservable()).mockReturnValueOnce(secondLoad.asObservable());
+        vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+
+        // The deletion reloads while the first load is still running.
+        component.deleteData(activeConsent);
+        fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)!.accept();
+        firstLoad.next([activeConsent]);
+        expect(component.loading()).toBe(true);
+
+        secondLoad.next([undecidedConsent]);
+        expect(component.consents()).toEqual([undecidedConsent]);
+        expect(component.loading()).toBe(false);
+    });
+
+    it('should ignore a load that answers after the page was destroyed', () => {
+        const pendingLoad = new Subject<ScienceCourseConsent[]>();
+        vi.spyOn(scienceSettingsService, 'getConsents').mockReturnValue(pendingLoad.asObservable());
+        const alertSpy = vi.spyOn(alertService, 'error');
+        fixture.detectChanges();
+
+        fixture.destroy();
+        pendingLoad.error(new Error('late'));
+
+        expect(pendingLoad.observed).toBe(false);
+        expect(component.consents()).toEqual([]);
+        expect(alertSpy).not.toHaveBeenCalled();
+    });
+
+    it('should ignore a deletion that answers after the page was destroyed', () => {
+        const pendingDelete = new Subject<void>();
+        vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(pendingDelete.asObservable());
+        const successSpy = vi.spyOn(alertService, 'success');
+        fixture.detectChanges();
+        component.deleteData(activeConsent);
+        fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)!.accept();
+
+        fixture.destroy();
+        pendingDelete.next();
+
+        expect(successSpy).not.toHaveBeenCalled();
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledOnce();
+    });
+
+    it('should not load consents while the science feature is disabled', () => {
+        featureActive.next(false);
+        fixture.detectChanges();
+
+        expect(component.scienceFeatureActive()).toBe(false);
+        expect(component.loading()).toBe(false);
+        expect(scienceSettingsService.getConsents).not.toHaveBeenCalled();
+        expect(query('science-consent-feature-disabled')).not.toBeNull();
+    });
+
+    it('should load the consents once the feature is switched on', () => {
+        featureActive.next(false);
+        fixture.detectChanges();
+
+        featureActive.next(true);
+
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledOnce();
+        expect(component.consents()).toEqual([activeConsent, undecidedConsent]);
+    });
+
+    it('should report a failed load and still show the list after a later reload', () => {
+        const alertSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(scienceSettingsService, 'getConsents')
+            .mockReturnValueOnce(throwError(() => new Error('boom')))
+            .mockReturnValueOnce(of([activeConsent]));
+
+        fixture.detectChanges();
+        expect(alertSpy).toHaveBeenCalledWith('error.unexpectedError', { error: 'boom' });
+        expect(component.loading()).toBe(false);
+
+        featureActive.next(false);
+        featureActive.next(true);
+        fixture.detectChanges();
+
+        expect(component.consents()).toEqual([activeConsent]);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="science-consent-row"]')).toHaveLength(1);
+    });
+
+    it('should store the state the switch moved to, not the inverse of a possibly stale row', () => {
+        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(of({ ...activeConsent, active: false }));
+        fixture.detectChanges();
+
+        component.toggleConsent(activeConsent, false);
+
+        expect(scienceSettingsService.saveConsentForCourse).toHaveBeenCalledWith(activeConsent.courseId, false);
+        expect(component.consents()[0].active).toBe(false);
+    });
+
+    it('should treat an undecided course as an opt-in when toggled on', () => {
+        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(of({ ...undecidedConsent, active: true }));
+        fixture.detectChanges();
+
+        component.toggleConsent(undecidedConsent, true);
+
+        expect(scienceSettingsService.saveConsentForCourse).toHaveBeenCalledWith(undecidedConsent.courseId, true);
+    });
+
+    it('should lock the switch of a course while its decision is being stored', () => {
+        // Two overlapping saves can reach the server in either order, so a quick on-off could leave the student
+        // contributing while the switch shows off.
+        const pendingSave = new Subject<ScienceCourseConsent>();
+        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(pendingSave);
+        fixture.detectChanges();
+
+        component.toggleConsent(undecidedConsent, true);
+        fixture.detectChanges();
+        const toggles = fixture.nativeElement.querySelectorAll('[data-testid="science-consent-toggle"] input');
+        expect(toggles[1].disabled).toBe(true);
+        // Another course stays usable.
+        expect(toggles[0].disabled).toBe(false);
+
+        component.toggleConsent(undecidedConsent, false);
+        expect(scienceSettingsService.saveConsentForCourse).toHaveBeenCalledOnce();
+
+        // The switch shows the decision the server confirmed, and is unlocked again.
+        pendingSave.next({ ...undecidedConsent, active: true });
+        pendingSave.complete();
+        fixture.detectChanges();
+        expect(component.consents()[1].active).toBe(true);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="science-consent-toggle"] input')[1].disabled).toBe(false);
+    });
+
+    it('should re-read the stored decision and report the error when the save fails', () => {
+        // Not reverted from memory: a withdrawal stores the decision before recording it, so a failure can still have
+        // changed the stored state, and putting the row back would show consent the server does not have.
+        const alertSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(throwError(() => new Error('nope')));
+        fixture.detectChanges();
+
+        component.toggleConsent(activeConsent, false);
+
+        expect(alertSpy).toHaveBeenCalledWith('error.unexpectedError', { error: 'nope' });
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledTimes(2);
+        expect(component.consents()[0].active).toBe(true);
+    });
+
+    it('should not delete science data before the confirmation is accepted', () => {
+        vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+
+        component.deleteData(activeConsent);
+
+        expect(scienceSettingsService.deleteScienceDataForCourse).not.toHaveBeenCalled();
+    });
+
+    it('should delete science data and reload the consents once confirmed', () => {
+        const successSpy = vi.spyOn(alertService, 'success');
+        vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+
+        component.deleteData(activeConsent);
+        fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)!.accept();
+
+        expect(scienceSettingsService.deleteScienceDataForCourse).toHaveBeenCalledWith(activeConsent.courseId);
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledTimes(2);
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.userSettings.scienceSettingsPage.deleteDataSuccess', { courseTitle: activeConsent.courseTitle });
+    });
+
+    it('should report a failed deletion with the error text', () => {
+        const alertSpy = vi.spyOn(alertService, 'error');
+        const successSpy = vi.spyOn(alertService, 'success');
+        vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(throwError(() => new Error('denied')));
+        fixture.detectChanges();
+
+        component.deleteData(activeConsent);
+        fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)!.accept();
+
+        expect(alertSpy).toHaveBeenCalledWith('error.unexpectedError', { error: 'denied' });
+        expect(successSpy).not.toHaveBeenCalled();
+    });
+
+    it('should name each switch after its course, not just "Contribute"', () => {
+        fixture.detectChanges();
+
+        const labelledBy = fixture.nativeElement.querySelector(`#science-course-${activeConsent.courseId}`).getAttribute('aria-labelledby');
+        expect(labelledBy).toContain(`science-course-title-${activeConsent.courseId}`);
     });
 });

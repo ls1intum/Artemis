@@ -17,6 +17,7 @@ import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard'
 import { UpcomingExamsAndExercisesComponent } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN } from 'app/foundation/constants/authority.constants';
 import { AdminContainerComponent } from 'app/admin/admin-container/admin-container.component';
+import { adminScienceGuard } from 'app/admin/science/admin-science.guard';
 
 /**
  * Only allow the ingestion dashboard when the global search (Weaviate) integration is enabled for this instance;
@@ -56,6 +57,15 @@ const childRoutes: Routes = [
         data: {
             pageTitle: 'features.title',
         },
+    },
+    {
+        path: 'science',
+        loadComponent: () => import('app/admin/science/admin-science.component').then((m) => m.AdminScienceComponent),
+        data: {
+            pageTitle: 'artemisApp.admin.science.title',
+            authorities: IS_AT_LEAST_ADMIN,
+        },
+        canActivate: [adminScienceGuard],
     },
     {
         path: 'health',

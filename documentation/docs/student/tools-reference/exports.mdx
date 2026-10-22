@@ -128,9 +128,12 @@ If competency-based learning is enabled:
 - Last modification timestamps
 
 #### Science Events (`science_events.csv`)
-If science/analytics tracking is enabled:
-- Learning events (opening lectures, exercises, etc.)
-- Timestamps of activities
+If Artemis holds science events for you (see [Science Data Collection](/student/progress-analytics/science-data-collection)):
+- One row per event, with the columns `timestamp`, `event_type`, `course_id` and `resource_id`
+- The interactions recorded while you contributed data to a course, such as opening a lecture, an exercise or your learning path
+- Your decisions per course: `SCIENCE__OPT_IN` when you agreed, `SCIENCE__OPT_OUT` when you declined or withdrew, and `SCIENCE__DATA_DELETED` when you deleted recorded data for that course
+- Interactions recorded before Artemis asked for consent per course
+- An empty `course_id` for events Artemis could not assign to a course
 
 #### Plagiarism Cases
 If you were involved in plagiarism cases:

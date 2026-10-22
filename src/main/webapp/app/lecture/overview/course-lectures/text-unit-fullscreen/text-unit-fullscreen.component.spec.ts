@@ -90,7 +90,7 @@ describe('TextUnitFullscreenComponent', () => {
     it('should log that the unit was opened', () => {
         fixture.detectChanges();
 
-        expect(scienceService.logEvent).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, textUnit.id);
+        expect(scienceService.logEvent).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, textUnit.id, 42);
     });
 
     it('should show a message when the lecture has no text unit with that id', () => {
