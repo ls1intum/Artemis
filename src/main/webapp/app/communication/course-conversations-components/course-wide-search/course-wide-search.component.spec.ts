@@ -172,6 +172,73 @@ describe('CourseWideSearchComponent', () => {
             expect(top).toBe(1100);
         });
 
+        it.each(['a', 'Enter', 'Tab'])('keeps the end after the non-scrolling %s key', (key) => {
+            container.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it.each(['input', 'textarea', 'button', 'div'])('keeps the end when a key belongs to a nested %s', (tag) => {
+            const target = document.createElement(tag);
+            if (tag === 'div') target.setAttribute('contenteditable', 'true');
+            container.appendChild(target);
+            target.dispatchEvent(new KeyboardEvent('keydown', { key: tag === 'button' ? ' ' : 'ArrowUp', bubbles: true }));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it.each([false, true])('keeps the end after an ordinary pointer press (nested: %s)', (nested) => {
+            const target = nested ? document.createElement('button') : container;
+            if (nested) container.appendChild(target);
+            Object.defineProperty(container, 'clientWidth', { value: 300, configurable: true });
+            vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ left: 10, right: 330, top: 20, bottom: 420 } as DOMRect);
+            target.dispatchEvent(new MouseEvent('pointerdown', { clientX: 150, clientY: 100, bubbles: true }));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it('keeps the end when a descendant prevents a scrolling key', () => {
+            const event = new KeyboardEvent('keydown', { key: 'PageUp', bubbles: true, cancelable: true });
+            event.preventDefault();
+            container.dispatchEvent(event);
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it('keeps the end after a touch tap and releases it when the touch moves', () => {
+            container.dispatchEvent(new Event('touchstart'));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+            container.dispatchEvent(new Event('touchmove'));
+            listHeight = 2000;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it.each(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '])('releases the end for the scrolling %s key', (key) => {
+            container.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(600);
+        });
+
+        it.each(['left', 'right'])('releases the end when a drag starts in the %s scrollbar gutter', (side) => {
+            Object.defineProperties(container, {
+                clientWidth: { value: 300, configurable: true },
+                clientLeft: { value: side === 'left' ? 20 : 0, configurable: true },
+            });
+            vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ left: 10, right: 330, top: 20, bottom: 420 } as DOMRect);
+            container.dispatchEvent(new MouseEvent('pointerdown', { clientX: side === 'left' ? 15 : 320, clientY: 100, bubbles: true }));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(600);
+        });
+
         it('should hold the end again for the next search', () => {
             container.dispatchEvent(new Event('wheel'));
             component.onSearch();

@@ -8,7 +8,7 @@ import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/
 import { Post } from 'app/communication/shared/entities/post.model';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
-import { PostContextFilter, PostSortCriterion, SortDirection, USER_SCROLL_EVENTS } from 'app/communication/communication.util';
+import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/communication.util';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { NgClass } from '@angular/common';
@@ -75,15 +75,41 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     // The list starts at its end, but images load after that and push the newest messages out of view, so the end is held
     // until the user scrolls themselves.
     private holdsEnd = false;
-    /** Give scroll ownership to reader input, including input before the initial positioning frame. */
-    private readonly releaseEnd = () => {
+    private readonly scrollInputEvents = ['wheel', 'touchmove', 'pointerdown', 'keydown'] as const;
+    /** Release the end for scrolling input, leaving ordinary message interaction and editing alone. */
+    private readonly releaseEnd = (event: Event) => {
+        if (event.defaultPrevented) return;
+        if (event.type === 'keydown') {
+            const key = (event as KeyboardEvent).key;
+            const target = event.target instanceof HTMLElement ? event.target : undefined;
+            if (
+                !['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(key) ||
+                target?.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])') ||
+                (key === ' ' && target?.closest('button, [role="button"]'))
+            ) {
+                return;
+            }
+        } else if (event.type === 'pointerdown') {
+            const container = this.content()?.nativeElement;
+            if (!container || event.target !== container) return;
+            const pointer = event as PointerEvent;
+            const bounds = container.getBoundingClientRect();
+            const contentLeft = bounds.left + container.clientLeft;
+            const contentRight = contentLeft + container.clientWidth;
+            const inScrollbar = pointer.clientX >= bounds.left && pointer.clientX < bounds.right && (pointer.clientX < contentLeft || pointer.clientX >= contentRight);
+            if (pointer.button !== 0 || pointer.clientY < bounds.top || pointer.clientY >= bounds.bottom || !inScrollbar) return;
+        } else if (event.type === 'wheel' && (event as WheelEvent).ctrlKey) {
+            return;
+        }
         this.holdsEnd = false;
         // Reader input establishes their own position even if the initial positioning frame has not run yet.
         this.initialScrollPositioned = true;
     };
     /** Keep the newest result visible through delayed layout changes until the reader takes over. */
     private readonly onContentLoaded = () => {
-        if (this.holdsEnd && !this.isFetchingPosts() && this.pendingPageScrollDistance === undefined) this.scrollToBottomOfMessages();
+        if (this.holdsEnd && !this.isFetchingPosts() && this.pendingPageScrollDistance === undefined) {
+            this.scrollToBottomOfMessages();
+        }
     };
     page = 1;
 
@@ -104,7 +130,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         const container = this.content()?.nativeElement;
         // load events do not bubble, so they are caught on their way down to the image
         container?.addEventListener('load', this.onContentLoaded, true);
-        USER_SCROLL_EVENTS.forEach((eventName) => container?.addEventListener(eventName, this.releaseEnd, { passive: true }));
+        this.scrollInputEvents.forEach((eventName) => container?.addEventListener(eventName, this.releaseEnd, { passive: true }));
         const resultContent = this.resultContent()?.nativeElement;
         if (container && resultContent) {
             // Rows can grow after their first render, without an image load event. Keep the newest result visible
@@ -122,7 +148,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
         const container = this.content()?.nativeElement;
         container?.removeEventListener('load', this.onContentLoaded, true);
-        USER_SCROLL_EVENTS.forEach((eventName) => container?.removeEventListener(eventName, this.releaseEnd));
+        this.scrollInputEvents.forEach((eventName) => container?.removeEventListener(eventName, this.releaseEnd));
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }

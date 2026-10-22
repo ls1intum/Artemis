@@ -235,6 +235,41 @@ describe('CourseConversationsService', () => {
         });
     });
 
+    it.each([
+        [undefined, undefined, 1, 1],
+        [true, true, 1, 1],
+        [false, true, 0, 1],
+        [true, false, 1, 0],
+        [false, false, 0, 0],
+    ] as const)('publishes one accepted refresh with active/list flags %s/%s', (notifyActive, notifyList, activeEmissions, listEmissions) => {
+        courseConversationsService.setUpConversationService(course).subscribe();
+        courseConversationsService.setActiveConversation(channel.id);
+        const list = vi.fn();
+        const active = vi.fn();
+        const listSubscription = courseConversationsService.conversationsOfUser$.subscribe(list);
+        const activeSubscription = courseConversationsService.activeConversation$.subscribe(active);
+        list.mockClear();
+        active.mockClear();
+        const refreshed = [groupChat, oneToOneChat, channel].map((row) => ({ ...row, unreadMessagesCount: 7, hasUnreadMessage: true }));
+        const get = vi
+            .spyOn(conversationService, 'getConversationsOfUser')
+            .mockReturnValue(of(new HttpResponse({ body: refreshed })))
+            .mockClear();
+
+        courseConversationsService.forceRefresh(notifyActive, notifyList).subscribe();
+
+        expect(get).toHaveBeenCalledExactlyOnceWith(course.id);
+        expect(list).toHaveBeenCalledTimes(listEmissions);
+        if (listEmissions) expect(list).toHaveBeenCalledWith(refreshed);
+        expect(active).toHaveBeenCalledTimes(activeEmissions);
+        if (activeEmissions) expect(active).toHaveBeenCalledWith(channel);
+        expect(courseConversationsService['conversationsOfUser']).toEqual(refreshed);
+        expect(channel.unreadMessagesCount).toBe(7);
+        expect(courseConversationsService['activeConversation']).toBe(channel);
+        listSubscription.unsubscribe();
+        activeSubscription.unsubscribe();
+    });
+
     it('should keep the open conversation when a conversation that is not cached is requested', () => {
         return new Promise((done) => {
             courseConversationsService.setUpConversationService(course).subscribe({

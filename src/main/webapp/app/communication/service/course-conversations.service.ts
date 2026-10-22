@@ -350,7 +350,6 @@ export class CourseConversationsService implements OnDestroy {
                 }
                 this.acceptedUnreadSnapshotVersion = snapshotVersion;
                 this.hasUnreadMessagesCheck();
-                this._conversationsOfUser$.next(this.conversationsOfUser);
                 if (notifyConversationsSubscribers) {
                     this._conversationsOfUser$.next(this.conversationsOfUser);
                 }
@@ -516,14 +515,9 @@ export class CourseConversationsService implements OnDestroy {
             this._hasUnreadMessages$.next(this.hasUnreadMessages);
         }
         if (hasNewMessages) {
-            this.updateUnread();
+            this.conversationsOfUser.forEach((conversation) => (conversation.hasUnreadMessage = (conversation.unreadMessagesCount ?? 0) > 0));
         }
     };
-
-    private updateUnread() {
-        this.conversationsOfUser.forEach((conversation) => (conversation.hasUnreadMessage = !!conversation.unreadMessagesCount && conversation.unreadMessagesCount > 0));
-        this._conversationsOfUser$.next(this.conversationsOfUser);
-    }
 
     private setIsLoading(value: boolean) {
         this.isLoading = value;
