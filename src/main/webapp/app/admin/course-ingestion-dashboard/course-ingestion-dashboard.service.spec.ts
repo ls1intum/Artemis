@@ -397,7 +397,7 @@ describe('CourseIngestionDashboardService', () => {
             path: '/api/global-search/admin/courses/7/browser',
             query: '',
             load: () => service.getCourseBrowserData(7),
-            body: { entities: [{ entityId: 0, expected: false }], typeCounts: [] },
+            body: { entities: [{ entityId: 0, expected: false }], contentPresence: [], missingEntities: [], contentGaps: [], typeCounts: [] },
         },
         {
             path: '/api/global-search/admin/courses/7/entities',
@@ -472,10 +472,11 @@ describe('CourseIngestionDashboardService', () => {
         httpMock.verify();
     });
 
-    it('keeps a successful empty browser object distinct from an error', async () => {
+    it('keeps a successful browser response with empty arrays distinct from an error', async () => {
+        const empty: CourseBrowserData = { entities: [], contentPresence: [], missingEntities: [], contentGaps: [], typeCounts: [] };
         const result = firstValueFrom(service.getCourseBrowserData(7));
-        httpMock.expectOne('/api/global-search/admin/courses/7/browser').flush({});
-        await expect(result).resolves.toEqual({});
+        httpMock.expectOne('/api/global-search/admin/courses/7/browser').flush(empty);
+        await expect(result).resolves.toEqual(empty);
         httpMock.verify();
     });
 });

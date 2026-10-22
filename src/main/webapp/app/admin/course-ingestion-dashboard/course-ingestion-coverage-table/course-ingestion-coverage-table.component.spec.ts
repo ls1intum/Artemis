@@ -464,14 +464,11 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(component.totalRecords()).toBe(1);
     });
 
-    it('renders nullable or omitted metadata/counts and preserves zero and inactive rows', async () => {
-        const { courseTitle, releaseDate, semester, lastIngestedAt, typeCounts, ...omitted } = rows[1];
+    it('renders null or empty metadata/counts and preserves zero and inactive rows', async () => {
+        const emptyMetadata: IngestionCoverage = { ...rows[1], courseTitle: null, releaseDate: null, semester: null, lastIngestedAt: null, typeCounts: [] };
         liveSpy.mockReturnValue(
             of({
-                content: [
-                    { ...rows[1], courseTitle: null },
-                    { ...omitted, courseId: 3 },
-                ],
+                content: [emptyMetadata, { ...emptyMetadata, courseId: 3, courseTitle: '', semester: '' }],
                 totalElements: 57,
             }),
         );
@@ -481,7 +478,7 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(component.totalRecords()).toBe(57);
         expect(component.rows()[1].active).toBe(false);
         expect(component.rows()[1].coverageGapScore).toBe(0);
-        expect(component['cell'](omitted, 'exercise')).toEqual({ text: '–', class: 'text-muted-color' });
+        expect(component['cell'](emptyMetadata, 'exercise')).toEqual({ text: '–', class: 'text-muted-color' });
         const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('[data-testid="coverage-row-open"]');
         expect(buttons[0].getAttribute('aria-label')).toContain('2');
         expect(buttons[1].getAttribute('aria-label')).toContain('3');
