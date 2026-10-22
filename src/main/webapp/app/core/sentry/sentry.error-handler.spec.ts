@@ -144,6 +144,8 @@ describe('SentryErrorHandler', () => {
                 attributes: {
                     'url.full': 'https://artemis.example/git/ABC123/exercise-student1.git/info/refs',
                     'http.url': 'https://artemis.example/git/ABC123/exercise-student1.git',
+                    'sentry.segment.name': 'GET /git/ABC123/exercise-student1.git',
+                    'http.request.header.referer': ['https://artemis.example/git/ABC123/exercise-student1.git', 42],
                     'http.response.status_code': 200,
                     'sentry.origin': 'auto.http.client.fetch',
                 },
@@ -153,8 +155,31 @@ describe('SentryErrorHandler', () => {
             expect(scrubbed.name).toBe('GET /git/ABC123/exercise.git');
             expect(scrubbed.attributes['url.full']).toBe('https://artemis.example/git/ABC123/exercise.git/info/refs');
             expect(scrubbed.attributes['http.url']).toBe('https://artemis.example/git/ABC123/exercise.git');
+            expect(scrubbed.attributes['sentry.segment.name']).toBe('GET /git/ABC123/exercise.git');
+            expect(scrubbed.attributes['http.request.header.referer']).toEqual(['https://artemis.example/git/ABC123/exercise.git', 42]);
             expect(scrubbed.attributes['http.response.status_code']).toBe(200);
             expect(scrubbed.attributes['sentry.origin']).toBe('auto.http.client.fetch');
+        });
+
+        it('should not send the user of the scope on streamed spans', async () => {
+            const profileInfo = createProfileInfo({ testServer: false });
+
+            await service.initSentry(profileInfo);
+
+            const callArgs = (Sentry.init as ReturnType<typeof vi.fn>).mock.calls[0][0];
+            const span = {
+                name: 'GET /api/courses',
+                attributes: {
+                    'user.id': '1',
+                    'user.email': 'student@example.org',
+                    'user.ip_address': '127.0.0.1',
+                    'user.name': 'ab12cde',
+                    'http.response.status_code': 200,
+                },
+            };
+            const scrubbed = callArgs.beforeSendSpan(span);
+
+            expect(scrubbed.attributes).toEqual({ 'http.response.status_code': 200 });
         });
 
         it('should configure tracesSampler correctly', async () => {
