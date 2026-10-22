@@ -2186,6 +2186,23 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 sortedColumn, null, false);
     }
 
+    /**
+     * Finds participation IDs for management with optional team tutor and practice-mode restrictions.
+     *
+     * @param exerciseId       the exercise to query
+     * @param teamMode         whether the exercise uses teams
+     * @param searchTerm       search term for student or team names
+     * @param filterProp       management filter property
+     * @param stuckBuildCutoff cutoff for identifying stuck builds (nullable)
+     * @param scoreRangeLower  inclusive lower score bound (nullable)
+     * @param scoreRangeUpper  upper score bound, exclusive unless equal to 100 (nullable)
+     * @param pageable         pagination information
+     * @param sortOrder        sort direction, defaulting to ascending
+     * @param sortedColumn     the column to sort by
+     * @param teamOwnerId      tutor whose assigned teams to include, or null for all teams
+     * @param excludePractice  whether to exclude practice participations
+     * @return a page of matching participation IDs
+     */
     default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
             Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn, @Nullable Long teamOwnerId, boolean excludePractice) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
