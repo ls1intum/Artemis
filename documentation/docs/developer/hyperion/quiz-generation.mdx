@@ -77,6 +77,35 @@ The refined question can be restored to its previous state via a restore button,
 
 Bulk refinement reuses the architecture of the single-question refinement mechanism and parallelizes the requests across the questions, calling the same single-question refinement logic for each with the shared refinement prompt, and catches exceptions per question rather than letting one bad question abort the whole batch. Results are returned in the same order as the input questions.
 
+## Quiz Question Pool
+
+Separately from the on-demand generation in the quiz editor, Hyperion keeps a per-course pool of pre-generated and pre-judged multiple-choice questions. The pool is a grid of cells, one per combination of competency, lecture unit linked to that competency, language, question type and difficulty, and every cell holds a fixed number of items. Every question is grounded in the material of its lecture unit. Instructors review the pool on its own page in course management; quizzes are later assembled from the approved questions.
+
+### Cells and Settings
+
+`HyperionQuizQuestionPoolBuildService.enqueue` derives the cells from the course's competencies (Atlas), the lecture units linked to each of them that carry readable material, the course language, and the question types and difficulties configured under `artemis.hyperion.quiz-pool`, then tops every cell up to its target. `HyperionQuizQuestionPoolMaterialService` decides which linked units count: text units with content, and attachment video units with a stored PDF or a transcript; online units, exercise units and units without text get no cells, and a competency without such a unit gets no questions. The target comes from the course's `HyperionCourseSettings` (`questionsPerLectureUnit`, default 12), spread over that unit's cells and rounded up. Enqueuing is idempotent: cells that already hold their target gain nothing.
+
+The settings are stored as a JSON payload in `hyperion_course_settings`, keyed by course, and read as defaults until the first save creates the row. `poolGenerationEnabled` is stored for the scheduled overnight build, which a later change adds.
+
+### Build Loop
+
+A build is started from the pool page and runs on the dedicated `hyperionQuizQuestionPoolTaskExecutor`; the request returns `202 Accepted` at once, or `409 Conflict` while a build of the same course runs anywhere in the cluster. Before enqueuing, the request takes the course's lease in the distributed map `hyperion-quiz-pool-builds`. The lease value is the build's token and the time of its last renewal; a lease renewed more than `build-lease-minutes` ago counts as expired. Taking over an expired lease, renewing and releasing are each one compare-and-set on that value, so renewal fails the moment another build replaced the lease, a crashed node frees the course once its lease expires, and no build can touch another build's lease. A build whose lease expired while it waited in the executor queue takes the lease again when the course is free and drops itself when another build holds it, and a running build that finds its lease gone stops after its current unit of work. One build per course therefore runs at a time as long as no single unit of work, one generation batch or one judgement, outlasts the lease; a model call that does can overlap the next build for that one unit, and the item version fences its writes. `HyperionQuizQuestionPoolBuildService.build` then works the pool to completion:
+
+1. Claims older than `stale-claim-minutes` are returned to their stable state, and items whose last attempt failed on a model call (`CALL_FAILED`) or an unusable verdict (`FILTER_UNUSABLE`) are revived with a fresh attempt budget.
+2. While there are generated items awaiting the filter, one is claimed and judged.
+3. Otherwise up to `generation-batch-size` pending items of one cell are claimed and generated with a single model call; the questions are assigned to the claimed items in order, and items left without a usable question fail with `NO_VALID_QUESTION` and are retried up to three times.
+4. The loop ends when nothing is left to claim.
+
+Every item carries a version that each write increments. Claims are conditional updates that name the state and the version they expect (`QuizQuestionPoolItemRepository.claim`), the release of stale claims and the revival of failed items increment the version as well, and the completion writes go through the entity's optimistic lock, so a worker whose claim another node released and took over cannot overwrite the newer state: its save fails and the result is discarded (`saveIfStillOwned`). The cell coordinates and the item index are unique in the database, so two nodes cannot enqueue the same item twice. The item states are `PENDING`, `GENERATING`, `GENERATED`, `FILTERING`, `FILTERED`, `FAILED_GENERATION` and `FAILED_FILTER`; `review_state` records the instructor's later decision.
+
+### Generation and Filter
+
+Generation uses `generate_quiz_question_pool_system.st` and `generate_quiz_question_pool_user.st`, which ask for self-contained questions with four answer options and an explanation at the cognitive level the competency states: recall of stated facts at REMEMBER, at least one step of reasoning at UNDERSTAND and above. Lecture material is the text of the cell's lecture unit, extracted once per unit and build by `HyperionQuizQuestionPoolMaterialService` (text unit content, the PDF text of an attachment video unit via PDFBox, and its transcript), cut to `max-material-characters` and passed as a fenced block headed by the lecture and unit name. Items whose competency or lecture unit has disappeared, or whose unit no longer yields text, fail with `COMPETENCY_MISSING`, `LECTURE_UNIT_MISSING` or `NO_MATERIAL` and are not retried. Questions that fail the deterministic checks in `HyperionQuizQuestionChecks` (wrong type or option count, duplicate or contained options, "all of the above" style options, a reference to a figure the question does not contain, a conspicuously long correct option) are dropped before the filter sees them.
+
+`HyperionQuizQuestionFilterService` renders `filter_quiz_question_system.st` and `filter_quiz_question_user.st` and asks the judge for a severity from 0 to 1 on each of the five failure modes in `QuizQuestionFailureMode`: factual error, ambiguous correct answer, off topic, near duplicate and ill-formed distractors. A verdict that omits a mode is discarded. The aggregate score is one minus the worst severity among the gating modes, and the question is accepted when the aggregate reaches 0.7. Near duplicate is reported but never gates, because a question grounded in lecture material necessarily resembles it. Every verdict is stored with the item, so the pool page can show why a question was flagged or rejected.
+
+The generator and the judge model are set by the administrator under `artemis.hyperion.quiz-pool.generator-model` and `judge-model`; a blank value uses the default chat model. Both are bound onto the request through `ChatOptions`, and every call is recorded through `LLMTokenUsageService` under the pipeline ids `HYPERION_QUIZ_POOL_GENERATION` and `HYPERION_QUIZ_QUESTION_FILTER`.
+
 ## REST Endpoints
 
 | Method | Path                                                     | Request                                | Response                                |
@@ -84,6 +113,11 @@ Bulk refinement reuses the architecture of the single-question refinement mechan
 | POST   | `courses/{courseId}/quiz-exercises/generate-questions`   | `QuizQuestionGenerationRequestDTO`     | `QuizQuestionGenerationResponseDTO`     |
 | POST   | `courses/{courseId}/quiz-exercises/refine-question`      | `QuizQuestionRefinementRequestDTO`     | `QuizQuestionRefinementResponseDTO`     |
 | POST   | `courses/{courseId}/quiz-exercises/refine-all-questions` | `QuizQuestionBulkRefinementRequestDTO` | `QuizQuestionBulkRefinementResponseDTO` |
+| POST   | `courses/{courseId}/quiz-question-pool/build`            | –                                      | `QuizQuestionPoolBuildStartDTO`         |
+| GET    | `courses/{courseId}/quiz-question-pool/progress`         | –                                      | `QuizQuestionPoolProgressDTO`           |
+| GET    | `courses/{courseId}/quiz-question-pool/questions`        | `competencyId` (query, optional)       | `List<QuizQuestionPoolItemDTO>`         |
+| GET    | `courses/{courseId}/quiz-question-pool/settings`         | –                                      | `HyperionCourseSettingsDTO`             |
+| PUT    | `courses/{courseId}/quiz-question-pool/settings`         | `HyperionCourseSettingsDTO`            | `HyperionCourseSettingsDTO`             |
 
 ## Prompt-Injection Mitigation
 
