@@ -79,21 +79,12 @@
     padding: 0.5rem 0;
 }
 
-.presentation-content thead th {
-    background: var(--hover-slightly-darker-body-bg);
-}
-
 .student-search {
     width: min(100%, 19rem);
 }
 
 .student-search-input {
     padding-left: 2.25rem;
-}
-
-.presentation-detail-row > td {
-    padding: 1rem 1.5rem;
-    background: var(--module-bg);
 }
 
 .presentation-overview {
@@ -142,16 +133,6 @@
     padding: 0 1rem;
 }
 
-.presentation-student-details-button {
-    display: inline-flex;
-    align-items: center;
-    border: 0;
-    padding: 0;
-    color: inherit;
-    background: transparent;
-    text-align: left;
-}
-
 .presentation-paginator {
     display: block;
     flex: 0 0 auto;
@@ -159,17 +140,7 @@
     padding: 0.5rem 1rem 0.75rem;
 }
 
-.instance-detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem 2rem;
-}
-
 @media (max-width: 48rem) {
-    .instance-detail-grid {
-        grid-template-columns: 1fr;
-    }
-
     .presentation-detail-header,
     .presentation-grading-toolbar {
         align-items: stretch;
