@@ -11,6 +11,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -193,6 +195,15 @@ class RepositoryUriTest {
         URI httpUri = new URI("https://example.com/git/projectName.git");
         VcsRepositoryUri uri = new VcsRepositoryUri(httpUri.toString());
         assertThat(uri.folderNameForRepositoryUri()).isEqualTo("projectName");
+    }
+
+    /** The folder name consists of the project key and the slug, whatever the slug contains. */
+    @ParameterizedTest
+    @CsvSource({ "https://artemis.tum.de/git/ABC/abc-exercise.git, ABC/abc-exercise", "https://artemis.tum.de/git/ABC/abc-scm.git, ABC/abc-scm",
+            "https://artemis.tum.de/git/ABC/abc-practice-student1.git, ABC/abc-practice-student1", "https://artemis.tum.de/git/ABC/abc-ge47scm.git, ABC/abc-ge47scm",
+            "https://artemis.tum.de/git/SCMKEY/scmkey-exercise.git, SCMKEY/scmkey-exercise", "https://artemis.tum.de/git/ABC/abc-xscmy.git, ABC/abc-xscmy" })
+    void testFolderNameForRepositoryUriWithVariousSlugs(String uriString, String expectedFolderName) {
+        assertThat(new LocalVCRepositoryUri(uriString).folderNameForRepositoryUri()).isEqualTo(expectedFolderName);
     }
 
     @Test

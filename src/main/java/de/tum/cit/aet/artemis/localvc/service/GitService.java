@@ -349,8 +349,10 @@ public class GitService extends AbstractGitService {
         if (targetUrl == null) {
             throw new EntityNotFoundException("Cannot resolve the local repository path because the repository URI is null. The repository most likely does not exist.");
         }
-        Path resolvedPath = (targetPath.normalize()).resolve(targetUrl.folderNameForRepositoryUri()).normalize();
-        if (!resolvedPath.startsWith(targetPath.normalize())) {
+        Path normalizedTargetPath = targetPath.normalize();
+        Path resolvedPath = normalizedTargetPath.resolve(targetUrl.folderNameForRepositoryUri()).normalize();
+        // The folder of a repository lies strictly below the target path.
+        if (resolvedPath.equals(normalizedTargetPath) || !resolvedPath.startsWith(normalizedTargetPath)) {
             throw new IllegalArgumentException("Invalid path: " + resolvedPath);
         }
         return resolvedPath;
@@ -426,12 +428,14 @@ public class GitService extends AbstractGitService {
      * Creates a CommitCommand and sets signing to false. Egit uses the local git configuration and if signing of
      * commits is enabled, tests will fail because it will not be able to actually sign the commit.
      * This method makes sure that signing is disabled and commits work on systems regardless of the local git configuration.
+     * <p>
+     * Hook verification is also disabled, as Artemis does not use git hooks.
      *
      * @param git Git Repository Object.
-     * @return CommitCommand with signing set to false.
+     * @return CommitCommand with signing and hook verification disabled.
      */
     public static CommitCommand commit(Git git) {
-        return git.commit().setSign(false);
+        return git.commit().setSign(false).setNoVerify(true);
     }
 
     /**

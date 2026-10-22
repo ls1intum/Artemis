@@ -18,9 +18,6 @@ public class VcsRepositoryUri {
     /** A trailing slash of a repository path. */
     private static final Pattern TRAILING_SLASH = Pattern.compile("/$");
 
-    /** The scm prefix of a repository path. */
-    private static final Pattern SCM_PREFIX = Pattern.compile("^/.*scm");
-
     /** Everything before the git path segment of a repository path. */
     private static final Pattern PREFIX_BEFORE_GIT = Pattern.compile("^.*?/git/");
 
@@ -128,7 +125,6 @@ public class VcsRepositoryUri {
             // remove .git (which might be used at the end)
             path = GIT_SUFFIX.matcher(path).replaceAll("");
             path = TRAILING_SLASH.matcher(path).replaceAll("");
-            path = SCM_PREFIX.matcher(path).replaceAll("");
             path = PREFIX_BEFORE_GIT.matcher(path).replaceAll("/");
             path = LEADING_SLASH.matcher(path).replaceFirst("");
 
