@@ -90,7 +90,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
         { validators: this.validateDates.bind(this) },
     );
 
-    protected readonly textControl = this.form.get('text') as FormControl<string | null | undefined>;
+    protected readonly textControl = this.form.controls.text;
 
     /** Icons */
     protected readonly faSave = faSave;
