@@ -492,7 +492,7 @@ describe('PostComponent', () => {
 
         const forwardedMessage = debugElement.query(By.directive(ForwardedMessageComponent));
         expect(forwardedMessage).not.toBeNull();
-        expect(forwardedMessage.componentInstance.hasOriginalPostBeenDeleted()).toBe(true);
+        expect(forwardedMessage.componentInstance.isSourceUnavailable()).toBe(true);
     });
 
     it('should display the selected answer when an unused forwarded post is deleted', () => {
@@ -503,10 +503,10 @@ describe('PostComponent', () => {
         fixture.detectChanges();
 
         expect(component.originalPostDetails()).toBe(answer);
-        expect(component.hasOriginalPostBeenDeleted()).toBe(false);
+        expect(component.hasUnavailableForwardedSource()).toBe(false);
         const forwardedMessage = debugElement.query(By.directive(ForwardedMessageComponent)).componentInstance as ForwardedMessageComponent;
         expect(forwardedMessage.originalPostDetails()).toBe(answer);
-        expect(forwardedMessage.hasOriginalPostBeenDeleted()).toBe(false);
+        expect(forwardedMessage.isSourceUnavailable()).toBe(false);
     });
 
     it('should keep deletion state aligned when switching from a deleted answer to an available post', () => {
@@ -517,18 +517,18 @@ describe('PostComponent', () => {
         fixture.detectChanges();
 
         expect(component.originalPostDetails()).toBeUndefined();
-        expect(component.hasOriginalPostBeenDeleted()).toBe(true);
+        expect(component.hasUnavailableForwardedSource()).toBe(true);
         let forwardedMessage = debugElement.query(By.directive(ForwardedMessageComponent)).componentInstance as ForwardedMessageComponent;
-        expect(forwardedMessage.hasOriginalPostBeenDeleted()).toBe(true);
+        expect(forwardedMessage.isSourceUnavailable()).toBe(true);
 
         fixture.componentRef.setInput('forwardedAnswerPosts', []);
         fixture.detectChanges();
 
         expect(component.originalPostDetails()).toBe(post);
-        expect(component.hasOriginalPostBeenDeleted()).toBe(false);
+        expect(component.hasUnavailableForwardedSource()).toBe(false);
         forwardedMessage = debugElement.query(By.directive(ForwardedMessageComponent)).componentInstance as ForwardedMessageComponent;
         expect(forwardedMessage.originalPostDetails()).toBe(post);
-        expect(forwardedMessage.hasOriginalPostBeenDeleted()).toBe(false);
+        expect(forwardedMessage.isSourceUnavailable()).toBe(false);
     });
 
     it('should clear the forwarded preview when the original is removed', () => {
@@ -542,6 +542,32 @@ describe('PostComponent', () => {
 
         expect(component.originalPostDetails()).toBeUndefined();
         expect(debugElement.query(By.directive(ForwardedMessageComponent))).toBeNull();
+    });
+
+    it.each(['post', 'answer'])('shows an inline placeholder for an unavailable forwarded %s', (sourceType) => {
+        component.posting.set(communicationPostExerciseUser1);
+        fixture.componentRef.setInput(sourceType === 'post' ? 'forwardedPosts' : 'forwardedAnswerPosts', [undefined]);
+        fixture.detectChanges();
+        const placeholder = fixture.nativeElement.querySelector('[data-testid="forwarded-message-unavailable"]');
+        expect(placeholder).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-forwarded-message button')).toBeNull();
+    });
+
+    it('updates a forwarded preview when its source becomes unavailable and returns', () => {
+        component.posting.set(communicationPostExerciseUser1);
+        fixture.componentRef.setInput('forwardedPosts', [{ id: 11, content: 'Original message' }]);
+        fixture.detectChanges();
+        expect(component.originalPostDetails()?.id).toBe(11);
+
+        fixture.componentRef.setInput('forwardedPosts', [undefined]);
+        fixture.detectChanges();
+        expect(component.originalPostDetails()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('[data-testid="forwarded-message-unavailable"]')).not.toBeNull();
+
+        fixture.componentRef.setInput('forwardedPosts', [{ id: 12, content: 'Available again' }]);
+        fixture.detectChanges();
+        expect(component.originalPostDetails()?.id).toBe(12);
+        expect(fixture.nativeElement.querySelector('[data-testid="forwarded-message-unavailable"]')).toBeNull();
     });
 
     it('should do nothing if both forwardedPosts and forwardedAnswerPosts are empty', () => {
