@@ -20,7 +20,20 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faCheck, faCircleNotch, faComment, faDownload, faEraser, faFilePowerpoint, faFolderOpen, faPencil, faSync, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    faCheck,
+    faChevronDown,
+    faCircleNotch,
+    faComment,
+    faDownload,
+    faEraser,
+    faFilePowerpoint,
+    faFolderOpen,
+    faPencil,
+    faSync,
+    faTimes,
+    faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -143,6 +156,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
 
     protected readonly faComment = faComment;
+    protected readonly faChevronDown = faChevronDown;
     protected readonly faDownload = faDownload;
     protected readonly faSync = faSync;
     protected readonly faFolderOpen = faFolderOpen;

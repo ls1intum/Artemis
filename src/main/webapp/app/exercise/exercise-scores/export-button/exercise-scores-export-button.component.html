@@ -1,5 +1,14 @@
 @if (isProgrammingExerciseResults) {
-    <button type="button" tumAetUiButton size="small" id="export-results-dropdown" [tumAetUiMenuTrigger]="resultExportMenu">
+    <button
+        type="button"
+        tumAetUiButton
+        size="small"
+        [variant]="inDropdown() ? 'text' : 'solid'"
+        [severity]="inDropdown() ? 'secondary' : 'primary'"
+        [class]="inDropdown() ? 'w-full justify-start!' : ''"
+        id="export-results-dropdown"
+        [tumAetUiMenuTrigger]="resultExportMenu"
+    >
         <fa-icon [icon]="faDownload" />
         <span jhiTranslate="artemisApp.exercise.export.results.title"></span>
     </button>
@@ -23,7 +32,15 @@
         </tumaet-ui-menu>
     </ng-template>
 } @else {
-    <button type="button" tumAetUiButton size="small" (click)="exportResults(false, false)">
+    <button
+        type="button"
+        tumAetUiButton
+        size="small"
+        [variant]="inDropdown() ? 'text' : 'solid'"
+        [severity]="inDropdown() ? 'secondary' : 'primary'"
+        [class]="inDropdown() ? 'w-full justify-start!' : ''"
+        (click)="exportResults(false, false)"
+    >
         <fa-icon [icon]="faDownload" />
         <span jhiTranslate="artemisApp.exercise.export.results.title"></span>
     </button>

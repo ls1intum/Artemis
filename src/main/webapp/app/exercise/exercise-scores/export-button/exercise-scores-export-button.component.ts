@@ -35,6 +35,8 @@ export class ExerciseScoresExportButtonComponent {
     private resultService = inject(ResultService);
     private alertService = inject(AlertService);
 
+    readonly inDropdown = input(false);
+
     readonly exercises = input<Exercise[]>([]); // Used to export multiple scores together
     readonly exercise = input<Exercise | ProgrammingExercise>();
 

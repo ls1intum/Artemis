@@ -16,7 +16,8 @@ import { DialogService } from 'primeng/dynamicdialog';
             type="button"
             tumAetUiButton
             size="small"
-            severity="warn"
+            severity="secondary"
+            variant="outlined"
             [attr.aria-label]="'entity.action.addExternalSubmission' | artemisTranslate"
             (click)="openExternalSubmissionDialog($event)"
         >

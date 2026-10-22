@@ -18,7 +18,9 @@ import { TranslateService } from '@ngx-translate/core';
             type="button"
             tumAetUiButton
             size="small"
-            severity="primary"
+            [variant]="inDropdown() ? 'text' : 'solid'"
+            [severity]="inDropdown() ? 'secondary' : 'primary'"
+            [class]="inDropdown() ? 'w-full justify-start!' : ''"
             [jhiFeatureToggle]="FeatureToggle.Exports"
             [overwriteDisabled]="!exerciseId() || false"
             [attr.aria-label]="'artemisApp.instructorDashboard.exportSubmissions.title' | artemisTranslate"
@@ -33,6 +35,8 @@ import { TranslateService } from '@ngx-translate/core';
 export class SubmissionExportButtonComponent {
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
+
+    readonly inDropdown = input(false);
 
     readonly FeatureToggle = FeatureToggle;
 

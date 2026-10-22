@@ -18,7 +18,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             type="button"
             tumAetUiButton
             size="small"
-            severity="primary"
+            [variant]="inDropdown() ? 'text' : 'solid'"
+            [severity]="inDropdown() ? 'secondary' : 'primary'"
+            [class]="inDropdown() ? 'w-full justify-start!' : ''"
             [jhiFeatureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
             [overwriteDisabled]="!programmingExercises() || false"
             [attr.aria-label]="
@@ -35,6 +37,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class ProgrammingAssessmentRepoExportButtonComponent {
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
+
+    readonly inDropdown = input(false);
 
     readonly FeatureToggle = FeatureToggle;
 

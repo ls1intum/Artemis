@@ -5,10 +5,10 @@ import { catchError, debounceTime, filter, map, switchMap, take, tap } from 'rxj
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { faCircleNotch, faClock, faExclamationTriangle, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faCircleNotch, faClock, faExclamationTriangle, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseTriggerAllButtonComponent } from '../trigger-all-button/programming-exercise-trigger-all-button.component';
-import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -37,6 +37,8 @@ const AWAITED_RUN_STATUS_POLL_INTERVAL_MS = 30_000;
         FaIconComponent,
         ProgrammingExerciseTriggerAllButtonComponent,
         TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
         TumAetUiTagComponent,
         TumAetUiTooltipDirective,
         FeatureToggleDirective,
@@ -91,6 +93,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     readonly resultEtaInMs = signal<number | undefined>(undefined);
 
     // Icons
+    readonly faChevronDown = faChevronDown;
     faClock = faClock;
     readonly faExclamationTriangle = faExclamationTriangle;
     faCircleNotch = faCircleNotch;

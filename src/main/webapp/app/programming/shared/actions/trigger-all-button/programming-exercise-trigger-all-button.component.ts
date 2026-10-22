@@ -29,6 +29,8 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
             id="trigger-all-button"
             [size]="btnSize() === ButtonSize.SMALL ? 'small' : btnSize() === ButtonSize.LARGE ? 'large' : 'default'"
             severity="danger"
+            [variant]="inDropdown() ? 'text' : 'solid'"
+            [class]="inDropdown() ? 'w-full justify-start!' : ''"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [overwriteDisabled]="disabled() || isTriggeringBuildAll()"
             [attr.aria-label]="'artemisApp.programmingExercise.resubmitAll' | artemisTranslate"
@@ -56,6 +58,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     ButtonSize = ButtonSize;
     readonly exercise = input.required<ProgrammingExercise>();
     readonly disabled = input(false);
+    readonly inDropdown = input(false);
     readonly btnSize = input(ButtonSize.MEDIUM);
     readonly shouldToggle = input(false);
     readonly toggleBreakpoint = input<'md' | 'xl'>('xl');

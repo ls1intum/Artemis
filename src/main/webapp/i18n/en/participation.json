@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "participation": {
+            "triggerOptions": "Trigger builds",
             "searchStudents": "Search students",
             "searchTeams": "Search teams",
             "onlineEditor": "Online editor",

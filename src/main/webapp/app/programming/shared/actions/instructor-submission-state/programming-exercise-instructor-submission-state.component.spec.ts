@@ -115,14 +115,22 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         vi.restoreAllMocks();
     });
 
+    const openTriggerDropdown = () => {
+        const trigger: HTMLButtonElement | null = fixture.nativeElement.querySelector('[data-testid="participation-trigger-dropdown"]');
+        if (trigger && trigger.getAttribute('aria-expanded') !== 'true') {
+            trigger.click();
+            fixture.detectChanges();
+        }
+    };
+
     const getTriggerAllButton = () => {
-        const triggerButton = debugElement.query(By.css('#trigger-all-button'));
-        return triggerButton ? triggerButton.nativeElement : null;
+        openTriggerDropdown();
+        return document.querySelector<HTMLButtonElement>('#trigger-all-button');
     };
 
     const getTriggerFailedButton = () => {
-        const triggerButton = debugElement.query(By.css('#trigger-failed-button'));
-        return triggerButton ? triggerButton.nativeElement : null;
+        openTriggerDropdown();
+        return document.querySelector<HTMLButtonElement>('#trigger-failed-button');
     };
 
     const getBuildState = () => {
@@ -198,9 +206,9 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(debugElement.query(By.css('#build-state-failed')).nativeElement.textContent).toContain('0');
 
         expect(getTriggerAllButton()).not.toBeNull();
-        expect(getTriggerAllButton().disabled).toBe(false);
+        expect(getTriggerAllButton()!.disabled).toBe(false);
         expect(getTriggerFailedButton()).not.toBeNull();
-        expect(getTriggerFailedButton().disabled).toBe(true);
+        expect(getTriggerFailedButton()!.disabled).toBe(true);
         expect(getBuildState()).not.toBeNull();
     });
 
@@ -237,9 +245,9 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         expect(getResultEtaContainer()).not.toBeNull();
         expect(getTriggerAllButton()).not.toBeNull();
-        expect(getTriggerAllButton().disabled).toBe(false);
+        expect(getTriggerAllButton()!.disabled).toBe(false);
         expect(getTriggerFailedButton()).not.toBeNull();
-        expect(getTriggerFailedButton().disabled).toBe(false);
+        expect(getTriggerFailedButton()!.disabled).toBe(false);
         expect(getBuildState()).not.toBeNull();
     });
 
@@ -269,7 +277,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         it('should call the service on click and keep the button busy after the request returned until the server reports its own run as completed', async () => {
             await showFailedSubmission();
-            const triggerButton = getTriggerFailedButton();
+            const triggerButton = getTriggerFailedButton()!;
             expect(triggerButton).not.toBeNull();
             expect(triggerButton.disabled).toBe(false);
 
@@ -284,19 +292,19 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
             fixture.detectChanges();
 
             expect(comp.isBuildingFailedSubmissions()).toBe(true);
-            expect(getTriggerFailedButton().disabled).toBe(true);
+            expect(getTriggerFailedButton()!.disabled).toBe(true);
 
             selectedBuildRunCompletionsSubject.next('run-1');
             fixture.detectChanges();
 
             expect(comp.isBuildingFailedSubmissions()).toBe(false);
-            expect(getTriggerFailedButton().disabled).toBe(false);
+            expect(getTriggerFailedButton()!.disabled).toBe(false);
         });
 
         it('should not take the end of a run of another instructor for its own', async () => {
             await showFailedSubmission();
 
-            getTriggerFailedButton().click();
+            getTriggerFailedButton()!.click();
             triggerRequestSubject.next({ runId: 'run-1' });
             triggerRequestSubject.complete();
             selectedBuildRunCompletionsSubject.next('run-2');
@@ -311,7 +319,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         it('should become available again when the run ended before the response that names it arrived', async () => {
             await showFailedSubmission();
 
-            getTriggerFailedButton().click();
+            getTriggerFailedButton()!.click();
             selectedBuildRunCompletionsSubject.next('run-1');
             expect(comp.isBuildingFailedSubmissions()).toBe(true);
 
@@ -324,7 +332,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         it('should stay busy when the request returns before the server reported the end of the run', async () => {
             await showFailedSubmission();
 
-            getTriggerFailedButton().click();
+            getTriggerFailedButton()!.click();
             triggerRequestSubject.next({ runId: 'run-1' });
             triggerRequestSubject.complete();
             fixture.detectChanges();
@@ -335,7 +343,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         it('should make the button available again when the request fails', async () => {
             await showFailedSubmission();
 
-            getTriggerFailedButton().click();
+            getTriggerFailedButton()!.click();
             expect(comp.isBuildingFailedSubmissions()).toBe(true);
 
             triggerRequestSubject.error(new Error('request failed'));
@@ -347,7 +355,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         it('should ignore the response of a request that was started for the previous exercise', async () => {
             await showFailedSubmission();
 
-            getTriggerFailedButton().click();
+            getTriggerFailedButton()!.click();
             fixture.componentRef.setInput('exercise', { id: 21 } as ProgrammingExercise);
             fixture.detectChanges();
             await vi.advanceTimersByTimeAsync(0);
@@ -364,7 +372,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         it('should not clear the busy state of the new exercise when the request of the previous exercise fails late', async () => {
             await showFailedSubmission();
             const previousRequest = triggerRequestSubject;
-            getTriggerFailedButton().click();
+            getTriggerFailedButton()!.click();
             fixture.componentRef.setInput('exercise', { id: 21 } as ProgrammingExercise);
             fixture.detectChanges();
             await vi.advanceTimersByTimeAsync(0);
@@ -383,7 +391,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         describe('when the message that announces the end of the run is missed', () => {
             const startRun = async () => {
                 await showFailedSubmission();
-                getTriggerFailedButton().click();
+                getTriggerFailedButton()!.click();
                 triggerRequestSubject.next({ runId: 'run-1' });
                 await vi.advanceTimersByTimeAsync(0);
             };
@@ -442,7 +450,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
             expect(getSelectedBuildRunCompletionsStub).toHaveBeenCalledOnce();
             expect(getSelectedBuildRunCompletionsStub).toHaveBeenLastCalledWith(20);
 
-            getTriggerFailedButton().click();
+            getTriggerFailedButton()!.click();
             triggerRequestSubject.next({ runId: 'run-1' });
             expect(comp.isBuildingFailedSubmissions()).toBe(true);
 
@@ -454,6 +462,30 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
             expect(getSelectedBuildRunCompletionsStub).toHaveBeenLastCalledWith(21);
             expect(comp.isBuildingFailedSubmissions()).toBe(false);
         });
+    });
+
+    it('opens the trigger actions together and keeps the all-build confirmation and busy state', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
+        fixture.detectChanges();
+        getExerciseSubmissionStateSubject.next({});
+        await vi.advanceTimersByTimeAsync(500);
+        fixture.detectChanges();
+        const trigger: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="participation-trigger-dropdown"]');
+        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        const allButton = getTriggerAllButton()!;
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        expect(getTriggerFailedButton()).not.toBeNull();
+        const openDialog = vi.spyOn(TestBed.inject(DialogService), 'open');
+        allButton.click();
+        expect(openDialog).toHaveBeenCalledOnce();
+        expect(submissionService.triggerInstructorBuildForAllParticipationsOfExercise).not.toHaveBeenCalled();
+        getBuildRunStateSubject.next(BuildRunState.RUNNING);
+        fixture.detectChanges();
+        trigger.click();
+        fixture.detectChanges();
+        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        expect(getTriggerAllButton()!.disabled).toBe(true);
     });
 
     it('should disable the trigger all button while a build is running and re-enable it when it is complete', async () => {
@@ -472,16 +504,16 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getTriggerAllButton().disabled).toBe(false);
+        expect(getTriggerAllButton()!.disabled).toBe(false);
 
         getBuildRunStateSubject.next(BuildRunState.RUNNING);
         fixture.detectChanges();
 
-        expect(getTriggerAllButton().disabled).toBe(true);
+        expect(getTriggerAllButton()!.disabled).toBe(true);
 
         getBuildRunStateSubject.next(BuildRunState.COMPLETED);
         fixture.detectChanges();
 
-        expect(getTriggerAllButton().disabled).toBe(false);
+        expect(getTriggerAllButton()!.disabled).toBe(false);
     });
 });
