@@ -207,8 +207,14 @@ describe('CourseIngestionCoverageTableComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        refreshSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503, error: null })));
+        liveSpy.mockClear();
+        storedSpy.mockClear();
+        const failed = new Subject<void>();
+        refreshSpy.mockReturnValue(failed);
         component['onRefresh']();
+        expect(component.refreshing()).toBe(true);
+        expect(component.rows()).toEqual(rows);
+        failed.error(new HttpErrorResponse({ status: 503, error: null }));
         fixture.detectChanges();
 
         const element: HTMLElement = fixture.nativeElement;
@@ -217,10 +223,24 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(element.querySelector('[data-testid="coverage-refresh-error"]')?.textContent).toContain('Failed to refresh course coverage. Please try again.');
         expect(element.querySelectorAll('table tbody tr')).toHaveLength(2);
 
-        refreshSpy.mockReturnValue(of(undefined));
+        expect(liveSpy).not.toHaveBeenCalled();
+        expect(storedSpy).not.toHaveBeenCalled();
+        const retry = new Subject<void>();
+        refreshSpy.mockReturnValue(retry);
         component['onRefresh']();
         fixture.detectChanges();
+        expect(component.refreshing()).toBe(true);
+        expect(component.refreshError()).toBe(true);
+        expect(element.querySelector('[data-testid="coverage-refresh-error"]')).not.toBeNull();
+        expect(liveSpy).not.toHaveBeenCalled();
+        retry.next();
+        retry.complete();
+        fixture.detectChanges();
 
+        expect(refreshSpy).toHaveBeenCalledTimes(2);
+        expect(component.refreshing()).toBe(false);
+        expect(liveSpy).toHaveBeenCalledOnce();
+        expect(storedSpy).not.toHaveBeenCalled();
         expect(element.querySelector('[data-testid="coverage-refresh-error"]')).toBeNull();
         expect(element.querySelectorAll('table tbody tr')).toHaveLength(2);
     });
@@ -304,6 +324,72 @@ describe('CourseIngestionCoverageTableComponent', () => {
         pending.next();
         expect(liveSpy).toHaveBeenCalledOnce();
         expect(component.refreshing()).toBe(false);
+    });
+
+    it.each(['live', 'stored'] as const)('reloads the current %s controls after refresh rather than restoring its starting selection', (mode) => {
+        fixture.detectChanges();
+        const pending = new Subject<void>();
+        refreshSpy.mockReturnValue(pending);
+        component['onRefresh']();
+
+        // Independent control changes still load normally while the refresh is pending.
+        component.search.set('latest');
+        component['onPageSizeChange'](50);
+        component['toggleSort']('release');
+        if (mode === 'stored') {
+            component['onStatusChange']('EMPTY');
+            component['onActiveChange']('false');
+        }
+        component['onPageChange'](2);
+        expect(component.refreshing()).toBe(true);
+        expect(mode === 'stored' ? storedSpy : liveSpy).toHaveBeenCalled();
+        liveSpy.mockClear();
+        storedSpy.mockClear();
+        expect(component.rows()).toEqual(rows);
+        pending.next();
+        pending.complete();
+
+        const request = { page: 2, size: 50, sort: mode === 'stored' ? 'releaseDate,desc' : 'startDate,desc', search: 'latest' };
+        if (mode === 'stored') {
+            expect(storedSpy).toHaveBeenCalledExactlyOnceWith({ ...request, status: 'EMPTY', active: false });
+            expect(liveSpy).not.toHaveBeenCalled();
+        } else {
+            expect(liveSpy).toHaveBeenCalledExactlyOnceWith(request);
+            expect(storedSpy).not.toHaveBeenCalled();
+        }
+        expect(component.page()).toBe(2);
+        expect(component.pageSize()).toBe(50);
+        expect(component.refreshing()).toBe(false);
+    });
+
+    it.each(['success', 'error'] as const)('unsubscribes on destruction and ignores a late refresh %s without loading again', (outcome) => {
+        fixture.detectChanges();
+        const pending = new Subject<void>();
+        const unsubscribed = vi.fn();
+        refreshSpy.mockReturnValue(
+            new Observable<void>((subscriber) => {
+                const subscription = pending.subscribe(subscriber);
+                return () => {
+                    subscription.unsubscribe();
+                    unsubscribed();
+                };
+            }),
+        );
+        component['onRefresh']();
+        liveSpy.mockClear();
+        storedSpy.mockClear();
+        fixture.destroy();
+        expect(unsubscribed).toHaveBeenCalledOnce();
+        if (outcome === 'success') {
+            pending.next();
+            pending.complete();
+        } else {
+            pending.error(new HttpErrorResponse({ status: 503, error: null }));
+        }
+        expect(liveSpy).not.toHaveBeenCalled();
+        expect(storedSpy).not.toHaveBeenCalled();
+        expect(component.refreshError()).toBe(false);
+        expect(component.rows()).toEqual(rows);
     });
 
     it('should rebuild the filter labels when the language changes', async () => {

@@ -177,6 +177,21 @@ class OpenAPIConfigurationTest {
     }
 
     @Test
+    void exportedRefreshOperationHasNoInputOrContentForSuccessAndFailure() {
+        var specification = YAMLMapper.builder().build().readTree(Path.of("config/openapi/openapi.yaml").toFile());
+        var operation = specification.get("paths").get("/api/global-search/admin/coverage/refresh").get("post");
+        assertThat(operation.get("operationId").stringValue()).isEqualTo("refreshCoverage");
+        assertThat(operation.has("requestBody")).isFalse();
+        assertThat(operation.has("parameters")).isFalse();
+        for (String status : List.of("200", "503")) {
+            var response = operation.get("responses").get(status);
+            assertThat(response).as("bodyless %s response", status).isNotNull();
+            assertThat(response.has("content")).isFalse();
+            assertThat(response.has("headers")).isFalse();
+        }
+    }
+
+    @Test
     void shouldGiveEverySearchTermSubclassItsOwnSchemaName() {
         var scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AssignableTypeFilter(SearchTermPageableSearchDTO.class));

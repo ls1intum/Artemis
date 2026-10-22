@@ -174,11 +174,17 @@ class IngestionCoverageResourceTest {
         verify(coverageRecomputeService, never()).readStoredCoverage(any(), any(), any(), any());
     }
 
-    @Test
-    void refreshReturns503ForAnExplicitFailedAttempt() {
-        when(coverageRecomputeService.forceRecompute()).thenReturn(CoverageRecomputeService.RecomputeOutcome.FAILED);
+    @ParameterizedTest
+    @EnumSource(CoverageRecomputeService.RecomputeOutcome.class)
+    void refreshIsBodylessAndSucceedsOnlyAfterRecomputation(CoverageRecomputeService.RecomputeOutcome outcome) {
+        when(coverageRecomputeService.forceRecompute()).thenReturn(outcome);
 
-        assertThat(resource.refreshCoverage().getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        var response = resource.refreshCoverage();
+
+        assertThat(response.getStatusCode()).isEqualTo(outcome == CoverageRecomputeService.RecomputeOutcome.RECOMPUTED ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(response.getBody()).isNull();
+        assertThat(response.getHeaders().isEmpty()).isTrue();
+        verify(coverageRecomputeService).forceRecompute();
     }
 
     @ParameterizedTest

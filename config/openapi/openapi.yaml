@@ -1036,7 +1036,8 @@ paths:
       tags: [ingestion-coverage]
       operationId: refreshCoverage
       responses:
-        '200': {description: OK}
+        '200': {description: Coverage recomputation completed}
+        '503': {description: Coverage could not be recomputed}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -3438,9 +3439,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object

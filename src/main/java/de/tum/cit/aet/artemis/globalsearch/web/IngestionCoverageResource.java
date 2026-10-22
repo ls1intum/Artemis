@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.CoverageRecomputeService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService;
 import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
@@ -174,6 +175,8 @@ public class IngestionCoverageResource {
      * @return 200 once the recompute has finished, or 503 if it could not run or failed
      */
     @PostMapping("coverage/refresh")
+    @ApiResponse(responseCode = "200", description = "Coverage recomputation completed", content = @Content)
+    @ApiResponse(responseCode = "503", description = "Coverage could not be recomputed", content = @Content)
     public ResponseEntity<Void> refreshCoverage() {
         return coverageRecomputeService.forceRecompute() == CoverageRecomputeService.RecomputeOutcome.RECOMPUTED ? ResponseEntity.ok().build()
                 : ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
