@@ -10,7 +10,7 @@ import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons'
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { CourseIngestionCoverageTableComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-coverage-table/course-ingestion-coverage-table.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionCoverage } from 'app/openapi/model/ingestion-coverage';
 
 describe('CourseIngestionCoverageTableComponent', () => {
     let component: CourseIngestionCoverageTableComponent;
@@ -172,6 +172,7 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: undefined, active: true, search: undefined });
         component['onActiveChange']('false');
         expect(component['activeFilterValue']()).toBe('false');
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: undefined, active: false, search: undefined });
         component['onActiveChange']('');
         expect(component.activeFilter()).toBeUndefined();
 
@@ -253,6 +254,58 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: 'INCOMPLETE', active: undefined, search: 'algo' });
     });
 
+    it('trims and deduplicates debounced search, and retains it through stored sort and page changes', () => {
+        fixture.detectChanges();
+        component['onPageChange'](2);
+        liveSpy.mockClear();
+        vi.useFakeTimers();
+        try {
+            component['onSearchInput']('  algo  ');
+            vi.advanceTimersByTime(299);
+            expect(liveSpy).not.toHaveBeenCalled();
+            vi.advanceTimersByTime(1);
+            expect(component.search()).toBe('algo');
+            expect(component.page()).toBe(0);
+            expect(liveSpy).toHaveBeenCalledOnce();
+            component['onSearchInput']('  algo  ');
+            vi.advanceTimersByTime(300);
+            expect(liveSpy).toHaveBeenCalledOnce();
+        } finally {
+            vi.useRealTimers();
+        }
+        component['onActiveChange']('false');
+        component['toggleSort']('release');
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'releaseDate,desc', status: undefined, active: false, search: 'algo' });
+        component['toggleSort']('release');
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'releaseDate,asc', status: undefined, active: false, search: 'algo' });
+        component['toggleSort']('worstFirst');
+        component['toggleSort']('worstFirst');
+        component['onPageChange'](1);
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 1, size: 20, sort: 'coverageGapScore,asc', status: undefined, active: false, search: 'algo' });
+        component['onActiveChange']('');
+        component['toggleSort']('name');
+        expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'title,asc', search: 'algo' });
+    });
+
+    it('emits refresh at start and reloads the table only after successful completion', () => {
+        fixture.detectChanges();
+        liveSpy.mockClear();
+        const pending = new Subject<void>();
+        refreshSpy.mockReturnValue(pending);
+        const refreshed = vi.fn();
+        component.refreshed.subscribe(refreshed);
+        component['onRefresh']();
+        expect(refreshed).toHaveBeenCalledOnce();
+        expect(component.refreshing()).toBe(true);
+        expect(liveSpy).not.toHaveBeenCalled();
+        component['onRefresh']();
+        expect(refreshSpy).toHaveBeenCalledOnce();
+        expect(refreshed).toHaveBeenCalledOnce();
+        pending.next();
+        expect(liveSpy).toHaveBeenCalledOnce();
+        expect(component.refreshing()).toBe(false);
+    });
+
     it('should rebuild the filter labels when the language changes', async () => {
         const translateService = TestBed.inject(TranslateService);
         vi.spyOn(translateService, 'instant').mockImplementation((key) => `de:${key}`);
@@ -323,6 +376,49 @@ describe('CourseIngestionCoverageTableComponent', () => {
         // The superseded request was cancelled, so its late response changes neither the rows nor the total.
         expect(component.rows().map((row) => row.courseTitle)).toEqual(['Newer']);
         expect(component.totalRecords()).toBe(1);
+    });
+
+    it('renders nullable or omitted metadata/counts and preserves zero and inactive rows', async () => {
+        const { courseTitle, releaseDate, semester, lastIngestedAt, typeCounts, ...omitted } = rows[1];
+        liveSpy.mockReturnValue(
+            of({
+                content: [
+                    { ...rows[1], courseTitle: null },
+                    { ...omitted, courseId: 3 },
+                ],
+                totalElements: 57,
+            }),
+        );
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(component.totalRecords()).toBe(57);
+        expect(component.rows()[1].active).toBe(false);
+        expect(component.rows()[1].coverageGapScore).toBe(0);
+        expect(component['cell'](omitted, 'exercise')).toEqual({ text: '–', class: 'text-muted-color' });
+        const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('[data-testid="coverage-row-open"]');
+        expect(buttons[0].getAttribute('aria-label')).toContain('2');
+        expect(buttons[1].getAttribute('aria-label')).toContain('3');
+    });
+
+    it('cancels superseded errors and destruction without changing newer loading state or timestamps', () => {
+        const first = new Subject<PageableResult<IngestionCoverage>>();
+        const second = new Subject<PageableResult<IngestionCoverage>>();
+        liveSpy.mockReturnValueOnce(first).mockReturnValueOnce(second);
+        fixture.detectChanges();
+        expect(first.observed).toBe(true);
+        component.load();
+        expect(first.observed).toBe(false);
+        expect(second.observed).toBe(true);
+        first.error(new Error('stale'));
+        expect(component.loading()).toBe(true);
+        expect(component.error()).toBe(false);
+        second.next({ content: rows, totalElements: 57 });
+        expect(component.totalRecords()).toBe(57);
+        expect(component.lastUpdated()).toBe(rows[0].computedAt);
+        expect(component.loading()).toBe(false);
+        fixture.destroy();
+        expect(second.observed).toBe(false);
     });
 
     it('should mark a type with orphaned objects as incomplete, the way the browser does', () => {

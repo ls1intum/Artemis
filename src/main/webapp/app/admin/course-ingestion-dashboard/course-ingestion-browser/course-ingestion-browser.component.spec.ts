@@ -7,7 +7,8 @@ import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionBrowserComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser/course-ingestion-browser.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { CourseBrowserData, IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { CourseBrowserData } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionCoverage } from 'app/openapi/model/ingestion-coverage';
 
 describe('CourseIngestionBrowserComponent', () => {
     let component: CourseIngestionBrowserComponent;
@@ -192,6 +193,35 @@ describe('CourseIngestionBrowserComponent', () => {
 
     it('should fall back to the matrix row until the live counts arrive', () => {
         expect(component.typeCounts()).toEqual(course.typeCounts);
+    });
+
+    it('uses no counts while a row with omitted counts is loading, then honors an empty live list', async () => {
+        const pending = new Subject<CourseBrowserData>();
+        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(pending);
+        const { typeCounts, ...withoutCounts } = course;
+        fixture.componentRef.setInput('course', withoutCounts);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        expect(component.loading()).toBe(true);
+        expect(component.typeCounts()).toEqual([]);
+        expect(component.incompleteTypeCount()).toBe(0);
+        pending.next({ ...browserData, typeCounts: [] });
+        fixture.detectChanges();
+        expect(component.loading()).toBe(false);
+        expect(component.typeCounts()).toEqual([]);
+    });
+
+    it('replaces stale row counts with an empty live count list', async () => {
+        const pending = new Subject<CourseBrowserData>();
+        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(pending);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        expect(component.typeCounts()).toEqual(course.typeCounts);
+        expect(component.incompleteTypeCount()).toBeGreaterThan(0);
+        pending.next({ ...browserData, typeCounts: [] });
+        fixture.detectChanges();
+        expect(component.typeCounts()).toEqual([]);
+        expect(component.incompleteTypeCount()).toBe(0);
     });
 
     it('should drop the loaded data on close so reopening shows current state', async () => {
