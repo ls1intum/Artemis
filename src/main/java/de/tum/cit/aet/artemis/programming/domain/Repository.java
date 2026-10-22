@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
  */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
 
-    /** The hooks directory of every repository: an absolute path that does not exist, so that git finds no hooks. */
+    /** The hooks directory of every repository: below the null device no hook can exist, so that git finds none. This relies on a POSIX file system. */
     private static final String NO_HOOKS_PATH = "/dev/null";
 
     private ProgrammingExerciseParticipation participation;

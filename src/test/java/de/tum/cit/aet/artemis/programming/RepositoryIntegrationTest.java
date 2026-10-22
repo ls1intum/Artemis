@@ -1054,6 +1054,60 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateFile_withInvalidName_isRejected() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFolderName + "/.git");
+        request.postWithoutResponseBody(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.BAD_REQUEST, params);
+        // The file listing leaves such entries out, so the working copy itself is checked.
+        assertThat(checkoutPathOf(participation).resolve(currentLocalFolderName).resolve(".git")).doesNotExist();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateFolder_withInvalidName_isRejected() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("folder", currentLocalFolderName + "/.git");
+        request.postWithoutResponseBody(participationsBaseUrl + participation.getId() + "/repository/folder", HttpStatus.BAD_REQUEST, params);
+        assertThat(checkoutPathOf(participation).resolve(currentLocalFolderName).resolve(".git")).doesNotExist();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRenameFile_toInvalidName_isRejected() throws Exception {
+        String nestedFile = currentLocalFolderName + "/content.txt";
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", nestedFile);
+        request.postWithoutResponseBody(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.OK, params);
+
+        FileMove fileMove = new FileMove(nestedFile, ".git");
+        request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/rename-file", fileMove, HttpStatus.BAD_REQUEST, null);
+
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).containsKey(nestedFile);
+        assertThat(checkoutPathOf(participation).resolve(currentLocalFolderName).resolve(".git")).doesNotExist();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "studentscm", roles = "USER")
+    void testGetFiles_forParticipationWithAnotherLogin_usesItsOwnFolder() throws Exception {
+        String login = TEST_PREFIX + "studentscm";
+        userUtilService.addStudentToCourse(login, course);
+        var slug = (programmingExercise.getProjectKey() + "-" + login).toLowerCase(Locale.ROOT);
+        createRepositoryForSlug(slug);
+        var otherParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, login);
+        otherParticipation.setRepositoryUri(buildLocalVcUri(slug));
+        studentParticipationRepository.save(otherParticipation);
+
+        var files = request.getMap(participationsBaseUrl + otherParticipation.getId() + "/repository/files", HttpStatus.OK, String.class, FileType.class);
+
+        assertThat(files).containsKey(currentLocalFileName);
+        Path checkoutPath = checkoutPathOf(otherParticipation);
+        assertThat(checkoutPath).hasFileName(slug);
+        assertThat(checkoutPath.resolve(".git")).isDirectory();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -1594,6 +1648,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     private void deleteDirectoryIfExists(Path path) throws IOException {
         RepositoryExportTestUtil.safeDeleteDirectory(path);
+    }
+
+    private Path checkoutPathOf(ProgrammingExerciseStudentParticipation studentParticipation) {
+        return gitService.getDefaultLocalCheckOutPathOfRepo(studentParticipation.getVcsRepositoryUri());
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {
