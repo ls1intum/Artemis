@@ -203,7 +203,7 @@
                 "viewConversation": "Unterhaltung anzeigen",
                 "forwardedFrom": "Weitergeleitet von",
                 "forwardedFromUnknown": "Weitergeleitet von einer Konversation",
-                "forwardedMessageDeleted": "Diese Nachricht wurde gelöscht",
+                "forwardedMessageUnavailable": "Diese weitergeleitete Nachricht ist nicht verfügbar. Das Original wurde möglicherweise gelöscht.",
                 "showLess": "Weniger anzeigen",
                 "showMore": "Mehr anzeigen"
             },
