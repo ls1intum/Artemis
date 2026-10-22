@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Duration;
@@ -35,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
  * Integration tests for {@link IngestionCoverageResource}: the admin-only ingestion-coverage endpoints. Verifies that
  * non-admins are forbidden, the overview reports reachability and per-collection counts, the stored-coverage endpoint
  * reads and maps the projection, the live-per-page endpoint computes coverage for a page of courses, and the refresh
- * endpoint is accepted.
+ * endpoint returns only after recomputation finishes.
  */
 @EnabledIf("isWeaviateEnabled")
 class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -88,10 +89,12 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void nonAdminIsForbiddenOnEveryEndpoint() throws Exception {
+        var stored = ingestionCoverageRepository.save(storedEntry(IngestionCoverageStatus.INCOMPLETE));
         request.get(BASE + "index/overview", HttpStatus.FORBIDDEN, IndexOverviewDTO.class);
         request.getList(BASE + "coverage", HttpStatus.FORBIDDEN, IngestionCoverageDTO.class);
         request.getList(BASE + "coverage/page", HttpStatus.FORBIDDEN, IngestionCoverageDTO.class);
-        request.postWithoutResponseBody(BASE + "coverage/refresh", null, HttpStatus.FORBIDDEN);
+        request.performMvcRequest(post(BASE + "coverage/refresh")).andExpect(status().isForbidden());
+        assertThat(ingestionCoverageRepository.findByCourseId(course.getId()).orElseThrow().getTypeCounts()).isEqualTo(stored.getTypeCounts());
     }
 
     @Test
@@ -253,11 +256,23 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
     void refreshAnswersOnceTheRecomputeHasFinished() throws Exception {
         ingestionCoverageRepository.save(storedEntry(IngestionCoverageStatus.INCOMPLETE));
 
-        request.postWithoutResponseBody(BASE + "coverage/refresh", null, HttpStatus.OK);
+        var response = request.performMvcRequest(post(BASE + "coverage/refresh")).andExpect(status().isOk()).andReturn().getResponse();
+
+        assertThat(response.getContentAsByteArray()).isEmpty();
 
         // The seeded row claims one missing exercise the course does not have, so a finished recompute has replaced it.
         assertThat(ingestionCoverageRepository.findByCourseId(course.getId()).orElseThrow().getTypeCounts())
                 .noneMatch(count -> count.type().equals("exercise") && count.missing() > 0);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonymousCannotRefreshOrChangeTheProjection() throws Exception {
+        var stored = ingestionCoverageRepository.save(storedEntry(IngestionCoverageStatus.INCOMPLETE));
+
+        request.performMvcRequest(post(BASE + "coverage/refresh")).andExpect(status().isUnauthorized());
+
+        assertThat(ingestionCoverageRepository.findByCourseId(course.getId()).orElseThrow().getTypeCounts()).isEqualTo(stored.getTypeCounts());
     }
 
     @Test

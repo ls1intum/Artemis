@@ -1,5 +1,4 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
 import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
@@ -35,17 +34,14 @@ export interface StoredCoverageRequest extends LiveCoverageRequest {
 }
 
 /**
- * Read-only client for the admin ingestion-observability dashboard endpoints exposed by `IngestionCoverageResource`.
+ * Client for the admin ingestion-observability dashboard endpoints, including forced coverage refresh.
  * The paged endpoints return the array body plus a total count read from the `X-Total-Count` response header, which is
  * why they observe the full response.
  */
 @Service()
 export class CourseIngestionDashboardService {
-    private http = inject(HttpClient);
     private readonly ingestionCoverageApi = inject(IngestionCoverageApi);
     private readonly ingestionBrowserApi = inject(IngestionBrowserApi);
-
-    private readonly baseUrl = 'api/global-search/admin';
 
     /** GET the index overview: Weaviate reachability + address, whether Iris is enabled, and per-collection object counts. */
     getIndexOverview(): Observable<IndexOverview> {
@@ -96,9 +92,9 @@ export class CourseIngestionDashboardService {
         return this.ingestionBrowserApi.getUnitContent(courseId, unitId, key);
     }
 
-    /** POST to force a background recompute of the whole projection (no-op if one is already running). */
+    /** POST to force a full recompute, waiting for completion and surfacing a failed attempt through the error channel. */
     refreshCoverage(): Observable<void> {
-        return this.http.post<void>(`${this.baseUrl}/coverage/refresh`, {});
+        return this.ingestionCoverageApi.refreshCoverage();
     }
 
     /** Adapts the UI's single Spring sort criterion without overriding server pagination defaults. */

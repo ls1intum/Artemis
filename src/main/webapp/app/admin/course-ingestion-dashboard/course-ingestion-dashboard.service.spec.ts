@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -15,8 +15,6 @@ import { IndexedContentObject } from 'app/openapi/model/indexed-content-object';
 describe('CourseIngestionDashboardService', () => {
     let service: CourseIngestionDashboardService;
     let httpMock: HttpTestingController;
-
-    const baseUrl = 'api/global-search/admin';
 
     const mockOverview: IndexOverview = {
         weaviateReachable: true,
@@ -291,25 +289,75 @@ describe('CourseIngestionDashboardService', () => {
         httpMock.verify();
     });
 
-    it('should POST to force a coverage refresh', async () => {
-        const resultPromise = firstValueFrom(service.refreshCoverage());
+    describe('generated coverage refresh transport', () => {
+        const path = '/api/global-search/admin/coverage/refresh';
 
-        const req = httpMock.expectOne(`${baseUrl}/coverage/refresh`);
-        expect(req.request.method).toBe('POST');
-        req.flush(null);
+        it('is cold and emits and completes on a genuine empty 200 without a request body', () => {
+            const refresh$ = service.refreshCoverage();
+            httpMock.expectNone(path);
+            const next = vi.fn();
+            const complete = vi.fn();
+            const error = vi.fn();
+            refresh$.subscribe({ next, complete, error });
 
-        await resultPromise;
-        httpMock.verify();
-    });
+            const req = httpMock.expectOne(path);
+            expect(req.request.method).toBe('POST');
+            expect(req.request.urlWithParams).toBe(path);
+            expect(req.request.params.keys()).toEqual([]);
+            expect(req.request.body).toBeNull();
+            expect(req.request.headers.has('Content-Type')).toBe(false);
+            expect(req.request.responseType).toBe('json');
+            expect(next).not.toHaveBeenCalled();
+            req.flush(null, { status: 200, statusText: 'OK' });
 
-    it('should surface a failed coverage refresh to the dashboard error UI', async () => {
-        const resultPromise = firstValueFrom(service.refreshCoverage());
+            // Angular delivers an empty response through next; void does not require literal undefined at runtime.
+            expect(next).toHaveBeenCalledOnce();
+            expect(complete).toHaveBeenCalledOnce();
+            expect(error).not.toHaveBeenCalled();
+            httpMock.expectNone(path);
 
-        const req = httpMock.expectOne(`${baseUrl}/coverage/refresh`);
-        req.flush({ title: 'Coverage unavailable' }, { status: 503, statusText: 'Service Unavailable' });
+            refresh$.subscribe({ next, complete, error });
+            httpMock.expectOne(path).flush(null);
+            expect(next).toHaveBeenCalledTimes(2);
+            expect(complete).toHaveBeenCalledTimes(2);
+            httpMock.verify();
+        });
 
-        await expect(resultPromise).rejects.toMatchObject({ status: 503 });
-        httpMock.verify();
+        it.each([401, 403, 503])('propagates an empty %s without retry and recovers on an explicit call', async (status) => {
+            const failed = firstValueFrom(service.refreshCoverage());
+            const rejection = expect(failed).rejects.toMatchObject({ status, error: null });
+            httpMock.expectOne(path).flush(null, { status, statusText: 'Refresh rejected' });
+            await rejection;
+            httpMock.expectNone(path);
+
+            const recovered = firstValueFrom(service.refreshCoverage());
+            const req = httpMock.expectOne(path);
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toBeNull();
+            req.flush(null);
+            await recovered;
+            httpMock.verify();
+        });
+
+        it('propagates a network failure without an automatic POST retry', async () => {
+            const failed = firstValueFrom(service.refreshCoverage());
+            const rejection = expect(failed).rejects.toMatchObject({ status: 0 });
+            httpMock.expectOne(path).error(new ProgressEvent('error'));
+            await rejection;
+            httpMock.expectNone(path);
+            httpMock.verify();
+        });
+
+        it('cancels a pending refresh when unsubscribed', () => {
+            const next = vi.fn();
+            const subscription = service.refreshCoverage().subscribe(next);
+            const req = httpMock.expectOne(path);
+            expect(req.cancelled).toBe(false);
+            subscription.unsubscribe();
+            expect(req.cancelled).toBe(true);
+            expect(next).not.toHaveBeenCalled();
+            httpMock.verify();
+        });
     });
 
     it('should GET the complete browser payload for the requested course', async () => {
