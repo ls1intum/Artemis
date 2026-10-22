@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -19,6 +18,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 // Rows outlive the shape that wrote them: this is read back by whatever the record looks like when the projection is
 // next read, so a component removed in a later release must not make the rows written before it unreadable.
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IngestionTypeCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type, long expected, long indexed, long missing, long orphaned) {
 }

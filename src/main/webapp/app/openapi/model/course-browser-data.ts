@@ -15,9 +15,9 @@ import type { MissingEntity } from './missing-entity';
 import type { MissingContent } from './missing-content';
 
 export interface CourseBrowserData {
-    entities?: Array<IndexedEntity>;
-    contentPresence?: Array<IndexedContentPresence>;
-    missingEntities?: Array<MissingEntity>;
-    contentGaps?: Array<MissingContent>;
-    typeCounts?: Array<IngestionTypeCount>;
+    entities: Array<IndexedEntity>;
+    contentPresence: Array<IndexedContentPresence>;
+    missingEntities: Array<MissingEntity>;
+    contentGaps: Array<MissingContent>;
+    typeCounts: Array<IngestionTypeCount>;
 }
