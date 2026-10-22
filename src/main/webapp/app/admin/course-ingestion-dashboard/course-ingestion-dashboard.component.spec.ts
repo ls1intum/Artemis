@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { provideHttpClient } from '@angular/common/http';
+import { Subject, of } from 'rxjs';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionDashboardComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
+import { CourseIngestionCoverageTableComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-coverage-table/course-ingestion-coverage-table.component';
+import { CourseIngestionOverviewComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-overview/course-ingestion-overview.component';
 
 import { IndexOverview } from 'app/openapi/model/index-overview';
 import { IngestionCoverage } from 'app/openapi/model/ingestion-coverage';
@@ -98,5 +100,33 @@ describe('CourseIngestionDashboardComponent', () => {
 
         table.refreshed.emit();
         expect(reloadSpy).toHaveBeenCalledOnce();
+    });
+
+    it.each(['success', 'error'] as const)('reloads the overview at refresh start without emitting again on POST %s', async (outcome) => {
+        const pending = new Subject<void>();
+        const refresh = vi.spyOn(service, 'refreshCoverage').mockReturnValue(pending);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const table: CourseIngestionCoverageTableComponent = fixture.debugElement.query((node) => node.name === 'jhi-course-ingestion-coverage-table').componentInstance;
+        const overviewComponent: CourseIngestionOverviewComponent = fixture.debugElement.query((node) => node.name === 'jhi-course-ingestion-overview').componentInstance;
+        const reload = vi.spyOn(overviewComponent, 'reload');
+        const load = vi.spyOn(table, 'load');
+
+        table['onRefresh']();
+        expect(refresh).toHaveBeenCalledOnce();
+        expect(reload).toHaveBeenCalledOnce();
+        expect(load).not.toHaveBeenCalled();
+        if (outcome === 'success') {
+            pending.next();
+            pending.complete();
+            expect(load).toHaveBeenCalledOnce();
+            expect(table.refreshError()).toBe(false);
+        } else {
+            pending.error(new HttpErrorResponse({ status: 503, error: null }));
+            expect(load).not.toHaveBeenCalled();
+            expect(table.refreshError()).toBe(true);
+        }
+        expect(table.refreshing()).toBe(false);
+        expect(reload).toHaveBeenCalledOnce();
     });
 });
