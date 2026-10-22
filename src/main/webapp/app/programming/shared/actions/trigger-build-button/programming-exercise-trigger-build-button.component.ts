@@ -130,6 +130,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                             this.isBuilding.set(false);
                             this.participationHasLatestSubmissionWithoutResult.set(false);
                             break;
+                        case ProgrammingSubmissionState.IS_QUEUED:
                         case ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION:
                             this.isBuilding.set(true);
                             break;

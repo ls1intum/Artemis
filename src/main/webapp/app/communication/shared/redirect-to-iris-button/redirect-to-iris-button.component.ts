@@ -13,11 +13,12 @@ import { CommunicationService } from 'app/communication/service/communication.se
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-redirect-to-iris-button',
     templateUrl: './redirect-to-iris-button.component.html',
-    imports: [IrisLogoComponent, NgClass, FaIconComponent],
+    imports: [IrisLogoComponent, NgClass, FaIconComponent, TumAetUiButtonDirective],
 })
 export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     courseConversationsService = inject(CourseConversationsService);

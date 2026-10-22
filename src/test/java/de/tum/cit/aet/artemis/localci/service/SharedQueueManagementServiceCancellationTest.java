@@ -80,7 +80,11 @@ class SharedQueueManagementServiceCancellationTest {
     }
 
     private static BuildJobQueueItem job(String id, long courseId, long participationId) {
-        return new BuildJobQueueItem(id, id, new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), participationId, courseId, 3L, 0, 1, BuildStatus.QUEUED,
+        return jobOfExercise(id, courseId, participationId, 3L);
+    }
+
+    private static BuildJobQueueItem jobOfExercise(String id, long courseId, long participationId, long exerciseId) {
+        return new BuildJobQueueItem(id, id, new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), participationId, courseId, exerciseId, 0, 1, BuildStatus.QUEUED,
                 new RepositoryInfo("repo", RepositoryType.USER, RepositoryType.USER, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(ZonedDateTime.now(), null, null, null, 0),
                 new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null);
@@ -185,6 +189,29 @@ class SharedQueueManagementServiceCancellationTest {
         assertThat(removed.getValue()).as("the waiting build of that participation is removed, and only that one").containsExactly(queued);
         verify(buildJobRepository).updateBuildJobStatus("job-queued", BuildStatus.CANCELLED);
         verify(canceledBuildJobsTopic).publish("job-running");
+        verify(canceledBuildJobsTopic, never()).publish("job-other-running");
+    }
+
+    @Test
+    void cancelAllJobsForExercise_reachesTheQueuedAndRunningJobsOfEveryParticipationOfThatExercise() {
+        // The template, solution and every student participation of an exercise build separately. All of them have to stop when the exercise is deleted,
+        // while the builds of other exercises, even in the same course, must go on.
+        BuildJobQueueItem queuedTemplate = jobOfExercise("job-template", 1L, 10L, 7L);
+        BuildJobQueueItem queuedStudent = jobOfExercise("job-student", 1L, 12L, 7L);
+        when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedTemplate, jobOfExercise("job-other", 1L, 99L, 8L), queuedStudent)),
+                new ArrayList<>(List.of(jobOfExercise("job-other", 1L, 99L, 8L))));
+        withRunningJobs(jobOfExercise("job-solution", 1L, 11L, 7L), jobOfExercise("job-other-running", 1L, 98L, 8L));
+        when(processingJobs.remove("job-solution")).thenReturn(jobOfExercise("job-solution", 1L, 11L, 7L));
+
+        sharedQueueManagementService.cancelAllJobsForExercise(7L);
+
+        ArgumentCaptor<List<BuildJobQueueItem>> removed = ArgumentCaptor.captor();
+        verify(buildJobQueue).removeAll(removed.capture());
+        assertThat(removed.getValue()).as("the waiting builds of that exercise are removed, and only those").containsExactly(queuedTemplate, queuedStudent);
+        verify(buildJobRepository).updateBuildJobStatus("job-template", BuildStatus.CANCELLED);
+        verify(buildJobRepository).updateBuildJobStatus("job-student", BuildStatus.CANCELLED);
+        verify(buildJobRepository, never()).updateBuildJobStatus("job-other", BuildStatus.CANCELLED);
+        verify(canceledBuildJobsTopic).publish("job-solution");
         verify(canceledBuildJobsTopic, never()).publish("job-other-running");
     }
 }

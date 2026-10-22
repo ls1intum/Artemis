@@ -66,9 +66,12 @@
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
 @source './app/exercise/result';
+@source './app/exercise/participation-submission';
 @source './app/exercise/import';
 @source './app/iris/manage/settings';
 @source './app/editor/markdown-editor';
+@source './app/communication/message-editor';
+@source './app/communication/posting-markdown-editor';
 
 /* The whole exam mode, and the example solution that only its summary shows. */
 @source './app/exam';
