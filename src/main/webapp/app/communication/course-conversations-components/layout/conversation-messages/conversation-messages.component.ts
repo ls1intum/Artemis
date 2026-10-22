@@ -640,9 +640,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private buildSourceRequests(sourcePostIds: number[], sourceAnswerIds: number[]): Observable<Posting[] | undefined>[] {
         const requests: Observable<Posting[] | undefined>[] = [];
 
-        // forwarded-source previews are non-critical: a source may live in a conversation the viewer cannot access (403),
-        // or the fetch may otherwise fail. Swallow any error to undefined so one bad source does not break rendering of the
-        // whole message list (extractFetchedSources tolerates undefined).
+        // A source may have been deleted or its preview may fail to load. Keep the rest of the chat usable;
+        // the forwarded-message component shows an inline fallback for unavailable sources.
         if (sourcePostIds.length > 0) {
             requests.push(this.communicationService.getSourcePostsByIds(sourcePostIds).pipe(catchError(() => of(undefined))));
         }
@@ -667,7 +666,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         responses.forEach((response) => {
             if (Array.isArray(response) && response.length > 0) {
                 const first = response[0];
-                if ((first as Post).conversation !== undefined) {
+                if ((first as Post).conversation !== undefined || (first as Post).resolved !== undefined) {
                     fetchedPosts = response;
                 } else if ((first as AnswerPost).resolvesPost !== undefined) {
                     fetchedAnswerPosts = response;

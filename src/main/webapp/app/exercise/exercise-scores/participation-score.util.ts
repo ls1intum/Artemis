@@ -3,12 +3,12 @@ import { Participation, ParticipationType } from 'app/exercise/shared/entities/p
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { ParticipationScoreDTO } from './participation-score-dto.model';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 
 /**
  * Builds a Result object from the flat DTO fields for use with jhi-result.
  */
-export function scoreDtoToResult(dto: ParticipationScoreDTO): Result | undefined {
+export function scoreDtoToResult(dto: ParticipationManagementDTO): Result | undefined {
     if (!dto.resultId) return undefined;
     const result = new Result();
     result.id = dto.resultId;
@@ -30,7 +30,7 @@ export function scoreDtoToResult(dto: ParticipationScoreDTO): Result | undefined
  * one per correction round, which is what the assessment actions of each round act on. The newest result is often
  * one of the rounds itself, so it is not added twice.
  */
-function scoreDtoToResults(dto: ParticipationScoreDTO): Result[] {
+function scoreDtoToResults(dto: ParticipationManagementDTO): Result[] {
     const latestResult = scoreDtoToResult(dto);
     const roundResults = (dto.correctionRoundResults ?? [])
         .filter((roundResult) => roundResult.resultId !== dto.resultId)
@@ -50,7 +50,7 @@ function scoreDtoToResults(dto: ParticipationScoreDTO): Result[] {
  * Builds the minimal submission that {@link scoreDtoToParticipation} embeds. Programming exercises get a real
  * {@link ProgrammingSubmission}, which is where `buildFailed` is declared.
  */
-function scoreDtoToSubmission(dto: ParticipationScoreDTO, exercise?: Exercise): Submission {
+function scoreDtoToSubmission(dto: ParticipationManagementDTO, exercise?: Exercise): Submission {
     const results = scoreDtoToResults(dto);
     if (exercise?.type === ExerciseType.PROGRAMMING) {
         const submission = new ProgrammingSubmission();
@@ -66,7 +66,7 @@ function scoreDtoToSubmission(dto: ParticipationScoreDTO, exercise?: Exercise): 
  * Builds a minimal Participation-like object from the flat DTO so that jhi-result and
  * manage-assessment-buttons can render results, assessment links and cancel buttons.
  */
-export function scoreDtoToParticipation(dto: ParticipationScoreDTO, exercise?: Exercise): Participation {
+export function scoreDtoToParticipation(dto: ParticipationManagementDTO, exercise?: Exercise): Participation {
     return {
         id: dto.participationId,
         type: exercise?.type === ExerciseType.PROGRAMMING ? ParticipationType.PROGRAMMING : ParticipationType.STUDENT,

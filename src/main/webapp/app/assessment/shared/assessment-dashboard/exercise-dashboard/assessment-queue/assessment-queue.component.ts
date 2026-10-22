@@ -18,7 +18,7 @@ import {
 import { finalize, map } from 'rxjs/operators';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { CorrectionRoundResultDTO, ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
+import { CorrectionRoundResultDTO, ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { scoreDtoToParticipation, scoreDtoToResult } from 'app/exercise/exercise-scores/participation-score.util';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -46,7 +46,7 @@ const STATE_SEVERITY: Record<AssessmentState, TumAetUiTagSeverity> = {
 /**
  * Derives where an assessment stands from its newest manual result, which belongs to the latest correction round.
  */
-export function getAssessmentState(dto: ParticipationScoreDTO, correctionRoundsEnabled = 1): AssessmentState {
+export function getAssessmentState(dto: ParticipationManagementDTO, correctionRoundsEnabled = 1): AssessmentState {
     if (!dto.submissionId) {
         return 'noSubmission';
     }
@@ -99,7 +99,7 @@ export class AssessmentQueueComponent {
     readonly participantSortField = computed(() => (this.teamMode() ? 'participantName' : 'participationId'));
     readonly translationKey = computed(() => 'artemisApp.exerciseAssessmentDashboard.' + (this.teamMode() ? 'myTeams' : 'students'));
 
-    readonly rows = signal<ParticipationScoreDTO[]>([]);
+    readonly rows = signal<ParticipationManagementDTO[]>([]);
     readonly totalRecords = signal(0);
     readonly isLoading = signal(false);
     private lastQuery?: TumAetUiTableQueryEvent;
@@ -108,11 +108,11 @@ export class AssessmentQueueComponent {
     readonly course = computed(() => getCourseFromExercise(this.exercise())!);
     readonly isProgrammingExercise = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
 
-    readonly participantTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('participantTemplate');
-    readonly statusTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('statusTemplate');
-    readonly resultTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('resultTemplate');
+    readonly participantTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('participantTemplate');
+    readonly statusTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('statusTemplate');
+    readonly resultTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('resultTemplate');
 
-    readonly columns = computed<ColumnDef<ParticipationScoreDTO>[]>(() => [
+    readonly columns = computed<ColumnDef<ParticipationManagementDTO>[]>(() => [
         { field: this.participantSortField(), headerKey: this.translationKey() + '.participant', sort: true, templateRef: this.participantTemplate() },
         { headerKey: 'artemisApp.exerciseAssessmentDashboard.myTeams.status', templateRef: this.statusTemplate() },
         { field: 'score', headerKey: 'artemisApp.exerciseAssessmentDashboard.myTeams.result', sort: true, templateRef: this.resultTemplate() },
@@ -130,7 +130,7 @@ export class AssessmentQueueComponent {
         const request = this.isTestRun()
             ? this.submissionService.getTestRunSubmissionsForExercise(this.exercise().id!).pipe(
                   map((response) => {
-                      const content = (response.body ?? []).map((submission): ParticipationScoreDTO => {
+                      const content = (response.body ?? []).map((submission): ParticipationManagementDTO => {
                           const result = getLatestSubmissionResult(submission);
                           return {
                               participationId: submission.participation!.id!,
@@ -194,31 +194,31 @@ export class AssessmentQueueComponent {
         }
     }
 
-    state(dto: ParticipationScoreDTO): AssessmentState {
+    state(dto: ParticipationManagementDTO): AssessmentState {
         return getAssessmentState(dto, this.correctionRoundsEnabled());
     }
 
-    stateSeverity(dto: ParticipationScoreDTO): TumAetUiTagSeverity {
+    stateSeverity(dto: ParticipationManagementDTO): TumAetUiTagSeverity {
         return STATE_SEVERITY[this.state(dto)];
     }
 
-    teamMembers(dto: ParticipationScoreDTO): string {
+    teamMembers(dto: ParticipationManagementDTO): string {
         return (dto.teamStudents ?? []).map((student) => student.name ?? student.login).join(', ');
     }
 
-    ownedCorrectionRounds(dto: ParticipationScoreDTO): number[] {
+    ownedCorrectionRounds(dto: ParticipationManagementDTO): number[] {
         return (dto.correctionRoundResults ?? []).filter((result) => result.ownedByCurrentUser).map((result) => result.correctionRound ?? 0);
     }
 
-    toParticipation(dto: ParticipationScoreDTO) {
+    toParticipation(dto: ParticipationManagementDTO) {
         return scoreDtoToParticipation(dto, this.exercise());
     }
 
-    toResult(dto: ParticipationScoreDTO) {
+    toResult(dto: ParticipationManagementDTO) {
         return scoreDtoToResult(dto);
     }
 
-    repositoryLink(dto: ParticipationScoreDTO): (string | number)[] {
+    repositoryLink(dto: ParticipationManagementDTO): (string | number)[] {
         return getLocalRepositoryLink(
             this.course().id!,
             this.exercise().id!,
@@ -229,11 +229,11 @@ export class AssessmentQueueComponent {
         );
     }
 
-    commitHistoryLink(dto: ParticipationScoreDTO): (string | number)[] {
+    commitHistoryLink(dto: ParticipationManagementDTO): (string | number)[] {
         return [...this.repositoryLink(dto), 'commit-history'];
     }
 
-    teamLink(dto: ParticipationScoreDTO): (string | number)[] {
+    teamLink(dto: ParticipationManagementDTO): (string | number)[] {
         return ['/course-management', this.course().id!, 'exercises', this.exercise().id!, 'teams', dto.teamId!];
     }
 }

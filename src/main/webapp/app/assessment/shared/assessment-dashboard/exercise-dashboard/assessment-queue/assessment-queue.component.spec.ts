@@ -11,7 +11,7 @@ import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -23,7 +23,7 @@ describe('AssessmentQueueComponent', () => {
     let participationService: ParticipationService;
 
     const exercise = { id: 7, type: ExerciseType.PROGRAMMING, teamMode: true, course: { id: 3 } } as Exercise;
-    const teamRow = { participationId: 11, submissionCount: 1, submissionId: 12, teamId: 13, testRun: false, assessableCorrectionRounds: [0] } as ParticipationScoreDTO;
+    const teamRow = { participationId: 11, submissionCount: 1, submissionId: 12, teamId: 13, testRun: false, assessableCorrectionRounds: [0] } as ParticipationManagementDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -62,9 +62,9 @@ describe('AssessmentQueueComponent', () => {
     });
 
     it('ignores stale responses, completions and errors while a newer request is loading', () => {
-        const first = new Subject<{ content: ParticipationScoreDTO[]; totalElements: number }>();
-        const second = new Subject<{ content: ParticipationScoreDTO[]; totalElements: number }>();
-        const third = new Subject<{ content: ParticipationScoreDTO[]; totalElements: number }>();
+        const first = new Subject<{ content: ParticipationManagementDTO[]; totalElements: number }>();
+        const second = new Subject<{ content: ParticipationManagementDTO[]; totalElements: number }>();
+        const third = new Subject<{ content: ParticipationManagementDTO[]; totalElements: number }>();
         vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValueOnce(first).mockReturnValueOnce(second).mockReturnValueOnce(third);
         const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
         comp.loadPage({ pageIndex: 0, pageSize: 20 });
@@ -86,7 +86,7 @@ describe('AssessmentQueueComponent', () => {
     });
 
     it('reports errors from the latest request and clears its loading state', () => {
-        const response = new Subject<{ content: ParticipationScoreDTO[]; totalElements: number }>();
+        const response = new Subject<{ content: ParticipationManagementDTO[]; totalElements: number }>();
         vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(response);
         const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
         comp.loadPage({ pageIndex: 0, pageSize: 20 });
@@ -299,7 +299,7 @@ describe('AssessmentQueueComponent', () => {
             ['complaint', { correctionRoundResults: [manual({ completionDate: dayjs(), hasComplaint: true })] }],
             ['inProgress', { correctionRoundResults: [manual({ completionDate: dayjs(), hasComplaint: true }), manual({ resultId: 2, correctionRound: 1 })] }],
         ])('is %s', (state, overrides) => {
-            expect(getAssessmentState({ ...teamRow, ...overrides } as ParticipationScoreDTO)).toBe(state);
+            expect(getAssessmentState({ ...teamRow, ...overrides } as ParticipationManagementDTO)).toBe(state);
         });
     });
 });

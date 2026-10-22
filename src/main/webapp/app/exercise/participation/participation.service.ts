@@ -3,9 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { PageableResult, ParticipationScoreSearch, ParticipationSearch } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, ParticipationSearch } from 'app/foundation/pagination/pageable-table';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
-import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -106,46 +105,18 @@ export class ParticipationService {
     }
 
     searchParticipations(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
-        const params: Record<string, string | number> = {
-            page: search.page,
-            pageSize: search.pageSize,
-            sortingOrder: search.sortingOrder,
-            sortedColumn: search.sortedColumn,
-            searchTerm: search.searchTerm,
-        };
-        if (search.filterProp) {
-            params['filterProp'] = search.filterProp;
-        }
-        return this.http
-            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page`, {
-                params,
-                observe: 'response',
-            })
-            .pipe(
-                map((res: HttpResponse<ParticipationManagementDTO[]>) => {
-                    const content = res.body ?? [];
-                    content.forEach((dto) => {
-                        dto.initializationDate = convertDateFromServer(dto.initializationDate);
-                        dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
-                    });
-                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
-                }),
-            );
+        return this.searchParticipationResults(exerciseId, search, 'participations/page');
     }
 
-    searchParticipationScores(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
-        return this.searchParticipationResults(exerciseId, search, 'participations/scores');
-    }
-
-    searchAssessmentQueue(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
+    searchAssessmentQueue(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
         return this.searchParticipationResults(exerciseId, search, 'assessment-queue');
     }
 
     private searchParticipationResults(
         exerciseId: number,
-        search: ParticipationScoreSearch,
-        resource: 'participations/scores' | 'assessment-queue',
-    ): Observable<PageableResult<ParticipationScoreDTO>> {
+        search: ParticipationSearch,
+        resource: 'participations/page' | 'assessment-queue',
+    ): Observable<PageableResult<ParticipationManagementDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,
             pageSize: search.pageSize,
@@ -166,15 +137,16 @@ export class ParticipationService {
             params['scoreRangeUpper'] = search.scoreRangeUpper;
         }
         return this.http
-            .get<ParticipationScoreDTO[]>(`api/exercise/exercises/${exerciseId}/${resource}`, {
+            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/${resource}`, {
                 params,
                 observe: 'response',
             })
             .pipe(
-                map((res: HttpResponse<ParticipationScoreDTO[]>) => {
+                map((res: HttpResponse<ParticipationManagementDTO[]>) => {
                     const content = res.body ?? [];
                     content.forEach((dto) => {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
+                        dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
                         dto.completionDate = convertDateFromServer(dto.completionDate);
                         dto.correctionRoundResults?.forEach((result) => {
                             result.completionDate = convertDateFromServer(result.completionDate);

@@ -203,7 +203,7 @@
                 "viewConversation": "View conversation",
                 "forwardedFrom": "Forwarded from",
                 "forwardedFromUnknown": "Forwarded from a conversation",
-                "forwardedMessageDeleted": "This message has been deleted",
+                "forwardedMessageUnavailable": "This forwarded message is unavailable. The original may have been deleted.",
                 "showLess": "Show less",
                 "showMore": "Show more"
             },

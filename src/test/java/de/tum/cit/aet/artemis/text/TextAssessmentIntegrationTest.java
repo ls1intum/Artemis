@@ -64,7 +64,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -356,7 +356,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
                 TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(AssessmentType.MANUAL, now().minusMinutes(10), submission, TEST_PREFIX + previousAssessor, List.of());
         var queue = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue?page=0&pageSize=20&sortedColumn=participationId&sortingOrder=ASCENDING",
-                HttpStatus.OK, ParticipationScoreDTO.class);
+                HttpStatus.OK, ParticipationManagementDTO.class);
         if ("tutor1".equals(previousAssessor)) {
             assertThat(queue.getFirst().assessableCorrectionRounds()).doesNotContain(1);
         }

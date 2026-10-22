@@ -1098,6 +1098,66 @@ describe('ExamParticipationComponent', () => {
             expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
         });
+
+        describe('after a page reload during the exam', () => {
+            // What the server returns for a student who has already started: the exam is running and the student exam is marked started.
+            const buildStartedStudentExam = () => {
+                const { studentExam } = buildResumeStudentExam();
+                studentExam.exam!.visibleDate = dayjs().subtract(1, 'hours');
+                studentExam.id = 1;
+                studentExam.started = true;
+                studentExam.startedDate = dayjs().subtract(5, 'minutes');
+                studentExam.submitted = false;
+                return studentExam;
+            };
+
+            const cover = () => fixture.debugElement.query(By.css('jhi-exam-participation-cover'));
+
+            it('should show the start cover again and neither resume nor create a session by itself when the last save succeeded', () => {
+                // Intended behavior: a reload sends the student back to the start cover, where typing the name and confirming the rules
+                // starts the exam again (a new exam session). Only a failed save resumes automatically (next test).
+                // Let Angular run its own first change detection (ngOnInit) before arranging the state under test.
+                fixture.changeDetectorRef.detectChanges();
+                const examStartedSpy = vi.spyOn(comp, 'examStarted');
+                const loadLocalSpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage');
+                vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+
+                comp.handleStudentExam(buildStartedStudentExam());
+                fixture.changeDetectorRef.detectChanges();
+
+                expect(examStartedSpy).not.toHaveBeenCalled();
+                expect(loadLocalSpy).not.toHaveBeenCalled();
+                expect(comp.examStartConfirmed()).toBe(false);
+                expect(comp.loadingExam()).toBe(false);
+                expect(cover()).not.toBeNull();
+                expect(fixture.debugElement.query(By.css('jhi-exam-bar'))).toBeNull();
+            });
+
+            it('should resume the exam without the start cover and re-send the unsaved answers when the last save failed', () => {
+                // The one automatic resume: the unsaved answers only exist in local storage, so the exam is restored from there.
+                fixture.changeDetectorRef.detectChanges();
+                const { studentExam: localExam, textSubmission } = buildResumeStudentExam();
+                localExam.id = 1;
+                localExam.started = true;
+                vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(true);
+                vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage').mockReturnValue(of(localExam));
+                const examStartedSpy = vi.spyOn(comp, 'examStarted');
+                const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+                vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+                vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+
+                comp.handleStudentExam(buildStartedStudentExam());
+
+                expect(examStartedSpy).toHaveBeenCalledOnce();
+                expect(examStartedSpy).toHaveBeenCalledWith(comp.studentExam(), true);
+                expect(comp.examStartConfirmed()).toBe(true);
+                expect(comp.loadingExam()).toBe(false);
+                // the unsaved text answer is re-sent at once, without waiting for the websocket or the next autosave
+                expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
+                fixture.changeDetectorRef.detectChanges();
+                expect(cover()).toBeNull();
+            });
+        });
     });
 
     it('should submit exam when end confirmed', () => {

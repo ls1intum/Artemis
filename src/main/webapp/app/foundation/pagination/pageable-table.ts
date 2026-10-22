@@ -47,14 +47,10 @@ export interface CourseCompetencyFilter {
 
 export interface CompetencyPageableSearch extends PageableSearch, CourseCompetencyFilter {}
 
-export interface ParticipationScoreSearch extends SearchTermPageableSearch {
+export interface ParticipationSearch extends SearchTermPageableSearch {
     /** Restrict the assessment queue to the requesting tutor’s teams. */
     ownTeams?: boolean;
     filterProp?: string;
     scoreRangeLower?: number;
     scoreRangeUpper?: number;
-}
-
-export interface ParticipationSearch extends SearchTermPageableSearch {
-    filterProp?: string;
 }
