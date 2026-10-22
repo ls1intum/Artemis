@@ -17,6 +17,9 @@ type StreamedSpan = Parameters<NonNullable<NonNullable<Parameters<typeof init>[0
 // by default, plus `authorization` so credentials are excluded regardless of Sentry's built-in sensitive-data filtering.
 const SENTRY_DENIED_HEADER_PATTERNS = ['authorization', 'forwarded', '-ip', 'remote-', 'via', '-user'];
 
+// Suffixes of the repositories of an exercise that belong to no participant, as in `abc123-solution`.
+const EXERCISE_REPOSITORY_SUFFIXES = ['exercise', 'solution', 'tests'];
+
 @Service()
 export class SentryErrorHandler extends ErrorHandler {
     private localStorageService = inject(LocalStorageService);
@@ -167,13 +170,21 @@ export class SentryErrorHandler extends ErrorHandler {
         return message;
     }
 
+    /**
+     * Removes the participant from the repositories in a url. A repository is named `<project key>-<suffix>` and the project key has no
+     * hyphen, so everything behind the first hyphen identifies the participant, even if the login or the team name contains hyphens.
+     * The repositories of the exercise itself (template, solution and tests) do not identify anybody and stay as they are.
+     * @param url the url or the text containing repository urls
+     * @returns the text without the participants of the repositories
+     */
     private scrubUrl(url: string): string {
-        const scrubbed: string = url.replace(/\/git\/([A-Z0-9]+)\/([^/]+)-[^/]+\.git/g, '/git/$1/$2.git');
-
-        if (url.includes('-tests.git') || url.includes('-exercise.git') || url.includes('-solution.git')) {
-            return url;
-        }
-        return scrubbed;
+        return url.replace(/\/git\/([A-Z0-9]+)\/([^/]+)\.git/g, (repository: string, projectKey: string, name: string) => {
+            const separator = name.indexOf('-');
+            if (separator === -1 || EXERCISE_REPOSITORY_SUFFIXES.includes(name.slice(separator + 1))) {
+                return repository;
+            }
+            return `/git/${projectKey}/${name.slice(0, separator)}.git`;
+        });
     }
 
     /**

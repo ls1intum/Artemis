@@ -161,6 +161,23 @@ describe('SentryErrorHandler', () => {
             expect(scrubbed.attributes['sentry.origin']).toBe('auto.http.client.fetch');
         });
 
+        it.each([
+            ['a login with hyphens', 'https://artemis.example/git/ABC123/abc123-jane-doe.git/info/refs', 'https://artemis.example/git/ABC123/abc123.git/info/refs'],
+            ['a practice repository', 'https://artemis.example/git/ABC123/abc123-practice-jane-doe.git', 'https://artemis.example/git/ABC123/abc123.git'],
+            ['a login with an exercise suffix', 'https://artemis.example/git/ABC123/abc123-jane-exercise.git', 'https://artemis.example/git/ABC123/abc123.git'],
+            ['the template repository', 'https://artemis.example/git/ABC123/abc123-exercise.git', 'https://artemis.example/git/ABC123/abc123-exercise.git'],
+            ['the solution repository', 'https://artemis.example/git/ABC123/abc123-solution.git/info/refs', 'https://artemis.example/git/ABC123/abc123-solution.git/info/refs'],
+            ['the tests repository', 'https://artemis.example/git/ABC123/abc123-tests.git', 'https://artemis.example/git/ABC123/abc123-tests.git'],
+            ['two participants in one text', 'clone /git/ABC123/abc123-jane-doe.git and /git/ABC123/abc123-max.git', 'clone /git/ABC123/abc123.git and /git/ABC123/abc123.git'],
+        ])('should remove the whole participant from the repository of %s in a span', async (_description, url, expected) => {
+            await service.initSentry(createProfileInfo({ testServer: false }));
+
+            const callArgs = (Sentry.init as ReturnType<typeof vi.fn>).mock.calls[0][0];
+            const scrubbed = callArgs.beforeSendSpan({ name: 'GET', attributes: { 'url.full': url } });
+
+            expect(scrubbed.attributes['url.full']).toBe(expected);
+        });
+
         it('should not send the user of the scope on streamed spans', async () => {
             const profileInfo = createProfileInfo({ testServer: false });
 
