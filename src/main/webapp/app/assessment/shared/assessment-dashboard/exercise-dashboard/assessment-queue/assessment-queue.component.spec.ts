@@ -239,6 +239,38 @@ describe('AssessmentQueueComponent', () => {
         ]);
     });
 
+    it.each([false, true])('reloads the last page when exam assessment opens, with an existing submission: %s', async (hasSubmission) => {
+        fixture.componentRef.setInput('exercise', {
+            ...exercise,
+            exerciseGroup: { id: 5, exam: { id: 4, course: { id: 3 } } },
+        });
+        fixture.componentRef.setInput('assessmentDisabled', true);
+        const searchSpy = vi
+            .spyOn(participationService, 'searchAssessmentQueue')
+            .mockReturnValue(of({ content: [{ ...teamRow, submissionId: hasSubmission ? 12 : undefined, assessableCorrectionRounds: [] }], totalElements: 40 }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const query = { pageIndex: 1, pageSize: 20, sort: { field: 'score', direction: 'desc' as const }, searchTerm: 'alpha' };
+        comp.loadPage(query);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-assessment-action="assess"]')).toBeNull();
+        searchSpy.mockClear().mockReturnValue(of({ content: [teamRow], totalElements: 40 }));
+
+        fixture.componentRef.setInput('assessmentDisabled', false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(searchSpy).toHaveBeenCalledExactlyOnceWith(
+            7,
+            expect.objectContaining({ page: 1, pageSize: 20, sortedColumn: 'score', sortingOrder: SortingOrder.DESCENDING, searchTerm: 'alpha' }),
+        );
+        expect(comp.rows()).toEqual([teamRow]);
+        expect(fixture.nativeElement.querySelector('[data-assessment-action="assess"]')).not.toBeNull();
+        fixture.detectChanges();
+        expect(searchSpy).toHaveBeenCalledOnce();
+    });
+
     it('reloads the last requested page on refresh', () => {
         const searchSpy = vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(of({ content: [], totalElements: 0 }));
         comp.refresh();

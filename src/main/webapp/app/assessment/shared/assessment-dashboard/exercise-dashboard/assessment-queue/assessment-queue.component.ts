@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCodeCommit, faEllipsisVertical, faFolderOpen, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -122,6 +122,17 @@ export class AssessmentQueueComponent {
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faCodeCommit = faCodeCommit;
     protected readonly faUsers = faUsers;
+
+    constructor() {
+        let wasDisabled = false;
+        effect(() => {
+            const disabled = this.assessmentDisabled();
+            if (wasDisabled && !disabled) {
+                untracked(() => this.refresh());
+            }
+            wasDisabled = disabled;
+        });
+    }
 
     loadPage(query: TumAetUiTableQueryEvent) {
         const requestId = ++this.currentLoadRequestId;
