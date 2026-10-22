@@ -3,6 +3,8 @@ import { TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/action
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
 import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
+import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
+import { TranslateService } from '@ngx-translate/core';
 
 interface UrlArguments {
     text: string;
@@ -18,8 +20,29 @@ export class UrlAction extends TextStyleTextEditorAction {
     static readonly DEFAULT_LINK_PLACEHOLDER = 'https://';
     static readonly DEFAULT_INSERT_TEXT = `[🔗 ${this.DEFAULT_LINK_TEXT}](${this.DEFAULT_LINK_PLACEHOLDER})`;
 
+    private disposablePasteInterceptor?: Disposable;
+
     constructor() {
         super(UrlAction.ID, 'artemisApp.multipleChoiceQuestion.editor.link', faLink, undefined);
+    }
+
+    /**
+     * Registers the action with the given editor and adds a paste interceptor that turns the selected text into a link when a URL is pasted over it.
+     * @param editor The editor to register the action in.
+     * @param translateService The translation service to use for translating the action label.
+     */
+    override register(editor: TextEditor, translateService: TranslateService) {
+        super.register(editor, translateService);
+        this.disposablePasteInterceptor = editor.addPasteInterceptor((pastedText) => this.wrapSelectionWithPastedUrl(editor, pastedText));
+    }
+
+    /**
+     * Disposes the action and removes the paste interceptor from the editor it was registered in.
+     */
+    override dispose() {
+        super.dispose();
+        this.disposablePasteInterceptor?.dispose();
+        this.disposablePasteInterceptor = undefined;
     }
 
     /**
@@ -49,6 +72,51 @@ export class UrlAction extends TextStyleTextEditorAction {
             this.replaceTextAtCurrentSelection(editor, `[${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }
         editor.focus();
+    }
+
+    /**
+     * If the pasted text is a single http(s) URL and text on one line is selected, replaces the selection with "[selectedText](url)"
+     * and places the cursor after the link. The selection is left alone if it is itself a URL or consists only of characters the
+     * sanitizer removes.
+     * @param editor The editor in which the text was pasted.
+     * @param pastedText The text the user pasted.
+     * @return true if the selection was replaced by a link, false if the editor should paste the text as usual.
+     */
+    private wrapSelectionWithPastedUrl(editor: TextEditor, pastedText: string): boolean {
+        const selection = editor.getSelection();
+        const start = selection.getStartPosition();
+        const end = selection.getEndPosition();
+        if (!UrlAction.isHttpUrl(pastedText) || start.getLineNumber() !== end.getLineNumber() || start.getColumn() === end.getColumn()) {
+            return false;
+        }
+        const selectedText = this.getTextAtRange(editor, selection) ?? '';
+        const label = sanitizeStringForMarkdownEditor(selectedText) ?? '';
+        if (!label.trim() || UrlAction.isHttpUrl(selectedText)) {
+            return false;
+        }
+        // Keep the URL as copied; only encode the parentheses that would end the markdown link early.
+        const url = pastedText.trim().replaceAll('(', '%28').replaceAll(')', '%29');
+        const link = `[${label}](${url})`;
+        this.replaceTextAtRange(editor, selection, link);
+        editor.setPosition(start.withColumn(start.getColumn() + link.length));
+        return true;
+    }
+
+    /**
+     * Checks whether the given text, ignoring surrounding whitespace, is exactly one http or https URL.
+     * @param text The text to check.
+     */
+    private static isHttpUrl(text: string): boolean {
+        const trimmed = text.trim();
+        if (!trimmed || /\s/.test(trimmed)) {
+            return false;
+        }
+        try {
+            const protocol = new URL(trimmed).protocol;
+            return protocol === 'http:' || protocol === 'https:';
+        } catch {
+            return false;
+        }
     }
 
     /**
