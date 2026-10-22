@@ -65,9 +65,9 @@ class KubernetesBuildArchiveServiceTest {
     }
 
     /**
-     * A container of a multi-container build plan that is scoped to run without the test repository is prepared with a
-     * null test path. The archive then carries the assignment only: the instructor's test files must not reach a
-     * container that did not list them, and packing a null path must not fail the build.
+     * A build container that is scoped to run without the test repository is prepared with a null test path. The
+     * archive then carries the assignment only: the instructor's test files must not reach a container that did not
+     * list them, and packing a null path must not fail the build.
      */
     @Test
     void omitsTheTestRepositoryOfAContainerScopedWithoutIt() throws Exception {

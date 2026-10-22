@@ -115,6 +115,14 @@ class BuildPlanPhasesDTOTest {
     }
 
     @Test
+    void testRejectsARepositorySelectionByName() {
+        // repositories are selected by type only; a selection that names one auxiliary repository is not a supported format
+        var json = "{\"containers\":[{\"name\":\"tests\",\"repositories\":[{\"type\":\"AUXILIARY\",\"name\":\"grading-utils\"}],\"phases\":[{\"name\":\"test\",\"script\":\"echo\"}]}]}";
+
+        assertThatThrownBy(() -> BuildPlanPhasesDTO.fromBuildPlanConfiguration(json)).isInstanceOf(JacksonException.class);
+    }
+
+    @Test
     void testDistinguishesUnscopedFromScopedToNothingAcrossSerialization() throws Exception {
         // null repositories means unscoped (checkout the exercise repositories); an empty list means scoped to nothing
         // (only the assignment repository). The empty list must survive serialization, otherwise a container scoped to

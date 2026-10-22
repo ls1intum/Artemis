@@ -5,6 +5,7 @@ import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildContainerDTO(@NotBlank @Pattern(regexp = BuildContainerDTO.BUILD_CONTAINER_NAME_REGEX) String name, String dockerImage,
-        @JsonInclude List<@Valid BuildContainerRepositoryDTO> repositories, @NotEmpty List<@Valid BuildPhaseDTO> phases, @Nullable @Positive Integer timeoutSeconds,
+        @JsonInclude List<@NotNull @Valid BuildContainerRepositoryDTO> repositories, @NotEmpty List<@Valid BuildPhaseDTO> phases, @Nullable @Positive Integer timeoutSeconds,
         @Valid BuildContainerDockerFlagsDTO dockerFlags) {
 
     /**

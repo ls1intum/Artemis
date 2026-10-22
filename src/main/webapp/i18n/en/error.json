@@ -5,7 +5,9 @@
         "http": {
             "400": "Bad request.",
             "401": "You are not authenticated to access this page.",
-            "403": "You are not authorized to access this page.",
+            "403": "You do not have permission to access this content or perform this action. Contact your course team if you need access.",
+            "403Read": "You do not have permission to view the requested content. Contact your course team if you need access.",
+            "403Action": "You do not have permission to perform this action. Contact your course team if you need access.",
             "404": "The page does not exist.",
             "405": "The HTTP verb you used is not supported for this URL.",
             "409": "There was a conflict while processing your request.",
@@ -361,6 +363,7 @@
         "emptyBuildContainer": "The build container {{ container }} must contain at least one build phase.",
         "invalidBuildContainerTimeout": "The timeout of the build container {{ container }} must be a positive number of seconds.",
         "buildContainerTimeoutExceedsExerciseTimeout": "The timeout of the build container {{ container }} must not exceed the timeout of the exercise ({{ timeout }} seconds).",
+        "invalidBuildContainerRepository": "The repository selection of the build container {{ container }} contains an entry without a repository type.",
         "buildContainerMemorySwapBelowMemory": "The build container {{ container }} would run with a memory swap limit of {{ memorySwap }} MB below its memory limit of {{ memory }} MB. Set its memory swap limit as well, or leave the memory limit to the exercise.",
         "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."

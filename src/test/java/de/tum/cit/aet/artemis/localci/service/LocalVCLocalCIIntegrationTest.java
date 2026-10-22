@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueu
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localvc.service.AuthenticationContext;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;

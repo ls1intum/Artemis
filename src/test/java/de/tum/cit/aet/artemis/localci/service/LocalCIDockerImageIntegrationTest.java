@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -159,8 +158,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         ReflectionTestUtils.setField(buildAgentConfiguration, "dockerConnectionUri", dockerTransportConfig.getDockerHost().toString());
         buildAgentConfiguration.openBuildAgentServices();
         realDockerClient = (DockerClient) ReflectionTestUtils.getField(buildAgentConfiguration, "dockerClient");
-        doReturn(realDockerClient).when(buildAgentConfiguration).getDockerClient();
-        doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
+        buildAgentConfigurationOverrides.useDockerClient(realDockerClient);
         dockerClient = realDockerClient;
         String architecture = normalizeDockerArchitecture(realDockerClient.infoCmd().exec().getArchitecture());
         log.info("Running with Docker architecture: {}", architecture);
@@ -168,6 +166,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
         sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
@@ -180,6 +179,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
         buildAgentConfiguration.closeBuildAgentServices();
         realDockerClient = null;
         if (originalDockerConnectionUri != null) {

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -11,8 +12,10 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 
@@ -117,6 +120,19 @@ class BuildPlanConfigurationValidatorTest {
         var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(), List.of(phase("test")));
 
         assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(container), 0)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testRejectsARepositorySelectionWithoutAType() {
+        // bean validation skips a null list element and only runs on the build plan endpoint; the exercise update path relies on this check
+        var withNullEntry = new BuildContainerDTO("student_tests", DOCKER_IMAGE, Arrays.asList((BuildContainerRepositoryDTO) null), List.of(phase("test")));
+        var withoutType = new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(new BuildContainerRepositoryDTO(null)), List.of(phase("test")));
+
+        assertThat(errorKeyOf(planOf(withNullEntry))).isEqualTo("invalidBuildContainerRepository");
+        assertThat(errorKeyOf(planOf(withoutType))).isEqualTo("invalidBuildContainerRepository");
+        assertThatCode(() -> BuildPlanConfigurationValidator
+                .validate(planOf(new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(new BuildContainerRepositoryDTO(RepositoryType.TESTS)), List.of(phase("test")))), 0))
+                .doesNotThrowAnyException();
     }
 
     @Test

@@ -190,6 +190,7 @@
             }
         },
         "courseNotification": {
+            "messagePreviewUnavailable": "Keine Nachrichtenvorschau verfügbar.",
             "newPostNotification": {
                 "settingsTitle": "Neue Nachricht",
                 "title": "Neue Nachricht",

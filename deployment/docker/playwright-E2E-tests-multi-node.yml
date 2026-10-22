@@ -84,11 +84,11 @@ services:
       service: nginx
     depends_on:
       artemis-app-node-1:
-        condition: service_started
+        condition: service_healthy
       artemis-app-node-2:
-        condition: service_started
+        condition: service_healthy
       artemis-app-node-3:
-        condition: service_started
+        condition: service_healthy
     restart: always
     ports:
       - '80:80'
