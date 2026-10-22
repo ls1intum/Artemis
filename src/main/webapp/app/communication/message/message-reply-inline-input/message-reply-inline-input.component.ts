@@ -27,6 +27,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     private currentUserId: number | undefined;
     private draftMessageSubscription?: Subscription;
     private previousPostingPostId: number | undefined;
+    private previousPostingId: number | undefined;
 
     readonly activeConversation = input<ConversationDTO>();
 
@@ -49,10 +50,13 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     protected override onPostingChanged(): void {
         const posting = this.posting();
         const previousPostingPostId = this.previousPostingPostId;
+        const previousPostingId = this.previousPostingId;
         this.previousPostingPostId = posting?.post?.id;
+        this.previousPostingId = posting?.id;
 
-        // Preserve current form content when re-rendering the same post
-        const preservedContent = this.formGroup && posting && previousPostingPostId === posting.post?.id ? this.formGroup.get('content')?.value : undefined;
+        // Preserve current form content only when re-rendering the same reply draft.
+        const preservedContent =
+            this.formGroup && posting && previousPostingPostId === posting.post?.id && previousPostingId === posting.id ? this.formGroup.get('content')?.value : undefined;
         super.onPostingChanged();
         if (preservedContent !== undefined) {
             this.formGroup.get('content')?.setValue(preservedContent);
