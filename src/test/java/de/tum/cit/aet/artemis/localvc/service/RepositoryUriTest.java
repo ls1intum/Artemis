@@ -11,6 +11,9 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -193,6 +196,47 @@ class RepositoryUriTest {
         URI httpUri = new URI("https://example.com/git/projectName.git");
         VcsRepositoryUri uri = new VcsRepositoryUri(httpUri.toString());
         assertThat(uri.folderNameForRepositoryUri()).isEqualTo("projectName");
+    }
+
+    /** The folder name consists of the project key and the slug, whatever the slug contains. */
+    @ParameterizedTest
+    @CsvSource({ "https://artemis.tum.de/git/ABC/abc-exercise.git, ABC/abc-exercise", "https://artemis.tum.de/git/ABC/abc-scm.git, ABC/abc-scm",
+            "https://artemis.tum.de/git/ABC/abc-practice-student1.git, ABC/abc-practice-student1", "https://artemis.tum.de/git/ABC/abc-ge47scm.git, ABC/abc-ge47scm",
+            "https://artemis.tum.de/git/SCMKEY/scmkey-exercise.git, SCMKEY/scmkey-exercise", "https://artemis.tum.de/git/ABC/abc-xscmy.git, ABC/abc-xscmy" })
+    void testFolderNameForRepositoryUriWithVariousSlugs(String uriString, String expectedFolderName) {
+        assertThat(new LocalVCRepositoryUri(uriString).folderNameForRepositoryUri()).isEqualTo(expectedFolderName);
+    }
+
+    /** Whatever follows the slug, or precedes the git segment, is not part of the folder name. */
+    @ParameterizedTest
+    @CsvSource({ "https://artemis.tum.de/git/ABC/abc-exercise.git/.., ABC/abc-exercise", "https://artemis.tum.de/git/ABC/abc-exercise.git/%2e%2e, ABC/abc-exercise",
+            "https://artemis.tum.de/git/ABC/abc-exercise.git/extra, ABC/abc-exercise", "https://artemis.tum.de/git/ABC/abc-exercise.git/, ABC/abc-exercise",
+            "https://artemis.tum.de/artemis/git/ABC/abc-exercise.git, ABC/abc-exercise" })
+    void testFolderNameForRepositoryUriIgnoresFurtherPathSegments(String uriString, String expectedFolderName) {
+        assertThat(new LocalVCRepositoryUri(uriString).folderNameForRepositoryUri()).isEqualTo(expectedFolderName);
+    }
+
+    @Test
+    void testResolveFolderBelow() {
+        Path directory = Path.of("repos");
+
+        assertThat(new LocalVCRepositoryUri(URI.create("https://artemis.tum.de"), "ABC", "abc-exercise").resolveFolderBelow(directory))
+                .isEqualTo(Path.of("repos", "ABC", "abc-exercise"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", ".", "..", "ABC/../..", "../outside", "ABC/../../outside", "/outside" })
+    void testResolveBelowRejectsFoldersThatAreNotBelowTheDirectory(String folderName) {
+        assertThatThrownBy(() -> VcsRepositoryUri.resolveBelow(Path.of("repos"), folderName)).as("the folder name '%s' must be rejected", folderName)
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "https://artemis.tum.de/git/../..x.git", "https://artemis.tum.de/git/./..git" })
+    void testResolveFolderBelowRejectsAProjectKeyThatIsNotAFolderName(String uriString) {
+        var uri = new LocalVCRepositoryUri(uriString);
+
+        assertThatThrownBy(() -> uri.resolveFolderBelow(Path.of("repos"))).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
