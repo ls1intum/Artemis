@@ -77,6 +77,8 @@ describe('CourseConversationsService', () => {
     });
 
     afterEach(() => {
+        courseConversationsService.ngOnDestroy();
+        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
@@ -285,7 +287,9 @@ describe('CourseConversationsService', () => {
         // be pending: the url asks for one on load, and the user picks another before the answer arrives. The later
         // request is the more recent intent and has to be the one that opens.
         const conversationsResponse = new Subject<HttpResponse<ConversationDTO[]>>();
-        vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(conversationsResponse.asObservable());
+        vi.spyOn(conversationService, 'getConversationsOfUser')
+            .mockReturnValueOnce(conversationsResponse.asObservable())
+            .mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel] })));
 
         return new Promise((done) => {
             courseConversationsService.setUpConversationService(course).subscribe({
@@ -335,26 +339,25 @@ describe('CourseConversationsService', () => {
         const olderRefresh = new Subject<HttpResponse<ConversationDTO[]>>();
         const newerRefresh = new Subject<HttpResponse<ConversationDTO[]>>();
         const allConversations = new HttpResponse({ body: [groupChat, oneToOneChat, channel, olderChannel, newerChannel] });
-        return new Promise((done) => {
-            courseConversationsService.setUpConversationService(course).subscribe({
-                complete: () => {
-                    vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValueOnce(olderRefresh.asObservable()).mockReturnValueOnce(newerRefresh.asObservable());
-                    courseConversationsService.setActiveConversation(olderChannel.id);
-                    courseConversationsService.setActiveConversation(newerChannel.id);
+        courseConversationsService.setUpConversationService(course).subscribe();
+        const get = vi
+            .spyOn(conversationService, 'getConversationsOfUser')
+            .mockReturnValue(of(allConversations))
+            .mockReturnValueOnce(olderRefresh.asObservable())
+            .mockReturnValueOnce(newerRefresh.asObservable());
+        get.mockClear();
+        courseConversationsService.setActiveConversation(olderChannel.id);
+        courseConversationsService.setActiveConversation(newerChannel.id);
 
-                    // the answer for the newer selection arrives first, the older one afterwards
-                    newerRefresh.next(allConversations);
-                    newerRefresh.complete();
-                    olderRefresh.next(allConversations);
-                    olderRefresh.complete();
+        newerRefresh.next(allConversations);
+        newerRefresh.complete();
+        olderRefresh.next(allConversations);
+        olderRefresh.complete();
 
-                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
-                        expect(activeConversation?.id).toBe(newerChannel.id);
-                        done({});
-                    });
-                },
-            });
-        });
+        let selected: number | undefined;
+        courseConversationsService.activeConversation$.pipe(take(1)).subscribe((conversation) => (selected = conversation?.id));
+        expect(selected).toBe(newerChannel.id);
+        expect(get).toHaveBeenCalledTimes(3); // The pre-intent response is rejected and gets a current server snapshot.
     });
 
     it('should still clear the active conversation when it is cleared on purpose', () => {
@@ -585,7 +588,255 @@ describe('CourseConversationsService', () => {
         });
     });
 
+    describe('bounded unread reconciliation', () => {
+        beforeEach(() => vi.useFakeTimers());
+
+        it('batches sequential read completions without postponing the fixed window', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
+            courseConversationsService.setConversationViewOpen(true);
+            const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockClear();
+            const mark = vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of(new HttpResponse<void>()));
+            for (let index = 0; index < 10; index++) courseConversationsService.handleNewMessage(channel.id, dayjs());
+            expect(mark).toHaveBeenCalledTimes(10);
+            expect(get).not.toHaveBeenCalled();
+            vi.advanceTimersByTime(900);
+            courseConversationsService.handleNewMessage(channel.id, dayjs());
+            vi.advanceTimersByTime(100);
+            expect(get).toHaveBeenCalledTimes(1);
+            vi.advanceTimersByTime(5000);
+            expect(get).toHaveBeenCalledTimes(1);
+        });
+
+        it('bounds invalidated foreground requests and later reconciles without publishing stale state', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
+            const responses = Array.from({ length: 4 }, () => new Subject<HttpResponse<ConversationDTO[]>>());
+            let index = 0;
+            const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockImplementation(() => responses[index++]);
+            get.mockClear();
+            const failed = vi.fn();
+            const completed = vi.fn();
+            const alert = vi.spyOn(alertService, 'addAlert');
+            const counts: number[] = [];
+            const subscription = courseConversationsService.conversationsOfUser$.subscribe((rows) =>
+                counts.push(rows.find((row) => row.id === channel.id)?.unreadMessagesCount ?? 0),
+            );
+            courseConversationsService.forceRefresh(false).subscribe({ error: failed, complete: completed });
+            for (let attempt = 0; attempt < 3; attempt++) {
+                courseConversationsService.handleNewMessage(channel.id, dayjs());
+                responses[attempt].next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 99 }] }));
+                responses[attempt].complete();
+            }
+            expect(get).toHaveBeenCalledTimes(3);
+            expect(failed).toHaveBeenCalledTimes(1);
+            expect(completed).not.toHaveBeenCalled();
+            expect(alert).not.toHaveBeenCalled();
+            expect(counts).not.toContain(99);
+            expect(courseConversationsService['activeConversation']).toBe(channel);
+            expect(channel.unreadMessagesCount).toBe(3);
+            expect(courseConversationsService['isLoading']).toBe(false);
+            vi.advanceTimersByTime(1000);
+            expect(get).toHaveBeenCalledTimes(4);
+            responses[3].next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 3, hasUnreadMessage: true }] }));
+            responses[3].complete();
+            vi.advanceTimersByTime(5000);
+            expect(get).toHaveBeenCalledTimes(4);
+            expect(counts.at(-1)).toBe(3);
+            subscription.unsubscribe();
+        });
+
+        it('keeps one slow recovery in flight and delays its invalidated retry', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            const first = new Subject<HttpResponse<ConversationDTO[]>>();
+            const get = vi
+                .spyOn(conversationService, 'getConversationsOfUser')
+                .mockReturnValueOnce(first)
+                .mockReturnValue(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 0 }] })));
+            get.mockClear();
+            const read = () => courseConversationsService.messagesLoaded(channel.id!, courseConversationsService.messagesRequested(channel.id!));
+            read();
+            vi.advanceTimersByTime(1000);
+            read();
+            vi.advanceTimersByTime(2000);
+            expect(get).toHaveBeenCalledTimes(1);
+            first.next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 99 }] }));
+            first.complete();
+            expect(get).toHaveBeenCalledTimes(1);
+            expect(courseConversationsService['conversationsOfUser']).toHaveLength(3);
+            vi.advanceTimersByTime(999);
+            expect(get).toHaveBeenCalledTimes(1);
+            vi.advanceTimersByTime(1);
+            expect(get).toHaveBeenCalledTimes(2);
+            expect(courseConversationsService['conversationsOfUser'][0].unreadMessagesCount).toBe(0);
+            vi.advanceTimersByTime(5000);
+            expect(get).toHaveBeenCalledTimes(2);
+        });
+
+        it('does not reject a startup selection using metadata captured before that selection', () => {
+            const old = new Subject<HttpResponse<ConversationDTO[]>>();
+            const created = generateExampleChannelDTO({ id: 99 } as ChannelDTO);
+            vi.spyOn(conversationService, 'getConversationsOfUser')
+                .mockReturnValueOnce(old)
+                .mockReturnValue(of(new HttpResponse({ body: [channel, created] })));
+            const alert = vi.spyOn(alertService, 'addAlert');
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(created.id);
+            old.next(new HttpResponse({ body: [channel] }));
+            old.complete();
+            expect(alert).not.toHaveBeenCalled();
+            expect(courseConversationsService['activeConversation']?.id).toBe(created.id);
+        });
+
+        it('lets initial setup finish during arrivals and reconciles after the cache is available', () => {
+            const first = new Subject<HttpResponse<ConversationDTO[]>>();
+            const get = vi
+                .spyOn(conversationService, 'getConversationsOfUser')
+                .mockReturnValueOnce(first)
+                .mockReturnValue(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 1 }] })));
+            get.mockClear();
+            const complete = vi.fn();
+            courseConversationsService.setUpConversationService(course).subscribe({ complete });
+            for (let index = 0; index < 10; index++) courseConversationsService.handleNewMessage(channel.id, dayjs());
+            first.next(new HttpResponse({ body: [channel] }));
+            first.complete();
+            expect(complete).toHaveBeenCalledTimes(1);
+            expect(get).toHaveBeenCalledTimes(1);
+            vi.advanceTimersByTime(1000);
+            expect(get).toHaveBeenCalledTimes(2);
+            expect(courseConversationsService['conversationsOfUser'][0].unreadMessagesCount).toBe(1);
+        });
+
+        it('ignores arrivals outside this course when validating a loaded snapshot', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            const response = new Subject<HttpResponse<ConversationDTO[]>>();
+            const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(response).mockClear();
+            const complete = vi.fn();
+            courseConversationsService.forceRefresh().subscribe({ complete });
+            courseConversationsService.handleNewMessage(99999, dayjs());
+            response.next(new HttpResponse({ body: [channel] }));
+            response.complete();
+            expect(complete).toHaveBeenCalledTimes(1);
+            expect(get).toHaveBeenCalledTimes(1);
+        });
+
+        it.each([false, true])('cancels queued and active recovery on destroy (in flight=%s)', (inFlight) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            const response = new Subject<HttpResponse<ConversationDTO[]>>();
+            const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(response).mockClear();
+            const read = () => courseConversationsService.messagesLoaded(channel.id!, courseConversationsService.messagesRequested(channel.id!));
+            read();
+            if (inFlight) {
+                vi.advanceTimersByTime(1000);
+                read();
+            }
+            courseConversationsService.ngOnDestroy();
+            response.next(new HttpResponse({ body: [] }));
+            response.complete();
+            vi.advanceTimersByTime(5000);
+            expect(get).toHaveBeenCalledTimes(inFlight ? 1 : 0);
+            expect(courseConversationsService['conversationsOfUser']).toHaveLength(3);
+        });
+
+        it.each(['selection', 'creation'] as const)('resumes the latest pending %s after cancelled foreground work', (kind) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
+            const created = generateExampleGroupChatDTO({ id: 99 });
+            vi.spyOn(groupChatService, 'create').mockReturnValue(of(new HttpResponse({ body: created })));
+            const responses = Array.from({ length: 3 }, () => new Subject<HttpResponse<ConversationDTO[]>>());
+            const get = vi
+                .spyOn(conversationService, 'getConversationsOfUser')
+                .mockReturnValueOnce(responses[0])
+                .mockReturnValueOnce(responses[1])
+                .mockReturnValueOnce(responses[2])
+                .mockReturnValue(of(new HttpResponse({ body: [channel, created] })));
+            get.mockClear();
+            let displayed: number | undefined;
+            const active = courseConversationsService.activeConversation$.subscribe((conversation) => (displayed = conversation?.id));
+            if (kind === 'creation') courseConversationsService.createGroupChat(['partner']).subscribe({ error: () => {} });
+            else courseConversationsService.setActiveConversation(created.id);
+            for (const response of responses) {
+                courseConversationsService.handleNewMessage(channel.id, dayjs());
+                response.next(new HttpResponse({ body: [channel, created] }));
+                response.complete();
+            }
+            expect(displayed).toBe(channel.id);
+            expect(courseConversationsService['activeConversation']?.id).toBe(channel.id);
+            vi.advanceTimersByTime(1000);
+            expect(get).toHaveBeenCalledTimes(4);
+            expect(displayed).toBe(created.id);
+            expect(courseConversationsService['activeConversation']?.id).toBe(created.id);
+            active.unsubscribe();
+        });
+
+        it.each(['selection', 'creation'] as const)('does not resolve a pending %s from a list requested before it', (kind) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
+            const created = generateExampleGroupChatDTO({ id: 99 });
+            const old = new Subject<HttpResponse<ConversationDTO[]>>();
+            const fresh = new Subject<HttpResponse<ConversationDTO[]>>();
+            vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValueOnce(old).mockReturnValueOnce(fresh);
+            vi.spyOn(groupChatService, 'create').mockReturnValue(of(new HttpResponse({ body: created })));
+            const alert = vi.spyOn(alertService, 'addAlert');
+            courseConversationsService.messagesLoaded(channel.id!, courseConversationsService.messagesRequested(channel.id!));
+            vi.advanceTimersByTime(1000);
+            if (kind === 'creation') courseConversationsService.createGroupChat(['partner']).subscribe({ error: () => {} });
+            else courseConversationsService.setActiveConversation(created.id);
+            old.next(new HttpResponse({ body: [channel] }));
+            old.complete();
+            expect(alert).not.toHaveBeenCalled();
+            expect(courseConversationsService['activeConversation']?.id).toBe(channel.id);
+            fresh.next(new HttpResponse({ body: [channel, created] }));
+            fresh.complete();
+            expect(courseConversationsService['activeConversation']?.id).toBe(created.id);
+            expect(alert).not.toHaveBeenCalled();
+        });
+
+        it('does not resume a cancelled selection after a newer cached selection', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
+            const responses = Array.from({ length: 3 }, () => new Subject<HttpResponse<ConversationDTO[]>>());
+            const created = generateExampleGroupChatDTO({ id: 99 });
+            vi.spyOn(conversationService, 'getConversationsOfUser')
+                .mockReturnValueOnce(responses[0])
+                .mockReturnValueOnce(responses[1])
+                .mockReturnValueOnce(responses[2])
+                .mockReturnValue(of(new HttpResponse({ body: [channel, groupChat, created] })));
+            courseConversationsService.setActiveConversation(created.id);
+            for (const response of responses) {
+                courseConversationsService.handleNewMessage(channel.id, dayjs());
+                response.next(new HttpResponse({ body: [channel] }));
+                response.complete();
+            }
+            courseConversationsService.setActiveConversation(groupChat);
+            vi.advanceTimersByTime(1000);
+            expect(courseConversationsService['activeConversation']?.id).toBe(groupChat.id);
+        });
+
+        it('never treats exhausted selection refreshes as proof of missing membership', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
+            const responses = Array.from({ length: 4 }, () => new Subject<HttpResponse<ConversationDTO[]>>());
+            let index = 0;
+            const get = vi
+                .spyOn(conversationService, 'getConversationsOfUser')
+                .mockImplementation(() => responses[index++])
+                .mockClear();
+            const alert = vi.spyOn(alertService, 'addAlert');
+            courseConversationsService.setActiveConversation(99);
+            for (let attempt = 0; attempt < 3; attempt++) {
+                courseConversationsService.handleNewMessage(channel.id, dayjs());
+                responses[attempt].next(new HttpResponse({ body: [channel] }));
+                responses[attempt].complete();
+            }
+            expect(get).toHaveBeenCalledTimes(3);
+            expect(alert).not.toHaveBeenCalled();
+            expect(courseConversationsService['activeConversation']).toBe(channel);
+        });
+    });
+
     describe('a new message event for a conversation', () => {
+        beforeEach(() => vi.useFakeTimers());
         const eventFor = (conversation: ConversationDTO) => {
             const websocketDTO = new ConversationWebsocketDTO();
             websocketDTO.action = CommunicationCrudAction.NEW_MESSAGE;
@@ -710,7 +961,7 @@ describe('CourseConversationsService', () => {
             expect(markAsRead).toHaveBeenCalledExactlyOnceWith(course.id, created.id);
             expect(cachedUnreadCount(created.id)).toBe(0);
             expect(cachedUnreadCount(channel.id)).toBe(2);
-            expect(channel.lastReadDate).toBe(unreadDate);
+            expect(channel.lastReadDate?.isSame(unreadDate)).toBe(true);
             expect(courseConversationsService['hasUnreadMessages']).toBe(true);
         });
 
@@ -766,6 +1017,7 @@ describe('CourseConversationsService', () => {
                 of(new HttpResponse({ body: [{ ...conversation, unreadMessagesCount: 0, hasUnreadMessage: false, lastReadDate: readDate }] })),
             );
             courseConversationsService.messagesLoaded(conversation.id!, courseConversationsService.messagesRequested(conversation.id!));
+            vi.advanceTimersByTime(1000);
             expect(cachedUnreadCount(conversation.id)).toBe(0);
             expect(courseConversationsService.isConversationMarkedAsUnread(conversation.id)).toBe(false);
 
@@ -852,6 +1104,7 @@ describe('CourseConversationsService', () => {
                     } else {
                         responses[index].error(new Error('read rejected'));
                     }
+                    vi.advanceTimersByTime(1000);
                     expect(cachedUnreadCount(conversation.id)).toBe(expected);
                     const cached = courseConversationsService['conversationsOfUser'].find((row) => row.id === conversation.id)!;
                     expect(cached.hasUnreadMessage).toBe(expected > 0);
@@ -887,6 +1140,7 @@ describe('CourseConversationsService', () => {
                 expect(conversation.lastReadDate).toBe(manualDate);
                 expect(conversation.hasUnreadMessage).toBe(true);
                 expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+                vi.advanceTimersByTime(1000);
                 expect(getConversations).not.toHaveBeenCalled();
             },
         );
@@ -985,11 +1239,14 @@ describe('CourseConversationsService', () => {
                 .mockReturnValue(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 0, hasUnreadMessage: false, name: 'updated-channel' }] })));
             getConversations.mockClear();
             first.error(new Error('first failed'));
+            vi.advanceTimersByTime(1000);
             second.next(new HttpResponse<void>());
             second.complete();
             expect(getConversations).toHaveBeenCalledTimes(1);
             recovery.next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 1, hasUnreadMessage: true }] }));
             recovery.complete();
+            expect(getConversations).toHaveBeenCalledTimes(1);
+            vi.advanceTimersByTime(1000);
             expect(getConversations).toHaveBeenCalledTimes(2);
             expect(cachedUnreadCount(channel.id)).toBe(0);
             expect(courseConversationsService['hasUnreadMessages']).toBe(false);
@@ -1005,10 +1262,12 @@ describe('CourseConversationsService', () => {
             getConversations.mockClear();
             const request = courseConversationsService.messagesRequested(channel.id!);
             courseConversationsService.messagesLoaded(channel.id!, request);
+            vi.advanceTimersByTime(1000);
             expect(courseConversationsService['activeConversation']?.id).toBe(channel.id);
             expect(courseConversationsService['conversationsOfUser']).toHaveLength(3);
             expect(courseConversationsService['isLoading']).toBe(false);
             courseConversationsService.messagesLoaded(channel.id!, request);
+            vi.advanceTimersByTime(1000);
             expect(getConversations).toHaveBeenCalledTimes(2);
             expect(cachedUnreadCount(channel.id)).toBe(2);
         });
@@ -1112,7 +1371,7 @@ describe('CourseConversationsService', () => {
             post: { author: { id: 456 }, content: 'Content', conversation: { id: 1 } } as Post,
             action: CommunicationCrudAction.CREATE,
         };
-        courseConversationsService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 0 } as ConversationDTO];
+        courseConversationsService.setUpConversationService(course).subscribe();
         courseConversationsService.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
         expect(courseConversationsService['conversationsOfUser'][0].unreadMessagesCount).toBe(1);
     });
@@ -1187,6 +1446,7 @@ describe('CourseConversationsService', () => {
 
     describe('markAllChannelsAsRead', () => {
         it('keeps unread counts until the bulk read is confirmed, then applies server state', () => {
+            vi.useFakeTimers();
             channel.unreadMessagesCount = 3;
             courseConversationsService.setUpConversationService(course).subscribe();
             const pending = new Subject<void>();
@@ -1198,6 +1458,7 @@ describe('CourseConversationsService', () => {
             expect(courseConversationsService['conversationsOfUser'].find((row) => row.id === channel.id)?.unreadMessagesCount).toBe(3);
             pending.next();
             pending.complete();
+            vi.advanceTimersByTime(1000);
             expect(courseConversationsService['conversationsOfUser'][0].unreadMessagesCount).toBe(0);
             expect(courseConversationsService['hasUnreadMessages']).toBe(false);
         });

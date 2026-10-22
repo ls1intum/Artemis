@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, defer, finalize, map, of, switchMap, tap, throwError } from 'rxjs';
+import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, defer, finalize, map, of, switchMap, tap, throwError, timer } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -20,6 +20,9 @@ import { Params } from '@angular/router';
 import { PostBroadcastDTO } from 'app/communication/shared/entities/post-broadcast-dto.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
+
+/** A superseded snapshot is cancellation, never evidence that a conversation is absent. */
+class SupersededUnreadSnapshot extends Error {}
 
 /** Identifies the manual-unread boundary when a read starts. */
 export interface ConversationReadRequest {
@@ -50,16 +53,8 @@ export class CourseConversationsService implements OnDestroy {
      * yet" rather than "the user is in no conversation", and the two lead to opposite behaviour.
      */
     private conversationsLoaded = false;
-    /**
-     * A conversation requested before the cache held anything, to be activated once it arrives.
-     * <p>
-     * Opening the page with `?conversationId=` asks for a conversation while the request that fetches them is still in
-     * flight, because the route emits its query parameters immediately. Dropping that request leaves the page on an
-     * empty view that nothing ever fills, since it is the only request that will be made.
-     */
+    /** Latest selection waiting for an authoritative list, including navigation during setup and newly created chats. */
     private requestedConversationId: number | undefined = undefined;
-    // Incremented by every selection so that the answer to an older refresh cannot replace a newer selection
-    private selectionVersion = 0;
     _conversationsOfUser$: ReplaySubject<ConversationDTO[]> = new ReplaySubject<ConversationDTO[]>(1);
     // Stores the currently selected conversation
     private activeConversation: ConversationDTO | undefined = undefined;
@@ -77,6 +72,7 @@ export class CourseConversationsService implements OnDestroy {
     private unreadStateVersion = 0;
     private manualUnreadRevisions = new Map<number, number>();
     private unreadRefresh?: Subscription;
+    private unreadRefreshRequested = false;
     // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -111,8 +107,11 @@ export class CourseConversationsService implements OnDestroy {
         this.cleanupSubscriptions();
     }
 
+    /** Cancel owned work without letting a finalizer rearm reconciliation after teardown. */
     private cleanupSubscriptions() {
+        this.unreadRefreshRequested = false;
         this.unreadRefresh?.unsubscribe();
+        this.unreadRefresh = undefined;
         if (this.subscribedConversationMembershipTopic) {
             this.conversationMembershipSubscription?.unsubscribe();
             this.subscribedConversationMembershipTopic = undefined;
@@ -152,8 +151,9 @@ export class CourseConversationsService implements OnDestroy {
         return this._isLoading$.asObservable();
     }
 
+    /** Select a cached conversation immediately, or retain the latest intent until a fresh server list establishes membership. */
     public setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {
-        const selectionVersion = ++this.selectionVersion;
+        this.requestedConversationId = undefined;
         let cachedConversation: ConversationDTO | undefined = undefined;
         let conversationId: number | undefined = undefined;
         if (conversationIdentifier) {
@@ -162,6 +162,8 @@ export class CourseConversationsService implements OnDestroy {
             cachedConversation = this.conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversationId);
         }
         if (!cachedConversation && conversationIdentifier) {
+            // Earlier lists cannot establish membership for this newer selection intent.
+            this.unreadStateVersion++;
             if (!this.conversationsLoaded) {
                 // Not a membership problem: the cache simply has nothing to look in yet. Remember what was asked for
                 // and activate it when the list arrives. Warning about membership here would be wrong too, because
@@ -172,22 +174,9 @@ export class CourseConversationsService implements OnDestroy {
             // The conversation can be missing because it was created after the conversations were loaded: nobody is told about a new
             // course-wide channel, although every user of the course may open it. Ask the server again before concluding that the user
             // is not a member. Otherwise following the notification about such a channel only shows the warning.
+            this.requestedConversationId = conversationId;
             this.forceRefresh().subscribe({
-                complete: () => {
-                    if (selectionVersion !== this.selectionVersion) {
-                        // the user selected something else while the conversations were loading, which is the more recent intent
-                        return;
-                    }
-                    if (this.conversationsOfUser.some((conversationInCache) => conversationInCache.id === conversationId)) {
-                        this.setActiveConversation(conversationId);
-                    } else {
-                        this.alertService.addAlert({
-                            type: AlertType.WARNING,
-                            message: 'artemisApp.communication.channel.notAMember',
-                        });
-                    }
-                },
-                // the failed request has already been reported by forceRefresh
+                // Failed or superseded snapshots retain the intent for the next successful reconciliation.
                 error: () => {},
             });
             // Keep whatever is currently open instead of closing it. Replacing it with nothing empties the view, and the
@@ -215,20 +204,17 @@ export class CourseConversationsService implements OnDestroy {
         this.activeConversation = conversation;
     }
 
-    /**
-     * Activates the conversation that was asked for before the conversations were known, if there is one.
-     * <p>
-     * Only when nothing else has been activated in the meantime: a conversation the user has since opened themselves is
-     * the more recent intent and must not be replaced by the one the url happened to carry.
-     */
+    /** Resolve the latest pending selection only from an accepted snapshot; newer user selections clear the intent. */
     private activateRequestedConversation() {
-        if (this.requestedConversationId === undefined || this.activeConversation) {
-            this.requestedConversationId = undefined;
-            return;
-        }
+        if (this.requestedConversationId === undefined) return;
         const requested = this.requestedConversationId;
         this.requestedConversationId = undefined;
-        this.setActiveConversation(requested);
+        const conversation = this.conversationsOfUser.find((cached) => cached.id === requested);
+        if (conversation) {
+            this.setActiveConversation(conversation);
+        } else {
+            this.alertService.addAlert({ type: AlertType.WARNING, message: 'artemisApp.communication.channel.notAMember' });
+        }
     }
 
     public disableConversationService() {
@@ -240,13 +226,14 @@ export class CourseConversationsService implements OnDestroy {
      * Set the course conversation component to the contents of the code of conduct.
      */
     public setCodeOfConduct() {
-        this.selectionVersion++;
+        this.requestedConversationId = undefined;
         this.selectConversation(undefined);
         this._activeConversation$.next(this.activeConversation);
         this.isCodeOfConductPresented = true;
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
     }
 
+    /** Apply an explicit unread boundary and invalidate older reads so their later outcomes cannot erase it. */
     public updateConversationUnreadState(conversationId: number | undefined, lastReadDate: dayjs.Dayjs | undefined, unreadMessagesCount: number | undefined) {
         this.unreadStateVersion++;
         if (conversationId !== undefined) {
@@ -268,26 +255,46 @@ export class CourseConversationsService implements OnDestroy {
         this.hasUnreadMessagesCheck();
     }
 
-    /** Never publish an unread snapshot captured before a newer read, incoming message or explicit unread mark. */
-    private currentUnreadSnapshot<T>(request: () => Observable<T>): Observable<T> {
+    /**
+     * Reject stale snapshots, with at most three foreground attempts. Exhaustion cancels the caller and queues
+     * reconciliation instead of accepting obsolete counts or keeping the caller loading indefinitely.
+     */
+    private currentUnreadSnapshot<T>(request: () => Observable<T>, attemptsLeft = 3): Observable<T> {
         return defer(() => {
             const version = this.unreadStateVersion;
-            return request().pipe(switchMap((response) => (version === this.unreadStateVersion ? of(response) : this.currentUnreadSnapshot(request))));
+            return request().pipe(
+                switchMap((response) => {
+                    if (version === this.unreadStateVersion) return of(response);
+                    if (attemptsLeft > 1) return this.currentUnreadSnapshot(request, attemptsLeft - 1);
+                    this.refreshUnreadState();
+                    return throwError(() => new SupersededUnreadSnapshot());
+                }),
+            );
         });
     }
 
-    private loadConversations(): Observable<ConversationDTO[]> {
-        return this.currentUnreadSnapshot(() => this.conversationService.getConversationsOfUser(this._courseId)).pipe(map((response) => response.body ?? []));
+    /** A list GET covers earlier refresh intents; changes during it remain queued for another snapshot. */
+    private loadConversations(attempts = 3): Observable<ConversationDTO[]> {
+        return this.currentUnreadSnapshot(() => {
+            this.unreadRefreshRequested = false;
+            return this.conversationService.getConversationsOfUser(this._courseId);
+        }, attempts).pipe(map((response) => response.body ?? []));
     }
 
+    /** Refresh server metadata while retaining the last known cache and selection on failure or cancellation. */
     public forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
+        return this.refreshConversations(notifyActiveConversationSubscribers, notifyConversationsSubscribers);
+    }
+
+    /** Background reconciliation uses one attempt so every subsequent GET passes through the batching window. */
+    private refreshConversations(notifyActiveConversationSubscribers: boolean, notifyConversationsSubscribers: boolean, attempts = 3): Observable<never> {
         if (!this._course) {
             throw new Error('Course is not set. The service does not seem to be initialized.');
         }
         this.setIsLoading(true);
-        return this.loadConversations().pipe(
-            catchError((res: HttpErrorResponse) => {
-                onError(this.alertService, res);
+        return this.loadConversations(attempts).pipe(
+            catchError((res: HttpErrorResponse | SupersededUnreadSnapshot) => {
+                if (!(res instanceof SupersededUnreadSnapshot)) onError(this.alertService, res);
                 this.setIsLoading(false);
                 // Do not continue into the mapping below with an empty list. Treating a failed request as "the user has no
                 // conversations" would drop the cached conversations, reset the active conversation and, through the
@@ -338,11 +345,12 @@ export class CourseConversationsService implements OnDestroy {
         this.onConversationCreation(this.oneToOneChatService.createWithId(this._courseId, userId));
     public createChannel = (channel: ChannelDTO) => this.onConversationCreation(this.channelService.create(this._courseId, channel));
     public createGroupChat = (loginsOfChatPartners: string[]) => this.onConversationCreation(this.groupChatService.create(this._courseId, loginsOfChatPartners));
+    /** Defer selection until metadata is accepted so the displayed conversation and automatic-read ownership change together. */
     private onConversationCreation = (creation$: Observable<HttpResponse<ConversationDTO>>): Observable<never> => {
         return creation$.pipe(
             tap((conversation: HttpResponse<ConversationDTO>) => {
-                this.selectionVersion++;
-                this.selectConversation(conversation.body ?? undefined);
+                this.unreadStateVersion++;
+                this.requestedConversationId = conversation.body?.id;
             }),
             catchError((res: HttpErrorResponse) => {
                 if (!res.error?.skipAlert) {
@@ -372,12 +380,13 @@ export class CourseConversationsService implements OnDestroy {
         return this.oneToOneChatService.create(this._courseId, loginsOfChatPartners);
     }
 
+    /** Initialize one course cache, resolve pending navigation and then attach its membership subscription. */
     public setUpConversationService = (course: Course): Observable<never> => {
         this._courseId = course.id!;
         this._course = course;
         return this.loadConversations().pipe(
-            catchError((res: HttpErrorResponse) => {
-                onError(this.alertService, res);
+            catchError((res: HttpErrorResponse | SupersededUnreadSnapshot) => {
+                if (!(res instanceof SupersededUnreadSnapshot)) onError(this.alertService, res);
                 this.setIsLoading(false);
                 this._isServiceSetup$.next(false);
                 // Stop here instead of running the setup below with an empty list, which would announce the service as
@@ -399,6 +408,7 @@ export class CourseConversationsService implements OnDestroy {
                 this.subscribeToConversationMembershipTopic(course.id!, this.userId);
                 this.setIsLoading(false);
                 this._isServiceSetup$.next(true);
+                if (this.unreadRefreshRequested) this.refreshUnreadState();
                 return;
             }),
             finalize(() => {
@@ -409,6 +419,7 @@ export class CourseConversationsService implements OnDestroy {
         );
     };
 
+    /** Update the course badge from a server check only if no intervening read or unread mutation superseded it. */
     checkForUnreadMessages = (course: Course) => {
         if (!course?.id) {
             return;
@@ -421,8 +432,8 @@ export class CourseConversationsService implements OnDestroy {
                     this._hasUnreadMessages$.next(this.hasUnreadMessages);
                 }
             },
-            error: (errorResponse: HttpErrorResponse) => {
-                onError(this.alertService, errorResponse);
+            error: (errorResponse: HttpErrorResponse | SupersededUnreadSnapshot) => {
+                if (!(errorResponse instanceof SupersededUnreadSnapshot)) onError(this.alertService, errorResponse);
             },
         });
     };
@@ -461,6 +472,7 @@ export class CourseConversationsService implements OnDestroy {
         });
     }
 
+    /** Derive the course badge from unmuted conversation counts, including unread thread replies. */
     private hasUnreadMessagesCheck = (): void => {
         const hasNewMessages = this.conversationsOfUser.some((conversation) => {
             return conversation?.unreadMessagesCount && conversation.unreadMessagesCount > 0 && !conversation.isMuted;
@@ -546,6 +558,7 @@ export class CourseConversationsService implements OnDestroy {
         this.readCompleted(conversationId, request);
     }
 
+    /** Invalidate older snapshots and queue reconciliation unless a newer explicit unread boundary protects this conversation. */
     private readCompleted(conversationId: number, request: ConversationReadRequest) {
         this.unreadStateVersion++;
         // An older read outcome must not undo a later explicit mark, including after navigation.
@@ -554,14 +567,22 @@ export class CourseConversationsService implements OnDestroy {
         }
     }
 
+    /**
+     * Batch read completions in a fixed one-second window, with only one timer or GET active. Traffic cannot
+     * postpone the window; changes during a GET queue another window. HTTP failures wait for a new intent.
+     */
     private refreshUnreadState() {
-        // One internal refresh at a time. Any mutation during it invalidates its snapshot, so its
-        // response will repeat the GET instead of losing that mutation or starting parallel GETs.
-        // Exercise discussions can read messages before the communication view initializes this cache.
-        // Its first load will obtain the authoritative state; there is no cached list to reconcile yet.
-        if (this.conversationsLoaded && (!this.unreadRefresh || this.unreadRefresh.closed)) {
-            this.unreadRefresh = this.forceRefresh(false).subscribe({ error: () => {} });
-        }
+        this.unreadRefreshRequested = true;
+        if (!this.conversationsLoaded || (this.unreadRefresh && !this.unreadRefresh.closed)) return;
+        this.unreadRefresh = timer(1000)
+            .pipe(
+                switchMap(() => (this.unreadRefreshRequested ? this.refreshConversations(false, true, 1) : EMPTY)),
+                finalize(() => {
+                    this.unreadRefresh = undefined;
+                    if (this.unreadRefreshRequested) this.refreshUnreadState();
+                }),
+            )
+            .subscribe({ error: () => {} });
     }
 
     /** Marks a live arrival read only while its conversation is visible and has no explicit unread mark. */
@@ -578,6 +599,7 @@ export class CourseConversationsService implements OnDestroy {
     }
 
     // The selected conversation only counts as read while the view that shows it is open.
+    /** A retained selection counts as being read only while its conversation view is mounted. */
     private isReadingConversation(conversationId: number | undefined): boolean {
         return this.isConversationViewOpen && conversationId !== undefined && conversationId === this.activeConversation?.id;
     }
@@ -647,7 +669,13 @@ export class CourseConversationsService implements OnDestroy {
         }
     }
 
+    /** Apply arrivals only to this course's cache; startup arrivals queue a later authoritative reconciliation. */
     handleNewMessage(conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined) {
+        if (!this.conversationsLoaded) {
+            this.refreshUnreadState();
+            return;
+        }
+        if (!this.conversationsOfUser.some((conversation) => conversation.id === conversationId)) return;
         this.unreadStateVersion++;
         if (this.isReadingConversation(conversationId) && !this.isMarkedAsUnread) {
             this.readNewMessage(conversationId);
@@ -678,6 +706,7 @@ export class CourseConversationsService implements OnDestroy {
         return ['/courses', courseId, 'communication'];
     }
 
+    /** Reconcile after bulk reads on either outcome; a rejected request must not clear unread counts locally. */
     markAllChannelsAsRead(course: Course | undefined) {
         if (!course?.id) {
             return of();

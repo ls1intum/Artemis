@@ -301,6 +301,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
         return this.activatedRoute.parent?.snapshot.data?.course;
     }
 
+    /** Mount conversation read ownership and wire the retained course state into this communication view. */
     ngOnInit(): void {
         // The service outlives this view, so it has to be told that the selected conversation is only being read while the view is open
         this.courseConversationsService.setConversationViewOpen(true);
@@ -482,6 +483,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
         });
     }
 
+    /** Release conversation read ownership when leaving Communication while retaining the course-level selection. */
     ngOnDestroy() {
         this.courseConversationsService.setConversationViewOpen(false);
         this.tabReselectionSubscription?.unsubscribe();
@@ -551,6 +553,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
         });
     }
 
+    /** Detect count or badge changes in retained DTOs so sidebar state rebuilds without another server request. */
     private unreadStateOf(conversations: ConversationDTO[]): string {
         return conversations.map((conversation) => `${conversation.id}:${conversation.unreadMessagesCount ?? 0}:${!!conversation.hasUnreadMessage}`).join(',');
     }

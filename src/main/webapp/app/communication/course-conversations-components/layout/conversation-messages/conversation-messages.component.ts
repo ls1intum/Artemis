@@ -124,6 +124,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     // The post the list opened at. Images and link previews above it load after it was positioned and push it out of view,
     // so its position is held until the user scrolls themselves.
     private initialAnchor: { postId: number; alignToUnreadLine: boolean } | undefined;
+    /** Release the opening unread anchor on reader input so later rendering cannot pull the reader back. */
     private readonly releaseInitialAnchor = () => {
         this.initialAnchor = undefined;
     };
@@ -321,6 +322,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     };
     private mutationObserver: MutationObserver | undefined;
 
+    /** Observe settled layout while holding the initial unread anchor, and release it on explicit reader input. */
     ngAfterViewInit() {
         const el = this.content()?.nativeElement;
         if (!el) {
@@ -352,6 +354,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
     }
 
+    /** Invalidate pending rendering and remove scroll listeners and layout observers owned by this message view. */
     ngOnDestroy(): void {
         this.postRequestId++;
         this.postPreparationId++;
@@ -960,11 +963,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     // the line sits in front of the post item that holds the post, see the template
+    /** Find the separator immediately before a post when aligning the first unread message. */
     private newMessagesLineOf(postElement: HTMLElement): HTMLElement | undefined {
         const line = postElement.closest('.post-item')?.previousElementSibling;
         return line?.classList.contains('new-messages-separator') ? (line as HTMLElement) : undefined;
     }
 
+    /** Restore the opening post or separator after layout changes while the reader still owns no scroll position. */
     private reapplyInitialAnchor() {
         const anchor = this.initialAnchor;
         const containerEl = this.content()?.nativeElement;
@@ -1031,6 +1036,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         return getUnreadPostsByLastReadDate(this.currentUser, this.allPosts(), lastReadDate);
     }
 
+    /** Keep the opening divider stable through automatic reads, but honor a new explicit unread boundary. */
     private displayedLastReadDate() {
         const conversation = this._activeConversation();
         return this.courseConversationsService.isConversationMarkedAsUnread(conversation?.id) ? conversation?.lastReadDate : this.openingLastReadDate();

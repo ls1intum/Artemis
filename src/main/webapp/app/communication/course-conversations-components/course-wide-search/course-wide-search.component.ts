@@ -75,11 +75,13 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     // The list starts at its end, but images load after that and push the newest messages out of view, so the end is held
     // until the user scrolls themselves.
     private holdsEnd = false;
+    /** Give scroll ownership to reader input, including input before the initial positioning frame. */
     private readonly releaseEnd = () => {
         this.holdsEnd = false;
         // Reader input establishes their own position even if the initial positioning frame has not run yet.
         this.initialScrollPositioned = true;
     };
+    /** Keep the newest result visible through delayed layout changes until the reader takes over. */
     private readonly onContentLoaded = () => {
         if (this.holdsEnd && !this.isFetchingPosts() && this.pendingPageScrollDistance === undefined) this.scrollToBottomOfMessages();
     };
@@ -96,6 +98,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.fetchPosts(true);
     }
 
+    /** Observe content growth and reader input separately so layout changes preserve the initial end anchor. */
     ngAfterViewInit() {
         this.messages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
         const container = this.content()?.nativeElement;
@@ -112,6 +115,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         }
     }
 
+    /** Invalidate pending results and remove layout observers, frames and input listeners owned by this view. */
     ngOnDestroy() {
         this.postRequestId++;
         this.resizeObserver?.disconnect();
@@ -143,6 +147,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.posts.set(posts.slice().reverse());
     }
 
+    /** Position the initial newest page; after reader input preserve its distance when older results are prepended. */
     handleScrollOnNewMessage = () => {
         if (this.isFetchingPosts() || this.posts().length === 0 || !this.content()) return;
         if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
