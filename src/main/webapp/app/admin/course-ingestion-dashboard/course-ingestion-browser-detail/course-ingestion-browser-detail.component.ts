@@ -16,9 +16,9 @@ import {
     IndexedContentObject,
     IndexedEntity,
     IndexedEntityRecord,
-    IngestionTypeCount,
     MissingContent,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionTypeCount } from 'app/openapi/model/ingestion-type-count';
 
 /**
  * A unit can hold hundreds of content chunks, so both stored lists are paged rather than rendered whole. The default

@@ -22,11 +22,11 @@ import {
     BrowserSelection,
     IndexedContentPresence,
     IndexedEntity,
-    IngestionTypeCount,
     MissingContent,
     MissingEntity,
     selectionKey,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionTypeCount } from 'app/openapi/model/ingestion-type-count';
 
 /** The metadata types listed in the scoreboard, in a fixed order so the list does not reshuffle between courses. */
 const SCOREBOARD_TYPES = ['exercise', 'lecture', 'lecture_unit', 'exam', 'faq', 'channel', 'course'] as const;

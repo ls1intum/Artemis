@@ -8,7 +8,8 @@ import { provideRouter } from '@angular/router';
 
 import { CourseIngestionBrowserDetailComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-detail/course-ingestion-browser-detail.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { CourseBrowserData, IndexedEntityRecord, IngestionTypeCount } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { CourseBrowserData, IndexedEntityRecord } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionTypeCount } from 'app/openapi/model/ingestion-type-count';
 
 describe('CourseIngestionBrowserDetailComponent', () => {
     let component: CourseIngestionBrowserDetailComponent;

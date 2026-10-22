@@ -2,16 +2,12 @@ import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
-import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
+import { Pageable } from 'app/openapi/model/pageable';
 import { IngestionCoverageApi } from 'app/openapi/api/ingestion-coverage-api';
 import { IndexOverview } from 'app/openapi/model/index-overview';
-import {
-    CourseBrowserData,
-    IndexedContentObject,
-    IndexedEntityRecord,
-    IngestionCoverage,
-    IngestionCoverageStatus,
-} from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { CourseBrowserData, IndexedContentObject, IndexedEntityRecord } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionCoverage, IngestionCoverageStatusEnum } from 'app/openapi/model/ingestion-coverage';
 
 /** Zero-based page request against a Spring `Pageable` endpoint. `sort` follows Spring's `property,direction` form. */
 export interface CoveragePageRequest {
@@ -30,7 +26,7 @@ export interface LiveCoverageRequest extends CoveragePageRequest {
  * stored projection can answer. The search is shared because a filter and a search are one question, not two views.
  */
 export interface StoredCoverageRequest extends LiveCoverageRequest {
-    status?: IngestionCoverageStatus;
+    status?: IngestionCoverageStatusEnum;
     active?: boolean;
 }
 
@@ -57,16 +53,7 @@ export class CourseIngestionDashboardService {
      * is active, and by a case-insensitive title search.
      */
     getStoredCoverage(request: StoredCoverageRequest = {}): Observable<PageableResult<IngestionCoverage>> {
-        let params = this.searchParam(this.paginationParams(request), request.search);
-        if (request.status !== undefined) {
-            params = params.set('status', request.status);
-        }
-        if (request.active !== undefined) {
-            params = params.set('active', request.active);
-        }
-        return this.http
-            .get<IngestionCoverage[]>(`${this.baseUrl}/coverage`, { params, observe: 'response' })
-            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+        return this.ingestionCoverageApi.getStoredCoverage(this.toPageable(request), request.status, request.active, request.search || undefined).pipe(map(toPageableResult));
     }
 
     /**
@@ -74,10 +61,7 @@ export class CourseIngestionDashboardService {
      * sorted on course columns (e.g. `title`, `startDate`) and optionally filtered by a case-insensitive title search.
      */
     getLiveCoveragePage(request: LiveCoverageRequest = {}): Observable<PageableResult<IngestionCoverage>> {
-        const params = this.searchParam(this.paginationParams(request), request.search);
-        return this.http
-            .get<IngestionCoverage[]>(`${this.baseUrl}/coverage/page`, { params, observe: 'response' })
-            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+        return this.ingestionCoverageApi.getLiveCoveragePage(this.toPageable(request), request.search || undefined).pipe(map(toPageableResult));
     }
 
     /**
@@ -114,23 +98,18 @@ export class CourseIngestionDashboardService {
         return this.http.post<void>(`${this.baseUrl}/coverage/refresh`, {});
     }
 
-    /** Builds the standard Spring pagination params, only setting the values that were provided. */
-    private paginationParams(request: CoveragePageRequest): HttpParams {
-        let params = new HttpParams();
+    /** Adapts the UI's single Spring sort criterion without overriding server pagination defaults. */
+    private toPageable(request: CoveragePageRequest): Pageable {
+        const pageable: Pageable = {};
         if (request.page !== undefined) {
-            params = params.set('page', request.page);
+            pageable.page = request.page;
         }
         if (request.size !== undefined) {
-            params = params.set('size', request.size);
+            pageable.size = request.size;
         }
         if (request.sort !== undefined && request.sort !== '') {
-            params = params.set('sort', request.sort);
+            pageable.sort = [request.sort];
         }
-        return params;
-    }
-
-    /** Adds the title search, if there is one. Both coverage endpoints take it under the same name. */
-    private searchParam(params: HttpParams, search: string | undefined): HttpParams {
-        return search === undefined || search === '' ? params : params.set('search', search);
+        return pageable;
     }
 }

@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.globalsearch.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -256,6 +258,78 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
         // The seeded row claims one missing exercise the course does not have, so a finished recompute has replaced it.
         assertThat(ingestionCoverageRepository.findByCourseId(course.getId()).orElseThrow().getTypeCounts())
                 .noneMatch(count -> count.type().equals("exercise") && count.missing() > 0);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonymousCannotReadEitherCoverageEndpoint() throws Exception {
+        request.get(BASE + "coverage", HttpStatus.UNAUTHORIZED, String.class);
+        request.get(BASE + "coverage/page", HttpStatus.UNAUTHORIZED, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void storedCoverageBindsFalseAndLiteralSearchAndOmitsEmptyMetadata() throws Exception {
+        var entry = storedEntry(IngestionCoverageStatus.EMPTY);
+        entry.setCourseTitle("C++ & 50%_\\ Überprüfung 東京");
+        entry.setActive(false);
+        entry.setCoverageGapScore(0);
+        entry.setTypeCounts(List.of());
+        ingestionCoverageRepository.save(entry);
+        var decoy = storedEntry(IngestionCoverageStatus.EMPTY);
+        decoy.setCourseId(course.getId() + 1_000_000L);
+        decoy.setCourseTitle("C++ & 50XX\\ Überprüfung 東京");
+        decoy.setActive(false);
+        ingestionCoverageRepository.save(decoy);
+
+        var response = request.performMvcRequest(get(BASE + "coverage").param("search", "  " + entry.getCourseTitle() + "  ").param("active", "false").param("status", "EMPTY")
+                .param("page", "0").param("size", "1").param("sort", "courseTitle,asc")).andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(response.getHeader("X-Total-Count")).isEqualTo("1");
+        var rows = objectMapper.readTree(response.getContentAsString());
+        assertThat(rows.isArray()).isTrue();
+        assertThat(rows).hasSize(1);
+        var row = rows.get(0);
+        assertThat(row.get("courseId").longValue()).isEqualTo(course.getId());
+        assertThat(row.get("courseTitle").stringValue()).isEqualTo(entry.getCourseTitle());
+        assertThat(row.get("active").booleanValue()).isFalse();
+        assertThat(row.get("coverageGapScore").intValue()).isZero();
+        assertThat(row.get("status").stringValue()).isEqualTo("EMPTY");
+        assertThat(row.get("computedAt").isString()).isTrue();
+        assertThat(row.has("typeCounts")).isFalse();
+        assertThat(row.has("releaseDate")).isFalse();
+        assertThat(row.has("semester")).isFalse();
+        assertThat(row.has("lastIngestedAt")).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void bothCoverageEndpointsExposeFullTotalsAndRespectOmittedPaginationDefaults() throws Exception {
+        for (int i = 0; i < 2; i++) {
+            var matching = courseUtilService.createCourse();
+            matching.setTitle(TEST_PREFIX + "-headers-" + matching.getId());
+            matching = courseRepository.save(matching);
+            var entry = storedEntry(IngestionCoverageStatus.COMPLETE);
+            entry.setCourseId(matching.getId());
+            entry.setCourseTitle(matching.getTitle());
+            ingestionCoverageRepository.save(entry);
+        }
+        for (String endpoint : List.of("coverage", "coverage/page")) {
+            var response = request.performMvcRequest(get(BASE + endpoint).param("search", TEST_PREFIX + "-headers-").param("page", "0").param("size", "1"))
+                    .andExpect(status().isOk()).andReturn().getResponse();
+            assertThat(response.getHeader("X-Total-Count")).isEqualTo("2");
+            assertThat(response.getHeader("Link")).contains("page=1", "rel=\"next\"");
+            var page = objectMapper.readTree(response.getContentAsString());
+            assertThat(page.isArray()).isTrue();
+            assertThat(page).hasSize(1);
+            assertThat(page.get(0).get("computedAt").isString()).isTrue();
+            assertThat(page.get(0).get("status").isString()).isTrue();
+            var defaults = request.performMvcRequest(get(BASE + endpoint).param("search", TEST_PREFIX + "-headers-")).andExpect(status().isOk()).andReturn().getResponse();
+            assertThat(defaults.getHeader("X-Total-Count")).isEqualTo("2");
+            assertThat(objectMapper.readTree(defaults.getContentAsString())).hasSize(2);
+            var empty = request.performMvcRequest(get(BASE + endpoint).param("search", TEST_PREFIX + "-missing-")).andExpect(status().isOk()).andReturn().getResponse();
+            assertThat(empty.getHeader("X-Total-Count")).isEqualTo("0");
+            assertThat(objectMapper.readTree(empty.getContentAsString())).isEmpty();
+        }
     }
 
     /**

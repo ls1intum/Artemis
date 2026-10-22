@@ -42,6 +42,9 @@ import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.CoverageRecomputeService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService;
 import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * Admin-only, read-only endpoints for the ingestion-observability dashboard: the index overview, the stored per-course
@@ -135,6 +138,7 @@ public class IngestionCoverageResource {
      * @return the requested page of stored coverage rows
      */
     @GetMapping("coverage")
+    @ApiResponse(responseCode = "200", headers = @Header(name = "X-Total-Count", schema = @Schema(type = "integer", format = "int64")))
     public ResponseEntity<List<IngestionCoverageDTO>> getStoredCoverage(@RequestParam(required = false) IngestionCoverageStatus status,
             @RequestParam(required = false) Boolean active, @RequestParam(required = false) String search, Pageable pageable) {
         CoverageRecomputeService.RecomputeOutcome outcome = coverageRecomputeService.triggerRecomputeIfStale();
@@ -156,6 +160,7 @@ public class IngestionCoverageResource {
      * @throws ResponseStatusException 400 if the page size exceeds {@link #MAX_LIVE_PAGE_SIZE}
      */
     @GetMapping("coverage/page")
+    @ApiResponse(responseCode = "200", headers = @Header(name = "X-Total-Count", schema = @Schema(type = "integer", format = "int64")))
     public ResponseEntity<List<IngestionCoverageDTO>> getLiveCoveragePage(@RequestParam(required = false) String search, Pageable pageable) {
         if (pageable.getPageSize() > MAX_LIVE_PAGE_SIZE) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The page size must not be greater than " + MAX_LIVE_PAGE_SIZE);
