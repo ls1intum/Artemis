@@ -378,6 +378,7 @@ overrides:
   yargs-parser: 22.0.0
 
 patchedDependencies:
+  braces@3.0.3: d5329670db5eefc81f5515f35df5a73eedc746914db0236eba1dcc2ecb5d5a86
   eslint@10.12.0: 19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424
   y-monaco@0.1.6: 1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e
 
@@ -10166,7 +10167,7 @@ snapshots:
     dependencies:
       balanced-match: 4.0.4
 
-  braces@3.0.3:
+  braces@3.0.3(patch_hash=d5329670db5eefc81f5515f35df5a73eedc746914db0236eba1dcc2ecb5d5a86):
     dependencies:
       fill-range: 7.1.1
 
@@ -11441,7 +11442,7 @@ snapshots:
 
   micromatch@4.0.8:
     dependencies:
-      braces: 3.0.3
+      braces: 3.0.3(patch_hash=d5329670db5eefc81f5515f35df5a73eedc746914db0236eba1dcc2ecb5d5a86)
       picomatch: 2.3.2
 
   mime@1.6.0:

@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
 import java.time.Duration;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -17,14 +15,14 @@ import org.redisson.client.RedisConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.AbstractDistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryAddedEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryListener;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryRemovedEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryUpdatedEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapListener;
 
-public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
+public class RedissonDistributedMap<K, V> extends AbstractDistributedMap<K, V> {
 
     private static final Logger log = LoggerFactory.getLogger(RedissonDistributedMap.class);
 
@@ -42,12 +40,14 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     private final Map<UUID, Integer> listenerRegistrations = new ConcurrentHashMap<>();
 
     public RedissonDistributedMap(RMap<K, V> map, RTopic notificationTopic) {
+        super(map);
         this.map = map;
         this.mapCache = null;
         this.notificationTopic = notificationTopic;
     }
 
     public RedissonDistributedMap(RMapCache<K, V> mapCache, RTopic notificationTopic) {
+        super(mapCache);
         this.map = mapCache;
         this.mapCache = mapCache;
         this.notificationTopic = notificationTopic;
@@ -154,36 +154,6 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
             publishSafely(MapItemEvent.removed(key, oldValue));
         }
         return oldValue;
-    }
-
-    @Override
-    public Collection<V> values() {
-        return map.values();
-    }
-
-    @Override
-    public Set<K> keySet() {
-        return map.keySet();
-    }
-
-    @Override
-    public Set<Map.Entry<K, V>> entrySet() {
-        return map.entrySet();
-    }
-
-    @Override
-    public HashMap<K, V> getMapCopy() {
-        return new HashMap<>(map);
-    }
-
-    @Override
-    public int size() {
-        return map.size();
-    }
-
-    @Override
-    public void clear() {
-        map.clear();
     }
 
     @Override

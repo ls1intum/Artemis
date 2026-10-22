@@ -2,11 +2,13 @@
     <div class="message-inline-input-form__wrapper mb-3 me-1">
         <jhi-posting-markdown-editor
             formControlName="content"
+            [draftIdentity]="'reply:' + posting()?.post?.id + ':' + (posting()?.id ?? 'new')"
             [activeConversation]="activeConversation()"
-            [editorHeight]="editorHeight"
             [maxContentLength]="maxContentLength"
             [isInputLengthDisplayed]="false"
             (keydown.enter)="confirm()"
+            (keydown.control.enter)="confirm()"
+            (keydown.meta.enter)="confirm()"
             (valueChange)="valueChange.emit()"
             [isButtonLoading]="isLoading()"
             [isFormGroupValid]="formGroup.valid"

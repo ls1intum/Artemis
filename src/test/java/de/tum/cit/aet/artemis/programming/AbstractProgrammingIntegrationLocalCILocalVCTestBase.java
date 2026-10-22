@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static org.mockito.Mockito.lenient;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -63,11 +61,8 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @BeforeEach
     protected void mockBuildAgentServices() {
-        // Use lenient stubbing to avoid Mockito concurrency issues when tests run in parallel.
-        // Standard doReturn().when() can cause "WrongTypeOfReturnValue" errors when multiple tests
-        // simultaneously stub the same spy bean.
-        lenient().doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
-        lenient().doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
+        // The shared buildAgentConfiguration spy must not be stubbed here: scheduled and build threads call it while this runs, see BuildAgentConfigurationOverrides.
+        buildAgentConfigurationOverrides.useDockerClient(dockerClientMock);
         this.dockerClient = dockerClientMock;
     }
 

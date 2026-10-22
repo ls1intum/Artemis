@@ -206,6 +206,11 @@ modernizer {
 }
 
 gitProperties {
+    if (project.hasProperty('reproducible')) {
+        // Keep stable revision/author information used at runtime; omit machine and builder identity.
+        keys = ['git.branch', 'git.commit.id', 'git.commit.id.abbrev', 'git.commit.id.describe', 'git.commit.time', 'git.commit.user.name', 'git.commit.user.email', 'git.build.version']
+        dateFormatTimeZone = 'UTC'
+    }
     // Only override branch when CI (= env variable present)
     def ciBranch = System.getenv('GIT_BRANCH')
     if (ciBranch) {
@@ -218,6 +223,10 @@ gitProperties {
         customProperty 'git.commit.id', ciCommit
         customProperty 'git.commit.id.abbrev', ciCommit.take(7)
     }
+}
+
+tasks.named('generateGitProperties') {
+    inputs.property('reproducible', project.hasProperty('reproducible'))
 }
 
 // Override Spring Boot BOM versions to patched releases addressing known CVEs:
@@ -502,8 +511,14 @@ dependencies {
     implementation "ch.qos.logback:logback-core"
 
     implementation "org.jsoup:jsoup:1.23.2"
-    // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "commons-codec:commons-codec:1.23.0"
+    // Shibboleth 9.2.3 decodes all Base64 with a STRICT 76-column codec. Since commons-codec 1.23.0,
+    // this rejects valid SAML metadata certificates and SAML messages with different whitespace.
+    // Update commons-codec to 1.23.0 once the OpenSAML dependency brings in shib-support 9.3.0 with the fix for
+    // https://shibboleth.atlassian.net/browse/JSSH-84, and run SAML2MetadataCompatibilityTest to verify compatibility.
+    implementation("commons-codec:commons-codec") {
+        version { strictly "1.22.1" }
+        because "Shibboleth's strict chunked Base64 decoder is incompatible with commons-codec 1.23.0"
+    }
 
     implementation "org.semver4j:semver4j:6.0.0"
 

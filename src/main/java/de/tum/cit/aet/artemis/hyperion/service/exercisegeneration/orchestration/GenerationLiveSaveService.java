@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.CanonicalMaps;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /** Coordinates durable authoring operations, not the preceding generation work. */
@@ -305,20 +306,32 @@ public class GenerationLiveSaveService {
             if (!reservations.replace(key, current, claimed)) {
                 continue;
             }
-            boolean completed = false;
+            boolean completed;
             try {
                 completed = callback.getAsBoolean();
-                return completed;
             }
-            finally {
-                var finished = new LiveSaveSlot(claimed.token(), claimed.ownerNodeId(), claimed.startedAt(), claimed.readers(),
-                        new TestCaseSynchronization(solutionCommit, testsCommit, false, completed));
-                if (!reservations.replace(key, claimed, finished)) {
-                    throw new IllegalStateException("Test synchronization lost its save reservation");
+            catch (RuntimeException | Error failure) {
+                try {
+                    finishTestCaseSynchronization(exerciseId, key, claimed, false);
                 }
-                log.info("Canonical test synchronization for exercise {} finished: solution {}, tests {}, accepted {}", exerciseId, solutionCommit, testsCommit, completed);
+                catch (RuntimeException | Error completionFailure) {
+                    failure.addSuppressed(completionFailure);
+                }
+                throw failure;
             }
+            finishTestCaseSynchronization(exerciseId, key, claimed, completed);
+            return completed;
         }
+    }
+
+    private void finishTestCaseSynchronization(long exerciseId, String key, LiveSaveSlot claimed, boolean completed) {
+        var sync = claimed.synchronization();
+        var finished = new LiveSaveSlot(claimed.token(), claimed.ownerNodeId(), claimed.startedAt(), claimed.readers(),
+                new TestCaseSynchronization(sync.solutionCommit(), sync.testsCommit(), false, completed));
+        if (!reservations.replace(key, claimed, finished)) {
+            throw new IllegalStateException("Test synchronization lost its save reservation");
+        }
+        log.info("Canonical test synchronization for exercise {} finished: solution {}, tests {}, accepted {}", exerciseId, sync.solutionCommit(), sync.testsCommit(), completed);
     }
 
     /**
@@ -399,7 +412,8 @@ public class GenerationLiveSaveService {
         }
 
         public LiveSaveSlot {
-            readers = Map.copyOf(readers);
+            // Compared by encoded bytes in Redis, so the encoding must survive a round trip; Map.copyOf does not.
+            readers = CanonicalMaps.copyOf(readers);
         }
     }
 

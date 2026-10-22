@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
-import { request } from '@playwright/test';
+import { request, type FullConfig } from '@playwright/test';
+import { waitForServerReadiness } from './server-readiness';
 import { SSH_KEYS_PATH, SSH_KEY_NAMES } from '../support/pageobjects/exercises/programming/GitClient';
 import { admin, studentOne, studentTwo, studentThree, studentFour, tutor, instructor, UserCredentials } from '../support/users';
 import { SEED_COURSES } from '../support/seedData';
@@ -9,7 +10,7 @@ import { SEED_COURSES } from '../support/seedData';
 const AUTH_DIR = path.join(__dirname, '..', '.auth');
 const JWT_TOKENS_PATH = path.join(AUTH_DIR, 'jwt-tokens.json');
 
-async function globalSetup() {
+async function globalSetup(config: FullConfig) {
     console.log('Running global setup...');
 
     // Set correct permissions to the SSH keys
@@ -23,6 +24,13 @@ async function globalSetup() {
         }
     } catch (error) {
         console.error('Error during SSH key setup:', error);
+    }
+
+    const readinessContext = await request.newContext({ ignoreHTTPSErrors: true });
+    try {
+        await waitForServerReadiness(readinessContext, config.projects[0].use.baseURL ?? 'http://localhost:9000', process.env.MULTI_NODE_URLS);
+    } finally {
+        await readinessContext.dispose();
     }
 
     // Pre-authenticate all users and cache JWT tokens
@@ -133,15 +141,8 @@ async function preAuthenticateUsers(): Promise<string | undefined> {
  * connection pool. All seed IDs come from `support/seedData.ts` so a single source of
  * truth defines what the warmer touches.
  *
- * The flow:
- *   1. Strict health gate — one `GET /management/health/readiness` must return 200,
- *      otherwise we throw. This separates "server down" (real outage, fail loud) from
- *      "endpoint slow" (warm-up, fail soft). The readiness probe is used instead of the
- *      aggregate `/management/health`, which also reports external connectors (e.g. the
- *      Hermes push relay) and would fail every run while one of them is degraded.
- *   2. Soft warm pass — fire ~12 GETs in parallel. Each result is logged but never
- *      throws; a 404 because seed-data drifted or a 503 because one module is still
- *      starting up is acceptable.
+ * Readiness is checked for every core node before pre-authentication. This pass is
+ * deliberately soft: a missing seed entity must not be confused with an unavailable server.
  */
 async function prewarmServer(adminJwt: string): Promise<void> {
     const baseURL = process.env.BASE_URL ?? 'http://localhost:9000';
@@ -151,14 +152,6 @@ async function prewarmServer(adminJwt: string): Promise<void> {
         extraHTTPHeaders: { cookie: `jwt=${adminJwt}` },
     });
     try {
-        // Strict readiness gate
-        const healthStart = Date.now();
-        const healthResp = await ctx.get('/management/health/readiness', { timeout: 30_000 });
-        if (!healthResp.ok()) {
-            throw new Error(`[prewarm] server readiness check failed: HTTP ${healthResp.status()}`);
-        }
-        console.log(`[prewarm] readiness OK (${Date.now() - healthStart} ms)`);
-
         // Soft warm pass — read endpoints against seed entities, no side effects
         const atlas = SEED_COURSES.atlas1.id;
         const examMgmt = SEED_COURSES.examManagement.id;

@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationDeliveryPolicy;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.UserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
@@ -120,6 +121,11 @@ class CourseNotificationSettingPresetRegistryServiceTest {
 
         public TestNotification(Long notificationId, Long courseId, ZonedDateTime creationDate) {
             super(notificationId, courseId, "Test Course", "image.url", creationDate);
+        }
+
+        @Override
+        protected CourseNotificationDeliveryPolicy getDeliveryPolicy() {
+            return CourseNotificationDeliveryPolicy.GENERAL;
         }
 
         @Override

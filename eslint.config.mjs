@@ -711,7 +711,11 @@ export default tseslint.config(
             'src/main/webapp/app/exercise/result/**/*.html',
             'src/main/webapp/app/iris/manage/settings/**/*.html',
             'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
+            'src/main/webapp/app/atlas/shared/competency-selection/**/*.html',
+            'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
+            'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.html',
             'src/main/webapp/app/localci/build-queue/**/*.html',
+            'src/main/webapp/app/videosource/gocast/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
             // Admin-reachable global shell + delete-dialog chain (rendered on every admin page / during admin deletes).
@@ -747,6 +751,12 @@ export default tseslint.config(
             'src/main/webapp/app/lecture/manage/lecture-units/**/*.html',
             'src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.html',
             'src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.html',
+            'src/main/webapp/app/exercise/participation/programming-exercise-participation-actions/**/*.html',
+            'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
+            'src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.html',
+            'src/main/webapp/app/plagiarism/shared/case-header/**/*.html',
+            'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
+            'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
         ],
         languageOptions: {
@@ -789,7 +799,14 @@ export default tseslint.config(
     // The exam mode is migrated to TUM AET UI and Tailwind: neither PrimeNG nor ng-bootstrap may be imported anywhere in it, including specs.
     // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
     {
-        files: ['src/main/webapp/app/exam/**/*.ts', 'src/main/webapp/app/notification/**/*.ts', 'src/main/webapp/app/calendar/**/*.ts'],
+        files: [
+            'src/main/webapp/app/exam/**/*.ts',
+            'src/main/webapp/app/notification/**/*.ts',
+            'src/main/webapp/app/calendar/**/*.ts',
+            'src/main/webapp/app/atlas/shared/competency-selection/**/*.ts',
+            'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.ts',
+            'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.ts',
+        ],
         rules: {
             'no-restricted-imports': [
                 'error',
@@ -805,7 +822,7 @@ export default tseslint.config(
                         {
                             group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
                             message:
-                                'The exam mode, the notifications and the calendar use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
+                                'Migrated client components use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
                         },
                     ],
                 },
