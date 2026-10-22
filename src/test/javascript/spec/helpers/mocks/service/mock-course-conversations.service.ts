@@ -45,10 +45,10 @@ export class MockCourseConversationsService {
     }
 
     messagesRequested(conversationId: number): ConversationReadRequest {
-        return { coveredRequests: 0, unreadRevision: 0 };
+        return { unreadRevision: 0 };
     }
 
-    messagesLoaded(conversationId: number, request: ConversationReadRequest, readAt?: dayjs.Dayjs): void {}
+    messagesLoaded(conversationId: number, request: ConversationReadRequest): void {}
 
     setUpConversationService = (course: Course): Observable<never> => {
         return EMPTY;
@@ -67,8 +67,6 @@ export class MockCourseConversationsService {
     forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         return EMPTY;
     }
-
-    markAsRead(): void {}
 
     acceptCodeOfConduct(course: Course) {}
 

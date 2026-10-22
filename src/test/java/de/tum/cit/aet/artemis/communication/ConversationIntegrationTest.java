@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,6 +16,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.ResponsibleUserDTO;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -693,22 +694,39 @@ class ConversationIntegrationTest extends AbstractConversationTest {
                 AnswerPostResponseDTO.class, HttpStatus.CREATED);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = { "messages", "patch", "bulk" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void markMessagesAsRead() throws Exception {
+    void readIsCommittedBeforeResponse(String readPath) throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(exampleCourse, "mark-as-read");
-        channel.setLastMessageDate(ZonedDateTime.now().minusDays(1));
         ConversationParticipant participant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        ZonedDateTime previousRead = ZonedDateTime.now().minusDays(1);
+        participant.setLastRead(previousRead);
+        participant.setUnreadMessagesCount(3L);
+        conversationParticipantRepository.saveAndFlush(participant);
 
-        request.patch("/api/communication/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/mark-as-read", null, HttpStatus.OK);
+        if ("messages".equals(readPath)) {
+            var params = new LinkedMultiValueMap<String, String>();
+            params.add("conversationIds", channel.getId().toString());
+            request.getList("/api/communication/courses/" + exampleCourseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+        }
+        else if ("bulk".equals(readPath)) {
+            request.postWithoutLocation("/api/communication/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
+        }
+        else {
+            request.patch("/api/communication/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/mark-as-read", null, HttpStatus.OK);
+        }
 
-        conversationParticipantRepository.flush();
-        ConversationParticipant updatedParticipant = conversationParticipantRepository
-                .findConversationParticipantByConversationIdAndUserIdElseThrow(participant.getConversation().getId(), participant.getUser().getId());
-        assertThat(updatedParticipant.getLastRead()).isNotNull();
-        // lenient assertion to prevent flaky behavior
-        assertThat(updatedParticipant.getLastRead()).satisfiesAnyOf(lastRead -> assertThat(lastRead).isCloseTo(participant.getLastRead(), Assertions.within(1, ChronoUnit.SECONDS)),
-                lastRead -> assertThat(lastRead).isAfter(participant.getLastRead()));
+        // No await: HTTP success must mean the transaction committed, so an immediate list GET is authoritative.
+        ConversationParticipant updated = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(channel.getId(),
+                participant.getUser().getId());
+        assertThat(updated.getUnreadMessagesCount()).isZero();
+        assertThat(updated.getLastRead().toInstant()).isAfter(previousRead.toInstant());
+        var conversations = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
+        assertThat(conversations).filteredOn(conversation -> conversation.getId().equals(channel.getId())).singleElement().satisfies(conversation -> {
+            assertThat(conversation.getUnreadMessagesCount()).isZero();
+            assertThat(conversation.getLastReadDate().toInstant()).isAfter(previousRead.toInstant());
+        });
     }
 
     @Test

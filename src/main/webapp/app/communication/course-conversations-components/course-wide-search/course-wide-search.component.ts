@@ -77,6 +77,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private holdsEnd = false;
     private readonly releaseEnd = () => {
         this.holdsEnd = false;
+        // Reader input establishes their own position even if the initial positioning frame has not run yet.
+        this.initialScrollPositioned = true;
     };
     private readonly onContentLoaded = () => {
         if (this.holdsEnd && !this.isFetchingPosts() && this.pendingPageScrollDistance === undefined) this.scrollToBottomOfMessages();
@@ -148,13 +150,14 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             this.scrollFrame = undefined;
             const element = this.content()?.nativeElement;
             if (!element) return;
-            if (this.pendingPageScrollDistance !== undefined) {
-                element.scrollTop = element.scrollHeight - this.pendingPageScrollDistance;
+            // Initial positioning and an end the reader has not released take precedence over automatic prefetch.
+            if (!this.initialScrollPositioned || this.holdsEnd) {
                 this.pendingPageScrollDistance = undefined;
-                this.holdsEnd = false;
-            } else if (!this.initialScrollPositioned) {
                 this.scrollToBottomOfMessages();
                 this.holdsEnd = true;
+            } else if (this.pendingPageScrollDistance !== undefined) {
+                element.scrollTop = element.scrollHeight - this.pendingPageScrollDistance;
+                this.pendingPageScrollDistance = undefined;
             }
             this.initialScrollPositioned = true;
         });

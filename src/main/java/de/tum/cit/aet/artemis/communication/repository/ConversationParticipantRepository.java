@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,7 +53,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             """)
     Set<ConversationParticipant> findConversationParticipantsWithUserCourseRolesByConversationId(@Param("conversationId") Long conversationId);
 
-    @Async
+    // Complete this transaction before returning read success: clients immediately reload authoritative counts.
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
@@ -63,7 +62,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             WHERE p.user.id = :userId
                 AND p.conversation.id = :conversationId
             """)
-    void updateLastReadAsync(@Param("userId") Long userId, @Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
+    void updateLastRead(@Param("userId") Long userId, @Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
 
     /**
      * Mark a message and all subsequent messages as unread.
@@ -89,7 +88,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     void markFromMessageAsUnread(@Param("conversationId") Long conversationId, @Param("userId") Long userId, @Param("messageDate") ZonedDateTime messageDate,
             @Param("lastRead") ZonedDateTime lastRead);
 
-    @Async
+    // Complete this transaction before returning read success: clients immediately reload authoritative counts.
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
@@ -98,7 +97,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             WHERE p.user.id = :userId
                 AND p.conversation.id IN :conversationIds
             """)
-    void updateMultipleLastReadAsync(@Param("userId") Long userId, @Param("conversationIds") List<Long> conversationIds, @Param("now") ZonedDateTime now);
+    void updateMultipleLastRead(@Param("userId") Long userId, @Param("conversationIds") List<Long> conversationIds, @Param("now") ZonedDateTime now);
 
     boolean existsByConversationIdAndUserId(Long conversationId, Long userId);
 
@@ -214,7 +213,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
      * conversation. Participants failing any of those conditions are left untouched.
      * <p>
      * Call this from the request that creates the message, not from a background thread. The read side
-     * ({@code updateLastReadAsync}) resets the counter to zero and nothing orders the two, so an increment running
+     * ({@code updateLastRead}) resets the counter to zero and nothing orders the two, so an increment running
      * asynchronously can land after a recipient's read and leave them with an unread message they already saw.
      *
      * @param conversationId id of the conversation with participants

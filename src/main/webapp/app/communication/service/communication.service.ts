@@ -184,7 +184,7 @@ export class CommunicationService implements OnDestroy {
                 // Personal-topic posts are counted by CourseConversationsService. Count course-wide posts only here,
                 // rather than again when the visible-message stream subscribes to this same topic.
                 const conversationId = postDTO.post.conversation?.id;
-                if (postDTO.action === CommunicationCrudAction.CREATE && conversationId !== this.currentConversation?.id && postDTO.post.author?.id !== this.user.id) {
+                if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post.author?.id !== this.user.id) {
                     this.courseConversationsService.handleNewMessage(conversationId, postDTO.post.creationDate);
                 }
                 this.handleNewOrUpdatedMessage(postDTO);
@@ -232,7 +232,6 @@ export class CommunicationService implements OnDestroy {
             // Loading the messages of a single conversation resets its unread count on the server, unless a search is used.
             const loadedConversationId = postContextFilter.conversationIds?.length === 1 && !postContextFilter.searchText ? postContextFilter.conversationIds[0] : undefined;
             const readRequest = loadedConversationId !== undefined ? this.courseConversationsService.messagesRequested(loadedConversationId) : undefined;
-            const readAt = dayjs();
             this.postService
                 .getPosts(this.courseId, postContextFilter)
                 .pipe(
@@ -245,7 +244,7 @@ export class CommunicationService implements OnDestroy {
                 .subscribe((res) => {
                     // The server reset the count even when a newer request has taken over the cache.
                     if (loadedConversationId !== undefined && readRequest) {
-                        this.courseConversationsService.messagesLoaded(loadedConversationId, readRequest, readAt);
+                        this.courseConversationsService.messagesLoaded(loadedConversationId, readRequest);
                     }
                     // A newer request owns the shared cache, including its messages, total and subscription context.
                     if (requestId !== this.filteredPostsRequestId) {
@@ -816,13 +815,6 @@ export class CommunicationService implements OnDestroy {
                     } else {
                         this.cachedPosts = [postDTO.post, ...this.cachedPosts];
                     }
-                }
-
-                if (this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length == 1 && postDTO.post.author?.id !== this.user.id) {
-                    setTimeout(() => {
-                        // We add a small timeout to avoid concurrency issues
-                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationIds![0]).subscribe();
-                    }, 1000);
                 }
 
                 break;

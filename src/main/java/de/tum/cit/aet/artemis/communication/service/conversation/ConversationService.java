@@ -236,7 +236,7 @@ public class ConversationService {
     }
 
     public void markAsRead(Long conversationId, Long userId) {
-        conversationParticipantRepository.updateLastReadAsync(userId, conversationId, ZonedDateTime.now());
+        conversationParticipantRepository.updateLastRead(userId, conversationId, ZonedDateTime.now());
     }
 
     /**
@@ -473,7 +473,7 @@ public class ConversationService {
         var userId = requestingUser.getId();
         List<Long> conversationIds = conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(userId, courseId);
         if (!conversationIds.isEmpty()) {
-            conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+            conversationParticipantRepository.updateMultipleLastRead(userId, conversationIds, now);
         }
 
         log.debug("Marking all conversations with existing participants as read took {} ms", TimeLogUtil.formatDurationFrom(start));
@@ -508,7 +508,7 @@ public class ConversationService {
                     }
                 }
                 if (!concurrentlyCreatedConversationIds.isEmpty()) {
-                    conversationParticipantRepository.updateMultipleLastReadAsync(userId, concurrentlyCreatedConversationIds, now);
+                    conversationParticipantRepository.updateMultipleLastRead(userId, concurrentlyCreatedConversationIds, now);
                 }
             }
         }

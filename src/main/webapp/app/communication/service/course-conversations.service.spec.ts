@@ -84,6 +84,17 @@ describe('CourseConversationsService', () => {
         expect(courseConversationsService).toBeTruthy();
     });
 
+    it('allows message reads before the communication cache is initialized, as in exercise discussions', () => {
+        const getConversations = vi.spyOn(conversationService, 'getConversationsOfUser');
+        getConversations.mockClear();
+        const request = courseConversationsService.messagesRequested(channel.id!);
+        expect(() => courseConversationsService.messagesLoaded(channel.id!, request)).not.toThrow();
+        expect(getConversations).not.toHaveBeenCalled();
+        courseConversationsService.setUpConversationService(course).subscribe();
+        expect(courseConversationsService['conversationsLoaded']).toBe(true);
+        expect(getConversations).toHaveBeenCalledOnce();
+    });
+
     it('should set up the service correctly', () => {
         return new Promise((done) => {
             courseConversationsService.setUpConversationService(course).subscribe({
@@ -681,536 +692,238 @@ describe('CourseConversationsService', () => {
             expect(courseConversationsService['hasUnreadMessages']).toBe(true);
         });
 
-        it('clears navigation badges without advancing the opening read timestamp', async () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            const lastReadDate = dayjs().subtract(10, 'minutes');
-            channel.lastReadDate = lastReadDate;
+        it('does not treat navigation as a confirmed read', async () => {
+            channel.lastReadDate = dayjs('2026-01-01T10:00:00Z');
             channel.unreadMessagesCount = 2;
-            channel.hasUnreadMessage = true;
-            const active = channel;
-            courseConversationsService.setActiveConversation(active);
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
             courseConversationsService.setConversationViewOpen(true);
-            const emittedCounts: number[] = [];
-            const subscription = courseConversationsService.conversationsOfUser$.subscribe((conversations) => {
-                emittedCounts.push(conversations.find((conversation) => conversation.id === channel.id)?.unreadMessagesCount ?? 0);
-            });
-
             await TestBed.inject(Router).navigateByUrl('/courses/1/communication?conversationId=3');
-
-            // The message response can still be pending at NavigationEnd. The shared DTO
-            // must keep the timestamp used to locate the first unread message when that response arrives.
-            expect(active.lastReadDate).toBe(lastReadDate);
-            expect(channel.lastReadDate).toBe(lastReadDate);
-            expect(active.unreadMessagesCount).toBe(0);
-            expect(channel.unreadMessagesCount).toBe(0);
-            expect(active.hasUnreadMessage).toBe(false);
-            expect(channel.hasUnreadMessage).toBe(false);
-            expect(emittedCounts.at(-1)).toBe(0);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-            subscription.unsubscribe();
-        });
-
-        it('advances the cached read timestamp when a live reply is marked read before posts finish loading', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            const openingReadDate = dayjs().subtract(10, 'minutes');
-            channel.lastReadDate = openingReadDate;
-            courseConversationsService.setActiveConversation(channel);
-            courseConversationsService.setConversationViewOpen(true);
-            const pendingRead = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pendingRead);
-
-            receiveMockSubject.next(eventFor(channel));
-            pendingRead.next(new HttpResponse<void>());
-
-            expect(courseConversationsService['activeConversation']?.lastReadDate?.isAfter(openingReadDate)).toBe(true);
-            expect(channel.lastReadDate?.isAfter(openingReadDate)).toBe(true);
-            expect(cachedUnreadCount(channel.id)).toBe(0);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-            pendingRead.complete();
-
+            expect(cachedUnreadCount(channel.id)).toBe(2);
+            expect(channel.lastReadDate?.toISOString()).toBe('2026-01-01T10:00:00.000Z');
             courseConversationsService.setActiveConversation(groupChat);
-            expect(channel.lastReadDate?.isAfter(openingReadDate)).toBe(true);
-        });
-
-        it('clears the cached and course unread state when a read succeeds after an earlier failure', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const successfulRead = new Subject<HttpResponse<void>>();
-            const unreadStates: boolean[] = [];
-            const unreadSubscription = courseConversationsService.hasUnreadMessages$.subscribe((value) => unreadStates.push(value));
-            const counts: number[] = [];
-            const countSubscription = courseConversationsService.conversationsOfUser$.subscribe((conversations) => {
-                counts.push(conversations.find((conversation) => conversation.id === channel.id)?.unreadMessagesCount ?? 0);
-            });
-            vi.spyOn(conversationService, 'markAsRead')
-                .mockReturnValueOnce(throwError(() => new Error('read failed')))
-                .mockReturnValueOnce(successfulRead);
-
-            receiveMockSubject.next(eventFor(channel));
-            expect(cachedUnreadCount(channel.id)).toBe(1);
+            expect(cachedUnreadCount(channel.id)).toBe(2);
             expect(courseConversationsService['hasUnreadMessages']).toBe(true);
-
-            receiveMockSubject.next(eventFor(channel));
-            expect(counts.at(-1)).toBe(1);
-            successfulRead.next(new HttpResponse<void>());
-
-            expect(cachedUnreadCount(channel.id)).toBe(0);
-            expect(courseConversationsService['activeConversation']?.hasUnreadMessage).toBe(false);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-            expect(courseConversationsService['isMarkedAsUnread']).toBe(false);
-            expect(counts.at(-1)).toBe(0);
-            expect(unreadStates).toEqual([true, false]);
-            successfulRead.complete();
-            countSubscription.unsubscribe();
-            unreadSubscription.unsubscribe();
         });
 
-        it('keeps the successful read timestamp when leaving and reopening Communication through another course tab', async () => {
+        // The fake server snapshots DTOs when a GET starts, independently of when responses arrive.
+        // This tests the public cache against server state, without a client request/contribution ledger.
+        const kinds = ['channel', 'group', 'direct'] as const;
+        const scenarios = kinds.flatMap((kind) =>
+            [true, false].flatMap((firstSucceeds) =>
+                [true, false].flatMap((secondSucceeds) =>
+                    [true, false].flatMap((reverseResponses) => [true, false].map((navigate) => ({ kind, firstSucceeds, secondSucceeds, reverseResponses, navigate }))),
+                ),
+            ),
+        );
+        it.each(scenarios)(
+            'uses authoritative counts for overlapping reads: $kind / first=$firstSucceeds second=$secondSucceeds reversed=$reverseResponses navigate=$navigate',
+            ({ kind, firstSucceeds, secondSucceeds, reverseResponses, navigate }) => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                const conversation = kind === 'channel' ? channel : kind === 'group' ? groupChat : oneToOneChat;
+                const other = conversation === channel ? groupChat : channel;
+                courseConversationsService.setActiveConversation(conversation);
+                courseConversationsService.setConversationViewOpen(true);
+                let serverCount = 0;
+                const serverReadDate = dayjs('2026-01-01T12:00:00Z');
+                const snapshot = () =>
+                    [groupChat, oneToOneChat, channel].map((row) => ({
+                        ...row,
+                        unreadMessagesCount: row.id === conversation.id ? serverCount : 0,
+                        hasUnreadMessage: row.id === conversation.id && serverCount > 0,
+                        lastReadDate: serverReadDate,
+                    }));
+                vi.spyOn(conversationService, 'getConversationsOfUser').mockImplementation(() => of(new HttpResponse({ body: snapshot() })));
+                const responses = [new Subject<HttpResponse<void>>(), new Subject<HttpResponse<void>>()];
+                vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(responses[0]).mockReturnValueOnce(responses[1]);
+                serverCount++;
+                receiveMockSubject.next(eventFor(conversation));
+                if (firstSucceeds) serverCount = 0;
+                serverCount++;
+                receiveMockSubject.next(eventFor(conversation));
+                if (secondSucceeds) serverCount = 0;
+                if (navigate) courseConversationsService.setActiveConversation(other);
+                const expected = serverCount;
+                for (const index of reverseResponses ? [1, 0] : [0, 1]) {
+                    if (index === 0 ? firstSucceeds : secondSucceeds) {
+                        responses[index].next(new HttpResponse<void>());
+                        responses[index].complete();
+                    } else {
+                        responses[index].error(new Error('read rejected'));
+                    }
+                    expect(cachedUnreadCount(conversation.id)).toBe(expected);
+                    const cached = courseConversationsService['conversationsOfUser'].find((row) => row.id === conversation.id)!;
+                    expect(cached.hasUnreadMessage).toBe(expected > 0);
+                    expect(cached.lastReadDate).toBe(serverReadDate);
+                    expect(courseConversationsService['hasUnreadMessages']).toBe(expected > 0);
+                    expect(courseConversationsService['activeConversation']?.id).toBe(navigate ? other.id : conversation.id);
+                }
+            },
+        );
+
+        it.each(kinds.flatMap((kind) => ['success', 'failure', 'messages'].flatMap((outcome) => [false, true].map((navigate) => ({ kind, outcome, navigate })))))(
+            'preserves a manual unread mark against an older $outcome for $kind (navigate=$navigate)',
+            ({ kind, outcome, navigate }) => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                const conversation = kind === 'channel' ? channel : kind === 'group' ? groupChat : oneToOneChat;
+                courseConversationsService.setActiveConversation(conversation);
+                courseConversationsService.setConversationViewOpen(true);
+                const pending = new Subject<HttpResponse<void>>();
+                vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
+                const request = courseConversationsService.messagesRequested(conversation.id!);
+                receiveMockSubject.next(eventFor(conversation));
+                const manualDate = dayjs('2026-01-01T10:00:00Z');
+                courseConversationsService.updateConversationUnreadState(conversation.id, manualDate, 3);
+                if (navigate) courseConversationsService.setActiveConversation(conversation === channel ? groupChat : channel);
+                const getConversations = vi.spyOn(conversationService, 'getConversationsOfUser');
+                getConversations.mockClear();
+                if (outcome === 'success') {
+                    pending.next(new HttpResponse<void>());
+                    pending.complete();
+                } else if (outcome === 'failure') pending.error(new Error('rejected'));
+                else courseConversationsService.messagesLoaded(conversation.id!, request);
+                expect(cachedUnreadCount(conversation.id)).toBe(3);
+                expect(conversation.lastReadDate).toBe(manualDate);
+                expect(conversation.hasUnreadMessage).toBe(true);
+                expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+                expect(getConversations).not.toHaveBeenCalled();
+            },
+        );
+
+        it.each(['success', 'failure', 'messages', 'manual', 'arrival', 'read-start', 'bulk-success', 'bulk-failure'] as const)(
+            'rejects a stale list after %s changes the unread baseline',
+            (mutation) => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                courseConversationsService.setActiveConversation(channel);
+                courseConversationsService.setConversationViewOpen(true);
+                const pending = new Subject<HttpResponse<void>>();
+                vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
+                receiveMockSubject.next(eventFor(channel));
+                const request = courseConversationsService.messagesRequested(channel.id!);
+                const stale = new Subject<HttpResponse<ConversationDTO[]>>();
+                const expected = mutation === 'manual' ? 3 : mutation === 'failure' || mutation === 'arrival' || mutation === 'bulk-failure' || mutation === 'read-start' ? 2 : 0;
+                const confirmedDate = dayjs('2026-01-01T12:00:00Z');
+                const fresh = () => [groupChat, oneToOneChat, { ...channel, unreadMessagesCount: expected, hasUnreadMessage: expected > 0, lastReadDate: confirmedDate }];
+                const getConversations = vi
+                    .spyOn(conversationService, 'getConversationsOfUser')
+                    .mockReturnValueOnce(stale)
+                    .mockImplementation(() => of(new HttpResponse({ body: fresh() })));
+                const publishedCounts: number[] = [];
+                const counts = courseConversationsService.conversationsOfUser$.subscribe((rows) =>
+                    publishedCounts.push(rows.find((row) => row.id === channel.id)?.unreadMessagesCount ?? 0),
+                );
+                const activeNotifications = vi.spyOn(courseConversationsService['_activeConversation$'], 'next');
+                courseConversationsService.forceRefresh(false).subscribe();
+                if (mutation === 'success') {
+                    pending.next(new HttpResponse<void>());
+                    pending.complete();
+                } else if (mutation === 'failure') pending.error(new Error('read failed'));
+                else if (mutation === 'messages') courseConversationsService.messagesLoaded(channel.id!, request);
+                else if (mutation === 'manual') courseConversationsService.updateConversationUnreadState(channel.id, confirmedDate, expected);
+                else if (mutation === 'arrival') {
+                    courseConversationsService.setConversationViewOpen(false);
+                    receiveMockSubject.next(eventFor(channel));
+                } else if (mutation === 'read-start') courseConversationsService['readNewMessage'](channel.id);
+                else {
+                    vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(
+                        mutation === 'bulk-success' ? of(undefined) : throwError(() => new HttpErrorResponse({ status: 500 })),
+                    );
+                    courseConversationsService.markAllChannelsAsRead(course).subscribe();
+                }
+                publishedCounts.length = 0;
+                stale.next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 7, hasUnreadMessage: true }] }));
+                stale.complete();
+                expect(cachedUnreadCount(channel.id)).toBe(expected);
+                expect(publishedCounts).not.toContain(7);
+                expect(courseConversationsService['activeConversation']?.lastReadDate?.isSame(confirmedDate)).toBe(true);
+                expect(courseConversationsService['hasUnreadMessages']).toBe(expected > 0);
+                expect(getConversations.mock.calls.length).toBeGreaterThan(1);
+                expect(activeNotifications).not.toHaveBeenCalled();
+                counts.unsubscribe();
+            },
+        );
+
+        it('keeps the visible DTO connected after ordinary and silent refreshes, then a manual unread mark', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
-            const openingReadDate = dayjs('2026-01-01T10:00:00Z');
-            channel.lastReadDate = openingReadDate;
             courseConversationsService.setActiveConversation(channel);
-            courseConversationsService.setConversationViewOpen(true);
-            await TestBed.inject(Router).navigateByUrl('/courses/1/communication?conversationId=3');
-            const coveredRequests = courseConversationsService.messagesRequested(channel.id!);
-            courseConversationsService.messagesLoaded(channel.id!, coveredRequests);
-
-            courseConversationsService.setConversationViewOpen(false);
-            await TestBed.inject(Router).navigateByUrl('/courses/1/exercises');
-            courseConversationsService.setConversationViewOpen(true);
-            await TestBed.inject(Router).navigateByUrl('/courses/1/communication?conversationId=3');
-
-            expect(channel.lastReadDate?.isAfter(openingReadDate)).toBe(true);
-            expect(courseConversationsService['activeConversation']?.lastReadDate).toBe(channel.lastReadDate);
-        });
-
-        it('ignores automatic read failures covered by a successful bulk read and refresh for every conversation', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            const pendingChannelRead = new Subject<HttpResponse<void>>();
-            const pendingGroupRead = new Subject<HttpResponse<void>>();
-            const bulkRead = new Subject<void>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(pendingChannelRead).mockReturnValueOnce(pendingGroupRead);
-            vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(bulkRead);
-            courseConversationsService.setActiveConversation(channel);
-            receiveMockSubject.next(eventFor(channel));
-            courseConversationsService.setActiveConversation(groupChat);
-            receiveMockSubject.next(eventFor(groupChat));
-
-            courseConversationsService.markAllChannelsAsRead(course).subscribe();
-            bulkRead.next();
+            const viewConversation = channel;
+            vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(
+                of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 0, hasUnreadMessage: false, name: 'updated-channel' }] })),
+            );
             courseConversationsService.forceRefresh().subscribe();
-            pendingChannelRead.error(new Error('older channel read failed'));
-            pendingGroupRead.error(new Error('older group read failed'));
-
-            expect(cachedUnreadCount(channel.id)).toBe(0);
-            expect(cachedUnreadCount(groupChat.id)).toBe(0);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-        });
-
-        it('keeps a newer failed read unread when a bulk read only covered an older request', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const olderRead = new Subject<HttpResponse<void>>();
-            const newerRead = new Subject<HttpResponse<void>>();
-            const bulkRead = new Subject<void>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(olderRead).mockReturnValueOnce(newerRead);
-            vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(bulkRead);
-            receiveMockSubject.next(eventFor(channel));
-            courseConversationsService.markAllChannelsAsRead(course).subscribe();
-            receiveMockSubject.next(eventFor(channel));
-
-            bulkRead.next();
-            newerRead.error(new Error('newer read failed'));
-            olderRead.error(new Error('older read failed'));
-
-            expect(cachedUnreadCount(channel.id)).toBe(1);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
-        });
-
-        it('ignores a read failure that a newer successful read has superseded', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const firstRead = new Subject<HttpResponse<void>>();
-            const secondRead = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(firstRead).mockReturnValueOnce(secondRead);
-
-            receiveMockSubject.next(eventFor(channel));
-            receiveMockSubject.next(eventFor(channel));
-            secondRead.next(new HttpResponse<void>());
-            expect(cachedUnreadCount(channel.id)).toBe(0);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-
-            firstRead.error(new Error('read failed'));
-
-            expect(cachedUnreadCount(channel.id)).toBe(0);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-        });
-
-        it('ignores a read failure after the conversation was reopened and its messages loaded', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const pendingRead = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pendingRead);
-            receiveMockSubject.next(eventFor(channel));
-
-            // the user switches away and back, and the messages request of the reopened conversation resets the count on the server
-            courseConversationsService.setActiveConversation(groupChat);
-            courseConversationsService.setActiveConversation(channel);
-            const coveredRequests = courseConversationsService.messagesRequested(channel.id!);
-            courseConversationsService.messagesLoaded(channel.id!, coveredRequests);
-            courseConversationsService.markAsRead(channel.id!);
-            expect(cachedUnreadCount(channel.id)).toBe(0);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-
-            pendingRead.error(new Error('read failed'));
-
-            expect(cachedUnreadCount(channel.id)).toBe(0);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-        });
-
-        it.each(['channel', 'group', 'direct'] as const)('removes a covered failed read when the later messages GET succeeds for a %s conversation', (kind) => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            const conversation = kind === 'channel' ? channel : kind === 'group' ? groupChat : oneToOneChat;
-            const other = conversation === channel ? groupChat : channel;
-            courseConversationsService.setActiveConversation(conversation);
-            const pending = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
-            receiveMockSubject.next(eventFor(conversation));
-            courseConversationsService.setActiveConversation(other);
-            courseConversationsService.setActiveConversation(conversation);
-            const request = courseConversationsService.messagesRequested(conversation.id!);
-            courseConversationsService.setActiveConversation(other);
-
-            pending.error(new Error('covered PATCH failed before GET completion'));
-            expect(cachedUnreadCount(conversation.id)).toBe(1);
-            courseConversationsService.messagesLoaded(conversation.id!, request);
-
-            expect(cachedUnreadCount(conversation.id)).toBe(0);
-            expect(conversation.hasUnreadMessage).toBe(false);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-        });
-
-        it('removes only covered failed-read contributions, preserving newer failures and messages', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const first = new Subject<HttpResponse<void>>();
-            const second = new Subject<HttpResponse<void>>();
-            const newer = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(first).mockReturnValueOnce(second).mockReturnValueOnce(newer);
-            receiveMockSubject.next(eventFor(channel));
-            receiveMockSubject.next(eventFor(channel));
-            const request = courseConversationsService.messagesRequested(channel.id!);
-            receiveMockSubject.next(eventFor(channel));
-            courseConversationsService.setActiveConversation(groupChat);
-            receiveMockSubject.next(eventFor(channel));
-            first.error(new Error('first covered read failed'));
-            second.error(new Error('second covered read failed'));
-            newer.error(new Error('newer uncovered read failed'));
-            expect(cachedUnreadCount(channel.id)).toBe(4);
-
-            courseConversationsService.messagesLoaded(channel.id!, request);
-            courseConversationsService.messagesLoaded(channel.id!, request);
-
-            expect(cachedUnreadCount(channel.id)).toBe(2);
-            expect(channel.hasUnreadMessage).toBe(true);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
-        });
-
-        it.each(['manual', 'read'] as const)('does not subtract an old failed-read contribution from a newer %s baseline', (baseline) => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(throwError(() => new Error('read failed')));
-            receiveMockSubject.next(eventFor(channel));
-            expect(cachedUnreadCount(channel.id)).toBe(1);
-            if (baseline === 'manual') {
-                courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 3);
-            } else {
-                courseConversationsService.markAsRead(channel.id!);
-                courseConversationsService.setActiveConversation(groupChat);
-                receiveMockSubject.next(eventFor(channel));
-            }
-
             courseConversationsService.messagesLoaded(channel.id!, courseConversationsService.messagesRequested(channel.id!));
-
-            expect(cachedUnreadCount(channel.id)).toBe(baseline === 'manual' ? 3 : 1);
+            expect(courseConversationsService['activeConversation']).toBe(viewConversation);
+            expect(viewConversation.name).toBe('updated-channel');
+            courseConversationsService.setActiveConversation(channel.id);
+            const manualDate = dayjs('2026-01-01T10:00:00Z');
+            courseConversationsService.updateConversationUnreadState(channel.id, manualDate, 3);
+            expect(viewConversation.lastReadDate).toBe(manualDate);
+            expect(viewConversation.unreadMessagesCount).toBe(3);
+            courseConversationsService.setActiveConversation(channel.id);
+            expect(courseConversationsService.isConversationMarkedAsUnread(channel.id)).toBe(true);
+            const arrivalDate = dayjs('2026-01-01T12:00:00Z');
+            receiveMockSubject.next(eventFor({ ...channel, lastMessageDate: arrivalDate }));
+            expect(cachedUnreadCount(channel.id)).toBe(4);
+            expect(viewConversation.unreadMessagesCount).toBe(4);
+            expect(viewConversation.lastMessageDate?.isSame(arrivalDate)).toBe(true);
         });
 
-        it.each(['channel', 'group', 'direct'] as const)('reconciles an earlier failed PATCH when a later PATCH succeeds after leaving a %s', (kind) => {
+        it('coalesces read completions and repeats an invalidated recovery snapshot', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            const conversation = kind === 'channel' ? channel : kind === 'group' ? groupChat : oneToOneChat;
-            courseConversationsService.setActiveConversation(conversation);
-            const first = new Subject<HttpResponse<void>>();
-            const second = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(first).mockReturnValueOnce(second);
-            receiveMockSubject.next(eventFor(conversation));
-            receiveMockSubject.next(eventFor(conversation));
-            courseConversationsService.setActiveConversation(conversation === channel ? groupChat : channel);
-            first.error(new Error('earlier read failed after navigation'));
-            expect(cachedUnreadCount(conversation.id)).toBe(1);
-
-            second.next(new HttpResponse<void>());
-
-            expect(cachedUnreadCount(conversation.id)).toBe(0);
-            expect(conversation.hasUnreadMessage).toBe(false);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-        });
-
-        it('keeps an arrival after navigation when a later PATCH reconciles an earlier failure', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
             courseConversationsService.setActiveConversation(channel);
+            courseConversationsService.setConversationViewOpen(true);
             const first = new Subject<HttpResponse<void>>();
             const second = new Subject<HttpResponse<void>>();
             vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(first).mockReturnValueOnce(second);
             receiveMockSubject.next(eventFor(channel));
             receiveMockSubject.next(eventFor(channel));
-            courseConversationsService.setActiveConversation(groupChat);
-            first.error(new Error('older read failed'));
-            receiveMockSubject.next(eventFor(channel));
-            expect(cachedUnreadCount(channel.id)).toBe(2);
-
-            second.next(new HttpResponse<void>());
-
-            expect(cachedUnreadCount(channel.id)).toBe(1);
-            expect(channel.hasUnreadMessage).toBe(true);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
-        });
-
-        it.each([
-            [0, 'failure'],
-            [1, 'failure'],
-            [1, 'success'],
-            [1, 'success-after-message'],
-            [1, 'success-after-manual-unread'],
-        ] as const)('reconciles a pending read against refreshed count %s on %s', (count, outcome) => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const pending = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
-            receiveMockSubject.next(eventFor(channel));
-            courseConversationsService.setActiveConversation(groupChat);
-            const refreshedChannel = { ...channel, unreadMessagesCount: count, hasUnreadMessage: count > 0 };
-            vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, refreshedChannel] })));
-            vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-            courseConversationsService.markAllChannelsAsRead(course).subscribe();
-            expect(cachedUnreadCount(channel.id)).toBe(count);
-            if (outcome === 'success-after-message') {
-                receiveMockSubject.next(eventFor(channel));
-            } else if (outcome === 'success-after-manual-unread') {
-                courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 3);
-            }
-
-            if (outcome === 'failure') {
-                pending.error(new Error('read failure already represented by refresh'));
-            } else {
-                pending.next(new HttpResponse<void>());
-            }
-
-            const expected = outcome === 'failure' ? count : outcome === 'success-after-message' ? 1 : outcome === 'success-after-manual-unread' ? 3 : 0;
-            expect(cachedUnreadCount(channel.id)).toBe(expected);
-            expect(refreshedChannel.hasUnreadMessage).toBe(expected > 0);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(expected > 0);
-        });
-
-        it('reconciles both pending reads after repeated recovery refreshes', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const first = new Subject<HttpResponse<void>>();
-            const second = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(first).mockReturnValueOnce(second);
-            receiveMockSubject.next(eventFor(channel));
-            receiveMockSubject.next(eventFor(channel));
-            courseConversationsService.setActiveConversation(groupChat);
-            const refreshedChannel = { ...channel, unreadMessagesCount: 2, hasUnreadMessage: true };
-            vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, refreshedChannel] })));
-            vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-            courseConversationsService.markAllChannelsAsRead(course).subscribe({ complete: () => courseConversationsService.forceRefresh(false).subscribe() });
-            first.error(new Error('read failure already represented by both refreshes'));
-            expect(cachedUnreadCount(channel.id)).toBe(2);
-
-            second.next(new HttpResponse<void>());
-
-            expect(cachedUnreadCount(channel.id)).toBe(0);
-            expect(refreshedChannel.hasUnreadMessage).toBe(false);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
-        });
-
-        it.each([
-            [0, 'failure'],
-            [1, 'failure'],
-            [0, 'success'],
-            [1, 'success'],
-        ] as const)('replaces refreshed count %s when an automatic read starts during the GET before %s', (initialCount, outcome) => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const initialRefresh = new Subject<HttpResponse<ConversationDTO[]>>();
-            const replacementRefresh = new Subject<HttpResponse<ConversationDTO[]>>();
-            const getConversations = vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValueOnce(initialRefresh).mockReturnValueOnce(replacementRefresh);
+            const recovery = new Subject<HttpResponse<ConversationDTO[]>>();
+            const getConversations = vi
+                .spyOn(conversationService, 'getConversationsOfUser')
+                .mockReturnValueOnce(recovery)
+                .mockReturnValue(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 0, hasUnreadMessage: false, name: 'updated-channel' }] })));
             getConversations.mockClear();
-            const pendingRead = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pendingRead);
-            courseConversationsService.forceRefresh(false, false).subscribe();
-            receiveMockSubject.next(eventFor(channel));
-            courseConversationsService.setActiveConversation(groupChat);
-            const activeNotifications = vi.spyOn(courseConversationsService['_activeConversation$'], 'next');
-
-            initialRefresh.next(new HttpResponse({ body: [groupChat, oneToOneChat, { ...channel, unreadMessagesCount: initialCount, hasUnreadMessage: initialCount > 0 }] }));
-            initialRefresh.complete();
+            first.error(new Error('first failed'));
+            second.next(new HttpResponse<void>());
+            second.complete();
+            expect(getConversations).toHaveBeenCalledTimes(1);
+            recovery.next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 1, hasUnreadMessage: true }] }));
+            recovery.complete();
             expect(getConversations).toHaveBeenCalledTimes(2);
-            replacementRefresh.next(new HttpResponse({ body: [groupChat, oneToOneChat, { ...channel, unreadMessagesCount: 1, hasUnreadMessage: true }] }));
-            replacementRefresh.complete();
-            expect(cachedUnreadCount(channel.id)).toBe(1);
-
-            if (outcome === 'failure') {
-                pendingRead.error(new Error('read failed after replacement refresh'));
-            } else {
-                pendingRead.next(new HttpResponse<void>());
-            }
-
-            expect(cachedUnreadCount(channel.id)).toBe(outcome === 'failure' ? 1 : 0);
-            // A reply after the accepted baseline remains new; the replacement must not absorb it.
-            receiveMockSubject.next(eventFor(channel));
-            expect(cachedUnreadCount(channel.id)).toBe(outcome === 'failure' ? 2 : 1);
-            expect(activeNotifications).not.toHaveBeenCalled();
+            expect(cachedUnreadCount(channel.id)).toBe(0);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
         });
 
-        it('preserves a manual unread boundary when an older messages response arrives after navigation', () => {
+        it('retains cache and selection if recovery fails, then allows another recovery', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
             courseConversationsService.setActiveConversation(channel);
-            const coveredRequests = courseConversationsService.messagesRequested(channel.id!);
-            const manualUnreadDate = dayjs('2026-01-01T10:00:00Z');
-            courseConversationsService.updateConversationUnreadState(channel.id, manualUnreadDate, 3);
-            courseConversationsService.setActiveConversation(groupChat);
-
-            // A superseded GET still reports server-side read completion before its posts are discarded.
-            courseConversationsService.messagesLoaded(channel.id!, coveredRequests, dayjs('2026-01-01T12:00:00Z'));
-            courseConversationsService.setActiveConversation(channel);
-
-            expect(channel.lastReadDate).toBe(manualUnreadDate);
-            expect(cachedUnreadCount(channel.id)).toBe(3);
+            const getConversations = vi
+                .spyOn(conversationService, 'getConversationsOfUser')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })))
+                .mockReturnValue(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 2, hasUnreadMessage: true }] })));
+            getConversations.mockClear();
+            const request = courseConversationsService.messagesRequested(channel.id!);
+            courseConversationsService.messagesLoaded(channel.id!, request);
+            expect(courseConversationsService['activeConversation']?.id).toBe(channel.id);
+            expect(courseConversationsService['conversationsOfUser']).toHaveLength(3);
+            expect(courseConversationsService['isLoading']).toBe(false);
+            courseConversationsService.messagesLoaded(channel.id!, request);
+            expect(getConversations).toHaveBeenCalledTimes(2);
+            expect(cachedUnreadCount(channel.id)).toBe(2);
         });
 
-        it('still restores the count when the failed read was sent after the messages were requested', () => {
+        it('does not send automatic reads for another conversation, a closed view or a manual unread mark', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
             courseConversationsService.setActiveConversation(channel);
-            const pendingRead = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pendingRead);
-            const coveredRequests = courseConversationsService.messagesRequested(channel.id!);
-
-            receiveMockSubject.next(eventFor(channel));
-            courseConversationsService.messagesLoaded(channel.id!, coveredRequests);
-            pendingRead.error(new Error('read failed'));
-
-            expect(cachedUnreadCount(channel.id)).toBe(1);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
-        });
-
-        it('keeps the count of a newer failed read when an older read succeeds afterwards', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
+            const mark = vi.spyOn(conversationService, 'markAsRead');
+            courseConversationsService['readNewMessage'](channel.id);
             courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const firstRead = new Subject<HttpResponse<void>>();
-            const secondRead = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValueOnce(firstRead).mockReturnValueOnce(secondRead);
-
-            receiveMockSubject.next(eventFor(channel));
-            receiveMockSubject.next(eventFor(channel));
-            secondRead.error(new Error('read failed'));
-            expect(cachedUnreadCount(channel.id)).toBe(1);
-
-            firstRead.next(new HttpResponse<void>());
-
-            expect(cachedUnreadCount(channel.id)).toBe(1);
-            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
-        });
-
-        it('does not clear a manual unread mark made while the server read is pending', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const pending = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
-            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService['readNewMessage'](groupChat.id);
+            courseConversationsService['readNewMessage'](undefined);
             courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 3);
-
-            pending.next(new HttpResponse<void>());
-
+            courseConversationsService['readNewMessage'](channel.id);
+            expect(mark).not.toHaveBeenCalled();
             expect(cachedUnreadCount(channel.id)).toBe(3);
-            expect(courseConversationsService['activeConversation']?.hasUnreadMessage).toBe(true);
-            expect(courseConversationsService['isMarkedAsUnread']).toBe(true);
-            pending.complete();
-        });
-
-        it.each([false, true])('keeps the authoritative manual unread count when an older read fails (navigate: %s)', (navigate) => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const pending = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
-            receiveMockSubject.next(eventFor(channel));
-            courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 3);
-            if (navigate) {
-                courseConversationsService.setActiveConversation(groupChat);
-            }
-
-            pending.error(new Error('older read failed'));
-
-            expect(cachedUnreadCount(channel.id)).toBe(3);
-            if (!navigate) {
-                expect(courseConversationsService['activeConversation']?.hasUnreadMessage).toBe(true);
-                expect(courseConversationsService['isMarkedAsUnread']).toBe(true);
-            }
-        });
-
-        it('does not clear another conversation when a previous read completes after navigation', () => {
-            courseConversationsService.setUpConversationService(course).subscribe();
-            courseConversationsService.setConversationViewOpen(true);
-            courseConversationsService.setActiveConversation(channel);
-            const pending = new Subject<HttpResponse<void>>();
-            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
-            receiveMockSubject.next(eventFor(channel));
-            courseConversationsService.setActiveConversation(groupChat);
-            courseConversationsService.setConversationViewOpen(false);
-            receiveMockSubject.next(eventFor(groupChat));
-            expect(cachedUnreadCount(groupChat.id)).toBe(1);
-
-            pending.next(new HttpResponse<void>());
-
-            expect(cachedUnreadCount(groupChat.id)).toBe(1);
-            expect(courseConversationsService['activeConversation']?.id).toBe(groupChat.id);
-            expect(courseConversationsService['activeConversation']?.hasUnreadMessage).toBe(true);
-            pending.complete();
-        });
-
-        it('should show the unread count the server kept when marking the open conversation as read fails', () => {
-            return new Promise((done) => {
-                courseConversationsService.setUpConversationService(course).subscribe({
-                    complete: () => {
-                        courseConversationsService.setConversationViewOpen(true);
-                        courseConversationsService.setActiveConversation(channel);
-                        vi.spyOn(conversationService, 'markAsRead').mockReturnValue(throwError(() => new Error('mark as read failed')));
-
-                        receiveMockSubject.next(eventFor(channel));
-
-                        expect(cachedUnreadCount(channel.id)).toBe(1);
-                        done({});
-                    },
-                });
-            });
         });
     });
 
@@ -1278,6 +991,21 @@ describe('CourseConversationsService', () => {
         expect(acceptStub).toHaveBeenCalledOnce();
     });
 
+    it('rejects a stale course badge response after messages have been read', () => {
+        courseConversationsService.setUpConversationService(course).subscribe();
+        const stale = new Subject<HttpResponse<boolean>>();
+        const check = vi
+            .spyOn(conversationService, 'checkForUnreadMessages')
+            .mockReturnValueOnce(stale)
+            .mockReturnValue(of(new HttpResponse({ body: false })));
+        courseConversationsService.checkForUnreadMessages(course);
+        courseConversationsService.messagesLoaded(channel.id!, courseConversationsService.messagesRequested(channel.id!));
+        stale.next(new HttpResponse({ body: true }));
+        stale.complete();
+        expect(check).toHaveBeenCalledTimes(2);
+        expect(courseConversationsService['hasUnreadMessages']).toBe(false);
+    });
+
     it('should handle new message', () => {
         const postDTO: PostBroadcastDTO = {
             post: { author: { id: 456 }, content: 'Content', conversation: { id: 1 } } as Post,
@@ -1286,12 +1014,6 @@ describe('CourseConversationsService', () => {
         courseConversationsService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 0 } as ConversationDTO];
         courseConversationsService.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
         expect(courseConversationsService['conversationsOfUser'][0].unreadMessagesCount).toBe(1);
-    });
-
-    it('should mark messages as read', () => {
-        courseConversationsService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 1 } as ConversationDTO, { id: 2, unreadMessageCount: 1 } as ConversationDTO];
-        courseConversationsService.markAsRead(2);
-        expect(courseConversationsService['conversationsOfUser'][1].unreadMessagesCount).toBe(0);
     });
 
     it('should call refresh after marking all channels as read', () => {
@@ -1350,69 +1072,6 @@ describe('CourseConversationsService', () => {
         });
     });
 
-    describe('updateConversationAsRead', () => {
-        it('should update last read date and unread messages count for active conversation', () => {
-            groupChat.unreadMessagesCount = 5;
-            groupChat.hasUnreadMessage = true;
-            (courseConversationsService as any).activeConversation = groupChat;
-            (courseConversationsService as any).conversationsOfUser = [groupChat];
-
-            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
-
-            (courseConversationsService as any).updateConversationAsRead();
-
-            expect((courseConversationsService as any).activeConversation.unreadMessagesCount).toBe(0);
-            expect((courseConversationsService as any).activeConversation.hasUnreadMessage).toBe(false);
-            expect((courseConversationsService as any).activeConversation.lastReadDate).toBeDefined();
-
-            expect((courseConversationsService as any).conversationsOfUser[0].unreadMessagesCount).toBe(0);
-            expect((courseConversationsService as any).conversationsOfUser[0].hasUnreadMessage).toBe(false);
-            expect((courseConversationsService as any).conversationsOfUser[0].lastReadDate).toBeDefined();
-
-            expect(nextSpy).toHaveBeenCalledWith((courseConversationsService as any).conversationsOfUser);
-        });
-
-        it('should not update anything if there is no active conversation', () => {
-            (courseConversationsService as any).activeConversation = undefined;
-            (courseConversationsService as any).conversationsOfUser = [groupChat];
-
-            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
-
-            (courseConversationsService as any).updateConversationAsRead();
-
-            expect(nextSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not update anything if isMarkedAsUnread flag is true', () => {
-            (courseConversationsService as any).activeConversation = groupChat;
-            (courseConversationsService as any).conversationsOfUser = [groupChat];
-            (courseConversationsService as any).isMarkedAsUnread = true;
-
-            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
-
-            (courseConversationsService as any).updateConversationAsRead();
-
-            expect(nextSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not update conversationsOfUser if active conversation is not found in the array', () => {
-            groupChat.unreadMessagesCount = 5;
-            groupChat.hasUnreadMessage = true;
-            const nonExistentConversation = { ...groupChat, id: 999 };
-            (courseConversationsService as any).activeConversation = nonExistentConversation;
-            (courseConversationsService as any).conversationsOfUser = [groupChat];
-
-            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
-
-            (courseConversationsService as any).updateConversationAsRead();
-
-            expect(nextSpy).not.toHaveBeenCalled();
-
-            expect((courseConversationsService as any).activeConversation.unreadMessagesCount).toBe(0);
-            expect((courseConversationsService as any).activeConversation.hasUnreadMessage).toBe(false);
-        });
-    });
-
     it('should return correct params object with conversationId', () => {
         const conversationId = 42;
         const result = CourseConversationsService.getQueryParamsForConversation(conversationId);
@@ -1426,29 +1085,20 @@ describe('CourseConversationsService', () => {
     });
 
     describe('markAllChannelsAsRead', () => {
-        it('should update all conversations and call service', () => {
-            (courseConversationsService as any).conversationsOfUser = [
-                { ...groupChat, unreadMessagesCount: 3, hasUnreadMessage: true },
-                { ...oneToOneChat, unreadMessagesCount: 2, hasUnreadMessage: true },
-                { ...channel, unreadMessagesCount: 1, hasUnreadMessage: true },
-            ];
-
-            // @ts-ignore
-            const markAllChannelsAsReadSpy = vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of({}));
-
-            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
-
-            courseConversationsService.markAllChannelsAsRead(course);
-
-            // @ts-ignore
-            (courseConversationsService as any).conversationsOfUser.forEach((conversation) => {
-                expect(conversation.unreadMessagesCount).toBe(0);
-                expect(conversation.hasUnreadMessage).toBe(false);
-            });
-
-            expect(nextSpy).toHaveBeenCalledWith((courseConversationsService as any).conversationsOfUser);
-
-            expect(markAllChannelsAsReadSpy).toHaveBeenCalledWith(course.id);
+        it('keeps unread counts until the bulk read is confirmed, then applies server state', () => {
+            channel.unreadMessagesCount = 3;
+            courseConversationsService.setUpConversationService(course).subscribe();
+            const pending = new Subject<void>();
+            vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(pending);
+            vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(
+                of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 0, hasUnreadMessage: false, name: 'updated-channel' }] })),
+            );
+            courseConversationsService.markAllChannelsAsRead(course).subscribe();
+            expect(courseConversationsService['conversationsOfUser'].find((row) => row.id === channel.id)?.unreadMessagesCount).toBe(3);
+            pending.next();
+            pending.complete();
+            expect(courseConversationsService['conversationsOfUser'][0].unreadMessagesCount).toBe(0);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
         });
 
         it('reloads unread counts for channels, groups and direct chats when the bulk read fails', () => {
@@ -1465,7 +1115,7 @@ describe('CourseConversationsService', () => {
             const completed = vi.fn();
             const errorAlert = vi.spyOn(alertService, 'error');
             courseConversationsService.markAllChannelsAsRead(course).subscribe({ complete: completed });
-            expect(courseConversationsService['conversationsOfUser'].every((conversation) => conversation.unreadMessagesCount === 0)).toBe(true);
+            expect(completed).not.toHaveBeenCalled();
 
             failedRead.error(new HttpErrorResponse({ status: 400 }));
 

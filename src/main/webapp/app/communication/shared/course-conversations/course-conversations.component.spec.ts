@@ -214,7 +214,6 @@ examples.forEach((activeConversation) => {
             courseConversationsService.setActiveConversation = vi.fn();
             courseConversationsService.setUpConversationService = vi.fn().mockReturnValue(EMPTY);
             courseConversationsService.forceRefresh = vi.fn().mockReturnValue(EMPTY);
-            courseConversationsService.markAsRead = vi.fn();
             courseConversationsService.acceptCodeOfConduct = vi.fn();
             courseConversationsService.createGroupChat = vi.fn().mockReturnValue(EMPTY);
             courseConversationsService.createOneToOneChat = vi.fn().mockReturnValue(EMPTY);

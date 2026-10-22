@@ -267,6 +267,37 @@ describe('CourseWideSearchComponent', () => {
             expect(top).toBe(400);
         });
 
+        it.each([false, true])('keeps the newest result through automatic older-page prefetch (before initial positioning: %s)', (beforeInitialPositioning) => {
+            if (beforeInitialPositioning) {
+                container.dispatchEvent(new Event('wheel'));
+                component.onSearch();
+                component.isFetchingPosts.set(false);
+            }
+            component.totalNumberOfPosts.set(100);
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
+            component.fetchNextPage();
+            const callbacks = request.mock.calls.at(-1)![3]!;
+            callbacks.beforeApply();
+            listHeight = 1500;
+            callbacks.complete(true);
+            vi.runAllTimers();
+            expect(top).toBe(1100);
+            listHeight = 2000;
+            resize();
+            expect(top).toBe(1600);
+
+            // Deliberate reader input releases the end; subsequent older pages preserve that position.
+            container.dispatchEvent(new Event('wheel'));
+            top = 300;
+            component.fetchNextPage();
+            const olderPage = request.mock.calls.at(-1)![3]!;
+            olderPage.beforeApply();
+            listHeight = 2500;
+            olderPage.complete(true);
+            vi.runAllTimers();
+            expect(top).toBe(800);
+        });
+
         it('observes both result height and viewport size and disconnects on destruction', () => {
             expect(observe).toHaveBeenCalledWith(container);
             expect(observe).toHaveBeenCalledWith(fixture.nativeElement.querySelector('[data-testid="course-wide-search-results"]'));
@@ -325,6 +356,7 @@ describe('CourseWideSearchComponent', () => {
         expect(fetchPosts).toHaveBeenCalledOnce();
         expect(container.scrollTop).toBe(20);
 
+        container.dispatchEvent(new Event('wheel'));
         container.scrollTop = 220; // The reader moves while the response is pending.
         callbacks!.beforeApply();
         component.setPosts([{ id: 2 } as Post, examplePost]);

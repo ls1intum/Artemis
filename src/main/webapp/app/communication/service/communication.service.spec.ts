@@ -174,6 +174,27 @@ describe('CommunicationService', () => {
             expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77, created);
         });
 
+        it('routes an active course-wide post to the shared owner once, including when manually unread', async () => {
+            await Promise.resolve();
+            const socket = TestBed.inject(WebsocketService);
+            if (!(socket instanceof MockWebsocketService)) throw new Error('Expected the shared websocket test service');
+            const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+            const directPatch = vi.spyOn(conversationService, 'markAsRead');
+            communicationService['currentConversation'] = { id: 77 };
+            communicationService['currentPostContextFilter'] = { conversationIds: [77] };
+            communicationService.setCourse(course);
+            const topic = `/topic/communication/courses/${course.id}`;
+            communicationService.createWebsocketSubscription(topic);
+            const created = dayjs();
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.CREATE,
+                post: { id: 901, author: { id: 1, internal: true }, creationDate: created, conversation: { id: 77 } },
+            });
+            expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77, created);
+            vi.runOnlyPendingTimers();
+            expect(directPatch).not.toHaveBeenCalled();
+        });
+
         it('does not count own posts or edits received on the course-wide topic', async () => {
             await Promise.resolve();
             const socket = TestBed.inject(WebsocketService);
@@ -218,7 +239,7 @@ describe('CommunicationService', () => {
         it('reports the loaded messages of a single conversation as a read, also when a newer request owns the cache', () => {
             vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
             const courseConversations = TestBed.inject(CourseConversationsService);
-            const readRequest = { coveredRequests: 4, unreadRevision: 2 };
+            const readRequest = { unreadRevision: 2 };
             const requested = vi.spyOn(courseConversations, 'messagesRequested').mockReturnValue(readRequest);
             const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
             const olderResponse = new Subject<HttpResponse<Post[]>>();
@@ -232,7 +253,7 @@ describe('CommunicationService', () => {
 
             olderResponse.next(new HttpResponse({ body: [post] }));
 
-            expect(loaded).toHaveBeenCalledExactlyOnceWith(7, readRequest, expect.anything());
+            expect(loaded).toHaveBeenCalledExactlyOnceWith(7, readRequest);
         });
 
         it.each([

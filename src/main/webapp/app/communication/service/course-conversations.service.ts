@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, finalize, map, of, switchMap, tap, throwError } from 'rxjs';
+import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, defer, finalize, map, of, switchMap, tap, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -16,24 +16,14 @@ import { ChannelDTO } from 'app/communication/shared/entities/conversation/chann
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import dayjs from 'dayjs/esm';
-import { NavigationEnd, Params, Router } from '@angular/router';
+import { Params } from '@angular/router';
 import { PostBroadcastDTO } from 'app/communication/shared/entities/post-broadcast-dto.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
-/** The automatic reads covered by a messages request and the manual-unread baseline it started from. */
+/** Identifies the manual-unread boundary when a read starts. */
 export interface ConversationReadRequest {
-    readonly coveredRequests: number;
     readonly unreadRevision: number;
-}
-
-interface ConversationReadState {
-    sent: number;
-    succeeded: number;
-    failed: number;
-    unreadRevision: number;
-    unreadContributions: Set<number>;
-    pending: Set<number>;
-    refreshedThrough: number;
 }
 
 /**
@@ -52,7 +42,6 @@ export class CourseConversationsService implements OnDestroy {
     private websocketService = inject(WebsocketService);
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
-    private router = inject(Router);
 
     // Stores the conversation of the course where the current user is a member
     private conversationsOfUser: ConversationDTO[] = [];
@@ -83,10 +72,11 @@ export class CourseConversationsService implements OnDestroy {
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
     private isMarkedAsUnread = false;
     private isConversationViewOpen = false;
-    // Per conversation, the number of the last read request sent, and the numbers of the newest one that succeeded and that failed. Read requests of
-    // the same conversation can complete out of order, and only the newest outcome describes the count the server holds.
-    private readRequests = new Map<number, ConversationReadState>();
-    private automaticReadVersion = 0;
+    // All unread mutations invalidate in-flight list snapshots. Counts and timestamps come from the server;
+    // no request-specific contributions are added to or subtracted from a refreshed count.
+    private unreadStateVersion = 0;
+    private manualUnreadRevisions = new Map<number, number>();
+    private unreadRefresh?: Subscription;
     // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -122,6 +112,7 @@ export class CourseConversationsService implements OnDestroy {
     }
 
     private cleanupSubscriptions() {
+        this.unreadRefresh?.unsubscribe();
         if (this.subscribedConversationMembershipTopic) {
             this.conversationMembershipSubscription?.unsubscribe();
             this.subscribedConversationMembershipTopic = undefined;
@@ -204,8 +195,9 @@ export class CourseConversationsService implements OnDestroy {
             // no longer restore the conversation either. Clearing on purpose stays possible by passing undefined.
             return;
         }
-        if (this.activeConversation?.id !== conversationId) {
-            this.updateConversationAsRead();
+        // Query-only changes (e.g. opening a thread) do not select a new conversation or clear a manual unread mark.
+        if (cachedConversation && this.activeConversation?.id === conversationId) {
+            return;
         }
         this.requestedConversationId = undefined;
         this.activeConversation = cachedConversation;
@@ -247,24 +239,10 @@ export class CourseConversationsService implements OnDestroy {
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
     }
 
-    public markAsRead(conversationId: number) {
-        const indexOfCachedConversation = this.conversationsOfUser.findIndex((cachedConversation) => cachedConversation.id === conversationId);
-        if (indexOfCachedConversation !== -1) {
-            this.conversationsOfUser[indexOfCachedConversation].lastMessageDate = dayjs();
-            this.conversationsOfUser[indexOfCachedConversation].unreadMessagesCount = 0;
-            this.readRequestsOf(conversationId).unreadContributions.clear();
-            this._conversationsOfUser$.next(this.conversationsOfUser);
-        }
-        this.hasUnreadMessagesCheck();
-    }
-
     public updateConversationUnreadState(conversationId: number | undefined, lastReadDate: dayjs.Dayjs | undefined, unreadMessagesCount: number | undefined) {
+        this.unreadStateVersion++;
         if (conversationId !== undefined) {
-            // The server recalculated this count. Earlier automatic reads must not alter its new baseline.
-            const reads = this.readRequestsOf(conversationId);
-            reads.unreadRevision++;
-            reads.unreadContributions.clear();
-            reads.pending.clear();
+            this.manualUnreadRevisions.set(conversationId, (this.manualUnreadRevisions.get(conversationId) ?? 0) + 1);
         }
         if (this.activeConversation && this.activeConversation?.id === conversationId) {
             this.activeConversation.lastReadDate = lastReadDate;
@@ -279,34 +257,19 @@ export class CourseConversationsService implements OnDestroy {
             this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = (unreadMessagesCount ?? 0) > 0;
             this._conversationsOfUser$.next(this.conversationsOfUser);
         }
+        this.hasUnreadMessagesCheck();
     }
 
-    private updateConversationAsRead() {
-        if (this.activeConversation && !this.isMarkedAsUnread) {
-            const lastReadDate = dayjs();
-            this.activeConversation.lastReadDate = lastReadDate;
-            const cachedConversation = this.conversationsOfUser.find((conversation) => conversation.id === this.activeConversation!.id);
-            if (cachedConversation) {
-                cachedConversation.lastReadDate = lastReadDate;
-            }
-            this.clearActiveConversationUnreadBadge();
-        }
+    /** Never publish an unread snapshot captured before a newer read, incoming message or explicit unread mark. */
+    private currentUnreadSnapshot<T>(request: () => Observable<T>): Observable<T> {
+        return defer(() => {
+            const version = this.unreadStateVersion;
+            return request().pipe(switchMap((response) => (version === this.unreadStateVersion ? of(response) : this.currentUnreadSnapshot(request))));
+        });
     }
 
-    private clearActiveConversationUnreadBadge() {
-        if (this.activeConversation && !this.isMarkedAsUnread) {
-            this.activeConversation.unreadMessagesCount = 0;
-            this.activeConversation.hasUnreadMessage = false;
-            if (this.activeConversation.id !== undefined) {
-                this.readRequestsOf(this.activeConversation.id).unreadContributions.clear();
-            }
-            const cachedConversation = this.conversationsOfUser.find((conversation) => conversation.id === this.activeConversation!.id);
-            if (cachedConversation) {
-                cachedConversation.unreadMessagesCount = 0;
-                cachedConversation.hasUnreadMessage = false;
-                this._conversationsOfUser$.next(this.conversationsOfUser);
-            }
-        }
+    private loadConversations(): Observable<ConversationDTO[]> {
+        return this.currentUnreadSnapshot(() => this.conversationService.getConversationsOfUser(this._courseId)).pipe(map((response) => response.body ?? []));
     }
 
     public forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
@@ -314,16 +277,7 @@ export class CourseConversationsService implements OnDestroy {
             throw new Error('Course is not set. The service does not seem to be initialized.');
         }
         this.setIsLoading(true);
-        const automaticReadVersion = this.automaticReadVersion;
-        const readSnapshots = Array.from(this.readRequests, ([conversationId, reads]) => ({
-            conversationId,
-            request: this.messagesRequested(conversationId),
-            contributions: [...new Set([...reads.unreadContributions, ...reads.pending])],
-        }));
-        return this.conversationService.getConversationsOfUser(this._courseId).pipe(
-            map((conversations: HttpResponse<ConversationDTO[]>) => {
-                return conversations.body ?? [];
-            }),
+        return this.loadConversations().pipe(
             catchError((res: HttpErrorResponse) => {
                 onError(this.alertService, res);
                 this.setIsLoading(false);
@@ -335,32 +289,8 @@ export class CourseConversationsService implements OnDestroy {
                 // do not mistake a failed refresh for an up to date list.
                 return throwError(() => res);
             }),
-            switchMap((conversations: ConversationDTO[]) => {
-                // A reply observed during this GET may already be in its count. Start a new snapshot after
-                // that reply instead of guessing its coverage and counting a delayed PATCH failure twice.
-                if (automaticReadVersion !== this.automaticReadVersion) {
-                    return this.forceRefresh(notifyActiveConversationSubscribers, notifyConversationsSubscribers);
-                }
-                return of(conversations);
-            }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
-                // Keep track of pending read events already represented by the authoritative count. Their failure
-                // must not add them again, while a later success must still remove their covered contribution.
-                for (const snapshot of readSnapshots) {
-                    const reads = this.readRequestsOf(snapshot.conversationId);
-                    if (reads.unreadRevision !== snapshot.request.unreadRevision) {
-                        continue;
-                    }
-                    const count = conversations.find((conversation) => conversation.id === snapshot.conversationId)?.unreadMessagesCount ?? 0;
-                    reads.refreshedThrough = Math.max(reads.refreshedThrough, snapshot.request.coveredRequests);
-                    reads.unreadContributions = new Set(
-                        snapshot.contributions
-                            .filter((request) => request > reads.succeeded)
-                            .sort((a, b) => b - a)
-                            .slice(0, Math.max(0, count)),
-                    );
-                }
                 this.conversationsLoaded = true;
                 this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this.conversationsOfUser);
@@ -371,7 +301,9 @@ export class CourseConversationsService implements OnDestroy {
                     if (!cachedActiveConversation) {
                         this.activeConversation = undefined;
                     } else {
-                        this.activeConversation = cachedActiveConversation;
+                        // Keep the message view's DTO identity across all refreshes: its opening divider stays fixed, and a later
+                        // manual unread mark must still update the object held by that view.
+                        hydrate(this.activeConversation, cachedActiveConversation);
                     }
                 }
                 if (notifyConversationsSubscribers) {
@@ -435,10 +367,7 @@ export class CourseConversationsService implements OnDestroy {
     public setUpConversationService = (course: Course): Observable<never> => {
         this._courseId = course.id!;
         this._course = course;
-        return this.conversationService.getConversationsOfUser(this._courseId).pipe(
-            map((conversations: HttpResponse<ConversationDTO[]>) => {
-                return conversations.body ?? [];
-            }),
+        return this.loadConversations().pipe(
             catchError((res: HttpErrorResponse) => {
                 onError(this.alertService, res);
                 this.setIsLoading(false);
@@ -451,8 +380,6 @@ export class CourseConversationsService implements OnDestroy {
             }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
-                // The refreshed counts are authoritative, so no earlier failure is still a local contribution.
-                this.readRequests.forEach((reads) => reads.unreadContributions.clear());
                 this.conversationsLoaded = true;
                 this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this.conversationsOfUser);
@@ -462,7 +389,6 @@ export class CourseConversationsService implements OnDestroy {
                 this.activateRequestedConversation();
                 this._activeConversation$.next(this.activeConversation);
                 this.subscribeToConversationMembershipTopic(course.id!, this.userId);
-                this.subscribeToRouteChange();
                 this.setIsLoading(false);
                 this._isServiceSetup$.next(true);
                 return;
@@ -480,7 +406,7 @@ export class CourseConversationsService implements OnDestroy {
             return;
         }
 
-        this.conversationService.checkForUnreadMessages(course.id).subscribe({
+        this.currentUnreadSnapshot(() => this.conversationService.checkForUnreadMessages(course.id!)).subscribe({
             next: (hasNewMessages) => {
                 if (hasNewMessages?.body !== this.hasUnreadMessages) {
                     this.hasUnreadMessages = hasNewMessages?.body ?? false;
@@ -562,18 +488,6 @@ export class CourseConversationsService implements OnDestroy {
         return courseTopicName + '/conversations/user/' + userId;
     }
 
-    private subscribeToRouteChange() {
-        this.router.events.subscribe((event) => {
-            if (event instanceof NavigationEnd) {
-                // Navigation clears badges; only successful reads advance the cached timestamp.
-                // The message view retains its opening timestamp for initial positioning.
-                if (this.isReadingConversation(this.activeConversation?.id) && !this.isMarkedAsUnread) {
-                    this.clearActiveConversationUnreadBadge();
-                    this.hasUnreadMessagesCheck();
-                }
-            }
-        });
-    }
     private subscribeToConversationMembershipTopic(courseId: number, userId: number) {
         // already subscribed to the topic -> nothing to do
         if (this.subscribedConversationMembershipTopic) {
@@ -609,81 +523,46 @@ export class CourseConversationsService implements OnDestroy {
         return conversationId !== undefined && this.activeConversation?.id === conversationId && this.isMarkedAsUnread;
     }
 
-    private readRequestsOf(conversationId: number) {
-        let readRequest = this.readRequests.get(conversationId);
-        if (!readRequest) {
-            readRequest = { sent: 0, succeeded: 0, failed: 0, unreadRevision: 0, unreadContributions: new Set<number>(), pending: new Set<number>(), refreshedThrough: 0 };
-            this.readRequests.set(conversationId, readRequest);
-        }
-        return readRequest;
-    }
-
-    /**
-     * Notes that the messages of a conversation are being requested. The server resets the unread count of the conversation with that
-     * request, which also covers every read request that was sent for the conversation before it.
-     *
-     * @param conversationId the conversation whose messages are requested
-     * @return the pending-read coverage and unread revision to pass to {@link messagesLoaded} once the messages arrive
-     */
+    /** Capture the manual boundary before a PATCH or a messages GET (which also marks the conversation read). */
     public messagesRequested(conversationId: number): ConversationReadRequest {
-        const state = this.readRequestsOf(conversationId);
-        return { coveredRequests: state.sent, unreadRevision: state.unreadRevision };
+        this.unreadStateVersion++;
+        return { unreadRevision: this.manualUnreadRevisions.get(conversationId) ?? 0 };
     }
 
-    /**
-     * Notes that the messages of a conversation arrived, so the read requests sent before they were requested no longer describe the unread count
-     * of the server, whether a covered request failed before or after the messages arrived.
-     *
-     * @param conversationId the conversation whose messages arrived
-     * @param request         the value {@link messagesRequested} returned when the request started
-     * @param readAt          when the successful read was requested, so later arrivals remain unread on return
-     */
-    public messagesLoaded(conversationId: number, request: ConversationReadRequest, readAt = dayjs()) {
-        const readRequest = this.readRequestsOf(conversationId);
-        // Manual unread marks remain authoritative even after the user navigates to another conversation.
-        if (readRequest.unreadRevision !== request.unreadRevision) {
+    /** A successful messages GET changed server read state even if its posts were superseded by navigation. */
+    public messagesLoaded(conversationId: number, request: ConversationReadRequest) {
+        this.readCompleted(conversationId, request);
+    }
+
+    private readCompleted(conversationId: number, request: ConversationReadRequest) {
+        this.unreadStateVersion++;
+        // An older read outcome must not undo a later explicit mark, including after navigation.
+        if (request.unreadRevision === (this.manualUnreadRevisions.get(conversationId) ?? 0)) {
+            this.refreshUnreadState();
+        }
+    }
+
+    private refreshUnreadState() {
+        // One internal refresh at a time. Any mutation during it invalidates its snapshot, so its
+        // response will repeat the GET instead of losing that mutation or starting parallel GETs.
+        // Exercise discussions can read messages before the communication view initializes this cache.
+        // Its first load will obtain the authoritative state; there is no cached list to reconcile yet.
+        if (this.conversationsLoaded && (!this.unreadRefresh || this.unreadRefresh.closed)) {
+            this.unreadRefresh = this.forceRefresh(false).subscribe({ error: () => {} });
+        }
+    }
+
+    /** Marks a live arrival read only while its conversation is visible and has no explicit unread mark. */
+    private readNewMessage(conversationId: number | undefined) {
+        if (!this.isReadingConversation(conversationId) || this.isMarkedAsUnread) {
             return;
         }
-        this.acknowledgeRead(conversationId, request.coveredRequests);
-        this.advanceConversationReadDate(conversationId, readAt);
-    }
-
-    /** Reconciles covered unread contributions independently of which conversation is currently displayed. */
-    private acknowledgeRead(conversationId: number, coveredRequests: number): void {
-        const readRequest = this.readRequestsOf(conversationId);
-        readRequest.succeeded = Math.max(readRequest.succeeded, coveredRequests);
-        let coveredContributions = 0;
-        for (const readNumber of readRequest.unreadContributions) {
-            if (readNumber <= coveredRequests) {
-                readRequest.unreadContributions.delete(readNumber);
-                coveredContributions++;
-            }
-        }
-        if (coveredContributions) {
-            const cached = this.conversationsOfUser.find((conversation) => conversation.id === conversationId);
-            const active = this.activeConversation?.id === conversationId ? this.activeConversation : undefined;
-            for (const conversation of new Set([cached, active])) {
-                if (conversation) {
-                    conversation.unreadMessagesCount = Math.max(0, (conversation.unreadMessagesCount ?? 0) - coveredContributions);
-                    conversation.hasUnreadMessage = conversation.unreadMessagesCount > 0;
-                }
-            }
-            this.hasUnreadMessagesCheck();
-            this._conversationsOfUser$.next(this.conversationsOfUser);
-        }
-    }
-
-    private advanceConversationReadDate(conversationId: number, readAt: dayjs.Dayjs) {
-        if (this.activeConversation?.id === conversationId && this.isMarkedAsUnread) {
-            return;
-        }
-        const cached = this.conversationsOfUser.find((conversation) => conversation.id === conversationId);
-        if (cached && (!cached.lastReadDate || readAt.isAfter(cached.lastReadDate))) {
-            cached.lastReadDate = readAt;
-        }
-        if (this.activeConversation?.id === conversationId && (!this.activeConversation.lastReadDate || readAt.isAfter(this.activeConversation.lastReadDate))) {
-            this.activeConversation.lastReadDate = readAt;
-        }
+        const request = this.messagesRequested(conversationId!);
+        this.conversationService.markAsRead(this._courseId, conversationId!).subscribe({
+            next: () => this.readCompleted(conversationId!, request),
+            // A rejected read leaves the server count intact. Fetch it rather than inventing a contribution.
+            error: () => this.readCompleted(conversationId!, request),
+        });
     }
 
     // The selected conversation only counts as read while the view that shows it is open.
@@ -706,55 +585,7 @@ export class CourseConversationsService implements OnDestroy {
                 this.handleDeleteConversation(conversationDTO);
                 break;
             case CommunicationCrudAction.NEW_MESSAGE:
-                if (this.isReadingConversation(conversationDTO.id) && !this.isMarkedAsUnread) {
-                    // The user is reading this conversation, so what arrived is not new to them, e.g. a reply in a thread of theirs. The server counted
-                    // it for them anyway, and reading the conversation again is what resets that count.
-                    const selectionVersion = this.selectionVersion;
-                    const conversationId = conversationDTO.id!;
-                    const readRequest = this.readRequestsOf(conversationId);
-                    const requestNumber = ++readRequest.sent;
-                    this.automaticReadVersion++;
-                    readRequest.pending.add(requestNumber);
-                    const unreadRevision = readRequest.unreadRevision;
-                    const readAt = dayjs();
-                    this.conversationService.markAsRead(this._courseId, conversationId).subscribe({
-                        next: () => {
-                            readRequest.pending.delete(requestNumber);
-                            if (readRequest.unreadRevision !== unreadRevision) {
-                                return;
-                            }
-                            this.acknowledgeRead(conversationId, requestNumber);
-                            // A newer read that failed left a count on the server, which a delayed older success must not hide.
-                            const isSupersededByFailure = readRequest.failed > requestNumber;
-                            if (!isSupersededByFailure) {
-                                this.advanceConversationReadDate(conversationId, readAt);
-                            }
-                            // A delayed read must not clear a different selection or an explicit unread mark.
-                            if (!isSupersededByFailure && selectionVersion === this.selectionVersion && this.isReadingConversation(conversationId) && !this.isMarkedAsUnread) {
-                                // The message view keeps its own opening timestamp for the New divider.
-                                this.clearActiveConversationUnreadBadge();
-                                this.hasUnreadMessagesCheck();
-                            }
-                        },
-                        error: () => {
-                            readRequest.pending.delete(requestNumber);
-                            // A newer read, or the messages request that covers this one, already reset the count on the server, so this failure no
-                            // longer describes it. A request cannot both succeed and fail, so its own number is never recorded as succeeded.
-                            if (readRequest.unreadRevision !== unreadRevision || readRequest.succeeded >= requestNumber) {
-                                return;
-                            }
-                            readRequest.failed = Math.max(readRequest.failed, requestNumber);
-                            if (requestNumber <= readRequest.refreshedThrough) {
-                                return;
-                            }
-                            readRequest.unreadContributions.add(requestNumber);
-                            // the count the server raised stays, so the badge has to show it
-                            this.handleNewMessage(conversationId, conversationDTO.lastMessageDate);
-                        },
-                    });
-                } else {
-                    this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
-                }
+                this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
                 break;
         }
         this._conversationsOfUser$.next(this.conversationsOfUser);
@@ -769,6 +600,7 @@ export class CourseConversationsService implements OnDestroy {
     }
 
     private handleUpdateOrCreate(updatedOrNewConversation: ConversationDTO) {
+        this.unreadStateVersion++;
         const conversationsCopy = [...this.conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === updatedOrNewConversation.id);
         if (indexOfCachedConversation === -1) {
@@ -788,6 +620,7 @@ export class CourseConversationsService implements OnDestroy {
     }
 
     private handleDeleteConversation(deletedConversation: ConversationDTO) {
+        this.unreadStateVersion++;
         const conversationsCopy = [...this.conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === deletedConversation.id);
         if (indexOfCachedConversation !== -1) {
@@ -803,18 +636,23 @@ export class CourseConversationsService implements OnDestroy {
     }
 
     handleNewMessage(conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined) {
+        this.unreadStateVersion++;
+        if (this.isReadingConversation(conversationId) && !this.isMarkedAsUnread) {
+            this.readNewMessage(conversationId);
+            return;
+        }
         const conversationsCopy = [...this.conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationId);
         if (indexOfCachedConversation !== -1) {
             conversationsCopy[indexOfCachedConversation].lastMessageDate = lastMessageDate;
             conversationsCopy[indexOfCachedConversation].hasUnreadMessage = true;
             conversationsCopy[indexOfCachedConversation].unreadMessagesCount = (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1;
-            if (!this.hasUnreadMessages) {
-                this.hasUnreadMessages = true;
-                this._hasUnreadMessages$.next(this.hasUnreadMessages);
+            if (this.activeConversation && this.activeConversation.id === conversationId) {
+                hydrate(this.activeConversation, conversationsCopy[indexOfCachedConversation]);
             }
         }
         this.conversationsOfUser = conversationsCopy;
+        this.hasUnreadMessagesCheck();
         this._conversationsOfUser$.next(this.conversationsOfUser);
     }
 
@@ -833,34 +671,15 @@ export class CourseConversationsService implements OnDestroy {
             return of();
         }
 
-        const readAt = dayjs();
-        const coveredReads = this.conversationsOfUser
-            .filter((conversation) => conversation.id !== undefined)
-            .map((conversation) => {
-                return { conversationId: conversation.id!, request: this.messagesRequested(conversation.id!) };
-            });
-
-        this.conversationsOfUser = this.conversationsOfUser.map((conversation) => {
-            conversation.hasUnreadMessage = false;
-            conversation.unreadMessagesCount = 0;
-            if (conversation.id !== undefined) {
-                this.readRequestsOf(conversation.id).unreadContributions.clear();
-            }
-            return conversation;
-        });
-
-        this._conversationsOfUser$.next(this.conversationsOfUser);
-
+        this.unreadStateVersion++;
         return this.conversationService.markAllChannelsAsRead(course.id).pipe(
             tap(() => {
-                for (const read of coveredReads) {
-                    this.messagesLoaded(read.conversationId, read.request, readAt);
-                }
+                this.unreadStateVersion++;
+                this.refreshUnreadState();
             }),
             catchError((errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
-                // The failed PATCH did not confirm the optimistic reset, for any conversation type.
-                // Refresh membership state without reopening the active conversation and its messages.
+                this.unreadStateVersion++;
                 return this.forceRefresh(false).pipe(catchError(() => EMPTY));
             }),
         );

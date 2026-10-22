@@ -38,16 +38,18 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
     async function markRead(page: Page, id: number) {
         const response = await page.request.patch(`api/communication/courses/${course!.id}/conversations/${id}/mark-as-read`);
         expect(response.ok()).toBe(true);
-        // The server resets the count asynchronously, so the response can arrive before the reset is visible.
+        // Confirm the server read before proceeding with the next fixture action.
         await expect.poll(() => unread(page, id)).toBe(0);
     }
 
     async function showGroups(page: Page) {
         for (const group of ['General', 'Group Chats', 'Direct Messages']) {
             const button = page.getByRole('button', { name: new RegExp(`^${group} \\(`) });
-            if ((await button.count()) && (await button.getAttribute('aria-expanded')) !== 'true') {
+            await expect(button).toBeVisible();
+            if ((await button.getAttribute('aria-expanded')) !== 'true') {
                 await button.click();
             }
+            await expect(button).toHaveAttribute('aria-expanded', 'true');
         }
     }
 
@@ -188,8 +190,7 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         const newPost = await api(previousReplier).createCourseMessage(course!, channel.id!, 'channel', 'Should all reads use the same lock as updates?');
         expect(await unread(page, channel.id!)).toBe(1);
         await expect(badge).toHaveText('1');
-        // Sending a post marks its author's conversation read asynchronously. Complete that before the new reply,
-        // so the author's remaining unread count really belongs to the reply when a moderator deletes the post.
+        // Confirm the author's read boundary before the reply, so the remaining unread count belongs to that reply.
         await expect
             .poll(async () => new Date((await conversation(previousReplier, channel.id!)).lastReadDate!.toString()).getTime())
             .toBeGreaterThanOrEqual(new Date(newPost.creationDate!.toString()).getTime());
@@ -254,17 +255,20 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
 
     test('All Messages initially shows the newest page rather than the oldest course posts', async ({ page, courseMessages }, info) => {
         const oldest = await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'First lecture: specifications describe what a program must do.');
+        const createdIds = [oldest.id!];
         for (let index = 0; index < 60; index++) {
-            await api(staff).createCourseMessage(
+            const post = await api(staff).createCourseMessage(
                 course!,
                 channel.id!,
                 'channel',
                 `Tutorial discussion ${index + 1}: explain how specifications, invariants and tests complement each other.`,
             );
+            createdIds.push(post.id!);
         }
         const newest = await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'Next tutorial: prepare your questions about thread safety and synchronization.');
         await page.goto(`/courses/${course!.id}/communication?conversationId=${other.id}`);
         await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
+        createdIds.push(newest.id!);
         const firstPage = page.waitForResponse((response) => {
             const url = new URL(response.url());
             return url.pathname.endsWith('/messages') && url.searchParams.get('conversationIds')?.includes(',') === true && url.searchParams.get('page') === '0';
@@ -272,11 +276,19 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         await courseMessages.searchCourseWide('');
         const initialResponse = await firstPage;
         expect(initialResponse.ok()).toBe(true);
-        expect(new URL(initialResponse.url()).searchParams.get('sortingOrder')).toBe('DESCENDING');
-        const initialPosts: { id: number }[] = await initialResponse.json();
-        expect(initialPosts).toHaveLength(50);
-        expect(initialPosts[0].id).toBe(newest.id);
-        expect(initialPosts.map((post) => post.id)).not.toContain(oldest.id);
+        const parameters = new URL(initialResponse.url()).searchParams;
+        expect(parameters.get('sortingOrder')).toBe('DESCENDING');
+        expect(parameters.get('size')).toBe('50');
+        // Assert the actual rendered page; Angular may abort fetch after consuming its body, making
+        // Chromium's response-body instrumentation unavailable even though the messages rendered.
+        await expect
+            .poll(() =>
+                page
+                    .getByTestId('course-wide-search-results')
+                    .locator('[id^="item-"]')
+                    .evaluateAll((elements) => elements.slice(-50).map((element) => Number(element.id.slice(5)))),
+            )
+            .toEqual(createdIds.slice(-50));
         await expect(courseMessages.getSinglePost(newest.id!)).toBeInViewport();
         await expect(courseMessages.getSinglePost(newest.id!)).toContainText(newest.content!);
         // Infinite scrolling may prefetch the older page while layout settles. It must not replace the newest view.
