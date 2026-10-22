@@ -97,10 +97,18 @@
         }}
     </p>
     <ng-template #footer>
-        <button type="button" tumAetUiButton severity="secondary" variant="outlined" data-testid="science-consent-decline" (click)="declineScienceConsent()">
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="outlined"
+            data-testid="science-consent-decline"
+            [disabled]="scienceConsentSaving()"
+            (click)="declineScienceConsent()"
+        >
             {{ 'artemisApp.courseOverview.scienceConsent.decline' | artemisTranslate }}
         </button>
-        <button type="button" tumAetUiButton data-testid="science-consent-accept" (click)="acceptScienceConsent()">
+        <button type="button" tumAetUiButton data-testid="science-consent-accept" [disabled]="scienceConsentSaving()" (click)="acceptScienceConsent()">
             {{ 'artemisApp.courseOverview.scienceConsent.accept' | artemisTranslate }}
         </button>
     </ng-template>

@@ -944,6 +944,39 @@ describe('CourseOverviewComponent', () => {
             expect(component.showScienceConsentModal()).toBeFalsy();
         });
 
+        it('should lock both decisions while one is being stored', () => {
+            // Two overlapping saves can reach the server in either order, so "Contribute data" followed by "Do not
+            // contribute" could leave the student contributing although their last choice was to decline.
+            const pendingSave = new Subject<ScienceCourseConsent>();
+            scienceSettingsServiceMock.saveConsentForCourse.mockReturnValue(pendingSave);
+            enterCourse(undecidedConsent);
+
+            component.acceptScienceConsent();
+            fixture.detectChanges();
+            expect(component.scienceConsentSaving()).toBeTruthy();
+            expect(document.querySelector<HTMLButtonElement>('[data-testid="science-consent-accept"]')?.disabled).toBeTruthy();
+            expect(document.querySelector<HTMLButtonElement>('[data-testid="science-consent-decline"]')?.disabled).toBeTruthy();
+
+            component.declineScienceConsent();
+            expect(scienceSettingsServiceMock.saveConsentForCourse).toHaveBeenCalledExactlyOnceWith(course1.id, true);
+
+            pendingSave.next({ ...undecidedConsent, active: true });
+            pendingSave.complete();
+            expect(component.scienceConsentSaving()).toBeFalsy();
+            expect(scienceService().courseConsent()).toEqual({ ...undecidedConsent, active: true });
+        });
+
+        it('should unlock the decisions after a failed save so the student can try again', () => {
+            scienceSettingsServiceMock.saveConsentForCourse.mockReturnValueOnce(throwError(() => new Error('boom')));
+            enterCourse(undecidedConsent);
+
+            component.acceptScienceConsent();
+            expect(component.scienceConsentSaving()).toBeFalsy();
+            component.acceptScienceConsent();
+
+            expect(scienceSettingsServiceMock.saveConsentForCourse).toHaveBeenCalledTimes(2);
+        });
+
         it('should stop prompting for this course once the dialog is dismissed', () => {
             // Consent has to be freely given, so there is always a way out. Without it a failed save left a modal with
             // no close control over an unusable course.

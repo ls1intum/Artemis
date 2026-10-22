@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, finalize, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -90,6 +90,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     /** The courses the consent prompt was dismissed for while this page lives. */
     private readonly scienceConsentDismissedFor = signal<ReadonlySet<number>>(new Set());
+    /** Whether a decision from the dialog is being stored. Both buttons are locked, so two saves can never overtake each other. */
+    readonly scienceConsentSaving = signal(false);
 
     /**
      * Exam pages never show the prompt: a reload during an exam rebuilds this page, which would otherwise put a modal
@@ -395,15 +397,19 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      */
     private saveScienceConsent(active: boolean): void {
         const consentCourse = this.scienceConsentCourse();
-        if (!consentCourse) {
+        if (!consentCourse || this.scienceConsentSaving()) {
             return;
         }
+        this.scienceConsentSaving.set(true);
         // Reported here as well as by the global error handler: that one stays silent for a 404 or a proxy error page,
         // and a decision that was not stored must never fail silently. The dialog stays open either way.
-        this.scienceSettingsService.saveConsentForCourse(consentCourse.courseId, active).subscribe({
-            next: (updatedConsent) => this.scienceService.setConsent(updatedConsent),
-            error: (error) => this.alertService.error('error.unexpectedError', { error: error.message }),
-        });
+        this.scienceSettingsService
+            .saveConsentForCourse(consentCourse.courseId, active)
+            .pipe(finalize(() => this.scienceConsentSaving.set(false)))
+            .subscribe({
+                next: (updatedConsent) => this.scienceService.setConsent(updatedConsent),
+                error: (error) => this.alertService.error('error.unexpectedError', { error: error.message }),
+            });
     }
 
     /**
