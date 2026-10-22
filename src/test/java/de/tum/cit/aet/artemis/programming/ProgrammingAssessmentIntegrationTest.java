@@ -153,6 +153,15 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void lockSubmissionBeforeFinalTestsIsForbidden() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        request.get("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/lock", HttpStatus.FORBIDDEN, ProgrammingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateAssessmentAfterComplaint_responseKeepsTypedAutomaticFeedback() throws Exception {
         ProgrammingSubmission submissionWithComplaint = ParticipationFactory.generateProgrammingSubmission(true);
         submissionWithComplaint = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submissionWithComplaint,

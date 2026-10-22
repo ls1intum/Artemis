@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /** Shared eligibility checks for selecting and starting manual assessments. */
 @Profile(PROFILE_CORE)
@@ -48,6 +49,11 @@ public class SubmissionAssessmentEligibilityService {
         boolean testRun = participation instanceof StudentParticipation student && student.isTestRun();
         if (!testRun && (!Boolean.TRUE.equals(submission.isSubmitted())
                 || (!exercise.isExamExercise() && ExerciseDateService.getDueDate(participation).filter(date -> date.isAfter(ZonedDateTime.now())).isPresent()))) {
+            return false;
+        }
+        if (!testRun && !exercise.isExamExercise() && exercise instanceof ProgrammingExercise programmingExercise
+                && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
             return false;
         }
         var previousResult = correctionRound > 0 ? submission.getResultForCorrectionRound(correctionRound - 1) : null;

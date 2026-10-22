@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -107,6 +108,25 @@ class SubmissionAssessmentEligibilityServiceTest {
         submission.setSubmitted(false);
         exercise.setDueDate(now().plusHours(1));
         assertThat(service.canStartAssessment(submission, exercise, 0)).isTrue();
+    }
+
+    @Test
+    void waitsForFinalProgrammingTestsUnlessTestRun() {
+        var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setDueDate(now().minusHours(2));
+        participation.setExercise(programmingExercise);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(now().plusHours(1));
+        assertThat(service.canStartAssessment(submission, programmingExercise, 0)).isFalse();
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> service.checkCanStartAssessmentElseThrow(submission, 0));
+        participation.setTestRun(true);
+        assertThat(service.canStartAssessment(submission, programmingExercise, 0)).isTrue();
+        service.checkCanStartAssessmentElseThrow(submission, 0);
+        participation.setTestRun(false);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(now().minusHours(1));
+        assertThat(service.canStartAssessment(submission, programmingExercise, 0)).isTrue();
+        service.checkCanStartAssessmentElseThrow(submission, 0);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        assertThat(service.canStartAssessment(submission, programmingExercise, 0)).isTrue();
     }
 
     @Test
