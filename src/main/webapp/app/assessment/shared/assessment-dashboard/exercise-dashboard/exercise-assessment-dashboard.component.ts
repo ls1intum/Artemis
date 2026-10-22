@@ -282,14 +282,31 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * test runs, which happen before the exam starts and stay assessable). The dates come from the server, so all
      * exercise types agree and the banner never contradicts the alert shown after a 403.
      */
+    /** Whether the manual assessment upload belongs on this dashboard at all: it imports programming assessments, and only an instructor may do that. */
+    readonly canOfferManualAssessmentUpload = computed(() => this.exercise().type === ExerciseType.PROGRAMMING && !!this.exercise().isAtLeastInstructor && !this.isTestRun());
+
     /**
-     * Whether an instructor may upload manual assessments for this exercise. The upload creates and overwrites manual assessments, so it is offered under the same condition
-     * the assessment editor is: manual assessment configured and the relevant due date passed. The server enforces the same gate, which would otherwise only be felt after an
-     * archive has been prepared and uploaded.
+     * Whether an upload would be accepted. The upload creates and overwrites manual assessments, so it is allowed under the same condition the assessment editor is: manual
+     * assessment configured and the relevant due date passed. The server enforces the same gate; this only decides whether the instructor is invited to try.
      */
-    readonly canUploadManualAssessments = computed(
-        () => this.exercise().type === ExerciseType.PROGRAMMING && !!this.exercise().isAtLeastInstructor && !this.isTestRun() && areManualResultsAllowed(this.exercise()),
-    );
+    readonly canUploadManualAssessments = computed(() => this.canOfferManualAssessmentUpload() && areManualResultsAllowed(this.exercise()));
+
+    /** Why the upload is offered but disabled, or undefined while it is possible. The two reasons need different things from the instructor, so they are told apart. */
+    readonly manualAssessmentUploadDisabledReason = computed(() => {
+        if (!this.canOfferManualAssessmentUpload() || this.canUploadManualAssessments()) {
+            return undefined;
+        }
+        return this.exercise().assessmentType === AssessmentType.AUTOMATIC
+            ? 'artemisApp.assessmentUpload.notPossible.automaticAssessment'
+            : 'artemisApp.assessmentUpload.notPossible.beforeDueDate';
+    });
+
+    /** Tooltip for the disabled upload button, empty while the upload is possible so that no tooltip is shown. */
+    readonly manualAssessmentUploadDisabledTooltip = computed(() => {
+        this.currentLanguage();
+        const reason = this.manualAssessmentUploadDisabledReason();
+        return reason ? this.translateService.instant(reason) : '';
+    });
 
     readonly assessmentNotPossibleYetReason = computed(() => {
         this.assessmentAvailabilityTick();
@@ -331,6 +348,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * Postcondition: opens the upload dialog for the current exercise id; it does not itself change any persistent state.
      */
     openAssessmentUpload(): void {
+        // Guarded as well as disabled: the button is the only way in, but re-enabling it in the browser must not open a dialog the server would reject anyway.
+        if (!this.canUploadManualAssessments()) {
+            return;
+        }
         this.uploadDialogVisible.set(true);
     }
 

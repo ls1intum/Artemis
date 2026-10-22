@@ -3,6 +3,10 @@
         "assessmentUpload": {
             "title": "Manuelle Bewertungen hochladen",
             "openButton": "Manuelle Bewertungen hochladen",
+            "notPossible": {
+                "automaticAssessment": "Diese Aufgabe wird automatisch bewertet. Manuelle Bewertungen können nur für Aufgaben hochgeladen werden, bei denen die manuelle Bewertung aktiviert ist.",
+                "beforeDueDate": "Manuelle Bewertungen können erst hochgeladen werden, wenn die Frist zum Bauen und Testen der Abgaben vorbei ist."
+            },
             "description": "Lade eine ZIP-Datei hoch, die eine Datei \"assessment-scores.csv\" und pro Teilnehmer eine \".txt\"-Datei enthält. Die CSV-Datei muss in der ersten Spalte die Teilnehmerkennung (<participationId>-<login>, wie beim Repository-Export) und eine Spalte \"Manual points\" enthalten. Diese Punkte zählen zusätzlich zu den automatischen Testergebnissen, so wie die Punkte eines Tutors im Bewertungseditor, und dürfen zum Abziehen negativ sein. Jede \".txt\"-Datei ist nach dem exportierten Repository-Ordner des Teilnehmers benannt und ihr Inhalt wird als Feedback gespeichert.",
             "overwriteWarning": "Vorhandene manuelle Bewertungen der aufgeführten Teilnehmer werden überschrieben: Ihre manuellen Punkte und ihr Feedback werden durch die hochgeladenen ersetzt. Die automatischen Testergebnisse, gegen die die Bewertung erstellt wurde, bleiben erhalten und zählen weiterhin zur Punktzahl, und Teilnehmer, die nicht in der CSV-Datei stehen, werden nicht verändert. Teilnehmer, deren aktuelle Bewertung eine offene Beschwerde hat, werden abgelehnt statt überschrieben.",
             "overwriteConfirmation": "Mir ist bewusst, dass die vorhandenen manuellen Bewertungen der Teilnehmer in dieser Datei überschrieben werden.",

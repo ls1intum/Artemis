@@ -355,27 +355,49 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it.each([
-        [AssessmentType.SEMI_AUTOMATIC, true, 'manual assessment is configured'],
-        [AssessmentType.AUTOMATIC, false, 'the exercise is assessed automatically'],
-    ])('should offer the manual assessment upload only when %s allows it', (assessmentType, expectedVisible) => {
-        // The upload creates and overwrites manual assessments, so it is offered under the same condition the assessment editor is. The server rejects the upload either way,
-        // but an instructor should not find that out only after preparing and uploading an archive.
-        const programmingExerciseWithAssessmentType = {
-            ...programmingExercise,
-            assessmentType,
-            isAtLeastInstructor: true,
-            dueDate: dayjs().subtract(1, 'day'),
-        } as ProgrammingExercise;
-        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: programmingExerciseWithAssessmentType, headers: new HttpHeaders() })));
-        comp.exerciseId.set(programmingExerciseWithAssessmentType.id!);
+        [AssessmentType.SEMI_AUTOMATIC, true, undefined],
+        [AssessmentType.AUTOMATIC, false, 'artemisApp.assessmentUpload.notPossible.automaticAssessment'],
+    ])('should enable the manual assessment upload only when %s allows it', (assessmentType, expectedEnabled, expectedReason) => {
+        // The upload creates and overwrites manual assessments, so it is allowed under the same condition the assessment editor is. It stays visible when it is not allowed,
+        // with the reason, rather than disappearing without explanation.
+        setUpProgrammingExerciseForUpload({ assessmentType, dueDate: dayjs().subtract(1, 'day') });
 
         fixture.detectChanges();
 
-        expect(comp.canUploadManualAssessments()).toBe(expectedVisible);
-        expect(fixture.nativeElement.querySelector('[data-testid="open-assessment-upload"]') !== null).toBe(expectedVisible);
+        expect(comp.canOfferManualAssessmentUpload()).toBe(true);
+        expect(comp.canUploadManualAssessments()).toBe(expectedEnabled);
+        expect(comp.manualAssessmentUploadDisabledReason()).toBe(expectedReason);
+        expect(fixture.nativeElement.querySelector('[data-testid="open-assessment-upload"]')).not.toBeNull();
     });
 
+    it('should disable the manual assessment upload until the due date has passed, naming that reason', () => {
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().add(1, 'day') });
+
+        fixture.detectChanges();
+
+        expect(comp.canUploadManualAssessments()).toBe(false);
+        expect(comp.manualAssessmentUploadDisabledReason()).toBe('artemisApp.assessmentUpload.notPossible.beforeDueDate');
+    });
+
+    it('should not open the upload dialog when the upload is not allowed', () => {
+        // The disabled button is the only way in, but re-enabling it in the browser must not open a dialog the server would reject anyway.
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.AUTOMATIC, dueDate: dayjs().subtract(1, 'day') });
+        fixture.detectChanges();
+
+        comp.openAssessmentUpload();
+
+        expect(comp['uploadDialogVisible']()).toBe(false);
+    });
+
+    function setUpProgrammingExerciseForUpload(overrides: Partial<ProgrammingExercise>): void {
+        const exerciseForUpload = { ...programmingExercise, isAtLeastInstructor: true, ...overrides } as ProgrammingExercise;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForUpload, headers: new HttpHeaders() })));
+        comp.exerciseId.set(exerciseForUpload.id!);
+    }
+
     it('should open the manual assessment upload dialog', () => {
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().subtract(1, 'day') });
+        fixture.detectChanges();
         expect(comp['uploadDialogVisible']()).toBe(false);
 
         comp.openAssessmentUpload();

@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -689,6 +690,37 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         assertThatThrownBy(() -> assessmentUploadService.importAssessments(exerciseWithTwoRounds, zip)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("correction round");
         assertThat(getManualResults(participation1.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectUploadForAnExerciseAssessedAutomatically() {
+        // The dashboard disables the upload for such an exercise, which is a hint rather than a guard: the endpoint has to refuse it on its own.
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setAllowComplaintsForAutomaticAssessments(false);
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        final MockMultipartFile zip = buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback"));
+
+        assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, zip)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("not allowed");
+        assertThat(getManualResults(participation1.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectTheUploadRequestItselfWhenManualResultsAreNotAllowed() throws Exception {
+        // Re-enabling the disabled button in the browser gets an instructor as far as the request, and no further: the gate lives behind the endpoint, not in front of it.
+        userUtilService.enrollPrefixedUsersInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), TEST_PREFIX);
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setAllowComplaintsForAutomaticAssessments(false);
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        final MockMultipartFile zip = buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback"));
+
+        request.postWithMultipartFile("/api/assessment/exercises/" + programmingExercise.getId() + "/manual-assessments", null, "ignored", zip, AssessmentUploadResultDTO.class,
+                HttpStatus.BAD_REQUEST);
+
+        assertThat(getManualResults(participation1.getId())).isEmpty();
+        assertThat(getSubmissions(participation1.getId())).isEmpty();
     }
 
     @Test
