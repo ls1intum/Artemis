@@ -626,7 +626,7 @@ public class BuildJobExecutionService {
             try {
                 // Clone into a build-job-specific directory: {checkedOutReposPath}/{buildJobId}/{repoFolder}
                 // Using buildJobId (not commitHash) ensures complete isolation between concurrent build jobs
-                repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(checkedOutReposPath, buildJobId, repositoryUri.folderNameForRepositoryUri()));
+                repository = buildJobGitService.cloneRepository(repositoryUri, repositoryUri.resolveFolderBelow(Path.of(checkedOutReposPath, buildJobId)));
                 break;
             }
             catch (GitAPIException | IOException | URISyntaxException e) {
@@ -679,7 +679,7 @@ public class BuildJobExecutionService {
         String msg;
         try {
             // Construct path using buildJobId to ensure we only affect this build job's files
-            Path repositoryPathForDeletion = Path.of(checkedOutReposPath, buildJobId, repositoryUri.folderNameForRepositoryUri());
+            Path repositoryPathForDeletion = repositoryUri.resolveFolderBelow(Path.of(checkedOutReposPath, buildJobId));
             Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(repositoryPathForDeletion, repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository for build job " + buildJobId + " not found";
@@ -694,7 +694,7 @@ public class BuildJobExecutionService {
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             log.error("Error while deleting repository with URI {} and Path {}", repositoryUri, repositoryPath, e);
         }
-        catch (IOException e) {
+        catch (IOException | IllegalArgumentException e) {
             msg = "Error while deleting repository";
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             log.error("Error while deleting repository with URI {} and Path {}", repositoryUri, repositoryPath, e);

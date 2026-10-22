@@ -103,6 +103,16 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     }
 
     /**
+     * The folder of the repository consists of its project key and its slug, whatever else the path of the URI holds.
+     *
+     * @return the project key and the repository slug, separated by a slash
+     */
+    @Override
+    public String folderNameForRepositoryUri() {
+        return projectKey + "/" + repositorySlug;
+    }
+
+    /**
      * Associates a username with the current VCS repository URI and returns the instance for chaining.
      *
      * @param username The username to be associated with the URI.
