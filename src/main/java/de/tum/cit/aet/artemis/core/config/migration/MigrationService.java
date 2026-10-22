@@ -43,13 +43,11 @@ public class MigrationService {
     @Value("${artemis.version}")
     private String artemisVersion;
 
-    private final MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-
     private final MigrationChangeRepository migrationChangeRepository;
 
     private final AutowireCapableBeanFactory beanFactory;
 
-    public MigrationService(MigrationChangeRepository migrationChangeRepository, AutowireCapableBeanFactory beanFactory) throws NoSuchAlgorithmException {
+    public MigrationService(MigrationChangeRepository migrationChangeRepository, AutowireCapableBeanFactory beanFactory) {
         this.migrationChangeRepository = migrationChangeRepository;
         this.beanFactory = beanFactory;
     }
@@ -172,6 +170,13 @@ public class MigrationService {
     }
 
     private String toMD5(String string) {
-        return HexFormat.of().formatHex(messageDigest.digest(string.getBytes(StandardCharsets.UTF_8)));
+        // A MessageDigest keeps state while it hashes and is not thread-safe, so every call creates its own instance.
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("MD5").digest(string.getBytes(StandardCharsets.UTF_8)));
+        }
+        catch (NoSuchAlgorithmException exception) {
+            // The Java platform requires every implementation to support MD5.
+            throw new IllegalStateException("The MD5 algorithm is not available", exception);
+        }
     }
 }
