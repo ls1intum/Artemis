@@ -1359,7 +1359,8 @@ public class ParticipationService {
 
         return new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
                 participantName, participantIdentifier, studentId, studentLogin, teamId, teamStudents, participation.isTestRun(), participation.getPresentationScore(),
-                participation.getIndividualDueDate(), buildPlanId, repositoryUri, buildFailed, lastResultIsManual, submissionId, latestResult != null ? latestResult.getId() : null,
+                participation.getIndividualDueDate(), buildPlanId, repositoryUri, buildFailed, lastResultIsManual, submissionId,
+                latestSubmission != null ? latestSubmission.getSubmissionDate() : null, latestResult != null ? latestResult.getId() : null,
                 latestResult != null ? latestResult.getScore() : null, latestResult != null ? latestResult.isSuccessful() : null, completionDate,
                 latestResult != null ? latestResult.getAssessmentType() : null,
                 latestResult != null && latestResult.getAssessmentNote() != null ? latestResult.getAssessmentNote().getNote() : null, durationInSeconds,

@@ -55,11 +55,12 @@ function scoreDtoToSubmission(dto: ParticipationManagementDTO, exercise?: Exerci
     if (exercise?.type === ExerciseType.PROGRAMMING) {
         const submission = new ProgrammingSubmission();
         submission.id = dto.submissionId;
+        submission.submissionDate = dto.submissionDate;
         submission.results = results;
         submission.buildFailed = dto.buildFailed;
         return submission;
     }
-    return { id: dto.submissionId, results };
+    return { id: dto.submissionId, submissionDate: dto.submissionDate, results };
 }
 
 /**
@@ -71,6 +72,7 @@ export function scoreDtoToParticipation(dto: ParticipationManagementDTO, exercis
         id: dto.participationId,
         type: exercise?.type === ExerciseType.PROGRAMMING ? ParticipationType.PROGRAMMING : ParticipationType.STUDENT,
         exercise,
+        individualDueDate: dto.individualDueDate,
         submissionCount: dto.submissionCount,
         submissions: dto.submissionId ? [scoreDtoToSubmission(dto, exercise)] : [],
     };

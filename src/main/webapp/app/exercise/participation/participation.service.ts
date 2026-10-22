@@ -148,6 +148,7 @@ export class ParticipationService {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
                         dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
                         dto.completionDate = convertDateFromServer(dto.completionDate);
+                        dto.submissionDate = convertDateFromServer(dto.submissionDate);
                         dto.correctionRoundResults?.forEach((result) => {
                             result.completionDate = convertDateFromServer(result.completionDate);
                         });
