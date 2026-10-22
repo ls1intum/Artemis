@@ -27,6 +27,7 @@ import { getElement } from 'test/helpers/utils/general-test.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { PostContextFilter } from '../../communication.util';
 
 @Directive({
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
@@ -64,6 +65,8 @@ describe('CourseWideSearchComponent', () => {
     courseWideSearchConfig.sortingOrder = SortDirection.DESCENDING;
     courseWideSearchConfig.selectedConversations = [];
     courseWideSearchConfig.selectedAuthors = [];
+
+    let postsSubject: BehaviorSubject<Post[]>;
 
     beforeEach(() => {
         vi.useFakeTimers();
@@ -112,7 +115,8 @@ describe('CourseWideSearchComponent', () => {
         Object.defineProperty(communicationService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(1).asObservable() });
         Object.defineProperty(communicationService, 'createEmptyPostForContext', { value: () => new Post() });
         Object.defineProperty(courseConversationsService, 'course', { get: () => course });
-        Object.defineProperty(communicationService, 'posts', { get: () => new BehaviorSubject([examplePost]).asObservable() });
+        postsSubject = new BehaviorSubject<Post[]>([examplePost]);
+        Object.defineProperty(communicationService, 'posts', { get: () => postsSubject.asObservable() });
 
         fixture = TestBed.createComponent(CourseWideSearchComponent);
         component = fixture.componentInstance;
@@ -673,5 +677,28 @@ describe('CourseWideSearchComponent', () => {
         sortControl.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
         expect(changeDirection).toHaveBeenCalledOnce();
         expect(component.sortingOrder()).not.toBe(initialDirection);
+    });
+
+    it('should filter out resolved messages with unresolved filter active otherwise not', () => {
+        // Setup and initial assertions
+        const post1 = { id: 1, content: 'test', resolved: true } as Post;
+        const post2 = { id: 2, content: 'test2', resolved: false } as Post;
+
+        // Simulate a change in the posts that includes a resolved post.
+        const updatedPosts = [post1, post2];
+
+        // Retrigger the subscription avoiding setup for an answer and a resolve action.
+        postsSubject.next(updatedPosts);
+
+        // Assert that the component's posts are filtered to only include unresolved posts.
+        expect(component.posts()).toHaveLength(updatedPosts.length);
+        updatedPosts.forEach((post) => {
+            expect(component.posts()).toContainEqual(post);
+        });
+
+        // Now activate the unresolved filter and check that the resolved post is filtered out.
+        component.currentPostContextFilter = { filterToUnresolved: true } as PostContextFilter;
+        postsSubject.next(updatedPosts);
+        expect(component.posts()).toStrictEqual([post2]);
     });
 });
