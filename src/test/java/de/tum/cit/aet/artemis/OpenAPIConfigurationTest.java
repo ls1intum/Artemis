@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.globalsearch.dto.IndexOverviewDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityRecordDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
-import de.tum.cit.aet.artemis.globalsearch.web.IngestionCoverageResource;
 import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -80,7 +79,8 @@ class OpenAPIConfigurationTest {
 
         assertThat(openApi.getComponents().getSchemas()).containsOnlyKeys("IngestionCoverage", "IngestionTypeCount");
         Schema<?> coverage = openApi.getComponents().getSchemas().get("IngestionCoverage");
-        assertThat(coverage.getRequired()).containsExactlyInAnyOrder("courseId", "active", "coverageGapScore", "status", "computedAt");
+        assertThat(coverage.getRequired()).containsExactlyInAnyOrder("courseId", "courseTitle", "releaseDate", "active", "semester", "coverageGapScore", "status", "computedAt",
+                "lastIngestedAt", "typeCounts");
         assertThat(coverage.getProperties()).containsKeys("courseTitle", "releaseDate", "semester", "lastIngestedAt", "typeCounts");
         assertThat(coverage.getProperties().get("typeCounts").getItems().get$ref()).isEqualTo("#/components/schemas/IngestionTypeCount");
         Schema<?> count = openApi.getComponents().getSchemas().get("IngestionTypeCount");
@@ -109,17 +109,6 @@ class OpenAPIConfigurationTest {
         for (String property : List.of("courseTitle", "releaseDate", "semester", "lastIngestedAt")) {
             assertThat(coverage.get("properties").get(property).get("type")).anySatisfy(type -> assertThat(type.stringValue()).isEqualTo("null"));
         }
-        for (var method : IngestionCoverageResource.class.getDeclaredMethods()) {
-            if (method.getName().equals("getStoredCoverage") || method.getName().equals("getLiveCoveragePage")) {
-                var response = method.getAnnotation(io.swagger.v3.oas.annotations.responses.ApiResponse.class);
-                assertThat(response.responseCode()).isEqualTo("200");
-                assertThat(response.headers()).singleElement().satisfies(header -> {
-                    assertThat(header.name()).isEqualTo("X-Total-Count");
-                    assertThat(header.schema().type()).isEqualTo("integer");
-                    assertThat(header.schema().format()).isEqualTo("int64");
-                });
-            }
-        }
     }
 
     @Test
@@ -133,7 +122,7 @@ class OpenAPIConfigurationTest {
         var models = openApi.getComponents().getSchemas();
         assertThat(models).containsKeys("CourseBrowserData", "IndexedEntity", "IndexedContentPresence", "MissingEntity", "MissingContent", "IngestionTypeCount",
                 "IndexedEntityRecord", "IndexedContentObject");
-        assertThat(models.get("CourseBrowserData").getRequired()).isNullOrEmpty();
+        assertThat(models.get("CourseBrowserData").getRequired()).containsExactlyInAnyOrder("entities", "contentPresence", "missingEntities", "contentGaps", "typeCounts");
         Schema<?> browserSchema = models.get("CourseBrowserData");
         assertThat(browserSchema.getProperties().get("entities").getItems().get$ref()).isEqualTo("#/components/schemas/IndexedEntity");
         assertThat(models.get("IndexedEntity").getRequired()).containsExactlyInAnyOrder("entityId", "expected");

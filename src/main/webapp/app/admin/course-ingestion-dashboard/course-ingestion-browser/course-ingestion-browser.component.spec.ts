@@ -196,11 +196,10 @@ describe('CourseIngestionBrowserComponent', () => {
         expect(component.typeCounts()).toEqual(course.typeCounts);
     });
 
-    it('uses no counts while a row with omitted counts is loading, then honors an empty live list', async () => {
+    it('uses no counts while a row with empty counts is loading, then honors an empty live list', async () => {
         const pending = new Subject<CourseBrowserData>();
         vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(pending);
-        const { typeCounts, ...withoutCounts } = course;
-        fixture.componentRef.setInput('course', withoutCounts);
+        fixture.componentRef.setInput('course', { ...course, typeCounts: [] });
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
         expect(component.loading()).toBe(true);
@@ -225,17 +224,18 @@ describe('CourseIngestionBrowserComponent', () => {
         expect(component.incompleteTypeCount()).toBe(0);
     });
 
-    it('treats a successful omitted-list payload as loaded empty data and drops stale row counts', async () => {
+    it('treats a successful empty-list payload as loaded empty data and drops stale row counts', async () => {
         const pending = new Subject<CourseBrowserData>();
         vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(pending);
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
         expect(component.typeCounts()).toEqual(course.typeCounts);
-        pending.next({});
+        const empty: CourseBrowserData = { entities: [], contentPresence: [], missingEntities: [], contentGaps: [], typeCounts: [] };
+        pending.next(empty);
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
-        expect(component.data()).toEqual({});
+        expect(component.data()).toEqual(empty);
         expect(component.typeCounts()).toEqual([]);
         expect(component.incompleteTypeCount()).toBe(0);
         expect(component.isEmpty()).toBe(true);
@@ -247,7 +247,13 @@ describe('CourseIngestionBrowserComponent', () => {
         const load = vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(pending);
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
-        pending.next({ missingEntities: [{ type: 'course', entityId: 7, title: null, lectureId: null }] });
+        pending.next({
+            entities: [],
+            contentPresence: [],
+            missingEntities: [{ type: 'course', entityId: 7, title: null, lectureId: null }],
+            contentGaps: [],
+            typeCounts: [],
+        });
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();

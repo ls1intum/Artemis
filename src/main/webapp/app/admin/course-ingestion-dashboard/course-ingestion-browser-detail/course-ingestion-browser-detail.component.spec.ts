@@ -458,6 +458,8 @@ describe('CourseIngestionBrowserDetailComponent', () => {
             entities: [{ type: 'lecture_unit', entityId: 11, expected: false, lectureId: null, title: null }],
             missingEntities: [{ type: 'lecture', entityId: 99, title: 'Missing lecture', lectureId: null }],
             contentPresence: [{ key: 'slides' }],
+            contentGaps: [],
+            typeCounts: [],
         };
         fixture.componentRef.setInput('data', sparse);
         component.selection.set({ kind: 'lecture', lectureId: 99 });

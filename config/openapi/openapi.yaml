@@ -2585,7 +2585,8 @@ components:
         typeCounts:
           type: array
           items: {$ref: '#/components/schemas/IngestionTypeCount'}
-      required: [active, computedAt, courseId, coverageGapScore, status]
+      required: [active, computedAt, courseId, courseTitle, coverageGapScore, lastIngestedAt,
+        releaseDate, semester, status, typeCounts]
     DragAndDropSubmittedAnswerFromStudent:
       required: [mappings, questionId, type]
       type: object
@@ -2889,6 +2890,7 @@ components:
         typeCounts:
           type: array
           items: {$ref: '#/components/schemas/IngestionTypeCount'}
+      required: [contentGaps, contentPresence, entities, missingEntities, typeCounts]
     StudentQuizParticipationWithSolutions:
       required: [quizQuestionsType]
       type: object
@@ -3439,9 +3441,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object

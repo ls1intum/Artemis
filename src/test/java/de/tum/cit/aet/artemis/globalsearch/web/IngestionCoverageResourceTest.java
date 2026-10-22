@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -47,6 +48,20 @@ class IngestionCoverageResourceTest {
 
     private final IngestionCoverageResource resource = new IngestionCoverageResource(Optional.of(mock(WeaviateHealthIndicator.class)),
             mock(IngestionCoverageWeaviateReadService.class), coverageRecomputeService, mock(Environment.class), Optional.<IrisHealthApi>empty());
+
+    @ParameterizedTest
+    @ValueSource(strings = { "getStoredCoverage", "getLiveCoveragePage" })
+    void coverageEndpointsDeclareTotalCountHeader(String methodName) {
+        var method = Arrays.stream(IngestionCoverageResource.class.getDeclaredMethods()).filter(candidate -> candidate.getName().equals(methodName)).findFirst().orElseThrow();
+        var response = method.getAnnotation(io.swagger.v3.oas.annotations.responses.ApiResponse.class);
+        assertThat(response).isNotNull();
+        assertThat(response.responseCode()).isEqualTo("200");
+        assertThat(response.headers()).singleElement().satisfies(header -> {
+            assertThat(header.name()).isEqualTo("X-Total-Count");
+            assertThat(header.schema().type()).isEqualTo("integer");
+            assertThat(header.schema().format()).isEqualTo("int64");
+        });
+    }
 
     @Test
     void overviewPreservesCollectionOrderZeroAndUnavailableCounts() {
@@ -221,17 +236,25 @@ class IngestionCoverageResourceTest {
     }
 
     @Test
-    void coverageJsonOmitsEmptyMetadataButRetainsFalseZeroAndOffsetMeaning() {
+    void coverageJsonRetainsNullEmptyFalseZeroAndOffsetMeaning() {
         var mapper = JsonObjectMapper.get();
         var computedAt = ZonedDateTime.parse("2026-10-21T12:00:00+02:00");
         var row = new IngestionCoverageDTO(1, null, null, false, null, IngestionCoverageStatus.EMPTY, 0, computedAt, null, List.of());
         var json = mapper.readTree(mapper.writeValueAsString(row));
-        assertThat(json.propertyNames()).containsExactlyInAnyOrder("courseId", "active", "status", "coverageGapScore", "computedAt");
+        assertThat(json.propertyNames()).containsExactlyInAnyOrder("courseId", "courseTitle", "releaseDate", "active", "semester", "status", "coverageGapScore", "computedAt",
+                "lastIngestedAt", "typeCounts");
+        for (String property : List.of("courseTitle", "releaseDate", "semester", "lastIngestedAt")) {
+            assertThat(json.get(property).isNull()).isTrue();
+        }
+        assertThat(json.get("typeCounts").isArray()).isTrue();
+        assertThat(json.get("typeCounts")).isEmpty();
         assertThat(json.get("active").booleanValue()).isFalse();
         assertThat(json.get("coverageGapScore").intValue()).isZero();
         assertThat(ZonedDateTime.parse(json.get("computedAt").stringValue()).toInstant()).isEqualTo(computedAt.toInstant());
         var emptyTitle = new IngestionCoverageDTO(1, "", null, false, "", IngestionCoverageStatus.EMPTY, 0, computedAt, null, List.of());
-        assertThat(mapper.readTree(mapper.writeValueAsString(emptyTitle))).isEqualTo(json);
+        var emptyMetadata = mapper.readTree(mapper.writeValueAsString(emptyTitle));
+        assertThat(emptyMetadata.get("courseTitle").stringValue()).isEmpty();
+        assertThat(emptyMetadata.get("semester").stringValue()).isEmpty();
     }
 
     @Test

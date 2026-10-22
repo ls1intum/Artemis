@@ -130,15 +130,14 @@ public class OpenAPIConfiguration {
     static void markPrimitiveRecordComponentsRequired(Map<String, Schema> schemas) {
         Map<String, List<Class<?>>> recordsBySchemaName = findRecordsBySchemaName();
         schemas.forEach((name, schema) -> {
-            List<Class<?>> records = recordsBySchemaName.get(name);
+            List<Class<?>> records = recordsBySchemaName.getOrDefault(name, List.of());
             // Two records sharing a schema name cannot be told apart here, so neither is trusted.
-            if (records == null || records.size() != 1 || schema.getProperties() == null) {
+            if (records.size() != 1 || schema.getProperties() == null) {
                 return;
             }
             for (RecordComponent component : records.getFirst().getRecordComponents()) {
                 String property = component.getName();
-                boolean alreadyRequired = schema.getRequired() != null && schema.getRequired().contains(property);
-                if (component.getType().isPrimitive() && schema.getProperties().containsKey(property) && !alreadyRequired) {
+                if (component.getType().isPrimitive() && schema.getProperties().containsKey(property)) {
                     schema.addRequiredItem(property);
                 }
             }
