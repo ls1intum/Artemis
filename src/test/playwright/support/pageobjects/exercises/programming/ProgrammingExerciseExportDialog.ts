@@ -26,7 +26,7 @@ export class ProgrammingExerciseExportDialog {
     }
 
     dialog() {
-        return this.page.getByRole('dialog');
+        return this.page.getByRole('dialog', { name: 'Export Repositories', exact: true });
     }
 
     /**

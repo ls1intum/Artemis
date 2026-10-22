@@ -8,16 +8,25 @@
         [class]="inDropdown() ? 'w-full justify-start!' : ''"
         id="export-results-dropdown"
         [tumAetUiMenuTrigger]="resultExportMenu"
+        [tumAetUiMenuPosition]="inDropdown() ? submenuPositions : undefined"
     >
         <fa-icon [icon]="faDownload" />
         <span jhiTranslate="artemisApp.exercise.export.results.title"></span>
+        <fa-icon [icon]="inDropdown() ? faChevronRight : faChevronDown" class="ms-auto" />
     </button>
     <ng-template #resultExportMenu>
-        <tumaet-ui-menu>
-            <button type="button" tumAetUiMenuItem (triggered)="exportResults(false, false)" jhiTranslate="artemisApp.exercise.export.results.withoutTestCases"></button>
+        <tumaet-ui-menu [class]="inDropdown() ? 'min-w-64! max-w-[calc(100vw-2rem)] p-3! gap-1' : ''">
             <button
                 type="button"
                 tumAetUiMenuItem
+                [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
+                (triggered)="exportResults(false, false)"
+                jhiTranslate="artemisApp.exercise.export.results.withoutTestCases"
+            ></button>
+            <button
+                type="button"
+                tumAetUiMenuItem
+                [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
                 (triggered)="exportResults(true, false)"
                 [tumAetUiTooltip]="'artemisApp.exercise.export.results.withTestCasesTooltip' | artemisTranslate"
                 jhiTranslate="artemisApp.exercise.export.results.withTestCases"
@@ -25,6 +34,7 @@
             <button
                 type="button"
                 tumAetUiMenuItem
+                [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
                 (triggered)="exportResults(true, true)"
                 [tumAetUiTooltip]="'artemisApp.exercise.export.results.withTestCasesAndFeedbackTooltip' | artemisTranslate"
                 jhiTranslate="artemisApp.exercise.export.results.withTestCasesAndFeedback"
