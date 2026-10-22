@@ -1417,6 +1417,17 @@ public class CourseUtilService {
         courseRepo.saveWithDefaultConfigurations(course);
     }
 
+    /**
+     * Changes and persists the communication configuration of a course fixture.
+     *
+     * @param course        the existing course
+     * @param configuration the communication and messaging features to enable
+     */
+    public void setCourseInformationSharingConfiguration(Course course, CourseInformationSharingConfiguration configuration) {
+        course.setCourseInformationSharingConfiguration(configuration);
+        courseRepo.save(course);
+    }
+
     public void enableMessagingForCourse(Course course) {
         CourseInformationSharingConfiguration currentConfig = course.getCourseInformationSharingConfiguration();
         if (currentConfig == CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {

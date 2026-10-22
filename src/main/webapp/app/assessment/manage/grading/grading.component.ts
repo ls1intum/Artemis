@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormField, applyEach, form, required, validate, validateTree } from '@angular/forms/signals';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -91,6 +92,7 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
         FaIconComponent,
         NgbTooltip,
         FormsModule,
+        NgTemplateOutlet,
         FormField,
         GradingPresentationsComponent,
         ArtemisTranslatePipe,

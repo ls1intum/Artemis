@@ -299,6 +299,95 @@ class GenerationOrchestrationServiceTest {
         verify(workers).release(claim);
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "modelCalls", "toolCalls", "turns", "attempts", "input", "output", "cache", "requests", "models" })
+    void everyAccountingMismatchKeepsProviderUsagePermanentlyUncertain(String field) {
+        var reported = new GenerationUsage(1, 2, 3, 4, 30, 10, 5, true, 0, false, List.of("model"), List.of("request"), true);
+        var recorded = new ExerciseGenerationUsageDTO(field.equals("modelCalls") ? 9 : 1, field.equals("toolCalls") ? 9 : 2, field.equals("turns") ? 9 : 3,
+                field.equals("attempts") ? 9 : 4, field.equals("input") ? 31 : 30, field.equals("output") ? 11 : 10, field.equals("cache") ? 6 : 5, true, 0, false,
+                List.of(field.equals("models") ? "other" : "model"), List.of(field.equals("requests") ? "other" : "request"), true);
+        var status = mock(ExerciseGenerationStatusDTO.class);
+        when(status.usage()).thenReturn(recorded);
+        when(jobs.getStatus(user, exercise)).thenReturn(Optional.of(status));
+        var complete = new GenerationOutput(snapshot, new VerificationResult(true, true, true, 1, List.of()), snapshot.sha256(), SpecFidelityReport.empty(), "CONVERGED", reported,
+                GenerationOutput.AccountingState.COMPLETE, "draft");
+        deliveries.add(event(1, WorkerEvent.Type.FINISHED, complete));
+        assertThat(run(() -> false).isMechanicallyVerified()).isTrue();
+        verify(usage).markUncertain();
+        verify(workers).release(claim);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "template/App.java", "tests/AppTest.java", "SPEC.md" })
+    void fileActivityRoutesPreviewToItsRepositoryBucket(String path) {
+        var activity = new GenerationProgress.FileChange(path, "edit", 3, Instant.parse("2026-01-01T00:00:00Z"), "updated");
+        deliveries.add(event(1, WorkerEvent.Type.PROGRESS, null).withProgress(new GenerationProgress(null, null, activity, null)));
+        deliveries.add(event(2, WorkerEvent.Type.FINISHED, output(true, "draft")));
+        assertThat(run(() -> false).isMechanicallyVerified()).isTrue();
+        assertThat(fileUpdates).singleElement().satisfies(update -> {
+            assertThat(update.change().path()).isEqualTo(path);
+            assertThat(update.change().repo()).isEqualTo(path.startsWith("template/") ? "template" : path.startsWith("tests/") ? "tests" : "other");
+            assertThat(update.change().turn()).isEqualTo(3);
+            assertThat(update.change().timestamp()).isEqualTo(activity.timestamp());
+            assertThat(update.content()).isEqualTo("updated");
+        });
+    }
+
+    @Test
+    void structuredActivityAndEmptyMessagesAreProjectedWithoutInventingProgressText() {
+        var activity = new de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity("Tests", 1, 2, true, 3, 4, 5);
+        deliveries.add(new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, "worker", claim.identity().workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.PROGRESS,
+                claim.identity(), false, claim.imageDigest(), "Authoring", activity, null));
+        deliveries.add(new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, "worker", claim.identity().workerIncarnation(), 2, Instant.now(), WorkerEvent.Type.PROGRESS,
+                claim.identity(), false, claim.imageDigest(), null, null, null));
+        deliveries.add(event(3, WorkerEvent.Type.FINISHED, output(true, "draft")));
+        run(() -> false);
+        verify(progress).activity("Authoring", activity);
+        verify(progress, never()).accept(org.mockito.ArgumentMatchers.isNull());
+        assertThat(fileUpdates).isEmpty();
+    }
+
+    @Test
+    void explicitProfileOptionsAreCarriedIntoAuthorizedWorkerAssignment() {
+        var options = org.springframework.ai.openai.OpenAiChatOptions.builder().model("assigned-model").reasoningEffort("low").temperature(0.2).topP(0.8).maxCompletionTokens(2048)
+                .verbosity("low").build();
+        var explicit = new HyperionGenerationSettings("draft", "Draft", 15, Duration.ofMinutes(4), 4000, false, "FRESH", 64000, options, false, true);
+        deliveries.add(event(1, WorkerEvent.Type.FINISHED, output(true, "draft")));
+        var result = service.generate(exercise, user, "Generate", "job", GenerationMode.ADAPT, () -> false, progress, fileUpdates::add, usage, null, Instant.now().plusSeconds(600),
+                explicit);
+        assertThat(result.isMechanicallyVerified()).isTrue();
+        var commands = ArgumentCaptor.forClass(WorkerCommand.class);
+        verify(client, times(3)).send(commands.capture());
+        var assignment = commands.getAllValues().getFirst().assignment();
+        assertThat(assignment.brief().mode()).isEqualTo(de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode.ADAPT);
+        assertThat(assignment.parameters()).satisfies(parameters -> {
+            assertThat(parameters.maxTurns()).isEqualTo(15);
+            assertThat(parameters.model()).isEqualTo("assigned-model");
+            assertThat(parameters.reasoningEffort()).isEqualTo("low");
+            assertThat(parameters.temperature()).isEqualTo(0.2);
+            assertThat(parameters.topP()).isEqualTo(0.8);
+            assertThat(parameters.maxCompletionTokens()).isEqualTo(2048);
+            assertThat(parameters.verbosity()).isEqualTo("low");
+            assertThat(parameters.stagedGeneration()).isFalse();
+            assertThat(parameters.stagedContext()).isEqualTo("FRESH");
+        });
+    }
+
+    @Test
+    void workerRenewFailureAndExpiredDrainWindowStopWithoutReturningCandidate() {
+        when(workers.renew(claim)).thenReturn(false);
+        var failed = run(() -> false);
+        assertThat(failed.isMechanicallyVerified()).isFalse();
+        assertThat(failed.errorMessage()).contains("unavailable");
+        verify(client, never()).receive(any(), any());
+        when(workers.renew(claim)).thenReturn(true);
+        var expired = service.generate(exercise, user, "Generate", "job", GenerationMode.GENERATE, () -> false, progress, fileUpdates::add, response -> {
+        }, null, Instant.now().minusSeconds(600), settings);
+        assertThat(expired.isMechanicallyVerified()).isFalse();
+        assertThat(expired.errorMessage()).contains("unavailable");
+        verify(client, never()).receive(any(), any());
+    }
+
     private GenerationOutcome run(BooleanSupplier stop) {
         return service.generate(exercise, user, "generate a stack", "job", GenerationMode.GENERATE, stop, progress, fileUpdates::add, usage, "original brief",
                 Instant.now().plusSeconds(600), null);

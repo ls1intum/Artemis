@@ -33,10 +33,10 @@ services:
         extends:
             file: ./nginx.yml
             service: nginx
-        # the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
+        # Wait for the server readiness probe before nginx can accept test traffic.
         depends_on:
             artemis-app:
-                condition: service_started
+                condition: service_healthy
         volumes:
             - ./nginx/artemis-nginx-playwright.conf:/etc/nginx/conf.d/artemis-nginx-playwright.conf:ro
             # Lift the nginx request rate limits for the E2E run (see the geo block in artemis-nginx.conf):

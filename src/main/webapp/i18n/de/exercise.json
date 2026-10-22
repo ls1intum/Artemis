@@ -316,6 +316,7 @@
                         "timeoutSeconds": "Timeout (Sekunden)",
                         "dockerFlags": "Docker-Flags",
                         "theiaImage": "Theia-Image",
+                        "onlineIdeExperienceLevel": "Online-IDE-Erfahrungsstufe",
                         "allowBranching": "Branching erlauben",
                         "branchRegex": "Branch-Regex"
                     }

@@ -823,10 +823,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             TextExercise finalExercise = noRegExercise;
             assertExerciseExistsInWeaviate(weaviateService, finalExercise);
 
-            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20NoReg&types=exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var titles = getResultTitles(results);
-
-            assertThat(titles).contains(SEARCH_PREFIX + " NoReg ExamExercise");
+            // Object persistence does not imply that the asynchronous BM25 index can already find the exercise.
+            awaitSearchResults("/api/search?q=" + SEARCH_PREFIX + "%20NoReg&types=exercise&courseIds=" + course.getId(),
+                    results -> assertThat(getResultTitles(results)).contains(SEARCH_PREFIX + " NoReg ExamExercise"));
         }
     }
 
@@ -1161,6 +1160,33 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
                 assertThat(titles).doesNotContain("weaviate-archive-search");
             });
         }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testChannelIsFoundByItsNameButNotByItsDescription() throws Exception {
+            User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+            Channel channel = new Channel();
+            channel.setName("weaviate-name-search");
+            channel.setDescription("Zvk9ChannelTopic");
+            channel.setIsPublic(true);
+            channel.setIsCourseWide(true);
+            channel.setIsAnnouncementChannel(false);
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepository.save(course);
+            channelService.createChannel(course, channel, Optional.of(instructor));
+
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                var results = request.getList("/api/search?q=name-search&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+                assertThat(getResultTitles(results)).contains("weaviate-name-search");
+            });
+
+            // The row is indexed with its description, which a keyword search matches; the name does not hold the word.
+            var results = request.getList("/api/search?q=Zvk9ChannelTopic&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            assertThat(getResultTitles(results)).doesNotContain("weaviate-name-search");
+        }
     }
 
     /**
@@ -1180,7 +1206,6 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             exercise.setTitle(SEARCH_PREFIX + " " + channelName);
             exercise = exerciseRepository.save(exercise);
             Channel channel = channelService.createExerciseChannel(exercise, Optional.of(channelName));
-            searchableEntityWeaviateService.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
             assertChannelExistsInWeaviate(weaviateService, channel);
             return channel;
         }

@@ -26,12 +26,13 @@ export default defineConfig({
     outputDir: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-results/${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-results',
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [
+        ['./completion-reporter.cjs'],
         ['list'],
         ['junit', { outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/results-${process.env.PLAYWRIGHT_TEST_TYPE}.xml` : './test-reports/results.xml' }],
         ...(process.env.PLAYWRIGHT_COVERAGE !== 'off'
             ? ([
                   [
-                      'monocart-reporter',
+                      './optional-reporter.cjs',
                       {
                           outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
                           coverage: {

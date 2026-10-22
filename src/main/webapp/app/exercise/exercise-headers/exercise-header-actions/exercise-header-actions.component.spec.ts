@@ -376,20 +376,16 @@ describe('ExerciseHeaderActionsComponent', () => {
             expect(fixture.componentInstance.instructorActionItems()).toEqual([]);
         });
 
-        it('should offer a tutor to view the exercise, its scores and its participations', () => {
+        it('should offer a tutor to view the exercise and its participations', () => {
             const exercise = new TextExercise(undefined, undefined);
             exercise.id = 5;
             exercise.isAtLeastTutor = true;
             createComponent(exercise);
 
-            expect(links()).toEqual([
-                '/course-management/1/text-exercises/5/',
-                '/course-management/1/text-exercises/5/scores',
-                '/course-management/1/text-exercises/5/participations',
-            ]);
+            expect(links()).toEqual(['/course-management/1/text-exercises/5/', '/course-management/1/text-exercises/5/participations']);
         });
 
-        it('should offer a tutor the preview and the solution of a quiz instead of the participations', () => {
+        it('should offer a tutor participations, preview and solution for a quiz', () => {
             const quiz = new QuizExercise(undefined, undefined);
             quiz.id = 5;
             quiz.isAtLeastTutor = true;
@@ -397,7 +393,7 @@ describe('ExerciseHeaderActionsComponent', () => {
 
             expect(links()).toEqual([
                 '/course-management/1/quiz-exercises/5/',
-                '/course-management/1/quiz-exercises/5/scores',
+                '/course-management/1/quiz-exercises/5/participations',
                 '/course-management/1/quiz-exercises/5/preview',
                 '/course-management/1/quiz-exercises/5/solution',
             ]);

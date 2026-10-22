@@ -54,6 +54,8 @@ public class DistributedDataAccessService {
 
     private DistributedQueue<ResultQueueItem> buildResultQueue;
 
+    private DistributedQueue<ResultQueueItem> deferredBuildResultQueue;
+
     private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
     private DistributedMap<String, BuildAgentAddressInfo> buildAgentAddresses;
@@ -162,6 +164,18 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * Results awaiting an exercise lifecycle lock. This queue deliberately has no listener: retries run on the periodic sweep.
+     *
+     * @return the shared deferred result queue
+     */
+    public DistributedQueue<ResultQueueItem> getDistributedDeferredBuildResultQueue() {
+        if (this.deferredBuildResultQueue == null) {
+            this.deferredBuildResultQueue = this.distributedDataProvider.getQueue("deferredBuildResultQueue");
+        }
+        return this.deferredBuildResultQueue;
+    }
+
+    /**
      * This method is used to get a List containing all build results. This should be used for reading the queue.
      * If you want to write to the queue or add a listener, use {@link DistributedDataAccessService#getDistributedBuildResultQueue()} instead.
      *
@@ -170,14 +184,16 @@ public class DistributedDataAccessService {
     public List<ResultQueueItem> getBuildResultQueue() {
         // NOTE: we should not use streams with DistributedQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network
         // condition
-        return getDistributedBuildResultQueue().getAll();
+        List<ResultQueueItem> results = new ArrayList<>(getDistributedBuildResultQueue().getAll());
+        results.addAll(getDistributedDeferredBuildResultQueue().getAll());
+        return results;
     }
 
     /**
      * @return the size of the result queue
      */
     public int getResultQueueSize() {
-        return getDistributedBuildResultQueue().size();
+        return getDistributedBuildResultQueue().size() + getDistributedDeferredBuildResultQueue().size();
     }
 
     /**

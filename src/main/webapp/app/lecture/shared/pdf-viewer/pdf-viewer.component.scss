@@ -343,13 +343,11 @@ $toolbar-compact-hidden-selectors: (
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
+// Pages are shown as authored in dark mode too. The canvas is a flat bitmap, so inverting it would also turn every
+// photo and illustration on the slide into a negative.
 .pdf-page__canvas {
     display: block;
     user-select: none;
-}
-
-.pdf-viewer-surface.dark-mode .pdf-page__canvas {
-    filter: invert(1) hue-rotate(180deg);
 }
 
 .pdf-page__highlight {

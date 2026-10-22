@@ -3,21 +3,8 @@
     "allTestPaths": [
         "e2e/atlas/",
         "e2e/course/",
-        "e2e/exam/ExamAssessment.spec.ts",
-        "e2e/exam/ExamChecklists.spec.ts",
-        "e2e/exam/ExamCreationDeletion.spec.ts",
-        "e2e/exam/ExamDateVerification.spec.ts",
-        "e2e/exam/ExamManagement.spec.ts",
-        "e2e/exam/ExamParticipation.spec.ts",
-        "e2e/exam/ExamResults.spec.ts",
-        "e2e/exam/ExamTestRun.spec.ts",
-        "e2e/exam/test-exam/",
-        "e2e/exercise/ExerciseImport.spec.ts",
-        "e2e/exercise/file-upload/",
-        "e2e/exercise/modeling/",
-        "e2e/exercise/programming/",
-        "e2e/exercise/quiz-exercise/",
-        "e2e/exercise/text/",
+        "e2e/exam/",
+        "e2e/exercise/",
         "e2e/lecture/",
         "e2e/Login.spec.ts",
         "e2e/Logout.spec.ts",
@@ -114,7 +101,10 @@
                 "src/main/webapp/app/communication/"
             ],
             "testPaths": [
-                "e2e/course/CourseMessages.spec.ts"
+                "e2e/course/CourseChannelMessages.spec.ts",
+                "e2e/course/CourseDirectMessages.spec.ts",
+                "e2e/course/CourseGroupChatMessages.spec.ts",
+                "e2e/course/CourseMessageInteractions.spec.ts"
             ]
         },
         "exercise": {

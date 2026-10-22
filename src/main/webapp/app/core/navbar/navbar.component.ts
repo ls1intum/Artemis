@@ -384,6 +384,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tests_repository: 'artemisApp.repository.testsRepository.title',
         auxiliary_repository: 'artemisApp.repository.auxiliaryRepository.title',
         vcs_access_log: 'artemisApp.repository.vcsAccessLog.title',
+        gocast_binding: 'artemisApp.gocast.title',
     };
 
     /**
@@ -572,8 +573,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 }
                 break;
             case 'submissions':
-                // only a scores list exists, no special one for submissions
-                const updatedLink = currentPath.replace('/submissions/', '/scores/');
+                // Link submission breadcrumbs to the exercise's participation page.
+                const updatedLink = currentPath.replace(/\/(?:participations\/\d+\/)?submissions\/$/, '/participations/');
                 this.addTranslationAsCrumb(updatedLink, 'submissions');
                 break;
             case 'tutorial-lectures':

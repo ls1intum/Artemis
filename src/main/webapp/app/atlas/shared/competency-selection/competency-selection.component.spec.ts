@@ -87,6 +87,17 @@ describe('CompetencySelection', () => {
         expect(selector).not.toBeNull();
     });
 
+    it('should give the focusable help icon the localized tooltip as its accessible name', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'Programming Basics' } as Competency] });
+        fixture.componentRef.setInput('labelTooltip', 'Select the competencies linked to this exercise');
+
+        fixture.detectChanges();
+
+        const helpIcon = fixture.nativeElement.querySelector('legend fa-icon[tabindex="0"]') as HTMLElement;
+        expect(helpIcon.getAttribute('role')).toBe('img');
+        expect(helpIcon.getAttribute('aria-label')).toBe('Select the competencies linked to this exercise');
+    });
+
     it('should get competencies from service', () => {
         const nonOptional = { id: 1, optional: false } as Competency;
         const optional = { id: 2, optional: true } as Competency;
@@ -490,6 +501,8 @@ describe('CompetencySelection', () => {
             const tooltip = suggestedIcon.injector.get(TumAetUiTooltipDirective, null);
             expect(tooltip).toBeTruthy();
             expect(tooltip?.content()).toBe('artemisApp.competency.suggestion.tooltip');
+            expect(suggestedIcon.nativeElement.getAttribute('role')).toBe('img');
+            expect(suggestedIcon.nativeElement.getAttribute('aria-label')).toBe('artemisApp.competency.suggestion.tooltip');
         });
 
         it('should match competencies by ID when processing suggestions', () => {

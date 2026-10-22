@@ -179,7 +179,7 @@ export const getLocalRepositoryLink = (
 /**
  * A generic method which navigates into a subpage of an exam exercise
  * @router the router th component uses to navigate into different webpages
- * @subPage the subpage of an exercise which we want to navigate into, e.g. scores
+ * @subPage the subpage of an exercise which we want to navigate into, e.g. participations
  */
 export const navigateToExamExercise = (
     navigationUtilService: ArtemisNavigationUtilService,

@@ -52,6 +52,33 @@ The fix is in the background path, not in the test. Making the test wait longer,
 stubbing, moves the race rather than removing it. Find what is still running from the previous test
 and stop it deterministically.
 
+A spy that scheduled tasks or build threads call all the time (`BuildAgentConfiguration`) has no
+quiet moment. Mockito keeps the pending stubbing in the mock, so `doReturn(x).when(spy).m()` in a
+`@BeforeEach` fails with `WrongTypeOfReturnValue` when such a thread calls any method of the spy
+between the two halves. Do not stub or reset it per test:
+stub it once when the context is built with answers that read an `AtomicReference`, and change the
+holder in the test (`BuildAgentConfigurationOverrides`, `@MockitoSpyBean(reset = MockReset.NONE)`).
+Install these answers in a bean post-processor after Mockito creates the spy and before it is injected
+into consumers. `SmartInitializingSingleton` is too late: a consumer can schedule work in `@PostConstruct`.
+Clear the spy's recorded calls with `Mockito.clearInvocations(...)` after each test to bound its history;
+this preserves the startup answers and does not start a new stubbing.
+
+A scheduled task that rewrites shared state a test also writes (the `dockerImageCleanupInfo` map is
+cleared and refilled every five minutes) is switched off in the test contexts by its interval
+property instead.
+
+Two mechanisms keep background work out of the next test:
+
+- Mail goes through the `mailTaskExecutor`, which is synchronous under the `test` profile. An `@Async`
+  method that reaches `MailSendingService` has to name it (`@Async("mailTaskExecutor")`); on the shared
+  pool the mail would be sent from a pool thread. `AsyncMailArchitectureTest` rejects such a method.
+- `AsyncWorkDrainExtension`, registered on `AbstractArtemisIntegrationTest`, waits after each test
+  until every shared `taskExecutor` submission has actually completed, before the `@AfterEach`
+  methods reset the spies. `AsyncWorkTrackingConfiguration` wraps the initialized executor before
+  consumers receive it and counts work through completion; pool active/queue snapshots cannot
+  prove completion because a worker can be paused between dequeueing and execution. A task that does not finish within 30 seconds is logged and the context is no
+  longer awaited, so look for that warning when a test leaves a task behind.
+
 ## Coverage
 
 CI enforces coverage thresholds per module. A new class with no test can fail the build even when

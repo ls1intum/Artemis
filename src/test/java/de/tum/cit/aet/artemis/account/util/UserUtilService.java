@@ -347,6 +347,20 @@ public class UserUtilService {
     }
 
     /**
+     * Gets the shared Iris system account without overwriting its profile. This account survives normal test cleanup.
+     *
+     * @return the existing bot, or a newly created bot with the canonical name
+     */
+    public User getOrCreateIrisBotUser() {
+        return userTestRepository.findOneWithAuthoritiesByLogin(User.IRIS_BOT_LOGIN).orElseGet(() -> {
+            User bot = createAndSaveUser(User.IRIS_BOT_LOGIN);
+            bot.setFirstName("Iris");
+            bot.setLastName("Bot");
+            return userTestRepository.save(bot);
+        });
+    }
+
+    /**
      * Creates and saves multiple Users given the amounts for each role.
      *
      * @param numberOfStudents    The number of students to create

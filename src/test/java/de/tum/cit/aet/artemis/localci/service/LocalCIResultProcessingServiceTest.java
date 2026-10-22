@@ -1,12 +1,15 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -16,11 +19,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +42,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -54,6 +60,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalQueue;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
@@ -71,6 +79,8 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService.ResultProcessingPermit;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService.AppendedContainerResult;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
@@ -129,10 +139,19 @@ class LocalCIResultProcessingServiceTest {
     private LocalCIQueueWebsocketService localCIQueueWebsocketService;
 
     @Mock
+    private ProgrammingExerciseDeletionService programmingExerciseDeletionService;
+
+    @Mock
     private DistributedQueue<ResultQueueItem> resultQueue;
 
     @Mock
     private DistributedMap<String, Boolean> aggregationLocks;
+
+    @Mock
+    private DistributedQueue<ResultQueueItem> deferredResultQueue;
+
+    @Mock
+    private ResultProcessingPermit resultProcessingPermit;
 
     @Mock
     private BuildResult buildResult;
@@ -144,10 +163,10 @@ class LocalCIResultProcessingServiceTest {
     private ProgrammingExerciseStudentParticipation participation;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws InterruptedException {
         resultProcessingService = new LocalCIResultProcessingService(programmingExerciseGradingService, programmingMessagingService, buildJobRepository,
                 programmingExerciseRepository, participationRepository, programmingTriggerService, buildLogEntryService, programmingExerciseBuildStatisticsRepository,
-                distributedDataAccessService, programmingSubmissionMessagingService, Optional.of(localCIQueueWebsocketService));
+                distributedDataAccessService, programmingSubmissionMessagingService, Optional.of(localCIQueueWebsocketService), programmingExerciseDeletionService);
         // The production executor hands the work to a pool thread, which would make every assertion below a race. This one
         // runs the same task on the calling thread, so the test observes the finished work rather than polling for it.
         ReflectionTestUtils.setField(resultProcessingService, "resultProcessingExecutor", inlineExecutor());
@@ -160,6 +179,10 @@ class LocalCIResultProcessingServiceTest {
         participation.setId(PARTICIPATION_ID);
         participation.setProgrammingExercise(exercise);
         lenient().when(distributedDataAccessService.getDistributedBuildResultQueue()).thenReturn(resultQueue);
+        lenient().when(programmingExerciseDeletionService.tryAdmitResultProcessing(EXERCISE_ID)).thenReturn(Optional.of(resultProcessingPermit));
+        lenient().when(programmingExerciseDeletionService.awaitResultProcessing(EXERCISE_ID)).thenReturn(resultProcessingPermit);
+        lenient().when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenReturn(true);
+        lenient().when(distributedDataAccessService.getDistributedDeferredBuildResultQueue()).thenReturn(deferredResultQueue);
     }
 
     @AfterEach
@@ -178,7 +201,11 @@ class LocalCIResultProcessingServiceTest {
     }
 
     private static BuildJobQueueItem buildJob(RepositoryType repositoryType, RepositoryType triggeredByPushTo) {
-        return new BuildJobQueueItem("job-1", "job-1", new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), PARTICIPATION_ID, 1L, EXERCISE_ID, 0, 1, BuildStatus.BUILDING,
+        return buildJob(repositoryType, triggeredByPushTo, EXERCISE_ID, PARTICIPATION_ID, "job-1");
+    }
+
+    private static BuildJobQueueItem buildJob(RepositoryType repositoryType, RepositoryType triggeredByPushTo, long exerciseId, long participationId, String id) {
+        return new BuildJobQueueItem(id, id, new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), participationId, 1L, exerciseId, 0, 1, BuildStatus.BUILDING,
                 new RepositoryInfo("repo", repositoryType, triggeredByPushTo, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), null, 60),
                 new BuildConfig(null, "ghcr.io/example/image:1", "commit", "commit", "test-commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null,
@@ -427,6 +454,108 @@ class LocalCIResultProcessingServiceTest {
     }
 
     @Test
+    void twoResultsOfTheSameExerciseCanBeGradedConcurrently() throws Exception {
+        var lifecycle = new ProgrammingExerciseDeletionService(null, null, null, Optional.empty(), null, null, null, Optional.empty(), new LocalDataProviderService());
+        var service = new LocalCIResultProcessingService(programmingExerciseGradingService, programmingMessagingService, buildJobRepository, programmingExerciseRepository,
+                participationRepository, programmingTriggerService, buildLogEntryService, programmingExerciseBuildStatisticsRepository, distributedDataAccessService,
+                programmingSubmissionMessagingService, Optional.of(localCIQueueWebsocketService), lifecycle);
+        var executor = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+        ReflectionTestUtils.setField(service, "resultProcessingExecutor", executor);
+        withParticipation();
+        withSavedBuildJob();
+        when(resultQueue.poll()).thenReturn(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null),
+                new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER, EXERCISE_ID, PARTICIPATION_ID, "job-2"), List.of(), null));
+        CountDownLatch entered = new CountDownLatch(2);
+        CountDownLatch release = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            entered.countDown();
+            assertThat(release.await(10, TimeUnit.SECONDS)).isTrue();
+            return new Result();
+        }).when(programmingExerciseGradingService).processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean());
+        try {
+            service.processResultAsync();
+            service.processResultAsync();
+            assertThat(entered.await(5, TimeUnit.SECONDS)).as("both same-exercise results enter grading before either finishes").isTrue();
+            verify(deferredResultQueue, never()).add(any());
+        }
+        finally {
+            release.countDown();
+            executor.shutdown();
+            assertThat(executor.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
+    }
+
+    @Test
+    void aBusyExerciseDoesNotConsumeAResultWorkerOrDiscardTheResult() {
+        ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        withQueuedResult(item);
+        when(programmingExerciseDeletionService.tryAdmitResultProcessing(EXERCISE_ID)).thenReturn(Optional.empty());
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(participationRepository, buildJobRepository, programmingExerciseGradingService);
+        verify(deferredResultQueue).add(item);
+        verifyNoInteractions(resultProcessingPermit);
+    }
+
+    @Test
+    void deferredResultIsGradedWhenTheExerciseRemainsAfterDeletionFails() {
+        ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        when(deferredResultQueue.poll()).thenReturn(item);
+        withParticipation();
+        withSavedBuildJob();
+        when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean())).thenReturn(new Result());
+
+        resultProcessingService.processDeferredResultAsync();
+
+        verify(programmingExerciseGradingService).processNewProgrammingExerciseResult(participation, buildResult, false);
+        verify(resultProcessingPermit).close();
+        verify(deferredResultQueue, never()).add(any());
+    }
+
+    @Test
+    void oneWorkerProcessesAnotherExerciseWhileDeletionHoldsTheFirstLock() {
+        var ordinary = new LocalQueue<ResultQueueItem>(new LinkedBlockingQueue<>(), "ordinary-results");
+        var deferred = new LocalQueue<ResultQueueItem>(new LinkedBlockingQueue<>(), "deferred-results");
+        when(distributedDataAccessService.getDistributedBuildResultQueue()).thenReturn(ordinary);
+        when(distributedDataAccessService.getDistributedDeferredBuildResultQueue()).thenReturn(deferred);
+        var deleting = new java.util.concurrent.atomic.AtomicBoolean(true);
+        when(programmingExerciseDeletionService.tryAdmitResultProcessing(EXERCISE_ID))
+                .thenAnswer(invocation -> deleting.get() ? Optional.empty() : Optional.of(resultProcessingPermit));
+        when(programmingExerciseDeletionService.tryAdmitResultProcessing(4L)).thenReturn(Optional.of(resultProcessingPermit));
+        withParticipation();
+        var otherExercise = new ProgrammingExercise();
+        otherExercise.setId(4L);
+        var otherParticipation = new ProgrammingExerciseStudentParticipation();
+        otherParticipation.setId(11L);
+        otherParticipation.setProgrammingExercise(otherExercise);
+        when(participationRepository.findWithProgrammingExerciseById(11L)).thenReturn(Optional.of(otherParticipation));
+        withSavedBuildJob();
+        when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean())).thenReturn(new Result());
+        ResultQueueItem busy = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        resultProcessingService.init();
+        try {
+            ordinary.add(busy);
+            ordinary.add(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER, 4L, 11L, "job-2"), List.of(), null));
+            verify(programmingExerciseGradingService, timeout(5000)).processNewProgrammingExerciseResult(otherParticipation, buildResult, false);
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(deferred.getAll()).containsExactly(busy));
+            verify(participationRepository, never()).findWithProgrammingExerciseById(PARTICIPATION_ID);
+            var scheduler = new LocalCIResultListenerService(distributedDataAccessService, resultProcessingService);
+            scheduler.processQueuedResults();
+            ThreadPoolExecutor executor = (ThreadPoolExecutor) ReflectionTestUtils.getField(resultProcessingService, "resultProcessingExecutor");
+            await().atMost(Duration.ofSeconds(5)).until(() -> executor.getCompletedTaskCount() >= 3);
+            assertThat(deferred.getAll()).containsExactly(busy);
+            deleting.set(false);
+            scheduler.processQueuedResults();
+            verify(programmingExerciseGradingService, timeout(5000)).processNewProgrammingExerciseResult(participation, buildResult, false);
+            verify(programmingExerciseGradingService, times(2)).processNewProgrammingExerciseResult(any(), any(), anyBoolean());
+        }
+        finally {
+            resultProcessingService.removeListener();
+        }
+    }
+
+    @Test
     void aQueueItemWithoutABuildResultIsSkipped() {
         // Without a build result there is nothing to grade and nothing to record, so the item is dropped rather than saved as failed.
         withQueuedResult(new ResultQueueItem(null, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
@@ -515,6 +644,93 @@ class LocalCIResultProcessingServiceTest {
         assertThat(capturedBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
         verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
         verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any());
+    }
+
+    @Test
+    void anAdmittedResultFinishesWhenDeletionStartsBeforeGrading() {
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        // The marker can appear after admission. Deletion must drain this writer instead of discarding its result.
+        lenient().when(programmingExerciseDeletionService.isBeingDeleted(EXERCISE_ID)).thenReturn(true);
+        when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean())).thenReturn(new Result());
+
+        resultProcessingService.processResultAsync();
+
+        verify(programmingExerciseGradingService).processNewProgrammingExerciseResult(participation, buildResult, false);
+        verify(programmingMessagingService).notifyUserAboutNewResult(any(), any());
+    }
+
+    @Test
+    void aSolutionBuildDuringDeletionIsDeferredWithoutStartingFollowUps() {
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.SOLUTION, RepositoryType.TESTS), List.of(), null));
+        when(programmingExerciseDeletionService.tryAdmitResultProcessing(EXERCISE_ID)).thenReturn(Optional.empty());
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(programmingTriggerService, programmingExerciseGradingService, buildJobRepository);
+        verify(deferredResultQueue).add(any());
+    }
+
+    @Test
+    void aResultThatCannotBeWrittenBecauseTheParticipationWasDeletedMeanwhileIsDropped() {
+        // The deletion removed the participation between loading it and saving the result, so the foreign key rejects the insert. This must not take the thread down.
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean()))
+                .thenThrow(new DataIntegrityViolationException("fk_result_exercise_id"));
+        when(participationRepository.existsById(PARTICIPATION_ID)).thenReturn(false);
+
+        resultProcessingService.processResultAsync();
+
+        assertThat(capturedBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
+        verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
+        verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any());
+    }
+
+    @Test
+    void deletedExerciseDoesNotGetStatisticsFromAsyncFollowUp() throws InterruptedException {
+        afterASuccessfulBuild();
+        CountDownLatch existenceChecked = new CountDownLatch(1);
+        when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenAnswer(invocation -> {
+            existenceChecked.countDown();
+            return false;
+        });
+
+        resultProcessingService.processResultAsync();
+
+        assertThat(existenceChecked.await(5, TimeUnit.SECONDS)).isTrue();
+        verifyNoInteractions(programmingExerciseBuildStatisticsRepository);
+    }
+
+    @Test
+    void deletedExerciseDoesNotGetAnotherTemplateBuildFromAsyncFollowUp() throws InterruptedException {
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.SOLUTION, RepositoryType.TESTS), List.of(), null));
+        withSavedBuildJob();
+        CountDownLatch existenceChecked = new CountDownLatch(1);
+        when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenAnswer(invocation -> {
+            existenceChecked.countDown();
+            return false;
+        });
+
+        resultProcessingService.processResultAsync();
+
+        assertThat(existenceChecked.await(5, TimeUnit.SECONDS)).isTrue();
+        verifyNoInteractions(programmingTriggerService);
+    }
+
+    @Test
+    void aConstraintViolationOfAnExistingParticipationIsNotHidden() {
+        // Only the loss of the participation explains the violation. Any other one is a defect and must stay visible.
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+        when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean()))
+                .thenThrow(new DataIntegrityViolationException("not null"));
+        when(participationRepository.existsById(PARTICIPATION_ID)).thenReturn(true);
+        withSavedBuildJob();
+
+        assertThatThrownBy(() -> resultProcessingService.processResultAsync()).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -761,6 +977,21 @@ class LocalCIResultProcessingServiceTest {
         verify(localCIQueueWebsocketService, never()).sendChangedFinishedBuildJobOverWebsocket(any());
     }
 
+    /** The sweep takes the exercise's result-processing admission, so it writes no result while the exercise is being deleted. */
+    @Test
+    void theSweepLeavesAGroupWhoseExerciseIsBeingDeletedForTheNextSweep() {
+        withBuildGroupFoundByTheSweep();
+        Result aggregate = new Result();
+        aggregate.setId(7L);
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, aggregate)));
+        when(programmingExerciseDeletionService.tryAdmitResultProcessing(EXERCISE_ID)).thenReturn(Optional.empty());
+
+        assertThat(sweep()).isZero();
+
+        verify(distributedDataAccessService, never()).getResultAggregationLockMap();
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any(), any());
+    }
+
     @Test
     void theSweepSendsTheJobsOfTheGroupItFinalizedAgain() {
         ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
@@ -996,6 +1227,7 @@ class LocalCIResultProcessingServiceTest {
     void theSweepLeavesAGroupAloneThatItsLastContainerFinalizedMeanwhile() {
         // the last container finalized the group between the sweep's query and its lock
         withBuildGroupFoundByTheSweep();
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, null)));
         when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
         when(buildJobRepository.existsResultInProgressOfBuildGroup("group-1")).thenReturn(false);
 

@@ -1,9 +1,14 @@
 {
     "artemisApp": {
         "participation": {
+            "onlineEditor": "Online editor",
             "home": {
                 "title": "Participation",
                 "createLabel": "Create new participation"
+            },
+            "filterGroup": {
+                "submissions": "Submissions",
+                "results": "Results"
             },
             "created": "Created new participation with identifier {{ param }}",
             "updated": "Updated participation with identifier {{ param }}",

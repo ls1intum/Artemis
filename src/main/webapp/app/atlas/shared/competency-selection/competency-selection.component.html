@@ -6,7 +6,7 @@
                 <span>{{ labelName() }}</span>
             }
             @if (labelTooltip()) {
-                <fa-icon [icon]="faQuestionCircle" class="text-muted-color" tabindex="0" [tumAetUiTooltip]="labelTooltip()" />
+                <fa-icon [icon]="faQuestionCircle" class="text-muted-color" role="img" tabindex="0" [attr.aria-label]="labelTooltip()" [tumAetUiTooltip]="labelTooltip()" />
             }
             <tumaet-ui-button
                 severity="warn"
@@ -42,7 +42,9 @@
                                     <fa-icon
                                         [icon]="faLightbulb"
                                         class="text-state-warning"
+                                        role="img"
                                         tabindex="0"
+                                        [attr.aria-label]="'artemisApp.competency.suggestion.tooltip' | artemisTranslate"
                                         [tumAetUiTooltip]="'artemisApp.competency.suggestion.tooltip' | artemisTranslate"
                                         data-testid="suggested-competency"
                                     />

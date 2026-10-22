@@ -553,12 +553,14 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * Uses openForwardMessageView from PostingsReactionsBarDirective to show the forward dialog.
      */
     forwardMessage(): void {
-        const isAnswer = this.getPostingType() === 'answerPost';
-        if (!this.posting()!.content || this.posting()!.content === '') {
-            this.openForwardMessageView(this.originalPostDetails()!, isAnswer);
-        } else {
-            this.openForwardMessageView(this.posting()!, isAnswer);
+        const posting = this.posting();
+        const source = posting?.content ? posting : this.originalPostDetails();
+        if (!source) {
+            return;
         }
+        // A received forward is a post even when its selected source is a reply without private parent metadata.
+        const isAnswer = 'resolvesPost' in source || 'post' in source;
+        this.openForwardMessageView(source, isAnswer);
     }
 
     markMessageAsUnread() {

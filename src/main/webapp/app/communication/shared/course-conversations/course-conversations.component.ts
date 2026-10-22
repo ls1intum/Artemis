@@ -262,6 +262,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
         });
     }
 
+    onForwardedMessagesLoaded(posts: Post[]): void {
+        const openPostId = this.postInThread()?.id;
+        const hydratedPost = posts.find((post) => post.id === openPostId);
+        if (openPostId !== undefined && hydratedPost) {
+            // Source previews load after the post stream. Publish a new reference so the open thread receives them too.
+            this.postInThread.set(Post.withSameValues(hydratedPost));
+        }
+    }
+
     togglePinnedView(): void {
         this.showOnlyPinned.set(!this.showOnlyPinned());
     }

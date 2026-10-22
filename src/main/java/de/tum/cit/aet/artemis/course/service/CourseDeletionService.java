@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSett
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
+import de.tum.cit.aet.artemis.videosource.api.GocastBindingApi;
 
 /**
  * Service for deleting a course and all its associated elements.
@@ -116,6 +117,8 @@ public class CourseDeletionService {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final Optional<GocastBindingApi> gocastBindingApi;
+
     public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
@@ -126,7 +129,8 @@ public class CourseDeletionService {
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository, CourseRequestRepository courseRequestRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
             CourseOperationProgressService progressService, CourseAdminService courseAdminService, ParticipationRepository participationRepository,
-            SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
+            Optional<GocastBindingApi> gocastBindingApi) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.lectureApi = lectureApi;
@@ -155,6 +159,7 @@ public class CourseDeletionService {
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.gocastBindingApi = gocastBindingApi;
     }
 
     /**
@@ -169,6 +174,7 @@ public class CourseDeletionService {
      * <li>All Iris course settings and chat sessions</li>
      * <li>All LLM token usage traces</li>
      * <li>All learner profiles for the course</li>
+     * <li>The TUM.Live course connection, after revoking its access in TUM.Live</li>
      * </ul>
      * Progress is reported via WebSocket for real-time UI updates using weighted progress
      * that accounts for the complexity of each operation (e.g., programming exercises take longer).
@@ -286,6 +292,9 @@ public class CourseDeletionService {
 
             // Step 14a: Clean up all Weaviate rows for the course (exercises, lectures, etc.) — async, no stepsCompleted increment
             searchableEntityWeaviateService.ifPresent(service -> service.deleteAllForCourseAsync(courseId));
+
+            // Step 14b: Revoke the TUM.Live access while the connection still exists — no stepsCompleted increment
+            gocastBindingApi.ifPresent(api -> api.disconnectBeforeCourseDeletion(courseId));
 
             // Step 14: Delete the course itself (cascades user_course_role rows via FK onDelete=CASCADE)
             progressService.updateProgress(operationClaim, "Deleting course", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));

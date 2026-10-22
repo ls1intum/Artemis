@@ -1,8 +1,8 @@
-import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
-import { catchError, map, take } from 'rxjs/operators';
+import { catchError, map, startWith, switchMap, take } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -33,11 +33,28 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/shared/services/programming-submission.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { AccountService } from 'app/core/auth/account.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 
 @Component({
     selector: 'jhi-participation-submission',
     templateUrl: './participation-submission.component.html',
-    imports: [TranslateDirective, TableViewComponent, ResultComponent, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisTimeAgoPipe],
+    imports: [
+        TranslateDirective,
+        TableViewComponent,
+        ResultComponent,
+        DeleteButtonDirective,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
+    ],
 })
 export class ParticipationSubmissionComponent implements OnInit {
     private route = inject(ActivatedRoute);
@@ -52,6 +69,10 @@ export class ParticipationSubmissionComponent implements OnInit {
     private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private profileService = inject(ProfileService);
+    private destroyRef = inject(DestroyRef);
+    private accountService = inject(AccountService);
 
     readonly ParticipationType = ParticipationType;
     readonly buttonSizeSmall = ButtonSize.SMALL;
@@ -66,11 +87,40 @@ export class ParticipationSubmissionComponent implements OnInit {
     readonly exerciseStatusBadge = signal('bg-success');
     readonly isTmpOrSolutionProgrParticipation = signal(false);
     readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly programmingExercise = computed<ProgrammingExercise | undefined>(() => {
+        const exercise = this.exercise();
+        return exercise?.type === ExerciseType.PROGRAMMING ? exercise : undefined;
+    });
     readonly participation = signal<Participation | undefined>(undefined);
     readonly dueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly submissions = signal<Submission[]>([]);
     readonly isLoading = signal(true);
     readonly resultIdToBuildJobIdMap = signal<{ [key: string]: string } | undefined>(undefined);
+
+    private readonly buildState = signal<ProgrammingSubmissionStateObj | undefined>(undefined);
+    private readonly liveSubmissions = signal<ProgrammingSubmission[]>([]);
+    private readonly deletedSubmissionIds = signal<ReadonlySet<number>>(new Set());
+    private readonly buildParticipationId = computed(() => this.participation()?.id);
+    private readonly programmingExerciseId = computed(() => (this.exercise()?.type === ExerciseType.PROGRAMMING ? this.exercise()?.id : undefined));
+    readonly showBuildProgressBar = this.profileService.isProfileActive(PROFILE_LOCALCI);
+    readonly ProgrammingSubmissionState = ProgrammingSubmissionState;
+    readonly activeBuild = computed(() => {
+        const state = this.buildState();
+        return state?.submissionState === ProgrammingSubmissionState.IS_QUEUED || state?.submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION
+            ? state
+            : undefined;
+    });
+
+    readonly displayedSubmissions = computed(() => {
+        const submissions = this.submissions();
+        const loadedIds = new Set(submissions.map((submission) => submission.id));
+        const deletedIds = this.deletedSubmissionIds();
+        // Retain every received submission until participation changes; loaded rows supply authoritative results.
+        // The table sorts its input in place. Keep both source arrays untouched.
+        return [...this.liveSubmissions().filter((submission) => !loadedIds.has(submission.id)), ...submissions].filter(
+            (submission) => submission.id === undefined || !deletedIds.has(submission.id),
+        );
+    });
 
     eventSubscriber?: Subscription;
 
@@ -90,6 +140,8 @@ export class ParticipationSubmissionComponent implements OnInit {
         striped: true,
         // paginated: false,
         showSearch: false,
+        initialSortField: 'submissionDate',
+        initialSortOrder: -1,
     };
 
     readonly columns = computed<ColumnDef<Submission>[]>(() => {
@@ -97,11 +149,12 @@ export class ParticipationSubmissionComponent implements OnInit {
         const participation = this.participation();
 
         const cols: ColumnDef<Submission>[] = [
-            { header: 'Id', field: 'id' },
             { headerKey: 'artemisApp.participation.participationSubmission.submissionType', field: 'type', width: '90px' },
             {
                 headerKey: 'artemisApp.participation.participationSubmission.submissionDate',
                 field: 'submissionDate',
+                sort: true,
+                sortComparator: (rowA, rowB) => (rowA.submissionDate ? dayjs(rowA.submissionDate).valueOf() : 0) - (rowB.submissionDate ? dayjs(rowB.submissionDate).valueOf() : 0),
                 width: '180px',
                 templateRef: this.submissionDateTemplate(),
             },
@@ -119,6 +172,10 @@ export class ParticipationSubmissionComponent implements OnInit {
                 templateRef: this.resultsTemplate(),
             },
         ];
+
+        if (this.accountService.isAdmin()) {
+            cols.unshift({ header: 'Id', field: 'id' });
+        }
 
         if (isTmpOrSolution || participation?.type === ParticipationType.PROGRAMMING) {
             cols.push({
@@ -140,7 +197,10 @@ export class ParticipationSubmissionComponent implements OnInit {
             },
             {
                 headerKey: 'artemisApp.exercise.completionDate',
-                field: 'results',
+                // A distinct sort key avoids the other columns that also render the results collection.
+                field: 'completionDate',
+                sort: true,
+                sortComparator: (rowA, rowB) => this.latestCompletionTimestamp(rowA) - this.latestCompletionTimestamp(rowB),
                 width: '180px',
                 templateRef: this.completionDateTemplate(),
             },
@@ -148,6 +208,66 @@ export class ParticipationSubmissionComponent implements OnInit {
 
         return cols;
     });
+
+    private latestCompletionTimestamp(submission: Submission): number {
+        return (
+            submission.results?.reduce((latest, result) => {
+                // This endpoint can leave nested result dates as ISO strings; other loaders convert them to Dayjs.
+                const timestamp = result.completionDate ? dayjs(result.completionDate).valueOf() : 0;
+                return Number.isFinite(timestamp) ? Math.max(latest, timestamp) : latest;
+            }, 0) ?? 0
+        );
+    }
+
+    constructor() {
+        this.destroyRef.onDestroy(() => this.eventSubscriber?.unsubscribe());
+        effect((onCleanup) => {
+            const participationId = this.buildParticipationId();
+            const exerciseId = this.programmingExerciseId();
+            this.buildState.set(undefined);
+            this.liveSubmissions.set([]);
+            this.deletedSubmissionIds.set(new Set());
+            if (participationId === undefined || exerciseId === undefined) {
+                return;
+            }
+
+            // Reloads replace the participation object; subscribe only when its id or the programming exercise changes.
+            untracked(() => {
+                const subscription = this.programmingSubmissionService
+                    .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, false)
+                    .pipe(
+                        switchMap((state) => {
+                            if (this.showBuildProgressBar && state.submissionState === ProgrammingSubmissionState.IS_QUEUED) {
+                                return this.programmingSubmissionService.fetchQueueReleaseDateEstimationByParticipationId(participationId).pipe(
+                                    map((estimatedCompletionDate) =>
+                                        cloneWith(state, { buildTimingInfo: { buildStartDate: state.submission?.submissionDate, estimatedCompletionDate } }),
+                                    ),
+                                    startWith(state),
+                                    catchError(() => of(state)),
+                                );
+                            }
+                            return of(state);
+                        }),
+                    )
+                    .subscribe((state) => {
+                        const hadPendingSubmission = this.buildState()?.submission !== undefined;
+                        this.buildState.set(state);
+                        const liveSubmission = state.submission;
+                        if (liveSubmission?.id !== undefined && !this.deletedSubmissionIds().has(liveSubmission.id)) {
+                            this.liveSubmissions.update((submissions) => [liveSubmission, ...submissions.filter((submission) => submission.id !== liveSubmission.id)]);
+                        }
+                        // The shared service clears pending state only after receiving the matching result.
+                        if (hadPendingSubmission && state.submissionState === ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION) {
+                            this.setupPage();
+                        }
+                    });
+                onCleanup(() => {
+                    subscription.unsubscribe();
+                    this.programmingSubmissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
+                });
+            });
+        });
+    }
 
     /**
      * Initialize component by setting up page and subscribe to eventManager
@@ -295,6 +415,8 @@ export class ParticipationSubmissionComponent implements OnInit {
     deleteSubmission(submissionId: number) {
         this.submissionService.delete(submissionId).subscribe({
             next: () => {
+                this.deletedSubmissionIds.update((ids) => new Set([...ids, submissionId]));
+                this.liveSubmissions.update((submissions) => submissions.filter((submission) => submission.id !== submissionId));
                 this.eventManager.broadcast({
                     name: 'submissionsModification',
                     content: 'Deleted a submission',

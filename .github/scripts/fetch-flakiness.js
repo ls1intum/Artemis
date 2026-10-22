@@ -87,7 +87,8 @@ async function fetchFlakinessScores(failedTests, heliosSecret) {
                     res.on('error', () => fail('response interrupted'));
                     res.on('aborted', () => fail('response interrupted'));
                     if (res.statusCode !== 200) {
-                        fail(`HTTP ${res.statusCode}`);
+                        const remediation = res.statusCode === 401 || res.statusCode === 403 ? '; Rotate HELIOS_REPO_SECRET in Helios and the GitHub repository settings' : '';
+                        fail(`HTTP ${res.statusCode}${remediation}`);
                         res.destroy();
                         return;
                     }

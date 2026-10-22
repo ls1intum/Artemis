@@ -1,3 +1,4 @@
+import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -42,7 +43,7 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { ElementRef, signal } from '@angular/core';
+import { ElementRef, computed, signal } from '@angular/core';
 import {
     ChannelAction,
     ChannelsOverviewDialogComponent,
@@ -271,12 +272,111 @@ examples.forEach((activeConversation) => {
             vi.resetAllMocks();
         });
 
+        it('should refresh an already open thread after its forwarded sources finish loading', () => {
+            activeConversation$.next({ id: 5, type: ConversationType.CHANNEL });
+            fixture.detectChanges();
+            const openedPost = new Post();
+            openedPost.id = 42;
+            openedPost.conversation = { id: 5 };
+            component.postInThread.set(openedPost);
+            fixture.detectChanges();
+            const sidebar = fixture.debugElement.query(By.directive(ConversationThreadSidebarComponent));
+            const forwardedContent = computed(() => sidebar.componentInstance.activePost()?.forwardedPosts?.[0]?.content);
+            expect(forwardedContent()).toBeUndefined();
+
+            // Forwarded sources arrive after the user opened the bare wrapper in the thread.
+            openedPost.forwardedPosts = [{ id: 43, content: 'Loaded forwarded message' }];
+            fixture.debugElement.query(By.directive(ConversationMessagesComponent)).triggerEventHandler('forwardedMessagesLoaded', [openedPost]);
+            fixture.detectChanges();
+
+            expect(sidebar.componentInstance.activePost()).not.toBe(openedPost);
+            expect(forwardedContent()).toBe('Loaded forwarded message');
+        });
+
         it('should have service set up', () => {
             fixture.detectChanges();
             expect(component.isServiceSetUp()).toBe(true);
             expect(component.isLoading()).toBe(false);
             expect(component.conversationsOfUser()).toHaveLength(1);
             expect(component.activeConversation()).toEqual(activeConversation);
+        });
+
+        it('should open and close a thread without retaining a pending source', () => {
+            const opened = { id: 42 } as Post;
+            const setOpenPost = vi.spyOn(component['selectionState'], 'setOpenPostId');
+            component['pendingThreadPostId'] = 99;
+
+            component.openThread(opened);
+            expect(component.postInThread()).toBe(opened);
+            expect(setOpenPost).toHaveBeenCalledWith(42);
+            expect(component['pendingThreadPostId']).toBeUndefined();
+
+            component.closeThread();
+            expect(component.postInThread()).toBeUndefined();
+            expect(component['pendingThreadPostId']).toBeUndefined();
+        });
+
+        it.each(['post', 'reply'] as const)('should scroll to and temporarily highlight an existing original %s', (kind) => {
+            const host = document.createElement('div');
+            host.id = 'item-987654';
+            const target = kind === 'post' ? document.createElement('div') : host;
+            if (kind === 'post') {
+                target.className = 'post';
+                host.appendChild(target);
+            }
+            const scroll = vi.fn();
+            target.scrollIntoView = scroll;
+            document.body.appendChild(host);
+            try {
+                if (kind === 'post') component['scrollToAndHighlightPost'](987654);
+                else component['scrollToAndHighlightReply'](987654);
+
+                expect(scroll).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'center' });
+                expect(target.classList.contains('highlight-' + kind)).toBe(true);
+                vi.advanceTimersByTime(2000);
+                expect(target.classList.contains('highlight-' + kind)).toBe(false);
+            } finally {
+                host.remove();
+            }
+        });
+
+        it.each(['post', 'reply'] as const)('should wait for a lazily rendered original %s and disconnect its observer', async (kind) => {
+            if (kind === 'post') component['scrollToAndHighlightPost'](987655);
+            else component['scrollToAndHighlightReply'](987655);
+            const observer = kind === 'post' ? component['highlightPostObserver']! : component['highlightReplyObserver']!;
+            const disconnect = vi.spyOn(observer, 'disconnect');
+            const host = document.createElement('div');
+            host.id = 'item-987655';
+            const target = kind === 'post' ? document.createElement('div') : host;
+            if (kind === 'post') {
+                target.className = 'post';
+                host.appendChild(target);
+            }
+            const scroll = vi.fn();
+            target.scrollIntoView = scroll;
+            document.body.appendChild(host);
+            try {
+                // Deliver the real DOM mutation observer microtask.
+                await Promise.resolve();
+                expect(scroll).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'center' });
+                expect(target.classList.contains('highlight-' + kind)).toBe(true);
+                expect(disconnect).toHaveBeenCalled();
+                vi.advanceTimersByTime(2000);
+                expect(target.classList.contains('highlight-' + kind)).toBe(false);
+            } finally {
+                host.remove();
+            }
+        });
+
+        it('should stop waiting for an unavailable original reply after five seconds', () => {
+            component['focusReplyId'] = 987656;
+            component['scrollToAndHighlightReply'](987656);
+            const disconnect = vi.spyOn(component['highlightReplyObserver']!, 'disconnect');
+
+            vi.advanceTimersByTime(5000);
+
+            expect(disconnect).toHaveBeenCalled();
+            expect(component['focusReplyId']).toBeUndefined();
         });
 
         it('should store the highlight observers and disconnect them in ngOnDestroy', () => {

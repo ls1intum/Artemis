@@ -434,4 +434,35 @@ class OrchestratorDelegationToolsServiceTest {
     private static ChatResponse response(String text) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
     }
+
+    @Test
+    void missingTaskCourseOrActionBufferRejectsBeforeDispatch() {
+        assertThat(service.delegateToCreator(null, new ToolContext(parentContext())).message()).isEqualTo("Worker task must not be blank.");
+        assertThat(service.delegateToCreator("Inspect", null).message()).isEqualTo("Worker delegation context is incomplete.");
+        var noBuffer = parentContext();
+        noBuffer.remove(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY);
+        assertThat(service.delegateToEditor("Inspect", new ToolContext(noBuffer)).message()).isEqualTo("Worker delegation context is incomplete.");
+        org.mockito.Mockito.verifyNoInteractions(delegationService, llmTokenUsageService);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    void absentProviderResponseCannotClaimCompletionAndOmittedLearningObjectIsNotCopied(boolean emptyResponse) {
+        var parent = parentContext();
+        parent.remove(OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY);
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> worker = invocation.getArgument(3);
+                    assertThat(worker).doesNotContainKey(OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY);
+                    OrchestratorToolHelpers.markWorkerRead(new ToolContext(worker));
+                    workerTerminal.completeWorkerTask(true, "Checked", new ToolContext(worker));
+                    return emptyResponse ? new ChatResponse(List.of()) : null;
+                });
+        var result = service.delegateToCreator("Inspect course", new ToolContext(parent));
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).isEqualTo("Creator worker provider response did not complete.");
+        assertThat(result.appliedActions()).isEmpty();
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(any(), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
+    }
+
 }

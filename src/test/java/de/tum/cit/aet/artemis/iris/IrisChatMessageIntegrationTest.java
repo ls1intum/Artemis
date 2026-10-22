@@ -581,16 +581,16 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         Instant from = Instant.now().minusSeconds(5);
 
-        long thumbsUpBaseline = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5));
-        long totalBaseline = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5));
+        long thumbsUpBaseline = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5), "ALL");
+        long totalBaseline = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5), "ALL");
 
         // A final (non-intermediate) helpful LLM answer must be counted by the rating aggregates.
         IrisMessage finalMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
         finalMessage.setHelpful(true);
         irisMessageService.saveMessage(finalMessage, session, IrisMessageSender.LLM);
 
-        long thumbsUpAfterFinal = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5));
-        long totalAfterFinal = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5));
+        long thumbsUpAfterFinal = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5), "ALL");
+        long totalAfterFinal = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5), "ALL");
         assertThat(thumbsUpAfterFinal).isEqualTo(thumbsUpBaseline + 1);
         assertThat(totalAfterFinal).isEqualTo(totalBaseline + 1);
 
@@ -600,8 +600,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         intermediateMessage.setIntermediate(true);
         irisMessageService.saveMessage(intermediateMessage, session, IrisMessageSender.LLM);
 
-        assertThat(irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5))).isEqualTo(thumbsUpAfterFinal);
-        assertThat(irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5))).isEqualTo(totalAfterFinal);
+        assertThat(irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5), "ALL")).isEqualTo(thumbsUpAfterFinal);
+        assertThat(irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5), "ALL")).isEqualTo(totalAfterFinal);
     }
 
     @ParameterizedTest

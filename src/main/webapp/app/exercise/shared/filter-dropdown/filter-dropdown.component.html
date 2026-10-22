@@ -3,6 +3,7 @@
     <p-select
         size="small"
         appendTo="self"
+        [overlayOptions]="overlayOptions"
         [group]="true"
         [options]="groupedFilters()!"
         optionGroupLabel="labelKey"
@@ -34,6 +35,7 @@
     <p-select
         size="small"
         appendTo="self"
+        [overlayOptions]="overlayOptions"
         [options]="filters()"
         [ngModel]="isFiltered() ? activeFilter() : null"
         [showClear]="isFiltered()"

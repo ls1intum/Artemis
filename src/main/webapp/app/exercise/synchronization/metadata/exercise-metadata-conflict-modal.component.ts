@@ -254,6 +254,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.timeoutSeconds', key: 'timeoutSeconds' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.dockerFlags', key: 'dockerFlags' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.theiaImage', key: 'theiaImage' },
+            { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.onlineIdeExperienceLevel', key: 'onlineIdeExperienceLevel' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.allowBranching', key: 'allowBranching' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.branchRegex', key: 'branchRegex' },
         ] as const;

@@ -755,6 +755,29 @@ describe('PostingReactionsBarComponent', () => {
         expect(openForwardMessageViewSpy).toHaveBeenCalledWith(originalPost, false);
     });
 
+    it.each([
+        { id: 42, content: 'Forwarded reply', resolvesPost: false },
+        { id: 42, content: 'Forwarded reply', post: { id: 41 } },
+    ])('forwards a received reply as an answer using the selected source', (source) => {
+        const openForwardMessageViewSpy = vi.spyOn(component, 'openForwardMessageView').mockImplementation(() => undefined);
+        fixture.componentRef.setInput('posting', { id: 1, content: '', hasForwardedMessages: true } as Post);
+        fixture.componentRef.setInput('originalPostDetails', source);
+
+        component.forwardMessage();
+
+        expect(openForwardMessageViewSpy).toHaveBeenCalledExactlyOnceWith(source, true);
+    });
+
+    it('does not open a forward dialog when the received source is unavailable', () => {
+        const openForwardMessageViewSpy = vi.spyOn(component, 'openForwardMessageView').mockImplementation(() => undefined);
+        fixture.componentRef.setInput('posting', { id: 1, content: '', hasForwardedMessages: true } as Post);
+        fixture.componentRef.setInput('originalPostDetails', undefined);
+
+        component.forwardMessage();
+
+        expect(openForwardMessageViewSpy).not.toHaveBeenCalled();
+    });
+
     it('should call openForwardMessageView with posting when posting content is not empty', () => {
         const openForwardMessageViewSpy = vi.spyOn(component, 'openForwardMessageView');
         const postingWithContent = { id: 1, content: 'Non-empty content' } as Post;
@@ -763,6 +786,36 @@ describe('PostingReactionsBarComponent', () => {
 
         expect(openForwardMessageViewSpy).toHaveBeenCalledOnce();
         expect(openForwardMessageViewSpy).toHaveBeenCalledWith(postingWithContent, false);
+    });
+
+    it.each([{ logins: ['student-two'] }, { logins: ['student-two', 'student-three'] }])('keeps the reply source type when forwarding to $logins', async ({ logins }) => {
+        const source = { id: 42, content: 'Shared reply', resolvesPost: false };
+        const destination = { id: 1337, type: logins.length === 1 ? ConversationType.ONE_TO_ONE : ConversationType.GROUP_CHAT } as ConversationDTO;
+        const selection = new Subject<{ channels: Conversation[]; users: { id: number; login: string }[]; messageContent: string }>();
+        vi.spyOn(TestBed.inject(ConversationService), 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(component['dialogService'], 'open').mockReturnValue({ onClose: selection.asObservable() } as any);
+        const conversations = TestBed.inject(CourseConversationsService);
+        const directSpy = vi.fn().mockReturnValue(of(new HttpResponse({ body: destination })));
+        conversations.createDirectConversation = directSpy;
+        const groupSpy = vi.fn().mockReturnValue(of(new HttpResponse({ body: destination })));
+        conversations.createGroupConversation = groupSpy;
+        createForwardedMessagesSpy.mockReturnValue(of([]));
+        fixture.componentRef.setInput('course', { id: 1 });
+        fixture.componentRef.setInput('posting', { id: 1, content: '', hasForwardedMessages: true } as Post);
+        fixture.componentRef.setInput('originalPostDetails', source);
+
+        component.forwardMessage();
+        selection.next({ channels: [], users: logins.map((login, index) => ({ id: index + 2, login })), messageContent: 'For next week' });
+
+        await vi.waitFor(() => expect(createForwardedMessagesSpy).toHaveBeenCalledExactlyOnceWith([source], destination, true, 'For next week'));
+        if (logins.length === 1) {
+            expect(directSpy).toHaveBeenCalledExactlyOnceWith(logins[0]);
+            expect(groupSpy).not.toHaveBeenCalled();
+        } else {
+            expect(groupSpy).toHaveBeenCalledExactlyOnceWith(logins);
+            expect(directSpy).not.toHaveBeenCalled();
+        }
+        selection.complete();
     });
 
     it('should not call openForwardMessageView when course id is not set', async () => {

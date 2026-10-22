@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { Route, RouteReuseStrategy, Routes, UrlSegment, UrlSegmentGroup, provideRouter } from '@angular/router';
+import { Route, RouteReuseStrategy, Router, Routes, UrlSegment, UrlSegmentGroup, UrlTree, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, of } from 'rxjs';
@@ -13,7 +13,10 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
-import { IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { GocastGuard } from 'app/videosource/gocast/gocast-guard.service';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 function presentationRoutes(routes: Routes): Routes {
     return routes.flatMap((route) => (route.matcher === presentationAssessmentUrlMatcher ? [route] : presentationRoutes(route.children ?? [])));
@@ -170,5 +173,32 @@ describe('courseManagementRoutes', () => {
 
     it('provides team pages inside the management container', () => {
         expect(containerRoute!.children?.some((route) => route.path === ':courseId/exercises/:exerciseId/teams')).toBe(true);
+    });
+
+    it('provides instructor-only TUM.Live course connection management', () => {
+        const route = containerRoute!.children?.find((candidate) => candidate.path === ':courseId/gocast-binding');
+
+        expect(route).toBeDefined();
+        expect(route!.data?.['authorities']).toEqual(IS_AT_LEAST_INSTRUCTOR);
+        expect(route!.canActivate).toEqual([UserRouteAccessService, GocastGuard]);
+    });
+
+    it('blocks direct TUM.Live course connection navigation when the integration is unavailable', () => {
+        TestBed.configureTestingModule({
+            providers: [provideRouter([]), GocastGuard, { provide: ProfileService, useValue: { isGocastEnabled: () => false } }],
+        });
+
+        const result = TestBed.inject(GocastGuard).canActivate();
+        expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/courses');
+    });
+
+    it('allows direct TUM.Live course connection navigation when the integration is available', () => {
+        const route = containerRoute!.children?.find((candidate) => candidate.path === ':courseId/gocast-binding');
+        expect(route?.canActivate).toContain(GocastGuard);
+        TestBed.configureTestingModule({
+            providers: [provideRouter([]), GocastGuard, { provide: ProfileService, useValue: { isGocastEnabled: () => true } }],
+        });
+
+        expect(TestBed.inject(GocastGuard).canActivate()).toBe(true);
     });
 });

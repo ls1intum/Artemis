@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -161,6 +162,26 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
                 )
             """)
     long countAccessiblePosts(@Param("postIds") Collection<Long> postIds, @Param("userId") Long userId);
+
+    /**
+     * Returns only IDs readable through the original conversation, without granting access through forwards.
+     *
+     * @param postIds message IDs to check
+     * @param userId  requesting user ID
+     * @return IDs accessible through conversation membership or a course-wide channel
+     */
+    @Query("""
+            SELECT DISTINCT post.id
+            FROM Post post
+                LEFT JOIN post.conversation conv
+                LEFT JOIN conv.conversationParticipants cp
+            WHERE post.id IN :postIds
+                AND (
+                    (TYPE(conv) = Channel AND TREAT(conv AS Channel).isCourseWide = TRUE)
+                    OR (cp.user.id = :userId)
+                )
+            """)
+    Set<Long> findAccessiblePostIds(@Param("postIds") Collection<Long> postIds, @Param("userId") Long userId);
 
     /**
      * Verifies that the user has access to all specified posts.

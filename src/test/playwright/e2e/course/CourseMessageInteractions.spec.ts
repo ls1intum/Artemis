@@ -1,4 +1,6 @@
-import { expect } from '@playwright/test';
+import { expect, Page, TestInfo } from '@playwright/test';
+import path from 'node:path';
+import { Course } from 'app/course/shared/entities/course.model';
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';
@@ -6,6 +8,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { SEED_COURSES, SEED_CHANNELS } from '../../support/seedData';
 import { Commands } from '../../support/commands';
+import { expectInside } from '../../support/layout';
 
 const writeCourse = { id: SEED_COURSES.channel2.id };
 // Use the pre-seeded "random" channel — students are already joined
@@ -444,6 +447,160 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
 
             // Same as the post case, but the access check guards the source-answer fetch; a visible preview proves it returned the reply.
             await courseMessages.openConversationAndWaitForForwardedPreview(writeCourse.id, destinationChannel.id!, reply.content!);
+        });
+    });
+    test.describe('Forwarded preview layout and navigation', () => {
+        let course: Course | undefined;
+        let source: Channel;
+        let destination: Channel;
+        let original: Post;
+        const longContent = [
+            '**Design by contract: preparing for the tutorial**',
+            'A method specification states the precondition expected from callers and the postcondition guaranteed by the implementation.',
+            'For binary search, explain why the input must be sorted and how the loop invariant narrows the search interval.',
+            'Distinguish a representation invariant from an abstraction function when implementing an immutable set.',
+            'Give an example in which defensive copying prevents representation exposure through a mutable collection.',
+            'Explain why a passing test suite does not establish correctness for every permitted input.',
+            'Compare checked and unchecked exceptions when documenting a failure condition in a public API.',
+            'For the tutorial discussion, prepare one specification that is too weak and one that is stronger than its implementation.',
+        ].join('\n\n');
+
+        async function screenshot(page: Page, info: TestInfo, name: string) {
+            const directory = process.env.ARTEMIS_PR_SCREENSHOTS;
+            if (directory && info.project.name === 'chromium') {
+                await page.screenshot({ path: path.join(directory, name + '.png'), fullPage: true });
+            }
+        }
+
+        test.beforeEach(async ({ login, courseManagementAPIRequests, communicationAPIRequests }) => {
+            await login(admin);
+            course = await courseManagementAPIRequests.createCourse({ courseName: 'Software Engineering' });
+            await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
+            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+            source = await communicationAPIRequests.createCourseMessageChannel(course, 'tutorial-questions', 'Questions on specifications and software design', false, true);
+            destination = await communicationAPIRequests.createCourseMessageChannel(course, 'exam-preparation', 'Discussion of lecture concepts', false, true);
+            for (const channel of [source, destination]) {
+                await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, instructor);
+                await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, studentOne);
+            }
+            await login(instructor);
+            original = await communicationAPIRequests.createCourseMessage(course, source.id!, 'channel', longContent);
+        });
+
+        test.afterEach(async ({ courseManagementAPIRequests }) => {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+            course = undefined;
+        });
+
+        test('keeps long forwarded posts expandable in light and dark themes and the thread internally scrollable', async ({
+            page,
+            courseMessages,
+            communicationAPIRequests,
+        }, info) => {
+            await courseMessages.openConversationAndWaitForPost(course!.id!, source.id!, original.id!);
+            const forwardedResponse = page.waitForResponse(
+                (response) => response.url().endsWith('/messages') && response.request().method() === 'POST' && response.status() === 201,
+            );
+            await courseMessages.forwardMessageToChannel(original.id!, destination.name!, 'Please prepare these questions for the next tutorial.');
+            const forwarded: Post = await (await forwardedResponse).json();
+            await courseMessages.openConversationAndWaitForForwardedPreview(course!.id!, destination.id!, 'Design by contract');
+            const mainPost = courseMessages.getSinglePost(forwarded.id!);
+            const preview = mainPost.getByTestId('forwarded-message-body');
+            const expand = mainPost.getByTestId('forwarded-message-expand');
+            await expect(preview).toContainText('Design by contract');
+            await expect(expand).toHaveAttribute('aria-expanded', 'false');
+            const collapsedHeight = await preview.evaluate((element) => element.clientHeight);
+            expect(await preview.evaluate((element) => element.scrollHeight)).toBeGreaterThan(collapsedHeight);
+            await screenshot(page, info, '01-forwarded-post-light');
+            await expand.click();
+            await expect(expand).toHaveAttribute('aria-expanded', 'true');
+            await expect.poll(() => preview.evaluate((element) => element.clientHeight)).toBeGreaterThan(collapsedHeight);
+            await expect(expand).toHaveText('Show less');
+            await expand.click();
+            await expect(expand).toHaveAttribute('aria-expanded', 'false');
+            await expect.poll(() => preview.evaluate((element) => element.clientHeight)).toBe(collapsedHeight);
+            if ((await page.locator('html').getAttribute('data-theme')) !== 'dark') {
+                await page.getByRole('button', { name: 'Dark Mode', exact: true }).click();
+            }
+            await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+            await expect(preview).toBeVisible();
+            await screenshot(page, info, '02-forwarded-post-dark');
+
+            for (let index = 0; index < 14; index++) {
+                await communicationAPIRequests.createCourseMessageReply(
+                    course!,
+                    forwarded,
+                    `Tutorial follow-up ${index + 1}: how does the invariant constrain the implementation?\n\nExplain which preconditions the caller must establish and which postconditions the method guarantees.`,
+                );
+            }
+            await courseMessages.openThreadForMessage(forwarded.id!);
+            const card = page.getByTestId('conversation-thread-card');
+            const scrollBody = page.getByTestId('conversation-thread-scroll-body');
+            await expect(card.getByTestId('forwarded-message-body')).toContainText('Design by contract');
+            await expand.click();
+            const threadExpand = card.getByTestId('forwarded-message-expand');
+            await threadExpand.click();
+            await expect(expand).toHaveAttribute('aria-expanded', 'true');
+            await expect(threadExpand).toHaveAttribute('aria-expanded', 'true');
+            const update = await communicationAPIRequests.createCourseMessage(
+                course!,
+                destination.id!,
+                'channel',
+                'For the tutorial, compare the loop invariant with the method postcondition.',
+            );
+            // Rendering the new row waits for the real forwarded-source refetch to finish.
+            await expect(courseMessages.getSinglePost(update.id!)).toContainText(update.content!);
+            await expect(expand).toHaveAttribute('aria-expanded', 'true');
+            await expect(threadExpand).toHaveAttribute('aria-expanded', 'true');
+            await expectInside(mainPost.getByRole('button', { name: 'View conversation', exact: true }), mainPost, ['left', 'right'], {
+                name: 'Forwarded conversation link in the narrow message column',
+            });
+            await expect.poll(() => scrollBody.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+            const cardBounds = await card.boundingBox();
+            expect(cardBounds).not.toBeNull();
+            expect(cardBounds!.y + cardBounds!.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+            const documentTop = await page.evaluate(() => window.scrollY);
+            await scrollBody.evaluate((element) => (element.scrollTop = element.scrollHeight));
+            await expect.poll(() => scrollBody.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+            await expect(card.getByText('Tutorial follow-up 14:', { exact: false })).toBeVisible();
+            expect(await page.evaluate(() => window.scrollY)).toBe(documentTop);
+            await screenshot(page, info, '03-thread-internal-scrolling');
+        });
+
+        test('renders a forwarded reply in its thread and navigates to the original conversation', async ({ page, courseMessages, communicationAPIRequests }, info) => {
+            const reply = await communicationAPIRequests.createCourseMessageReply(
+                course!,
+                original,
+                'The abstraction function maps the concrete representation to the abstract value.',
+            );
+            await courseMessages.openConversationAndWaitForPost(course!.id!, source.id!, original.id!);
+            const forwardedResponse = page.waitForResponse(
+                (response) => response.url().endsWith('/messages') && response.request().method() === 'POST' && response.status() === 201,
+            );
+            await courseMessages.forwardReplyToChannel(original.id!, reply.id!, destination.name!);
+            const forwarded: Post = await (await forwardedResponse).json();
+            await courseMessages.openConversationAndWaitForForwardedPreview(course!.id!, destination.id!, 'The abstraction function');
+            await courseMessages.openThreadForMessage(forwarded.id!);
+            const card = page.getByTestId('conversation-thread-card');
+            await expect(card.getByTestId('forwarded-message-body')).toContainText('The abstraction function maps the concrete representation');
+            await screenshot(page, info, '04-forwarded-reply-in-thread');
+            await card.getByRole('button', { name: 'View conversation', exact: true }).click();
+            await expect(page).toHaveURL(new RegExp(`conversationId=${source.id}(?:&|$)`));
+            await expect(page.getByTestId('conversation-name')).toHaveText(source.name!);
+            await expect(page.getByTestId('conversation-thread-card')).toContainText(reply.content!);
+        });
+
+        test('shows a deleted-source placeholder after reloading a forwarded post', async ({ page, courseMessages }, info) => {
+            await courseMessages.openConversationAndWaitForPost(course!.id!, source.id!, original.id!);
+            await courseMessages.forwardMessageToChannel(original.id!, destination.name!);
+            await courseMessages.openConversationAndWaitForForwardedPreview(course!.id!, destination.id!, 'Design by contract');
+            const deleted = await page.request.delete(`api/communication/courses/${course!.id}/messages/${original.id}`);
+            expect(deleted.ok()).toBe(true);
+            await page.reload();
+            await expect(page.getByTestId('forwarded-message-unavailable')).toHaveText('This forwarded message is unavailable. The original may have been deleted.');
+            await expect(page.getByTestId('forwarded-message-body')).toHaveCount(0);
+            await expect(page.getByTestId('forwarded-message-expand')).toHaveCount(0);
+            await screenshot(page, info, '05-deleted-source-placeholder');
         });
     });
 });

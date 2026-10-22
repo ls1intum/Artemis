@@ -16,6 +16,7 @@ import {
     ExerciseMetadataConflictModalResult,
 } from 'app/exercise/synchronization/metadata/exercise-metadata-conflict-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { OnlineIdeExperienceLevel } from 'app/programming/shared/entities/programming-exercise-build.config';
 
 describe('ExerciseMetadataConflictModalComponent', () => {
     let fixture: ComponentFixture<ExerciseMetadataConflictModalComponent>;
@@ -245,18 +246,20 @@ describe('ExerciseMetadataConflictModalComponent', () => {
             sequentialTestRuns: true,
             timeoutSeconds: 30,
             branchRegex: 'feature/.*',
+            onlineIdeExperienceLevel: OnlineIdeExperienceLevel.EXPERT,
         });
 
-        expect(entries).toHaveLength(12);
+        expect(entries).toHaveLength(13);
         expect(entries.find((entry) => entry.labelKey.endsWith('sequentialTestRuns'))).toEqual(expect.objectContaining({ value: true }));
         expect(entries.find((entry) => entry.labelKey.endsWith('timeoutSeconds'))).toEqual(expect.objectContaining({ value: 30 }));
         expect(entries.find((entry) => entry.labelKey.endsWith('branchRegex'))).toEqual(expect.objectContaining({ value: 'feature/.*' }));
+        expect(entries.find((entry) => entry.labelKey.endsWith('onlineIdeExperienceLevel'))).toEqual(expect.objectContaining({ value: OnlineIdeExperienceLevel.EXPERT }));
     });
 
     it('returns undefined values for missing build config', () => {
         const entries = component.getBuildConfigValues(undefined);
 
-        expect(entries).toHaveLength(12);
+        expect(entries).toHaveLength(13);
         expect(entries.every((entry) => entry.value === undefined)).toBe(true);
     });
 

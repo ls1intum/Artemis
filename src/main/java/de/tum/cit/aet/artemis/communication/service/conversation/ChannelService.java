@@ -189,7 +189,7 @@ public class ChannelService {
             conversationParticipantOfRequestingUser.setIsModerator(true);
             conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
             savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
-            savedChannel = channelRepository.save(savedChannel);
+            // The participant owns the relationship and was already inserted; updating the inverse collection needs no channel merge.
             conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, savedChannel, Set.of(creator.get()));
         }
         syncChannelWithWeaviate(savedChannel);

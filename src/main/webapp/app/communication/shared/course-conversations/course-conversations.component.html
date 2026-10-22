@@ -67,6 +67,7 @@
                                 />
                                 <jhi-conversation-messages
                                     (openThread)="openThread($event)"
+                                    (forwardedMessagesLoaded)="onForwardedMessagesLoaded($event)"
                                     [course]="currentCourse"
                                     (onNavigateToPost)="onTriggerNavigateToPost($event)"
                                     [focusPostId]="focusPostId()"
@@ -95,6 +96,7 @@
                                     [readOnlyMode]="!!getAsChannel(currentPost.conversation)?.isArchived"
                                     [activePost]="currentPost"
                                     (closePostThread)="closeThread()"
+                                    (onNavigateToPost)="onTriggerNavigateToPost($event)"
                                     [course]="currentCourse"
                                 />
                             }

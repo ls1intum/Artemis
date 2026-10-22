@@ -9,6 +9,7 @@ import java.util.Set;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 
@@ -65,8 +66,24 @@ public final class BuildPlanConfigurationValidator {
         for (final BuildContainerDTO container : containers) {
             validateContainerName(container, containerNames);
             validateDockerImageOf(container);
+            validateRepositoriesOf(container);
             validateTimeoutOf(container, exerciseTimeoutSeconds);
             validatePhasesOf(container);
+        }
+    }
+
+    private static void validateRepositoriesOf(BuildContainerDTO container) {
+        if (container.repositories() == null) {
+            // the container is not scoped and receives the repositories of the exercise
+            return;
+        }
+        // bean validation skips a null list element, and a selection without a type would fail every build of the plan
+        // when the trigger scopes the repositories
+        for (final BuildContainerRepositoryDTO repository : container.repositories()) {
+            if (repository == null || repository.type() == null) {
+                throw badRequest("A repository selection of a build container must name a repository type", "invalidBuildContainerRepository",
+                        Map.of("container", container.name()));
+            }
         }
     }
 

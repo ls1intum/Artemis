@@ -190,6 +190,7 @@
             }
         },
         "courseNotification": {
+            "messagePreviewUnavailable": "No message preview available.",
             "newPostNotification": {
                 "title": "New message",
                 "content": "{{postMarkdownContent}}",

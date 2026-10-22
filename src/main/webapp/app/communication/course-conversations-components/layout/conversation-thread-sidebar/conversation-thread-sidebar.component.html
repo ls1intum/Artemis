@@ -13,7 +13,7 @@
                 <fa-icon [icon]="faGripLinesVertical" />
             </div>
         }
-        <div class="card">
+        <div class="card" data-testid="conversation-thread-card">
             <!-- header -->
             <div class="card-header cursor-default d-flex">
                 <div class="row flex-grow-1">
@@ -37,13 +37,16 @@
                 </div>
             </div>
             <!-- body -->
-            <div #scrollBody class="pt-0 scrollbar wrapper-scroll-y mx-1 thread-answer-post">
+            <div #scrollBody class="pt-0 scrollbar wrapper-scroll-y mx-1 thread-answer-post" data-testid="conversation-thread-scroll-body">
                 @if (post() !== undefined) {
                     <div class="my-2">
                         <div class="card-body px-0">
                             <jhi-post
                                 [readOnlyMode]="readOnlyMode()"
                                 [posting]="post()"
+                                [forwardedPosts]="post()?.forwardedPosts ?? []"
+                                [forwardedAnswerPosts]="post()?.forwardedAnswerPosts ?? []"
+                                (onNavigateToPost)="onNavigateToPost.emit($event)"
                                 [showAnswers]="true"
                                 [isCommunicationPage]="true"
                                 [isThreadSidebar]="true"

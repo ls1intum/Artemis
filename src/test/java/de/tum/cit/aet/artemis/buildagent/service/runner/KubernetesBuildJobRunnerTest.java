@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.service.BuildLogsMap;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.localci.exception.ImagePullException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -242,6 +243,115 @@ class KubernetesBuildJobRunnerTest {
         assertThat(wait).isEqualTo(Duration.ofSeconds(45));
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({ "builder,ErrImagePull,true", "builder,ImagePullBackOff,true", "builder,InvalidImageName,true", "helper,ErrImagePull,false",
+            "builder,CreateContainerConfigError,false", "builder,CreateContainerError,false", "helper,RunContainerError,false" })
+    void startupFailuresClassifyExerciseImagesSeparatelyFromAgentFailures(String container, String reason, boolean imageFailure) throws Exception {
+        KubernetesClient client = mock(KubernetesClient.class);
+        BuildLogsMap logs = mock(BuildLogsMap.class);
+        KubernetesBuildJobRunner runner = runner(client, mock(KubernetesBuildArchiveService.class), logs, new TempFileUtilService(temporaryDirectory));
+        String jobName = KubernetesBuildJobRunner.jobName(buildJob(), "Agent One");
+        configureSuccessfulExecution(client, jobName, resultArchive(), false);
+        Pod failed = new PodBuilder().withNewMetadata().withName("build-pod").endMetadata().withNewStatus().withPhase("Pending").addNewContainerStatus().withName(container)
+                .withNewState().withNewWaiting().withReason(reason).withMessage("test diagnostic").endWaiting().endState().endContainerStatus().endStatus().build();
+        when(client.pods().inNamespace("builds").withLabel("job-name", jobName).list()).thenReturn(new PodListBuilder().withItems(failed).build());
+
+        assertThatThrownBy(() -> runner.execute(buildJob(), preparedBuildJob())).isInstanceOf(imageFailure ? ImagePullException.class : LocalCIException.class)
+                .hasMessageContaining(reason).hasMessageContaining("test diagnostic");
+        assertThat(runner.isFetchingImage(buildJob().id())).isFalse();
+        verify(client.batch().v1().jobs().inNamespace("builds").withName(jobName).withPropagationPolicy(io.fabric8.kubernetes.api.model.DeletionPropagation.FOREGROUND)).delete();
+    }
+
+    @Test
+    void waitsForBothContainersAndIncludesFailedSchedulingDiagnostics() throws Exception {
+        KubernetesClient client = mock(KubernetesClient.class);
+        var runner = runner(client, mock(KubernetesBuildArchiveService.class), mock(BuildLogsMap.class), new TempFileUtilService(temporaryDirectory));
+        String jobName = KubernetesBuildJobRunner.jobName(buildJob(), "Agent One");
+        configureSuccessfulExecution(client, jobName, resultArchive(), false);
+        Pod missingStatus = new PodBuilder().withNewMetadata().withName("build-pod").endMetadata().build();
+        Pod missingContainers = new PodBuilder().withNewStatus().withPhase("Running").endStatus().build();
+        Pod onlyBuilder = new PodBuilder().withNewStatus().withPhase("Running").addNewContainerStatus().withName("builder").withStarted(true).endContainerStatus().endStatus()
+                .build();
+        Pod notStarted = new PodBuilder().withNewStatus().withPhase("Running").addNewContainerStatus().withName("builder").withStarted(false).endContainerStatus()
+                .addNewContainerStatus().withName("helper").withStarted(true).endContainerStatus().endStatus().build();
+        Pod helperNotStarted = new PodBuilder(runningPod()).editStatus().editContainerStatus(1).withStarted(false).endContainerStatus().endStatus().build();
+        Pod failed = new PodBuilder().withNewStatus().withPhase("Failed").withReason("Unschedulable").withMessage("no capacity").addNewCondition().withStatus("True")
+                .withReason("Ignored").endCondition().addNewCondition().withStatus("False").endCondition().addNewCondition().withStatus("False").withReason("NoNodes")
+                .withMessage("all nodes full").endCondition().addNewCondition().withStatus("False").withReason("NoQuota").endCondition().endStatus().build();
+        when(client.pods().inNamespace("builds").withLabel("job-name", jobName).list()).thenReturn(new PodListBuilder().build(),
+                new PodListBuilder().withItems(missingStatus).build(), new PodListBuilder().withItems(missingContainers).build(),
+                new PodListBuilder().withItems(onlyBuilder).build(), new PodListBuilder().withItems(notStarted).build(), new PodListBuilder().withItems(helperNotStarted).build(),
+                new PodListBuilder().withItems(failed).build());
+
+        assertThatThrownBy(() -> runner.execute(buildJob(), preparedBuildJob())).isInstanceOf(LocalCIException.class)
+                .hasMessage("Kubernetes build Pod failed before startup: Unschedulable no capacity NoNodes: all nodes full NoQuota");
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "disappeared", "failed", "oom", "upload", "archive" })
+    void executionFailuresReleaseInputArchiveAndExecutionOwnership(String failure) throws Exception {
+        KubernetesClient client = mock(KubernetesClient.class);
+        KubernetesBuildArchiveService archives = mock(KubernetesBuildArchiveService.class);
+        BuildLogsMap logs = mock(BuildLogsMap.class);
+        var runner = runner(client, archives, logs, new TempFileUtilService(temporaryDirectory));
+        Path input = Files.createFile(temporaryDirectory.resolve("input.tar"));
+        when(archives.createInputArchive(any(), any())).thenReturn(input);
+        String jobName = KubernetesBuildJobRunner.jobName(buildJob(), "Agent One");
+        configureSuccessfulExecution(client, jobName, resultArchive(), false);
+        PodResource pod = client.pods().inNamespace("builds").withName("build-pod");
+        String expected;
+        switch (failure) {
+            case "disappeared" -> {
+                when(pod.get()).thenReturn(null);
+                expected = "disappeared during execution";
+            }
+            case "failed" -> {
+                when(pod.get()).thenReturn(new PodBuilder().withNewStatus().withPhase("Failed").endStatus().build());
+                expected = "Pod failed: phase Failed";
+            }
+            case "oom" -> {
+                Pod killed = new PodBuilder(completedPod()).editStatus().editContainerStatus(0).editState().editTerminated().withReason("OOMKilled").endTerminated().endState()
+                        .endContainerStatus().endStatus().build();
+                when(pod.get()).thenReturn(killed);
+                expected = "exceeded its memory limit";
+            }
+            case "upload" -> {
+                when(pod.inContainer("helper").file("/var/tmp/artemis-localci-input.tar").upload(any(InputStream.class))).thenReturn(false);
+                expected = "could not upload";
+            }
+            default -> {
+                when(archives.createInputArchive(any(), any())).thenReturn(temporaryDirectory.resolve("missing-input.tar"));
+                expected = "Could not transfer Kubernetes build files";
+            }
+        }
+        assertThatThrownBy(() -> runner.execute(buildJob(), preparedBuildJob())).isInstanceOf(LocalCIException.class).hasMessageContaining(expected);
+        assertThat(runner.isFetchingImage(buildJob().id())).isFalse();
+        if (!failure.equals("archive")) {
+            assertThat(input).doesNotExist();
+        }
+        verify(client.batch().v1().jobs().inNamespace("builds").withName(jobName).withPropagationPolicy(io.fabric8.kubernetes.api.model.DeletionPropagation.FOREGROUND)).delete();
+    }
+
+    @Test
+    void duplicateExecutionIsRejectedAndActiveCancellationReleasesResources() throws Exception {
+        KubernetesClient client = mock(KubernetesClient.class);
+        KubernetesBuildArchiveService archives = mock(KubernetesBuildArchiveService.class);
+        var runner = runner(client, archives, mock(BuildLogsMap.class), new TempFileUtilService(temporaryDirectory));
+        Path input = Files.createFile(temporaryDirectory.resolve("input.tar"));
+        when(archives.createInputArchive(any(), any())).thenReturn(input);
+        String jobName = KubernetesBuildJobRunner.jobName(buildJob(), "Agent One");
+        configureSuccessfulExecution(client, jobName, resultArchive(), false);
+        try (var result = runner.execute(buildJob(), preparedBuildJob())) {
+            assertThat(runner.isActive(buildJob().id())).isTrue();
+            assertThat(runner.isFetchingImage(buildJob().id())).isFalse();
+            assertThatThrownBy(() -> runner.execute(buildJob(), new PreparedBuildJob(null, null, null, List.of()))).isInstanceOf(LocalCIException.class)
+                    .hasMessageContaining("already has an active Kubernetes execution");
+            runner.cancel(buildJob().id());
+            assertThat(result.resultArchive().readAllBytes()).isNotEmpty();
+        }
+        assertTemporaryFilesAreDeleted();
+    }
+
     private KubernetesBuildJobRunner runner(KubernetesClient client, KubernetesBuildArchiveService archiveService, BuildLogsMap buildLogsMap,
             TempFileUtilService tempFileUtilService) {
         KubernetesBuildJobFactory factory = mock(KubernetesBuildJobFactory.class);
@@ -371,7 +481,7 @@ class KubernetesBuildJobRunnerTest {
     }
 
     private static KubernetesBuildRunnerProperties properties() {
-        return new KubernetesBuildRunnerProperties("builds", "helper:test", "IfNotPresent", "workload", 1, 1, 60, 15, 30, "3Gi",
+        return new KubernetesBuildRunnerProperties("builds", "helper:test", "IfNotPresent", "workload", 5, 1, 60, 15, 30, "3Gi",
                 new KubernetesBuildRunnerProperties.Resources("500m", "512Mi", "2Gi"), Map.of(), List.of(), List.of());
     }
 

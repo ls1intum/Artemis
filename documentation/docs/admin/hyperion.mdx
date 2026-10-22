@@ -446,15 +446,46 @@ mix incompatible job-record readers while runs are active. This is a provider
 record compatibility requirement, not a database schema migration or a reason to
 stop ordinary exercise edits across the deployment.
 
-Layer 3 introduces the live-save coordination map and its `LiveSaveSlot` and
-`TestCaseSynchronization` records; these types are absent from the upstream
-`develop` baseline. Their complete initial wire surface is recorded in
-`distributed-data-surface.txt`, so this introduction needs no distributed namespace
-migration and makes no database schema change. Earlier development builds used a
-four-component slot. Do not mix those builds with this five-component slot or
-reuse their active reservations: drain generation, undo, and result processing
-before updating all affected cores together. Reconcile any retained reservation
-before the update; do not delete it to bypass an uncertain save.
+### Upgrade live-save coordination encoding
+
+Live-save coordination uses serialized `LiveSaveSlot` records, including the readers map. Changing its map encoding
+can leave readable stored values whose bytes no longer match a conditional update or removal. This also requires a
+coordinated upgrade when the distributed-data schema number is unchanged; do not mix old and new writers.
+
+1. Stop new generation requests and ordinary programming-exercise mutations at the deployment boundary, including
+   saves, undo, template copies, source imports and version capture. Keep coordination enabled while work drains.
+2. Wait for generation, live saves, undo, shared copies and post-save LocalCI test synchronization to finish. An empty
+   **AI generations** view is insufficient: ordinary saves and shared copies also hold live-operation reservations.
+3. Before recovering any reservation, stop or drain generation and build-result processing on every affected core,
+   following the [save and recovery procedure](#save-cancellation-and-recovery). No remaining callback may still update
+   grading. Inspect remaining reservations with the old application. For each affected exercise, an administrator can use
+   `GET /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot`. Stop its old core/worker execution and reconcile
+   repository heads, metadata and grading before using the matching
+   `DELETE /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/{token}?reason=...` recovery operation.
+   Recovery is audited but does not establish process liveness or repair incomplete writes. A legacy reservation may
+   remain visible because its stored bytes prevent the recovery endpoint's conditional removal. Record the token,
+   stopped execution and evidence that repository heads, metadata and grading have been reconciled. Treat this as a
+   reconciled reservation awaiting map cleanup in step 5; do not keep retrying recovery or reopen admission. If the
+   external mutations of any reservation cannot be reconciled safely, postpone the upgrade and keep admission closed.
+4. Stop every old core, LocalVC writer, generation worker and build agent connected to the store, prevent automatic
+   restarts, and take a consistent
+   distributed-store backup. Confirm that no active operation or reservation with unresolved external mutations remains
+   before clearing any state. Only the documented, reconciled legacy reservations from step 3 may still await map cleanup.
+5. For Redis or Valkey, remove only the live-save coordination map, using the current schema number from
+   `GET artemis:distributed-data-schema`. With schema `1`, the exact key is:
+
+    ```bash
+    redis-cli DEL 'artemis:v1:{hyperion-live-save-coordination}'
+    ```
+
+    This also removes the reconciled legacy reservations whose conditional recovery failed in step 3. Do not clear it
+    while any writer is running or any external mutation remains unresolved. Preserve the generation baselines, job maps, build queues and results;
+    they are not part of this cleanup. A fully stopped Hazelcast cluster has no retained coordination map.
+
+6. Start all replacement processes with the same application release, verify a controlled save/copy/undo workflow,
+   then reopen admission. Keep the old application stopped; rollback requires the same drain and reconciliation.
+
+See [distributed-data upgrades](/admin/production-setup/distributed-data) for store backup and schema migration.
 
 ### Inspect runs and worker capacity
 
