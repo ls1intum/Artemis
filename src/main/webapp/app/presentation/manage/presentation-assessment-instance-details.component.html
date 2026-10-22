@@ -1,0 +1,39 @@
+<div class="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
+    @if (presentationAssessment(); as presentationAssessment) {
+        <div>
+            <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.description"></span>:
+            {{ presentationAssessment.description || '-' }}
+        </div>
+        <div>
+            <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.exercise"></span>:
+            {{ presentationAssessment.exerciseTitle || '-' }}
+        </div>
+    }
+    <div>
+        <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.language"></span>:
+        {{ instance().language || '-' }}
+    </div>
+    <div>
+        <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.mode.label"></span>:
+        {{
+            instance().mode === PresentationAssessmentMode.ONLINE
+                ? ('artemisApp.presentationAssessment.mode.online' | artemisTranslate)
+                : ('artemisApp.presentationAssessment.mode.inPerson' | artemisTranslate)
+        }}
+    </div>
+    @if (instance().mode === PresentationAssessmentMode.ONLINE) {
+        <div>
+            <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
+            @if (instance().meetingLink; as meetingLink) {
+                <a [href]="meetingLink" target="_blank" rel="noopener noreferrer">{{ meetingLink }}</a>
+            } @else {
+                -
+            }
+        </div>
+    } @else {
+        <div>
+            <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.location"></span>:
+            {{ instance().location || '-' }}
+        </div>
+    }
+</div>
