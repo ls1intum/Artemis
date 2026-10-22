@@ -104,7 +104,8 @@
                 "e2e/course/CourseChannelMessages.spec.ts",
                 "e2e/course/CourseDirectMessages.spec.ts",
                 "e2e/course/CourseGroupChatMessages.spec.ts",
-                "e2e/course/CourseMessageInteractions.spec.ts"
+                "e2e/course/CourseMessageInteractions.spec.ts",
+                "e2e/course/FormattedMessageEditor.spec.ts"
             ]
         },
         "exercise": {

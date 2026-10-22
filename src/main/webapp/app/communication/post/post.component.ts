@@ -128,8 +128,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
     readonly course = signal<Course>(undefined!);
 
-    readonly originalPostDetails = computed(() => (this.forwardedAnswerPosts().length ? this.forwardedAnswerPosts()[0] : this.forwardedPosts()[0]));
-    readonly hasOriginalPostBeenDeleted = computed(() => (this.forwardedAnswerPosts().length > 0 || this.forwardedPosts().length > 0) && this.originalPostDetails() === undefined);
+    readonly originalPostDetails = computed(() => (this.forwardedAnswerPosts().length > 0 ? this.forwardedAnswerPosts()[0] : this.forwardedPosts()[0]));
+    readonly hasUnavailableForwardedSource = computed(() => (this.forwardedPosts().length > 0 || this.forwardedAnswerPosts().length > 0) && !this.originalPostDetails());
 
     constructor() {
         super();

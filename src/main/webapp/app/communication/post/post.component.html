@@ -89,10 +89,10 @@
                             (userReferenceClicked)="onUserReferenceClicked($event)"
                             (channelReferenceClicked)="onChannelReferenceClicked($event)"
                         />
-                        @if (originalPostDetails() || hasOriginalPostBeenDeleted()) {
+                        @if (originalPostDetails() || hasUnavailableForwardedSource()) {
                             <jhi-forwarded-message
                                 [originalPostDetails]="originalPostDetails()"
-                                [hasOriginalPostBeenDeleted]="hasOriginalPostBeenDeleted()"
+                                [isSourceUnavailable]="hasUnavailableForwardedSource()"
                                 (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails())"
                             />
                         }

@@ -4,8 +4,6 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { PostingEditType } from 'app/communication/communication.util';
 
-import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-
 // Note: this number should be the same as in Posting.java
 export const MAX_CONTENT_LENGTH = 5000;
 
@@ -20,7 +18,6 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
 
     readonly isLoading = signal(false);
     maxContentLength = MAX_CONTENT_LENGTH;
-    editorHeight = MarkdownEditorHeight.INLINE;
     content = '';
     formGroup!: FormGroup; // set by resetFormGroup() (implemented in subclasses)
 
