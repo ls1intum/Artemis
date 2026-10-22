@@ -174,6 +174,21 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         await expect(link.getByTestId('conversation-unread-count')).toHaveText('2');
         expect(await unread(page, channel.id!)).toBe(2);
         await screenshot(page, info, '02-manually-unread-open-conversation');
+
+        // Navigate through the router so the course service survives while the conversation view is recreated.
+        await page.locator(`a[href="/courses/${course!.id}/exercises"]`).click();
+        await expect(page).toHaveURL(new RegExp(`/courses/${course!.id}/exercises$`));
+        expect(await unread(page, channel.id!)).toBe(2);
+        await page.locator(`a[href="/courses/${course!.id}/communication"]`).click();
+        await expect(page.getByTestId('conversation-name')).toHaveText(channel.name!);
+        await expect.poll(() => unread(page, channel.id!)).toBe(0);
+        await showGroups(page);
+        await expect(link.getByTestId('conversation-unread-count')).toHaveCount(0);
+        await courseMessages.openThreadForMessage(root.id!);
+        const afterReturn = await api(staff).createCourseMessageReply(course!, root, 'After the next tutorial, compare the locking policies of your implementations.');
+        await expect(page.locator('jhi-conversation-thread-sidebar')).toContainText(afterReturn.content!);
+        await expect.poll(() => unread(page, channel.id!)).toBe(0);
+        await expect(link.getByTestId('conversation-unread-count')).toHaveCount(0);
     });
 
     test('deleting a read post preserves unread replies and moderator deletion excludes the actual author', async ({ page }, info) => {
@@ -235,6 +250,11 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         await expect(courseMessages.getSinglePost(newest.id!)).toBeInViewport();
         const list = courseMessages.getScrollableMessagesContainer();
         await expect.poll(() => list.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+        // Reader input releases initial positioning; assigning scrollTop alone is a layout change, not a user scroll.
+        const openingScrollTop = await list.evaluate((element) => element.scrollTop);
+        await list.hover();
+        await page.mouse.wheel(0, -100);
+        await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeLessThan(openingScrollTop);
         await list.evaluate((element) => (element.scrollTop = 0));
         await expect(courseMessages.getSinglePost(oldest.id!)).toBeInViewport();
         const key = `conversationId.scrollPosition.${channel.id}`;

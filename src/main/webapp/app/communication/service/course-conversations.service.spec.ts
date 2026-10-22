@@ -674,6 +674,41 @@ describe('CourseConversationsService', () => {
             });
         });
 
+        it.each(['channel', 'group', 'direct'] as const)('resumes automatic reads after reopening a manually unread %s', (kind) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            const conversation = kind === 'channel' ? channel : kind === 'group' ? groupChat : oneToOneChat;
+            courseConversationsService.setActiveConversation(conversation);
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.updateConversationUnreadState(conversation.id, dayjs(), 2);
+            const markAsRead = vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of(new HttpResponse<void>()));
+
+            // A thread query update within the current view must retain the explicit unread mark.
+            courseConversationsService.setActiveConversation(conversation.id);
+            courseConversationsService.setConversationViewOpen(true);
+            receiveMockSubject.next(eventFor(conversation));
+            expect(courseConversationsService.isConversationMarkedAsUnread(conversation.id)).toBe(true);
+            expect(cachedUnreadCount(conversation.id)).toBe(3);
+            expect(markAsRead).not.toHaveBeenCalled();
+
+            // Exercises destroys the view; Communication reopens the retained conversation and loads its messages.
+            courseConversationsService.setConversationViewOpen(false);
+            expect(courseConversationsService.isConversationMarkedAsUnread(conversation.id)).toBe(true);
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(conversation.id);
+            const readDate = dayjs();
+            vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(
+                of(new HttpResponse({ body: [{ ...conversation, unreadMessagesCount: 0, hasUnreadMessage: false, lastReadDate: readDate }] })),
+            );
+            courseConversationsService.messagesLoaded(conversation.id!, courseConversationsService.messagesRequested(conversation.id!));
+            expect(cachedUnreadCount(conversation.id)).toBe(0);
+            expect(courseConversationsService.isConversationMarkedAsUnread(conversation.id)).toBe(false);
+
+            receiveMockSubject.next(eventFor(conversation));
+            expect(markAsRead).toHaveBeenCalledExactlyOnceWith(course.id, conversation.id);
+            expect(cachedUnreadCount(conversation.id)).toBe(0);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
+        });
+
         it.each([
             ['another course tab', false, false, 1],
             ['an explicitly unread conversation', true, true, 3],

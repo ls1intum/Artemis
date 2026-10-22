@@ -511,6 +511,10 @@ export class CourseConversationsService implements OnDestroy {
      * @param isOpen whether the conversation view is shown
      */
     public setConversationViewOpen(isOpen: boolean) {
+        // Reopening reads the retained selection again; query-only updates within the open view keep an explicit unread mark.
+        if (isOpen && !this.isConversationViewOpen) {
+            this.isMarkedAsUnread = false;
+        }
         this.isConversationViewOpen = isOpen;
     }
 
