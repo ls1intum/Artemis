@@ -82,10 +82,8 @@ public class UserAiPreferenceService {
     }
 
     /**
-     * Whether the account has a preference row at all, which is not the same as having decided: an account that turned
-     * the removed Memiris integration off still has a row without a decision until a later migration removes those rows.
-     * Callers that need to tell "never recorded anything" from "no decision" have to ask this rather than compare the
-     * decision against null.
+     * Whether the account has a preference row at all. An explicitly saved row can still have no decision; callers
+     * that need to distinguish it from an absent row should ask this rather than compare the decision against null.
      *
      * @param userId the account
      * @return true if a row exists

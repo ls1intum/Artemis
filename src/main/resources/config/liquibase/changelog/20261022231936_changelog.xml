@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Contract step after #14315, which stopped mapping these columns in Artemis 10.4.
+         Ship in a later release so reverting to the previous WAR still finds every column it reads and writes.
+         Historical changesets and the baseline stay unchanged; this also runs on a fresh installation. -->
+    <changeSet id="20261022231936-01-remove-memiris-storage" author="krusche">
+        <comment>Remove retired Memiris storage. Preserve recorded AI consent decisions, their timestamps, users and chat messages.</comment>
+        <delete tableName="user_ai_preference">
+            <where>selection_decision IS NULL</where>
+        </delete>
+        <dropColumn tableName="user_ai_preference" columnName="memiris_enabled"/>
+        <dropColumn tableName="iris_message" columnName="accessed_memories"/>
+        <dropColumn tableName="iris_message" columnName="created_memories"/>
+        <rollback>
+            <stop>Memiris cleanup permanently removed legacy data. Restore the database backup taken before this migration to recover it. Artemis 10.4 with #14315 can run against the cleaned schema.</stop>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

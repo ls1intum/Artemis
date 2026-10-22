@@ -19,8 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
  * <p>
  * A row exists only for an account that has made a decision. The absence of a row means "no decision recorded" - resolve
  * it through {@code UserAiPreferenceService} rather than reading this entity directly, so that default lives in one
- * place. The table still has a {@code memiris_enabled} column from the removed Memiris integration; it is no longer
- * mapped, and rows written only for that choice remain until a later migration removes the column and those rows.
+ * place.
  */
 @Entity
 @Table(name = "user_ai_preference")

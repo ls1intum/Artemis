@@ -26,8 +26,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 /**
  * The AI preferences live in {@code user_ai_preference}, where a row exists only for an account that has made a decision.
  * That makes "no row" a meaningful state which every reader has to interpret the same way, so these tests pin it: no row
- * means no recorded decision. Accounts that turned the removed Memiris integration off can still have a row without a
- * decision until a later migration removes those rows, so that state is pinned too.
+ * means no recorded decision. An explicitly saved row without a decision has the same default, so that state is pinned
+ * too.
  * <p>
  * Getting that default wrong flips behaviour for the majority of accounts - 26,648 of 34,354 have no row - which is why
  * it is tested per accessor rather than only through the happy path.
@@ -154,8 +154,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
         }
 
         /**
-         * A row without a decision is left over from an account that turned the removed Memiris integration off. Clearing
-         * removes it like any other row.
+         * Clearing an explicitly saved row without a decision removes it like any other row.
          */
         @Test
         void removesARowWithoutADecision() {
@@ -191,7 +190,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
 
         @Test
         void aRowWithoutADecisionIsStillDistinguishableFromNoRow() {
-            // A row left over from an account that turned the removed Memiris integration off, so "no decision" and "no row" differ here.
+            // Saving an empty row explicitly keeps "no decision" distinguishable from "no row".
             userAiPreferenceRepository.save(new UserAiPreference(user.getId()));
 
             assertThat(userAiPreferenceService.findDecision(user.getId())).isNull();

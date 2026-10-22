@@ -27,6 +27,26 @@ Which of these actually execute depends on the database Artemis finds:
 
 Both routes end with the same schema, so it makes no difference to the running instance whether it was installed fresh or upgraded over several years. A check on every Artemis pull request applies both routes to an empty database and compares the results on MySQL and PostgreSQL.
 
+## Memiris Storage Cleanup After 10.4
+
+Artemis 10.4 removed the Memiris integration. The later contract migration
+`20261022231936-01-remove-memiris-storage` drops `user_ai_preference.memiris_enabled`,
+`iris_message.accessed_memories` and `iris_message.created_memories`. It also removes AI preference rows without a
+selection decision. Recorded decisions, including `NO_AI`, their timestamps, user accounts and chat messages remain.
+
+Deploy this cleanup only in a release after 10.4. Reverting the WAR to 10.4, which no longer maps these columns, remains
+compatible with the cleaned schema. Older releases that still read or write them require the database backup taken
+immediately before the migration. The migration permanently deletes the legacy memory data and deliberately refuses
+a Liquibase rollback rather than recreating empty columns and presenting them as recovered data.
+
+The distributed-data schema version is unchanged. The retired `Feature.Memiris` enum constant remains in its original
+position because removing it would change the persisted Redis keys of every feature after it, even if Memiris was
+never enabled. Its eventual removal belongs with an explicit distributed-data migration; see
+[Changing a stored type](/developer/guidelines/distributed-data#changing-a-stored-type).
+
+This migration affects only the Artemis database. Deployments that used Memiris must separately remove its unused
+Weaviate collections (`Memory`, `Learning` and `MemoryConnection`) after deploying Pyris without Memiris.
+
 ## Why Intermediate Versions Are Required
 
 Consolidation adds a baseline **alongside** the changelogs it summarises; it never rewrites them. An upgrade therefore needs no intermediate version on account of consolidation alone.
