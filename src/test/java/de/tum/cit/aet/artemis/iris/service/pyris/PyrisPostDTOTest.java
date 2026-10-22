@@ -52,7 +52,7 @@ class PyrisPostDTOTest {
         Post post = postWithAnswers(answerBy(11L, 1L, "opted out"), answerBy(12L, 2L, "opted in"));
         Map<Long, AiSelectionDecision> decisions = Map.of(1L, AiSelectionDecision.NO_AI, 2L, AiSelectionDecision.CLOUD_AI);
 
-        var dto = new PyrisPostDTO(post, decisions);
+        var dto = new PyrisPostDTO(post, Map.of(), decisions);
 
         assertThat(dto.answers()).filteredOn(answer -> answer.id() == 11L).singleElement().satisfies(answer -> assertThat(answer.redacted()).isTrue())
                 .satisfies(answer -> assertThat(answer.content()).isNull());
@@ -68,7 +68,7 @@ class PyrisPostDTOTest {
     void doesNotRedactAnAuthorMissingFromTheMap() {
         Post post = postWithAnswers(answerBy(11L, 1L, "no decision recorded"));
 
-        var dto = new PyrisPostDTO(post, Map.of());
+        var dto = new PyrisPostDTO(post, Map.of(), Map.of());
 
         assertThat(dto.answers()).singleElement().satisfies(answer -> {
             assertThat(answer.redacted()).isFalse();
@@ -80,7 +80,7 @@ class PyrisPostDTOTest {
     void doesNotRedactAnAnswerWithoutAnAuthor() {
         Post post = postWithAnswers(answerBy(11L, null, "authorless"));
 
-        var dto = new PyrisPostDTO(post, Map.of(1L, AiSelectionDecision.NO_AI));
+        var dto = new PyrisPostDTO(post, Map.of(), Map.of(1L, AiSelectionDecision.NO_AI));
 
         assertThat(dto.answers()).singleElement().satisfies(answer -> {
             assertThat(answer.redacted()).isFalse();
@@ -92,7 +92,7 @@ class PyrisPostDTOTest {
     void carriesThePostContentAndAuthorThrough() {
         Post post = postWithAnswers(answerBy(11L, 1L, "answer"));
 
-        var dto = new PyrisPostDTO(post, Map.of());
+        var dto = new PyrisPostDTO(post, Map.of(), Map.of());
 
         assertThat(dto.id()).isEqualTo(1L);
         assertThat(dto.content()).isEqualTo("post content");
@@ -101,7 +101,7 @@ class PyrisPostDTOTest {
 
     @Test
     void handlesAPostWithoutAnswers() {
-        var dto = new PyrisPostDTO(postWithAnswers(), Map.of());
+        var dto = new PyrisPostDTO(postWithAnswers(), Map.of(), Map.of());
 
         assertThat(dto.answers()).isEmpty();
     }
