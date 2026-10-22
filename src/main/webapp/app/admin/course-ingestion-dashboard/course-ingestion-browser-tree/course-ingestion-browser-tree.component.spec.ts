@@ -3,8 +3,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionBrowserTreeComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-tree/course-ingestion-browser-tree.component';
-import { IndexedContentPresence, IndexedEntity, MissingEntity } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+
 import { IngestionTypeCount } from 'app/openapi/model/ingestion-type-count';
+import { IndexedEntity } from 'app/openapi/model/indexed-entity';
+import { IndexedContentPresence } from 'app/openapi/model/indexed-content-presence';
+import { MissingEntity } from 'app/openapi/model/missing-entity';
 
 describe('CourseIngestionBrowserTreeComponent', () => {
     let component: CourseIngestionBrowserTreeComponent;
@@ -302,5 +305,24 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         click('tree-toggle-lecture:20');
         click('tree-toggle-unit:11');
         expect(query('content-orphaned:coll:11:unit_summary')).toBeFalsy();
+    });
+    it('ignores nullable parents and accepts omitted content sets without inventing numeric nodes', () => {
+        const sparseEntities: IndexedEntity[] = [
+            { type: 'lecture', entityId: 20, title: null, expected: false },
+            { type: 'lecture_unit', entityId: 10, lectureId: null, expected: false },
+        ];
+        const sparsePresence: IndexedContentPresence[] = [{ key: 'slides' }, { key: 'transcript', unitIds: [], orphanedUnitIds: [] }];
+        const missing: MissingEntity[] = [{ type: 'lecture_unit', entityId: 11, lectureId: null, title: null }];
+        fixture.componentRef.setInput('entities', sparseEntities);
+        fixture.componentRef.setInput('contentPresence', sparsePresence);
+        fixture.componentRef.setInput('missingEntities', missing);
+        fixture.componentRef.setInput('contentGaps', []);
+        fixture.detectChanges();
+        expect(query('tree-node-lecture:20')).toBeTruthy();
+        expect(query('tree-node-lecture:null')).toBeFalsy();
+        expect(query('tree-node-lecture:0')).toBeFalsy();
+        expect(component['orphanedContentUnits']()).toEqual([]);
+        expect(component['lectures']()[0].units).toEqual([]);
+        expect(component['lectures']()[0].complete).toBe(false);
     });
 });

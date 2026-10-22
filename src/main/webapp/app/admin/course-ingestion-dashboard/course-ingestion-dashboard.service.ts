@@ -1,13 +1,17 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
 import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { Pageable } from 'app/openapi/model/pageable';
+import { IngestionBrowserApi } from 'app/openapi/api/ingestion-browser-api';
 import { IngestionCoverageApi } from 'app/openapi/api/ingestion-coverage-api';
 import { IndexOverview } from 'app/openapi/model/index-overview';
-import { CourseBrowserData, IndexedContentObject, IndexedEntityRecord } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+
 import { IngestionCoverage, IngestionCoverageStatusEnum } from 'app/openapi/model/ingestion-coverage';
+import { CourseBrowserData } from 'app/openapi/model/course-browser-data';
+import { IndexedEntityRecord } from 'app/openapi/model/indexed-entity-record';
+import { IndexedContentObject } from 'app/openapi/model/indexed-content-object';
 
 /** Zero-based page request against a Spring `Pageable` endpoint. `sort` follows Spring's `property,direction` form. */
 export interface CoveragePageRequest {
@@ -39,6 +43,7 @@ export interface StoredCoverageRequest extends LiveCoverageRequest {
 export class CourseIngestionDashboardService {
     private http = inject(HttpClient);
     private readonly ingestionCoverageApi = inject(IngestionCoverageApi);
+    private readonly ingestionBrowserApi = inject(IngestionBrowserApi);
 
     private readonly baseUrl = 'api/global-search/admin';
 
@@ -72,7 +77,7 @@ export class CourseIngestionDashboardService {
      * separately made each request reload them.
      */
     getCourseBrowserData(courseId: number): Observable<CourseBrowserData> {
-        return this.http.get<CourseBrowserData>(`${this.baseUrl}/courses/${courseId}/browser`);
+        return this.ingestionBrowserApi.getCourseBrowserData(courseId);
     }
 
     /**
@@ -80,8 +85,7 @@ export class CourseIngestionDashboardService {
      * or unit is selected, because those maps carry the entity's body text and are not loaded with the course.
      */
     getIndexedEntityRecords(courseId: number, type: string): Observable<IndexedEntityRecord[]> {
-        const params = new HttpParams().set('type', type);
-        return this.http.get<IndexedEntityRecord[]>(`${this.baseUrl}/courses/${courseId}/entities`, { params });
+        return this.ingestionBrowserApi.getIndexedEntityRecords(courseId, type);
     }
 
     /**
@@ -89,8 +93,7 @@ export class CourseIngestionDashboardService {
      * selected, because the property maps are heavy enough that loading them with the rest would not pay for itself.
      */
     getUnitContent(courseId: number, unitId: number, key: string): Observable<IndexedContentObject[]> {
-        const params = new HttpParams().set('key', key);
-        return this.http.get<IndexedContentObject[]>(`${this.baseUrl}/courses/${courseId}/units/${unitId}/content`, { params });
+        return this.ingestionBrowserApi.getUnitContent(courseId, unitId, key);
     }
 
     /** POST to force a background recompute of the whole projection (no-op if one is already running). */
