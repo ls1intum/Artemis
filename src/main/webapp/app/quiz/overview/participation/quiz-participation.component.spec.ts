@@ -484,6 +484,23 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(component.waitingForQuizStart()).toBe(true);
     });
 
+    it('should show the planned start time of the batch, which the countdown is based on, while waiting for the quiz start', () => {
+        fixture.detectChanges();
+
+        const batchStart = dayjs(now).add(2, 'days').add(1, 'hour');
+        component.applyQuizFull({
+            ...quizExerciseUnreleased,
+            quizMode: QuizMode.SYNCHRONIZED,
+            quizEnded: false,
+            quizBatches: [{ started: false, startTime: batchStart }],
+        });
+        fixture.detectChanges();
+
+        const plannedStart = fixture.nativeElement.querySelector('[data-testid="quiz-planned-start-time"]') as HTMLElement;
+        expect(plannedStart.textContent).toContain(batchStart.format('LT'));
+        expect(plannedStart.textContent).not.toContain(quizExerciseUnreleased.releaseDate!.format('LT'));
+    });
+
     it('should update participation from server', () => {
         fixture.detectChanges();
 
