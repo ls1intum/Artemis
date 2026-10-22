@@ -2,7 +2,11 @@ package de.tum.cit.aet.artemis.globalsearch.dto;
 
 import java.time.Instant;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * One row stored in the {@code SearchableEntities} collection for a course, reduced to what the browser's tree needs to
@@ -20,5 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param expected   whether the database still expects this metadata identity; {@code false} labels a retained row as orphaned
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IndexedEntityDTO(String type, long entityId, String title, Long lectureId, Instant ingestedAt, boolean expected) {
+public record IndexedEntityDTO(String type, long entityId, @Nullable @Schema(nullable = true) String title, @Nullable @Schema(nullable = true) Long lectureId,
+        @Nullable @Schema(nullable = true) Instant ingestedAt, boolean expected) {
 }

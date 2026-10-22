@@ -10,9 +10,9 @@
 
 
 export interface IndexedEntityRecord {
-    type?: string;
+    type: string;
     entityId: number;
-    title?: string;
-    ingestedAt?: string;
+    title?: string | null;
+    ingestedAt?: string | null;
     properties?: { [key: string]: any | null; };
 }

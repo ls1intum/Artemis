@@ -2195,6 +2195,7 @@ components:
           type: array
           items: {type: integer, format: int64}
           uniqueItems: true
+      required: [key]
     Tokens:
       type: object
       description: Response containing consistency check tokens
@@ -2614,12 +2615,15 @@ components:
       properties:
         type: {type: string}
         entityId: {type: integer, format: int64}
-        title: {type: string}
-        ingestedAt: {type: string, format: date-time}
+        title:
+          type: [string, 'null']
+        ingestedAt:
+          type: [string, 'null']
+          format: date-time
         properties:
           type: object
           additionalProperties: {}
-      required: [entityId]
+      required: [entityId, type]
     ExerciseGenerationMetadataSuggestionRequest:
       type: object
       description: Request for the derived metadata of an exercise an instructor is
@@ -2935,9 +2939,12 @@ components:
       type: object
       properties:
         lectureUnitId: {type: integer, format: int64}
-        title: {type: string}
-        kind: {type: string}
-      required: [lectureUnitId]
+        title:
+          type: [string, 'null']
+        kind:
+          type: string
+          enum: [slides, transcript]
+      required: [kind, lectureUnitId]
     QuizQuestionGenerationResponse:
       type: object
       description: Response containing generated quiz questions
@@ -3209,7 +3216,9 @@ components:
     IndexedContentObject:
       type: object
       properties:
-        ingestedAt: {type: string, format: date-time}
+        ingestedAt:
+          type: [string, 'null']
+          format: date-time
         properties:
           type: object
           additionalProperties: {}
@@ -3618,9 +3627,12 @@ components:
       properties:
         type: {type: string}
         entityId: {type: integer, format: int64}
-        title: {type: string}
-        lectureId: {type: integer, format: int64}
-      required: [entityId]
+        title:
+          type: [string, 'null']
+        lectureId:
+          type: [integer, 'null']
+          format: int64
+      required: [entityId, type]
     CreateExerciseVariantGroup:
       type: object
       properties:
@@ -3685,9 +3697,14 @@ components:
       properties:
         type: {type: string}
         entityId: {type: integer, format: int64}
-        title: {type: string}
-        lectureId: {type: integer, format: int64}
-        ingestedAt: {type: string, format: date-time}
+        title:
+          type: [string, 'null']
+        lectureId:
+          type: [integer, 'null']
+          format: int64
+        ingestedAt:
+          type: [string, 'null']
+          format: date-time
         expected: {type: boolean}
       required: [entityId, expected]
     ShortAnswerSubmittedText:

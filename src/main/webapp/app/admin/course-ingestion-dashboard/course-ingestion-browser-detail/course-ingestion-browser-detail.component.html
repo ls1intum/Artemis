@@ -110,7 +110,7 @@
                         @if (records().length === 1) {
                             <!-- One object: a collapsed row would hide the only thing there is to show. -->
                             <div class="border border-solid rounded p-2" data-testid="detail-single-record">
-                                <jhi-course-ingestion-stored-fields [properties]="records()[0].properties" />
+                                <jhi-course-ingestion-stored-fields [properties]="records()[0].properties ?? {}" />
                             </div>
                         } @else {
                             @for (record of pagedRecords(); track record.entityId) {
@@ -129,7 +129,7 @@
                                     </button>
                                     @if (expanded) {
                                         <div class="px-2 pb-2">
-                                            <jhi-course-ingestion-stored-fields [properties]="record.properties" />
+                                            <jhi-course-ingestion-stored-fields [properties]="record.properties ?? {}" />
                                         </div>
                                     }
                                 </div>
@@ -158,7 +158,7 @@
                             <span class="font-mono">SearchableEntities</span>
                         </div>
                         @if (selectedRecord(); as record) {
-                            <jhi-course-ingestion-stored-fields [properties]="record.properties" />
+                            <jhi-course-ingestion-stored-fields [properties]="record.properties ?? {}" />
                         } @else {
                             <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIndexedRecord"></p>
                         }
@@ -181,7 +181,7 @@
                             <span class="font-mono">SearchableEntities</span>
                         </div>
                         @if (selectedRecord(); as record) {
-                            <jhi-course-ingestion-stored-fields [properties]="record.properties" />
+                            <jhi-course-ingestion-stored-fields [properties]="record.properties ?? {}" />
                         } @else {
                             <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIndexedRecord"></p>
                         }
@@ -192,7 +192,7 @@
                     <div data-testid="detail-collection">
                         @if (labelledContent().length === 1) {
                             <div class="border border-solid rounded p-2" data-testid="detail-single-content">
-                                <jhi-course-ingestion-stored-fields [properties]="labelledContent()[0].object.properties" />
+                                <jhi-course-ingestion-stored-fields [properties]="labelledContent()[0].object.properties ?? {}" />
                             </div>
                         } @else {
                             @for (entry of pagedContent(); track entry.key) {
@@ -211,7 +211,7 @@
                                     </button>
                                     @if (expanded) {
                                         <div class="px-2 pb-2">
-                                            <jhi-course-ingestion-stored-fields [properties]="entry.object.properties" />
+                                            <jhi-course-ingestion-stored-fields [properties]="entry.object.properties ?? {}" />
                                         </div>
                                     }
                                 </div>

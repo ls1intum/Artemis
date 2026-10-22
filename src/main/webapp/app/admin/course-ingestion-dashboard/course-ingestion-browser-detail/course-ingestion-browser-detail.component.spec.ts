@@ -8,8 +8,11 @@ import { provideRouter } from '@angular/router';
 
 import { CourseIngestionBrowserDetailComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-detail/course-ingestion-browser-detail.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { CourseBrowserData, IndexedEntityRecord } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+
 import { IngestionTypeCount } from 'app/openapi/model/ingestion-type-count';
+import { CourseBrowserData } from 'app/openapi/model/course-browser-data';
+import { IndexedEntityRecord } from 'app/openapi/model/indexed-entity-record';
+import { IndexedContentObject } from 'app/openapi/model/indexed-content-object';
 
 describe('CourseIngestionBrowserDetailComponent', () => {
     let component: CourseIngestionBrowserDetailComponent;
@@ -18,8 +21,8 @@ describe('CourseIngestionBrowserDetailComponent', () => {
 
     const data: CourseBrowserData = {
         entities: [
-            { type: 'lecture', entityId: 20, title: 'Week 1', ingestedAt: '2026-08-26T09:00:00Z' },
-            { type: 'lecture_unit', entityId: 11, title: 'Intro slides', lectureId: 20, ingestedAt: '2026-08-26T09:00:00Z' },
+            { type: 'lecture', entityId: 20, title: 'Week 1', expected: true, ingestedAt: '2026-08-26T09:00:00Z' },
+            { type: 'lecture_unit', entityId: 11, title: 'Intro slides', lectureId: 20, expected: true, ingestedAt: '2026-08-26T09:00:00Z' },
         ],
         contentPresence: [{ key: 'slides', unitIds: [11] }],
         missingEntities: [{ type: 'exercise', entityId: 5, title: 'Sorting' }],
@@ -166,7 +169,7 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         // Lecture 99 has no row in `entities` (it is not indexed), only a `missingEntities` row carrying the title the
         // server already resolved from the database. The heading must use it instead of falling back to the generic
         // "untitled" key, which would hide which lecture the pane is even showing.
-        fixture.componentRef.setInput('data', { ...data, missingEntities: [...data.missingEntities, { type: 'lecture', entityId: 99, title: 'Week 2 (draft)' }] });
+        fixture.componentRef.setInput('data', { ...data, missingEntities: [...(data.missingEntities ?? []), { type: 'lecture', entityId: 99, title: 'Week 2 (draft)' }] });
         component.selection.set({ kind: 'lecture', lectureId: 99 });
         await settle();
 
@@ -294,8 +297,8 @@ describe('CourseIngestionBrowserDetailComponent', () => {
     it('should give an untitled lecture/unit a translated fallback breadcrumb rather than a blank button', async () => {
         const untitledData: CourseBrowserData = {
             entities: [
-                { type: 'lecture', entityId: 30 },
-                { type: 'lecture_unit', entityId: 12, lectureId: 30 },
+                { type: 'lecture', entityId: 30, expected: true },
+                { type: 'lecture_unit', entityId: 12, lectureId: 30, expected: true },
             ],
             contentPresence: [{ key: 'slides', unitIds: [12] }],
             missingEntities: [],
@@ -427,8 +430,8 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         // open link and the breadcrumb somewhere less useful than the unit the pane is actually showing.
         fixture.componentRef.setInput('data', {
             ...data,
-            missingEntities: [...data.missingEntities, { type: 'lecture_unit', entityId: 40, title: 'Late slides', lectureId: 20 }],
-            contentPresence: [...data.contentPresence, { key: 'slides', unitIds: [40] }],
+            missingEntities: [...(data.missingEntities ?? []), { type: 'lecture_unit', entityId: 40, title: 'Late slides', lectureId: 20 }],
+            contentPresence: [...(data.contentPresence ?? []), { key: 'slides', unitIds: [40] }],
         });
 
         component.selection.set({ kind: 'unit', unitId: 40 });
@@ -449,5 +452,75 @@ describe('CourseIngestionBrowserDetailComponent', () => {
 
         expect(component.openTarget()?.link).toEqual(['/course-management', 7]);
         expect(component.openTarget()?.labelKey).toContain('openCourse');
+    });
+    it('uses missing-entity headings and handles sparse lists and nullable parents without invented indexed status', async () => {
+        const sparse: CourseBrowserData = {
+            entities: [{ type: 'lecture_unit', entityId: 11, expected: false, lectureId: null, title: null }],
+            missingEntities: [{ type: 'lecture', entityId: 99, title: 'Missing lecture', lectureId: null }],
+            contentPresence: [{ key: 'slides' }],
+        };
+        fixture.componentRef.setInput('data', sparse);
+        component.selection.set({ kind: 'lecture', lectureId: 99 });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.heading().text).toBe('Missing lecture');
+        expect(component['entityOf']('lecture', 99)).not.toHaveProperty('expected');
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.heading().text).toBeUndefined();
+        expect(component.breadcrumbs()).toEqual([]);
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7]);
+        expect(component.unitContentKeys()).toEqual([]);
+        expect(component.missingContentOfUnit()).toEqual([]);
+        component.selection.set({ kind: 'type', type: 'exercise' });
+        fixture.detectChanges();
+        expect(component.missingOfType()).toEqual([]);
+    });
+
+    it('keeps zero positions, sparse property bags, duplicate labels and escaped structured fields', async () => {
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(
+            of([
+                { properties: { page_number: 0, flag: false, nested: { text: '<script>bad</script>' } } },
+                { properties: { page_number: 0 } },
+                { properties: { segment_start_time: 0 } },
+                {},
+            ]),
+        );
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(component.labelledContent().map((entry) => entry.label)).toEqual(['Page 0 (1/2)', 'Page 0 (2/2)', 'Segment @ 0s', '#4']);
+        component['toggleRow']('content:0');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.textContent).toContain('false');
+        expect(fixture.nativeElement.textContent).toContain('<script>bad</script>');
+        expect(fixture.nativeElement.querySelector('script')).toBeNull();
+        expect(component.labelledContent()[3].object.properties).toBeUndefined();
+    });
+
+    it('cancels a superseded records error and the pending content subscription on destruction', async () => {
+        const old = new Subject<IndexedEntityRecord[]>();
+        const pending = new Subject<IndexedContentObject[]>();
+        vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(old);
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(pending);
+        component.selection.set({ kind: 'type', type: 'exercise' });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(old.observed).toBe(true);
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(old.observed).toBe(false);
+        old.error(new Error('stale'));
+        expect(component.loading()).toBe(true);
+        expect(component.error()).toBe(false);
+        pending.next([{}]);
+        fixture.detectChanges();
+        expect(component.contentObjects()).toEqual([{}]);
+        expect(component.loading()).toBe(false);
+        fixture.destroy();
+        expect(pending.observed).toBe(false);
     });
 });

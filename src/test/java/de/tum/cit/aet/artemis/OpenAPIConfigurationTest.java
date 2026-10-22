@@ -16,7 +16,10 @@ import org.springframework.util.ClassUtils;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.CourseBrowserDataDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexOverviewDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityRecordDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
 import de.tum.cit.aet.artemis.globalsearch.web.IngestionCoverageResource;
 import io.swagger.v3.core.converter.ModelConverters;
@@ -116,6 +119,60 @@ class OpenAPIConfigurationTest {
                     assertThat(header.schema().format()).isEqualTo("int64");
                 });
             }
+        }
+    }
+
+    @Test
+    void keepsTheResolvedSparseBrowserGraphAndControlledIdentityFields() {
+        var schemas = new HashMap<String, Schema>();
+        for (Class<?> dto : List.of(CourseBrowserDataDTO.class, IndexedEntityRecordDTO.class, IndexedContentObjectDTO.class)) {
+            schemas.putAll(ModelConverters.getInstance().readAll(dto));
+        }
+        var openApi = new OpenAPI().components(new Components().schemas(schemas)).paths(new Paths());
+        new OpenAPIConfiguration().schemaCustomizer().customise(openApi);
+        var models = openApi.getComponents().getSchemas();
+        assertThat(models).containsKeys("CourseBrowserData", "IndexedEntity", "IndexedContentPresence", "MissingEntity", "MissingContent", "IngestionTypeCount",
+                "IndexedEntityRecord", "IndexedContentObject");
+        assertThat(models.get("CourseBrowserData").getRequired()).isNullOrEmpty();
+        Schema<?> browserSchema = models.get("CourseBrowserData");
+        assertThat(browserSchema.getProperties().get("entities").getItems().get$ref()).isEqualTo("#/components/schemas/IndexedEntity");
+        assertThat(models.get("IndexedEntity").getRequired()).containsExactlyInAnyOrder("entityId", "expected");
+        assertThat(models.get("IndexedContentPresence").getRequired()).containsExactly("key");
+        assertThat(models.get("MissingEntity").getRequired()).containsExactlyInAnyOrder("type", "entityId");
+        assertThat(models.get("IndexedEntityRecord").getRequired()).containsExactlyInAnyOrder("type", "entityId");
+        Schema<?> recordSchema = models.get("IndexedEntityRecord");
+        assertThat(recordSchema.getProperties().get("properties").getAdditionalProperties()).isNotNull();
+        assertThat(models.get("IndexedContentObject").getRequired()).isNullOrEmpty();
+        assertThat(models.get("MissingContent").getRequired()).containsExactlyInAnyOrder("lectureUnitId", "kind");
+        Schema<?> missingContentSchema = models.get("MissingContent");
+        Schema<?> kindSchema = missingContentSchema.getProperties().get("kind");
+        assertThat(kindSchema.getEnum()).extracting(Object::toString).containsExactly("slides", "transcript");
+    }
+
+    @Test
+    void exportedBrowserOperationsKeepBodyResponsesRequiredQueriesAndNullableMetadata() {
+        var specification = YAMLMapper.builder().build().readTree(Path.of("config/openapi/openapi.yaml").toFile());
+        String base = "/api/global-search/admin/courses/{courseId}";
+        for (String path : List.of(base + "/browser", base + "/entities", base + "/units/{unitId}/content")) {
+            var operation = specification.get("paths").get(path).get("get");
+            var response = operation.get("responses").get("200");
+            assertThat(response.has("headers")).isFalse();
+            var body = response.get("content").get("application/json").get("schema");
+            if (path.endsWith("/browser")) {
+                assertThat(body.get("$ref").stringValue()).isEqualTo("#/components/schemas/CourseBrowserData");
+            }
+            else {
+                assertThat(body.get("type").stringValue()).isEqualTo("array");
+                String query = path.endsWith("/entities") ? "type" : "key";
+                assertThat(operation.get("parameters")).anySatisfy(parameter -> {
+                    assertThat(parameter.get("name").stringValue()).isEqualTo(query);
+                    assertThat(parameter.get("required").booleanValue()).isTrue();
+                });
+            }
+        }
+        var models = specification.get("components").get("schemas");
+        for (String model : List.of("IndexedEntity", "IndexedEntityRecord", "MissingEntity", "MissingContent")) {
+            assertThat(models.get(model).get("properties").get("title").get("type")).anySatisfy(type -> assertThat(type.stringValue()).isEqualTo("null"));
         }
     }
 

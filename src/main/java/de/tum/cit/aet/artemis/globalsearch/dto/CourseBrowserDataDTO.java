@@ -2,8 +2,11 @@ package de.tum.cit.aet.artemis.globalsearch.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
- * Everything the content browser needs to open a course, in one response.
+ * Everything the content browser needs to open a course, in one response. Empty lists are omitted from JSON; clients
+ * treat an omitted list as empty after this payload has loaded.
  * <p>
  * These are served together rather than from an endpoint each because they are all derived from the same two
  * id-sets: what the database expects indexed, and what the index holds. Fetched separately, each request reloaded those
@@ -16,6 +19,7 @@ import java.util.List;
  * @param typeCounts      the per-type counts for this course, diffed from the same sets as the two gap lists, so the
  *                            browser never pairs its live gaps with the coverage matrix's separately computed row
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseBrowserDataDTO(List<IndexedEntityDTO> entities, List<IndexedContentPresenceDTO> contentPresence, List<MissingEntityDTO> missingEntities,
         List<MissingContentDTO> contentGaps, List<IngestionTypeCountDTO> typeCounts) {
 }

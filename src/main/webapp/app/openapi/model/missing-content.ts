@@ -11,6 +11,16 @@
 
 export interface MissingContent {
     lectureUnitId: number;
-    title?: string;
-    kind?: string;
+    title?: string | null;
+    kind: MissingContentKindEnum;
 }
+
+export type MissingContentKindEnum = 'slides' | 'transcript';
+
+export const MissingContentKindEnum = {
+    Slides: 'slides' as const,
+    Transcript: 'transcript' as const,
+} as const;
+
+export const MissingContentKindEnumValues = ['slides', 'transcript'] as const;
+
