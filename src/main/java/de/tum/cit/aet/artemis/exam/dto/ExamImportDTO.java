@@ -31,7 +31,7 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
         @Nullable String confirmationEndText, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
         @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber,
         @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable ZonedDateTime examSummaryPublicationDate, @Nullable String channelName,
-        @NotNull Long courseId, @Nullable List<@NotNull @Valid ExerciseGroupImportDTO> exerciseGroups) {
+        @NotNull Long courseId, @Nullable List<@NotNull @Valid ExerciseGroupImportDTO> exerciseGroups) implements ExamSettingsDTO {
 
     /**
      * Creates an ExamImportDTO from an existing Exam entity.
@@ -62,33 +62,8 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
      */
     public Exam toEntity(Course course) {
         Exam exam = new Exam();
-        exam.setTitle(title);
         exam.setTestExam(testExam);
-        exam.setExamWithAttendanceCheck(examWithAttendanceCheck);
-        exam.setVisibleDate(visibleDate);
-        exam.setStartDate(startDate);
-        exam.setEndDate(endDate);
-        exam.setPublishResultsDate(publishResultsDate);
-        exam.setExamStudentReviewStart(examStudentReviewStart);
-        exam.setExamStudentReviewEnd(examStudentReviewEnd);
-        if (gracePeriod != null) {
-            exam.setGracePeriod(gracePeriod);
-        }
-        exam.setWorkingTime(workingTime);
-        exam.setStartText(startText);
-        exam.setEndText(endText);
-        exam.setConfirmationStartText(confirmationStartText);
-        exam.setConfirmationEndText(confirmationEndText);
-        exam.setExamMaxPoints(examMaxPoints);
-        exam.setRandomizeExerciseOrder(randomizeExerciseOrder);
-        exam.setNumberOfExercisesInExam(numberOfExercisesInExam);
-        exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRoundsInExam);
-        exam.setExaminer(examiner);
-        exam.setModuleNumber(moduleNumber);
-        exam.setCourseName(courseName);
-        exam.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        exam.setExamSummaryPublicationDate(examSummaryPublicationDate);
-        exam.setChannelName(channelName);
+        applySettingsTo(exam);
         exam.setCourse(course);
 
         // Add exercise groups with exercises

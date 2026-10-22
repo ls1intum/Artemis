@@ -1,4 +1,4 @@
-import { TumAetUiChartAxisConfig, TumAetUiChartDatumContext, TumAetUiChartLegendConfig, TumAetUiChartLegendPosition } from './tumaet-ui-chart.types';
+import { TumAetUiChartAxisConfig, TumAetUiChartDatumContext, TumAetUiChartLegendConfig, TumAetUiChartLegendPosition, TumAetUiChartSeries } from './tumaet-ui-chart.types';
 import { BandScale, LinearScale, approximateTextWidth } from './tumaet-ui-chart.scales';
 
 export const TICK_FONT_SIZE = 11;
@@ -222,11 +222,21 @@ export function gridLineViews(plot: ChartPlot, scale: LinearScale, ticks: readon
     });
 }
 
-export function axisTitleViews(plot: ChartPlot, margin: ChartMargin, xTitle?: string, yTitle?: string): { x?: ChartAxisTitle; y?: ChartAxisTitle } {
-    return {
-        x: xTitle ? { text: xTitle, x: plot.width / 2, y: plot.height + margin.bottom - 2, rotate: 0 } : undefined,
-        y: yTitle ? { text: yTitle, x: -(margin.left - AXIS_TITLE_FONT_SIZE), y: plot.height / 2, rotate: -90 } : undefined,
-    };
+export function axisTitleViews(plot: ChartPlot, margin: ChartMargin, xTitle?: string, yTitle?: string): ChartAxisTitle[] {
+    const titles: (ChartAxisTitle | undefined)[] = [
+        xTitle ? { text: xTitle, x: plot.width / 2, y: plot.height + margin.bottom - 2, rotate: 0 } : undefined,
+        yTitle ? { text: yTitle, x: -(margin.left - AXIS_TITLE_FONT_SIZE), y: plot.height / 2, rotate: -90 } : undefined,
+    ];
+    return titles.filter((title): title is ChartAxisTitle => title !== undefined);
+}
+
+/** Hidden entries keep their original key; line-chart reference series stay out of its legend. */
+export function seriesLegendItems(series: readonly TumAetUiChartSeries[], hidden: ReadonlySet<string>, referenceLines: 'include' | 'exclude' = 'include'): ChartLegendItem[] {
+    return series.flatMap((entry, index) =>
+        entry.label && (referenceLines === 'include' || !entry.referenceLine)
+            ? [{ key: `${index}`, label: entry.label, color: entry.color ?? 'var(--tumaet-ui-primary-color)', hidden: hidden.has(`${index}`) }]
+            : [],
+    );
 }
 
 export function legendPositionOf(legend: TumAetUiChartLegendConfig | undefined): TumAetUiChartLegendPosition | undefined {

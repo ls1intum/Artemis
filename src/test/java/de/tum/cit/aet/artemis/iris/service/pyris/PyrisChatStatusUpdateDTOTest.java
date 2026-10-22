@@ -124,7 +124,7 @@ class PyrisChatStatusUpdateDTOTest {
 
     @Test
     void serializesWithoutStagesField() throws JacksonException {
-        var dto = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null);
+        var dto = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, null, null);
 
         String json = objectMapper.writeValueAsString(dto);
 
