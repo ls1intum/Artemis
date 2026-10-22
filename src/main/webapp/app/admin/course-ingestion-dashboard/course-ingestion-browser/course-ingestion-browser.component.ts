@@ -7,7 +7,8 @@ import { CourseIngestionBrowserDetailComponent } from 'app/admin/course-ingestio
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { BrowserSelection, CourseBrowserData, IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { BrowserSelection, CourseBrowserData } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionCoverage } from 'app/openapi/model/ingestion-coverage';
 
 /**
  * The per-course content browser: a master-detail modal over what the index actually holds for one course.
@@ -54,7 +55,7 @@ export class CourseIngestionBrowserComponent {
      * once it lands the scoreboard, the chip and the detail pane all agree with the gaps beside them. The matrix row
      * stands in only until then, because in a stored-projection view it can be as old as the last recompute.
      */
-    readonly typeCounts = computed(() => this.data()?.typeCounts ?? this.course().typeCounts);
+    readonly typeCounts = computed(() => this.data()?.typeCounts ?? this.course().typeCounts ?? []);
 
     /** How many measured types are not fully indexed, shown as the header chip. */
     readonly incompleteTypeCount = computed(() => this.typeCounts().filter((count) => count.missing > 0 || count.orphaned > 0).length);

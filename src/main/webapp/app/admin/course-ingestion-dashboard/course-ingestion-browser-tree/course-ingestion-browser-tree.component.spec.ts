@@ -3,7 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionBrowserTreeComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-tree/course-ingestion-browser-tree.component';
-import { IndexedContentPresence, IndexedEntity, IngestionTypeCount, MissingEntity } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IndexedContentPresence, IndexedEntity, MissingEntity } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionTypeCount } from 'app/openapi/model/ingestion-type-count';
 
 describe('CourseIngestionBrowserTreeComponent', () => {
     let component: CourseIngestionBrowserTreeComponent;

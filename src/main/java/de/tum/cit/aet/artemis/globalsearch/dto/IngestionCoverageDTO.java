@@ -3,16 +3,23 @@ package de.tum.cit.aet.artemis.globalsearch.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * One course's index coverage for the dashboard matrix. Both the stored cross-course view and the live per-page view
  * return this shape, so the client consumes one type: the stored view maps it from the {@code ingestion_coverage}
  * projection, the live view computes it on the fly for the visible page. {@code computedAt} is the projection's stored
  * timestamp for the stored view, or the request time for the live view.
+ * Nullable metadata, empty titles and empty type-count lists are omitted from JSON. Primitive false and zero values
+ * remain present; clients should treat omitted type counts as an empty list.
  *
  * @param courseId         the id of the course
- * @param courseTitle      the course title
+ * @param courseTitle      the course title, if available
  * @param releaseDate      the course start/release date (nullable)
  * @param active           whether the course is currently active
  * @param semester         the course semester (nullable)
@@ -20,8 +27,11 @@ import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
  * @param coverageGapScore the precomputed worst-first severity (higher is worse; the total missing count)
  * @param computedAt       when this coverage was computed
  * @param lastIngestedAt   the most recent index write across the course's objects, or {@code null} if nothing is indexed
- * @param typeCounts       the per-type expected/indexed/missing/orphaned counts
+ * @param typeCounts       the per-type expected/indexed/missing/orphaned counts, omitted from JSON when empty
  */
-public record IngestionCoverageDTO(long courseId, String courseTitle, ZonedDateTime releaseDate, boolean active, String semester, IngestionCoverageStatus status,
-        int coverageGapScore, ZonedDateTime computedAt, ZonedDateTime lastIngestedAt, List<IngestionTypeCountDTO> typeCounts) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record IngestionCoverageDTO(long courseId, @Nullable @Schema(nullable = true) String courseTitle, @Nullable @Schema(nullable = true) ZonedDateTime releaseDate,
+        boolean active, @Nullable @Schema(nullable = true) String semester, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) IngestionCoverageStatus status,
+        int coverageGapScore, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ZonedDateTime computedAt, @Nullable @Schema(nullable = true) ZonedDateTime lastIngestedAt,
+        List<IngestionTypeCountDTO> typeCounts) {
 }

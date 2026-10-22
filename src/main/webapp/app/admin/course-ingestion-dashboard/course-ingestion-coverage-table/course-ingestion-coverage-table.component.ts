@@ -18,7 +18,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { IngestionCoverage, IngestionCoverageStatus } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionCoverage, IngestionCoverageStatusEnum } from 'app/openapi/model/ingestion-coverage';
 
 /** The metadata entity types, in the order shown under the "Entity metadata" column group. */
 const METADATA_TYPES = ['exercise', 'lecture', 'lecture_unit', 'exam', 'faq', 'channel', 'course'] as const;
@@ -39,7 +39,7 @@ const SORT_CONFIG: Record<SortMode, { storedField: string; liveField: string; de
 };
 
 /** The semantic text colour for each coverage status; used for both the status dot and its label. */
-const STATUS_CLASS: Record<IngestionCoverageStatus, string> = {
+const STATUS_CLASS: Record<IngestionCoverageStatusEnum, string> = {
     COMPLETE: 'text-state-success',
     INCOMPLETE: 'text-state-danger',
     EMPTY: 'text-muted-color',
@@ -131,7 +131,7 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     readonly pageSize = signal(20);
     readonly sortMode = signal<SortMode>('name');
     readonly sortDirection = signal<SortDirection>('asc');
-    readonly statusFilter = signal<IngestionCoverageStatus | undefined>(undefined);
+    readonly statusFilter = signal<IngestionCoverageStatusEnum | undefined>(undefined);
     readonly activeFilter = signal<boolean | undefined>(undefined);
     readonly search = signal('');
 
@@ -246,7 +246,7 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     }
 
     protected onStatusChange(value: string | undefined): void {
-        this.statusFilter.set(value ? (value as IngestionCoverageStatus) : undefined);
+        this.statusFilter.set(value ? (value as IngestionCoverageStatusEnum) : undefined);
         this.page.set(0);
         this.load();
     }
@@ -301,7 +301,7 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
      * or present) and the semantic colour (danger when something is missing, success when complete, muted when empty).
      */
     protected cell(row: IngestionCoverage, type: string): { text: string; class: string } {
-        const count = row.typeCounts.find((entry) => entry.type === type);
+        const count = (row.typeCounts ?? []).find((entry) => entry.type === type);
         if (!count || (count.expected === 0 && count.indexed === 0)) {
             return { text: '–', class: 'text-muted-color' };
         }
@@ -319,7 +319,7 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
         return index === 0 || index === METADATA_TYPES.length ? GROUP_DIVIDER : '';
     }
 
-    protected statusClass(status: IngestionCoverageStatus): string {
+    protected statusClass(status: IngestionCoverageStatusEnum): string {
         return STATUS_CLASS[status];
     }
 }
