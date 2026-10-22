@@ -131,6 +131,32 @@ describe('SentryErrorHandler', () => {
             expect(callArgs).not.toHaveProperty('sendDefaultPii');
         });
 
+        it('should scrub repository urls from streamed spans instead of using the ignored beforeSendTransaction', async () => {
+            const profileInfo = createProfileInfo({ testServer: false });
+
+            await service.initSentry(profileInfo);
+
+            const callArgs = (Sentry.init as ReturnType<typeof vi.fn>).mock.calls[0][0];
+            expect(callArgs).not.toHaveProperty('beforeSendTransaction');
+
+            const span = {
+                name: 'GET /git/ABC123/exercise-student1.git',
+                attributes: {
+                    'url.full': 'https://artemis.example/git/ABC123/exercise-student1.git/info/refs',
+                    'http.url': 'https://artemis.example/git/ABC123/exercise-student1.git',
+                    'http.response.status_code': 200,
+                    'sentry.origin': 'auto.http.client.fetch',
+                },
+            };
+            const scrubbed = callArgs.beforeSendSpan(span);
+
+            expect(scrubbed.name).toBe('GET /git/ABC123/exercise.git');
+            expect(scrubbed.attributes['url.full']).toBe('https://artemis.example/git/ABC123/exercise.git/info/refs');
+            expect(scrubbed.attributes['http.url']).toBe('https://artemis.example/git/ABC123/exercise.git');
+            expect(scrubbed.attributes['http.response.status_code']).toBe(200);
+            expect(scrubbed.attributes['sentry.origin']).toBe('auto.http.client.fetch');
+        });
+
         it('should configure tracesSampler correctly', async () => {
             const profileInfo = createProfileInfo({ testServer: false });
 

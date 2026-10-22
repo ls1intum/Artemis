@@ -10,6 +10,9 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 // (e.g. "Dedupe") back to `string` so a mixed integration array stays assignable.
 type Integration = Omit<ReturnType<typeof dedupeIntegration>, 'name'> & { name: string };
 
+// The span `beforeSendSpan` receives. Derived from the init options for the same reason as `Integration` above.
+type StreamedSpan = Parameters<NonNullable<NonNullable<Parameters<typeof init>[0]>['beforeSendSpan']>>[0];
+
 // Header and query parameter names that can identify a user or the network path. These are the patterns Sentry 10 denied
 // by default, plus `authorization` so credentials are excluded regardless of Sentry's built-in sensitive-data filtering.
 const SENTRY_DENIED_HEADER_PATTERNS = ['authorization', 'forwarded', '-ip', 'remote-', 'via', '-user'];
@@ -83,8 +86,9 @@ export class SentryErrorHandler extends ErrorHandler {
             beforeSend: (event) => {
                 return this.scrubSentryPayload(event);
             },
-            beforeSendTransaction: (t) => {
-                return this.scrubSentryPayload(t);
+            // Sentry 11 streams spans by default and ignores `beforeSendTransaction` then, so spans are scrubbed here.
+            beforeSendSpan: (span) => {
+                return this.scrubSpan(span);
             },
             beforeBreadcrumb: (crumb) => {
                 if (crumb.message) {
@@ -129,6 +133,16 @@ export class SentryErrorHandler extends ErrorHandler {
         }
 
         return trans;
+    }
+
+    private scrubSpan(span: StreamedSpan): StreamedSpan {
+        span.name = this.scrubUrl(span.name);
+        for (const [key, value] of Object.entries(span.attributes)) {
+            if (typeof value === 'string' && key.includes('url')) {
+                span.attributes[key] = this.scrubUrl(value);
+            }
+        }
+        return span;
     }
 
     private scrubStringMessage(message: string): string {
