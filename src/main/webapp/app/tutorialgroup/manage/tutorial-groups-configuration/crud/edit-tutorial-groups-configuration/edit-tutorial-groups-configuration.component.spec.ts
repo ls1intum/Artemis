@@ -4,7 +4,6 @@ import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { EditTutorialGroupsConfigurationComponent } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
@@ -21,7 +20,7 @@ import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-con
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { expectComponentRendered } from 'test/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
-import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
 
 describe('EditTutorialGroupsConfigurationComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupsConfigurationComponent>;
@@ -29,7 +28,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
     let configurationService: TutorialGroupsConfigurationService;
     let courseStorageService: CourseStorageService;
     let findConfigurationSpy: ReturnType<typeof vi.spyOn>;
-    let exampleConfiguration: TutorialGroupConfigurationDTO;
+    let exampleConfiguration: TutorialGroupConfiguration;
     const course = { id: 1, title: 'Example' } as Course;
     const router = new MockRouter();
 
@@ -58,7 +57,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
         exampleConfiguration = generateExampleTutorialGroupsConfigurationDTO({ id: 2 });
         courseStorageService = TestBed.inject(CourseStorageService);
-        findConfigurationSpy = vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: exampleConfiguration })));
+        findConfigurationSpy = vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(exampleConfiguration));
         fixture.detectChanges();
     });
 
@@ -84,17 +83,12 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
     });
 
     it('should send PUT request upon form submission and navigate', () => {
-        const changedConfiguration: TutorialGroupConfigurationDTO = {
+        const changedConfiguration: TutorialGroupConfiguration = {
             ...exampleConfiguration,
         };
 
-        const updateResponse: HttpResponse<TutorialGroupConfigurationDTO> = new HttpResponse({
-            body: changedConfiguration,
-            status: 200,
-        });
-
         const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse');
-        const updatedStub = vi.spyOn(configurationService, 'update').mockReturnValue(of(updateResponse));
+        const updatedStub = vi.spyOn(configurationService, 'update').mockReturnValue(of(changedConfiguration));
         const navigateSpy = vi.spyOn(router, 'navigate');
 
         const sessionForm: TutorialGroupsConfigurationFormComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormComponent)).componentInstance;
@@ -103,7 +97,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
 
         sessionForm.formSubmitted.emit(formData);
         expect(updatedStub).toHaveBeenCalledOnce();
-        expect(updatedStub).toHaveBeenCalledWith(course.id, exampleConfiguration.id, changedConfiguration, formData.period);
+        expect(updatedStub).toHaveBeenCalledWith(course.id, exampleConfiguration.id, exampleConfiguration, formData);
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();
