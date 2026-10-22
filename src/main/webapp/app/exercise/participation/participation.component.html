@@ -14,7 +14,14 @@
                 <jhi-external-submission class="inline-block" [exercise]="exercise()!" />
             }
             @if (exercise()!.isAtLeastInstructor) {
-                <button type="button" tumAetUiButton size="small" [tumAetUiPopoverTrigger]="exportPopover" [attr.aria-label]="'entity.action.export' | artemisTranslate">
+                <button
+                    type="button"
+                    tumAetUiButton
+                    size="small"
+                    data-testid="participation-export-button"
+                    [tumAetUiPopoverTrigger]="exportPopover"
+                    [attr.aria-label]="'entity.action.export' | artemisTranslate"
+                >
                     <fa-icon [icon]="faDownload" />
                     <span class="hidden md:inline" jhiTranslate="entity.action.export"></span>
                 </button>

@@ -1066,7 +1066,7 @@ describe('ParticipationComponent', () => {
             const container = document.createElement('div');
             view.rootNodes.forEach((node) => container.append(node));
 
-            expect(!!container.querySelector('button[tumAetUiButton][aria-label="entity.action.export"]')).toBe(isAtLeastInstructor);
+            expect(!!container.querySelector('[data-testid="participation-export-button"]')).toBe(isAtLeastInstructor);
             view.destroy();
         });
 
