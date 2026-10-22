@@ -273,6 +273,72 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         await screenshot(page, info, '03-unread-reply-preserved-after-deletion');
     });
 
+    test('rapid navigation waits for post-read metadata and does not reuse the previous New divider', async ({ page, courseMessages }) => {
+        await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'Lecture recap: distinguish a specification from its implementation.');
+        const otherPost = await api(staff).createCourseMessage(course!, other.id!, 'channel', 'Tutorial preparation: review the examples of class invariants.');
+        await markRead(page, channel.id!);
+        const unreadPost = await api(staff).createCourseMessage(
+            course!,
+            channel.id!,
+            'channel',
+            'For the next tutorial, explain why an invariant must hold after a public method.',
+        );
+        const coursePath = `/api/communication/courses/${course!.id}`;
+        const metadataPattern = (url: URL) => url.pathname === `${coursePath}/conversations`;
+        const messagesPattern = (url: URL) => url.pathname === `${coursePath}/messages`;
+        let paused = false;
+        const waiting: (() => void)[] = [];
+        const firstReads = new Set<number>();
+        const release = () => {
+            paused = false;
+            waiting.splice(0).forEach((resume) => resume());
+        };
+        await page.route(metadataPattern, async (route) => {
+            if (route.request().method() === 'GET' && paused) await new Promise<void>((resolve) => waiting.push(resolve));
+            await route.continue();
+        });
+        await page.route(messagesPattern, async (route) => {
+            const url = new URL(route.request().url());
+            const id = Number(url.searchParams.get('conversationIds'));
+            if (route.request().method() === 'GET' && firstReads.delete(id) && !url.searchParams.get('searchText')) {
+                const response = await route.fetch();
+                // Pause metadata before delivering the read success, so neither the batching timer nor fast HTTP can hide the race.
+                paused = true;
+                await route.fulfill({ response });
+            } else await route.continue();
+        });
+        try {
+            await page.goto(`/courses/${course!.id}/communication?conversationId=${other.id}`);
+            await showGroups(page);
+            await expect(courseMessages.getSinglePost(otherPost.id!)).toBeVisible();
+            firstReads.add(channel.id!);
+            firstReads.add(other.id!);
+            await conversationLink(page, channel.id!).click();
+            await expect(courseMessages.getSinglePost(unreadPost.id!)).toBeInViewport();
+            await expect(page.locator('#unread-post-line')).toHaveCount(1);
+            await expect.poll(() => unread(page, channel.id!)).toBe(0);
+            await showGroups(page);
+            await conversationLink(page, other.id!).click();
+            await expect.poll(() => waiting.length).toBeGreaterThan(0);
+            await expect(page.getByTestId('conversation-name')).toHaveText(channel.name!);
+            release();
+            await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
+            await expect(courseMessages.getSinglePost(otherPost.id!)).toBeVisible();
+            await conversationLink(page, channel.id!).click();
+            await expect.poll(() => waiting.length).toBeGreaterThan(0);
+            await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
+            release();
+            await expect(page.getByTestId('conversation-name')).toHaveText(channel.name!);
+            await expect(courseMessages.getSinglePost(unreadPost.id!)).toBeVisible();
+            await expect(page.locator('#unread-post-line')).toHaveCount(0);
+            expect(await unread(page, channel.id!)).toBe(0);
+        } finally {
+            release();
+            await page.unroute(metadataPattern);
+            await page.unroute(messagesPattern);
+        }
+    });
+
     test('reopens a fully read channel at the newest message after the reader saved an older scroll position', async ({ page, courseMessages }, info) => {
         const oldest = await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'Lecture preparation: distinguish a class invariant from a method precondition.');
         // Serialize writes to the same conversation: concurrent setup posts contend for its optimistic lock.

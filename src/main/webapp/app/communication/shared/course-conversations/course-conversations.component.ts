@@ -63,7 +63,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
-import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
+import { Observable, Subject, Subscription, firstValueFrom, of, switchMap } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 import { SidebarView } from 'app/course/shared/sidebar-view.interface';
@@ -303,8 +303,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
 
     /** Mount conversation read ownership and wire the retained course state into this communication view. */
     ngOnInit(): void {
-        // The service outlives this view, so it has to be told that the selected conversation is only being read while the view is open
-        this.courseConversationsService.setConversationViewOpen(true);
         // Selecting this tab while already on it acts as a refresh -- prepareSidebarData re-reads the conversations and
         // replaces the rendered list only once they arrive
         this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.activatedRoute).subscribe(() => this.prepareSidebarData());
@@ -339,48 +337,55 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
         }
 
         this.isLoading.set(true);
-        this.courseConversationsService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
-            if (isServiceSetUp) {
-                this.course.set(this.courseConversationsService.course);
-                this.initializeCourseWideSearchConfig();
-                this.initializeSidebarAccordions();
-                this.setupCommunicationService();
-                this.subscribeToPosts();
-                this.subscribeToQueryParameter();
-                // service is fully set up, now we can subscribe to the respective observables
-                this.subscribeToActiveConversation();
-                this.subscribeToIsCodeOfConductAccepted();
-                this.subscribeToIsCodeOfConductPresented();
-                this.subscribeToConversationsOfUser();
-                this.updateQueryParameters();
-                this.prepareSidebarData();
-                this.courseConversationsService.checkIsCodeOfConductAccepted(this.course()!);
-                if (!this.isServiceSetUp()) {
-                    outputToObservable(this.channelActions$)
-                        .pipe(
-                            debounceTime(500),
-                            distinctUntilChanged(
-                                (prev, curr) =>
-                                    curr.action !== 'create' && prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name,
-                            ),
-                            takeUntil(this.ngUnsubscribe),
-                        )
-                        .subscribe((channelAction) => {
-                            this.performChannelAction(channelAction);
-                        });
+        this.courseConversationsService.isServiceSetup$
+            .pipe(
+                switchMap((isServiceSetUp) => (isServiceSetUp ? this.courseConversationsService.prepareConversationView() : of(false))),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe((isServiceSetUp: boolean) => {
+                if (isServiceSetUp) {
+                    // Mount read ownership only after retained metadata is fresh, before replaying the active conversation.
+                    this.courseConversationsService.setConversationViewOpen(true);
+                    this.course.set(this.courseConversationsService.course);
+                    this.initializeCourseWideSearchConfig();
+                    this.initializeSidebarAccordions();
+                    this.setupCommunicationService();
+                    this.subscribeToPosts();
+                    this.subscribeToQueryParameter();
+                    // service is fully set up, now we can subscribe to the respective observables
+                    this.subscribeToActiveConversation();
+                    this.subscribeToIsCodeOfConductAccepted();
+                    this.subscribeToIsCodeOfConductPresented();
+                    this.subscribeToConversationsOfUser();
+                    this.updateQueryParameters();
+                    this.prepareSidebarData();
+                    this.courseConversationsService.checkIsCodeOfConductAccepted(this.course()!);
+                    if (!this.isServiceSetUp()) {
+                        outputToObservable(this.channelActions$)
+                            .pipe(
+                                debounceTime(500),
+                                distinctUntilChanged(
+                                    (prev, curr) =>
+                                        curr.action !== 'create' && prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name,
+                                ),
+                                takeUntil(this.ngUnsubscribe),
+                            )
+                            .subscribe((channelAction) => {
+                                this.performChannelAction(channelAction);
+                            });
+                    }
+                    this.isServiceSetUp.set(true);
+                    this.isLoading.set(false);
+                } else {
+                    // The service reported that it is not set up, either because loading the conversations failed or because it
+                    // was disabled. Follow that state instead of keeping the view in its previous one, and stop the loading
+                    // indicator rather than spinning forever. The error itself has already been raised by the service.
+                    this.isServiceSetUp.set(false);
+                    this.isLoading.set(false);
                 }
-                this.isServiceSetUp.set(true);
-                this.isLoading.set(false);
-            } else {
-                // The service reported that it is not set up, either because loading the conversations failed or because it
-                // was disabled. Follow that state instead of keeping the view in its previous one, and stop the loading
-                // indicator rather than spinning forever. The error itself has already been raised by the service.
-                this.isServiceSetUp.set(false);
-                this.isLoading.set(false);
-            }
 
-            this.createChannelFn = (channel: ChannelDTO) => this.courseConversationsService.createChannel(channel);
-        });
+                this.createChannelFn = (channel: ChannelDTO) => this.courseConversationsService.createChannel(channel);
+            });
     }
 
     performChannelAction(channelAction: ChannelAction) {
@@ -542,8 +547,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     private subscribeToConversationsOfUser() {
         this.courseConversationsService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.conversationsOfUser.set(conversations ?? []);
-            if (this.sidebarData() && this.conversationsToShowInSidebar().some((conversation) => !this.isListedInSidebar(conversation.id!) && isOneToOneChatDTO(conversation))) {
-                // A direct message that was left out of the sidebar because it was empty has received its first message.
+            if (!this.sidebarData() || this.conversationsToShowInSidebar().some((conversation) => !this.isListedInSidebar(conversation.id!) && isOneToOneChatDTO(conversation))) {
+                // Accepted metadata can initialize the sidebar after a cancelled foreground refresh, or add a formerly empty direct message.
                 this.rebuildSidebarData();
             } else if (this.sidebarData() && this.unreadStateOf(this.conversationsToShowInSidebar()) !== this.renderedUnreadState) {
                 // The service raises the unread count of the cached conversation in place when a message or a reply arrives. The sidebar cards

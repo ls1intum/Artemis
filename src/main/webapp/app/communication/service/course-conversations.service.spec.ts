@@ -14,7 +14,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { provideLocationMocks } from '@angular/common/testing';
 import { Router, provideRouter } from '@angular/router';
-import { Subject, forkJoin, of, take, throwError } from 'rxjs';
+import { EMPTY, Subject, forkJoin, of, switchMap, take, throwError } from 'rxjs';
 import { ConversationDTO } from '../shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -591,6 +591,146 @@ describe('CourseConversationsService', () => {
     describe('bounded unread reconciliation', () => {
         beforeEach(() => vi.useFakeTimers());
 
+        it.each(['channel', 'group', 'direct'] as const)('opens a read %s with accepted metadata on rapid navigation before the batching window', (kind) => {
+            const conversation = kind === 'channel' ? channel : kind === 'group' ? groupChat : oneToOneChat;
+            const other = conversation === channel ? groupChat : channel;
+            const oldDate = dayjs('2026-01-01T10:00:00Z');
+            const readDate = dayjs('2026-01-01T12:00:00Z');
+            conversation.lastReadDate = oldDate;
+            conversation.unreadMessagesCount = 2;
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            const openings: { id: number | undefined; date: string | undefined }[] = [];
+            const active = courseConversationsService.activeConversation$.subscribe((row) => {
+                if (row && openings.at(-1)?.id !== row.id) openings.push({ id: row.id, date: row.lastReadDate?.toISOString() });
+            });
+            courseConversationsService.setActiveConversation(conversation.id);
+            courseConversationsService.messagesLoaded(conversation.id!, courseConversationsService.messagesRequested(conversation.id!));
+            const response = new Subject<HttpResponse<ConversationDTO[]>>();
+            const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(response).mockClear();
+            courseConversationsService.setActiveConversation(other.id);
+            expect(courseConversationsService['activeConversation']?.id).toBe(conversation.id);
+            expect(get).toHaveBeenCalledTimes(1);
+            response.next(
+                new HttpResponse({
+                    body: [conversation, other].map((row) => ({
+                        ...row,
+                        lastReadDate: row.id === conversation.id ? readDate : oldDate,
+                        unreadMessagesCount: 0,
+                        hasUnreadMessage: false,
+                    })),
+                }),
+            );
+            response.complete();
+            expect(courseConversationsService['activeConversation']?.id).toBe(other.id);
+            courseConversationsService.setActiveConversation(conversation.id);
+            expect(courseConversationsService['activeConversation']?.lastReadDate?.isSame(readDate)).toBe(true);
+            expect(openings[0]).toEqual({ id: conversation.id, date: oldDate.toISOString() });
+            expect(openings.at(-1)).toEqual({ id: conversation.id, date: readDate.toISOString() });
+            vi.advanceTimersByTime(1000);
+            expect(get).toHaveBeenCalledTimes(1);
+            active.unsubscribe();
+        });
+
+        it('waits through cancelled view entry and publishes readiness only after recovered metadata is applied', () => {
+            channel.lastReadDate = dayjs('2026-01-01T10:00:00Z');
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
+            courseConversationsService.messagesLoaded(channel.id!, courseConversationsService.messagesRequested(channel.id!));
+            const pending = Array.from({ length: 3 }, () => new Subject<HttpResponse<ConversationDTO[]>>());
+            const readDate = dayjs('2026-01-01T12:00:00Z');
+            const get = vi
+                .spyOn(conversationService, 'getConversationsOfUser')
+                .mockReturnValueOnce(pending[0])
+                .mockReturnValueOnce(pending[1])
+                .mockReturnValueOnce(pending[2])
+                .mockReturnValue(of(new HttpResponse({ body: [{ ...channel, lastReadDate: readDate, unreadMessagesCount: 0, hasUnreadMessage: false }] })))
+                .mockClear();
+            const ready: boolean[] = [];
+            const observedDates: string[] = [];
+            const completed = vi.fn();
+            courseConversationsService.prepareConversationView().subscribe({
+                next: (value) => {
+                    ready.push(value);
+                    observedDates.push(channel.lastReadDate!.toISOString());
+                },
+                complete: completed,
+            });
+            for (const response of pending) {
+                courseConversationsService.handleNewMessage(channel.id, dayjs());
+                response.next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 99 }] }));
+                response.complete();
+            }
+            expect(ready).toEqual([]);
+            expect(completed).not.toHaveBeenCalled();
+            expect(get).toHaveBeenCalledTimes(3);
+            vi.advanceTimersByTime(1000);
+            expect(ready).toEqual([true]);
+            expect(observedDates).toEqual([readDate.toISOString()]);
+            expect(completed).toHaveBeenCalledTimes(1);
+            expect(get).toHaveBeenCalledTimes(4);
+            expect(courseConversationsService['isConversationViewOpen']).toBe(false);
+        });
+
+        it('reports failed view entry and can become ready after a later accepted retry', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
+            courseConversationsService.messagesLoaded(channel.id!, courseConversationsService.messagesRequested(channel.id!));
+            const readDate = dayjs('2026-01-01T12:00:00Z');
+            const get = vi
+                .spyOn(conversationService, 'getConversationsOfUser')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })))
+                .mockReturnValue(of(new HttpResponse({ body: [{ ...channel, lastReadDate: readDate, unreadMessagesCount: 0, hasUnreadMessage: false }] })))
+                .mockClear();
+            const ready: boolean[] = [];
+            const completed = vi.fn();
+            courseConversationsService.prepareConversationView().subscribe({ next: (value) => ready.push(value), complete: completed });
+            expect(ready).toEqual([false]);
+            expect(completed).not.toHaveBeenCalled();
+            courseConversationsService.forceRefresh(false).subscribe();
+            expect(ready).toEqual([false, true]);
+            expect(completed).toHaveBeenCalledTimes(1);
+            expect(channel.lastReadDate?.isSame(readDate)).toBe(true);
+            vi.advanceTimersByTime(1000);
+            expect(get).toHaveBeenCalledTimes(2);
+        });
+
+        it('cancels a discarded view entry while preserving its pending read reconciliation', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
+            courseConversationsService.messagesLoaded(channel.id!, courseConversationsService.messagesRequested(channel.id!));
+            const pending = new Subject<HttpResponse<ConversationDTO[]>>();
+            const get = vi
+                .spyOn(conversationService, 'getConversationsOfUser')
+                .mockReturnValueOnce(pending)
+                .mockReturnValue(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 0, hasUnreadMessage: false }] })))
+                .mockClear();
+            const ready = vi.fn();
+            const subscription = courseConversationsService.prepareConversationView().subscribe(ready);
+            subscription.unsubscribe();
+            pending.next(new HttpResponse({ body: [] }));
+            pending.complete();
+            expect(courseConversationsService['conversationsOfUser']).toHaveLength(3);
+            vi.advanceTimersByTime(1000);
+            expect(get).toHaveBeenCalledTimes(2);
+            expect(ready).not.toHaveBeenCalled();
+            expect(courseConversationsService['activeConversation']?.id).toBe(channel.id);
+        });
+
+        it('does not rearm readiness reconciliation when the conversation service is disabled', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.messagesLoaded(channel.id!, courseConversationsService.messagesRequested(channel.id!));
+            const response = new Subject<HttpResponse<ConversationDTO[]>>();
+            const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(response).mockClear();
+            const view = courseConversationsService.isServiceSetup$.pipe(switchMap((setup) => (setup ? courseConversationsService.prepareConversationView() : EMPTY))).subscribe();
+            expect(get).toHaveBeenCalledTimes(1);
+            courseConversationsService.disableConversationService();
+            vi.advanceTimersByTime(5000);
+            expect(get).toHaveBeenCalledTimes(1);
+            expect(response.observed).toBe(false);
+            view.unsubscribe();
+        });
+
         it('batches sequential read completions without postponing the fixed window', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
             courseConversationsService.setActiveConversation(channel);
@@ -1137,7 +1277,7 @@ describe('CourseConversationsService', () => {
                 } else if (outcome === 'failure') pending.error(new Error('rejected'));
                 else courseConversationsService.messagesLoaded(conversation.id!, request);
                 expect(cachedUnreadCount(conversation.id)).toBe(3);
-                expect(conversation.lastReadDate).toBe(manualDate);
+                expect(conversation.lastReadDate?.isSame(manualDate)).toBe(true);
                 expect(conversation.hasUnreadMessage).toBe(true);
                 expect(courseConversationsService['hasUnreadMessages']).toBe(true);
                 vi.advanceTimersByTime(1000);

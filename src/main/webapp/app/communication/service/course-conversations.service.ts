@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, defer, finalize, map, of, switchMap, tap, throwError, timer } from 'rxjs';
+import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, defer, filter, finalize, map, merge, of, switchMap, takeWhile, tap, throwError, timer } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -70,6 +70,8 @@ export class CourseConversationsService implements OnDestroy {
     // All unread mutations invalidate in-flight list snapshots. Counts and timestamps come from the server;
     // no request-specific contributions are added to or subtracted from a refreshed count.
     private unreadStateVersion = 0;
+    private acceptedUnreadSnapshotVersion = 0;
+    private readonly acceptedUnreadSnapshots$ = new Subject<void>();
     private manualUnreadRevisions = new Map<number, number>();
     private unreadRefresh?: Subscription;
     private unreadRefreshRequested = false;
@@ -161,7 +163,8 @@ export class CourseConversationsService implements OnDestroy {
             conversationId = parameterJustId ? conversationIdentifier : conversationIdentifier.id;
             cachedConversation = this.conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversationId);
         }
-        if (!cachedConversation && conversationIdentifier) {
+        const needsFreshOpening = cachedConversation && this.activeConversation?.id !== conversationId && this.acceptedUnreadSnapshotVersion !== this.unreadStateVersion;
+        if (conversationIdentifier && (!cachedConversation || needsFreshOpening)) {
             // Earlier lists cannot establish membership for this newer selection intent.
             this.unreadStateVersion++;
             if (!this.conversationsLoaded) {
@@ -218,8 +221,8 @@ export class CourseConversationsService implements OnDestroy {
     }
 
     public disableConversationService() {
-        this.cleanupSubscriptions();
         this._isServiceSetup$.next(false);
+        this.cleanupSubscriptions();
     }
 
     /**
@@ -286,6 +289,31 @@ export class CourseConversationsService implements OnDestroy {
         return this.refreshConversations(notifyActiveConversationSubscribers, notifyConversationsSubscribers);
     }
 
+    /**
+     * New views wait for accepted metadata before replaying the retained selection. Cancellation waits for background
+     * recovery; an HTTP failure reports false while keeping the gate subscribed for a later successful retry.
+     */
+    public prepareConversationView(): Observable<boolean> {
+        return defer(() => {
+            if (!this.conversationsLoaded) return of(false);
+            if (this.acceptedUnreadSnapshotVersion === this.unreadStateVersion) return of(true);
+            let resolved = false;
+            return merge(
+                this.acceptedUnreadSnapshots$.pipe(
+                    filter(() => this.acceptedUnreadSnapshotVersion === this.unreadStateVersion),
+                    map(() => true),
+                ),
+                this.forceRefresh(false).pipe(catchError((error: HttpErrorResponse | SupersededUnreadSnapshot) => (error instanceof SupersededUnreadSnapshot ? EMPTY : of(false)))),
+            ).pipe(
+                tap((ready) => (resolved = ready)),
+                takeWhile((ready) => !ready, true),
+                finalize(() => {
+                    if (!resolved) this.refreshUnreadState();
+                }),
+            );
+        });
+    }
+
     /** Background reconciliation uses one attempt so every subsequent GET passes through the batching window. */
     private refreshConversations(notifyActiveConversationSubscribers: boolean, notifyConversationsSubscribers: boolean, attempts = 3): Observable<never> {
         if (!this._course) {
@@ -305,10 +333,9 @@ export class CourseConversationsService implements OnDestroy {
                 return throwError(() => res);
             }),
             map((conversations: ConversationDTO[]) => {
+                const snapshotVersion = this.unreadStateVersion;
                 this.conversationsOfUser = conversations;
                 this.conversationsLoaded = true;
-                this.hasUnreadMessagesCheck();
-                this._conversationsOfUser$.next(this.conversationsOfUser);
 
                 // we check if the active conversation still is part of the conversations of the user, otherwise we reset it
                 if (this.activeConversation) {
@@ -321,6 +348,9 @@ export class CourseConversationsService implements OnDestroy {
                         hydrate(this.activeConversation, cachedActiveConversation);
                     }
                 }
+                this.acceptedUnreadSnapshotVersion = snapshotVersion;
+                this.hasUnreadMessagesCheck();
+                this._conversationsOfUser$.next(this.conversationsOfUser);
                 if (notifyConversationsSubscribers) {
                     this._conversationsOfUser$.next(this.conversationsOfUser);
                 }
@@ -329,6 +359,7 @@ export class CourseConversationsService implements OnDestroy {
                     this._activeConversation$.next(this.activeConversation);
                 }
                 this.setIsLoading(false);
+                this.acceptedUnreadSnapshots$.next();
                 return;
             }),
             finalize(() => {
@@ -396,11 +427,13 @@ export class CourseConversationsService implements OnDestroy {
                 return throwError(() => res);
             }),
             map((conversations: ConversationDTO[]) => {
+                const snapshotVersion = this.unreadStateVersion;
                 this.conversationsOfUser = conversations;
                 this.conversationsLoaded = true;
                 this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this.conversationsOfUser);
                 this.selectConversation(undefined);
+                this.acceptedUnreadSnapshotVersion = snapshotVersion;
                 // After the reset, so the conversation the url asked for survives it. This is the reload case: the
                 // query parameters were read while this request was still in flight.
                 this.activateRequestedConversation();
@@ -408,6 +441,7 @@ export class CourseConversationsService implements OnDestroy {
                 this.subscribeToConversationMembershipTopic(course.id!, this.userId);
                 this.setIsLoading(false);
                 this._isServiceSetup$.next(true);
+                this.acceptedUnreadSnapshots$.next();
                 if (this.unreadRefreshRequested) this.refreshUnreadState();
                 return;
             }),

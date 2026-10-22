@@ -214,6 +214,7 @@ examples.forEach((activeConversation) => {
             courseConversationsService.setActiveConversation = vi.fn();
             courseConversationsService.setUpConversationService = vi.fn().mockReturnValue(EMPTY);
             courseConversationsService.forceRefresh = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.prepareConversationView = vi.fn().mockReturnValue(of(true));
             courseConversationsService.acceptCodeOfConduct = vi.fn();
             courseConversationsService.createGroupChat = vi.fn().mockReturnValue(EMPTY);
             courseConversationsService.createOneToOneChat = vi.fn().mockReturnValue(EMPTY);
@@ -270,6 +271,53 @@ examples.forEach((activeConversation) => {
             component.ngOnDestroy();
             vi.useRealTimers();
             vi.resetAllMocks();
+        });
+
+        it('waits for accepted view-entry metadata before replaying the retained selection or rewriting its URL', () => {
+            const ready = new Subject<boolean>();
+            vi.mocked(courseConversationsService.prepareConversationView).mockReturnValue(ready);
+            const retained = generateExampleChannelDTO({ id: 21, name: 'Lecture questions' } as ChannelDTO);
+            activeConversation$.next(retained);
+            queryParamsSubject.next({ conversationId: 21 });
+            const navigate = vi.spyOn(router, 'navigate').mockClear();
+            const mount = vi.spyOn(courseConversationsService, 'setConversationViewOpen');
+            fixture.detectChanges();
+            expect(mount).not.toHaveBeenCalled();
+            expect(component.activeConversation()).toBeUndefined();
+            expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            expect(navigate).not.toHaveBeenCalled();
+
+            ready.next(false);
+            expect(component.isLoading()).toBe(false);
+            expect(component.activeConversation()).toBeUndefined();
+            expect(navigate).not.toHaveBeenCalled();
+            ready.next(true);
+            fixture.detectChanges();
+            expect(mount).toHaveBeenCalledExactlyOnceWith(true);
+            expect(component.activeConversation()?.id).toBe(retained.id);
+            expect(setActiveConversationSpy).toHaveBeenCalledWith(retained.id);
+        });
+
+        it('initializes an absent sidebar from accepted conversations after the initial refresh is cancelled', () => {
+            const recovered = generateExampleChannelDTO({ id: 21, name: 'Lecture questions', unreadMessagesCount: 2 } as ChannelDTO);
+            const conversations = new Subject<ConversationDTO[]>();
+            vi.spyOn(courseConversationsService, 'conversationsOfUser$', 'get').mockReturnValue(conversations);
+            vi.mocked(courseConversationsService.forceRefresh).mockReturnValue(throwError(() => new Error('snapshot superseded')));
+            const cards = [{ id: 21, title: 'Lecture questions', isCurrent: false, conversation: recovered, size: 'S' as const }];
+            vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockReturnValue(cards);
+            vi.mocked(courseOverviewService.groupConversationsByChannelType).mockReturnValue({ recents: { entityData: [] }, generalChannels: { entityData: cards } });
+            fixture.detectChanges();
+            expect(component.sidebarData()).toBeUndefined();
+            expect(courseConversationsService.forceRefresh).toHaveBeenCalled();
+
+            conversations.next([recovered]);
+            fixture.detectChanges();
+
+            expect(component.sidebarData()).toBeDefined();
+            expect(component.conversationsOfUser()).toEqual([recovered]);
+            expect(component.sidebarConversations()).toEqual(cards);
+            expect(component.accordionConversationGroups().generalChannels.entityData[0].conversation?.unreadMessagesCount).toBe(2);
+            expect(courseConversationsService.forceRefresh).toHaveBeenCalledTimes(1);
         });
 
         it('should refresh an already open thread after its forwarded sources finish loading', () => {

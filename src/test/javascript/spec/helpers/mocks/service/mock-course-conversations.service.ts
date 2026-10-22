@@ -1,5 +1,5 @@
 import { Course } from 'app/course/shared/entities/course.model';
-import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, of } from 'rxjs';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import dayjs from 'dayjs';
@@ -63,6 +63,10 @@ export class MockCourseConversationsService {
     };
 
     handleNewMessage = (conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined): void => {};
+
+    prepareConversationView(): Observable<boolean> {
+        return of(true);
+    }
 
     forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         return EMPTY;
