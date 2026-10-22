@@ -35,7 +35,7 @@
                         {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation().status!.toString() | artemisTranslate }}
                     </p>
 
-                    @if (exercise().type === ExerciseType.PROGRAMMING && exercise().isAtLeastInstructor && !isTestRun()) {
+                    @if (canUploadManualAssessments()) {
                         <div class="mt-2">
                             <tumaet-ui-button data-testid="open-assessment-upload" severity="primary" size="small" (clicked)="openAssessmentUpload()">
                                 <fa-icon [icon]="faFileImport" />

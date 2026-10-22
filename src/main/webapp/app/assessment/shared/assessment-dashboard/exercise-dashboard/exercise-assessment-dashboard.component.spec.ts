@@ -354,6 +354,27 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(complaintsLink.getAttribute('aria-label')).toBe('artemisApp.exercise.complaints');
     });
 
+    it.each([
+        [AssessmentType.SEMI_AUTOMATIC, true, 'manual assessment is configured'],
+        [AssessmentType.AUTOMATIC, false, 'the exercise is assessed automatically'],
+    ])('should offer the manual assessment upload only when %s allows it', (assessmentType, expectedVisible) => {
+        // The upload creates and overwrites manual assessments, so it is offered under the same condition the assessment editor is. The server rejects the upload either way,
+        // but an instructor should not find that out only after preparing and uploading an archive.
+        const programmingExerciseWithAssessmentType = {
+            ...programmingExercise,
+            assessmentType,
+            isAtLeastInstructor: true,
+            dueDate: dayjs().subtract(1, 'day'),
+        } as ProgrammingExercise;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: programmingExerciseWithAssessmentType, headers: new HttpHeaders() })));
+        comp.exerciseId.set(programmingExerciseWithAssessmentType.id!);
+
+        fixture.detectChanges();
+
+        expect(comp.canUploadManualAssessments()).toBe(expectedVisible);
+        expect(fixture.nativeElement.querySelector('[data-testid="open-assessment-upload"]') !== null).toBe(expectedVisible);
+    });
+
     it('should open the manual assessment upload dialog', () => {
         expect(comp['uploadDialogVisible']()).toBe(false);
 

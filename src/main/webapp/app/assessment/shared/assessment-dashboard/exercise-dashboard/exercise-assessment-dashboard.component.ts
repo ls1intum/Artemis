@@ -91,6 +91,7 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
+import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { AssessmentUploadDialogComponent } from 'app/assessment/manage/assessment-upload/assessment-upload-dialog.component';
 
 /** Largest delay `setTimeout` accepts before its signed 32-bit delay overflows and the timer fires immediately. */
@@ -281,6 +282,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * test runs, which happen before the exam starts and stay assessable). The dates come from the server, so all
      * exercise types agree and the banner never contradicts the alert shown after a 403.
      */
+    /**
+     * Whether an instructor may upload manual assessments for this exercise. The upload creates and overwrites manual assessments, so it is offered under the same condition
+     * the assessment editor is: manual assessment configured and the relevant due date passed. The server enforces the same gate, which would otherwise only be felt after an
+     * archive has been prepared and uploaded.
+     */
+    readonly canUploadManualAssessments = computed(
+        () => this.exercise().type === ExerciseType.PROGRAMMING && !!this.exercise().isAtLeastInstructor && !this.isTestRun() && areManualResultsAllowed(this.exercise()),
+    );
+
     readonly assessmentNotPossibleYetReason = computed(() => {
         this.assessmentAvailabilityTick();
         if (this.isTestRun()) {
