@@ -373,7 +373,7 @@ export class MessageEditorDom {
         }
     }
 
-    /** Adds a sanitized wire-format copy for atomic items; native copying remains unchanged for ordinary text. */
+    /** Adds a sanitized wire-format copy for references and literal hashes; ordinary text keeps native copying. */
     writeClipboard(clipboard: Pick<DataTransfer, 'setData'>, cut = false): boolean {
         const range = this.range().cloneRange();
         if (range.collapsed) return false;
@@ -383,7 +383,7 @@ export class MessageEditorDom {
         if (endItem) range.setEndAfter(endItem);
         const content = this.element.ownerDocument.createElement('div');
         content.append(range.cloneContents());
-        if (!content.querySelector('[data-message-reference]')) return false;
+        if (!content.querySelector('[data-message-reference], [data-message-literal]')) return false;
         try {
             clipboard.setData(MESSAGE_CLIPBOARD_TYPE, encodeMessageClipboard(content));
             clipboard.setData('text/html', content.innerHTML);

@@ -46,11 +46,14 @@ export class MessageEditorSuggestions {
         }
         if (trigger === '@') {
             const response = await firstValueFrom(this.members.searchMembersForUserMentions(courseId, query));
-            const items: MessageSuggestion[] = (response.body ?? []).map((user) => ({
-                label: `@${user.name}`,
-                kind: 'user',
-                markdown: `[user]${sanitizeStringForMarkdownEditor(user.name)}(${user.login})[/user]`,
-            }));
+            const items: MessageSuggestion[] = (response.body ?? [])
+                // The server validates the exact full name; stripping mention delimiters would invalidate the whole message.
+                .filter((user) => sanitizeStringForMarkdownEditor(user.name) === user.name)
+                .map((user) => ({
+                    label: `@${user.name}`,
+                    kind: 'user',
+                    markdown: `[user]${user.name}(${user.login})[/user]`,
+                }));
             if (conversation?.type === ConversationType.GROUP_CHAT && !editing && 'all'.startsWith(query.toLowerCase())) {
                 items.unshift({ label: '@all', kind: 'user', markdown: '@all' });
             }

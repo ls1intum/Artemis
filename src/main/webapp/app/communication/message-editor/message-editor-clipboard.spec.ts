@@ -112,6 +112,15 @@ describe('Message editor clipboard conversion', () => {
         expect(element.textContent).toBe('**plain** [user]Other(other)[/user]');
     });
 
+    it('retains literal hashes from native HTML when the custom clipboard format is unavailable', () => {
+        const copied = reopen(String.raw`Literal \#123 stays text`);
+        const message = clipboardToMessage(copied.innerHTML)!;
+        expect(message).toBe(String.raw`Literal \#123 stays text`);
+        const element = reopen(message);
+        expect(element.textContent).toBe('Literal #123 stays text');
+        expect(element.querySelector('[data-message-reference]')).toBeNull();
+    });
+
     it('keeps numeric references outside imported marks and links', () => {
         const message = clipboardToMessage('<b>Read #123 today</b> <a href="https://example.org">#456</a>')!;
         expect(message).toBe('**Read** #123 **today** #456');

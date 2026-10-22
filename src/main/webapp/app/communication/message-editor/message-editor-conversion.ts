@@ -45,12 +45,22 @@ markdown.renderer.rules.message_reference = (tokens, index) => tokens[index].con
 
 // Markdown keeps escaped/entity characters distinct until text_join. Retain literal hashes before
 // that distinction is lost, so the DOM reference scan cannot promote them to active post references.
+// Formatting tokens can separate a hash from its digits until a later edit removes the formatting.
 markdown.core.ruler.before('text_join', 'message_literal_hash', (state) => {
     for (const block of state.tokens) {
         const children = block.children ?? [];
         for (const [index, token] of children.entries()) {
-            if (token.type === 'text_special' && token.content === '#' && /^\d/.test(children[index + 1]?.content ?? '')) {
-                token.type = 'message_literal_hash';
+            if (token.type === 'text_special' && token.content === '#') {
+                let next = index + 1;
+                while (
+                    children[next] &&
+                    (children[next].nesting !== 0 ||
+                        (children[next].type === 'text' && !children[next].content) ||
+                        (children[next].type === 'html_inline' && /^<\/?(?:ins|u)>$/.test(children[next].content)))
+                ) {
+                    next++;
+                }
+                if (/^\d/.test(children[next]?.content ?? '')) token.type = 'message_literal_hash';
             }
         }
     }

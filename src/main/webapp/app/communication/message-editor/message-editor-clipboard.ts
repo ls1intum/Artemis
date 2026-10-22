@@ -78,7 +78,7 @@ export function clipboardToEditorFragment(html: string): DocumentFragment | unde
             'h6',
             'table',
         ],
-        ALLOWED_ATTR: ['href', 'start', 'style', 'data-message-placeholder'],
+        ALLOWED_ATTR: ['href', 'start', 'style', 'data-message-placeholder', 'data-message-literal'],
         ALLOW_DATA_ATTR: false,
         ALLOW_ARIA_ATTR: false,
         RETURN_DOM_FRAGMENT: true,
@@ -90,6 +90,8 @@ export function clipboardToEditorFragment(html: string): DocumentFragment | unde
         const style = element.style;
         const weight = style.fontWeight;
         const semanticMark = semanticMarks[element.tagName];
+        // This marker only escapes visible text; unlike reference payloads it cannot introduce trusted wire content.
+        const literalHash = element.matches('span[data-message-literal="#"]');
         const containsBlocks = element.querySelector(blockTags) !== null;
         const marks = [
             ...(weight === 'bold' || weight === 'bolder' || Number(weight) >= 600 ? ['strong'] : []),
@@ -98,7 +100,11 @@ export function clipboardToEditorFragment(html: string): DocumentFragment | unde
             ...((style.textDecorationLine || style.textDecoration).includes('line-through') ? ['s'] : []),
         ];
         for (const attribute of Array.from(element.attributes)) {
-            if (!(element.matches('a') && attribute.name === 'href') && !(element.matches('ol') && attribute.name === 'start')) {
+            if (
+                !(element.matches('a') && attribute.name === 'href') &&
+                !(element.matches('ol') && attribute.name === 'start') &&
+                !(literalHash && attribute.name === 'data-message-literal')
+            ) {
                 element.removeAttribute(attribute.name);
             }
         }
@@ -125,7 +131,7 @@ export function clipboardToEditorFragment(html: string): DocumentFragment | unde
         } else if (semanticMark !== undefined && containsBlocks) {
             applyClipboardMarks(element, [semanticMark]);
             element.replaceWith(...Array.from(element.childNodes));
-        } else if (element.tagName === 'SPAN' || (element.tagName === 'DIV' && containsBlocks)) {
+        } else if ((element.tagName === 'SPAN' && !literalHash) || (element.tagName === 'DIV' && containsBlocks)) {
             element.replaceWith(...Array.from(element.childNodes));
         } else {
             const tag = canonicalTags[element.tagName];

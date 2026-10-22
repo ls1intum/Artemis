@@ -127,6 +127,35 @@ describe('Message editor content in the actual posting view', () => {
         },
     );
 
+    it.each([
+        [String.raw`Literal \#**123** stays text`, ['strong']],
+        ['Literal &#35;**123** stays text', ['strong']],
+        [String.raw`Literal \#***123*** stays text`, ['strong', 'em']],
+        [String.raw`Literal \#*123* stays text`, ['em']],
+        [String.raw`Literal \#<ins>123</ins> stays text`, ['ins']],
+        ['Literal \\#`123` stays text', ['code']],
+    ] as const)('keeps a literal hash across formatting boundaries when removing marks, saving and reopening: %s', async (source, marks) => {
+        editor.load(source);
+        for (const mark of marks) {
+            const range = document.createRange();
+            range.selectNodeContents(host.querySelector(mark)!);
+            document.getSelection()!.removeAllRanges();
+            document.getSelection()!.addRange(range);
+            editor.format(mark);
+            expect(host.querySelector(mark)).toBeNull();
+        }
+        const saved = editorToMessage(host);
+
+        await render(saved, (view) => {
+            expect(view.textContent).toContain('Literal #123 stays text');
+            expect(view.querySelector('a.reference')).toBeNull();
+        });
+        editor.load(saved);
+        expect(host.textContent).toBe('Literal #123 stays text');
+        expect(host.querySelector('[data-message-reference]')).toBeNull();
+        expect(editorToMessage(host)).toBe(saved);
+    });
+
     it('keeps an edited literal hash literal through posting and reopening', async () => {
         editor.load(String.raw`Literal \#123 stays text`);
         const hash = host.querySelector('[data-message-literal]')!.firstChild!;
@@ -140,6 +169,27 @@ describe('Message editor content in the actual posting view', () => {
         editor.load(saved);
         expect(host.textContent).toBe('Literal #4123 stays text');
         expect(host.querySelector('[data-message-reference]')).toBeNull();
+    });
+
+    it.each([false, true])('keeps copied literal hashes literal through paste, posting and reopening (cut: %s)', async (cut) => {
+        editor.load(String.raw`Literal \#123 stays text`);
+        selectAll();
+        const data = new Map<string, string>();
+        expect(editor.writeClipboard({ setData: (type, value) => data.set(type, value) }, cut)).toBe(true);
+        if (cut) expect(host.textContent).toBe('');
+        editor.load('');
+        selectAll();
+        editor.insertClipboard(data.get('text/html')!, data.get('text/plain')!, data.get(MESSAGE_CLIPBOARD_TYPE)!);
+        const saved = editorToMessage(host);
+
+        await render(saved, (view) => {
+            expect(view.textContent).toContain('Literal #123 stays text');
+            expect(view.querySelector('a.reference')).toBeNull();
+        });
+        editor.load(saved);
+        expect(host.textContent).toBe('Literal #123 stays text');
+        expect(host.querySelector('[data-message-reference]')).toBeNull();
+        expect(editorToMessage(host)).toBe(saved);
     });
 
     it.each(['strong', 'code'] as const)('keeps %s formatting on a loaded literal hash through posting and reopening', async (mark) => {

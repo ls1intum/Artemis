@@ -113,6 +113,14 @@ describe('Message editor suggestions', () => {
         expect((await suggestions.search('@', '', 1)).some((item) => item.markdown === '@all')).toBe(false);
     });
 
+    it.each(['Anna (Tutor)', 'Anna [Tutor]', 'Anna )Tutor', 'Anna ]Tutor'])('omits names that cannot be mentioned unchanged without hiding valid matches: %s', async (name) => {
+        members.searchMembersForUserMentions.mockReturnValue(
+            of(new HttpResponse({ body: [...Array.from({ length: 12 }, (_, index) => ({ name, login: `tutor${index}` })), { name: 'Anna Müller-O’Neil', login: 'anna' }] })),
+        );
+
+        await expect(suggestions.search('@', 'anna', 1)).resolves.toEqual([{ label: '@Anna Müller-O’Neil', kind: 'user', markdown: '[user]Anna Müller-O’Neil(anna)[/user]' }]);
+    });
+
     it('retries failed content requests rather than caching the failure', async () => {
         channels.getPublicChannelsOfCourse.mockReturnValueOnce(throwError(() => new Error('offline')));
         await expect(suggestions.search('#', '', 1)).rejects.toThrow('offline');
