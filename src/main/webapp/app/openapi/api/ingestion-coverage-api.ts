@@ -12,7 +12,7 @@
  * IngestionCoverageApi - API service
  * @generated from OpenAPI specification
  */
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { IndexOverview } from '../model/index-overview';
@@ -40,13 +40,13 @@ export class IngestionCoverageApi {
      * @param pageable 
      * @param search 
      */
-    getLiveCoveragePage(pageable: Pageable, search?: string): Observable<Array<IngestionCoverage>> {
+    getLiveCoveragePage(pageable: Pageable, search?: string): Observable<HttpResponse<Array<IngestionCoverage>>> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'search', search);
         appendQueryParam(queryParams, 'pageable', pageable);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/global-search/admin/coverage/page${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<IngestionCoverage>>(url);
+        return this.http.get<Array<IngestionCoverage>>(url, { observe: 'response' });
     }
 
     /**
@@ -57,7 +57,7 @@ export class IngestionCoverageApi {
      * @param active 
      * @param search 
      */
-    getStoredCoverage(pageable: Pageable, status?: 'COMPLETE' | 'INCOMPLETE' | 'EMPTY', active?: boolean, search?: string): Observable<Array<IngestionCoverage>> {
+    getStoredCoverage(pageable: Pageable, status?: 'COMPLETE' | 'INCOMPLETE' | 'EMPTY', active?: boolean, search?: string): Observable<HttpResponse<Array<IngestionCoverage>>> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'status', status);
         appendQueryParam(queryParams, 'active', active);
@@ -65,7 +65,7 @@ export class IngestionCoverageApi {
         appendQueryParam(queryParams, 'pageable', pageable);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/global-search/admin/coverage${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<IngestionCoverage>>(url);
+        return this.http.get<Array<IngestionCoverage>>(url, { observe: 'response' });
     }
 
     /**

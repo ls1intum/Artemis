@@ -7,27 +7,36 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.core.env.Environment;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateHealthIndicator;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexOverviewDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedCollectionCountDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.CoverageRecomputeService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService;
 import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
@@ -152,14 +161,16 @@ class IngestionCoverageResourceTest {
         RequestContextHolder.resetRequestAttributes();
     }
 
-    @Test
-    void storedCoverageReturns503InsteadOfRowsAfterARecomputeFailure() {
-        when(coverageRecomputeService.triggerRecomputeIfStale()).thenReturn(CoverageRecomputeService.RecomputeOutcome.FAILED);
-        setRequestContext();
+    @ParameterizedTest
+    @EnumSource(value = CoverageRecomputeService.RecomputeOutcome.class, names = { "FAILED", "LOCK_TIMEOUT" })
+    void storedCoverageReturns503InsteadOfRowsAfterARecomputeFailure(CoverageRecomputeService.RecomputeOutcome outcome) {
+        when(coverageRecomputeService.triggerRecomputeIfStale()).thenReturn(outcome);
+        setRequestContext("/api/global-search/admin/coverage");
 
         var response = resource.getStoredCoverage(null, null, null, PageRequest.of(0, 25));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(response.getBody()).isNull();
         verify(coverageRecomputeService, never()).readStoredCoverage(any(), any(), any(), any());
     }
 
@@ -170,8 +181,67 @@ class IngestionCoverageResourceTest {
         assertThat(resource.refreshCoverage().getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
-    private static void setRequestContext() {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/global-search/admin/coverage");
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void coverageReturnsArrayAndPaginationHeaders(boolean live) {
+        var pageable = PageRequest.of(0, 1);
+        var row = new IngestionCoverageDTO(1, null, null, false, null, IngestionCoverageStatus.EMPTY, 0, ZonedDateTime.parse("2026-10-21T10:00:00Z"), null, List.of());
+        var page = new PageImpl<>(List.of(row), pageable, 57);
+        String path = live ? "/api/global-search/admin/coverage/page" : "/api/global-search/admin/coverage";
+        setRequestContext(path);
+        when(coverageRecomputeService.triggerRecomputeIfStale()).thenReturn(CoverageRecomputeService.RecomputeOutcome.RECOMPUTED);
+        when(coverageRecomputeService.readStoredCoverage(IngestionCoverageStatus.EMPTY, false, " C++ & Über ", pageable)).thenReturn(page);
+        when(coverageRecomputeService.computeLiveCoveragePage(" C++ & Über ", pageable)).thenReturn(page);
+
+        var response = live ? resource.getLiveCoveragePage(" C++ & Über ", pageable) : resource.getStoredCoverage(IngestionCoverageStatus.EMPTY, false, " C++ & Über ", pageable);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsExactly(row);
+        assertThat(response.getHeaders().getFirst("X-Total-Count")).isEqualTo("57");
+        assertThat(response.getHeaders().getFirst("Link")).contains(path, "page=1", "rel=\"next\"", "page=56", "rel=\"last\"");
+    }
+
+    @Test
+    void liveCoverageAllows200ButRejects201BeforeComputing() {
+        setRequestContext("/api/global-search/admin/coverage");
+        var largestPage = PageRequest.of(0, 200);
+        when(coverageRecomputeService.computeLiveCoveragePage(null, largestPage)).thenReturn(new PageImpl<>(List.of(), largestPage, 0));
+        var response = resource.getLiveCoveragePage(null, largestPage);
+        assertThat(response.getBody()).isEmpty();
+        assertThat(response.getHeaders().getFirst("X-Total-Count")).isEqualTo("0");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> resource.getLiveCoveragePage(null, PageRequest.of(0, 201))).isInstanceOfSatisfying(ResponseStatusException.class,
+                error -> assertThat(error.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+        verify(coverageRecomputeService, never()).computeLiveCoveragePage(null, PageRequest.of(0, 201));
+    }
+
+    @Test
+    void coverageJsonOmitsEmptyMetadataButRetainsFalseZeroAndOffsetMeaning() {
+        var mapper = JsonObjectMapper.get();
+        var computedAt = ZonedDateTime.parse("2026-10-21T12:00:00+02:00");
+        var row = new IngestionCoverageDTO(1, null, null, false, null, IngestionCoverageStatus.EMPTY, 0, computedAt, null, List.of());
+        var json = mapper.readTree(mapper.writeValueAsString(row));
+        assertThat(json.propertyNames()).containsExactlyInAnyOrder("courseId", "active", "status", "coverageGapScore", "computedAt");
+        assertThat(json.get("active").booleanValue()).isFalse();
+        assertThat(json.get("coverageGapScore").intValue()).isZero();
+        assertThat(ZonedDateTime.parse(json.get("computedAt").stringValue()).toInstant()).isEqualTo(computedAt.toInstant());
+        var emptyTitle = new IngestionCoverageDTO(1, "", null, false, "", IngestionCoverageStatus.EMPTY, 0, computedAt, null, List.of());
+        assertThat(mapper.readTree(mapper.writeValueAsString(emptyTitle))).isEqualTo(json);
+    }
+
+    @Test
+    void persistedTypeCountsRoundTripZeroCountersAndIgnoreLegacyFields() {
+        var mapper = JsonObjectMapper.get();
+        var persistedMapper = mapper.rebuild().enable(tools.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
+        var count = new IngestionTypeCountDTO("exercise", 0, 0, 0, 0);
+        var json = mapper.readTree(mapper.writeValueAsString(count));
+        assertThat(json.propertyNames()).containsExactlyInAnyOrder("type", "expected", "indexed", "missing", "orphaned");
+        assertThat(persistedMapper.readValue(mapper.writeValueAsString(count), IngestionTypeCountDTO.class)).isEqualTo(count);
+        assertThat(persistedMapper.readValue("{\"type\":\"exercise\",\"expected\":0,\"indexed\":0,\"missing\":0,\"orphaned\":0,\"legacy\":true}", IngestionTypeCountDTO.class))
+                .isEqualTo(count);
+    }
+
+    private static void setRequestContext(String path) {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

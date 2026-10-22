@@ -5,9 +5,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { CourseBrowserData, IndexedContentObject, IndexedEntityRecord, IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { CourseBrowserData, IndexedContentObject, IndexedEntityRecord } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 import { IndexOverview } from 'app/openapi/model/index-overview';
+import { IngestionCoverage } from 'app/openapi/model/ingestion-coverage';
 
 describe('CourseIngestionDashboardService', () => {
     let service: CourseIngestionDashboardService;
@@ -113,13 +114,13 @@ describe('CourseIngestionDashboardService', () => {
     it('should GET stored coverage with status, search and pagination params and read X-Total-Count', async () => {
         const resultPromise = firstValueFrom(service.getStoredCoverage({ status: 'INCOMPLETE', search: 'algo', page: 0, size: 20, sort: 'coverageGapScore,desc' }));
 
-        const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage` && r.method === 'GET');
-        expect(req.request.params.get('status')).toBe('INCOMPLETE');
+        const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === `/api/global-search/admin/coverage` && r.method === 'GET');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('status')).toBe('INCOMPLETE');
         // The stored path takes the search too, so filtering and searching narrow the same rows.
-        expect(req.request.params.get('search')).toBe('algo');
-        expect(req.request.params.get('page')).toBe('0');
-        expect(req.request.params.get('size')).toBe('20');
-        expect(req.request.params.get('sort')).toBe('coverageGapScore,desc');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('search')).toBe('algo');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('page')).toBe('0');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('size')).toBe('20');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('sort')).toBe('coverageGapScore,desc');
         req.flush(mockCoverage, { headers: { 'X-Total-Count': '57' } });
 
         const result = await resultPromise;
@@ -131,13 +132,13 @@ describe('CourseIngestionDashboardService', () => {
     it('should GET stored coverage without optional params when none are provided', async () => {
         const resultPromise = firstValueFrom(service.getStoredCoverage());
 
-        const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage` && r.method === 'GET');
-        expect(req.request.params.has('status')).toBe(false);
-        expect(req.request.params.has('active')).toBe(false);
-        expect(req.request.params.has('search')).toBe(false);
-        expect(req.request.params.has('page')).toBe(false);
-        expect(req.request.params.has('size')).toBe(false);
-        expect(req.request.params.has('sort')).toBe(false);
+        const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === `/api/global-search/admin/coverage` && r.method === 'GET');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.has('status')).toBe(false);
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.has('active')).toBe(false);
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.has('search')).toBe(false);
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.has('page')).toBe(false);
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.has('size')).toBe(false);
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.has('sort')).toBe(false);
         req.flush([]);
 
         const result = await resultPromise;
@@ -149,9 +150,9 @@ describe('CourseIngestionDashboardService', () => {
     it('should GET stored coverage with the active filter param', async () => {
         const resultPromise = firstValueFrom(service.getStoredCoverage({ active: false, page: 0, size: 20 }));
 
-        const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage` && r.method === 'GET');
-        expect(req.request.params.get('active')).toBe('false');
-        expect(req.request.params.has('status')).toBe(false);
+        const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === `/api/global-search/admin/coverage` && r.method === 'GET');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('active')).toBe('false');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.has('status')).toBe(false);
         req.flush([]);
 
         await resultPromise;
@@ -161,11 +162,11 @@ describe('CourseIngestionDashboardService', () => {
     it('should GET the live coverage page with search and read X-Total-Count', async () => {
         const resultPromise = firstValueFrom(service.getLiveCoveragePage({ search: 'algo', page: 1, size: 10, sort: 'title,asc' }));
 
-        const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage/page` && r.method === 'GET');
-        expect(req.request.params.get('search')).toBe('algo');
-        expect(req.request.params.get('page')).toBe('1');
-        expect(req.request.params.get('size')).toBe('10');
-        expect(req.request.params.get('sort')).toBe('title,asc');
+        const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === `/api/global-search/admin/coverage/page` && r.method === 'GET');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('search')).toBe('algo');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('page')).toBe('1');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('size')).toBe('10');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('sort')).toBe('title,asc');
         req.flush(mockCoverage, { headers: { 'X-Total-Count': '1' } });
 
         const result = await resultPromise;
@@ -177,8 +178,8 @@ describe('CourseIngestionDashboardService', () => {
     it('should default missing stored coverage response fields to an empty page', async () => {
         const resultPromise = firstValueFrom(service.getStoredCoverage({ sort: '' }));
 
-        const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage` && r.method === 'GET');
-        expect(req.request.params.has('sort')).toBe(false);
+        const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === `/api/global-search/admin/coverage` && r.method === 'GET');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.has('sort')).toBe(false);
         req.flush(null);
 
         await expect(resultPromise).resolves.toEqual({ content: [], totalElements: 0 });
@@ -188,12 +189,103 @@ describe('CourseIngestionDashboardService', () => {
     it('should not send an empty search param on the live coverage page', async () => {
         const resultPromise = firstValueFrom(service.getLiveCoveragePage({ search: '', page: 0, size: 20 }));
 
-        const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage/page` && r.method === 'GET');
-        expect(req.request.params.has('search')).toBe(false);
-        expect(req.request.params.get('page')).toBe('0');
+        const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === `/api/global-search/admin/coverage/page` && r.method === 'GET');
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.has('search')).toBe(false);
+        expect(new URL(req.request.urlWithParams, 'https://artemis.test').searchParams.get('page')).toBe('0');
         req.flush([]);
 
         await resultPromise;
+        httpMock.verify();
+    });
+
+    describe.each([
+        { path: '/api/global-search/admin/coverage', load: () => service.getStoredCoverage() },
+        { path: '/api/global-search/admin/coverage/page', load: () => service.getLiveCoveragePage() },
+    ])('$path generated transport', ({ path, load }) => {
+        it('is cold, preserves JSON arrays and uses the total header independently of page length', async () => {
+            const page$ = load();
+            httpMock.expectNone((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === path);
+            const result = firstValueFrom(page$);
+            const req = httpMock.expectOne(path);
+            expect(req.request.method).toBe('GET');
+            expect(req.request.body).toBeNull();
+            expect(req.request.responseType).toBe('json');
+            expect(new URL(req.request.urlWithParams, 'https://artemis.test').search).toBe('');
+            req.flush(mockCoverage, { headers: { 'X-Total-Count': '57' } });
+            await expect(result).resolves.toEqual({ content: mockCoverage, totalElements: 57 });
+            httpMock.verify();
+        });
+
+        it.each([
+            { body: null, headers: undefined, content: [], total: 0 },
+            { body: [], headers: { 'X-Total-Count': '0' }, content: [], total: 0 },
+            { body: mockCoverage, headers: { 'X-Total-Count': '0' }, content: mockCoverage, total: 0 },
+            { body: mockCoverage, headers: undefined, content: mockCoverage, total: 0 },
+            { body: null, headers: { 'X-Total-Count': '12' }, content: [], total: 12 },
+        ])('preserves successful body/header fallbacks: $total', async ({ body, headers, content, total }) => {
+            const result = firstValueFrom(load());
+            httpMock.expectOne(path).flush(body, { headers });
+            await expect(result).resolves.toEqual({ content, totalElements: total });
+            httpMock.verify();
+        });
+
+        it.each([400, 401, 403, 503])('propagates %s without retry and recovers on an explicit read', async (status) => {
+            const result = firstValueFrom(load());
+            const rejected = expect(result).rejects.toMatchObject({ status });
+            httpMock.expectOne(path).flush(null, { status, statusText: 'Failed' });
+            await rejected;
+            httpMock.expectNone(path);
+            const recovered = firstValueFrom(load());
+            httpMock.expectOne(path).flush(mockCoverage, { headers: { 'X-Total-Count': '1' } });
+            await expect(recovered).resolves.toEqual({ content: mockCoverage, totalElements: 1 });
+            httpMock.verify();
+        });
+
+        it('cancels pending HTTP on unsubscription', () => {
+            const subscription = load().subscribe();
+            const req = httpMock.expectOne(path);
+            expect(req.cancelled).toBe(false);
+            subscription.unsubscribe();
+            expect(req.cancelled).toBe(true);
+            httpMock.verify();
+        });
+    });
+
+    it.each(['COMPLETE', 'INCOMPLETE', 'EMPTY'] as const)('serializes stored status %s, page zero and inactive false', async (status) => {
+        const result = firstValueFrom(service.getStoredCoverage({ status, active: false, page: 0, size: 20, sort: 'courseTitle,asc' }));
+        const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === '/api/global-search/admin/coverage');
+        const params = new URL(req.request.urlWithParams, 'https://artemis.test').searchParams;
+        expect([...params.keys()].sort()).toEqual(['active', 'page', 'size', 'sort', 'status']);
+        expect(params.get('status')).toBe(status);
+        expect(params.get('active')).toBe('false');
+        expect(params.get('page')).toBe('0');
+        expect(params.getAll('sort')).toEqual(['courseTitle,asc']);
+        req.flush([]);
+        await result;
+        httpMock.verify();
+    });
+
+    it.each(['stored', 'live'] as const)('preserves special-character searches and a single Spring sort on %s', async (mode) => {
+        const search = '  C++ & 50%_\\ Überprüfung 東京  ';
+        const request = { search, page: 0, sort: 'title,desc' };
+        const result = firstValueFrom(mode === 'stored' ? service.getStoredCoverage(request) : service.getLiveCoveragePage(request));
+        const path = mode === 'stored' ? '/api/global-search/admin/coverage' : '/api/global-search/admin/coverage/page';
+        const req = httpMock.expectOne((r) => new URL(r.urlWithParams, 'https://artemis.test').pathname === path);
+        const params = new URL(req.request.urlWithParams, 'https://artemis.test').searchParams;
+        expect([...params.keys()].sort()).toEqual(['page', 'search', 'sort']);
+        expect(params.get('search')).toBe(search);
+        expect(params.get('page')).toBe('0');
+        expect(params.getAll('sort')).toEqual(['title,desc']);
+        req.flush([]);
+        await result;
+        httpMock.verify();
+    });
+
+    it.each(['stored', 'live'] as const)('omits empty sort and search without inventing pagination on %s', async (mode) => {
+        const request = { sort: '', search: '' };
+        const result = firstValueFrom(mode === 'stored' ? service.getStoredCoverage(request) : service.getLiveCoveragePage(request));
+        httpMock.expectOne(mode === 'stored' ? '/api/global-search/admin/coverage' : '/api/global-search/admin/coverage/page').flush([]);
+        await expect(result).resolves.toEqual({ content: [], totalElements: 0 });
         httpMock.verify();
     });
 

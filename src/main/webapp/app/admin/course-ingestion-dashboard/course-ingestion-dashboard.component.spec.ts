@@ -7,8 +7,9 @@ import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionDashboardComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+
 import { IndexOverview } from 'app/openapi/model/index-overview';
+import { IngestionCoverage } from 'app/openapi/model/ingestion-coverage';
 
 describe('CourseIngestionDashboardComponent', () => {
     let component: CourseIngestionDashboardComponent;
@@ -77,6 +78,9 @@ describe('CourseIngestionDashboardComponent', () => {
         await fixture.whenStable();
 
         expect(fixture.nativeElement.querySelector('jhi-course-ingestion-browser')).toBeTruthy();
+        expect(component['selectedCourse']()).toBe(course);
+        const browser = fixture.debugElement.query((node) => node.name === 'jhi-course-ingestion-browser');
+        expect(browser.componentInstance.course()).toBe(course);
     });
 
     it('reloads the matrix when the browser closes and the overview when the matrix refreshes', async () => {

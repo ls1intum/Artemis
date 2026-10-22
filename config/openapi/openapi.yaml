@@ -1599,6 +1599,10 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            X-Total-Count:
+              style: simple
+              schema: {type: integer, format: int64}
           content:
             application/json:
               schema:
@@ -1620,6 +1624,10 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            X-Total-Count:
+              style: simple
+              schema: {type: integer, format: int64}
           content:
             application/json:
               schema:
@@ -2129,7 +2137,7 @@ components:
         indexed: {type: integer, format: int64}
         missing: {type: integer, format: int64}
         orphaned: {type: integer, format: int64}
-      required: [expected, indexed, missing, orphaned]
+      required: [expected, indexed, missing, orphaned, type]
     QuizQuestionRefinementRequest:
       type: object
       description: Request to refine an existing quiz question using a user prompt
@@ -2556,20 +2564,26 @@ components:
       type: object
       properties:
         courseId: {type: integer, format: int64}
-        courseTitle: {type: string}
-        releaseDate: {type: string, format: date-time}
+        courseTitle:
+          type: [string, 'null']
+        releaseDate:
+          type: [string, 'null']
+          format: date-time
         active: {type: boolean}
-        semester: {type: string}
+        semester:
+          type: [string, 'null']
         status:
           type: string
           enum: [COMPLETE, INCOMPLETE, EMPTY]
         coverageGapScore: {type: integer, format: int32}
         computedAt: {type: string, format: date-time}
-        lastIngestedAt: {type: string, format: date-time}
+        lastIngestedAt:
+          type: [string, 'null']
+          format: date-time
         typeCounts:
           type: array
           items: {$ref: '#/components/schemas/IngestionTypeCount'}
-      required: [active, courseId, coverageGapScore]
+      required: [active, computedAt, courseId, coverageGapScore, status]
     DragAndDropSubmittedAnswerFromStudent:
       required: [mappings, questionId, type]
       type: object

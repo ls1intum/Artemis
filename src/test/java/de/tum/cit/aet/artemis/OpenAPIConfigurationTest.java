@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -11,8 +13,12 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.util.ClassUtils;
 
+import tools.jackson.dataformat.yaml.YAMLMapper;
+
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexOverviewDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
+import de.tum.cit.aet.artemis.globalsearch.web.IngestionCoverageResource;
 import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -56,6 +62,61 @@ class OpenAPIConfigurationTest {
         assertThat(responseSchema.get$ref()).isEqualTo("#/components/schemas/IndexOverview");
         assertThat(openApi.getPaths().get("/api/global-search/admin/index/overview").getGet()).isSameAs(operation);
         assertThat(operation.getTags()).containsExactly("Ingestion Coverage");
+    }
+
+    @Test
+    void shouldKeepTheResolvedCoverageResponseGraph() {
+        var schemas = ModelConverters.getInstance().readAll(IngestionCoverageDTO.class);
+        var items = new Schema<>().$ref("#/components/schemas/IngestionCoverageDTO");
+        var response = new ApiResponse().content(new Content().addMediaType("application/json", new MediaType().schema(new ArraySchema().items(items))));
+        var operation = new Operation().operationId("getStoredCoverage").responses(new ApiResponses().addApiResponse("200", response));
+        var openApi = new OpenAPI().components(new Components().schemas(new HashMap<>(schemas)))
+                .paths(new Paths().addPathItem("/api/global-search/admin/coverage", new PathItem().get(operation)));
+
+        new OpenAPIConfiguration().schemaCustomizer().customise(openApi);
+
+        assertThat(openApi.getComponents().getSchemas()).containsOnlyKeys("IngestionCoverage", "IngestionTypeCount");
+        Schema<?> coverage = openApi.getComponents().getSchemas().get("IngestionCoverage");
+        assertThat(coverage.getRequired()).containsExactlyInAnyOrder("courseId", "active", "coverageGapScore", "status", "computedAt");
+        assertThat(coverage.getProperties()).containsKeys("courseTitle", "releaseDate", "semester", "lastIngestedAt", "typeCounts");
+        assertThat(coverage.getProperties().get("typeCounts").getItems().get$ref()).isEqualTo("#/components/schemas/IngestionTypeCount");
+        Schema<?> count = openApi.getComponents().getSchemas().get("IngestionTypeCount");
+        assertThat(count.getRequired()).containsExactlyInAnyOrder("type", "expected", "indexed", "missing", "orphaned");
+        assertThat(items.get$ref()).isEqualTo("#/components/schemas/IngestionCoverage");
+    }
+
+    @Test
+    void exportedCoverageMappingsKeepSuccessHeadersArrayContentAndPageable() {
+        var specification = YAMLMapper.builder().build().readTree(Path.of("config/openapi/openapi.yaml").toFile());
+        for (String path : List.of("/api/global-search/admin/coverage", "/api/global-search/admin/coverage/page")) {
+            var operation = specification.get("paths").get(path).get("get");
+            var response = operation.get("responses").get("200");
+            var total = response.get("headers").get("X-Total-Count").get("schema");
+            assertThat(total.get("type").stringValue()).isEqualTo("integer");
+            assertThat(total.get("format").stringValue()).isEqualTo("int64");
+            var body = response.get("content").get("application/json").get("schema");
+            assertThat(body.get("type").stringValue()).isEqualTo("array");
+            assertThat(body.get("items").get("$ref").stringValue()).isEqualTo("#/components/schemas/IngestionCoverage");
+            assertThat(operation.get("parameters")).anySatisfy(parameter -> {
+                assertThat(parameter.get("name").stringValue()).isEqualTo("pageable");
+                assertThat(parameter.get("schema").get("$ref").stringValue()).isEqualTo("#/components/schemas/Pageable");
+            });
+        }
+        var coverage = specification.get("components").get("schemas").get("IngestionCoverage");
+        for (String property : List.of("courseTitle", "releaseDate", "semester", "lastIngestedAt")) {
+            assertThat(coverage.get("properties").get(property).get("type")).anySatisfy(type -> assertThat(type.stringValue()).isEqualTo("null"));
+        }
+        for (var method : IngestionCoverageResource.class.getDeclaredMethods()) {
+            if (method.getName().equals("getStoredCoverage") || method.getName().equals("getLiveCoveragePage")) {
+                var response = method.getAnnotation(io.swagger.v3.oas.annotations.responses.ApiResponse.class);
+                assertThat(response.responseCode()).isEqualTo("200");
+                assertThat(response.headers()).singleElement().satisfies(header -> {
+                    assertThat(header.name()).isEqualTo("X-Total-Count");
+                    assertThat(header.schema().type()).isEqualTo("integer");
+                    assertThat(header.schema().format()).isEqualTo("int64");
+                });
+            }
+        }
     }
 
     @Test
