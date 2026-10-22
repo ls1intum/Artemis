@@ -1,9 +1,14 @@
 {
     "artemisApp": {
         "participation": {
+            "onlineEditor": "Online-Editor",
             "home": {
                 "title": "Teilnahmen",
                 "createLabel": "Teilnahme erstellen"
+            },
+            "filterGroup": {
+                "submissions": "Abgaben",
+                "results": "Ergebnisse"
             },
             "created": "Teilnahme erstellt mit ID {{ param }}",
             "updated": "Teilnahme von {{ param }} aktualisiert",
