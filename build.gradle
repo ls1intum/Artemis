@@ -229,9 +229,6 @@ tasks.named('generateGitProperties') {
     inputs.property('reproducible', project.hasProperty('reproducible'))
 }
 
-// Override Spring Boot BOM versions to patched releases addressing known CVEs:
-// thymeleaf: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q, GHSA-c9ph-gxww-7744
-ext["thymeleaf.version"] = "3.1.5.RELEASE"
 // To compute Maven exclusions, io.spring.dependency-management resolves detached copies of the configurations. One of
 // them declares every BOM-managed dependency at its managed version, and none of them has the
 // configurations.configureEach excludes below. The GitHub dependency graph reports those resolutions although no
