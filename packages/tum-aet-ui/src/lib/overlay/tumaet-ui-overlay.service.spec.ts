@@ -34,6 +34,23 @@ describe('TumAetUiOverlayService', () => {
         overlayRef.dispose();
     });
 
+    it('repositions on ancestor scrolling and stops tracking after disposal', () => {
+        const parent = document.createElement('div');
+        document.body.appendChild(parent);
+        parent.appendChild(origin);
+        const overlayRef = service.createConnectedOverlay(origin, 'bottom');
+        vi.spyOn(overlayRef, 'hasAttached').mockReturnValue(true);
+        const updatePosition = vi.spyOn(overlayRef, 'updatePosition').mockImplementation(() => {});
+
+        parent.dispatchEvent(new Event('scroll'));
+        expect(updatePosition).toHaveBeenCalledOnce();
+        overlayRef.dispose();
+        updatePosition.mockClear();
+        parent.dispatchEvent(new Event('scroll'));
+        expect(updatePosition).not.toHaveBeenCalled();
+        parent.remove();
+    });
+
     it('can match the overlay width to its origin', () => {
         vi.spyOn(origin, 'getBoundingClientRect').mockReturnValue({ width: 288 } as DOMRect);
         const overlayRef = service.createConnectedOverlay(origin, 'bottom', { matchOriginWidth: true });
