@@ -59,4 +59,11 @@ describe('ParticipationPrivacyService', () => {
         expect(service.isParticipantInformationHidden({ ...exercise, exerciseGroup: { id: 2 } })).toBe(true);
         expect(service.isParticipantInformationHidden({ ...exercise, type: ExerciseType.TEXT })).toBe(true);
     });
+
+    it('shows the participants of a course quiz, which is assessed automatically, but not of an exam quiz', () => {
+        const service = TestBed.inject(ParticipationPrivacyService);
+        const quiz = { ...exercise, type: ExerciseType.QUIZ, assessmentType: AssessmentType.AUTOMATIC, dueDate: dayjs(now).subtract(1, 'day') };
+        expect(service.isParticipantInformationHidden(quiz)).toBe(false);
+        expect(service.isParticipantInformationHidden({ ...quiz, exerciseGroup: { id: 2 } })).toBe(true);
+    });
 });

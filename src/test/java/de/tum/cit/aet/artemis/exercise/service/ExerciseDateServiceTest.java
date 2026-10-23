@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -188,6 +190,26 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentBatchT
         exercise = exerciseRepository.save(exercise);
 
         assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
+    }
+
+    @Test
+    void assessmentAnonymization_courseQuizIsAssessedAutomatically_participantsStayVisible() {
+        var quizExercise = new QuizExercise();
+
+        assertThat(exerciseDateService.isAssessmentAnonymizationActive(quizExercise)).isFalse();
+    }
+
+    @Test
+    void assessmentAnonymization_examQuiz_participantsStayHidden() {
+        var quizExercise = new QuizExercise();
+        quizExercise.setExerciseGroup(new ExerciseGroup());
+
+        assertThat(exerciseDateService.isAssessmentAnonymizationActive(quizExercise)).isTrue();
+    }
+
+    @Test
+    void assessmentAnonymization_courseModelingExercise_participantsStayHidden() {
+        assertThat(exerciseDateService.isAssessmentAnonymizationActive(exercise)).isTrue();
     }
 
     @Nested

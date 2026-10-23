@@ -2970,6 +2970,26 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         request.getList(url + "page", anonymous ? HttpStatus.FORBIDDEN : HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(identitySearch));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void courseQuizParticipantsAreVisibleToTutors() throws Exception {
+        final Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Quiz", TEST_PREFIX);
+        final QuizExercise quiz = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var participation = participationRepo.save(ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, quiz, student));
+        String url = "/api/exercise/exercises/" + quiz.getId() + "/participations/";
+
+        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", student.getLogin(), "All", null, null);
+        var page = request.getList(url + "page", HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+
+        assertThat(page).hasSize(1);
+        assertThat(page.getFirst().participationId()).isEqualTo(participation.getId());
+        assertThat(page.getFirst().participantName()).isEqualTo(student.getName());
+        assertThat(page.getFirst().participantIdentifier()).isEqualTo(student.getLogin());
+        var direct = request.get("/api/exercise/participations/" + participation.getId(), HttpStatus.OK, StudentParticipationDTO.class);
+        assertThat(direct.participantName()).isEqualTo(student.getName());
+    }
+
     private ProgrammingExerciseStudentParticipation createParticipationForAnonymityTest(boolean teamMode) {
         ProgrammingExerciseStudentParticipation participation;
         if (teamMode) {
