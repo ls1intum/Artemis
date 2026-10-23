@@ -7,7 +7,7 @@ ansible-lint==25.9.2
 attrs==25.4.0
 black==26.3.1
 bracex==2.6
-certifi==2025.10.5
+certifi==2026.10.19
 cffi==2.0.0
 charset-normalizer==3.4.4
 click==8.3.3

@@ -383,49 +383,6 @@
                 "privacyDisclaimer": "Lies die Datenschutzerklärung deiner Einrichtung für Details.",
                 "tryIris": "Iris ausprobieren",
                 "close": "Schließen"
-            },
-            "memories": {
-                "title": "Erinnerungen",
-                "loadingList": "Lade Erinnerungen...",
-                "empty": "Keine Erinnerungen gefunden.",
-                "delete": "Löschen",
-                "deleting": "Wird gelöscht...",
-                "indicator": {
-                    "usedSingular": "1 Erinnerung verwendet",
-                    "usedPlural": "{{count}} Erinnerungen verwendet",
-                    "createdSingular": "1 erstellt",
-                    "createdPlural": "{{count}} erstellt",
-                    "compactUsed": "{{count}} verwendet",
-                    "compactCreated": "{{count}} erstellt",
-                    "usedSectionTitle": "Verwendete Erinnerungen",
-                    "createdSectionTitle": "Erstellte Erinnerungen"
-                },
-                "conflict": {
-                    "warning": "Es gibt Konflikte zwischen Erinnerungen, die gelöst werden müssen.",
-                    "resolve": "Auflösen",
-                    "modalTitle": "Erinnerungskonflikte auflösen",
-                    "noConflicts": "Keine Konflikte.",
-                    "conflictCount": "Konflikt {{ current }} von {{ total }}",
-                    "keepThis": "Diese behalten",
-                    "previous": "Zurück",
-                    "next": "Weiter",
-                    "memoryId": "ID"
-                },
-                "details": {
-                    "loading": "Lade Details...",
-                    "learnings": "Erkenntnisse",
-                    "connections": "Verbindungen",
-                    "reference": "Referenz",
-                    "memories": "Erinnerungen",
-                    "weight": "Gewicht",
-                    "none": "Keine",
-                    "noDetails": "Keine Details verfügbar."
-                },
-                "error": {
-                    "loadFailed": "Fehler beim Laden der Erinnerungen.",
-                    "deleteFailed": "Fehler beim Löschen der Erinnerung.",
-                    "detailsLoadFailed": "Fehler beim Laden der Erinnerungsdetails."
-                }
             }
         },
         "pyrisSearchAskRequest": {

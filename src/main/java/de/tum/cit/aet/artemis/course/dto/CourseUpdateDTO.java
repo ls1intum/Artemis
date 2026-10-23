@@ -79,7 +79,7 @@ public record CourseUpdateDTO(
 
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
         boolean autoOrchestratorEnabled, @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
+        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) implements CourseSettingsDTO {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -91,48 +91,13 @@ public record CourseUpdateDTO(
      * @return the updated course entity
      */
     public Course applyTo(Course course) {
-        // Basic info
-        course.setTitle(title);
-        course.setShortName(shortName);
-        course.setDescription(description);
-        course.setSemester(semester);
-
-        // Dates
-        course.setStartDate(startDate);
-        course.setEndDate(endDate);
-        course.setEnrollmentStartDate(enrollmentStartDate);
-        course.setEnrollmentEndDate(enrollmentEndDate);
-        course.setUnenrollmentEndDate(unenrollmentEndDate);
-
-        // Configuration flags
-        course.setTestCourse(testCourse);
-        course.setOnlineCourse(onlineCourse != null && onlineCourse);
-        course.setLanguage(language);
-        course.setDefaultProgrammingLanguage(defaultProgrammingLanguage);
-
-        // Complaint settings
-        course.setMaxComplaints(maxComplaints);
-        course.setMaxTeamComplaints(maxTeamComplaints);
-        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays);
-        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
-        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
-
-        // UI settings
-        course.setColor(color);
+        applyBasicSettingsTo(course);
         course.setCourseIcon(courseIcon);
-        course.setEnrollmentEnabled(enrollmentEnabled);
-        course.setEnrollmentConfirmationMessage(enrollmentConfirmationMessage);
-        course.setUnenrollmentEnabled(unenrollmentEnabled);
+        applyEnrollmentSettingsTo(course);
         course.setCourseInformationSharingMessagingCodeOfConduct(courseInformationSharingMessagingCodeOfConduct);
 
         // Course features
-        course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setPresentationScore(presentationScore);
-        course.setMaxPoints(maxPoints);
-        course.setAccuracyOfScores(accuracyOfScores);
-        course.setTimeZone(timeZone);
-        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        applyFeatureSettingsTo(course);
 
         // Enforce the auto-orchestration override bounds again here: the @Min(1) bean-validation annotations on this DTO
         // already reject a non-positive override via the validated update endpoint (@Valid on CourseUpdateResource#updateCourse).

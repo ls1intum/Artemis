@@ -167,6 +167,21 @@ describe('courseManagementRoutes', () => {
         expect(creationRoute!.data?.['usesModuleBackground']).toBe(false);
     });
 
+    it('uses tutor metadata only for preloading the eight lazy assessment and exercise subtrees', () => {
+        const children = containerRoute!.children?.find((route) => route.path === ':courseId' && route.children)?.children ?? [];
+        const lazyRoutes = children.filter((route) => route.path === '' && route.loadChildren);
+        expect(lazyRoutes).toHaveLength(8);
+        for (const route of lazyRoutes) {
+            expect(route.data).toEqual({ authorities: IS_AT_LEAST_TUTOR });
+            expect(route.canActivate).toBeUndefined();
+            expect(route.canMatch).toBeUndefined();
+        }
+        const redirects = children.filter((route) => route.redirectTo === 'exercises');
+        expect(redirects.map((route) => route.path)).toEqual(['text-exercises', 'modeling-exercises', 'file-upload-exercises', 'quiz-exercises', 'programming-exercises']);
+        expect(children.indexOf(lazyRoutes[1])).toBeLessThan(children.indexOf(redirects[0]));
+        expect(children.indexOf(redirects[4])).toBeLessThan(children.indexOf(lazyRoutes[2]));
+    });
+
     it('provides course grading inside the management container', () => {
         expect(containerRoute!.children?.some((route) => route.path === ':courseId/grading')).toBe(true);
     });

@@ -1,0 +1,221 @@
+jhi-message-editor {
+    display: block;
+    min-width: 0;
+}
+
+jhi-message-editor .message-composer {
+    border: 1px solid var(--artemis-control-border);
+    background: var(--artemis-control-background);
+    color: var(--artemis-control-color);
+}
+
+// Explicitly override the flex utility while retaining the tools and pending uploads.
+jhi-message-editor .message-editor-advanced-toolbar[hidden],
+jhi-message-editor .message-editor-advanced-controls[hidden],
+jhi-message-editor .message-resource-controls[hidden] {
+    display: none;
+}
+
+jhi-message-editor .message-editor-divider {
+    border-color: var(--border-color);
+}
+
+.message-editor-muted {
+    color: var(--artemis-control-muted);
+}
+
+jhi-message-editor .message-editor-content {
+    min-height: 5rem;
+    max-height: 20rem;
+    overflow: auto;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    padding: 0.75rem;
+    outline: none;
+
+    // The editable DOM belongs to the editing adapter, so Angular does not add encapsulation attributes.
+    :is(p, ul, ol, blockquote, pre) {
+        margin: 0 0 0.5rem;
+    }
+
+    ul {
+        list-style: disc;
+        padding-inline-start: 1.5rem;
+    }
+
+    ol {
+        list-style: decimal;
+        padding-inline-start: 1.5rem;
+    }
+
+    [data-message-reference] {
+        border-radius: 0.25rem;
+        background: color-mix(in srgb, var(--primary) 24%, var(--artemis-control-background));
+        outline: 1px solid color-mix(in srgb, var(--primary) 60%, var(--artemis-control-border));
+        color: var(--artemis-control-color);
+        padding-inline: 0.2rem;
+        box-decoration-break: clone;
+    }
+
+    [data-reference-type='image'] {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        max-width: 100%;
+        padding: 0.25rem;
+        vertical-align: top;
+        font-size: 0.75rem;
+
+        img {
+            max-width: 100%;
+            max-height: 10rem;
+            object-fit: contain;
+        }
+    }
+
+    a {
+        color: color-mix(in srgb, var(--primary) 70%, var(--artemis-control-color));
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+        cursor: text;
+    }
+
+    blockquote {
+        border-inline-start: 1px solid var(--border-color);
+        padding-inline-start: 0.75rem;
+        color: var(--artemis-control-muted);
+    }
+
+    code {
+        font-family: monospace;
+        background: var(--hover-slightly-darker-body-bg);
+    }
+
+    pre {
+        padding: 0.5rem;
+        background: var(--hover-slightly-darker-body-bg);
+        white-space: pre-wrap;
+
+        > code {
+            display: block;
+            line-height: inherit;
+            background: transparent;
+        }
+    }
+
+    ::selection {
+        background: color-mix(in srgb, var(--primary) 25%, var(--artemis-control-background));
+    }
+
+    // WebKit paints a whole line for a native selection around contenteditable=false.
+    // Keep the semantic selection, but paint only the selected item ourselves.
+    &:has([data-message-selected]) {
+        &::selection,
+        ::selection {
+            background: transparent;
+            color: inherit;
+        }
+    }
+
+    [data-message-selected] {
+        background: color-mix(in srgb, var(--primary) 25%, var(--artemis-control-background));
+        outline: 2px solid var(--primary);
+        outline-offset: 1px;
+        border-radius: 0.25rem;
+    }
+}
+
+.message-suggestions {
+    border: 1px solid var(--border-color);
+    background: var(--popover-bg);
+    color: var(--body-color);
+    width: min(28rem, calc(100vw - 2rem));
+    max-height: 18rem;
+    overflow: auto;
+}
+
+.message-suggestion[aria-selected='true'] {
+    background: var(--hover-slightly-darker-body-bg);
+}
+
+.message-resource-picker {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: min(28rem, calc(100vw - 1rem));
+    max-height: min(32rem, calc(100dvh - 1rem));
+
+    jhi-emoji-picker,
+    .emoji-mart {
+        display: block;
+        max-width: 100%;
+    }
+}
+
+.message-resource-footer {
+    border-color: var(--border-color);
+}
+
+.message-resource-search {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+
+    input {
+        width: 100%;
+        height: 2rem;
+        min-height: 0;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+.message-resource-picker.message-emoji-picker {
+    width: min(21.5rem, calc(100vw - 1rem));
+    padding: 0;
+
+    .emoji-mart {
+        width: 100% !important;
+        border: 0;
+    }
+
+    .emoji-mart-search input {
+        height: 2rem;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+    }
+
+    .emoji-mart-scroll {
+        height: min(12rem, calc(100dvh - 9rem));
+    }
+}
+
+.message-slide-preview-pane {
+    pointer-events: none;
+}
+
+.message-slide-preview {
+    width: min(24rem, calc(100vw - 1rem));
+    max-height: calc(100dvh - 1rem);
+
+    img {
+        display: block;
+        width: 100%;
+        max-height: min(18rem, calc(100dvh - 5rem));
+        object-fit: contain;
+    }
+}
+
+// Keep a single visible focus border inside compact popup fields.
+.message-resource-picker input:focus {
+    border-color: var(--primary);
+    outline: none;
+    outline-offset: 0;
+    box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+// Keep keyboard and pointer formatting state visible using the existing theme accent.
+jhi-message-editor .message-editor-divider button[aria-pressed='true'] {
+    background: color-mix(in srgb, var(--primary) 15%, var(--artemis-control-background));
+    color: var(--artemis-control-color);
+}

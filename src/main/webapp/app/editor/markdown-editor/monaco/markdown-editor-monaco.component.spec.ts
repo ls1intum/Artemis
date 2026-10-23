@@ -16,29 +16,15 @@ import { TestCaseAction } from 'app/editor/monaco-editor/model/actions/test-case
 import { TaskAction } from 'app/editor/monaco-editor/model/actions/task.action';
 import { FullscreenAction } from 'app/editor/monaco-editor/model/actions/fullscreen.action';
 import { MonacoEditorOptionPreset } from 'app/editor/monaco-editor/model/monaco-editor-option-preset.model';
-import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS } from 'app/editor/monaco-editor/monaco-editor-option.helper';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
-import { CommunicationService } from 'app/communication/service/communication.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
-import { PostingEditType } from 'app/communication/communication.util';
-import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
-import { EmojiAction } from 'app/editor/monaco-editor/model/actions/emoji.action';
-import { LectureAttachmentReferenceAction, LectureWithDetails } from 'app/editor/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-import { ReferenceType } from 'app/communication/communication.util';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { EditorRange } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
-import { MenuItem } from 'primeng/api';
-import { TieredMenu } from 'primeng/tieredmenu';
-import { of } from 'rxjs';
 
 // Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
 const originalResizeObserver = globalThis.ResizeObserver;
@@ -68,8 +54,6 @@ describe('MarkdownEditorMonacoComponent', () => {
             providers: [
                 MockProvider(FileUploaderService),
                 MockProvider(AlertService),
-                MockProvider(CourseConversationsService),
-                MockProvider(CommunicationService),
                 MockProvider(ProfileService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -79,9 +63,9 @@ describe('MarkdownEditorMonacoComponent', () => {
             // Swap the heavy editor children for lightweight mocks; the Monaco editor in particular must not load
             // real Monaco. PrimeNG components and other directives/pipes stay real.
             .overrideComponent(MarkdownEditorMonacoComponent, {
-                remove: { imports: [MonacoEditorComponent, PostingButtonComponent, RedirectToIrisButtonComponent] },
+                remove: { imports: [MonacoEditorComponent] },
                 add: {
-                    imports: [MockComponent(MonacoEditorComponent), MockComponent(PostingButtonComponent), MockComponent(RedirectToIrisButtonComponent)],
+                    imports: [MockComponent(MonacoEditorComponent)],
                 },
             })
             .compileComponents();
@@ -421,7 +405,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         const executeInCurrentEditorStub = vi.spyOn(action, 'executeInCurrentEditor').mockImplementation(() => {});
         fixture.componentRef.setInput('defaultActions', [action]);
         fixture.detectChanges();
-        comp.handleActionClick(new MouseEvent('click'), action);
+        fixture.nativeElement.querySelector(`button:has(svg[data-icon="${action.icon!.iconName}"])`).click();
         expect(executeInCurrentEditorStub).toHaveBeenCalledOnce();
     });
 
@@ -508,14 +492,6 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(comp.targetWrapperHeight()).toBe(300 - wrapperTop - dragElemHeight / 2);
     });
 
-    it('should use the correct options to enable text field mode', () => {
-        fixture.detectChanges();
-        const applySpy = vi.spyOn(comp.monacoEditor()!, 'applyOptionPreset');
-        comp.enableTextFieldMode();
-        expect(applySpy).toHaveBeenCalledOnce();
-        expect(applySpy).toHaveBeenCalledWith(COMMUNICATION_MARKDOWN_EDITOR_OPTIONS);
-    });
-
     it('should apply option presets to the editor', () => {
         fixture.detectChanges();
         const applySpy = vi.spyOn(comp.monacoEditor()!, 'applyOptionPreset');
@@ -594,41 +570,6 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(renderedHtml).toContain('<h1>Heading</h1>');
         expect(renderedHtml).toContain('<ul>');
         expect(renderedHtml).toContain('<blockquote>');
-    });
-
-    it('should always show all text actions if not in communication mode', () => {
-        fixture.componentRef.setInput('isInCommunication', false);
-        fixture.detectChanges();
-
-        expect(comp.showTextStyleActions()).toBe(true);
-        expect(comp.showNonTextStyleActions()).toBe(true);
-    });
-
-    it('should hide text style actions in communication mode by default', () => {
-        fixture.componentRef.setInput('isInCommunication', true);
-        fixture.detectChanges();
-
-        expect(comp.showTextStyleActions()).toBe(false);
-        expect(comp.showNonTextStyleActions()).toBe(true);
-    });
-
-    it('should show text style actions in communication mode when text is selected', () => {
-        fixture.componentRef.setInput('isInCommunication', true);
-        fixture.detectChanges();
-
-        comp.updateEditorActionsVisibility({ startLineNumber: 1, endLineNumber: 1, startColumn: 10, endColumn: 20 });
-
-        expect(comp.showTextStyleActions()).toBe(true);
-        expect(comp.showNonTextStyleActions()).toBe(false);
-    });
-
-    it('should emit closeEditor on close button click', () => {
-        fixture.detectChanges();
-        const emitSpy = vi.spyOn(comp.closeEditor, 'emit');
-
-        comp.onCloseButtonClick();
-
-        expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should dispose selection change listener on destroy', () => {
@@ -884,52 +825,6 @@ describe('MarkdownEditorMonacoComponent', () => {
         });
     });
 
-    describe('send and iris buttons in the preview container', () => {
-        // In edit mode the toolbar is visible and carries the send button with the id "save". Everything else inside a hidden container belongs to the preview.
-        const sendButtons = () => Array.from(fixture.nativeElement.querySelectorAll('button[jhi-posting-button]')) as HTMLElement[];
-        const irisButtons = () => Array.from(fixture.nativeElement.querySelectorAll('jhi-redirect-to-iris-button')) as HTMLElement[];
-        const previewSendButtons = () => sendButtons().filter((button) => button.id !== 'save');
-        const previewIrisButtons = () => irisButtons().filter((button) => button.closest('.hidden') !== null);
-
-        it.each([
-            { isInCommunication: true, editType: PostingEditType.CREATE, expectedButtons: 1 },
-            { isInCommunication: true, editType: undefined, expectedButtons: 1 },
-            { isInCommunication: true, editType: PostingEditType.UPDATE, expectedButtons: 0 },
-            { isInCommunication: false, editType: PostingEditType.CREATE, expectedButtons: 0 },
-            { isInCommunication: false, editType: undefined, expectedButtons: 0 },
-        ])('should render $expectedButtons send and iris button in the hidden preview for communication=$isInCommunication and editType=$editType', (testCase) => {
-            fixture.componentRef.setInput('isInCommunication', testCase.isInCommunication);
-            fixture.componentRef.setInput('editType', testCase.editType);
-            fixture.detectChanges();
-
-            expect(previewSendButtons()).toHaveLength(testCase.expectedButtons);
-            expect(previewIrisButtons()).toHaveLength(testCase.expectedButtons);
-            for (const button of previewSendButtons()) {
-                expect(button.closest('.hidden')).not.toBeNull();
-            }
-            // The toolbar offers the same actions next to the editor, so the total is one more than the preview alone.
-            expect(sendButtons()).toHaveLength(testCase.expectedButtons * 2);
-            expect(irisButtons()).toHaveLength(testCase.expectedButtons * 2);
-        });
-
-        it('should reveal the send and iris button of the preview container with the preview tab', () => {
-            fixture.componentRef.setInput('isInCommunication', true);
-            fixture.componentRef.setInput('editType', PostingEditType.CREATE);
-            fixture.detectChanges();
-            const sendButton = previewSendButtons()[0];
-            const irisButton = previewIrisButtons()[0];
-            expect(sendButton.closest('.hidden')).not.toBeNull();
-            expect(irisButton.closest('.hidden')).not.toBeNull();
-
-            comp.onTabChange(TAB_PREVIEW);
-            fixture.detectChanges();
-
-            expect(sendButton.isConnected).toBe(true);
-            expect(sendButton.closest('.hidden')).toBeNull();
-            expect(irisButton.closest('.hidden')).toBeNull();
-        });
-    });
-
     describe('selection and scroll listeners', () => {
         let selectionListener: (selection: EditorRange | undefined) => void;
         let scrollListener: () => void;
@@ -1034,46 +929,6 @@ describe('MarkdownEditorMonacoComponent', () => {
             comp['emitSelectionWithScreenPosition']();
 
             expect(selectionEmitSpy).not.toHaveBeenCalled();
-        });
-
-        it('should toggle the text style actions with the selection in communication mode', () => {
-            fixture.componentRef.setInput('isInCommunication', true);
-            mockEditorQueries('selected');
-            expect(comp.showTextStyleActions()).toBe(true);
-
-            selectionListener(selection(4, 9));
-            expect(comp.showTextStyleActions()).toBe(true);
-            expect(comp.showNonTextStyleActions()).toBe(false);
-
-            selectionListener({ startLineNumber: 2, endLineNumber: 2, startColumn: 4, endColumn: 4 });
-            // A collapsed selection (just the cursor) switches back to the non text style actions.
-            expect(comp.showTextStyleActions()).toBe(false);
-            expect(comp.showNonTextStyleActions()).toBe(true);
-        });
-
-        it('should not change the visible actions outside of communication mode', () => {
-            mockEditorQueries('selected');
-            const visibilitySpy = vi.spyOn(comp, 'updateEditorActionsVisibility');
-
-            selectionListener(selection(4, 9));
-
-            expect(visibilitySpy).not.toHaveBeenCalled();
-            expect(comp.showTextStyleActions()).toBe(true);
-            expect(comp.showNonTextStyleActions()).toBe(true);
-        });
-
-        it('should keep the visible actions if they already match an empty selection', () => {
-            comp.showTextStyleActions.set(false);
-            comp.showNonTextStyleActions.set(true);
-            const showTextStyleSetSpy = vi.spyOn(comp.showTextStyleActions, 'set');
-            const showNonTextStyleSetSpy = vi.spyOn(comp.showNonTextStyleActions, 'set');
-
-            comp.updateEditorActionsVisibility(undefined);
-
-            expect(showTextStyleSetSpy).not.toHaveBeenCalled();
-            expect(showNonTextStyleSetSpy).not.toHaveBeenCalled();
-            expect(comp.showTextStyleActions()).toBe(false);
-            expect(comp.showNonTextStyleActions()).toBe(true);
         });
 
         it('should hide the inline button when the editor scrolls', () => {
@@ -1267,24 +1122,6 @@ describe('MarkdownEditorMonacoComponent', () => {
             expect(attachmentStub).toHaveBeenCalledWith({ text: 'test.png', url: 'https://test.invalid/test.png' });
         });
 
-        it('should upload into the current conversation in communication mode and fall back to the given conversation', async () => {
-            const communicationService = TestBed.inject(CommunicationService);
-            vi.spyOn(communicationService, 'getCourse').mockReturnValue({ id: 5 } as any);
-            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined as any);
-            const conversationUploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFileInCurrentConversation').mockRejectedValue(new Error('Upload failed'));
-            const plainUploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFile');
-            fixture.componentRef.setInput('useCommunicationForFileUpload', true);
-            fixture.componentRef.setInput('fallbackConversationId', 77);
-            fixture.detectChanges();
-            const file = new File([''], 'test.png');
-
-            comp.embedFiles([file]);
-
-            await vi.waitFor(() => expect(conversationUploadSpy).toHaveBeenCalledOnce());
-            expect(conversationUploadSpy).toHaveBeenCalledWith(file, 5, 77);
-            expect(plainUploadSpy).not.toHaveBeenCalled();
-        });
-
         it('should reject an upload response that cannot be embedded', () => {
             fixture.componentRef.setInput('defaultActions', [new UrlAction()]);
             fixture.detectChanges();
@@ -1304,19 +1141,6 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     describe('action buttons', () => {
-        it('should hand the click position to the emoji action before executing it', () => {
-            const emojiAction = new EmojiAction({} as any, {} as any, {} as any);
-            const setPointSpy = vi.spyOn(emojiAction, 'setPoint');
-            const executeSpy = vi.spyOn(emojiAction, 'executeInCurrentEditor').mockImplementation(() => {});
-            fixture.detectChanges();
-
-            comp.handleActionClick(new MouseEvent('click', { clientX: 12, clientY: 34 }), emojiAction);
-
-            expect(setPointSpy).toHaveBeenCalledOnce();
-            expect(setPointSpy).toHaveBeenCalledWith({ x: 12, y: 34 });
-            expect(executeSpy).toHaveBeenCalledOnce();
-        });
-
         it('should not insert a color for an unknown hex code', () => {
             fixture.detectChanges();
             const executeSpy = vi.spyOn(comp.colorAction()!, 'executeInCurrentEditor').mockImplementation(() => {});
@@ -1324,125 +1148,6 @@ describe('MarkdownEditorMonacoComponent', () => {
             comp.onSelectColor('#123456');
 
             expect(executeSpy).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('lecture reference menu', () => {
-        const slide = (id: number) => ({ id }) as Slide;
-        const unitWithLink = (name: string, slides?: Slide[]) => ({ name, attachment: { link: `/api/${name}.pdf` }, slides }) as unknown as AttachmentVideoUnit;
-        const unitWithoutLink = { name: 'no-link', attachment: {} } as unknown as AttachmentVideoUnit;
-
-        let lectureAction: LectureAttachmentReferenceAction;
-        let executeSpy: ReturnType<typeof vi.spyOn>;
-        let menu: TieredMenu;
-
-        beforeEach(() => {
-            lectureAction = new LectureAttachmentReferenceAction(
-                { getCourse: () => ({ id: 1 }) } as unknown as CommunicationService,
-                { findAllByCourseIdWithSlides: () => of(new HttpResponse<any[]>({ body: [] })) } as any,
-                {} as any,
-            );
-            executeSpy = vi.spyOn(lectureAction, 'executeInCurrentEditor').mockImplementation(() => {});
-            menu = { toggle: vi.fn() } as unknown as TieredMenu;
-            vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key) => `translated:${key}`);
-            fixture.detectChanges();
-        });
-
-        const openMenu = (lectures: LectureWithDetails[]): MenuItem[] => {
-            lectureAction.lecturesWithDetails = lectures;
-            const event = new MouseEvent('click');
-            comp.openLectureMenu(menu, event, lectureAction);
-            expect(menu.toggle).toHaveBeenCalledOnce();
-            expect(menu.toggle).toHaveBeenCalledWith(event);
-            return comp['lectureMenuModel']();
-        };
-
-        it('should show a single disabled entry if there are no lectures', () => {
-            expect(openMenu([])).toEqual([{ label: 'translated:global.generic.emptyList', disabled: true }]);
-        });
-
-        it('should reference a lecture without attachments directly', () => {
-            const lecture: LectureWithDetails = { id: 1, title: 'Lecture 1', attachmentVideoUnits: [unitWithoutLink] };
-
-            const items = openMenu([lecture]);
-
-            expect(items).toHaveLength(1);
-            expect(items[0].label).toBe('Lecture 1');
-            expect(items[0].items).toBeUndefined();
-            items[0].command!({} as any);
-            expect(executeSpy).toHaveBeenCalledWith({ reference: ReferenceType.LECTURE, lecture });
-        });
-
-        it('should offer a submenu with the lecture itself and its attachment units', () => {
-            const plainUnit = unitWithLink('plain-unit');
-            const lecture: LectureWithDetails = { id: 2, title: 'Lecture 2', attachmentVideoUnits: [unitWithoutLink, plainUnit] };
-
-            const items = openMenu([lecture]);
-
-            expect(items).toHaveLength(1);
-            expect(items[0].label).toBe('Lecture 2');
-            const submenu = items[0].items!;
-            // The unit without an attachment link is not referencable and therefore not listed.
-            expect(submenu.map((item) => item.label)).toEqual(['Lecture 2', 'plain-unit']);
-
-            submenu[0].command!({} as any);
-            expect(executeSpy).toHaveBeenLastCalledWith({ reference: ReferenceType.LECTURE, lecture });
-            submenu[1].command!({} as any);
-            expect(executeSpy).toHaveBeenLastCalledWith({ reference: ReferenceType.ATTACHMENT_UNITS, lecture, attachmentVideoUnit: plainUnit });
-        });
-
-        it('should list the slides of an attachment unit with their number', () => {
-            const slides = [slide(10), slide(11)];
-            const unit = unitWithLink('slides-unit', slides);
-            const lecture: LectureWithDetails = { id: 3, title: 'Lecture 3', attachmentVideoUnits: [unit] };
-
-            const items = openMenu([lecture]);
-
-            const unitMenu = items[0].items![1];
-            expect(unitMenu.label).toBe('slides-unit');
-            const unitItems = unitMenu.items!;
-            expect(unitItems.map((item) => item.label)).toEqual([
-                'slides-unit',
-                'translated:artemisApp.markdownEditor.slideWithNumber',
-                'translated:artemisApp.markdownEditor.slideWithNumber',
-            ]);
-            expect(TestBed.inject(TranslateService).instant).toHaveBeenCalledWith('artemisApp.markdownEditor.slideWithNumber', { number: 1 });
-            expect(TestBed.inject(TranslateService).instant).toHaveBeenCalledWith('artemisApp.markdownEditor.slideWithNumber', { number: 2 });
-
-            unitItems[0].command!({} as any);
-            expect(executeSpy).toHaveBeenLastCalledWith({ reference: ReferenceType.ATTACHMENT_UNITS, lecture, attachmentVideoUnit: unit });
-            unitItems[2].command!({} as any);
-            expect(executeSpy).toHaveBeenLastCalledWith({ reference: ReferenceType.SLIDE, lecture, slide: slides[1], attachmentVideoUnit: unit, slideIndex: 2 });
-        });
-
-        it('should rebuild the menu with the lectures loaded since the last time it was opened', () => {
-            expect(openMenu([])).toHaveLength(1);
-            expect(comp['lectureMenuModel']()[0].disabled).toBe(true);
-
-            lectureAction.lecturesWithDetails = [
-                { id: 1, title: 'First' },
-                { id: 2, title: 'Second' },
-            ];
-            comp.openLectureMenu(menu, new MouseEvent('click'), lectureAction);
-
-            expect(comp['lectureMenuModel']().map((item) => item.label)).toEqual(['First', 'Second']);
-        });
-
-        it.each([
-            { description: 'no attachment units', lecture: { id: 1, title: 'L' }, expected: false },
-            { description: 'only units without an attachment', lecture: { id: 1, title: 'L', attachmentVideoUnits: [{ name: 'u' } as AttachmentVideoUnit] }, expected: false },
-            {
-                description: 'only attachments without a link',
-                lecture: { id: 1, title: 'L', attachmentVideoUnits: [{ name: 'u', attachment: {} } as unknown as AttachmentVideoUnit] },
-                expected: false,
-            },
-            {
-                description: 'an attachment with a link',
-                lecture: { id: 1, title: 'L', attachmentVideoUnits: [{ name: 'u', attachment: {} } as unknown as AttachmentVideoUnit, unitWithLink('linked')] },
-                expected: true,
-            },
-        ])('should report referencable attachments for a lecture with $description', ({ lecture, expected }) => {
-            expect(comp.hasReferencableAttachments(lecture)).toBe(expected);
         });
     });
 
