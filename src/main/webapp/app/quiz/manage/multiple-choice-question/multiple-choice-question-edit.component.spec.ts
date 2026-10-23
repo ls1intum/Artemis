@@ -317,6 +317,22 @@ describe('MultipleChoiceQuestionEditComponent', async () => {
         expect(pointsInput.maxFractionDigits).toBe(2);
     });
 
+    it('should take the points that are typed with a decimal separator', () => {
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('input#score');
+        input.focus();
+        input.setSelectionRange(0, input.value.length);
+        for (const character of '5.5') {
+            const code = character.charCodeAt(0);
+            const key = { key: character, charCode: code, keyCode: code, which: code, bubbles: true, cancelable: true };
+            input.dispatchEvent(new KeyboardEvent('keydown', key));
+            input.dispatchEvent(new KeyboardEvent('keypress', key));
+        }
+        input.dispatchEvent(new Event('blur'));
+
+        expect(input.value).toBe('5.5');
+        expect(component.question().points).toBe(5.5);
+    });
+
     it('should trigger delete button', async () => {
         const spy = vi.spyOn(component, 'deleteQuestion');
         const deleteButton = fixture.debugElement.query(By.css(`.question-action-btn--delete`));

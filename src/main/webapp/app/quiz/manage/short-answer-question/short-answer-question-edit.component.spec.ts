@@ -316,6 +316,22 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(pointsInput.maxFractionDigits).toBe(2);
     });
 
+    it('should take the points that are typed with a decimal separator', () => {
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('input#score');
+        input.focus();
+        input.setSelectionRange(0, input.value.length);
+        for (const character of '5.5') {
+            const code = character.charCodeAt(0);
+            const key = { key: character, charCode: code, keyCode: code, which: code, bubbles: true, cancelable: true };
+            input.dispatchEvent(new KeyboardEvent('keydown', key));
+            input.dispatchEvent(new KeyboardEvent('keypress', key));
+        }
+        input.dispatchEvent(new Event('blur'));
+
+        expect(input.value).toBe('5.5');
+        expect(component.shortAnswerQuestion.points).toBe(5.5);
+    });
+
     describe('telling the parent when validity changes', () => {
         // The quiz reads whether it is valid live but keeps the reasons it explains a blocked save with cached, so a
         // change that is not announced leaves Save refusing to submit under an empty tooltip.
