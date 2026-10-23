@@ -62,6 +62,7 @@ class UserAiPreferenceServiceConcurrencyTest {
 
         UserAiPreferenceService service = new UserAiPreferenceService(repository);
 
-        org.assertj.core.api.Assertions.assertThatExceptionOfType(DataIntegrityViolationException.class).isThrownBy(() -> service.setMemirisEnabled(USER_ID, false));
+        org.assertj.core.api.Assertions.assertThatExceptionOfType(DataIntegrityViolationException.class)
+                .isThrownBy(() -> service.recordDecision(USER_ID, AiSelectionDecision.CLOUD_AI, ZonedDateTime.now()));
     }
 }

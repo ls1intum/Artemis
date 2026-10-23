@@ -137,6 +137,85 @@ describe('CommunicationService', () => {
         vi.restoreAllMocks();
     });
 
+    describe('unread websocket ownership', () => {
+        it.each([ConversationType.CHANNEL, ConversationType.GROUP_CHAT, ConversationType.ONE_TO_ONE])(
+            'leaves %s personal-topic counting to the course conversation service',
+            async (type) => {
+                await Promise.resolve();
+                const socket = TestBed.inject(WebsocketService);
+                if (!(socket instanceof MockWebsocketService)) {
+                    throw new Error('Expected the shared websocket test service');
+                }
+                const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+                communicationService.setCourse(course);
+                socket.emit<PostBroadcastDTO>('/topic/user/99/notifications/conversations', {
+                    action: CommunicationCrudAction.CREATE,
+                    post: { id: 900, author: { id: 1, internal: true }, creationDate: dayjs(), conversation: { id: 77, type } },
+                });
+                expect(handleUnread).not.toHaveBeenCalled();
+            },
+        );
+
+        it('counts one course-wide post once even when the visible-message stream uses the same topic', async () => {
+            await Promise.resolve();
+            const socket = TestBed.inject(WebsocketService);
+            if (!(socket instanceof MockWebsocketService)) {
+                throw new Error('Expected the shared websocket test service');
+            }
+            const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+            communicationService.setCourse(course);
+            const topic = `/topic/communication/courses/${course.id}`;
+            communicationService.createWebsocketSubscription(topic);
+            const created = dayjs();
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.CREATE,
+                post: { id: 900, author: { id: 1, internal: true }, creationDate: created, conversation: { id: 77, type: ConversationType.CHANNEL } },
+            });
+            expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77, created);
+        });
+
+        it('routes an active course-wide post to the shared owner once, including when manually unread', async () => {
+            await Promise.resolve();
+            const socket = TestBed.inject(WebsocketService);
+            if (!(socket instanceof MockWebsocketService)) throw new Error('Expected the shared websocket test service');
+            const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+            const directPatch = vi.spyOn(conversationService, 'markAsRead');
+            communicationService['currentConversation'] = { id: 77 };
+            communicationService['currentPostContextFilter'] = { conversationIds: [77] };
+            communicationService.setCourse(course);
+            const topic = `/topic/communication/courses/${course.id}`;
+            communicationService.createWebsocketSubscription(topic);
+            const created = dayjs();
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.CREATE,
+                post: { id: 901, author: { id: 1, internal: true }, creationDate: created, conversation: { id: 77 } },
+            });
+            expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77, created);
+            vi.runOnlyPendingTimers();
+            expect(directPatch).not.toHaveBeenCalled();
+        });
+
+        it('does not count own posts or edits received on the course-wide topic', async () => {
+            await Promise.resolve();
+            const socket = TestBed.inject(WebsocketService);
+            if (!(socket instanceof MockWebsocketService)) {
+                throw new Error('Expected the shared websocket test service');
+            }
+            const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+            communicationService.setCourse(course);
+            const topic = `/topic/communication/courses/${course.id}`;
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.CREATE,
+                post: { id: 900, author: { id: 99, internal: true }, conversation: { id: 77, type: ConversationType.CHANNEL } },
+            });
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.UPDATE,
+                post: { id: 900, author: { id: 1, internal: true }, conversation: { id: 77, type: ConversationType.CHANNEL } },
+            });
+            expect(handleUnread).not.toHaveBeenCalled();
+        });
+    });
+
     it('finishes only the requested page and calls its anchor hook before publishing the response', () => {
         const response = new Subject<HttpResponse<Post[]>>();
         vi.spyOn(postService, 'getPosts').mockReturnValue(response);
@@ -154,6 +233,55 @@ describe('CommunicationService', () => {
         response.complete();
         expect(events).toEqual(['anchor', 'posts', 'complete:true']);
         subscription.unsubscribe();
+    });
+
+    describe('read bookkeeping of the messages request', () => {
+        it('reports the loaded messages of a single conversation as a read, also when a newer request owns the cache', () => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const courseConversations = TestBed.inject(CourseConversationsService);
+            const readRequest = { unreadRevision: 2 };
+            const requested = vi.spyOn(courseConversations, 'messagesRequested').mockReturnValue(readRequest);
+            const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
+            const olderResponse = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts').mockReturnValueOnce(olderResponse).mockReturnValue(new Subject<HttpResponse<Post[]>>());
+
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [7], page: 0 }, true);
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [8], page: 0 }, true);
+            expect(requested).toHaveBeenCalledWith(7);
+            expect(requested).toHaveBeenCalledWith(8);
+            expect(loaded).not.toHaveBeenCalled();
+
+            olderResponse.next(new HttpResponse({ body: [post] }));
+
+            expect(loaded).toHaveBeenCalledExactlyOnceWith(7, readRequest);
+        });
+
+        it.each([
+            ['a search', { courseId: 1, conversationIds: [7], searchText: 'term', page: 0 }],
+            ['several conversations', { courseId: 1, conversationIds: [7, 8], page: 0 }],
+            ['no conversation', { courseId: 1, page: 0 }],
+        ])('does not report the response of %s as a read', (_name, filter) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const courseConversations = TestBed.inject(CourseConversationsService);
+            const requested = vi.spyOn(courseConversations, 'messagesRequested');
+            const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [post] })));
+
+            communicationService.getFilteredPosts(filter as PostContextFilter, true);
+
+            expect(requested).not.toHaveBeenCalled();
+            expect(loaded).not.toHaveBeenCalled();
+        });
+
+        it('does not report a failed messages request as a read', () => {
+            const courseConversations = TestBed.inject(CourseConversationsService);
+            const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
+            vi.spyOn(postService, 'getPosts').mockReturnValue(throwError(() => new Error('failed')));
+
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [7], page: 0 }, true);
+
+            expect(loaded).not.toHaveBeenCalled();
+        });
     });
 
     it('retries an unsuccessful request before allowing cache hits', () => {

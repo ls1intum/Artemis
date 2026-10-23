@@ -1,3 +1,4 @@
+import { OptionControl } from '../internal/option-control';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -6,7 +7,6 @@ import {
     Injector,
     TemplateRef,
     ViewContainerRef,
-    booleanAttribute,
     computed,
     contentChild,
     effect,
@@ -66,28 +66,13 @@ let nextMultiSelectId = 0;
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumAetUiMultiSelectComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TumAetUiMultiSelectComponent implements ControlValueAccessor {
+export class TumAetUiMultiSelectComponent extends OptionControl implements ControlValueAccessor {
     private readonly overlayService = inject(TumAetUiOverlayService);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
     private readonly document = inject(DOCUMENT);
     private readonly injector = inject(Injector);
     private readonly formField = inject(TUM_AET_UI_FORM_FIELD, { optional: true });
-
-    readonly options = input<readonly unknown[]>([]);
-
-    /** Property name used as the visible label for object options. */
-    readonly optionLabel = input<string>();
-
-    /** Property name written to the form value; omit it to write the option itself. */
-    readonly optionValue = input<string>();
-
-    readonly placeholder = input<string>();
-
-    readonly disabled = input(false, { transform: booleanAttribute });
-
-    /** Reports the control as required to assistive technology. Validation stays with the form control. */
-    readonly required = input(false, { transform: booleanAttribute });
 
     readonly size = input<TumAetUiMultiSelectSize>();
 
@@ -150,6 +135,7 @@ export class TumAetUiMultiSelectComponent implements ControlValueAccessor {
     private readonly keyManager = new ListKeyManager(this.keyManagerOptions, this.injector).withVerticalOrientation().withHomeAndEnd();
 
     constructor() {
+        super();
         // Tell an enclosing field which id to label whenever this control was given one of its own.
         effect(() => {
             const ownId = this.inputId();
@@ -186,29 +172,6 @@ export class TumAetUiMultiSelectComponent implements ControlValueAccessor {
 
     setDisabledState(isDisabled: boolean): void {
         this.disabledByForm.set(isDisabled);
-    }
-
-    protected label(option: unknown): string {
-        const key = this.optionLabel();
-        const raw = key && option !== null && typeof option === 'object' ? (option as Record<string, unknown>)[key] : option;
-        switch (typeof raw) {
-            case 'string':
-                return raw;
-            case 'number':
-            case 'boolean':
-            case 'bigint':
-                return String(raw);
-            default:
-                return '';
-        }
-    }
-
-    private resolveValue(option: unknown): unknown {
-        const key = this.optionValue();
-        if (key && option !== null && typeof option === 'object') {
-            return (option as Record<string, unknown>)[key];
-        }
-        return option;
     }
 
     protected isSelected(option: unknown): boolean {

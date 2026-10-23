@@ -140,41 +140,10 @@ class IrisChatResultValidationTest {
     @Test
     void deletedSessionDropsStatusAndPartialUpdates() {
         when(sessions.findById(2L)).thenReturn(Optional.empty());
-        var status = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null);
+        var status = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null);
         assertThat(service.handleStatusUpdate(job, status)).isNull();
         assertThat(service.handlePartialStatusUpdate(job, status)).isFalse();
         org.mockito.Mockito.verifyNoInteractions(messages, websocket);
-    }
-
-    @ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
-    void memoryOnlyUpdatesPersistToReferencedMessagesAndSuppressDuplicateResultBroadcasts(boolean duplicateFinalResult) {
-        var tracked = job.withUserMessageId(7L).withAssistantMessageId(8L);
-        if (!duplicateFinalResult) {
-            when(sessions.findById(2L)).thenReturn(Optional.of(session));
-        }
-        var userMessage = new IrisMessage();
-        userMessage.setId(7L);
-        var assistantMessage = new IrisMessage();
-        assistantMessage.setId(8L);
-        when(messageRepository.findById(7L)).thenReturn(Optional.of(userMessage));
-        when(messageRepository.findById(8L)).thenReturn(Optional.of(assistantMessage));
-        var memory = new de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO("m1", "Memory", "Content", List.of(), List.of(), false, false);
-        if (duplicateFinalResult) {
-            when(sessions.findByIdWithMessagesAndContents(2L)).thenReturn(session);
-            when(jobs.runWithJobLock(eq("job"), any())).thenAnswer(call -> ((java.util.function.Supplier<?>) call.getArgument(1)).get());
-            when(jobs.getJob("job")).thenReturn(tracked);
-        }
-        var status = new PyrisChatStatusUpdateDTO(duplicateFinalResult ? "Duplicate" : null, PyrisRunState.RUNNING, null, null, List.of(), List.of(), List.of(memory),
-                List.of(memory));
-        assertThat(service.handleStatusUpdate(tracked, status)).isEqualTo(tracked);
-        assertThat(userMessage.getAccessedMemories()).containsExactly(memory);
-        assertThat(assistantMessage.getCreatedMemories()).containsExactly(memory);
-        verify(messageRepository).save(userMessage);
-        verify(messageRepository).save(assistantMessage);
-        verify(websocket, org.mockito.Mockito.times(duplicateFinalResult ? 0 : 1)).sendMessage(session, userMessage, PyrisRunState.RUNNING, null);
-        verify(websocket, org.mockito.Mockito.times(duplicateFinalResult ? 0 : 1)).sendMessage(session, assistantMessage, PyrisRunState.RUNNING, null);
-        org.mockito.Mockito.verifyNoInteractions(messages);
     }
 
     @ParameterizedTest
@@ -183,7 +152,7 @@ class IrisChatResultValidationTest {
     void compactionPersistsOnlyNonblankSummariesAsHiddenJsonMessages(String summary) {
         when(sessions.findById(2L)).thenReturn(Optional.of(session));
         var compaction = new de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCompactionDTO(summary, 7L);
-        var status = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, List.of(), List.of(), null, null, null, null, null, null, null, null, compaction);
+        var status = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, List.of(), List.of(), null, null, null, null, null, null, compaction);
         assertThat(service.handleStatusUpdate(job, status)).isEqualTo(job);
         var saved = ArgumentCaptor.forClass(IrisMessage.class);
         verify(messages, org.mockito.Mockito.times(summary != null && !summary.isBlank() ? 1 : 0)).saveMessage(saved.capture(), eq(session), eq(IrisMessageSender.SUMMARY));
@@ -203,7 +172,7 @@ class IrisChatResultValidationTest {
         when(usage.findLLMTokenUsageTraceById(9L)).thenReturn(Optional.of(trace));
         var tokens = List.of(new de.tum.cit.aet.artemis.admin.domain.LLMRequest("model", 10, 1f, 5, 1f, "pipeline"));
         var tracedJob = job.withTraceId(9L);
-        var status = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, List.of("Try again"), tokens, null, null);
+        var status = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, List.of("Try again"), tokens);
         assertThat(service.handleStatusUpdate(tracedJob, status)).isEqualTo(tracedJob);
         verify(usage).appendRequestsToTrace(tokens, trace);
         assertThat(session.getLatestSuggestions()).isEqualTo("[\"Try again\"]");
@@ -214,7 +183,7 @@ class IrisChatResultValidationTest {
     private IrisMessage handleIntermediate(String result) {
         when(sessions.findByIdWithMessagesAndContents(2L)).thenReturn(session);
         when(messages.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(call -> call.getArgument(0));
-        var status = new PyrisChatStatusUpdateDTO(result, PyrisRunState.RUNNING, null, null, List.of(), List.of(), List.of(), List.of(), null, null, null, null, false);
+        var status = new PyrisChatStatusUpdateDTO(result, PyrisRunState.RUNNING, null, null, List.of(), List.of(), null, null, null, null, false);
         assertThat(service.handleStatusUpdate(job, status)).isEqualTo(job);
         var saved = ArgumentCaptor.forClass(IrisMessage.class);
         verify(messages).saveMessage(saved.capture(), eq(session), eq(IrisMessageSender.LLM));

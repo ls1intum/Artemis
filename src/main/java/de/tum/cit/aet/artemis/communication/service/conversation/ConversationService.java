@@ -223,18 +223,20 @@ public class ConversationService {
     }
 
     /**
-     * Determines if the user has unread messages in that course
+     * Determines if the user has unread messages in that course: new messages of other users since they last read a conversation, or
+     * replies that raised the unread count of a conversation, which are no new messages
      *
      * @param courseId       the id of the course
      * @param requestingUser the user for which the conversations should be checked
      * @return true if the user has unread messages in that course, false otherwise
      */
     public boolean userHasUnreadMessages(Long courseId, User requestingUser) {
-        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId());
+        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId())
+                || conversationParticipantRepository.userHasConversationWithUnreadCountInCourse(courseId, requestingUser.getId());
     }
 
     public void markAsRead(Long conversationId, Long userId) {
-        conversationParticipantRepository.updateLastReadAsync(userId, conversationId, ZonedDateTime.now());
+        conversationParticipantRepository.updateLastRead(userId, conversationId, ZonedDateTime.now());
     }
 
     /**
@@ -471,7 +473,7 @@ public class ConversationService {
         var userId = requestingUser.getId();
         List<Long> conversationIds = conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(userId, courseId);
         if (!conversationIds.isEmpty()) {
-            conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+            conversationParticipantRepository.updateMultipleLastRead(userId, conversationIds, now);
         }
 
         log.debug("Marking all conversations with existing participants as read took {} ms", TimeLogUtil.formatDurationFrom(start));
@@ -506,7 +508,7 @@ public class ConversationService {
                     }
                 }
                 if (!concurrentlyCreatedConversationIds.isEmpty()) {
-                    conversationParticipantRepository.updateMultipleLastReadAsync(userId, concurrentlyCreatedConversationIds, now);
+                    conversationParticipantRepository.updateMultipleLastRead(userId, concurrentlyCreatedConversationIds, now);
                 }
             }
         }

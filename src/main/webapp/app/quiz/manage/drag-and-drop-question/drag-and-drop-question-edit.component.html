@@ -79,35 +79,13 @@
             <div class="question-type">
                 <h3 class="mb-0"><span class="badge bg-warning align-text-top" style="width: 60px">DnD</span></h3>
             </div>
-            <div class="question-reevaluation-actions">
-                <button
-                    id="move-up-button"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    (click)="moveUpQuestion()"
-                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveUp' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faChevronUp" />
-                </button>
-                <button
-                    id="move-down-button"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    (click)="moveDownQuestion()"
-                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveDown' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faChevronDown" />
-                </button>
-                <button
-                    id="reset-button"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    (click)="resetQuestion()"
-                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestion' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faUndo" />
-                </button>
-            </div>
+            <div
+                jhi-question-reevaluation-actions
+                class="question-reevaluation-actions"
+                (moveUp)="moveUpQuestion()"
+                (moveDown)="moveDownQuestion()"
+                (resetQuestion)="resetQuestion()"
+            ></div>
         </div>
     }
     <div class="question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
