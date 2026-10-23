@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingS
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ZipContents;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -103,7 +104,7 @@ class AssessmentUploadAvailabilityGateTest {
         when(participationRepository.findAllForAssessmentUpload(eq(EXERCISE_ID), any())).thenReturn(participations);
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserFor(participations), participationRepository, submissionRepository, resultService,
-                submissionService, mock(TestCasePointsService.class));
+                submissionService, mock(TestCasePointsService.class), mock(FeedbackService.class));
         service.importAssessments(exercise(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 }));
     }
 

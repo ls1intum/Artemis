@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingS
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ZipContents;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -110,7 +111,7 @@ class AssessmentUploadTemplateGenerationTest {
         final AssessmentUploadParticipationRepository participationRepository = mock(AssessmentUploadParticipationRepository.class);
         when(participationRepository.findAllForAssessmentUploadTemplate(EXERCISE_ID)).thenReturn(participations);
         return new AssessmentUploadService(mock(AssessmentUploadArchiveParsingService.class), participationRepository, mock(SubmissionRepository.class),
-                mock(AssessmentUploadResultService.class), mock(SubmissionService.class), mock(TestCasePointsService.class));
+                mock(AssessmentUploadResultService.class), mock(SubmissionService.class), mock(TestCasePointsService.class), mock(FeedbackService.class));
     }
 
     private static ProgrammingExercise exerciseWithId(final long id) {

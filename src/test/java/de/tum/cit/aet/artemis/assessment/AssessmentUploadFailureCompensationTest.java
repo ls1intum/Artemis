@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingS
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ZipContents;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -79,7 +80,7 @@ class AssessmentUploadFailureCompensationTest {
         });
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepositoryReturningOneParticipation(),
-                submissionRepository, resultService, mock(SubmissionService.class), mock(TestCasePointsService.class));
+                submissionRepository, resultService, mock(SubmissionService.class), mock(TestCasePointsService.class), mock(FeedbackService.class));
 
         assertThatThrownBy(() -> service.importAssessments(exerciseAllowingManualResults(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 })))
                 .isSameAs(storageFailure);
@@ -108,7 +109,7 @@ class AssessmentUploadFailureCompensationTest {
         when(participationRepository.findAllForAssessmentUpload(any(Long.class), any())).thenReturn(List.of(participation));
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepository, submissionRepository, resultService,
-                mock(SubmissionService.class), mock(TestCasePointsService.class));
+                mock(SubmissionService.class), mock(TestCasePointsService.class), mock(FeedbackService.class));
 
         assertThatThrownBy(() -> service.importAssessments(exerciseAllowingManualResults(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 })))
                 .isSameAs(storageFailure);

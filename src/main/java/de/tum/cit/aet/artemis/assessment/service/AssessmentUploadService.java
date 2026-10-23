@@ -94,6 +94,8 @@ public class AssessmentUploadService {
 
     private final TestCasePointsService testCasePointsService;
 
+    private final FeedbackService feedbackService;
+
     /**
      * Creates a service for validating and storing uploaded manual assessments.
      * <p>
@@ -105,13 +107,14 @@ public class AssessmentUploadService {
      * @param assessmentUploadResultService           the service used to replace manual assessment results
      * @param submissionService                       the service enforcing the shared assessment-availability gate and copying automatic feedback onto a new assessment
      * @param testCasePointsService                   derives the points a passed test case is worth, so an uploaded assessment is scored like one made in the editor
+     * @param feedbackService                         copies the build's ordinary automatic feedback onto a newly created assessment
      * @throws IllegalArgumentException if any parameter is {@code null}
      */
     public AssessmentUploadService(final AssessmentUploadArchiveParsingService archiveParser, final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository,
             final SubmissionRepository submissionRepository, final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService,
-            final TestCasePointsService testCasePointsService) {
-        if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService, testCasePointsService)
-                .anyMatch(Objects::isNull)) {
+            final TestCasePointsService testCasePointsService, final FeedbackService feedbackService) {
+        if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService, testCasePointsService,
+                feedbackService).anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload service dependencies must not be null");
         }
         this.archiveParser = archiveParser;
@@ -120,6 +123,7 @@ public class AssessmentUploadService {
         this.assessmentUploadResultService = assessmentUploadResultService;
         this.submissionService = submissionService;
         this.testCasePointsService = testCasePointsService;
+        this.feedbackService = feedbackService;
     }
 
     /**
@@ -630,6 +634,8 @@ public class AssessmentUploadService {
         submission.getResults().stream().filter(result -> result != null && result.getId() != null && !result.isManual()).max(Comparator.comparing(Result::getId))
                 .ifPresent(automaticResult -> {
                     submissionService.copyTypedFeedbackToResult(manualResult, automaticResult);
+                    // The ordinary rows as well, not only the typed ones: a submission policy deduction lives here, and the editor copies these too.
+                    automaticResult.getFeedbacks().stream().map(feedbackService::copyFeedback).forEach(manualResult::addFeedback);
                     manualResult.copyProgrammingExerciseCounters(automaticResult);
                 });
     }
@@ -708,9 +714,11 @@ public class AssessmentUploadService {
         assert exercise != null && row != null : "exercise and row must not be null";
         assert exercise.getMaxPoints() != null && exercise.getMaxPoints() > 0 : "exercise must have positive maximum points";
         result.setExerciseId(exercise.getId());
-        // Mutate the collection instead of replacing it: Hibernate rejects a swapped reference on a collection that uses orphan removal, and the in-place clear is what deletes
-        // the previous feedback (and its long feedback text) as an orphan once the result is saved.
-        result.getFeedbacks().clear();
+        // Remove the manual rows only. Submission policy deductions and the like are stored as ordinary AUTOMATIC feedback alongside them, and they are part of what the build
+        // decided rather than of the assessment the upload replaces; dropping them would hand back the points the policy took away. Mutate the collection instead of
+        // replacing it: Hibernate rejects a swapped reference on a collection that uses orphan removal, and removing in place is what deletes the previous manual feedback
+        // (and its long feedback text) as an orphan once the result is saved.
+        result.getFeedbacks().removeIf(feedback -> feedback.getType() != FeedbackType.AUTOMATIC);
         result.addFeedback(buildManualFeedback(row.feedbackText(), row.points()));
         // The automatic feedback this assessment carries, and the counters that describe it, are deliberately left alone: the upload replaces the manual part of an
         // assessment, not the build it was made against.

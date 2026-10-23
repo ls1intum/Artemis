@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentUploadResource;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -49,19 +50,22 @@ class AssessmentUploadConstructorTest {
         final AssessmentUploadResultService assessmentUploadResultService = mock(AssessmentUploadResultService.class);
         final SubmissionService submissionService = mock(SubmissionService.class);
         final TestCasePointsService testCasePointsService = mock(TestCasePointsService.class);
+        final FeedbackService feedbackService = mock(FeedbackService.class);
 
         assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(null, assessmentUploadParticipationRepository, submissionRepository,
-                assessmentUploadResultService, submissionService, testCasePointsService));
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new AssessmentUploadService(archiveParser, null, submissionRepository, assessmentUploadResultService, submissionService, testCasePointsService));
+                assessmentUploadResultService, submissionService, testCasePointsService, feedbackService));
+        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(archiveParser, null, submissionRepository, assessmentUploadResultService,
+                submissionService, testCasePointsService, feedbackService));
         assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, null,
-                assessmentUploadResultService, submissionService, testCasePointsService));
-        assertThatIllegalArgumentException().isThrownBy(
-                () -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, submissionRepository, null, submissionService, testCasePointsService));
+                assessmentUploadResultService, submissionService, testCasePointsService, feedbackService));
+        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, submissionRepository, null,
+                submissionService, testCasePointsService, feedbackService));
         assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, submissionRepository,
-                assessmentUploadResultService, null, testCasePointsService));
+                assessmentUploadResultService, null, testCasePointsService, feedbackService));
         assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, submissionRepository,
-                assessmentUploadResultService, submissionService, null));
+                assessmentUploadResultService, submissionService, null, feedbackService));
+        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(archiveParser, assessmentUploadParticipationRepository, submissionRepository,
+                assessmentUploadResultService, submissionService, testCasePointsService, null));
     }
 
     @Test

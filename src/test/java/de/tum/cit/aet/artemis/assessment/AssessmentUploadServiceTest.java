@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -551,6 +552,44 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         final Result result = getManualResults(participation1.getId()).getFirst();
         assertThat(result.getScore()).isCloseTo(automaticPoints - 5, within(0.01));
         assertThat(result.getFeedbacks().iterator().next().getCredits()).isCloseTo(-5, within(0.01));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldKeepASubmissionPolicyDeductionWhenOverwritingAnAssessment() {
+        // A submission policy penalty is ordinary AUTOMATIC feedback sitting next to the manual rows, not typed test feedback. It is part of what the build decided, so
+        // replacing the manual part of an assessment must leave it in place; dropping it would hand the participant back the points the policy took away.
+        final double automaticPoints = seedAssessmentWithOnePassingTest();
+        final Result seeded = getManualResults(participation1.getId()).getFirst();
+        participationUtilService.addFeedbackToResult(submissionPolicyDeduction(), seeded);
+
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Manual points\n%s,5\n".formatted(identifier1), Map.of(identifier1 + ".txt", "five on top")));
+
+        final Result overwritten = getManualResults(participation1.getId()).getFirst();
+        assertThat(overwritten.getFeedbacks()).anyMatch(Feedback::isSubmissionPolicyFeedback);
+        assertThat(overwritten.getScore()).isCloseTo(automaticPoints - 10 + 5, within(0.01));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCopyASubmissionPolicyDeductionOntoANewlyCreatedAssessment() {
+        // The same deduction has to reach a participant assessed for the first time, which is what the assessment editor does when it opens an assessment on that build.
+        final Submission submission = participationUtilService.addSubmission(participation1, new ProgrammingSubmission().submitted(true));
+        final Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), submission);
+        participationUtilService.addFeedbackToResult(submissionPolicyDeduction(), automaticResult);
+
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Manual points\n%s,5\n".formatted(identifier1), Map.of(identifier1 + ".txt", "five on top")));
+
+        final Result created = getManualResults(participation1.getId()).getFirst();
+        assertThat(created.getFeedbacks()).anyMatch(Feedback::isSubmissionPolicyFeedback);
+        assertThat(created.getScore()).isCloseTo(0.0, within(0.01));
+    }
+
+    private Feedback submissionPolicyDeduction() {
+        return new Feedback().credits(-10.0).text(Feedback.SUBMISSION_POLICY_FEEDBACK_IDENTIFIER + "Submission Penalty Policy").detailText("policy").positive(false)
+                .type(FeedbackType.AUTOMATIC);
     }
 
     /**
