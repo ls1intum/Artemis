@@ -4,8 +4,8 @@
 }
 
 .tumaet-ui-chip-remove {
-    width: 1em;
-    height: 1em;
+    width: max(24px, 1em);
+    height: max(24px, 1em);
     border-radius: 50%;
 
     &:focus-visible {

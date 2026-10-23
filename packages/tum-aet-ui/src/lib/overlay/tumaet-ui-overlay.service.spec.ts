@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { DomPortal } from '@angular/cdk/portal';
 import { Directionality } from '@angular/cdk/bidi';
 import { vi } from 'vitest';
 import { TumAetUiOverlayPlacement, TumAetUiOverlayService } from './tumaet-ui-overlay.service';
@@ -34,21 +35,36 @@ describe('TumAetUiOverlayService', () => {
         overlayRef.dispose();
     });
 
-    it('repositions on ancestor scrolling and stops tracking after disposal', () => {
+    it('tracks ancestor scrolling on every attachment and stops on detach or disposal', () => {
         const parent = document.createElement('div');
-        document.body.appendChild(parent);
+        const content = document.createElement('div');
+        document.body.append(parent, content);
         parent.appendChild(origin);
         const overlayRef = service.createConnectedOverlay(origin, 'bottom');
-        vi.spyOn(overlayRef, 'hasAttached').mockReturnValue(true);
         const updatePosition = vi.spyOn(overlayRef, 'updatePosition').mockImplementation(() => {});
+        const portal = new DomPortal(content);
+        const scroll = () => parent.dispatchEvent(new Event('scroll'));
 
-        parent.dispatchEvent(new Event('scroll'));
+        scroll();
+        expect(updatePosition).not.toHaveBeenCalled();
+        overlayRef.attach(portal);
+        updatePosition.mockClear();
+        scroll();
+        expect(updatePosition).toHaveBeenCalledOnce();
+        overlayRef.detach();
+        updatePosition.mockClear();
+        scroll();
+        expect(updatePosition).not.toHaveBeenCalled();
+        overlayRef.attach(portal);
+        updatePosition.mockClear();
+        scroll();
         expect(updatePosition).toHaveBeenCalledOnce();
         overlayRef.dispose();
         updatePosition.mockClear();
-        parent.dispatchEvent(new Event('scroll'));
+        scroll();
         expect(updatePosition).not.toHaveBeenCalled();
         parent.remove();
+        content.remove();
     });
 
     it('can match the overlay width to its origin', () => {

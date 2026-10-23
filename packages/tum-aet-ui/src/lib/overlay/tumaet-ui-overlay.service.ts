@@ -61,9 +61,12 @@ export class TumAetUiOverlayService {
                 overlayRef.updatePosition();
             }
         };
-        this.document.addEventListener('scroll', reposition, true);
         const stopTrackingScroll = () => this.document.removeEventListener('scroll', reposition, true);
-        overlayRef.detachments().subscribe({ next: stopTrackingScroll, complete: stopTrackingScroll });
+        overlayRef.attachments().subscribe({
+            next: () => this.document.addEventListener('scroll', reposition, true),
+            complete: stopTrackingScroll,
+        });
+        overlayRef.detachments().subscribe(stopTrackingScroll);
         if (options.matchOriginWidth && typeof ResizeObserver !== 'undefined') {
             const resizeObserver = new ResizeObserver(() => overlayRef.updateSize({ width: originElement.getBoundingClientRect().width }));
             const disconnect = () => resizeObserver.disconnect();
