@@ -89,7 +89,7 @@ describe('TumAetUiSelectComponent', () => {
 
             triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
             fixture.detectChanges();
-            expect(disconnect).toHaveBeenCalledOnce();
+            expect(disconnect).toHaveBeenCalledTimes(2);
         } finally {
             fixture.destroy();
             vi.unstubAllGlobals();

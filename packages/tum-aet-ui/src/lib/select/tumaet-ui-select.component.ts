@@ -260,7 +260,8 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
                 // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- Disconnected on overlay detachment below, including disposal on component destruction.
                 const observer = new ResizeObserver(() => overlayRef.updateSize({ minWidth: origin.nativeElement.getBoundingClientRect().width }));
                 observer.observe(origin.nativeElement);
-                overlayRef.detachments().subscribe(() => observer.disconnect());
+                const disconnect = () => observer.disconnect();
+                overlayRef.detachments().subscribe({ next: disconnect, complete: disconnect });
             }
         }
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
