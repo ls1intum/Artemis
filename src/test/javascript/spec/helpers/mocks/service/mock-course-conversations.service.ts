@@ -1,8 +1,9 @@
 import { Course } from 'app/course/shared/entities/course.model';
-import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, of } from 'rxjs';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import dayjs from 'dayjs';
+import type { ConversationReadRequest } from 'app/communication/service/course-conversations.service';
 
 export class MockCourseConversationsService {
     get course(): Course | undefined {
@@ -37,6 +38,18 @@ export class MockCourseConversationsService {
 
     setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {}
 
+    setConversationViewOpen(isOpen: boolean): void {}
+
+    isConversationMarkedAsUnread(conversationId: number | undefined): boolean {
+        return false;
+    }
+
+    messagesRequested(conversationId: number): ConversationReadRequest {
+        return { unreadRevision: 0 };
+    }
+
+    messagesLoaded(conversationId: number, request: ConversationReadRequest): void {}
+
     setUpConversationService = (course: Course): Observable<never> => {
         return EMPTY;
     };
@@ -51,11 +64,13 @@ export class MockCourseConversationsService {
 
     handleNewMessage = (conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined): void => {};
 
+    prepareConversationView(): Observable<boolean> {
+        return of(true);
+    }
+
     forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         return EMPTY;
     }
-
-    markAsRead(): void {}
 
     acceptCodeOfConduct(course: Course) {}
 

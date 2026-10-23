@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -166,6 +167,8 @@ public class AnswerMessageService extends PostingService {
 
         this.courseNotificationService.sendCourseNotification(newAnswerNotification, filteredUsersInvolved);
 
+        markReplyAsUnreadForThreadParticipants(course, conversation, usersInvolved, notificationRecipientsList, newAnswerMessage.getAuthor().getId());
+
         var mentionCourseNotification = new NewMentionNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
                 newAnswerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(),
                 newAnswerMessage.getCreationDate().toString(), newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(),
@@ -188,6 +191,34 @@ public class AnswerMessageService extends PostingService {
         }
 
         return savedAnswerMessage;
+    }
+
+    /**
+     * A reply is unread for the people in its thread: the author of the message and everyone who replied to it. The other
+     * members of the conversation did not take part in the discussion, so it would only add noise to their unread counter.
+     * <p>
+     * Like for a new message, the counter is raised here, in the request, rather than asynchronously: the read side resets it
+     * and nothing orders the two. The participants it was raised for are told on the conversation membership channel, so that
+     * the sidebar of their open clients shows it without reloading. Users who muted the conversation are left out of both.
+     * The counter is not lowered again when the reply is deleted, in contrast to a message: it cannot tell which replies a user
+     * has already seen, and a counter too low would hide that something unread is left. It is reset when the conversation is opened.
+     *
+     * @param course                    the course of the conversation
+     * @param conversation              the conversation the reply was written in
+     * @param usersInvolved             the author of the message and the users who replied to it, which includes the author of the reply
+     * @param notificationRecipientList the members of the conversation with their mute state
+     * @param replyAuthorId             the id of the author of the reply, who has read it
+     */
+    private void markReplyAsUnreadForThreadParticipants(Course course, Conversation conversation, Set<User> usersInvolved,
+            List<ConversationNotificationRecipientSummary> notificationRecipientList, Long replyAuthorId) {
+        var involvedUserIds = usersInvolved.stream().map(User::getId).collect(Collectors.toSet());
+        var recipients = notificationRecipientList.stream().filter(recipient -> involvedUserIds.contains(recipient.userId()) && recipient.userId() != replyAuthorId)
+                .filter(recipient -> !recipient.isConversationMuted()).map(ConversationNotificationRecipientSummary::toUser).collect(Collectors.toSet());
+        if (recipients.isEmpty()) {
+            return;
+        }
+        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipantsIn(conversation.getId(), recipients.stream().map(User::getId).collect(Collectors.toSet()));
+        conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.NEW_MESSAGE, conversation, recipients);
     }
 
     /**

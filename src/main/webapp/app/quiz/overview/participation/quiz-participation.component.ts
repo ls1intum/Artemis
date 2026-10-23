@@ -1,3 +1,4 @@
+import { QuizAnswerSelection } from 'app/quiz/shared/util/quiz-answer-selection';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
@@ -17,9 +18,6 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/component
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
-import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
-import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { LiveQuizParticipationStatus, QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -48,7 +46,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
-import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
+import { formatQuizRelativeTime, quizCountdown } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { QuizParticipationBase } from './quiz-participation.base';
 
@@ -134,21 +132,14 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     readonly quizExercise = signal<QuizExercise>(undefined!);
     readonly quizBatch = signal<QuizBatch | undefined>(undefined);
     readonly totalScore = signal<number>(0);
-    readonly selectedAnswerOptions = signal(new Map<number, AnswerOption[]>());
-    readonly dragAndDropMappings = signal(new Map<number, DragAndDropMapping[]>());
-    readonly shortAnswerSubmittedTexts = signal(new Map<number, ShortAnswerSubmittedText[]>());
+    private readonly answerSelection = new QuizAnswerSelection();
+    readonly selectedAnswerOptions = this.answerSelection.selectedAnswerOptions;
+    readonly dragAndDropMappings = this.answerSelection.dragAndDropMappings;
+    readonly shortAnswerSubmittedTexts = this.answerSelection.shortAnswerSubmittedTexts;
+    readonly onSelectedAnswerOptionsChange = this.answerSelection.onSelectedAnswerOptionsChange;
+    readonly onDragAndDropMappingsChange = this.answerSelection.onDragAndDropMappingsChange;
+    readonly onShortAnswerSubmittedTextsChange = this.answerSelection.onShortAnswerSubmittedTextsChange;
 
-    onSelectedAnswerOptionsChange(questionId: number, answerOptions: AnswerOption[]): void {
-        this.selectedAnswerOptions.update((map) => new Map(map).set(questionId, answerOptions));
-    }
-
-    onDragAndDropMappingsChange(questionId: number, mappings: DragAndDropMapping[]): void {
-        this.dragAndDropMappings.update((map) => new Map(map).set(questionId, mappings));
-    }
-
-    onShortAnswerSubmittedTextsChange(questionId: number, submittedTexts: ShortAnswerSubmittedText[]): void {
-        this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(questionId, submittedTexts));
-    }
     readonly result = signal<Result>(undefined!);
     readonly questionScores = signal<{ [id: number]: number }>({});
     readonly inputExerciseId = input<number>();
@@ -499,26 +490,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * updates all displayed (relative) times in the UI
      */
     updateDisplayedTimes() {
-        const translationBasePath = 'artemisApp.showStatistic.';
-        // update remaining time
-        if (this.endDate) {
-            const endDate = this.endDate;
-            if (endDate.isAfter(this.serverDateService.now())) {
-                // quiz is still running => calculate remaining seconds and generate text based on that
-                // Get the diff as a floating point number in seconds
-                this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
-                this.remainingTimeText.set(this.relativeTimeText(this.remainingTimeSeconds()));
-            } else {
-                // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds.set(-1);
-                this.remainingTimeText.set(this.translateService.instant(translationBasePath + 'quizHasEnded'));
-            }
-        } else {
-            // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds.set(0);
-            this.remainingTimeText.set('?');
-        }
-
+        const countdown = quizCountdown(this.endDate, this.serverDateService.now(), this.translateService.instant('artemisApp.showStatistic.quizHasEnded'));
+        this.remainingTimeSeconds.set(countdown.seconds);
+        this.remainingTimeText.set(countdown.text);
         // update submission time
         if (this.submission() && this.submission().submissionDate) {
             // exact value is not important => use default relative time from dayjs for better readability and less distraction
@@ -530,7 +504,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
             if (this.startDate()!.isAfter(this.serverDateService.now())) {
                 this.timeUntilStart.set(this.relativeTimeText(this.startDate()!.diff(this.serverDateService.now(), 'seconds')));
             } else {
-                this.timeUntilStart.set(this.translateService.instant(translationBasePath + 'now'));
+                this.timeUntilStart.set(this.translateService.instant('artemisApp.showStatistic.now'));
                 // Check if websocket has updated the quiz exercise and check that following block is only executed once
                 if (!this.quizBatch()!.started && !this.quizStarted) {
                     this.quizStarted = true;
@@ -592,32 +566,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                 : 0,
         );
 
-        // prepare selection arrays for each question
-        this.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
-        this.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
-        this.shortAnswerSubmittedTexts.set(new Map<number, ShortAnswerSubmittedText[]>());
-
-        if (this.quizExercise().quizQuestions) {
-            this.quizExercise().quizQuestions!.forEach((question) => {
-                switch (question.type) {
-                    case QuizQuestionType.MULTIPLE_CHOICE:
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, []));
-                        break;
-                    case QuizQuestionType.DRAG_AND_DROP:
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, []));
-                        break;
-                    case QuizQuestionType.SHORT_ANSWER:
-                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
-                        break;
-                    default:
-                        captureException('Unknown question type: ' + question.type);
-                        break;
-                }
-            }, this);
-        }
+        this.answerSelection.reset(this.quizExercise().quizQuestions);
     }
 
     /**
@@ -627,39 +576,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * this needs to be done when we get new submission data, e.g. through the websocket connection
      */
     applySubmission() {
-        // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
-        // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
-        this.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
-        this.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
-        this.shortAnswerSubmittedTexts.set(new Map<number, ShortAnswerSubmittedText[]>());
-
-        if (this.quizExercise().quizQuestions) {
-            // iterate through all questions of this quiz
-            this.quizExercise().quizQuestions!.forEach((question) => {
-                // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission().submittedAnswers?.find((answer) => {
-                    return answer.quizQuestion!.id === question.id;
-                });
-
-                switch (question.type) {
-                    case QuizQuestionType.MULTIPLE_CHOICE:
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || []));
-                        break;
-                    case QuizQuestionType.DRAG_AND_DROP:
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || []));
-                        break;
-                    case QuizQuestionType.SHORT_ANSWER:
-                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []));
-                        break;
-                    default:
-                        captureException('Unknown question type: ' + question.type);
-                        break;
-                }
-            }, this);
-        }
+        this.answerSelection.reset(this.quizExercise().quizQuestions, this.submission().submittedAnswers);
     }
 
     /**
