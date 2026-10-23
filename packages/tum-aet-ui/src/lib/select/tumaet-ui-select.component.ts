@@ -255,6 +255,13 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
         this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { hasBackdrop: true, matchOriginWidth: this.matchTriggerWidth() });
         if (!this.matchTriggerWidth()) {
             this.overlayRef.updateSize({ minWidth: origin.nativeElement.getBoundingClientRect().width, maxWidth: 'calc(100vw - 16px)' });
+            if (typeof ResizeObserver !== 'undefined') {
+                const overlayRef = this.overlayRef;
+                // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- Disconnected on overlay detachment below, including disposal on component destruction.
+                const observer = new ResizeObserver(() => overlayRef.updateSize({ minWidth: origin.nativeElement.getBoundingClientRect().width }));
+                observer.observe(origin.nativeElement);
+                overlayRef.detachments().subscribe(() => observer.disconnect());
+            }
         }
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.scrollOptionIntoView(initialIndex);
