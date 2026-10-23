@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -108,6 +109,18 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         this.examStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
         participationUtilService.addSubmission(examStudentParticipation, new ProgrammingSubmission());
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EnumSource(value = AssessmentType.class, names = "AUTOMATIC_ATHENA", mode = EnumSource.Mode.EXCLUDE)
+    void findLatestResultsWithAssessmentNoteIncludesUntypedResultsAndExcludesAthena(AssessmentType assessmentType) {
+        var submission = programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow();
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
+        var latest = participationUtilService.addResultToSubmission(assessmentType, ZonedDateTime.now().minusDays(1), submission);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now(), submission);
+
+        assertThat(resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(Set.of(submission.getId()))).containsExactly(latest);
     }
 
     @Test

@@ -2,11 +2,13 @@ package de.tum.cit.aet.artemis.communication;
 
 import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topicMatching;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -43,6 +45,8 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
@@ -183,6 +187,80 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         // both conversation participants should be notified
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(), (Object) argThat(
                 argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(existingConversationPostsWithAnswers.get(2)))));
+    }
+
+    /**
+     * A group chat of student1, student2, student3 and tutor1 with a message of student1 that student2 already replied to.
+     */
+    private Post createThreadInGroupChat() {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var groupChat = conversationUtilService.createGroupChat(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"),
+                userUtilService.getUserByLogin(TEST_PREFIX + "student2"), userUtilService.getUserByLogin(TEST_PREFIX + "student3"),
+                userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        Post post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", groupChat);
+        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student2", post);
+        return post;
+    }
+
+    private long unreadMessagesCountOf(Post post, String loginWithoutPrefix) {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + loginWithoutPrefix);
+        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(post.getConversation().getId(), user.getId())
+                .getUnreadMessagesCount();
+    }
+
+    private void replyAs(Post post) throws Exception {
+        var replyDTO = new CreateAnswerPostDTO("A new reply", new ParentPostDTO(post.getId()));
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", replyDTO, AnswerPostResponseDTO.class, HttpStatus.CREATED);
+    }
+
+    private void verifyNewMessageEventSentTo(Post post, String loginWithoutPrefix) {
+        var receiver = userUtilService.getUserByLogin(TEST_PREFIX + loginWithoutPrefix);
+        var topic = "/topic/communication/courses/" + courseId + "/conversations/user/" + receiver.getId();
+        verify(websocketMessagingService, timeout(5000)).sendMessageToUser(eq(TEST_PREFIX + loginWithoutPrefix), userTopic(topic),
+                argThat(argument -> argument instanceof ConversationWebsocketDTO dto && dto.action() == CommunicationCrudAction.NEW_MESSAGE
+                        && dto.conversation().getId().equals(post.getConversation().getId())));
+    }
+
+    private void verifyNoNewMessageEventSentTo(String loginWithoutPrefix) {
+        verify(websocketMessagingService, never()).sendMessageToUser(eq(TEST_PREFIX + loginWithoutPrefix), any(WebsocketUserDestination.class),
+                argThat(argument -> argument instanceof ConversationWebsocketDTO dto && dto.action() == CommunicationCrudAction.NEW_MESSAGE));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateAnswerRaisesUnreadCountOfThreadParticipantsOnly() throws Exception {
+        Post post = createThreadInGroupChat();
+
+        replyAs(post);
+
+        // the author of the message and the user who replied before are told about the reply
+        assertThat(unreadMessagesCountOf(post, "student1")).isEqualTo(1);
+        assertThat(unreadMessagesCountOf(post, "student2")).isEqualTo(1);
+        // a member who is not part of the thread and the user who wrote the reply are not
+        assertThat(unreadMessagesCountOf(post, "student3")).isZero();
+        assertThat(unreadMessagesCountOf(post, "tutor1")).isZero();
+
+        verifyNewMessageEventSentTo(post, "student1");
+        verifyNewMessageEventSentTo(post, "student2");
+        verifyNoNewMessageEventSentTo("student3");
+        verifyNoNewMessageEventSentTo("tutor1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateAnswerDoesNotRaiseUnreadCountOfMutedParticipant() throws Exception {
+        Post post = createThreadInGroupChat();
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var mutedParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(post.getConversation().getId(), student1.getId());
+        mutedParticipant.setIsMuted(true);
+        conversationParticipantRepository.save(mutedParticipant);
+
+        replyAs(post);
+
+        assertThat(unreadMessagesCountOf(post, "student1")).isZero();
+        assertThat(unreadMessagesCountOf(post, "student2")).isEqualTo(1);
+        verifyNewMessageEventSentTo(post, "student2");
+        verifyNoNewMessageEventSentTo("student1");
     }
 
     @Test
