@@ -115,6 +115,8 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                     this.getPostingType() === 'answerPost' ? this.communicationService.currentUserIsAuthorOfPosting((postingValue as AnswerPost).post!) : false,
                 );
                 if (this.getPostingType() === 'post') {
+                    // The permission to pin depends on the conversation of the posting, which differs when the component is reused
+                    this.updateCanPin();
                     this.resetTooltipsAndPriority();
                 }
                 this.setMayDelete();
@@ -199,7 +201,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
         );
 
         if (this.getPostingType() === 'post') {
-            this.setCanPin(this.communicationService.getCurrentConversation() ?? this.getCachedConversationOfPost());
+            this.updateCanPin();
             this.resetTooltipsAndPriority();
         }
         this.setMayDelete();
@@ -233,6 +235,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             this.canPin.set(true);
         }
         this.canPinOutput.emit(this.canPin());
+    }
+
+    private updateCanPin() {
+        this.setCanPin(this.communicationService.getCurrentConversation() ?? this.getCachedConversationOfPost());
     }
 
     /**

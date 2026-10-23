@@ -1197,6 +1197,16 @@ describe('Message editor editing transactions', () => {
             expect(root.querySelectorAll('li')).toHaveLength(1);
         });
 
+        it('leaves a caret on a later line of the first item to the browser', () => {
+            editor.load('- first');
+            const item = root.querySelector('li')!;
+            item.prepend(document.createElement('br'));
+            select(item.lastChild!, 0);
+
+            expect(editor.exitFirstListItem()).toBe(false);
+            expect(root.querySelectorAll('li')).toHaveLength(1);
+        });
+
         it('leaves a selection to the browser', () => {
             editor.load('- first');
             select(root.querySelector('li')!.firstChild!, 0, 3);

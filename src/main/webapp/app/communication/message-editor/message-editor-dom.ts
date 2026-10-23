@@ -551,7 +551,8 @@ export class MessageEditorDom {
         const beforeCaret = range.cloneRange();
         beforeCaret.setStart(item, 0);
         const content = beforeCaret.cloneContents();
-        if (content.textContent?.replace(/\u200b/g, '') || content.querySelector('img, [data-message-reference]')) {
+        // A line break before the caret means the caret is on a later line of the item
+        if (content.textContent?.replace(/\u200b/g, '') || content.querySelector('img, [data-message-reference], br:not([data-message-placeholder])')) {
             return false;
         }
         this.block(list.tagName.toLowerCase() as 'ul' | 'ol');

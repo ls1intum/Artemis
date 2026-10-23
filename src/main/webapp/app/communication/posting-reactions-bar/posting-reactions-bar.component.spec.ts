@@ -742,6 +742,20 @@ describe('PostingReactionsBarComponent', () => {
             expect(component.canPin()).toBe(true);
         });
 
+        it('should recalculate the pin permission when the component gets a post of another conversation', () => {
+            vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockImplementation(
+                (conversationId) => ({ id: conversationId, type: ConversationType.CHANNEL, hasChannelModerationRights: conversationId === 5 }) as ChannelDTO,
+            );
+
+            fixture.componentRef.setInput('posting', searchResultInConversation(5));
+            fixture.detectChanges();
+            expect(component.canPin()).toBe(true);
+
+            fixture.componentRef.setInput('posting', searchResultInConversation(6));
+            fixture.detectChanges();
+            expect(component.canPin()).toBe(false);
+        });
+
         it('should not offer pinning when the conversation of the post is not known', () => {
             vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockReturnValue(undefined);
             fixture.componentRef.setInput('posting', searchResultInConversation(undefined));
