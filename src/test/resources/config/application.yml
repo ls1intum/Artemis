@@ -116,6 +116,10 @@ artemis:
     # Iris configuration - disabled by default, enabled in application-artemis.yml for tests
     iris:
         enabled: false
+        lecture-unit-sync:
+            # Periodic polls can reach the shared Iris HTTP mock while a test registers expectations.
+            # Tests exercise these jobs explicitly; event-driven synchronization remains enabled.
+            initial-delay: P365D
 
     # Theia configuration for tests
     theia:

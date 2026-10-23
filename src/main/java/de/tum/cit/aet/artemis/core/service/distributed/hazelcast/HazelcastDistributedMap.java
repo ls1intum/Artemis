@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.distributed.hazelcast;
 
 import java.time.Duration;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -20,14 +18,14 @@ import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.splitbrainprotection.SplitBrainProtectionException;
 
-import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.AbstractDistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryAddedEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryListener;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryRemovedEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryUpdatedEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapListener;
 
-public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
+public class HazelcastDistributedMap<K, V> extends AbstractDistributedMap<K, V> {
 
     private final IMap<K, V> map;
 
@@ -38,6 +36,7 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
     }
 
     public HazelcastDistributedMap(IMap<K, V> map, boolean ownerChecked) {
+        super(map);
         this.map = map;
         this.ownerChecked = ownerChecked;
     }
@@ -199,36 +198,6 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
     @Override
     public V remove(K key) {
         return ownerChecked ? protectedOperation(key, Mutation.REMOVE, null, null) : map.remove(key);
-    }
-
-    @Override
-    public Collection<V> values() {
-        return map.values();
-    }
-
-    @Override
-    public Set<K> keySet() {
-        return map.keySet();
-    }
-
-    @Override
-    public Set<Map.Entry<K, V>> entrySet() {
-        return map.entrySet();
-    }
-
-    @Override
-    public HashMap<K, V> getMapCopy() {
-        return new HashMap<>(map);
-    }
-
-    @Override
-    public int size() {
-        return map.size();
-    }
-
-    @Override
-    public void clear() {
-        map.clear();
     }
 
     @Override

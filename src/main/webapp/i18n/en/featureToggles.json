@@ -176,11 +176,6 @@
                     "description": "Enables an AI agent that helps students understand and master competencies by providing personalized explanations, answering questions about learning objectives, and guiding them through their competency-based learning journey.",
                     "disableWarning": "Students will not have access to the AI-powered competency assistant."
                 },
-                "Memiris": {
-                    "name": "Iris Memory System",
-                    "description": "Enables long-term memory for Iris AI assistants, allowing them to remember context from previous conversations and provide more personalized, contextually aware responses over time.",
-                    "disableWarning": "Iris will not retain conversation history between sessions, resulting in less personalized AI assistance."
-                },
                 "LectureContentProcessing": {
                     "name": "Lecture Unit Indexing",
                     "description": "Indexes lecture units for Iris: transcribes videos, extracts slide content from PDFs, and ingests both into the vector store so Iris can answer questions about them.",
