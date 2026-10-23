@@ -114,6 +114,33 @@ describe('Participation filter toolbar', () => {
         expect(Array.from(checkboxes, (checkbox) => checkbox.checked)).toEqual([false, false]);
     });
 
+    it('selects only one result category and can return to all results', async () => {
+        fixture.componentRef.setInput('groupedFilters', [{ labelKey: 'Results', items: ['Successful', 'Unsuccessful'], single: true }]);
+        fixture.componentRef.setInput('activeFilters', ['Manual']);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        openGroup(0);
+        toggleOption(1);
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Successful']);
+        openGroup(0);
+        toggleOption(2);
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Unsuccessful']);
+        openGroup(0);
+        toggleOption(0);
+        expect(changed).toHaveBeenLastCalledWith(['Manual']);
+    });
+
+    it('places checkboxes after dropdowns regardless of category order', () => {
+        fixture.componentRef.setInput('groupedFilters', [
+            { labelKey: 'Locked', items: ['Locked'] },
+            { labelKey: 'Submissions', items: ['NoSubmissions', 'ValidSubmissions'] },
+        ]);
+        fixture.detectChanges();
+        const controls = fixture.nativeElement.querySelectorAll('tumaet-ui-multi-select, tumaet-ui-checkbox');
+        expect(controls[0].tagName).toBe('TUMAET-UI-MULTI-SELECT');
+        expect(controls[1].tagName).toBe('TUMAET-UI-CHECKBOX');
+    });
+
     it('supports keyboard selection and Escape', () => {
         const trigger = fixture.nativeElement.querySelector('[role="combobox"]') as HTMLElement;
         for (const [key, keyCode] of [

@@ -23,6 +23,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import {
     faCheck,
     faChevronDown,
+    faCircleInfo,
     faCircleNotch,
     faComment,
     faDownload,
@@ -93,6 +94,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
 export enum FilterProp {
     FAILED = 'Failed',
     NO_SUBMISSIONS = 'NoSubmissions',
+    VALID_SUBMISSIONS = 'ValidSubmissions',
     NO_PRACTICE = 'NoPracticeMode',
     SUCCESSFUL = 'Successful',
     UNSUCCESSFUL = 'Unsuccessful',
@@ -155,6 +157,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly gradingService = inject(GradingService);
     private readonly websocketService = inject(WebsocketService);
 
+    protected readonly faCircleInfo = faCircleInfo;
     protected readonly faComment = faComment;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faDownload = faDownload;
@@ -226,9 +229,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return [
             {
                 labelKey: 'artemisApp.participation.filterGroup.submissions',
-                items: [...(isProgramming ? [FilterProp.FAILED, FilterProp.BUILD_FAILED] : []), FilterProp.NO_SUBMISSIONS],
+                items: [...(isProgramming ? [FilterProp.FAILED, FilterProp.BUILD_FAILED] : []), FilterProp.NO_SUBMISSIONS, FilterProp.VALID_SUBMISSIONS],
             },
-            { labelKey: 'artemisApp.participation.filterGroup.results', items: [FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL] },
+            { labelKey: 'artemisApp.participation.filterGroup.results', items: [FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL], single: true },
             ...(assessmentTypeFilterable ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentType', items: [FilterProp.MANUAL, FilterProp.AUTOMATIC] }] : []),
             ...(isProgramming ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.NO_PRACTICE] }] : []),
             ...(this.newManualResultAllowed() && ex.isAtLeastInstructor ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentStatus', items: [FilterProp.LOCKED] }] : []),

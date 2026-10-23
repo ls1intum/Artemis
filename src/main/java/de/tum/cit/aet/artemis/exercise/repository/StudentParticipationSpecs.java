@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team_;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation_;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation_;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -421,8 +422,8 @@ public class StudentParticipationSpecs {
             return noOp();
         }
         var selected = Arrays.asList(filterProp.split(","));
-        var groups = List.of(List.of("Failed", "BuildFailed", "NoSubmissions"), List.of("Successful", "Unsuccessful"), List.of("Manual", "Automatic"), List.of("NoPracticeMode"),
-                List.of("Locked"));
+        var groups = List.of(List.of("Failed", "BuildFailed", "NoSubmissions", "ValidSubmissions"), List.of("Successful", "Unsuccessful"), List.of("Manual", "Automatic"),
+                List.of("NoPracticeMode"), List.of("Locked"));
         return Specification.allOf(groups.stream()
                 .map(group -> Specification.anyOf(group.stream().filter(selected::contains).map(filter -> managementFilter(filter, stuckBuildCutoff)).toList())).toList());
     }
@@ -442,6 +443,8 @@ public class StudentParticipationSpecs {
         return switch (filterProp) {
             case "Failed" -> hasFailedBuild(stuckBuildCutoff);
             case "NoSubmissions" -> hasNoSubmissions();
+            case "ValidSubmissions" -> Specification.not(hasNoSubmissions()).and(Specification.not(isBuildFailed())).and((root, query, cb) -> cb
+                    .or(cb.notEqual(root.get(Participation_.EXERCISE).type(), ProgrammingExercise.class), existsLatestResultMatching(root, query, cb, null)));
             case "NoPracticeMode" -> isNotPracticeMode();
             case "Successful" -> isSuccessful();
             case "Unsuccessful" -> isUnsuccessful();

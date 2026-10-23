@@ -3266,6 +3266,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().participantIdentifier()).contains("student2");
+
+            var validSearch = buildParticipationSearch("", "ValidSubmissions", "id", SortingOrder.ASCENDING);
+            var validResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(validSearch));
+            assertThat(validResults).extracting(ParticipationManagementDTO::participationId).containsExactly(p1.getId());
         }
 
         @Test

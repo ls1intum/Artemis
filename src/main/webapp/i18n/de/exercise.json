@@ -266,6 +266,7 @@
             "showLocked": "Gesperrte Bewertungen",
             "showAll": "Alle",
             "showFailed": "Letzte Einreichung ohne Ergebnis",
+            "showValidSubmissions": "Gültige Einreichungen",
             "showNoSubmissions": "Nur ohne Einreichungen",
             "showNoPracticeMode": "Nur bewertete Abgaben",
             "showingOnlyInRange": "Zeige nur Ergebnisse im Bereich: {{ range }}",

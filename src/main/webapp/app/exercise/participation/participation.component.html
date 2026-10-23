@@ -89,6 +89,13 @@
 <!-- Filter dropdown in the table caption bar -->
 
 <ng-template #filterActionsTemplate>
+    <span
+        tabindex="0"
+        role="img"
+        [attr.aria-label]="'artemisApp.participation.searchHint' | artemisTranslate"
+        [tumAetUiTooltip]="'artemisApp.participation.searchHint' | artemisTranslate"
+        ><fa-icon [icon]="faCircleInfo"
+    /></span>
     <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilters]="activeFilters()" (filterChange)="updateParticipationFilter($event)" />
 </ng-template>
 

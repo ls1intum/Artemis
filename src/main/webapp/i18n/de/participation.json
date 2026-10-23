@@ -2,6 +2,7 @@
     "artemisApp": {
         "participation": {
             "triggerOptions": "Builds auslösen",
+            "searchHint": "Suchbegriffe durch Kommas trennen",
             "searchStudents": "Studierende suchen",
             "searchTeams": "Teams suchen",
             "onlineEditor": "Online-Editor",
