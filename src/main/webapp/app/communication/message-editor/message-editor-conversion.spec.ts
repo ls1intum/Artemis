@@ -299,6 +299,46 @@ describe('Message editor conversion', () => {
         expect(canEditMessageVisually(source)).toBe(true);
     });
 
+    describe('empty lines', () => {
+        /** Serializes an editor document that is given as markup, which stands for what native editing leaves in the DOM. */
+        function serializeEditorMarkup(markup: string): string {
+            const element = document.createElement('div');
+            element.innerHTML = markup;
+            return editorToMessage(element);
+        }
+
+        it.each([
+            ['keeps a single line break as it is', 'a<br>b', 'a\nb'],
+            ['keeps an empty soft line between two lines', 'a<br><br>b', 'a\n\nb'],
+            ['keeps each further empty soft line', 'a<br><br><br>b', 'a\n\n&nbsp;\n\nb'],
+            ['keeps two further empty soft lines', 'a<br><br><br><br>b', 'a\n\n&nbsp;\n\n&nbsp;\n\nb'],
+            ['keeps the empty soft lines of each paragraph', '<p>a<br><br>b</p><p>c<br><br>d</p>', 'a\n\nb\n\nc\n\nd'],
+            ['does not count the caret placeholder as an empty line', '<p>a<br data-message-placeholder="true"></p><p>b</p>', 'a\n\nb'],
+            ['drops empty lines at the start', '<p><br><br>a</p>', 'a'],
+            ['drops empty lines at the end', '<p>a<br><br><br></p>', 'a'],
+            ['keeps an empty paragraph written as a non-breaking space', '<p>a</p><p>&nbsp;</p><p>b</p>', 'a\n\n&nbsp;\n\nb'],
+            ['drops a non-breaking space paragraph at the start and the end', '<p>&nbsp;</p><p>a</p><p>&nbsp;</p>', 'a'],
+            ['leaves list items without paragraphs', '<ul><li>a<br><br>b</li><li>c</li></ul>', '- a\n  b\n- c'],
+        ])('%s', (_name, markup, expected) => {
+            expect(serializeEditorMarkup(markup)).toBe(expected);
+        });
+
+        it.each(['a\n\nb', 'a\n\n&nbsp;\n\nb', 'a\n\n&nbsp;\n\n&nbsp;\n\nb', 'a\nb'])('keeps %j when the sent message is reopened and saved again', (message) => {
+            const reopened = document.createElement('div');
+            reopened.append(messageToEditorFragment(message));
+
+            expect(editorToMessage(reopened)).toBe(message);
+        });
+
+        it('renders every empty line of the editor as a blank line of the sent message', async () => {
+            const message = serializeEditorMarkup('<p>a<br><br><br>b</p>');
+            const posting = document.createElement('div');
+            posting.innerHTML = await renderPostingMarkdownToHtml(message);
+
+            expect(Array.from(posting.querySelectorAll('p'), (paragraph) => paragraph.textContent?.replace(/\u00a0/g, '<blank>'))).toEqual(['a', '<blank>', 'b']);
+        });
+    });
+
     it.each(['Costs $5 and $10', '$5 for `a` and $10 for b', 'id$x$', '$x$id', '_$x$_', String.raw`\\$x^2$`])(
         'keeps currency and other literal dollars editable when the posting renderer leaves them literal: %s',
         async (source) => {

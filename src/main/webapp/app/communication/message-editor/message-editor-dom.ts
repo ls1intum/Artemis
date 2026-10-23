@@ -537,6 +537,40 @@ export class MessageEditorDom {
         return true;
     }
 
+    /**
+     * Turns the first item of a list that starts the message into text, like the list toolbar button does. Browsers leave the
+     * list in place when Backspace is pressed at the start of the first line, whereas later lines are handled natively.
+     */
+    exitFirstListItem(): boolean {
+        const range = this.range();
+        const item = this.parentElement(range.startContainer)?.closest('li');
+        const list = item?.parentElement;
+        if (!range.collapsed || !item || !list?.matches('ul, ol') || item !== list.firstElementChild || !this.startsMessage(list)) {
+            return false;
+        }
+        const beforeCaret = range.cloneRange();
+        beforeCaret.setStart(item, 0);
+        const content = beforeCaret.cloneContents();
+        if (content.textContent?.replace(/\u200b/g, '') || content.querySelector('img, [data-message-reference]')) {
+            return false;
+        }
+        this.block(list.tagName.toLowerCase() as 'ul' | 'ol');
+        return true;
+    }
+
+    /** Whether nothing but empty text precedes the block, so that it is the first line of the message. */
+    private startsMessage(block: Element): boolean {
+        if (block.parentElement !== this.element) {
+            return false;
+        }
+        for (let node = block.previousSibling; node; node = node.previousSibling) {
+            if (node.nodeType !== Node.TEXT_NODE || node.textContent?.replace(/\u200b/g, '').trim()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /** Reads the link under a keyboard caret or a selection wholly inside one link. */
     linkAtSelection(): HTMLAnchorElement | undefined {
         const range = this.range();

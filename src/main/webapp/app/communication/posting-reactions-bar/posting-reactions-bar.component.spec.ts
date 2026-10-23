@@ -701,6 +701,57 @@ describe('PostingReactionsBarComponent', () => {
         expect(communicationServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
     });
 
+    describe('pinning outside of a selected conversation (e.g. in the course-wide search)', () => {
+        const searchResultInConversation = (conversationId: number | undefined) => {
+            const searchResult = new Post();
+            searchResult.id = 99;
+            searchResult.displayPriority = DisplayPriority.NONE;
+            searchResult.conversation = conversationId === undefined ? undefined : ({ id: conversationId, type: ConversationType.CHANNEL } as Conversation);
+            return searchResult;
+        };
+
+        beforeEach(() => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined);
+            vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(true);
+        });
+
+        it('should not offer pinning to a tutor who has no moderation rights in the channel of the post', () => {
+            vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockReturnValue({
+                id: 5,
+                type: ConversationType.CHANNEL,
+                hasChannelModerationRights: false,
+            } as ChannelDTO);
+            fixture.componentRef.setInput('posting', searchResultInConversation(5));
+
+            component.ngOnInit();
+
+            expect(component.canPin()).toBe(false);
+        });
+
+        it('should offer pinning to a user who has moderation rights in the channel of the post', () => {
+            const cachedConversationSpy = vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockReturnValue({
+                id: 5,
+                type: ConversationType.CHANNEL,
+                hasChannelModerationRights: true,
+            } as ChannelDTO);
+            fixture.componentRef.setInput('posting', searchResultInConversation(5));
+
+            component.ngOnInit();
+
+            expect(cachedConversationSpy).toHaveBeenCalledExactlyOnceWith(5);
+            expect(component.canPin()).toBe(true);
+        });
+
+        it('should not offer pinning when the conversation of the post is not known', () => {
+            vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockReturnValue(undefined);
+            fixture.componentRef.setInput('posting', searchResultInConversation(undefined));
+
+            component.ngOnInit();
+
+            expect(component.canPin()).toBe(false);
+        });
+    });
+
     it('should emit isDeleteEvent when deletePosting is called', () => {
         const spy = vi.spyOn(component.isDeleteEvent, 'emit');
         component.deletePosting();
