@@ -38,6 +38,11 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { AccountService } from 'app/core/auth/account.service';
 import { TeamPracticeHintComponent } from 'app/course/overview/exercise-details/team-practice-hint/team-practice-hint.component';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { findLatestResult } from 'app/foundation/util/utils';
+import { ResultService } from 'app/exercise/result/result.service';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -67,6 +72,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
     ],
 })
 export class ExerciseSplitPanelComponent {
+    private readonly resultService = inject(ResultService);
     private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
@@ -132,7 +138,7 @@ export class ExerciseSplitPanelComponent {
 
     /**
      * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route
-     * *identity* (exercise type/id, participation id, mode, online-editor flag) — never the exercise/participation
+     * *identity* (exercise type/id, participation id, mode, online-editor flag, feedback-tab visibility) — never the exercise/participation
      * object references. An incoming result replaces the participation object while keeping its id; without this key
      * the navigation effect would re-run on every such change and re-issue router.navigate mid-transition, re-creating
      * the whole code-editor subtree in a loop (flooding the server, see PR #12976). Returns undefined while no
@@ -144,7 +150,14 @@ export class ExerciseSplitPanelComponent {
             return undefined;
         }
         const participationId = this.studentParticipation()?.id;
-        return [exercise.type, exercise.id, participationId ?? '', this.participationMode(), (exercise as ProgrammingExercise).allowOnlineEditor ?? ''].join('|');
+        return [
+            exercise.type,
+            exercise.id,
+            participationId ?? '',
+            this.participationMode(),
+            (exercise as ProgrammingExercise).allowOnlineEditor ?? '',
+            this.showReadOnlyEditorAsFeedbackTab(),
+        ].join('|');
     });
 
     readonly showDiscussion = computed(() => {
@@ -174,18 +187,27 @@ export class ExerciseSplitPanelComponent {
 
     readonly showCodeEditor = computed(() => {
         const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor;
+        return exercise.type === ExerciseType.PROGRAMMING && !!this.studentParticipation();
     });
 
     readonly showEditorPanel = computed(() => {
         const type = this.exercise().type;
         if (type === ExerciseType.QUIZ) return true;
         if (!this.studentParticipation()) return false;
-        if (type === ExerciseType.PROGRAMMING) {
-            return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
-        }
         return true;
     });
+
+    readonly showPrimaryEditorPanel = computed(() => {
+        const exercise = this.exercise();
+        return this.showEditorPanel() && (exercise.type !== ExerciseType.PROGRAMMING || (exercise as ProgrammingExercise).allowOnlineEditor === true);
+    });
+
+    readonly showEditorAsFeedbackTab = computed(() => {
+        const exercise = this.exercise();
+        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor !== true && this.latestResultHasInlineFeedback();
+    });
+
+    readonly showReadOnlyEditorAsFeedbackTab = computed(() => this.showEditorPanel() && this.showEditorAsFeedbackTab());
 
     readonly editorLabelKey = computed(() => {
         switch (this.exercise().type) {
@@ -230,7 +252,71 @@ export class ExerciseSplitPanelComponent {
         );
     });
 
+    private readonly loadedFeedback = signal<{ key: string; feedbacks: Feedback[] } | undefined>(undefined);
+    // Only the result identity drives the request; websocket object replacements must not fetch it again.
+    private readonly feedbackRequestKey = computed(() => {
+        const exercise = this.exercise();
+        const participation = this.studentParticipation();
+        const result = this.latestResultOfActiveParticipation();
+        if (
+            exercise.type !== ExerciseType.PROGRAMMING ||
+            (exercise as ProgrammingExercise).allowOnlineEditor ||
+            !participation?.id ||
+            !result?.id ||
+            result.feedbacks !== undefined
+        ) {
+            return undefined;
+        }
+        return `${participation.id}:${result.id}`;
+    });
+
+    private latestResultHasInlineFeedback(): boolean {
+        const latestResult = this.latestResultOfActiveParticipation();
+        if (!latestResult) {
+            return false;
+        }
+        if (this.resultBelongsToFailedBuild(latestResult)) {
+            return true;
+        }
+        if (latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA && latestResult.successful) {
+            return true;
+        }
+        const loaded = this.loadedFeedback();
+        const feedbacks = latestResult.feedbacks ?? (loaded?.key === this.feedbackRequestKey() ? loaded?.feedbacks : undefined);
+        return feedbacks?.some(Feedback.canBeShownInProgrammingEditor) ?? false;
+    }
+
+    private resultBelongsToFailedBuild(result: Result): boolean {
+        const submission: ProgrammingSubmission | undefined = result.submission;
+        if (submission?.buildFailed) {
+            return true;
+        }
+        return (
+            this.studentParticipation()?.submissions?.some(
+                (submission) => (submission as ProgrammingSubmission).buildFailed && submission.results?.some((submissionResult) => submissionResult.id === result.id),
+            ) ?? false
+        );
+    }
+
+    private latestResultOfActiveParticipation(): Result | undefined {
+        return findLatestResult(getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions));
+    }
+
     constructor() {
+        effect((onCleanup) => {
+            const key = this.feedbackRequestKey();
+            if (!key) {
+                return;
+            }
+            untracked(() => {
+                const result = this.latestResultOfActiveParticipation()!;
+                const subscription = this.resultService.getFeedbackDetailsForResult(this.studentParticipation()!.id, result).subscribe({
+                    next: (response) => this.loadedFeedback.set({ key, feedbacks: response.body ?? [] }),
+                    error: () => this.loadedFeedback.set({ key, feedbacks: [] }),
+                });
+                onCleanup(() => subscription.unsubscribe());
+            });
+        });
         // Keep _quizBatchStarted / _quizEnded in sync with the exercise input.
         // Effects (unlike computed signals) do not throw NG0950 when reading required inputs,
         // so this is safe even during the initial evaluation before inputs are fully bound.
@@ -286,7 +372,10 @@ export class ExerciseSplitPanelComponent {
                 if (!participation?.id) return;
                 const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
                 if (currentParticipationId === String(participation.id)) return;
-                const segments = participationChildRouteSegments(exercise, participation);
+                const segments =
+                    type === ExerciseType.PROGRAMMING && this.showReadOnlyEditorAsFeedbackTab()
+                        ? ['programming-exercises', exercise.id, 'code-editor', participation.id]
+                        : participationChildRouteSegments(exercise, participation);
                 if (segments) {
                     void this.router.navigate(segments, { relativeTo: this.route.parent });
                 }

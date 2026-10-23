@@ -13,6 +13,7 @@ import { of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
     let comp: CodeEditorStudentContainerComponent;
@@ -73,4 +74,17 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(getParticipationSubmissionCountSpy).not.toHaveBeenCalled();
         },
     );
+
+    it.each([
+        { allowOnlineEditor: true, onlineEditorEnabled: true, readOnlyCodeEditor: false },
+        { allowOnlineEditor: false, onlineEditorEnabled: false, readOnlyCodeEditor: true },
+    ])('should derive read-only code editor state from the online editor setting', ({ allowOnlineEditor, onlineEditorEnabled, readOnlyCodeEditor }) => {
+        comp.exercise.set({ ...studentParticipation.exercise, allowOnlineEditor } as ProgrammingExercise);
+
+        expect(comp.canSubmitExercise()).toBe(onlineEditorEnabled);
+        comp.repositoryIsLocked.set(true);
+        expect(comp.canSubmitExercise()).toBe(false);
+        expect(comp.onlineEditorEnabled()).toBe(onlineEditorEnabled);
+        expect(comp.readOnlyCodeEditor()).toBe(readOnlyCodeEditor);
+    });
 });

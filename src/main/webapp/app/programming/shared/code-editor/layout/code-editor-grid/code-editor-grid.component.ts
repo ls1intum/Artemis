@@ -23,6 +23,7 @@ export class CodeEditorGridComponent {
     readonly isTutorAssessment = input(false);
     readonly showEditorNavbar = input(true);
     readonly showEditorSidebarRight = input(true);
+    readonly showEditorBottomArea = input(true);
     readonly onResize = output<ResizeType>();
 
     readonly fileBrowserIsCollapsed = signal(false);
