@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -40,9 +41,21 @@ public class SubmissionAssessmentEligibilityService {
      * @return whether the current user may start this correction
      */
     public boolean canStartAssessment(Submission submission, Exercise exercise, int correctionRound) {
+        return canStartAssessment(submission, exercise, correctionRound, userRepository.getUser());
+    }
+
+    /**
+     * Checks eligibility using a user already loaded for the assessment page.
+     *
+     * @param submission      the submission to assess
+     * @param exercise        its exercise, including exam information
+     * @param correctionRound the round to start
+     * @param user            the current user
+     * @return whether the user may start this correction
+     */
+    public boolean canStartAssessment(Submission submission, Exercise exercise, int correctionRound, User user) {
         var participation = submission.getParticipation();
-        var user = userRepository.getUser();
-        if (exercise.isTeamMode() && !authCheckService.isAtLeastInstructorForExercise(exercise)
+        if (exercise.isTeamMode() && !authCheckService.isAtLeastInstructorForExercise(exercise, user)
                 && (!(participation instanceof StudentParticipation student) || student.getTeam().filter(team -> team.isOwner(user)).isEmpty())) {
             return false;
         }

@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Set;
@@ -58,6 +60,14 @@ class SubmissionAssessmentEligibilityServiceTest {
     }
 
     @Test
+    void reusesTheSuppliedUserAcrossCorrectionRounds() {
+        assertThat(service.canStartAssessment(submission, exercise, 0)).isTrue();
+        assertThat(service.canStartAssessment(submission, exercise, 0, tutor)).isTrue();
+        assertThat(service.canStartAssessment(submission, exercise, 1, tutor)).isFalse();
+        verify(userRepository, times(1)).getUser();
+    }
+
+    @Test
     void requiresSubmittedWorkAndTheEffectiveDeadline() {
         assertThat(service.canStartAssessment(submission, exercise, 0)).isTrue();
         submission.setSubmitted(false);
@@ -98,7 +108,7 @@ class SubmissionAssessmentEligibilityServiceTest {
         participation.getTeam().orElseThrow().setOwner(tutor);
         assertThat(service.canStartAssessment(submission, exercise, 0)).isTrue();
         participation.getTeam().orElseThrow().setOwner(null);
-        when(authCheckService.isAtLeastInstructorForExercise(exercise)).thenReturn(true);
+        when(authCheckService.isAtLeastInstructorForExercise(exercise, tutor)).thenReturn(true);
         assertThat(service.canStartAssessment(submission, exercise, 0)).isTrue();
     }
 

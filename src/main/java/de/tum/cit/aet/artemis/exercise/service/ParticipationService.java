@@ -32,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
@@ -121,6 +122,8 @@ public class ParticipationService {
 
     private final SubmissionAssessmentEligibilityService assessmentEligibilityService;
 
+    private final UserRepository userRepository;
+
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final Optional<HyperionExerciseMutationApi> liveSaveApi;
@@ -131,7 +134,8 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
             ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SubmissionAssessmentEligibilityService assessmentEligibilityService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
-            Optional<HyperionExerciseMutationApi> liveSaveApi) {
+            Optional<HyperionExerciseMutationApi> liveSaveApi, UserRepository userRepository) {
+        this.userRepository = userRepository;
         this.assessmentEligibilityService = assessmentEligibilityService;
         this.liveSaveApi = liveSaveApi;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -1271,14 +1275,15 @@ public class ParticipationService {
         Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
         final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
+        User assessmentUser = assessmentQueue ? userRepository.getUserWithAuthorities() : null;
         List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
-                .map(p -> mapToManagementDTO(p, exercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults, assessmentQueue)).toList();
+                .map(p -> mapToManagementDTO(p, exercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults, assessmentUser)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
     private ParticipationManagementDTO mapToManagementDTO(StudentParticipation participation, Exercise exercise, Map<Long, Integer> submissionCountMap,
-            Map<Long, Result> resultBySubmissionId, Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId, boolean assessmentQueue) {
+            Map<Long, Result> resultBySubmissionId, Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId, @Nullable User assessmentUser) {
         String participantName;
         String participantIdentifier;
         Long studentId = null;
@@ -1348,9 +1353,10 @@ public class ParticipationService {
                 latestResult != null && latestResult.getAssessmentNote() != null ? latestResult.getAssessmentNote().getNote() : null, durationInSeconds,
                 latestResult != null ? latestResult.getTestCaseCount() : null, latestResult != null ? latestResult.getPassedTestCaseCount() : null,
                 latestResult != null ? latestResult.getCodeIssueCount() : null, correctionRoundResults,
-                assessmentQueue
+                assessmentUser != null
                         ? IntStream.range(0, exercise.getNumberOfCorrectionRounds())
-                                .filter(round -> latestSubmission != null && assessmentEligibilityService.canStartAssessment(latestSubmission, exercise, round)).boxed().toList()
+                                .filter(round -> latestSubmission != null && assessmentEligibilityService.canStartAssessment(latestSubmission, exercise, round, assessmentUser))
+                                .boxed().toList()
                         : null);
     }
 
