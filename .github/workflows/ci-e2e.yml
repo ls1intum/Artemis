@@ -154,6 +154,20 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Collect slow-query report (Phase 1)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+
+      - name: Upload slow-query report artifact (Phase 1)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: Slow Query Report Phase 1
+          path: slow-query-report.html
+          if-no-files-found: warn
+
       - name: E2E Teardown
         id: teardown
         if: ${{ !cancelled() }}
@@ -230,6 +244,7 @@ jobs:
           INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
         with:
           script: |
+            const fs = require('fs');
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
 
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -244,6 +259,12 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            // Read from disk rather than an env var: actions/github-script spawns a fresh Node
+            // process with the whole job environment, and a large report here has previously
+            // pushed that environment past the OS's exec() size limit ("Argument list too long"),
+            // silently swallowed by this step's continue-on-error.
+            let slowQueryMd = '';
+            try { slowQueryMd = fs.readFileSync('slow-query-summary.md', 'utf8'); } catch {}
 
             const failedTests = parseFailedTests('phase1-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
@@ -262,6 +283,7 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
+            if (slowQueryMd) { body += '\n' + slowQueryMd; }
             body += `\n\n**Test Strategy:** Two-phase execution\n`;
             body += `- **Phase 1:** \`${relevantTests}\`\n`;
             body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
@@ -350,6 +372,20 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Collect slow-query report (Phase 2)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+
+      - name: Upload slow-query report artifact (Phase 2)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: Slow Query Report Phase 2
+          path: slow-query-report.html
+          if-no-files-found: warn
+
       - name: E2E Teardown
         id: teardown
         if: ${{ !cancelled() }}
@@ -424,6 +460,7 @@ jobs:
           INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
         with:
           script: |
+            const fs = require('fs');
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
 
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -436,6 +473,12 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            // Read from disk rather than an env var: actions/github-script spawns a fresh Node
+            // process with the whole job environment, and a large report here has previously
+            // pushed that environment past the OS's exec() size limit ("Argument list too long"),
+            // silently swallowed by this step's continue-on-error.
+            let slowQueryMd = '';
+            try { slowQueryMd = fs.readFileSync('slow-query-summary.md', 'utf8'); } catch {}
 
             const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
 
@@ -443,7 +486,7 @@ jobs:
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
             const flakinessTable = buildFlakinessTable(flakinessResults);
 
-            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable);
+            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable + (slowQueryMd ? '\n' + slowQueryMd : ''));
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
@@ -544,6 +587,20 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Collect slow-query report (All PR)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+
+      - name: Upload slow-query report artifact (All PR)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: Slow Query Report All PR
+          path: slow-query-report.html
+          if-no-files-found: warn
+
       - name: E2E Teardown
         id: teardown
         if: ${{ !cancelled() }}
@@ -626,6 +683,7 @@ jobs:
           INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
         with:
           script: |
+            const fs = require('fs');
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
 
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -638,6 +696,12 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            // Read from disk rather than an env var: actions/github-script spawns a fresh Node
+            // process with the whole job environment, and a large report here has previously
+            // pushed that environment past the OS's exec() size limit ("Argument list too long"),
+            // silently swallowed by this step's continue-on-error.
+            let slowQueryMd = '';
+            try { slowQueryMd = fs.readFileSync('slow-query-summary.md', 'utf8'); } catch {}
 
             const failedTests = parseFailedTests('all-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
@@ -651,6 +715,7 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
+            if (slowQueryMd) { body += '\n' + slowQueryMd; }
             body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
@@ -710,6 +775,20 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
         run: supporting_scripts/ci/E2E-tests/execute.sh multi-node-redis playwright
+
+      - name: Collect slow-query report (Non-PR)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+
+      - name: Upload slow-query report artifact (Non-PR)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: Slow Query Report Non-PR
+          path: slow-query-report.html
+          if-no-files-found: warn
 
       - name: E2E Teardown
         id: teardown
