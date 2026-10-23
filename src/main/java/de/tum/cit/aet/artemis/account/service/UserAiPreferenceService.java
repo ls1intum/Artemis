@@ -82,17 +82,6 @@ public class UserAiPreferenceService {
     }
 
     /**
-     * Whether the account has a preference row at all. An explicitly saved row can still have no decision; callers
-     * that need to distinguish it from an absent row should ask this rather than compare the decision against null.
-     *
-     * @param userId the account
-     * @return true if a row exists
-     */
-    public boolean hasPreferenceRow(long userId) {
-        return userAiPreferenceRepository.findByUserId(userId).isPresent();
-    }
-
-    /**
      * Whether the account has opted into LLM usage, meaning it recorded a decision other than {@code NO_AI}.
      *
      * @param userId the account

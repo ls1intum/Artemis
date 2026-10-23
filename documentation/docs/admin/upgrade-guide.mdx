@@ -32,7 +32,9 @@ Both routes end with the same schema, so it makes no difference to the running i
 Artemis 10.4 removed the Memiris integration. The later contract migration
 `20261022231936-01-remove-memiris-storage` drops `user_ai_preference.memiris_enabled`,
 `iris_message.accessed_memories` and `iris_message.created_memories`. It also removes AI preference rows without a
-selection decision. Recorded decisions, including `NO_AI`, their timestamps, user accounts and chat messages remain.
+selection decision, and `20261022231936-02-require-ai-selection-decision` makes `user_ai_preference.selection_decision`
+mandatory, so such rows cannot appear again. Recorded decisions, including `NO_AI`, their timestamps, user accounts and
+chat messages remain.
 
 Deploy this cleanup only in a release after 10.4. Reverting the WAR to 10.4, which no longer maps these columns, remains
 compatible with the cleaned schema. Older releases that still read or write them require the database backup taken

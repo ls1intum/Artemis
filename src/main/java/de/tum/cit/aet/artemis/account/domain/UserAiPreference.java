@@ -17,9 +17,9 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
 /**
  * An account's choice about AI features: which kind of LLM usage it consented to.
  * <p>
- * A row exists only for an account that has made a decision. The absence of a row means "no decision recorded" - resolve
- * it through {@code UserAiPreferenceService} rather than reading this entity directly, so that default lives in one
- * place.
+ * A row exists only for an account that has made a decision, which the database enforces. The absence of a row means "no
+ * decision recorded" - resolve it through {@code UserAiPreferenceService} rather than reading this entity directly, so
+ * that default lives in one place.
  */
 @Entity
 @Table(name = "user_ai_preference")
@@ -31,12 +31,13 @@ public class UserAiPreference {
     private long userId;
 
     /**
-     * Which kind of LLM usage the account consented to, or null when it has not decided yet. {@code NO_AI} is a recorded
-     * decision to refuse, which is not the same as not having decided.
+     * Which kind of LLM usage the account consented to. Required for a stored row; it is only null on a new instance
+     * until the decision is set. {@code NO_AI} is a recorded decision to refuse, which is not the same as not having
+     * decided.
      */
     @Nullable
     @Enumerated(EnumType.STRING)
-    @Column(name = "selection_decision", length = 20)
+    @Column(name = "selection_decision", length = 20, nullable = false)
     private AiSelectionDecision selectionDecision = null;
 
     /**

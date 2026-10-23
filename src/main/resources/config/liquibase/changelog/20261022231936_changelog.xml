@@ -18,4 +18,20 @@
             <stop>Memiris cleanup permanently removed legacy data. Restore the database backup taken before this migration to recover it. Artemis 10.4 with #14315 can run against the cleaned schema.</stop>
         </rollback>
     </changeSet>
+
+    <!-- A row now exists only for an account that has recorded a decision: the only code that writes rows
+         (UserAiPreferenceService.recordDecision) always sets one. The column enforces that from now on. Artemis 10.4
+         never writes a row without a decision either, so reverting the WAR to 10.4 still works. The delete repeats the
+         one above so this changeset holds on its own. Its rollback stops as well: undoing only the constraint would leave
+         the cleanup above in place, which can only be undone from the backup. -->
+    <changeSet id="20261022231936-02-require-ai-selection-decision" author="bassner">
+        <comment>Require a recorded AI selection decision for every AI preference row.</comment>
+        <delete tableName="user_ai_preference">
+            <where>selection_decision IS NULL</where>
+        </delete>
+        <addNotNullConstraint tableName="user_ai_preference" columnName="selection_decision" columnDataType="VARCHAR(20)"/>
+        <rollback>
+            <stop>The required AI selection decision belongs to the Memiris cleanup, which cannot be rolled back. Restore the database backup taken before this migration instead. Artemis 10.4 with #14315 can run against the cleaned schema.</stop>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>

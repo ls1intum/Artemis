@@ -82,29 +82,37 @@ class MemirisCleanupMigrationTest(unittest.TestCase):
                     self.assertNotIn("memiris_enabled", schema.tables["user_ai_preference"]["columns"])
                     self.assertNotIn("accessed_memories", schema.tables["iris_message"]["columns"])
                     self.assertNotIn("created_memories", schema.tables["iris_message"]["columns"])
+                    self.assertFalse(schema.tables["user_ai_preference"]["columns"]["selection_decision"]["nullable"])
 
                     # The current application writes only the consent fields; dropping the old default must not break inserts.
                     self.sql(database, """
                         INSERT INTO user_ai_preference (user_id, selection_decision, selection_decision_date)
                         VALUES (7, 'NO_AI', '2026-10-21 12:00:00');
                     """)
+                    # A row without a decision is the one state the cleanup removed; the column now refuses it.
+                    rejected = self.sql_result(database, "INSERT INTO user_ai_preference (user_id) VALUES (6);")
+                    self.assertNotEqual(rejected.returncode, 0)
                     liquibase.apply(database, CHANGELOG)
                     self.assertEqual(self.sql(database, "SELECT COUNT(*) FROM user_ai_preference;"), "4")
 
                     rollback = liquibase.command(database, CHANGELOG, "rollback-count", command_args=("--count=1",))
                     self.assertNotEqual(rollback.returncode, 0)
-                    self.assertIn("Memiris cleanup permanently removed legacy data", rollback.stdout + rollback.stderr)
+                    # The newest changeset refuses first, so the cleanup's own refusal is never reached here.
+                    self.assertIn("The required AI selection decision belongs to the Memiris cleanup", rollback.stdout + rollback.stderr)
                     self.assertEqual(self.sql(database, "SELECT COUNT(*) FROM user_ai_preference;"), "4")
                     self.assertEqual(database.schema(), schema)
 
     def sql(self, database, query):
+        result = self.sql_result(database, query)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return result.stdout.strip()
+
+    def sql_result(self, database, query):
         if database.engine.name == "postgres":
             client = ["psql", "-U", "artemis", "-d", "Artemis", "-t", "-A", "-F", "\t", "-v", "ON_ERROR_STOP=1"]
         else:
             client = ["mysql", "--default-character-set=utf8mb4", "-u", "root", "-N", "-B", "--database", "Artemis"]
-        result = run(["docker", "exec", "-i", database.container, *client], input=query)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        return result.stdout.strip()
+        return run(["docker", "exec", "-i", database.container, *client], input=query)
 
 
 if __name__ == "__main__":

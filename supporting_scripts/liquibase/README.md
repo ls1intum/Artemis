@@ -32,7 +32,8 @@ python3 test_memiris_cleanup_migration.py --database postgres
 ```
 
 It uses disposable containers on ports 16280 and 16281. It checks that legacy memory columns and preference rows without
-a decision are removed, while AI consent decisions and timestamps, users, and chat messages and contents survive.
+a decision are removed and that the decision column now refuses a row without one, while AI consent decisions and
+timestamps, users, and chat messages and contents survive.
 It also verifies that a rollback stops with the backup recovery instructions.
 The Liquibase workflow runs it on both supported databases.
 
