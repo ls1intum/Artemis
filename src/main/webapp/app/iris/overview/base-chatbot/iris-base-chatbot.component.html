@@ -261,14 +261,6 @@
                                                     ></span>
                                                 }
                                             }
-                                            @if (hasMemories(message)) {
-                                                <div class="bubble-meta bubble-meta-right">
-                                                    <jhi-iris-chat-memories-indicator
-                                                        [accessedMemories]="getAccessedMemories(message)"
-                                                        [createdMemories]="getCreatedMemories(message)"
-                                                    />
-                                                </div>
-                                            }
                                         </div>
                                     </div>
                                 }
@@ -300,14 +292,6 @@
                                             } @else if (content.type === IrisMessageContentType.TEXT) {
                                                 <div [class]="messageHasMcq(message) ? 'mcq-intro-text' : 'bubble-left'">
                                                     <jhi-iris-citation-text [text]="(content | as: IrisTextMessageContent).textContent" [citationInfo]="citationInfo()" />
-                                                    @if (hasMemories(message)) {
-                                                        <div class="bubble-meta bubble-meta-left">
-                                                            <jhi-iris-chat-memories-indicator
-                                                                [accessedMemories]="getAccessedMemories(message)"
-                                                                [createdMemories]="getCreatedMemories(message)"
-                                                            />
-                                                        </div>
-                                                    }
                                                 </div>
                                             }
                                         }
