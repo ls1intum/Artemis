@@ -26,6 +26,7 @@ import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service
 import type { Mock } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { InputNumber } from 'primeng/inputnumber';
+import { decimalSeparatorOf, typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { NgModel } from '@angular/forms';
 
 /**
@@ -177,21 +178,17 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(pointsInput.maxFractionDigits).toBe(2);
     });
 
-    it('should take the points that are typed with a decimal separator', () => {
+    it('should take the points that are typed with a decimal separator and two fraction digits', () => {
         fixture.detectChanges();
+        const pointsInput = fixture.debugElement.query(By.directive(InputNumber)).componentInstance as InputNumber;
+        const separator = decimalSeparatorOf(pointsInput);
         const input: HTMLInputElement = fixture.nativeElement.querySelector('input#score');
-        input.focus();
-        input.setSelectionRange(0, input.value.length);
-        for (const character of '5.5') {
-            const code = character.charCodeAt(0);
-            const key = { key: character, charCode: code, keyCode: code, which: code, bubbles: true, cancelable: true };
-            input.dispatchEvent(new KeyboardEvent('keydown', key));
-            input.dispatchEvent(new KeyboardEvent('keypress', key));
-        }
-        input.dispatchEvent(new Event('blur'));
 
-        expect(input.value).toBe('5.5');
-        expect(component.question().points).toBe(5.5);
+        // the third fraction digit is dropped
+        typeIntoInputNumber(input, `5${separator}555`);
+
+        expect(input.value).toBe(`5${separator}55`);
+        expect(component.question().points).toBe(5.55);
     });
 
     it('should detect changes and update component', () => {
