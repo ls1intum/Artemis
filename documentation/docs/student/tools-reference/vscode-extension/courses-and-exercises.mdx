@@ -1,0 +1,93 @@
+---
+id: courses-and-exercises
+title: Courses and Exercises in VS Code
+sidebar_label: Courses and Exercises
+---
+
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../../src/components/Image/Image";
+
+import dashboard from '../../assets/vscode-extension/dashboard.png';
+import courseList from '../../assets/vscode-extension/course-list.png';
+import courseDetail from '../../assets/vscode-extension/course-detail.png';
+import exerciseNotStarted from '../../assets/vscode-extension/exercise-not-started.png';
+import exerciseDetail from '../../assets/vscode-extension/exercise-detail.png';
+
+Your courses and exercises are in the **Artemis** view in the sidebar. It opens on the dashboard, and every other
+page has a back link at the top.
+
+## The Dashboard
+
+**Current Workspace Exercise** names the exercise whose repository is open in VS Code; select it to open that
+exercise. If no exercise is open, it says so, and **Choose** next to the heading opens the course list.
+
+<Image src={dashboard} alt="The dashboard with the current workspace exercise, a recent course with its exercises, and the Tools & Settings list" size={ImageSize.medium} caption="The dashboard, with the exercise that is open in the editor at the top" />
+
+**Recent Courses** lists up to three courses with up to four of their exercises each: the ones you opened last, and
+until you have opened any, those with the most recently released exercises. **Show All** opens the full course list.
+
+**Tools & Settings** holds **Browse Courses**, **Open Settings**, **Open Artemis in browser**,
+**Submission Setup** (see [Working on an Exercise](/student/tools-reference/vscode-extension/work-on-an-exercise#submission-setup)),
+**Bug Report**, which opens the extension's issue tracker, and **Logout from Artemis**.
+
+## Finding a Course
+
+**Browse Courses** opens **All Courses**, every course you are enrolled in. Search by title, semester or description,
+narrow the list by **Type** and **Semester**, and change the order with **Sort by**. **Clear Filters** resets all three.
+
+<Image src={courseList} alt="All Courses with the search field and filters, one active course and one archived course" size={ImageSize.medium} caption="The course list, with archived courses loaded" />
+
+Courses whose end date has passed are archived and are not loaded at first. **Load Archived Courses** adds them in a
+section of their own.
+
+## A Course
+
+Selecting a course shows its title, description and semester, and lists its exercises. Each row shows the exercise
+type as an icon, the due date and the points; the exercise that is open in your workspace carries an **Open** badge.
+Search the list or change its order with the dropdown beside the search field.
+
+<Image src={courseDetail} alt="A course page with the Ask Iris card and three exercises, one of them marked Open" size={ImageSize.medium} caption="A course and its exercises" />
+
+**Ask** on the **Ask Iris** card opens the Iris chat with this course as its topic; see
+[Iris in VS Code](/student/tools-reference/vscode-extension/iris).
+
+## An Exercise
+
+An exercise page starts with the title, the points and the time left until the due date. Below come your
+participation, the **Ask Iris** card and the problem statement under **Exercise Description**. The chevron beside the
+title shows more details, such as the release date and whether the exercise is graded.
+
+### Starting an Exercise
+
+An exercise you have not started says **Not Participating Yet**. **Start Exercise** creates your repository in
+Artemis, exactly as starting it in the browser does. **Open in browser** opens the same exercise in Artemis.
+
+<Image src={exerciseNotStarted} alt="An exercise that has not been started, with the Start Exercise and Open in browser buttons" size={ImageSize.medium} caption="An exercise you have not started yet" />
+
+After the due date, **Start Exercise** becomes **Practice**. It starts the exercise in practice mode, where your
+work no longer counts towards your grade; see [Practice Mode](/student/exercises/practice-mode). Exams are not
+available in the extension.
+
+For text, modeling, quiz and file upload exercises, the page asks you to complete them in the browser and only
+offers **Open in browser**.
+
+### A Started Exercise
+
+After you start, the participation block is headed **Repository Ready**. It shows the state of your local
+repository, the **Submit** button and the result of your latest submission.
+
+<Image src={exerciseDetail} alt="A started exercise with its latest result of 5 of 13 tests, the Ask Iris card and the problem statement" size={ImageSize.medium} caption="A started exercise, with the result of the latest submission" />
+
+As in Artemis, the problem statement shows for each task how many of its tests pass. Selecting a task shows the
+feedback for that task's tests only.
+
+[Working on an Exercise](/student/tools-reference/vscode-extension/work-on-an-exercise) covers cloning, submitting
+and reading the results.
+
+<Callout variant={CalloutVariant.tip}>
+
+  The icons at the top right of each page reload it from Artemis, open it in a larger editor tab, or open the
+  extension's settings.
+
+</Callout>

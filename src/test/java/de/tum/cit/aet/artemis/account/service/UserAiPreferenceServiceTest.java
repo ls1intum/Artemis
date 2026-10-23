@@ -24,9 +24,10 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
- * The AI preferences live in {@code user_ai_preference}, where a row exists only for an account that has made a decision
- * or turned Memiris off. That makes "no row" a meaningful state which every reader has to interpret the same way, so
- * these tests pin it: no row means no recorded decision and Memiris enabled.
+ * The AI preferences live in {@code user_ai_preference}, where a row exists only for an account that has made a decision.
+ * That makes "no row" a meaningful state which every reader has to interpret the same way, so these tests pin it: no row
+ * means no recorded decision. Accounts that turned the removed Memiris integration off can still have a row without a
+ * decision until a later migration removes those rows, so that state is pinned too.
  * <p>
  * Getting that default wrong flips behaviour for the majority of accounts - 26,648 of 34,354 have no row - which is why
  * it is tested per accessor rather than only through the happy path.
@@ -69,11 +70,6 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
         }
 
         @Test
-        void hasMemirisEnabled() {
-            assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).as("the column default was true, so no row must read as enabled").isTrue();
-        }
-
-        @Test
         void hasNotOptedIntoLlmUsage() {
             assertThat(userAiPreferenceService.hasOptedIntoLlmUsage(user.getId())).isFalse();
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId()));
@@ -113,13 +109,6 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
             assertThat(userAiPreferenceService.findDecision(user.getId())).isEqualTo(AiSelectionDecision.LOCAL_AI);
             assertThat(userAiPreferenceRepository.findAll()).filteredOn(preference -> preference.getUserId() == user.getId()).hasSize(1);
         }
-
-        @Test
-        void leavesMemirisEnabledUntouched() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
-
-            assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isTrue();
-        }
     }
 
     @Nested
@@ -148,58 +137,33 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Nested
-    class Memiris {
-
-        @Test
-        void canBeTurnedOffAndBackOn() {
-            userAiPreferenceService.setMemirisEnabled(user.getId(), false);
-            assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isFalse();
-
-            userAiPreferenceService.setMemirisEnabled(user.getId(), true);
-            assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isTrue();
-        }
-
-        @Test
-        void isIndependentOfTheLlmDecision() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
-            userAiPreferenceService.setMemirisEnabled(user.getId(), false);
-
-            assertThat(userAiPreferenceService.findDecision(user.getId())).isEqualTo(AiSelectionDecision.CLOUD_AI);
-            assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isFalse();
-        }
-    }
-
-    @Nested
     class ClearingADecision {
 
         /**
-         * With Memiris still at its default there is nothing left to record, so the row goes away and the account is
-         * represented the same way as one that never decided.
+         * The decision is all a row records, so the row goes away and the account is represented the same way as one that
+         * never decided.
          */
         @Test
-        void removesTheRowWhenNothingElseIsRecorded() {
+        void removesTheRow() {
             userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
 
             userAiPreferenceService.clearDecision(user.getId());
 
             assertThat(userAiPreferenceRepository.findByUserId(user.getId())).isEmpty();
             assertThat(userAiPreferenceService.findDecision(user.getId())).isNull();
-            assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isTrue();
         }
 
         /**
-         * A Memiris choice of false cannot be expressed by the absence of a row, so the row has to survive.
+         * A row without a decision is left over from an account that turned the removed Memiris integration off. Clearing
+         * removes it like any other row.
          */
         @Test
-        void keepsTheRowWhenMemirisIsTurnedOff() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
-            userAiPreferenceService.setMemirisEnabled(user.getId(), false);
+        void removesARowWithoutADecision() {
+            userAiPreferenceRepository.save(new UserAiPreference(user.getId()));
 
             userAiPreferenceService.clearDecision(user.getId());
 
-            assertThat(userAiPreferenceRepository.findByUserId(user.getId())).isPresent();
-            assertThat(userAiPreferenceService.findDecision(user.getId())).isNull();
-            assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isFalse();
+            assertThat(userAiPreferenceRepository.findByUserId(user.getId())).isEmpty();
         }
     }
 
@@ -226,12 +190,10 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
         }
 
         @Test
-        void aClearedDecisionIsStillDistinguishableFromNoRow() {
-            userAiPreferenceService.setMemirisEnabled(user.getId(), false);
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
-            userAiPreferenceService.clearDecision(user.getId());
+        void aRowWithoutADecisionIsStillDistinguishableFromNoRow() {
+            // A row left over from an account that turned the removed Memiris integration off, so "no decision" and "no row" differ here.
+            userAiPreferenceRepository.save(new UserAiPreference(user.getId()));
 
-            // The row survives because it still carries the Memiris choice, so "no decision" and "no row" differ here.
             assertThat(userAiPreferenceService.findDecision(user.getId())).isNull();
             assertThat(userAiPreferenceService.hasPreferenceRow(user.getId())).isTrue();
         }
@@ -280,14 +242,14 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
         }
 
         @Test
-        void ignoresAccountsThatOnlyTurnedMemirisOff() {
-            User memirisOff = userUtilService.createAndSaveUser(TEST_PREFIX + "memirisoff");
-            userAiPreferenceService.clearDecision(memirisOff.getId());
-            userAiPreferenceService.setMemirisEnabled(memirisOff.getId(), false);
+        void ignoresRowsWithoutADecision() {
+            User withoutDecision = userUtilService.createAndSaveUser(TEST_PREFIX + "nodecision");
+            userAiPreferenceService.clearDecision(withoutDecision.getId());
+            userAiPreferenceRepository.save(new UserAiPreference(withoutDecision.getId()));
 
-            var decisions = userAiPreferenceService.findDecisions(Set.of(memirisOff.getId()));
+            var decisions = userAiPreferenceService.findDecisions(Set.of(withoutDecision.getId()));
 
-            assertThat(decisions).as("a row without a decision must not appear as one").doesNotContainKey(memirisOff.getId());
+            assertThat(decisions).as("a row without a decision must not appear as one").doesNotContainKey(withoutDecision.getId());
         }
     }
 }

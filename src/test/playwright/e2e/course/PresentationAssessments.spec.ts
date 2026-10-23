@@ -29,10 +29,10 @@ test.describe('Presentation assessments', { tag: '@fast' }, () => {
         await presentationAssessmentManagement.openPresentation(title);
 
         await presentationAssessmentManagement.assignAndGrade(studentOne.username, dayjs(), 15);
-        await expect(presentationAssessmentManagement.instanceRow(studentOne.username)).toContainText('15');
+        await expect(presentationAssessmentManagement.instanceRow(studentOne.username).getByTestId('instance-result-points')).toHaveText('15 / 20');
 
         await presentationAssessmentManagement.changeGrade(studentOne.username, 18);
-        await expect(presentationAssessmentManagement.instanceRow(studentOne.username)).toContainText('18');
+        await expect(presentationAssessmentManagement.instanceRow(studentOne.username).getByTestId('instance-result-points')).toHaveText('18 / 20');
 
         await presentationAssessmentManagement.deleteInstance(studentOne.username);
         await expect(presentationAssessmentManagement.instanceRow(studentOne.username)).toHaveCount(0);
@@ -61,7 +61,7 @@ test.describe('Presentation assessments', { tag: '@fast' }, () => {
 
         await presentationAssessmentManagement.assignAndGrade(studentOne.username, dayjs(), 12);
         const row = presentationAssessmentManagement.instanceRow(studentOne.username);
-        await expect(row).toContainText('12');
+        await expect(row.getByTestId('instance-result-points')).toHaveText('12 / 20');
         await expect(row.getByTestId('edit-instance-button')).toBeVisible();
         await expect(row.getByTestId('delete-instance-button')).toHaveCount(0);
     });

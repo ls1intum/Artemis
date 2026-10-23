@@ -27,18 +27,7 @@
                         <fa-icon [icon]="faGripLines" />
                     </span>
 
-                    @if (hiddenPages()[page.slideId]) {
-                        <ng-container>
-                            <span class="hidden-overlay pdf-overlay" style="opacity: 1">
-                                <span>
-                                    <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
-                                </span>
-                            </span>
-                        </ng-container>
-                    }
-                    <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
-                        <span>{{ getPageOrder(page.slideId) }}</span>
-                    </span>
+                    <ng-container [ngTemplateOutlet]="pageOverlay" [ngTemplateOutletContext]="{ $implicit: page }" />
                 </button>
                 @if (loadedPages().has(page.order)) {
                     <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
@@ -120,18 +109,7 @@
                     [attr.aria-label]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: getPageOrder(page.slideId) }"
                     (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
                 >
-                    @if (hiddenPages()[page.slideId]) {
-                        <ng-container>
-                            <span class="hidden-overlay pdf-overlay" style="opacity: 1">
-                                <span>
-                                    <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
-                                </span>
-                            </span>
-                        </ng-container>
-                    }
-                    <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
-                        <span>{{ getPageOrder(page.slideId) }}</span>
-                    </span>
+                    <ng-container [ngTemplateOutlet]="pageOverlay" [ngTemplateOutletContext]="{ $implicit: page }" />
                 </button>
                 @if (loadedPages().has(page.order)) {
                     <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
@@ -150,3 +128,18 @@
         />
     }
 </div>
+
+<ng-template #pageOverlay let-page>
+    @if (hiddenPages()[page.slideId]) {
+        <ng-container>
+            <span class="hidden-overlay pdf-overlay" style="opacity: 1">
+                <span>
+                    <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
+                </span>
+            </span>
+        </ng-container>
+    }
+    <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
+        <span>{{ getPageOrder(page.slideId) }}</span>
+    </span>
+</ng-template>

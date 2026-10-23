@@ -319,7 +319,7 @@
                                 <span jhiTranslate="artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart"></span>
                                 <span class="text-bold">{{ timeUntilStart() }}</span>
                                 <br />
-                                <span>({{ quizExercise().releaseDate!.format('LT') }})</span>
+                                <span data-testid="quiz-planned-start-time">({{ startDate()!.format('LT') }})</span>
                             </div>
                         }
                     }
