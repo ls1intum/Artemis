@@ -78,6 +78,40 @@ artemis:
 
 More options can be found in `src/main/resources/config/application-localci.yml` and `src/main/resources/config/application-buildagent.yml`.
 
+### Bulk builds
+
+An instructor can trigger the builds of a whole exercise (**Trigger All** on the grading page) or of selected submissions, for example to rebuild the ones that failed.
+Such a run does not queue all of its builds at once.
+The server queues them one after the other in the background, pauses after every batch, and waits while the build queue is longer than the build agents can work off.
+
+- The pause after every batch is set with `artemis.external-system-request.batch-size` (default 50 builds) and `artemis.external-system-request.batch-waiting-time` (default 30 seconds).
+- The wait for room in the queue is set in `application-localci.yml`:
+
+```yaml
+artemis:
+    continuous-integration:
+        bulk-trigger:
+            # How many queued jobs each build slot may have before a bulk trigger waits. 0 turns the wait off.
+            max-queued-jobs-per-build-slot: 2
+            # The longest one bulk trigger waits in total, in minutes. After that, it queues the rest of its builds without waiting.
+            max-wait-minutes: 180
+```
+
+A build slot is one build that a build agent runs at the same time, so the number of build slots is the sum of the concurrent builds of all connected build agents that are not paused.
+With 20 build slots and the default of 2, a bulk trigger waits while 40 or more jobs are queued and continues as soon as the queue is shorter.
+Jobs of other bulk runs and of students' pushes count towards the queue, because they compete for the same slots.
+Builds triggered by a student's push and the builds at the start and the end of an exam are never held back.
+A bulk trigger also does not wait while no build agent is connected, because the queue cannot shrink then; its builds stay queued until an agent is available.
+
+<Callout variant={CalloutVariant.info}>
+
+  The wait only controls how fast a run adds builds to the queue. It does not reduce how many builds run at the same time on a build agent.
+  If builds fail with timeouts while many of them run, lower the concurrent builds of the build agents with `specify-concurrent-builds: true` and a smaller `concurrent-build-size`.
+
+</Callout>
+
+A run lives on the core node that received the request. If that node restarts while a long run is waiting, the builds that were not queued yet are not queued later, and the instructor has to trigger them again.
+
 By default, every build runs in a Docker container on the build agent, which is what the rest of this page assumes.
 A production installation can instead let each build run as a Kubernetes Job; see
 [LocalCI Build Runners](/admin/production-setup/build-runners).

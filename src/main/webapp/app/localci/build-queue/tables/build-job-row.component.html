@@ -1,0 +1,60 @@
+@let buildJob = this.buildJob();
+<td class="build-jobs-column-tiny">
+    <!-- Stretched link enables Cmd+Click to open in new tab -->
+    <a class="stretched-row-link" [routerLink]="getJobDetailRoute(buildJob.id)" aria-hidden="true" tabindex="-1"></a>
+    <span [class.text-(--tumaet-ui-primary-color)!]="running()" [class.text-muted-color]="!running()">
+        @if (running()) {
+            <fa-icon [icon]="faSpinner" animation="spin" />
+        } @else {
+            <fa-icon [icon]="faClock" />
+        }
+    </span>
+</td>
+<td class="build-jobs-column-strings">
+    <span [tumAetUiTooltip]="buildJob.name ?? ''" [style.color]="running() && (buildJob.jobTimingInfo?.buildDuration ?? 0) > 240 ? 'var(--danger)' : undefined">
+        @if (running() && (buildJob.jobTimingInfo?.buildDuration ?? 0) > 240) {
+            <fa-icon [icon]="faExclamationCircle" class="me-1" />
+        }
+        {{ buildJob.name ?? '' | slice: 0 : 30 }}{{ (buildJob.name ?? '').length > 30 ? '...' : '' }}
+    </span>
+</td>
+@if (running()) {
+    <td class="build-jobs-column-strings">
+        @if (isAdminView() && buildJob.buildAgent) {
+            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: buildJob.buildAgent.name }" (click)="onLinkClick($event)">
+                {{ buildJob.buildAgent.displayName }}
+            </a>
+        } @else if (buildJob.buildAgent) {
+            <span>{{ buildJob.buildAgent.displayName }}</span>
+        }
+    </td>
+}
+<td class="build-jobs-column">
+    <span class="text-muted-color text-sm">{{ (running() ? buildJob.jobTimingInfo?.buildStartDate : buildJob.jobTimingInfo?.submissionDate) | artemisDate: 'short' : true }}</span>
+</td>
+<td class="build-jobs-column">
+    @if (running()) {
+        {{ buildJob.jobTimingInfo?.buildDuration ?? 0 | artemisDurationFromSeconds }}
+    } @else {
+        <span class="text-muted-color">{{ calculateWaitingTime(buildJob.jobTimingInfo?.submissionDate, displayTime()) }}</span>
+    }
+</td>
+@if (showCourseId()) {
+    <td class="build-jobs-column">
+        <a [routerLink]="['/course-management', buildJob.courseId]" (click)="onLinkClick($event)">{{ buildJob.courseId }}</a>
+    </td>
+}
+<td class="build-jobs-column">
+    {{ buildJob.priority }}
+</td>
+<td class="build-jobs-column-tiny">
+    <tumaet-ui-button
+        severity="danger"
+        size="small"
+        (clicked)="onCancelJob(buildJob.id!, $event)"
+        [tumAetUiTooltip]="'artemisApp.buildQueue.cancel' | artemisTranslate"
+        [ariaLabel]="'artemisApp.buildQueue.cancel' | artemisTranslate"
+    >
+        <fa-icon [icon]="faTimes" />
+    </tumaet-ui-button>
+</td>

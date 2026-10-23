@@ -1,0 +1,205 @@
+<div class="flex flex-wrap items-center gap-1" cdkOverlayOrigin #origin="cdkOverlayOrigin">
+    <div class="message-resource-controls flex flex-wrap items-center gap-1" [hidden]="!controlsVisible()">
+        <button
+            type="button"
+            tumAetUiButton
+            variant="text"
+            severity="secondary"
+            size="small"
+            data-testid="message-attachment-button"
+            [disabled]="uploading() || !conversationId()"
+            [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
+            tumAetUiTooltipDescribesHost="false"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
+            (mousedown)="remember($event)"
+            (click)="openFiles()"
+        >
+            <fa-icon [icon]="icons.faFileArrowUp" />
+        </button>
+        <button
+            type="button"
+            tumAetUiButton
+            variant="text"
+            severity="secondary"
+            size="small"
+            data-testid="message-slides-button"
+            [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.slides' | artemisTranslate"
+            tumAetUiTooltipDescribesHost="false"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.slides' | artemisTranslate"
+            (mousedown)="remember($event)"
+            (click)="open('slides')"
+        >
+            <fa-icon [icon]="icons.faFilePowerpoint" />
+        </button>
+        <button
+            type="button"
+            tumAetUiButton
+            variant="text"
+            severity="secondary"
+            size="small"
+            data-testid="message-faq-button"
+            [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.faq' | artemisTranslate"
+            tumAetUiTooltipDescribesHost="false"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.faq' | artemisTranslate"
+            (mousedown)="remember($event)"
+            (click)="open('faq')"
+        >
+            <fa-icon [icon]="icons.faFileCircleQuestion" />
+        </button>
+
+        <input
+            #fileInput
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
+            type="file"
+            class="hidden"
+            tabindex="-1"
+            multiple
+            [accept]="acceptedFiles"
+            (change)="filesSelected($event)"
+            data-testid="message-file-input"
+        />
+    </div>
+    <button
+        type="button"
+        tumAetUiButton
+        variant="text"
+        severity="secondary"
+        size="small"
+        data-testid="message-emoji-button"
+        [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
+        tumAetUiTooltipDescribesHost="false"
+        [attr.aria-label]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
+        (mousedown)="remember($event)"
+        (click)="open('emoji')"
+    >
+        <fa-icon [icon]="icons.faFaceSmile" />
+    </button>
+</div>
+@if (uploading()) {
+    <span role="status" class="message-editor-muted text-xs">{{ 'artemisApp.communication.formattedEditor.uploading' | artemisTranslate }}</span>
+}
+@if (error(); as errorKey) {
+    <span role="alert" data-testid="message-upload-error" class="min-w-0 basis-full px-2 py-1 text-xs text-state-danger wrap-anywhere">{{
+        'artemisApp.communication.formattedEditor.errors.' + errorKey | artemisTranslate: { name: errorFile(), max: maxFileSize }
+    }}</span>
+}
+<ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="origin"
+    [cdkConnectedOverlayOpen]="!!picker()"
+    [cdkConnectedOverlayPositions]="positions"
+    [cdkConnectedOverlayHasBackdrop]="true"
+    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+    (backdropClick)="close()"
+    (detach)="close(false)"
+    [cdkConnectedOverlayPush]="true"
+    [cdkConnectedOverlayViewportMargin]="8"
+>
+    <div
+        class="message-resource-picker message-suggestions rounded-md p-2 shadow-md"
+        [class.message-emoji-picker]="picker() === 'emoji'"
+        tabindex="-1"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'artemisApp.communication.formattedEditor.' + picker() | artemisTranslate"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+        (keydown.escape)="keydown($event)"
+        (compositionstart)="composing = true"
+        (compositionend)="composing = false"
+    >
+        @if (picker() !== 'emoji') {
+            <label class="message-resource-search">
+                {{ 'artemisApp.communication.formattedEditor.' + picker() | artemisTranslate }}
+                <input
+                    #queryInput
+                    tumAetUiInput
+                    data-testid="message-resource-search"
+                    type="search"
+                    [value]="query()"
+                    (input)="search($event)"
+                    (keydown)="keydown($event)"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded="true"
+                    [attr.aria-controls]="listId"
+                    [attr.aria-activedescendant]="results().length ? listId + '-' + active() : null"
+                />
+            </label>
+            <div role="status" class="message-editor-muted py-2 text-xs" aria-live="polite">
+                @if (loading()) {
+                    {{ 'artemisApp.communication.formattedEditor.loading' | artemisTranslate }}
+                } @else if (failed()) {
+                    {{ 'artemisApp.communication.formattedEditor.searchError' | artemisTranslate }}
+                    <button type="button" tumAetUiButton size="small" variant="text" (click)="search()">
+                        {{ 'artemisApp.communication.formattedEditor.retry' | artemisTranslate }}
+                    </button>
+                } @else if (!results().length) {
+                    {{ 'artemisApp.communication.formattedEditor.noResults' | artemisTranslate }}
+                } @else {
+                    {{ 'artemisApp.communication.formattedEditor.choose' | artemisTranslate }}
+                }
+            </div>
+        }
+        <div #resourceContent class="min-h-0 overflow-auto" data-testid="message-resource-content">
+            @if (picker() === 'emoji') {
+                <jhi-emoji-picker (emojiSelect)="chooseEmoji($event)" />
+            } @else {
+                <ul [id]="listId" role="listbox" class="m-0 list-none p-0" [attr.aria-label]="'artemisApp.communication.formattedEditor.' + picker() | artemisTranslate">
+                    @for (item of results(); track item.markdown; let index = $index) {
+                        <li
+                            role="option"
+                            tabindex="-1"
+                            [id]="listId + '-' + index"
+                            data-testid="message-resource-option"
+                            [attr.aria-selected]="index === active()"
+                            class="message-suggestion flex cursor-pointer items-center justify-between gap-4 rounded-sm px-2 py-1"
+                            (click)="choose(item)"
+                            (keydown.enter)="choose(item); $event.stopPropagation()"
+                            (mouseenter)="activate(index)"
+                            (mouseleave)="preview.set(undefined)"
+                            (focus)="activate(index)"
+                            cdkOverlayOrigin
+                            #optionOrigin="cdkOverlayOrigin"
+                            [attr.aria-label]="item.label"
+                        >
+                            <span class="min-w-0 truncate" [title]="item.resourceLabel ?? item.label">{{ item.resourceLabel ?? item.label }}</span
+                            ><span class="message-editor-muted shrink-0 text-xs">
+                                {{ 'artemisApp.communication.formattedEditor.kind.' + item.kind | artemisTranslate }}
+                                @if (item.slideNumber; as slideNumber) {
+                                    <span data-testid="message-slide-number">{{ slideNumber }}</span>
+                                }
+                            </span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+        @if (picker() !== 'emoji') {
+            <div class="message-resource-footer mt-2 flex shrink-0 justify-end border-t pt-2" data-testid="message-resource-footer">
+                <button type="button" tumAetUiButton variant="text" size="small" (click)="close()">{{ 'artemisApp.communication.cancel' | artemisTranslate }}</button>
+            </div>
+        }
+    </div>
+</ng-template>
+
+@if (preview(); as selected) {
+    <ng-template
+        cdkConnectedOverlay
+        [cdkConnectedOverlayOrigin]="selected.origin"
+        [cdkConnectedOverlayOpen]="true"
+        [cdkConnectedOverlayPositions]="previewPositions"
+        cdkConnectedOverlayPanelClass="message-slide-preview-pane"
+        [cdkConnectedOverlayPush]="true"
+        [cdkConnectedOverlayViewportMargin]="8"
+    >
+        <figure class="message-slide-preview message-suggestions m-0 rounded-md p-2 shadow-md" data-testid="message-slide-preview">
+            @if (previewFailed()) {
+                <p class="m-0 text-sm">{{ 'artemisApp.communication.formattedEditor.previewUnavailable' | artemisTranslate }}</p>
+            } @else {
+                <img [src]="selected.item.previewUrl" [alt]="selected.item.label" decoding="async" (error)="previewFailed.set(true)" />
+            }
+            <figcaption class="message-editor-muted mt-1 text-xs">{{ selected.item.label }}</figcaption>
+        </figure>
+    </ng-template>
+}

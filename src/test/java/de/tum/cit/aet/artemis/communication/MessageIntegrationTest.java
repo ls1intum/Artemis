@@ -287,10 +287,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // path let a late increment overwrite a recipient's read. Most other write work here stays async.
         // + 1 durable outbox enqueue (a synchronous INSERT recording the SearchableEntities upsert intent, which replaced
         // the former fire-and-forget async Weaviate write). The actual Weaviate write still happens later off the request.
+        // + 1 author read reset, now completed before the response rather than queued on the async executor.
+        // This is the same UPDATE as before; it now counts toward the request's query budget.
         // further database calls are made in async code
         // Note: post via the channel's own course — the path courseId must match the conversation's course (see ensureConversationBelongsToCourseElseThrow)
         assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
-                .hasBeenCalledTimes(10);
+                .hasBeenCalledTimes(11);
     }
 
     @ParameterizedTest
@@ -797,14 +799,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PostResponseDTO createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, PostResponseDTO.class,
                 HttpStatus.CREATED);
 
-        // Wait for the post-creation @Async increment to settle: the count must reach 1 before student2 reads the
-        // conversation. Both the increment (ConversationMessagingService#notifyAboutMessageCreation) and the read reset
-        // (ConversationParticipantRepository#updateLastReadAsync) run asynchronously, so without this gate the increment
-        // can land after the reset and leave the count permanently at 1.
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-            SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isEqualTo(1);
-        });
+        assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isEqualTo(1);
 
         userUtilService.changeUser(TEST_PREFIX + "student2");
         // we read the messages by "getting" them from the server as student
@@ -815,11 +810,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Set<PostResponseDTO> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         assertThat(returnedPosts).hasSize(1);
 
-        await().untilAsserted(() -> {
-            SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isZero();
-            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student1)).isZero();
-        });
+        assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isZero();
+        assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student1)).isZero();
     }
 
     @Test
@@ -889,9 +881,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String messageId = createdPost1.id().toString();
 
         // Wait for both post-creation @Async increments to settle: count must reach 2 before we proceed.
-        // Without this gate, the subsequent mark-as-read @Async could race with stale post-creation increments,
-        // and the baseline `unreadCount == 0` could be satisfied by the initial state alone (never observing
-        // that mark-as-read actually ran).
+        // Establish a nonzero count before verifying the read reset. Both writes complete before their HTTP responses.
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
             assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isEqualTo(2);
