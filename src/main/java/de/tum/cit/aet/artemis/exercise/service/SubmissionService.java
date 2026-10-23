@@ -225,8 +225,9 @@ public class SubmissionService {
                     ZonedDateTime.now());
         }
 
+        var user = userRepository.getUserWithAuthorities();
         var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).flatMap(Optional::stream)
-                .filter(submission -> assessmentEligibilityService.canStartAssessment(submission, exercise, correctionRound)).toList();
+                .filter(submission -> assessmentEligibilityService.canStartAssessment(submission, exercise, correctionRound, user)).toList();
 
         if (!examMode && exercise.getDueDate() != null) {
             submissionsWithoutResult = selectOnlySubmissionsBeforeDueDate(submissionsWithoutResult);

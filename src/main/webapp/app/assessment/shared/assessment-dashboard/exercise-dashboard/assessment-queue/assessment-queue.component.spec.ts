@@ -42,7 +42,8 @@ describe('AssessmentQueueComponent', () => {
         fixture.componentRef.setInput('exercise', exercise);
     });
 
-    it('requests only the teams of the tutor and shows them', () => {
+    it.each([false, true])('requests teams respecting instructor access: %s', (isAtLeastInstructor) => {
+        fixture.componentRef.setInput('exercise', { ...exercise, isAtLeastInstructor });
         const searchSpy = vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(of({ content: [teamRow], totalElements: 1 }));
 
         comp.loadPage({ pageIndex: 1, pageSize: 20, sort: { field: 'score', direction: 'desc' }, searchTerm: 'alpha' });
@@ -53,7 +54,7 @@ describe('AssessmentQueueComponent', () => {
             sortingOrder: SortingOrder.DESCENDING,
             sortedColumn: 'score',
             searchTerm: 'alpha',
-            ownTeams: true,
+            ownTeams: !isAtLeastInstructor,
             filterProp: 'NoPracticeMode',
         });
         expect(comp.rows()).toEqual([teamRow]);

@@ -172,7 +172,7 @@ export class AssessmentQueueComponent {
                   sortingOrder: query.sort?.direction === 'desc' ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
                   sortedColumn: query.sort?.field ?? this.participantSortField(),
                   searchTerm: this.teamMode() ? (query.searchTerm ?? '') : '',
-                  ownTeams: this.teamMode(),
+                  ownTeams: this.teamMode() && !this.exercise().isAtLeastInstructor,
                   filterProp: 'NoPracticeMode',
               });
         request
