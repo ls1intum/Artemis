@@ -694,6 +694,20 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectUploadForAnAutomaticExerciseThatOnlyAllowsComplaints() {
+        // Enabling complaints on an automatically assessed exercise lets tutors answer complaints manually, and keeps the assessment dashboard reachable. It does not turn the
+        // exercise into a manually assessed one, so a batch of uploaded assessments must still be refused.
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setAllowComplaintsForAutomaticAssessments(true);
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        final MockMultipartFile zip = buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback"));
+
+        assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, zip)).isInstanceOf(BadRequestAlertException.class);
+        assertThat(getManualResults(participation1.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectUploadForAnExerciseAssessedAutomatically() {
         // The dashboard disables the upload for such an exercise, which is a hint rather than a guard: the endpoint has to refuse it on its own.
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -702,7 +716,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         final MockMultipartFile zip = buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback"));
 
         assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, zip)).isInstanceOf(BadRequestAlertException.class)
-                .hasMessageContaining("not allowed");
+                .hasMessageContaining("manual assessment enabled");
         assertThat(getManualResults(participation1.getId())).isEmpty();
     }
 

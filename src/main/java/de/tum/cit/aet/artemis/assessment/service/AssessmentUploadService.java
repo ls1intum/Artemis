@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -259,6 +260,13 @@ public class AssessmentUploadService {
         if (numberOfCorrectionRounds == null || numberOfCorrectionRounds != 1) {
             throw new BadRequestAlertException("Manual assessments can only be uploaded for exercises with exactly one correction round", ENTITY_NAME,
                     "assessmentUpload.multipleCorrectionRounds");
+        }
+        // Manual assessment has to be the exercise's assessment type. areManualResultsAllowed below is also satisfied by an automatically assessed exercise that merely allows
+        // complaints, because a tutor answering a complaint there produces a manual result; that is a reply to one student, not a batch of assessments replacing what the
+        // tests decided, and the assessment dashboard such an exercise still offers must not become a way in.
+        if (exercise.getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            throw new BadRequestAlertException("Manual assessments can only be uploaded for exercises that have manual assessment enabled", ENTITY_NAME,
+                    "assessmentUpload.automaticAssessment");
         }
         // Respect the same manual-result gate as the assessment editor (manual assessment configured and the relevant due date passed).
         if (!exercise.areManualResultsAllowed()) {

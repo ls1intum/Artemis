@@ -180,6 +180,7 @@
             "invalidZipFile": "The uploaded file could not be read as a zip file",
             "multipleCorrectionRounds": "Manual assessments can only be uploaded for exercises with exactly one correction round",
             "manualResultsNotAllowed": "Manual assessments are not allowed for this exercise yet",
+            "automaticAssessment": "Manual assessments can only be uploaded for exercises that have manual assessment enabled",
             "tooManyParticipantsForTemplate": "The exercise has too many participants to generate a manual-assessment upload template"
         },
         "room": {
