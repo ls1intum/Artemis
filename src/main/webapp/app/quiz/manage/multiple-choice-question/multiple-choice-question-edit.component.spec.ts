@@ -314,7 +314,7 @@ describe('MultipleChoiceQuestionEditComponent', async () => {
         const pointsInput = fixture.debugElement.query(By.directive(InputNumber)).componentInstance as InputNumber;
 
         // PrimeNG only accepts a decimal separator while fraction digits are allowed
-        expect(pointsInput.maxFractionDigits).toBeGreaterThan(0);
+        expect(pointsInput.maxFractionDigits).toBe(2);
     });
 
     it('should trigger delete button', async () => {
