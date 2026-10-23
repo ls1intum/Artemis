@@ -15,8 +15,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -556,6 +558,55 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldStartANewAssessmentFromTheBuildAndNotFromANewerAthenaResult() {
+        // A student can ask Athena for non-graded feedback after the build, which leaves a newer result on the same submission carrying suggestion credits and none of the
+        // build's tests or penalties. Starting from that one would lose the test points and count the suggestions instead.
+        final Submission submission = participationUtilService.addSubmission(participation1, new ProgrammingSubmission().submitted(true));
+        final Result buildResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+        final var testCase = testCaseRepository.findByExerciseId(programmingExercise.getId()).iterator().next();
+        participationUtilService.addTestCaseFeedbackToResult(buildResult, testCase, true, null);
+        participationUtilService.addFeedbackToResult(submissionPolicyDeduction(), buildResult);
+        buildResult.setTestCaseCount(1);
+        buildResult.setPassedTestCaseCount(1);
+        resultRepository.save(buildResult);
+        final Result athenaResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now().minusMinutes(5), submission);
+        participationUtilService.addFeedbackToResult(new Feedback().credits(99.0).detailText("an Athena suggestion").type(FeedbackType.AUTOMATIC), athenaResult);
+
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Manual points\n%s,5\n".formatted(identifier1), Map.of(identifier1 + ".txt", "five on top")));
+
+        final Result created = getManualResults(participation1.getId()).getFirst();
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(created.getId()))).hasSize(1);
+        assertThat(created.getFeedbacks()).anyMatch(Feedback::isSubmissionPolicyFeedback);
+        assertThat(created.getFeedbacks()).noneMatch(feedback -> "an Athena suggestion".equals(feedback.getDetailText()));
+        assertThat(created.getPassedTestCaseCount()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCopyTheBuildFeedbackOfEveryParticipantInAConstantNumberOfQueries() {
+        // The copy used to run two feedback selects per newly assessed participant, which the existing guard never saw because it stops at the complaint gate. This one
+        // imports successfully, so it reaches the creation path where the build feedback is copied.
+        giveEveryParticipantABuild();
+        // Two disjoint groups, so both imports create assessments and copy build feedback, and neither has to undo the other's work first.
+        final List<String> twoParticipants = identifiers.subList(0, 2);
+        final List<String> fourParticipants = identifiers.subList(2, 6);
+
+        queryInterceptor.startQueryCount();
+        assessmentUploadService.importAssessments(programmingExercise, buildZip(buildCsvWithoutTextFiles(twoParticipants), buildFeedbackFiles(twoParticipants)));
+        final long feedbackReadsForTwo = countTypedFeedbackReadsBeforeTheResultsAreWritten();
+
+        queryInterceptor.startQueryCount();
+        assessmentUploadService.importAssessments(programmingExercise, buildZip(buildCsvWithoutTextFiles(fourParticipants), buildFeedbackFiles(fourParticipants)));
+        final long feedbackReadsForFour = countTypedFeedbackReadsBeforeTheResultsAreWritten();
+
+        // Only the reads are counted: the inserts of the assessments and their feedback scale with the batch by nature, the two reads that collect the build feedback do not.
+        assertThat(feedbackReadsForTwo).isPositive();
+        assertThat(feedbackReadsForFour).isEqualTo(feedbackReadsForTwo);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldKeepASubmissionPolicyDeductionWhenOverwritingAnAssessment() {
         // A submission policy penalty is ordinary AUTOMATIC feedback sitting next to the manual rows, not typed test feedback. It is part of what the build decided, so
         // replacing the manual part of an assessment must leave it in place; dropping it would hand the participant back the points the policy took away.
@@ -585,6 +636,30 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         final Result created = getManualResults(participation1.getId()).getFirst();
         assertThat(created.getFeedbacks()).anyMatch(Feedback::isSubmissionPolicyFeedback);
         assertThat(created.getScore()).isCloseTo(0.0, within(0.01));
+    }
+
+    /**
+     * How many times the typed automatic feedback tables were read while the assessments were still being built, which is what copying the build feedback costs. Counted up
+     * to the first assessment written, so the reads the notification does afterwards — one pair per announced result, and not this path's doing — stay out of it.
+     */
+    private long countTypedFeedbackReadsBeforeTheResultsAreWritten() {
+        final List<String> statements = queryInterceptor.getStatements().stream().map(statement -> statement.toLowerCase(Locale.ROOT)).toList();
+        final int firstResultWrite = IntStream.range(0, statements.size()).filter(index -> statements.get(index).startsWith("insert into result")).findFirst()
+                .orElse(statements.size());
+        return statements.subList(0, firstResultWrite).stream()
+                .filter(statement -> statement.startsWith("select") && (statement.contains("from test_case_feedback") || statement.contains("from sca_feedback"))).count();
+    }
+
+    /** Gives every participant of the exercise a build with one passing test, so an import has automatic feedback to copy for each of them. */
+    private void giveEveryParticipantABuild() {
+        final var testCase = testCaseRepository.findByExerciseId(programmingExercise.getId()).iterator().next();
+        for (final String identifier : identifiers) {
+            final long participationId = Long.parseLong(identifier.substring(0, identifier.indexOf('-')));
+            final var participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId).orElseThrow();
+            final Submission submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission().submitted(true));
+            final Result buildResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+            participationUtilService.addTestCaseFeedbackToResult(buildResult, testCase, true, null);
+        }
     }
 
     private Feedback submissionPolicyDeduction() {

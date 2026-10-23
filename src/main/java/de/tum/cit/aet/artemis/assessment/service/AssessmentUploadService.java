@@ -528,6 +528,8 @@ public class AssessmentUploadService {
         // write that follows — would leave submitted external submissions carrying no assessment behind, for participants the upload then reports as not stored. They would
         // also be picked up as the latest submission by a re-run, which would assess that submission instead of creating a fresh one.
         final List<Long> createdSubmissionIds = new ArrayList<>();
+        // Collected while the assessments are built and read once for the whole batch below, so an import does not issue two feedback selects per participant.
+        final List<SubmissionService.TypedFeedbackCopy> typedFeedbackCopies = new ArrayList<>();
         try {
             for (final ValidatedRow row : validatedRows) {
                 final Result existingManualResult = existingManualResultsByParticipationId.get(row.participationId());
@@ -544,10 +546,11 @@ public class AssessmentUploadService {
                     return createdSubmission;
                 });
                 final Result manualResult = buildManualResult(exercise, submission, row);
-                copyAutomaticFeedbackOfLatestBuild(manualResult, submission);
+                copyAutomaticFeedbackOfLatestBuild(manualResult, submission, typedFeedbackCopies);
                 submission.addResult(manualResult);
                 newResults.add(manualResult);
             }
+            submissionService.copyTypedFeedbackToResults(typedFeedbackCopies);
             // Writes every result in one repository call, so it stores all of them or none. Reaching the catch below therefore means no assessment was written and the
             // submissions created above are the only trace of this upload; the in-place edits made in the loop were never flushed.
             assessmentUploadResultService.saveManualResults(newResults, updatedResults, true, exercise, testCasePointsService.calculateTestCasePoints(exercise, false));
@@ -626,17 +629,20 @@ public class AssessmentUploadService {
      * <b>Postcondition:</b> the assessment carries copies of the typed automatic feedback of the submission's latest automatic result and its counters, or nothing at all when
      * the submission has no automatic result (a participant whose submission this upload just created).
      *
-     * @param manualResult the assessment being created
-     * @param submission   the submission it is created on
+     * @param manualResult        the assessment being created
+     * @param submission          the submission it is created on
+     * @param typedFeedbackCopies collects the typed feedback still to be copied, so the batch reads it in one go
      */
-    private void copyAutomaticFeedbackOfLatestBuild(final Result manualResult, final Submission submission) {
+    private void copyAutomaticFeedbackOfLatestBuild(final Result manualResult, final Submission submission, final List<SubmissionService.TypedFeedbackCopy> typedFeedbackCopies) {
         assert manualResult != null && submission != null : "manualResult and submission must not be null";
-        submission.getResults().stream().filter(result -> result != null && result.getId() != null && !result.isManual()).max(Comparator.comparing(Result::getId))
-                .ifPresent(automaticResult -> {
-                    submissionService.copyTypedFeedbackToResult(manualResult, automaticResult);
+        // The build, not merely the newest result that is not manual: a student can ask Athena for non-graded feedback after the build, which leaves a newer
+        // AUTOMATIC_ATHENA result on the same submission that carries suggestion credits and none of the build's tests, penalties or counters.
+        submission.getResults().stream().filter(result -> result != null && result.getId() != null && result.getAssessmentType() == AssessmentType.AUTOMATIC)
+                .max(Comparator.comparing(Result::getId)).ifPresent(buildResult -> {
+                    typedFeedbackCopies.add(new SubmissionService.TypedFeedbackCopy(manualResult, buildResult));
                     // The ordinary rows as well, not only the typed ones: a submission policy deduction lives here, and the editor copies these too.
-                    automaticResult.getFeedbacks().stream().map(feedbackService::copyFeedback).forEach(manualResult::addFeedback);
-                    manualResult.copyProgrammingExerciseCounters(automaticResult);
+                    buildResult.getFeedbacks().stream().map(feedbackService::copyFeedback).forEach(manualResult::addFeedback);
+                    manualResult.copyProgrammingExerciseCounters(buildResult);
                 });
     }
 
