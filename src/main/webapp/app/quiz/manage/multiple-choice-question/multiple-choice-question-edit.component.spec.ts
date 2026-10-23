@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { InputNumber } from 'primeng/inputnumber';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { MultipleChoiceQuestionEditComponent } from 'app/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -308,6 +309,13 @@ describe('MultipleChoiceQuestionEditComponent', async () => {
         expect(component.question().hint).toBeUndefined();
         expect(component.question().hasCorrectOption).toBeUndefined();
     }
+
+    it('should accept a decimal number of points', () => {
+        const pointsInput = fixture.debugElement.query(By.directive(InputNumber)).componentInstance as InputNumber;
+
+        // PrimeNG only accepts a decimal separator while fraction digits are allowed
+        expect(pointsInput.maxFractionDigits).toBeGreaterThan(0);
+    });
 
     it('should trigger delete button', async () => {
         const spy = vi.spyOn(component, 'deleteQuestion');

@@ -25,6 +25,7 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import type { Mock } from 'vitest';
 import { By } from '@angular/platform-browser';
+import { InputNumber } from 'primeng/inputnumber';
 import { NgModel } from '@angular/forms';
 
 /**
@@ -166,6 +167,14 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.backupQuestion).toEqual(question1);
         expect(component.filePreviewPaths()).toEqual(new Map<string, string>());
         expect(component.mouse).toStrictEqual(new DragAndDropMouseEvent());
+    });
+
+    it('should accept a decimal number of points', () => {
+        fixture.detectChanges();
+        const pointsInput = fixture.debugElement.query(By.directive(InputNumber)).componentInstance as InputNumber;
+
+        // PrimeNG only accepts a decimal separator while fraction digits are allowed
+        expect(pointsInput.maxFractionDigits).toBeGreaterThan(0);
     });
 
     it('should detect changes and update component', () => {
