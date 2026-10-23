@@ -82,19 +82,6 @@ public class UserAiPreferenceService {
     }
 
     /**
-     * Whether the account has a preference row at all, which is not the same as having decided: an account that turned
-     * the removed Memiris integration off still has a row without a decision until a later migration removes those rows.
-     * Callers that need to tell "never recorded anything" from "no decision" have to ask this rather than compare the
-     * decision against null.
-     *
-     * @param userId the account
-     * @return true if a row exists
-     */
-    public boolean hasPreferenceRow(long userId) {
-        return userAiPreferenceRepository.findByUserId(userId).isPresent();
-    }
-
-    /**
      * Whether the account has opted into LLM usage, meaning it recorded a decision other than {@code NO_AI}.
      *
      * @param userId the account
