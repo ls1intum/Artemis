@@ -75,6 +75,14 @@
                     position: absolute;
                     font-size: 1.4rem;
                 }
+
+                // Sized here rather than with Tailwind classes, which this folder is not scanned for. It must fit the
+                // fixed-height card below its title.
+                tumaet-ui-doughnut-chart {
+                    flex: none;
+                    width: 7rem;
+                    height: 7rem;
+                }
             }
 
             .info-card-content {
