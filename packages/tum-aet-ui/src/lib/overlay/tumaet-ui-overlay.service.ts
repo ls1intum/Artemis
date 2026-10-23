@@ -1,4 +1,4 @@
-import { ElementRef, NgZone, Service, inject } from '@angular/core';
+import { ElementRef, Service, inject } from '@angular/core';
 import { ConnectedPosition, FlexibleConnectedPositionStrategy, Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
 import { Directionality } from '@angular/cdk/bidi';
@@ -29,7 +29,6 @@ const VERTICAL_POSITIONS: Record<'top' | 'bottom', ConnectedPosition[]> = {
 export class TumAetUiOverlayService {
     private readonly overlay = inject(Overlay);
     private readonly document = inject(DOCUMENT);
-    private readonly zone = inject(NgZone);
     private readonly directionality = inject(Directionality);
 
     positionStrategy(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumAetUiOverlayPlacement): FlexibleConnectedPositionStrategy {
@@ -62,7 +61,7 @@ export class TumAetUiOverlayService {
                 overlayRef.updatePosition();
             }
         };
-        this.zone.runOutsideAngular(() => this.document.addEventListener('scroll', reposition, true));
+        this.document.addEventListener('scroll', reposition, true);
         const stopTrackingScroll = () => this.document.removeEventListener('scroll', reposition, true);
         overlayRef.detachments().subscribe({ next: stopTrackingScroll, complete: stopTrackingScroll });
         if (options.matchOriginWidth && typeof ResizeObserver !== 'undefined') {
