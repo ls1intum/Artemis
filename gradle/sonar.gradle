@@ -108,5 +108,29 @@ sonar {
             "src/main/webapp/app/core/config/prod.config.ts",
             "packages/tum-aet-ui/src/**",
         ].join(",")
+
+        // Findings that are intended and whose code says why. Each entry silences one rule in one file, so a new finding of the same rule
+        // anywhere else still counts. Prefer fixing a finding; an entry is only for code that is right and that Sonar cannot know is right.
+        //
+        // java:S2142, WorkingCopyLocks: the interrupt is not restored on purpose. A fork-join worker that stays interrupted fails its next JGit
+        //   checkout in interruptible NIO and deletes the working copy; the interrupt is reported as a CanceledException instead.
+        // java:S2142, LocalCIBulkTriggerThrottle: the interrupt is not restored on purpose. The caller sleeps between batches too, and a restored
+        //   flag would make each of those sleeps fail at once, leaving the remaining participations unbuilt for good.
+        // typescript:S5247, message-editor-conversion.ts: markdown-it needs html: true for the <ins> and <u> the message editor writes; the
+        //   rendered html is sanitized with DOMPurify before it reaches the DOM.
+        // typescript:S5247, posting-reference.util.ts: the markdown-it instance only parses the post to find references and never renders html.
+        // java:S2068, UserDemoService: the password of the demo users is public on purpose; the demo profile is opt-in and never runs in production.
+        def acceptedIssues = [
+            [rule: "java:S2142", file: "src/main/java/de/tum/cit/aet/artemis/localvc/service/WorkingCopyLocks.java"],
+            [rule: "java:S2142", file: "src/main/java/de/tum/cit/aet/artemis/localci/service/LocalCIBulkTriggerThrottle.java"],
+            [rule: "typescript:S5247", file: "src/main/webapp/app/communication/message-editor/message-editor-conversion.ts"],
+            [rule: "typescript:S5247", file: "src/main/webapp/app/communication/posting-content/posting-reference.util.ts"],
+            [rule: "java:S2068", file: "src/main/java/de/tum/cit/aet/artemis/account/service/user/UserDemoService.java"],
+        ]
+        property "sonar.issue.ignore.multicriteria", (1..acceptedIssues.size()).collect { "e${it}".toString() }.join(",")
+        acceptedIssues.eachWithIndex { issue, index ->
+            property "sonar.issue.ignore.multicriteria.e${index + 1}.ruleKey".toString(), issue.rule
+            property "sonar.issue.ignore.multicriteria.e${index + 1}.resourceKey".toString(), issue.file
+        }
     }
 }
