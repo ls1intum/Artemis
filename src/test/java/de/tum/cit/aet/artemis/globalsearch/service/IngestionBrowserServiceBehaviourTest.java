@@ -104,11 +104,16 @@ class IngestionBrowserServiceBehaviourTest {
     }
 
     @Test
-    void serializesSparseBrowserPayloadWithConfiguredMapperAndKeepsFalseAndZero() {
+    void serializesRequiredBrowserListsWithConfiguredMapperAndKeepsFalseAndZero() {
         var mapper = JsonObjectMapper.get();
         var empty = new CourseBrowserDataDTO(List.of(), List.of(), List.of(), List.of(), List.of());
-        assertThat(mapper.readTree(mapper.writeValueAsString(empty)).isObject()).isTrue();
-        assertThat(mapper.readTree(mapper.writeValueAsString(empty))).isEmpty();
+        var emptyJson = mapper.readTree(mapper.writeValueAsString(empty));
+        assertThat(emptyJson.isObject()).isTrue();
+        assertThat(emptyJson.propertyNames()).containsExactlyInAnyOrder("entities", "contentPresence", "missingEntities", "contentGaps", "typeCounts");
+        for (String field : List.of("entities", "contentPresence", "missingEntities", "contentGaps", "typeCounts")) {
+            assertThat(emptyJson.get(field).isArray()).as(field).isTrue();
+            assertThat(emptyJson.get(field)).as(field).isEmpty();
+        }
 
         var entity = new IndexedEntityDTO("lecture", 0, null, null, null, false);
         var presence = new IndexedContentPresenceDTO("slides", Set.of(0L), Set.of());
@@ -122,7 +127,8 @@ class IngestionBrowserServiceBehaviourTest {
         assertThat(row.get("entityId").longValue()).isZero();
         assertThat(row.get("expected").isBoolean()).isTrue();
         assertThat(row.get("expected").booleanValue()).isFalse();
-        assertThat(json.has("typeCounts")).isFalse();
+        assertThat(json.get("typeCounts").isArray()).isTrue();
+        assertThat(json.get("typeCounts")).isEmpty();
         assertThat(json.get("contentPresence").get(0).get("unitIds").isArray()).isTrue();
         assertThat(json.get("contentPresence").get(0).get("unitIds").get(0).longValue()).isZero();
         assertThat(json.get("contentPresence").get(0).has("orphanedUnitIds")).isFalse();

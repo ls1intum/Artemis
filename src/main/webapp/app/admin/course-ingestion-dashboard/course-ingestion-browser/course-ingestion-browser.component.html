@@ -39,11 +39,11 @@
             <div class="grid grid-cols-1 md:grid-cols-[17rem_1fr] gap-4 h-[60vh]" data-testid="browser-master-detail">
                 <div class="min-h-0 overflow-y-auto border border-solid rounded-lg p-2" data-testid="browser-navigation">
                     <jhi-course-ingestion-browser-tree
-                        [entities]="loaded.entities ?? []"
-                        [contentPresence]="loaded.contentPresence ?? []"
+                        [entities]="loaded.entities"
+                        [contentPresence]="loaded.contentPresence"
                         [typeCounts]="typeCounts()"
-                        [contentGaps]="loaded.contentGaps ?? []"
-                        [missingEntities]="loaded.missingEntities ?? []"
+                        [contentGaps]="loaded.contentGaps"
+                        [missingEntities]="loaded.missingEntities"
                         [(selection)]="selection"
                     />
                 </div>
