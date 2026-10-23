@@ -799,16 +799,6 @@ public class UserUtilService {
     }
 
     /**
-     * Turns Memiris on or off for an account.
-     *
-     * @param user    the account, which must already be saved
-     * @param enabled whether Memiris may remember anything
-     */
-    public void setMemirisEnabled(User user, boolean enabled) {
-        userAiPreferenceService.setMemirisEnabled(user.getId(), enabled);
-    }
-
-    /**
      * Records the fixture's default AI decision for a generated account. The preference is a row keyed on the user id, so
      * it can only be recorded once the account is saved, which is why it is applied here rather than by UserFactory. The
      * many Iris and Athena tests that rely on the fixture default depend on this.
@@ -819,9 +809,8 @@ public class UserUtilService {
         if (user.getId() == null) {
             return;
         }
-        // Only when the account has no preference row at all. Checking the decision instead would re-seed an account whose
-        // decision a test cleared on purpose: clearAiSelectionDecision leaves the row behind when it still holds a Memiris
-        // choice, and a null decision then looks exactly like never having decided.
+        // Only when the account has no preference row at all, so a row a test saved on purpose without a decision is left
+        // alone.
         if (!userAiPreferenceService.hasPreferenceRow(user.getId())) {
             userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
         }

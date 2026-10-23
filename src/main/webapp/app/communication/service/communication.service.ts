@@ -181,6 +181,12 @@ export class CommunicationService implements OnDestroy {
 
             const coursewideTopic = `/topic/communication/courses/${this.courseId}`;
             this.courseWideTopicSubscription = this.websocketService.subscribe<PostBroadcastDTO>(coursewideTopic).subscribe((postDTO: PostBroadcastDTO) => {
+                // Personal-topic posts are counted by CourseConversationsService. Count course-wide posts only here,
+                // rather than again when the visible-message stream subscribes to this same topic.
+                const conversationId = postDTO.post.conversation?.id;
+                if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post.author?.id !== this.user.id) {
+                    this.courseConversationsService.handleNewMessage(conversationId, postDTO.post.creationDate);
+                }
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         }
@@ -223,6 +229,9 @@ export class CommunicationService implements OnDestroy {
             const requestId = ++this.filteredPostsRequestId;
             this.filteredPostsRequestFailed = false;
             let applied = false;
+            // Loading the messages of a single conversation resets its unread count on the server, unless a search is used.
+            const loadedConversationId = postContextFilter.conversationIds?.length === 1 && !postContextFilter.searchText ? postContextFilter.conversationIds[0] : undefined;
+            const readRequest = loadedConversationId !== undefined ? this.courseConversationsService.messagesRequested(loadedConversationId) : undefined;
             this.postService
                 .getPosts(this.courseId, postContextFilter)
                 .pipe(
@@ -233,6 +242,10 @@ export class CommunicationService implements OnDestroy {
                     }),
                 )
                 .subscribe((res) => {
+                    // The server reset the count even when a newer request has taken over the cache.
+                    if (loadedConversationId !== undefined && readRequest) {
+                        this.courseConversationsService.messagesLoaded(loadedConversationId, readRequest);
+                    }
                     // A newer request owns the shared cache, including its messages, total and subscription context.
                     if (requestId !== this.filteredPostsRequestId) {
                         return;
@@ -772,10 +785,6 @@ export class CommunicationService implements OnDestroy {
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
 
-        if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post.conversation?.id !== this.currentConversation?.id && postDTO.post.author?.id !== this.user.id) {
-            this.courseConversationsService.handleNewMessage(postConvId, postDTO.post.creationDate);
-        }
-
         if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate) {
             return;
         }
@@ -806,13 +815,6 @@ export class CommunicationService implements OnDestroy {
                     } else {
                         this.cachedPosts = [postDTO.post, ...this.cachedPosts];
                     }
-                }
-
-                if (this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length == 1 && postDTO.post.author?.id !== this.user.id) {
-                    setTimeout(() => {
-                        // We add a small timeout to avoid concurrency issues
-                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationIds![0]).subscribe();
-                    }, 1000);
                 }
 
                 break;

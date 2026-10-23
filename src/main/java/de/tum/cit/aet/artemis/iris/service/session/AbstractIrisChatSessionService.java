@@ -208,7 +208,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                     : handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle);
         }
         else {
-            applyNonResultSideEffects(session, job, statusUpdate, sessionTitle, false);
+            applyNonResultSideEffects(session, job, statusUpdate, sessionTitle);
             updatedJob = recordTokenUsage(session, job, statusUpdate, null);
         }
         saveCompaction(session, statusUpdate.compaction());
@@ -242,11 +242,11 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             var reloadedJob = pyrisJobService.getJob(job.jobId());
             if (!(reloadedJob instanceof TrackedSessionBasedPyrisJob trackedJob)) {
                 log.debug("Skipping already processed result status update for Iris job {} because the job is no longer tracked", job.jobId());
-                applyNonResultSideEffects(session, job, statusUpdate, sessionTitle, true);
+                applyNonResultSideEffects(session, job, statusUpdate, sessionTitle);
                 return job;
             }
             if (trackedJob.assistantMessageId() != null) {
-                applyNonResultSideEffects(session, trackedJob, statusUpdate, sessionTitle, true);
+                applyNonResultSideEffects(session, trackedJob, statusUpdate, sessionTitle);
                 return trackedJob;
             }
 
@@ -263,8 +263,6 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 message.addContent(content);
             }
             var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
-            message.setAccessedMemories(statusUpdate.accessedMemories());
-            message.setCreatedMemories(statusUpdate.createdMemories());
             message.setToolActivity(statusUpdate.activities());
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             var updatedJob = trackedJob.withAssistantMessageId(savedMessage.getId());
@@ -279,26 +277,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         });
     }
 
-    private void applyNonResultSideEffects(S session, TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, String sessionTitle,
-            boolean suppressMessageWebsocket) {
-        if (statusUpdate.accessedMemories() != null && !statusUpdate.accessedMemories().isEmpty() && job.userMessageId() != null) {
-            irisMessageRepository.findById(job.userMessageId()).ifPresent(message -> {
-                message.setAccessedMemories(statusUpdate.accessedMemories());
-                irisMessageRepository.save(message);
-                if (!suppressMessageWebsocket) {
-                    irisChatWebsocketService.sendMessage(session, message, statusUpdate.runState(), statusUpdate.error());
-                }
-            });
-        }
-        if (statusUpdate.createdMemories() != null && !statusUpdate.createdMemories().isEmpty() && job.assistantMessageId() != null) {
-            irisMessageRepository.findById(job.assistantMessageId()).ifPresent(message -> {
-                message.setCreatedMemories(statusUpdate.createdMemories());
-                irisMessageRepository.save(message);
-                if (!suppressMessageWebsocket) {
-                    irisChatWebsocketService.sendMessage(session, message, statusUpdate.runState(), statusUpdate.error());
-                }
-            });
-        }
+    private void applyNonResultSideEffects(S session, TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, String sessionTitle) {
         irisChatWebsocketService.sendStatusUpdate(session, job.jobId(), statusUpdate.runState(), statusUpdate.error(), sessionTitle, statusUpdate.suggestions(),
                 statusUpdate.tokens(), statusUpdate.activities(), statusUpdate.activitySeq());
     }
