@@ -562,10 +562,10 @@ public class TutorialGroupService {
      * @param course              The course for which the tutorial groups should be retrieved.
      * @param user                The user for whom to set the transient properties of the tutorial groups.
      * @param isAdminOrInstructor whether the instructor of the course or is admin
-     * @param revealTutorNames    whether the tutor name stays visible for groups the user has no managing rights for
+     * @param revealStaffOverview whether the tutor name and the number of registered users stay visible for groups the user has no managing rights for
      * @return A list of tutorial groups for the given course with the transient properties set for the given user.
      */
-    public Set<TutorialGroup> findAllForCourse(@NonNull Course course, @NonNull User user, boolean isAdminOrInstructor, boolean revealTutorNames) {
+    public Set<TutorialGroup> findAllForCourse(@NonNull Course course, @NonNull User user, boolean isAdminOrInstructor, boolean revealStaffOverview) {
         // do not load all sessions here as they are not needed for the overview page and would slow down the request
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(course.getId());
         // TODO: this is some overkill, we calculate way too many information with way too many database calls, we must reduce this
@@ -573,9 +573,11 @@ public class TutorialGroupService {
         tutorialGroups.forEach(tutorialGroup -> {
             if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
                 String tutorName = tutorialGroup.getTeachingAssistantName();
+                Integer numberOfRegisteredUsers = tutorialGroup.getNumberOfRegisteredUsers();
                 tutorialGroup.hidePrivacySensitiveInformation();
-                if (revealTutorNames) {
+                if (revealStaffOverview) {
                     tutorialGroup.setTeachingAssistantName(tutorName);
+                    tutorialGroup.setNumberOfRegisteredUsers(numberOfRegisteredUsers);
                 }
             }
         });
