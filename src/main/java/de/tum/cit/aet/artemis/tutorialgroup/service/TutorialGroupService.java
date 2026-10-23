@@ -562,16 +562,21 @@ public class TutorialGroupService {
      * @param course              The course for which the tutorial groups should be retrieved.
      * @param user                The user for whom to set the transient properties of the tutorial groups.
      * @param isAdminOrInstructor whether the instructor of the course or is admin
+     * @param revealTutorNames    whether the tutor name stays visible for groups the user has no managing rights for
      * @return A list of tutorial groups for the given course with the transient properties set for the given user.
      */
-    public Set<TutorialGroup> findAllForCourse(@NonNull Course course, @NonNull User user, boolean isAdminOrInstructor) {
+    public Set<TutorialGroup> findAllForCourse(@NonNull Course course, @NonNull User user, boolean isAdminOrInstructor, boolean revealTutorNames) {
         // do not load all sessions here as they are not needed for the overview page and would slow down the request
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(course.getId());
         // TODO: this is some overkill, we calculate way too many information with way too many database calls, we must reduce this
         tutorialGroups.forEach(tutorialGroup -> this.setTransientPropertiesForUser(user, tutorialGroup));
         tutorialGroups.forEach(tutorialGroup -> {
             if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
+                String tutorName = tutorialGroup.getTeachingAssistantName();
                 tutorialGroup.hidePrivacySensitiveInformation();
+                if (revealTutorNames) {
+                    tutorialGroup.setTeachingAssistantName(tutorName);
+                }
             }
         });
         tutorialGroups.forEach(TutorialGroup::preventCircularJsonConversion);
@@ -652,7 +657,7 @@ public class TutorialGroupService {
      * @throws IOException if an I/O error occurs
      */
     public String exportTutorialGroupsToCSV(Course course, User user, boolean isAdminOrInstructor, List<String> fields) throws IOException {
-        Set<TutorialGroup> tutorialGroups = findAllForCourse(course, user, isAdminOrInstructor);
+        Set<TutorialGroup> tutorialGroups = findAllForCourse(course, user, isAdminOrInstructor, isAdminOrInstructor);
 
         StringWriter out = new StringWriter();
 

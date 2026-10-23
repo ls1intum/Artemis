@@ -174,7 +174,8 @@ public class TutorialGroupResource {
         var user = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         boolean isAdminOrInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor);
+        boolean isAtLeastTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor, isAtLeastTutor);
         return ResponseEntity.ok(tutorialGroups.stream().map(TutorialGroupSummaryDTO::from).toList());
     }
 
