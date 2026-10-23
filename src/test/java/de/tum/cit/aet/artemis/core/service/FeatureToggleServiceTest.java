@@ -15,9 +15,12 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    // science, TutorSuggestions, AtlasAgent, AtlasML, Memiris, RateLimit, GlobalSearch, AutonomousTutor, Deimos,
+    // science, TutorSuggestions, AtlasAgent, AtlasML, RateLimit, GlobalSearch, AutonomousTutor, Deimos,
     // GlobalSearchReconcileOrphan disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 10;
+    private static final int FEATURES_DISABLED_DEFAULT = 9;
+
+    // Memiris, which is never reported as enabled or disabled
+    private static final int FEATURES_RETIRED = 1;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -39,7 +42,6 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasML)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AutonomousTutor)).isFalse();
-        assertThat(featureToggleService.isFeatureEnabled(Feature.Memiris)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.RateLimit)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearch)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.Deimos)).isFalse();
@@ -65,7 +67,6 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.disableFeature(Feature.AutonomousTutor);
         featureToggleService.disableFeature(Feature.RateLimit);
         featureToggleService.disableFeature(Feature.GlobalSearch);
-        featureToggleService.disableFeature(Feature.Memiris);
         featureToggleService.disableFeature(Feature.Deimos);
         featureToggleService.disableFeature(Feature.GlobalSearchReconcileOrphan);
     }
@@ -104,11 +105,11 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     void testShouldNotEnableTwice() {
-        assertThat(featureToggleService.enabledFeatures()).hasSize(Feature.values().length - FEATURES_DISABLED_DEFAULT);
+        assertThat(featureToggleService.enabledFeatures()).hasSize(Feature.values().length - FEATURES_DISABLED_DEFAULT - FEATURES_RETIRED);
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
 
         // Feature should not be added multiple times
-        assertThat(featureToggleService.enabledFeatures()).hasSize(Feature.values().length - FEATURES_DISABLED_DEFAULT);
+        assertThat(featureToggleService.enabledFeatures()).hasSize(Feature.values().length - FEATURES_DISABLED_DEFAULT - FEATURES_RETIRED);
     }
 
     @Test

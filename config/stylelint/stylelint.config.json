@@ -75,6 +75,12 @@
                 "src/main/webapp/app/lecture/manage/lecture-units/**/*.scss",
                 "src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.scss",
                 "src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.scss",
+                "src/main/webapp/app/exercise/participation/programming-exercise-participation-actions/**/*.scss",
+                "src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.scss",
+                "src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.scss",
+                "src/main/webapp/app/plagiarism/shared/case-header/**/*.scss",
+                "src/main/webapp/app/communication/saved-posting-banner/**/*.scss",
+                "src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.scss",
                 "packages/tum-aet-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
