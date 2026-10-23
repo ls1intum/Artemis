@@ -11,6 +11,7 @@
             </div>
         } @else if (group.single) {
             <tumaet-ui-select
+                [matchTriggerWidth]="false"
                 [options]="[
                     { value: 'All', label: (group.labelKey | artemisTranslate) + ': ' + ('artemisApp.exercise.showAll' | artemisTranslate) },
                     { value: group.items[0], label: 'artemisApp.exercise.show' + group.items[0] | artemisTranslate },
