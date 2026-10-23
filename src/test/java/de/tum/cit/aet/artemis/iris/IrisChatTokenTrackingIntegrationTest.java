@@ -226,7 +226,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
     private void sendStatus(String jobId, String result, PyrisRunState runState, List<LLMRequest> tokens) throws Exception {
         var callback = pyrisCallbackCredentials(jobId);
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status", new PyrisChatStatusUpdateDTO(result, runState, null, null, null, tokens),
-                HttpStatus.OK, callback.headers());
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status",
+                new PyrisChatStatusUpdateDTO(result, runState, null, null, null, tokens), HttpStatus.OK, callback.headers());
     }
 }
