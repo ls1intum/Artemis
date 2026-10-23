@@ -21,8 +21,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseLoadService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -87,8 +85,6 @@ public class PyrisPipelineService {
 
     private final UserRepository userRepository;
 
-    private final FeatureToggleService featureToggleService;
-
     @Value("${server.url}")
     private String artemisBaseUrl;
 
@@ -97,7 +93,7 @@ public class PyrisPipelineService {
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisCallbackTokenService callbackTokenService,
             PyrisDTOService pyrisDTOService, IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository,
-            UserRepository userRepository, CourseLoadService courseLoadService, FeatureToggleService featureToggleService, UserAiPreferenceService userAiPreferenceService,
+            UserRepository userRepository, CourseLoadService courseLoadService, UserAiPreferenceService userAiPreferenceService,
             IrisLectureMaterialVersionService materialVersionService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.userAiPreferenceService = userAiPreferenceService;
@@ -109,7 +105,6 @@ public class PyrisPipelineService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.courseLoadService = courseLoadService;
-        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -175,8 +170,8 @@ public class PyrisPipelineService {
             ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
-        // The run's user message, which gets the memories the run reports. Event-triggered runs (e.g. build failure, stalled progress) are not caused by a user message, so
-        // they carry no user message id. The last row of a session can be a stored conversation summary, which must not get memories, because that would push it to the client.
+        // The run's user message, whose client origin decides where the response notification goes. Event-triggered runs (e.g. build failure, stalled progress) are not
+        // caused by a user message, so they carry no user message id. The last row of a session can be a stored conversation summary, which is not a user message.
         var userMessageId = eventVariant.isPresent() ? null
                 : session.getMessages().reversed().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).findFirst().map(IrisMessage::getId).orElse(null);
         var runId = pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), userMessageId, clientId);
@@ -295,7 +290,7 @@ public class PyrisPipelineService {
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {
-        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && userAiPreferenceService.isMemirisEnabled(user.getId()));
+        return new PyrisUserDTO(user);
     }
 
     /**

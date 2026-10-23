@@ -249,7 +249,7 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
     private void sendStatus(String jobId, String result) throws Exception {
         var callback = pyrisCallbackCredentials(jobId);
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status",
-                new PyrisChatStatusUpdateDTO(result, PyrisRunState.FINISHED, null, null, null, null, null, null), HttpStatus.OK, callback.headers());
+                new PyrisChatStatusUpdateDTO(result, PyrisRunState.FINISHED, null, null, null, null), HttpStatus.OK, callback.headers());
     }
 
     private static String messagesUrl(IrisChatSession session) {

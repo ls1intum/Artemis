@@ -73,12 +73,6 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v1/health/")
     private URL healthApiURL;
 
-    @Value("${artemis.iris.url}/api/v1/memiris")
-    private URL memirisApiURL;
-
-    @Value("${artemis.iris.url}/api/v2/memiris")
-    private URL memirisApiV2URL;
-
     @Value("${artemis.iris.url}/api/v1/search/lectures")
     private URL lectureSearchApiURL;
 
@@ -473,80 +467,6 @@ public class IrisRequestMockProvider {
             return withRawStatus(status.value()).contentType(MediaType.APPLICATION_JSON).body("{\"detail\":\"invalid input: " + body.replace("\"", "'") + "\"}")
                     .createResponse(request);
         });
-    }
-
-    // -------------------- Memiris endpoints --------------------
-
-    public void mockListMemories(long userId, Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
-    }
-
-    public void mockListMemoriesError(long userId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
-    }
-
-    public void mockListMemoryData(long userId, Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiV2URL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
-    }
-
-    public void mockListMemoryDataError(long userId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiV2URL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
-    }
-
-    public void mockGetMemoryWithRelations(long userId, String memoryId, Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
-    }
-
-    public void mockGetMemoryWithRelationsError(long userId, String memoryId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
-    }
-
-    public void mockDeleteMemory(long userId, String memoryId) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.DELETE))
-            .andRespond(withRawStatus(HttpStatus.NO_CONTENT.value()));
-        // @formatter:on
-    }
-
-    public void mockDeleteMemoryError(long userId, String memoryId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.DELETE))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
     }
 
     private String write(Object responseBody) {

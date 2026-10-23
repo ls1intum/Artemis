@@ -1,3 +1,4 @@
+import { resizeVideoColumn, syncVideoTranscriptHeight } from '../video-transcript-layout.util';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewEncapsulation, computed, effect, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -181,18 +182,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
      * the clamped px width into `flex: 0 0 <percent>%` so the split changes and still scales when the wrapper resizes.
      */
     protected onVideoColumnResize(event: ResizableSizeEvent): void {
-        const videoColumnEl = this.videoColumn()?.nativeElement;
-        const wrapperEl = this.videoWrapper()?.nativeElement;
-        if (!videoColumnEl || !wrapperEl) {
-            return;
-        }
-        const wrapperWidth = wrapperEl.getBoundingClientRect().width;
-        if (wrapperWidth <= 0) {
-            return;
-        }
-        const percent = Math.min(100, Math.max(0, (event.width / wrapperWidth) * 100));
-        videoColumnEl.style.flex = `0 0 ${percent}%`;
-        videoColumnEl.style.width = '';
+        resizeVideoColumn(this.videoColumn()?.nativeElement, this.videoWrapper()?.nativeElement, event.width);
     }
 
     /**
@@ -200,21 +190,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
      * Ensures the transcript is at least MIN_TRANSCRIPT_HEIGHT pixels tall.
      */
     private syncTranscriptHeight(): void {
-        const videoColumnEl = this.videoColumn()?.nativeElement;
-        const wrapperEl = this.videoWrapper()?.nativeElement;
-
-        if (!videoColumnEl || !wrapperEl) {
-            return;
-        }
-
-        const transcriptColumnEl = wrapperEl.querySelector<HTMLElement>('.transcript-column');
-        if (!transcriptColumnEl) {
-            return;
-        }
-
-        const videoHeight = videoColumnEl.offsetHeight;
-        const targetHeight = Math.max(videoHeight, MIN_TRANSCRIPT_HEIGHT);
-        transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
+        syncVideoTranscriptHeight(this.videoColumn()?.nativeElement, this.videoWrapper()?.nativeElement, MIN_TRANSCRIPT_HEIGHT);
     }
 
     /**
