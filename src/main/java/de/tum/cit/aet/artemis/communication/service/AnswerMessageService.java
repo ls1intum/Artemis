@@ -408,8 +408,16 @@ public class AnswerMessageService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         AnswerPost existingAnswerMessage = answerPostRepository.findAnswerMessageWithPostConversationAndVerifierByIdElseThrow(answerMessageId);
-        if (!existingAnswerMessage.getPost().getConversation().getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("Answer message does not belong to the specified course", ANSWER_POST_ENTITY_NAME, "invalidCourse");
+        Conversation targetConversation = existingAnswerMessage.getPost().getConversation();
+        try {
+            ensureConversationBelongsToCourseElseThrow(targetConversation, courseId);
+        }
+        catch (BadRequestAlertException exception) {
+            // Keep the verification endpoint's existing error response when the shared check rejects the course.
+            if ("conversationCourseMismatch".equals(exception.getErrorKey())) {
+                throw new BadRequestAlertException("Answer message does not belong to the specified course", ANSWER_POST_ENTITY_NAME, "invalidCourse");
+            }
+            throw exception;
         }
         if (!existingAnswerMessage.getAuthor().isBot()) {
             throw new BadRequestAlertException("Only Iris-generated answers can be verified", ANSWER_POST_ENTITY_NAME, "notIrisAnswer");
