@@ -319,6 +319,20 @@ describe('Message editor conversion', () => {
             ['keeps an empty paragraph written as a non-breaking space', '<p>a</p><p>&nbsp;</p><p>b</p>', 'a\n\n&nbsp;\n\nb'],
             ['drops a non-breaking space paragraph at the start and the end', '<p>&nbsp;</p><p>a</p><p>&nbsp;</p>', 'a'],
             ['leaves list items without paragraphs', '<ul><li>a<br><br>b</li><li>c</li></ul>', '- a\n  b\n- c'],
+            ['keeps bold text in one piece around an empty line', '<p><strong>hello<br><br>world</strong></p>', '**hello\nworld**'],
+            ['keeps bold text in one piece around further empty lines', '<p><strong>a<br><br><br>b</strong></p>', '**a\nb**'],
+            ['keeps italic text in one piece around an empty line', '<p><em>hello<br><br>world</em></p>', '*hello\nworld*'],
+            ['keeps underlined text in one piece around an empty line', '<p><ins>a<br><br>b</ins></p>', '<ins>a\nb</ins>'],
+            ['keeps struck-through text in one piece around an empty line', '<p><s>a<br><br>b</s></p>', '~~a\nb~~'],
+            ['keeps a link in one piece around an empty line', '<p><a href="https://example.org/x">a<br><br>b</a></p>', '[a\nb](https://example.org/x)'],
+            ['writes the empty line outside of formatting that ends before it', '<p><strong>a</strong><br><br>b</p>', '**a**\n\nb'],
+            ['sends nothing for empty lines only', '<p><br><br><br><br data-message-placeholder="true"></p>', ''],
+            ['sends nothing for non-breaking space paragraphs only', '<p>&nbsp;</p><p>&nbsp;</p>', ''],
+            ['sends nothing for an empty line after a non-breaking space paragraph', '<p>&nbsp;</p><p><br></p>', ''],
+            ['keeps an empty block that the browser created for Enter', '<div>a</div><div><br></div><div>b</div>', 'a\n\nb'],
+            ['keeps each further empty block that the browser created for Enter', '<div>a</div><div><br></div><div><br></div><div>b</div>', 'a\n\n&nbsp;\n\nb'],
+            ['keeps each further empty paragraph', '<p>a</p><p><br></p><p><br></p><p><br></p><p>b</p>', 'a\n\n&nbsp;\n\n&nbsp;\n\nb'],
+            ['drops empty blocks at the start and the end', '<div><br></div><div><br></div><div>a</div><div><br></div><div><br></div>', 'a'],
         ])('%s', (_name, markup, expected) => {
             expect(serializeEditorMarkup(markup)).toBe(expected);
         });
