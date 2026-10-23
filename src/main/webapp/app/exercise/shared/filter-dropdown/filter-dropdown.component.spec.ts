@@ -80,7 +80,7 @@ describe('Participation filter toolbar', () => {
         ]);
         fixture.detectChanges();
         expect(trigger.getAttribute('aria-expanded')).toBe('true');
-        (document.querySelector('.cdk-overlay-backdrop') as HTMLElement).click();
+        document.body.click();
         fixture.detectChanges();
         expect(trigger.getAttribute('aria-expanded')).toBe('false');
     });
