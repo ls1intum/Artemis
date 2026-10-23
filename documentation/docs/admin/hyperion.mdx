@@ -548,15 +548,14 @@ not as zero usage.
 A rate-limit rejection (HTTP 429) or a request that never left the worker can be
 retried with a bounded backoff of up to five retries over about five minutes.
 For exact accounting, set both `spring.ai.openai.max-retries=0` and
-`spring.ai.openai.chat.max-retries=0` on each core and worker node. The chat setting
+`spring.ai.openai.chat.max-retries=0` on each worker node. The chat setting
 can override the common retry count. Spring AI treats its default chat retry count
 as a fallback to the common setting; Hyperion uses the same rule when it reports
 accounting completeness. These settings change SDK retry behavior, not Hyperion's
 bounded retries for requests that provably produced no completion.
-The current core also checks its own retry settings when it reports completeness,
-even though the worker sends generation model requests. Changing core retries also
-affects other AI features. The Ansible role leaves core retries unchanged, so
-accounting can remain incomplete when worker retries are disabled.
+Accounting completeness follows the worker's effective retry policy and delivered
+usage evidence. Core model settings do not affect generation accounting: core does
+not send these model requests. Leave retries for unrelated core AI features unchanged.
 
 A server or gateway
 failure (HTTP 5xx), HTTP 408, or a read timeout after sending the request leaves
