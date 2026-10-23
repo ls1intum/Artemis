@@ -2990,6 +2990,17 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(direct.participantName()).isEqualTo(student.getName());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void examQuizParticipantsStayAnonymousForTutors() throws Exception {
+        final QuizExercise quiz = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(2));
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var participation = participationRepo.save(ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, quiz, student));
+
+        var direct = request.get("/api/exercise/participations/" + participation.getId(), HttpStatus.OK, StudentParticipationDTO.class);
+        assertThat(direct).extracting("participantName", "participantIdentifier", "student", "team").containsOnlyNulls();
+    }
+
     private ProgrammingExerciseStudentParticipation createParticipationForAnonymityTest(boolean teamMode) {
         ProgrammingExerciseStudentParticipation participation;
         if (teamMode) {

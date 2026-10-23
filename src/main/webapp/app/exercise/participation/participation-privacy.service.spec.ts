@@ -64,6 +64,7 @@ describe('ParticipationPrivacyService', () => {
         const service = TestBed.inject(ParticipationPrivacyService);
         const quiz = { ...exercise, type: ExerciseType.QUIZ, assessmentType: AssessmentType.AUTOMATIC, dueDate: dayjs(now).subtract(1, 'day') };
         expect(service.isParticipantInformationHidden(quiz)).toBe(false);
+        expect(service.isParticipantInformationHidden({ ...quiz, assessmentType: AssessmentType.MANUAL })).toBe(false);
         expect(service.isParticipantInformationHidden({ ...quiz, exerciseGroup: { id: 2 } })).toBe(true);
     });
 });
