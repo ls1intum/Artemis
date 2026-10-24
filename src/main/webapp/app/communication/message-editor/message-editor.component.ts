@@ -359,7 +359,7 @@ export class MessageEditorComponent {
             return;
         }
         if (event.key === 'Backspace' || event.key === 'Delete') {
-            if ((event.key === 'Backspace' && this.editor?.exitEmptyList()) || this.editor?.deleteItem(event.key === 'Backspace')) {
+            if ((event.key === 'Backspace' && (this.editor?.exitEmptyList() || this.editor?.exitFirstListItem())) || this.editor?.deleteItem(event.key === 'Backspace')) {
                 event.preventDefault();
                 event.stopPropagation();
             }
