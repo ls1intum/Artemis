@@ -476,7 +476,11 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         const allButton = getTriggerAllButton()!;
         expect(trigger.getAttribute('aria-expanded')).toBe('true');
         expect(getTriggerFailedButton()).not.toBeNull();
-        const openDialog = vi.spyOn(TestBed.inject(DialogService), 'open');
+        const openDialog = vi.spyOn(TestBed.inject(DialogService), 'open').mockImplementation(() => {
+            fixture.detectChanges();
+            expect(trigger.getAttribute('aria-expanded')).toBe('false');
+            return null;
+        });
         allButton.click();
         expect(openDialog).toHaveBeenCalledOnce();
         expect(submissionService.triggerInstructorBuildForAllParticipationsOfExercise).not.toHaveBeenCalled();
@@ -484,7 +488,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges();
         trigger.click();
         fixture.detectChanges();
-        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
         expect(getTriggerAllButton()!.disabled).toBe(true);
     });
 

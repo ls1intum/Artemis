@@ -63,7 +63,12 @@
         </button>
         <tumaet-ui-popover class="contents" #triggerPopover [ariaLabel]="'artemisApp.participation.triggerOptions' | artemisTranslate">
             <div class="flex min-w-44 flex-col gap-1">
-                <jhi-programming-exercise-trigger-all-button [btnSize]="ButtonSize.SMALL" [exercise]="exercise()" [inDropdown]="true" />
+                <jhi-programming-exercise-trigger-all-button
+                    [btnSize]="ButtonSize.SMALL"
+                    [exercise]="exercise()"
+                    [inDropdown]="true"
+                    (confirmationOpening)="triggerPopover.close()"
+                />
                 <button
                     type="button"
                     tumAetUiButton

@@ -64,6 +64,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     readonly toggleBreakpoint = input<'md' | 'xl'>('xl');
 
     readonly onBuildTriggered = output();
+    readonly confirmationOpening = output<void>();
     readonly isTriggeringBuildAll = signal(false);
     // Icons
     faRedo = faRedo;
@@ -79,6 +80,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
      * and will create new results for the students (which could be confusing to them).
      */
     openTriggerAllModal() {
+        this.confirmationOpening.emit();
         const dialogRef = this.dialogService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, {
             header: this.translateService.instant('artemisApp.programmingExercise.resubmitAll'),
             width: '50rem',
