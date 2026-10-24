@@ -6,22 +6,35 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserFactory;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
+import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatService;
+import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 
@@ -30,6 +43,12 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     private static final String TEST_PREFIX = "ootest";
 
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    @Autowired
+    private OneToOneChatTestRepository oneToOneChatRepository;
+
+    @Autowired
+    private OneToOneChatService oneToOneChatService;
 
     @BeforeEach
     @Override
@@ -94,6 +113,73 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
         // members of the created one to one chat are only notified in case the first message within the conversation is created
         verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldStoreTheKeyOfThePairWhateverTheOrderOfTheUsers() throws Exception {
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var storedChat = oneToOneChatRepository.findById(chat.getId()).orElseThrow();
+        assertThat(storedChat.getParticipantPairKey()).isEqualTo(OneToOneChat.pairKeyOf(student1.getId(), student2.getId()))
+                .isEqualTo(OneToOneChat.pairKeyOf(student2.getId(), student1.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCompleteAChatThatWasLeftWithoutParticipants() throws Exception {
+        // A request that failed after inserting the chat left it behind without participants. The pair is not blocked by it: the next request completes it.
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var halfCreatedChat = new OneToOneChat();
+        halfCreatedChat.setCourse(exampleCourse);
+        halfCreatedChat.setCreator(student1);
+        halfCreatedChat.setParticipantPairKey(OneToOneChat.pairKeyOf(student1.getId(), student2.getId()));
+        halfCreatedChat = oneToOneChatRepository.save(halfCreatedChat);
+
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(chat.getId()).isEqualTo(halfCreatedChat.getId());
+        assertParticipants(chat.getId(), 2, "student1", "student2");
+    }
+
+    @Test
+    void shouldCreateExactlyOneChatWhenSeveralRequestsStartItAtTheSameTime() throws Exception {
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        int requests = 8;
+        ExecutorService executor = Executors.newFixedThreadPool(requests);
+        try {
+            var start = new CountDownLatch(1);
+            List<Future<Long>> chatIds = new ArrayList<>();
+            for (int request = 0; request < requests; request++) {
+                // both users start the chat, as they do when they write to each other for the first time
+                var requester = request % 2 == 0 ? student1 : student2;
+                var partner = request % 2 == 0 ? student2 : student1;
+                chatIds.add(executor.submit(() -> {
+                    start.await();
+                    return SecurityUtils.runAs(requester, () -> oneToOneChatService.startOneToOneChat(exampleCourse, requester, partner)).getId();
+                }));
+            }
+            start.countDown();
+
+            Set<Long> distinctChatIds = new HashSet<>();
+            for (var chatId : chatIds) {
+                // get() rethrows an error of the request, which this test must not see
+                distinctChatIds.add(chatId.get(60, TimeUnit.SECONDS));
+            }
+
+            assertThat(distinctChatIds).hasSize(1);
+            assertThat(oneToOneChatRepository.findAll().stream().filter(chat -> chat.getCourse().getId().equals(exampleCourseId))).hasSize(1);
+            assertParticipants(distinctChatIds.iterator().next(), 2, "student1", "student2");
+        }
+        finally {
+            executor.shutdownNow();
+        }
     }
 
     @Test

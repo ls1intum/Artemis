@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -139,18 +138,13 @@ public class ConversationService {
         Conversation conversation = loadConversationWithParticipantsIfGroupChat(conversationId);
 
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
             boolean canBecomeModerator = (channel.getIsAnnouncementChannel() ? authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user)
                     : authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), user));
-            conversationParticipant.setIsModerator(canBecomeModerator);
-            lastReadDate.ifPresent(conversationParticipant::setLastRead);
-            try {
-                conversationParticipantRepository.saveAndFlush(conversationParticipant);
-            }
-            catch (DataIntegrityViolationException e) {
+            // Like a new participant: nothing read yet, which is why the last read date lies in the past
+            ZonedDateTime lastRead = lastReadDate.orElseGet(() -> ZonedDateTime.now().minusYears(2));
+            if (!conversationParticipantRepository.createIfAbsent(channel.getId(), user.getId(), canBecomeModerator, lastRead, 0L)) {
                 log.info("User {} is already a participant in conversation {}", user.getId(), conversationId);
             }
-
         }
         else {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
@@ -481,45 +475,18 @@ public class ConversationService {
 
         // Then, find all course-wide channels that the user has not yet accessed and create conversation participants for them
         List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId);
-        List<ConversationParticipant> participants = new ArrayList<>();
+        // The participants of the channels the user has not yet accessed are created as read. A concurrent request, e.g. opening one of these channels, may have created one in
+        // the meantime. Such a participant is marked as read as well.
+        List<Long> concurrentlyCreatedConversationIds = new ArrayList<>();
         for (Channel channel : courseWideChannelsWithoutParticipants) {
-            participants.add(createReadParticipant(requestingUser, channel, now));
+            if (!conversationParticipantRepository.createIfAbsent(channel.getId(), userId, false, now, 0L)) {
+                concurrentlyCreatedConversationIds.add(channel.getId());
+            }
         }
-        // save all new conversation participants (i.e. for course-wide channels that the user has not yet accessed)
-        if (!participants.isEmpty()) {
-            try {
-                conversationParticipantRepository.saveAll(participants);
-            }
-            catch (DataIntegrityViolationException e) {
-                // A concurrent request (e.g. opening one of these channels) created a participant in the meantime, which rolled back the whole batch.
-                // Save them one by one instead, with new instances as the batch may have assigned ids that were rolled back, and mark the participants
-                // created concurrently as read as well.
-                List<Long> concurrentlyCreatedConversationIds = new ArrayList<>();
-                for (Channel channel : courseWideChannelsWithoutParticipants) {
-                    try {
-                        conversationParticipantRepository.save(createReadParticipant(requestingUser, channel, now));
-                    }
-                    catch (DataIntegrityViolationException saveFailed) {
-                        // Only a participant that exists by now was created concurrently; any other integrity violation is a real error
-                        if (!conversationParticipantRepository.existsByConversationIdAndUserId(channel.getId(), userId)) {
-                            throw saveFailed;
-                        }
-                        concurrentlyCreatedConversationIds.add(channel.getId());
-                    }
-                }
-                if (!concurrentlyCreatedConversationIds.isEmpty()) {
-                    conversationParticipantRepository.updateMultipleLastRead(userId, concurrentlyCreatedConversationIds, now);
-                }
-            }
+        if (!concurrentlyCreatedConversationIds.isEmpty()) {
+            conversationParticipantRepository.updateMultipleLastRead(userId, concurrentlyCreatedConversationIds, now);
         }
         log.debug("Marking all conversations without participants (i.e. creating new ones) as read took {} ms", TimeLogUtil.formatDurationFrom(start));
-    }
-
-    private static ConversationParticipant createReadParticipant(User user, Channel channel, ZonedDateTime lastRead) {
-        var participant = ConversationParticipant.createWithDefaultValues(user, channel);
-        participant.setUnreadMessagesCount(0L);
-        participant.setLastRead(lastRead);
-        return participant;
     }
 
     /**
@@ -604,7 +571,9 @@ public class ConversationService {
             Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
 
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                return ConversationParticipant.createWithDefaultValues(requestingUser, channel);
+                // Like a new participant: nothing read yet, which is why the last read date lies in the past
+                conversationParticipantRepository.createIfAbsent(channel.getId(), requestingUser.getId(), false, ZonedDateTime.now().minusYears(2), 0L);
+                return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId()).orElseThrow();
             }
             else {
                 throw new AccessForbiddenException("User not allowed to access this conversation!");
