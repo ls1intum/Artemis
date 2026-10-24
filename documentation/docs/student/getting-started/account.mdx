@@ -1,0 +1,72 @@
+---
+id: account
+title: Your Account
+sidebar_label: Account
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+This page explains two things about your account that can surprise you: how you change your email address, and why
+Artemis sometimes asks you to sign in again before you can add an SSH key, a passkey or an access token.
+
+## Changing your email address
+
+Your email address is where Artemis sends the link to reset your password. Whoever controls it can take over your
+account, so Artemis changes it only after you have confirmed the change **from both addresses**: the one you have now and
+the new one.
+
+1. Open your user menu in the navigation bar, choose **User Settings**, open **Account Information** and click
+   **Edit Account Settings**.
+2. Enter the new address in **Email** and click **Save**.
+3. Artemis sends two emails. "Confirm the change of your Artemis e-mail address" goes to your current address, and
+   "Confirm your new Artemis e-mail address" goes to the new one.
+4. Open the link in each email and click **Confirm email change** on the page that opens. The page confirms only after
+   you click, so a mail program that opens links on your behalf cannot confirm a change for you.
+5. Once both addresses are confirmed, your address changes. Your previous address receives a short notice.
+
+Until then you keep using your current address. The settings page shows **Email change waiting for confirmation**, which
+of the two addresses is **confirmed** and which is **not confirmed yet**, and until when the links are valid. They are
+valid for 24 hours.
+
+### While a change is waiting
+
+- **Resend confirmation emails** sends new links to both addresses. The earlier links stop working, and what you had
+  confirmed so far has to be confirmed again.
+- **Cancel change** withdraws the request. Your address stays as it is.
+- You can request a change, or resend the emails, once per minute.
+- A request ends on its own when your password is changed or reset, and when an administrator changes your password or
+  your address.
+- If you can no longer open the mailbox of your current address, ask an administrator to change the address for you.
+
+<Callout variant={CalloutVariant.warning}>
+
+  If you receive a confirmation email that you did not ask for, do not follow its link. Someone else may be using your
+  account. Change your password, which also cancels the request.
+
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+
+  Some installations cannot send email. There, the **Email** field is disabled and the page tells you to ask an
+  administrator. If your institution's login system manages your account, your address comes from there and follows it.
+
+</Callout>
+
+## Signing in again before you add a key, passkey or token
+
+When your password has been changed or reset, a browser that was still signed in from before can keep reading Artemis,
+but it can no longer add anything that would outlive the password change. That covers SSH keys, passkeys and access
+tokens, and it includes showing you the access token of an exercise repository for cloning.
+
+Without this, someone using a forgotten session could add their own key or passkey, and it would keep working after you
+changed your password.
+
+What you see: Artemis signs you out and opens the sign-in page, saying that you signed in before your credentials last
+changed. After you sign in again, you land on the page you came from and can repeat what you were doing.
+
+This also applies to you right after you change your own password: sign in again before you add a new SSH key or
+passkey.
+
+See [Integrated Code Lifecycle](/student/tools-reference/integrated-code-lifecycle) for how to use SSH keys and access
+tokens.
