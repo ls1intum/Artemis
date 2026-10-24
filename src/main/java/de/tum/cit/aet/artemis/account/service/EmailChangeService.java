@@ -97,9 +97,11 @@ public class EmailChangeService {
 
     private final SessionFreshnessService sessionFreshnessService;
 
+    private final UserActivityService userActivityService;
+
     public EmailChangeService(UserRecoveryKeyService userRecoveryKeyService, UserRepository userRepository, UserCreationService userCreationService,
             PasswordService passwordService, MailSendingService mailSendingService, AccountSecurityEventService accountSecurityEventService,
-            DistributedDataProvider distributedDataProvider, SessionFreshnessService sessionFreshnessService,
+            DistributedDataProvider distributedDataProvider, SessionFreshnessService sessionFreshnessService, UserActivityService userActivityService,
             @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}") Optional<Pattern> allowedEmailPattern) {
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userRepository = userRepository;
@@ -110,6 +112,7 @@ public class EmailChangeService {
         this.allowedEmailPattern = allowedEmailPattern;
         this.requestCooldowns = distributedDataProvider.getExpiringMap(REQUEST_COOLDOWN_MAP_NAME, MIN_INTERVAL_BETWEEN_REQUESTS);
         this.sessionFreshnessService = sessionFreshnessService;
+        this.userActivityService = userActivityService;
     }
 
     /**
@@ -150,6 +153,9 @@ public class EmailChangeService {
      *                                      another request was made a moment ago
      */
     public PendingEmailChangeDTO requestChange(User user, String requestedEmail, @Nullable String langKey) {
+        // Read before the session is checked and stored with the request: a password change ends a pending request, but one that is stored after it would survive it, so the
+        // request is applied only while the credentials are still as they were here. If they change after this read, the stored moment is the older one and nothing applies.
+        Instant credentialsChangedAt = userActivityService.findCredentialsChangedDate(user.getId());
         // A session that survived a password reset must not be able to start a new request, which the owner could otherwise only keep cancelling.
         sessionFreshnessService.requireCurrentSession();
         String newEmail = User.canonicalEmail(requestedEmail);
@@ -166,7 +172,7 @@ public class EmailChangeService {
         if (existing.isPresent() && Objects.equals(existing.get().getNewEmail(), newEmail)) {
             return PendingEmailChangeDTO.of(existing.get(), VALIDITY);
         }
-        return startRequest(user, newEmail, langKey);
+        return startRequest(user, newEmail, langKey, credentialsChangedAt);
     }
 
     /**
@@ -179,11 +185,13 @@ public class EmailChangeService {
      *                                      {@code emailChangeRequestedTooRecently} if the last mails went out a moment ago
      */
     public PendingEmailChangeDTO resend(User user) {
+        // Read first for the same reason as in requestChange.
+        Instant credentialsChangedAt = userActivityService.findCredentialsChangedDate(user.getId());
         sessionFreshnessService.requireCurrentSession();
         requireMailConfigured();
         PendingEmailChange pending = findValidPendingChange(user.getId())
                 .orElseThrow(() -> new BadRequestAlertException("No e-mail change is pending", ENTITY_NAME, "noPendingEmailChange"));
-        return startRequest(user, pending.getNewEmail(), null);
+        return startRequest(user, pending.getNewEmail(), null, credentialsChangedAt);
     }
 
     /**
@@ -300,12 +308,13 @@ public class EmailChangeService {
      * Claims the account cooldown, replaces pending confirmation keys and sends fresh links to both addresses.
      * Only hashes are persisted. An account without a current address starts with that side already confirmed.
      *
-     * @param user     the account requesting the change
-     * @param newEmail the canonical destination address, validated by the caller
-     * @param langKey  the language of both mails, or {@code null} or blank for the language the account has
+     * @param user                 the account requesting the change
+     * @param newEmail             the canonical destination address, validated by the caller
+     * @param langKey              the language of both mails, or {@code null} or blank for the language the account has
+     * @param credentialsChangedAt when the credentials of the account last changed, as it was read before the session was checked, or null if they never have
      * @return the newly stored pending request without confirmation secrets
      */
-    private PendingEmailChangeDTO startRequest(User user, String newEmail, @Nullable String langKey) {
+    private PendingEmailChangeDTO startRequest(User user, String newEmail, @Nullable String langKey, @Nullable Instant credentialsChangedAt) {
         requireNotRequestedTooRecently(user.getId());
         String mailLangKey = langKey == null || langKey.isBlank() ? user.getLangKey() : langKey;
         String currentKeyId = RandomUtil.generateResetKeyId();
@@ -317,7 +326,7 @@ public class EmailChangeService {
         boolean hasCurrentAddress = user.getEmail() != null;
         // The link to the current address is mailed to this address, so it is the one the change may only be applied over. The account is read before the secrets are
         // hashed, which takes a moment, and the address can be replaced meanwhile: see the match in UserRepository#applyConfirmedEmailChange.
-        PendingEmailChange change = new PendingEmailChange(newEmail, user.getEmail(), currentKeyId, passwordService.hashPassword(currentSecret), newKeyId,
+        PendingEmailChange change = new PendingEmailChange(newEmail, user.getEmail(), credentialsChangedAt, currentKeyId, passwordService.hashPassword(currentSecret), newKeyId,
                 passwordService.hashPassword(newSecret), now, hasCurrentAddress ? null : now);
         userRecoveryKeyService.storePendingEmailChange(user.getId(), change);
 

@@ -81,6 +81,7 @@ public interface UserRecoveryKeyRepository extends ArtemisJpaRepository<UserReco
             UPDATE UserRecoveryKey recoveryKey
             SET recoveryKey.pendingEmailChange.newEmail = NULL,
                 recoveryKey.pendingEmailChange.originalEmail = NULL,
+                recoveryKey.pendingEmailChange.credentialsChangedAt = NULL,
                 recoveryKey.pendingEmailChange.currentKeyId = NULL,
                 recoveryKey.pendingEmailChange.currentKeyHash = NULL,
                 recoveryKey.pendingEmailChange.newKeyId = NULL,
@@ -181,16 +182,17 @@ public interface UserRecoveryKeyRepository extends ArtemisJpaRepository<UserReco
     /**
      * Sets the pending e-mail change and nothing else on the row, with the guarantee of {@link #updateActivationKey}.
      *
-     * @param userId           the account
-     * @param newEmail         the address the account will have once both addresses have confirmed
-     * @param originalEmail    the address the account has now, where the link to the current address is mailed, or null if it has none
-     * @param currentKeyId     the id of the key mailed to the current address
-     * @param currentKeyHash   the hash of the secret mailed to the current address
-     * @param newKeyId         the id of the key mailed to the new address
-     * @param newKeyHash       the hash of the secret mailed to the new address
-     * @param requestedAt      when the request was made
-     * @param currentConfirmed when the current address was confirmed, or null
-     * @param newConfirmed     when the new address was confirmed, or null
+     * @param userId               the account
+     * @param newEmail             the address the account will have once both addresses have confirmed
+     * @param originalEmail        the address the account has now, where the link to the current address is mailed, or null if it has none
+     * @param credentialsChangedAt when the credentials of the account last changed, as it was read for this request, or null if they never have
+     * @param currentKeyId         the id of the key mailed to the current address
+     * @param currentKeyHash       the hash of the secret mailed to the current address
+     * @param newKeyId             the id of the key mailed to the new address
+     * @param newKeyHash           the hash of the secret mailed to the new address
+     * @param requestedAt          when the request was made
+     * @param currentConfirmed     when the current address was confirmed, or null
+     * @param newConfirmed         when the new address was confirmed, or null
      * @return 1 if the row exists and was written, 0 if the account has no row
      */
     @Modifying
@@ -199,6 +201,7 @@ public interface UserRecoveryKeyRepository extends ArtemisJpaRepository<UserReco
             UPDATE UserRecoveryKey recoveryKey
             SET recoveryKey.pendingEmailChange.newEmail = :newEmail,
                 recoveryKey.pendingEmailChange.originalEmail = :originalEmail,
+                recoveryKey.pendingEmailChange.credentialsChangedAt = :credentialsChangedAt,
                 recoveryKey.pendingEmailChange.currentKeyId = :currentKeyId,
                 recoveryKey.pendingEmailChange.currentKeyHash = :currentKeyHash,
                 recoveryKey.pendingEmailChange.newKeyId = :newKeyId,
@@ -209,8 +212,9 @@ public interface UserRecoveryKeyRepository extends ArtemisJpaRepository<UserReco
             WHERE recoveryKey.userId = :userId
             """)
     int updatePendingEmailChange(@Param("userId") long userId, @Param("newEmail") String newEmail, @Param("originalEmail") String originalEmail,
-            @Param("currentKeyId") String currentKeyId, @Param("currentKeyHash") String currentKeyHash, @Param("newKeyId") String newKeyId, @Param("newKeyHash") String newKeyHash,
-            @Param("requestedAt") Instant requestedAt, @Param("currentConfirmed") Instant currentConfirmed, @Param("newConfirmed") Instant newConfirmed);
+            @Param("credentialsChangedAt") Instant credentialsChangedAt, @Param("currentKeyId") String currentKeyId, @Param("currentKeyHash") String currentKeyHash,
+            @Param("newKeyId") String newKeyId, @Param("newKeyHash") String newKeyHash, @Param("requestedAt") Instant requestedAt,
+            @Param("currentConfirmed") Instant currentConfirmed, @Param("newConfirmed") Instant newConfirmed);
 
     /**
      * Clears the pending e-mail change, whichever request it is, and nothing else on the row.
@@ -224,6 +228,7 @@ public interface UserRecoveryKeyRepository extends ArtemisJpaRepository<UserReco
             UPDATE UserRecoveryKey recoveryKey
             SET recoveryKey.pendingEmailChange.newEmail = NULL,
                 recoveryKey.pendingEmailChange.originalEmail = NULL,
+                recoveryKey.pendingEmailChange.credentialsChangedAt = NULL,
                 recoveryKey.pendingEmailChange.currentKeyId = NULL,
                 recoveryKey.pendingEmailChange.currentKeyHash = NULL,
                 recoveryKey.pendingEmailChange.newKeyId = NULL,

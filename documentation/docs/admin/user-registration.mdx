@@ -152,8 +152,9 @@ intruder would choose.
   their address themselves and the settings field is disabled. An administrator can still change it in the user management, which
   is also the way out for a user whose old mailbox no longer exists.
 - Accounts managed by an external provider (LDAP, SAML2 or OIDC) are not affected: their address comes from the provider.
-- A request remembers the address the account had when it was made, and the address is applied only while the account still has
-  it. If an administrator assigns another address in the meantime, the request is dropped instead of replacing it.
+- A request remembers the address the account had when it was made and the moment its credentials last changed, and the address is
+  applied only while both are still the same. If an administrator assigns another address, or the password is changed or reset,
+  while the request is being stored, the request is dropped instead of being applied.
 - The links in the mails point to `/account/confirm-email-change` on `server.url`. That page is public and confirms only after a
   click, so a mail scanner that opens links cannot confirm a change. The path has to reach the client, as `/account/reset/finish` does.
 - `POST /api/core/public/account/confirm-email-change` is public and counts against the `ACCOUNT_MANAGEMENT` limit of the
