@@ -356,7 +356,13 @@ public class ExamAccessService {
         }
     }
 
-    private void checkExamBelongsToCourseElseThrow(Long courseId, Long examId) {
+    /**
+     * Checks that the exam exists and belongs to the given course. This check does not verify any role.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     */
+    public void checkExamBelongsToCourseElseThrow(Long courseId, Long examId) {
         // TODO: move this check directly into the database for performance reasons
         Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {

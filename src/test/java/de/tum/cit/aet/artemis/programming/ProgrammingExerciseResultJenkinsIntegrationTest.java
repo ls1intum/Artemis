@@ -46,7 +46,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
         var loginName = TEST_PREFIX + "student1";
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();

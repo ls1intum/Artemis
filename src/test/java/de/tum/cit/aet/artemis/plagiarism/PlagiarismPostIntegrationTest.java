@@ -115,7 +115,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     // POST
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPostingNotAllowedIfDisabledSetting() throws Exception {
         var persistedCourse = courseRepository.findByIdElseThrow(courseId);
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
@@ -147,7 +147,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @ParameterizedTest
     @MethodSource("userMentionProvider")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateCoursePostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         doNothing().when(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
 
@@ -180,7 +180,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreatePlagiarismPost() throws Exception {
         doNothing().when(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
 
@@ -199,7 +199,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreatePostWithoutPlagiarismCase_badRequest() throws Exception {
         Course course = conversationUtilService.createCourseWithPostsDisabled();
         courseId = course.getId();
@@ -223,7 +223,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     // UPDATE
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testEditPost_asTutor() throws Exception {
         Post postToUpdate = editExistingPost(existingPlagiarismPosts.getFirst());
         PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(),
@@ -233,7 +233,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @ParameterizedTest
     @MethodSource("userMentionProvider")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testEditPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         // update post of student1 (index 0)--> OK
         Post postToUpdate = editExistingPost(existingPosts.getFirst());
@@ -272,7 +272,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     // GET
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asInstructor() throws Exception {
         // request param plagiarismCaseId will fetch all posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
@@ -319,7 +319,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     // DELETE
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testDeletePost_asTutor_forbidden() throws Exception {
         Post postToNotDelete = existingPlagiarismPosts.getFirst();
 
@@ -328,7 +328,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeletePost_asInstructor() throws Exception {
         Post postToNotDelete = existingPlagiarismPosts.getFirst();
 
@@ -337,7 +337,20 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateAndDeletePost_postOfOtherCourse_conflict() throws Exception {
+        // the user is an instructor of the course in the path, but the post belongs to the plagiarism case of another course
+        Course otherCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        Post post = existingPlagiarismPosts.getFirst();
+
+        request.putWithResponseBody("/api/plagiarism/courses/" + otherCourse.getId() + "/posts/" + post.getId(),
+                new PlagiarismPostUpdateRequestDTO(post.getTitle(), "changed content"), PostResponseDTO.class, HttpStatus.CONFLICT);
+        request.delete("/api/plagiarism/courses/" + otherCourse.getId() + "/posts/" + post.getId(), HttpStatus.CONFLICT);
+        assertThat(postRepository.findById(post.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteNonExistentPosts_asTutor_notFound() throws Exception {
         // try to delete non-existing post
         request.delete("/api/plagiarism/courses/" + courseId + "/posts/" + 9999L, HttpStatus.NOT_FOUND);

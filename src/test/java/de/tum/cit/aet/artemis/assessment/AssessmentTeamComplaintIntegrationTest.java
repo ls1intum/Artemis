@@ -176,7 +176,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void submitComplaintResponse_rejectComplaint() throws Exception {
         complaint = complaintRepo.saveAndFlush(complaint);
 
@@ -198,7 +198,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void submitComplaintResponse_rejectComplaint_asOtherTutor_forbidden() throws Exception {
         complaint = complaintRepo.save(complaint);
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
@@ -211,7 +211,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void submitComplaintResponse_updateAssessment() throws Exception {
         complaint = complaintRepo.save(complaint);
 
@@ -242,7 +242,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void submitComplaintResponse_updateAssessment_asOtherTutor_forbidden() throws Exception {
         complaint = complaintRepo.save(complaint);
 

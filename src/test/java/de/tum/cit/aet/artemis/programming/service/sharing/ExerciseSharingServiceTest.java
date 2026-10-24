@@ -241,7 +241,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR1, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR1, roles = "USER")
     void testImportProgrammingExerciseFromSharing() throws URISyntaxException, IOException, GitAPIException, SharingException {
         userUtilService.addInstructor(INSTRUCTOR1);
         mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN);

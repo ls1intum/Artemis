@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLi
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -264,12 +264,13 @@ public class OnlineUnitResource {
     /**
      * GET /lectures/online-units/fetch-online-resource : Fetch the website's metadata from the specified link to an online resource.
      *
-     * @param link The link (as request parameter) to the website to fetch the metadata from
+     * @param link     The link (as request parameter) to the website to fetch the metadata from
+     * @param courseId The id of the course in which the user wants to create or edit the online unit (the user needs at least the editor role there)
      * @return the ResponseEntity with status 200 (OK) and with body a DTO with link, meta title, and meta description
      */
     @GetMapping("lectures/online-units/fetch-online-resource")
-    @EnforceAtLeastEditor
-    public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link) {
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link, @RequestParam("courseId") Long courseId) {
         // Ensure that the link is a correctly formed URL
         URL url = validateUrlStringAndReturnUrl(link);
 

@@ -133,7 +133,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testOpeningAnAssessmentIsForbiddenWhileTheExamIsRunningForEveryExerciseType() throws Exception {
         for (Class<? extends Exercise> exerciseType : MANUALLY_ASSESSED_TYPES) {
             Exercise exercise = exerciseOfType(exerciseType);
@@ -147,7 +147,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTheErrorTellsTheClientTheDateAndToRenderTheMessageItself() throws Exception {
         TextExercise textExercise = exerciseOfType(TextExercise.class);
         Submission submission = saveSubmission(textExercise);
@@ -162,7 +162,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAssessmentIsPossibleOnceTheExamAndItsGracePeriodAreOver() throws Exception {
         setExamWorkingPeriod(ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(2));
 
@@ -175,7 +175,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTheGracePeriodStillCountsAsExamTime() throws Exception {
         // the last student exam ended a minute ago, but students may still hand in during the grace period
         setExamWorkingPeriod(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().minusMinutes(1));
@@ -188,7 +188,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testProgrammingAssessmentAdditionallyWaitsForTheTestsToRunOnTheFinalSubmissions() throws Exception {
         setExamWorkingPeriod(ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(2));
         ProgrammingExercise programmingExercise = exerciseOfType(ProgrammingExercise.class);
@@ -203,7 +203,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testTestRunsStayAssessableBeforeTheExamStarts() throws Exception {
         setExamWorkingPeriod(ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2));
 
@@ -220,7 +220,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreatingAnAssessmentIsForbiddenWhileTheExamIsRunningEvenForInstructors() throws Exception {
         // This endpoint creates a result when none exists yet, and isAllowedToCreateOrOverrideResult neither includes
         // the grace period nor applies to instructors at all. Without the gate on the write side, assessment data could
@@ -239,7 +239,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTheAssessmentDashboardTellsTheClientWhenAssessmentBecomesPossible() throws Exception {
         TextExercise textExercise = exerciseOfType(TextExercise.class);
 
@@ -252,7 +252,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTheAssessmentDashboardSendsNoSuchDatesForCourseExercises() throws Exception {
         Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         TextExercise textExercise = ExerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");

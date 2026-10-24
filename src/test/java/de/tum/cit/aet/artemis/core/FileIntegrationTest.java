@@ -126,7 +126,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUploadExamUserSignature() throws Exception {
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
@@ -142,7 +142,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetTemplateFile() throws Exception {
         String javaReadme = request.get("/api/core/files/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();
@@ -153,14 +153,14 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCodeOfConductTemplate() throws Exception {
         var template = request.get("/api/core/files/templates/code-of-conduct", HttpStatus.OK, String.class);
         assertThat(template).startsWith("<!-- Code of Conduct Template");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetUnreleasedAttachmentVideoUnitAsTutor() throws Exception {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lecture.setTitle("Test title");
@@ -185,7 +185,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * both mappings load-bearing.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetMigratedLectureAttachmentUnderEitherPathSpelling() throws Exception {
         byte[] content = "lecture attachment content".getBytes();
         Attachment attachment = createLectureAttachmentWithStoredFile(content);
@@ -201,7 +201,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * even though the file itself never left the lecture attachment directory. That is the whole point of separating where a file is served from where it is stored.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetMigratedLectureAttachmentThroughItsAttachmentVideoUnit() throws Exception {
         byte[] content = "lecture attachment content".getBytes();
         Attachment attachment = createLectureAttachmentWithStoredFile(content);
@@ -252,7 +252,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * its student version.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAttachmentVideoUnitUnderThePathSpellingRecordedInPostMarkdown() throws Exception {
         byte[] dummyContent = "dummy pdf content".getBytes();
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
@@ -269,29 +269,58 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void uploadImageMarkdownAsStudent_forbidden() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         // upload file
-        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true&courseId=" + course.getId(), file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void uploadImageMarkdownAsTutor_nonExistingCourse_forbidden() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true&courseId=" + Long.MAX_VALUE, file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void uploadImageMarkdownAsTutor() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         // upload file
-        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
-                HttpStatus.CREATED);
+        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true&courseId=" + course.getId(), file.getOriginalFilename(), "file", file,
+                JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asString();
         assertThat(responsePath).contains("markdown");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void uploadImageMarkdownOutsideOfACourseAsAdmin() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/core/admin/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.CREATED);
+        assertThat(response.get("path").asString()).contains("markdown");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void uploadImageMarkdownOutsideOfACourseAsInstructor_forbidden() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        request.postWithMultipartFile("/api/core/admin/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void uploadFileMarkdownUnsupportedFileExtensionAsTutor() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         // upload file
-        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
+        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true&courseId=" + course.getId(), file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -301,7 +330,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
         var units = lecture.getLectureUnits();
@@ -323,7 +352,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged_DoesNotCompleteExternalPdf() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
         var externalUnit = (AttachmentVideoUnit) lecture.getLectureUnits().get(2);
@@ -340,7 +369,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged_MissingFileDoesNotCompleteUnits(boolean allFilesMissing) throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
         var pdfUnits = lecture.getLectureUnits().stream().map(AttachmentVideoUnit.class::cast).filter(unit -> unit.getAttachment().getLink().endsWith(".pdf")).toList();
@@ -355,7 +384,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged_CorruptFileDoesNotCompleteUnits() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
         var firstUnit = (AttachmentVideoUnit) lecture.getLectureUnits().getFirst();
@@ -373,7 +402,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged_TutorAccessToUnreleasedUnits() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
 
@@ -386,7 +415,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged_NoAccessToUnreleasedUnits() throws Exception {
         // The test setup needs elevated privileges, we later switch to a student for the test execution
         Lecture lecture = createLectureWithLectureUnits();
@@ -408,7 +437,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged_correctOrder() throws Exception {
         // The test setup needs elevated privileges, we later switch to a student for the test execution
         Lecture lecture = createLectureWithLectureUnits();
@@ -502,7 +531,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetAttachmentVideoUnitFileAsEditor() throws Exception {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
 
@@ -527,7 +556,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAttachmentVideoUnitAttachmentFilenameSanitization() throws Exception {
         testGetAttachmentVideoUnitAsTutor();
     }
@@ -604,7 +633,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAttachmentVideoUnitAttachmentRangeRequest() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
@@ -643,7 +672,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAttachmentVideoUnitAttachmentRangeRequestNotSatisfiable() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
@@ -653,7 +682,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAttachmentVideoUnitAttachmentRangeRequestMalformedHeader() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(dummyContent);
@@ -663,12 +692,13 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testMarkdownFileCacheHeaders() throws Exception {
         // Upload a markdown file
         MockMultipartFile file = new MockMultipartFile("file", "test-image.png", "image/png", "test image content".getBytes());
-        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class,
-                HttpStatus.CREATED);
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=false&courseId=" + course.getId(), file.getOriginalFilename(), "file", file,
+                JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asString();
 
         // Verify cache headers (30 days = 2592000 seconds)
@@ -676,7 +706,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExamUserSignatureCacheHeaders() throws Exception {
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
@@ -818,7 +848,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * that, the same old link can serve a different unit's file from one request to the next.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testLegacyLectureAttachmentRouteIsDeterministicForTwoAttachmentsOfTheSameName() throws Exception {
         byte[] olderContent = "the attachment the link was written for".getBytes();
         Attachment older = createLectureAttachmentWithStoredFile(olderContent);

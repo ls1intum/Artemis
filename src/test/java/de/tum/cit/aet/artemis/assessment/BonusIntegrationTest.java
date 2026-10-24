@@ -121,7 +121,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBonusSourcesForTargetExamNotFound() throws Exception {
         bonusRepository.delete(courseBonus);
 
@@ -129,7 +129,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBonusForTargetExam() throws Exception {
 
         BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
@@ -162,7 +162,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBonusIncludesSourceGradeStepsOnlyWhenRequested() throws Exception {
         // Re-point the bonus to a source grading scale that actually has grade steps (the grading-key student view reads them).
         bonusRepository.delete(courseBonus);
@@ -179,7 +179,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveBonusForTargetExam() throws Exception {
         bonusRepository.delete(courseBonus);
         Exam newExam = examUtilService.addExamWithExerciseGroup(course, true);
@@ -207,7 +207,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveBonusForTargetExamDuplicateError() throws Exception {
 
         request.postWithResponseBody(bonusesUrl(), bonusRequest(null, 1.0, BonusStrategy.GRADES_CONTINUOUS, sourceExamGradingScale.getId()), BonusResponseDTO.class,
@@ -215,7 +215,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveBonusForGradeScaleTypeError() throws Exception {
         bonusRepository.delete(courseBonus);
 
@@ -256,7 +256,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateBonusWithMismatchingIdsInPathAndBodyConflict() throws Exception {
         // The path id ("{id}1") deliberately differs from the body id to trigger the mismatch conflict.
         request.put(bonusesUrl() + "/" + courseBonus.getId() + 1, bonusRequest(courseBonus.getId(), 1.0, BonusStrategy.GRADES_CONTINUOUS, courseGradingScale.getId()),
@@ -264,7 +264,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateBonusWithoutChangingSourceGradingScale() throws Exception {
 
         BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
@@ -287,7 +287,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateBonusResponseIncludesBonusStrategy() throws Exception {
         BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
         assertThat(foundBonus.bonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
@@ -306,7 +306,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateBonusWithChangingSourceGradingScale() throws Exception {
 
         BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
@@ -326,7 +326,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateBonusWithoutSourceGradingScaleBadRequest() throws Exception {
         bonusRepository.delete(courseBonus);
 
@@ -342,7 +342,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateBonusValidationFailureDoesNotPersistBonusToStrategy() throws Exception {
         // The bonusTo grading scale currently carries the original (continuous) strategy.
         assertThat(gradingScaleRepository.findById(bonusToExamGradingScale.getId()).orElseThrow().getBonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
@@ -361,7 +361,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteBonus() throws Exception {
 
         BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);

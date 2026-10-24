@@ -122,13 +122,13 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdatePlagiarismComparisonStatus_forbidden_tutor() throws Exception {
         request.put("/api/plagiarism/courses/1/plagiarism-comparisons/1/status", new PlagiarismComparisonStatusDTO(NONE), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdatePlagiarismComparisonStatus_badRequest_teamExercise() throws Exception {
         textExercise.setMode(ExerciseMode.TEAM);
         textExercise = textExerciseRepository.save(textExercise);
@@ -138,7 +138,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdatePlagiarismComparisonStatus() throws Exception {
         var plagiarismComparisonStatusDTOConfirmed1 = new PlagiarismComparisonStatusDTO(CONFIRMED);
         request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/status", plagiarismComparisonStatusDTOConfirmed1,
@@ -203,7 +203,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
         PlagiarismComparisonDTO comparison = request.get(
                 "/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
@@ -226,7 +226,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetPlagiarismComparisonsForSplitView_multipleMatchesDoesNotDuplicateElements() throws Exception {
         var submissionA = plagiarismComparison2.getSubmissionA();
         submissionA.setElements(List.of(createSubmissionElement(submissionA, 1), createSubmissionElement(submissionA, 2)));
@@ -265,19 +265,19 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testDeletePlagiarismComparisons_tutor() throws Exception {
         request.delete("/api/plagiarism/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testDeletePlagiarismComparisons_editor() throws Exception {
         request.delete("/api/plagiarism/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeletePlagiarismComparisons_instructor() throws Exception {
         request.delete("/api/plagiarism/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=false",
                 HttpStatus.OK);
@@ -287,7 +287,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeletePlagiarismComparisons_instructor_deleteAll() throws Exception {
         request.delete("/api/plagiarism/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=true",
                 HttpStatus.OK);
@@ -296,20 +296,20 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testNumberOfPlagiarismResultsForExercise_instructor_correct() throws Exception {
         var results = request.get("/api/plagiarism/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.OK, Long.class);
         assertThat(results).isEqualTo(4);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testNumberOfPlagiarismResultsForExercise_tutor_forbidden() throws Exception {
         request.get("/api/plagiarism/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
         request.get("/api/plagiarism/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.FORBIDDEN, Long.class);
     }

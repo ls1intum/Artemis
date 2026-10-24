@@ -194,7 +194,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
      * Test get request for a single grade step when no grading scale exists
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetGradeStepByIdForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStepDTO.class);
     }
@@ -203,7 +203,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
      * Test get request for a single grade step
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetGradeStepByIdForCourse() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Name");
@@ -224,7 +224,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
      * Test get request for a single grade step when no grading scale exists
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetGradeStepByIdForExamNoGradingScaleExists() throws Exception {
         request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStepDTO.class);
     }
@@ -233,7 +233,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
      * Test get request for a single grade step
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetGradeStepByIdForExam() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Name");

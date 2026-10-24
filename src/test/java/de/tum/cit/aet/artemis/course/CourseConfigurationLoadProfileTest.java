@@ -121,7 +121,7 @@ class CourseConfigurationLoadProfileTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void anInstructorReadingTheCourseReadsEachConfigurationExactlyOnce() throws Exception {
         List<String> statements = statementsOf(() -> request.get("/api/course/courses/" + courseId, HttpStatus.OK, CourseManagementDTO.class));
 

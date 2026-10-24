@@ -328,7 +328,7 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR, roles = "USER")
     void submissions_everyExerciseType_matchTheEntityWire() throws Exception {
         Course course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         addRichSubmissions(course);
@@ -343,7 +343,7 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR, roles = "USER")
     void submissions_teamAndProgrammingParticipations_matchTheEntityWire() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -368,7 +368,7 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR, roles = "USER")
     void submissions_examExerciseParticipation_matchesTheEntityWire() throws Exception {
         TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(examExercise, STUDENT);
@@ -391,7 +391,7 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR, roles = "USER")
     void submissions_doNotQueryPerSubmissionOrResult() throws Exception {
         Course course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         addRichSubmissions(course);

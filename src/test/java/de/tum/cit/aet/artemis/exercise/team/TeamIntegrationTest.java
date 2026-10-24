@@ -114,7 +114,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testTeamAssignmentConfig() {
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setMinTeamSize(1);
@@ -129,7 +129,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateTeam() throws Exception {
         final String TEAM_NAME = TEST_PREFIX + "Team 1";
         final String TEAM_SHORT_NAME = TEST_PREFIX + "team1";
@@ -155,7 +155,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateTeam_StudentsAlreadyAssigned_BadRequest() throws Exception {
         // Create team that contains student "student1"
         Team team1 = new Team().name(TEST_PREFIX + "Team 1").shortName(TEST_PREFIX + "team1").exercise(exercise)
@@ -168,7 +168,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateTeam_BadRequest() throws Exception {
         // Try creating a team that already has an id set
         Team team1 = new Team();
@@ -179,7 +179,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
         // Revoke the tutor's UCR entry so they no longer have TA access to this course
         userUtilService.unenrollUserFromCourseByRole(tutor, course, CourseRole.TEACHING_ASSISTANT);
@@ -193,7 +193,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateTeam_InvalidShortName_BadRequest() throws Exception {
         Team team = new Team();
         team.setName("1 Invalid Name");
@@ -204,7 +204,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateTeam() throws Exception {
         final String TEAM_NAME_UPDATED = TEST_PREFIX + "Team Updated";
 
@@ -218,7 +218,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateTeam_BadRequest() throws Exception {
         // Try updating a team that has no id specified
         var dto1 = new TeamInputDTO(null, "name", "shortname", null, null, null);
@@ -233,7 +233,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateTeam_StudentsAlreadyAssigned_BadRequest() throws Exception {
         User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
@@ -251,7 +251,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateTeam_NotFound() throws Exception {
         // Try updating a non-existing team
         var dto = new TeamInputDTO(NON_EXISTING_ID, "name", "shortname", null, null, null);
@@ -259,7 +259,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
         // Revoke the tutor's UCR entry so they no longer have TA access to this course
         userUtilService.unenrollUserFromCourseByRole(tutor, course, CourseRole.TEACHING_ASSISTANT);
@@ -270,7 +270,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateTeam_Forbidden_ShortNameChanged() throws Exception {
         // It should not be allowed to change a team's short name (unique identifier) after creation
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
@@ -279,7 +279,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateTeam_Forbidden_OwnerChanged() throws Exception {
         // It should not be allowed to change a team's owner as a tutor
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
@@ -288,7 +288,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetTeam() throws Exception {
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
 
@@ -307,7 +307,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetTeam_BadRequest() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         Exercise wrongExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
@@ -318,13 +318,13 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetTeam_NotFound() throws Exception {
         request.get(resourceUrl() + "/" + NON_EXISTING_ID, HttpStatus.NOT_FOUND, TeamResponseDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetTeamsForExercise() throws Exception {
         int numberOfTeams = 3;
 
@@ -345,7 +345,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetTeamsForExercise_Forbidden() throws Exception {
         // Revoke the tutor's UCR entry so they no longer have TA access to this course
         userUtilService.unenrollUserFromCourseByRole(tutor, course, CourseRole.TEACHING_ASSISTANT);
@@ -354,7 +354,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteTeam() throws Exception {
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
 
@@ -365,7 +365,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testDeleteTeam_Forbidden_AsTutor() throws Exception {
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
 
@@ -373,7 +373,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteTeam_Forbidden_WhenNotInstructorInCourse() throws Exception {
         // Revoke the instructor's UCR entry so they no longer have access to this course
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
@@ -384,7 +384,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteTeam_BadRequest() throws Exception {
         // Try deleting a team with an exercise specified that does not match the exercise id param in the route
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
@@ -392,13 +392,13 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteTeam_NotFound() throws Exception {
         request.delete(resourceUrl() + "/" + NON_EXISTING_ID, HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testExistsTeamByShortName() throws Exception {
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
 
@@ -412,7 +412,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSearchUsersInCourse() throws Exception {
         // Check that all students from course are found (since their logins are all prefixed by "student")
         List<TeamSearchUserDTO> users1 = request.getList(resourceUrlSearchUsersInCourse(TEST_PREFIX + "student"), HttpStatus.OK, TeamSearchUserDTO.class);
@@ -438,14 +438,14 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSearchUsersInCourse_BadRequest() throws Exception {
         // Search terms that are shorter than 3 characters should lead to bad request
         request.getList(resourceUrlSearchUsersInCourse("ab"), HttpStatus.BAD_REQUEST, TeamSearchUserDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSearchUsersInCourse_Forbidden_AsTutorOfDifferentCourse() throws Exception {
         // Revoke the tutor's UCR entry so they no longer have TA access to this course
         userUtilService.unenrollUserFromCourseByRole(tutor, course, CourseRole.TEACHING_ASSISTANT);
@@ -527,7 +527,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.getFirst();
@@ -609,7 +609,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getCourseWithExercisesAndParticipationsForTeam_KeepsProgrammingRepositoryAndCommit() throws Exception {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
         Team team = teamUtilService.addTeamsForExercise(programmingExercise, TEST_PREFIX + "progteam", TEST_PREFIX + "progstudent", 1, tutor).getFirst();

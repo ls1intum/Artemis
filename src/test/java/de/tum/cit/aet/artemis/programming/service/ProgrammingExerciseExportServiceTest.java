@@ -128,7 +128,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * temporary directory altogether, so there is nothing left to collide over or to clean up twice.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldStreamEachRepositoryWithoutACheckout() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
         Path outputDir = tempFileUtilService.createTempDirectory("archival-export");
@@ -147,7 +147,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldExportTheWorkingTreeWithoutGitMetadata() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1");
         Path outputDir = tempFileUtilService.createTempDirectory("archival-export-content");
@@ -170,7 +170,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * get it: the repository is materialized straight from the bare repository.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldKeepTheHistoryWhenTheCallerAsksForItWithoutAnyRewritingOption() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1");
         Path outputDir = tempFileUtilService.createTempDirectory("manual-export-plain");
@@ -201,7 +201,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * would be read as an empty repository and hide the failure.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldNotLeaveAnArchiveBehindForAnUnreadableRepository() throws Exception {
         var participation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
@@ -230,7 +230,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * tell an instructor nothing about the repository it skipped.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldReportAnUnreadableRepositoryAlongsideTheOnesItExported() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(seedStudentParticipations(TEST_PREFIX + "student1"));
         var unreadable = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
@@ -254,7 +254,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldNameTheZipAfterTheParticipant() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1");
         Path outputDir = tempFileUtilService.createTempDirectory("archival-export-naming");
@@ -270,7 +270,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * history so the exported material can be re-imported and inspected, which is what the import expects to find.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldWriteOneZipPerRepositoryWithHistory() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -296,7 +296,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * the serialized index agrees with the files that were written next to it.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldProduceAnExtractableWorkingRepository() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -324,7 +324,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * must not disclose and which is unusable on the machine that extracts it.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldNotDiscloseTheInternalRepositoryPath() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -381,7 +381,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * are reachable from nowhere else, which is the one thing an archive must not do.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldKeepSecondaryBranchesAndTags() throws Exception {
         var baseRepositories = createAndSeedBaseRepositories();
         var templateRepository = baseRepositories.templateRepository();
@@ -419,7 +419,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * says nothing about them.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldExportAuxiliaryRepositories() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -464,7 +464,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * carry on with the remaining repositories rather than failing outright.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseRepositories_shouldReportMissingRepositoryUrisAsErrors() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -491,7 +491,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * reached by them.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositoriesToZipFile_withTheRewritingOptions_producesOneArchiveNamedAfterTheParticipants() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = List.of(seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1"),
                 seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student2"));
@@ -519,7 +519,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * identifiable from it, neither through the directory name nor through the commit authors.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositoriesToZipFile_whenAnonymizing_namesNoParticipant() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = List.of(seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1"));
         RepositoryExportOptionsDTO anonymizingOptions = new RepositoryExportOptionsDTO(true, false, false, null, false, false, true, true, false);
@@ -550,7 +550,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exportByParticipationIds_asTutor_ignoresIdentityRevealingOptions() throws Exception {
         var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
         var repository = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
@@ -569,13 +569,13 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exportByParticipantIdentifiers_asTutor_forbidden() throws Exception {
         assertExportByParticipantIdentifiersForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void exportByParticipantIdentifiers_asEditor_forbidden() throws Exception {
         assertExportByParticipantIdentifiersForbidden();
     }
@@ -587,7 +587,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportByParticipantIdentifiers_asInstructor_keepsNamedExport() throws Exception {
         seedStudentParticipations(TEST_PREFIX + "student1");
         File archive = request.postWithResponseBodyFile(
@@ -597,14 +597,14 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exportByParticipationIds_asTutor_cannotExportAll() throws Exception {
         var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
         request.post(exportByParticipationIdsUrl(programmingExercise, participation), ARCHIVAL_OPTIONS, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportByParticipationIds_fromAnotherExercise_forbidden() throws Exception {
         var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
         var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
@@ -613,7 +613,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exportStudentSnapshot_asTutor_hidesParticipantInFilename() throws Exception {
         File archive = exportStudentSnapshot();
         assertThat(archive.getName()).doesNotContain(TEST_PREFIX + "student1").endsWith("-student-submission.git.zip");
@@ -626,7 +626,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportStudentSnapshot_asInstructor_keepsParticipantInFilename() throws Exception {
         assertThat(exportStudentSnapshot().getName()).contains(TEST_PREFIX + "student1");
     }
@@ -646,7 +646,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositoriesToZipFile_withoutAnyParticipation_handsBackNothing() {
         // Nothing to zip is not an error: an instructor can filter the export down to a set of students that turns out to be empty.
         File exportedArchive = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise, List.of(), ARCHIVAL_OPTIONS, Map.of());
@@ -655,7 +655,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldSkipAParticipationWithoutARepository() throws Exception {
         // Participations of old exercises can be stored without a repository URI. There is nothing to export for them, and nothing to report either.
         List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1");
@@ -675,7 +675,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_shouldSkipPracticeParticipationsWhenTheyAreExcluded() throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(seedStudentParticipations(TEST_PREFIX + "student1"));
         var practiceParticipation = participations.getFirst();
@@ -694,7 +694,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_writesTheRepositoriesTheProblemStatementAndTheExerciseDetails() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setProblemStatement("Implement the sorting strategies.");
@@ -719,7 +719,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * it and posts it back, so every field those imports bind has to survive the export.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_writesDetailsTheImportBindsBack() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setProblemStatement("Implement the sorting strategies.");
@@ -764,7 +764,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * it creates and clears it only after that exercise was saved, and the association cascades ALL.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_writesNoConfigurationIds() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setMode(ExerciseMode.TEAM);
@@ -794,7 +794,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * exported exercise's row.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_detailsImportUnderAnIdCopyingImporter() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setMode(ExerciseMode.TEAM);
@@ -838,7 +838,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * shared exercise with an auxiliary repository could not be imported at all.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_detailsWithAuxiliaryRepositoriesImportIntoTheSharingCreation() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -872,7 +872,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * id and the references to its course and exercise group are the only ones, and the import replaces those.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_writesNoNestedIds() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -955,7 +955,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * only thing that told two otherwise identical criteria apart. The exported rubric still has to keep both rows.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForDownload_keepsIdenticalGradingCriteria() throws Exception {
         createAndSeedBaseRepositories();
         Set<GradingCriterion> criteria = new HashSet<>();
@@ -999,7 +999,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportProgrammingExerciseForArchival_writesTheInstructorAndTheStudentRepositoriesIntoTheGivenDirectory() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setProblemStatement("Implement the sorting strategies.");
@@ -1034,7 +1034,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * deadline, which is how an export for grading stays faithful to what was submitted in time.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportStudentRepositories_whenFilteringLateSubmissions_exportsTheStateOfTheCommitBeforeTheDeadline() throws Exception {
         var participation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");

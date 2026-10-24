@@ -123,19 +123,19 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testFilterFeedbacksForClientAsTA() {
         this.testFilterFeedbacksForClientAsCurrentUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testFilterFeedbacksForClientAsEditor() {
         this.testFilterFeedbacksForClientAsCurrentUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFilterFeedbacksForClientAsInstructor() {
         this.testFilterFeedbacksForClientAsCurrentUser();
     }
@@ -313,7 +313,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithFeedback_deletesResultAndAllFeedbacks() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
@@ -330,7 +330,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithFeedbackAndLongFeedbackText_deletesAllRelatedEntities() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
 
@@ -365,7 +365,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithRating_deletesResultAndRating() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
@@ -381,7 +381,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithComplaint_deletesResultAndComplaint() {
         Result result = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
@@ -405,7 +405,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithMultipleFeedbacksAndRating_deletesEverything() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
@@ -424,7 +424,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultPreservesOtherResultsOnSameParticipation() {
         var submission1 = programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow();
         Result result1 = participationUtilService.addResultToSubmission(null, null, submission1);
@@ -449,7 +449,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithUninitializedFeedbacks_shouldNotThrowEntityNotFoundException() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
@@ -475,7 +475,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithUninitializedFeedbacksAndLongFeedbackText_shouldNotViolateForeignKeyConstraint() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
 

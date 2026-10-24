@@ -116,7 +116,7 @@ Currently 20 product areas, 151 features, 1094 REST endpoints in 29 modules, and
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| account | `UserResource` | 0 | 1 | 0 | 0 |
+| account | `AdminUserResource` | 0 | 1 | 0 | 0 |
 | course | `CourseAccessResource` | 9 | 7 | 0 | 0 |
 
 ### Import from another course
@@ -168,6 +168,7 @@ Currently 20 product areas, 151 features, 1094 REST endpoints in 29 modules, and
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
+| core | `AdminFileResource` | 1 | 0 | 0 | 0 |
 | core | `FileResource` | 1 | 0 | 1 | 0 |
 
 ## Exercises
@@ -672,9 +673,9 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| exam | `AdminExamRoomManagementResource` | 1 | 0 | 0 | 0 |
+| exam | `AdminExamRoomManagementResource` | 2 | 1 | 0 | 0 |
 | exam | `ExamRoomDistributionResource` | 2 | 4 | 0 | 0 |
-| exam | `ExamRoomManagementResource` | 1 | 1 | 0 | 0 |
+| exam | `ExamRoomManagementResource` | 0 | 1 | 0 | 0 |
 
 ### Attendance check
 
@@ -885,9 +886,8 @@ Also recorded outside REST by `CourseNotificationService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| notification | `AdminSystemNotificationResource` | 3 | 1 | 0 | 0 |
+| notification | `AdminSystemNotificationResource` | 3 | 3 | 0 | 0 |
 | notification | `PublicSystemNotificationResource` | 0 | 0 | 1 | 0 |
-| notification | `SystemNotificationResource` | 0 | 2 | 0 | 0 |
 
 ## Tutorial groups
 
@@ -1291,8 +1291,8 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| lti | `AdminLtiConfigurationResource` | 4 | 1 | 0 | 0 |
-| lti | `LtiResource` | 2 | 2 | 0 | 0 |
+| lti | `AdminLtiConfigurationResource` | 4 | 2 | 0 | 0 |
+| lti | `LtiResource` | 2 | 1 | 0 | 0 |
 | lti | `PublicLtiResource` | 1 | 0 | 0 | 0 |
 | lti | `PublicOAuth2JWKSResource` | 0 | 0 | 0 | 1 |
 

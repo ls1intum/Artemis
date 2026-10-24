@@ -718,7 +718,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @ParameterizedTest
     @EnumSource(value = IrisChatMode.class, names = { "TEXT_EXERCISE_CHAT", "LECTURE_CHAT" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteOwningEntity_cascadesSessionsAndMessages(IrisChatMode mode) throws Exception {
         IrisChatSession session = createSessionForUser(mode, "instructor1");
         irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
@@ -943,7 +943,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void deleteProgrammingExercise_cascadesSessionsAndMessages() throws Exception {
             IrisChatSession session = createProgrammingSession(programmingExercise, "instructor1");
             irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);

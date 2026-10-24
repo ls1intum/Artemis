@@ -112,7 +112,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createSession() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
@@ -122,7 +122,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateTutorSuggestionSessionShouldReturnDifferentResponsesForSamePost() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var firstResponse = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
@@ -131,7 +131,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getCurrentSession() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
@@ -140,7 +140,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getCurrentMessagesForSession() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var irisSessionDTO = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
@@ -157,7 +157,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateTutorSuggestionShouldProcessRequestAndReturnResponse() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
@@ -172,6 +172,16 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testSendTutorSuggestionMessageForSessionOfOtherUserIsForbidden() throws Exception {
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.postWithResponseBody(irisSessionUrl(irisSession.id()) + "/tutor-suggestion", null, Void.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetTutorSuggestionSessionAsStudent() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
@@ -179,7 +189,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorSuggestionPipelineWithTextExercise() throws Exception {
         var post = createPostInTextExerciseChat(textExercise, TEST_PREFIX);
         var conversation = post.getConversation();
@@ -201,7 +211,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorSuggestionPipelineWithExerciseDTO() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var conversation = post.getConversation();
@@ -224,7 +234,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testExecuteTutorSuggestionPipelineShouldSendStatusUpdates() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var conversation = post.getConversation();
@@ -248,7 +258,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorSuggestionPipelineShouldIncludeAnswerPosts() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var conversation = post.getConversation();
@@ -278,7 +288,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorSuggestionStatusUpdateShouldBeHandled() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var conversation = post.getConversation();

@@ -299,7 +299,7 @@ public class UserTestService {
         final var newLastName = "Wayne";
         final var newImageUrl = "foobar.png";
         final var newLangKey = "DE";
-        final var newAuthorities = Stream.of(Role.TEACHING_ASSISTANT.getAuthority()).map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
+        final var newAuthorities = Stream.of(Role.STUDENT.getAuthority()).map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toSet());
         student.setAuthorities(newAuthorities);
         student.setEmail(newEmail);
@@ -534,22 +534,28 @@ public class UserTestService {
     }
 
     // Test
-    public void searchUsers_asInstructor_isSuccessful() throws Exception {
+    public void searchUsers_asAdmin_isSuccessful() throws Exception {
         final String loginOrName = TEST_PREFIX + "student1";
-        List<UserDTO> users = request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
+        List<UserDTO> users = request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
         assertThat(users).hasSize(1); // size([student1]) = 1
+    }
+
+    // Test
+    public void searchUsers_asInstructor_forbidden() throws Exception {
+        final String loginOrName = TEST_PREFIX + "student1";
+        request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
     }
 
     // Test
     public void searchUsers_asAdmin_badRequest() throws Exception {
         final String loginOrName = "ab"; // too short (needs at least 3 characters)
-        request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
+        request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
     }
 
     // Test
     public void searchUsers_asTutor_forbidden() throws Exception {
         final String loginOrName = "student";
-        request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
+        request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
     }
 
     // Test
@@ -590,7 +596,9 @@ public class UserTestService {
         assertThat(users).hasSize(2);
         assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo(String.valueOf(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS));
 
-        // Selected roles are combined with AND: tutors, editors and instructors are TAs, but only the instructor has both
+        // Teaching roles are course roles, so the users have to be enrolled in a course. Selected roles are combined with AND and mean "at least this role in some course":
+        // tutors, editors and instructors are TAs, but only the instructor is also an instructor
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         params.set("pageSize", "100");
         params.set("authorities", "TA,INSTRUCTOR");
         List<UserDTO> instructors = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
@@ -600,7 +608,7 @@ public class UserTestService {
     // Test
     public void getAuthorities_asAdmin_isSuccessful() throws Exception {
         List<String> authorities = request.getList("/api/account/admin/users/authorities", HttpStatus.OK, String.class);
-        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_SUPER_ADMIN", "ROLE_TA", "ROLE_USER"));
+        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_USER"));
     }
 
     // Test

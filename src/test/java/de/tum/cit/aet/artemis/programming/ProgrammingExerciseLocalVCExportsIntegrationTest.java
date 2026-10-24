@@ -66,7 +66,7 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportByParticipationIds_happyPath() throws Exception {
         var participationIds = programmingExerciseStudentParticipationTestRepository.findByExerciseId(exercise.getId()).stream().map(p -> p.getId().toString()).toList();
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
@@ -88,7 +88,7 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void generateTests_happyPath() throws Exception {
         // Ensure template, solution and tests repos exist and are wired to LocalVC via util
         var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);

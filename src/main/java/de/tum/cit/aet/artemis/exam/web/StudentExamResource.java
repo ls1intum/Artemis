@@ -45,9 +45,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
@@ -178,7 +177,8 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
@@ -194,7 +194,8 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and a list of student exams (without the nested exam). The list can be empty
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<StudentExamDTO>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
 
@@ -215,7 +216,8 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the updated student exam (including its nested exam and course) as body
      */
     @PatchMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/working-time")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<StudentExamDTO> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody Integer workingTime) {
         log.debug("REST request to update the working time of student exam : {}", studentExamId);
@@ -237,7 +239,8 @@ public class StudentExamResource {
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @PostMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}/attendance-check")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExamAttendanceCheckEventDTO> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
             @RequestBody(required = false) String message) {
         log.debug("REST request for attendance-check for student : {}", studentLogin);
@@ -471,7 +474,8 @@ public class StudentExamResource {
     // TODO: use the same REST call as for real exams and test exams
     @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<StudentExamForConductionDTO> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId,
             HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
@@ -663,7 +667,8 @@ public class StudentExamResource {
      * @return the list of test runs (each including its nested user)
      */
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<StudentExamDTO>> findAllTestRunsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to find all test runs for exam {}", examId);
 
@@ -683,7 +688,8 @@ public class StudentExamResource {
      * @return the created test run student exam (including its nested user), consistent with {@link #findAllTestRunsForExam}
      */
     @PostMapping({ "courses/{courseId}/exams/{examId}/test-runs", "courses/{courseId}/exams/{examId}/test-run" })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<StudentExamDTO> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody CreateTestRunDTO testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
         if (testRunConfiguration.examId() != examId) {
@@ -711,7 +717,8 @@ public class StudentExamResource {
      * @return {@link HttpStatus#BAD_REQUEST} if the exam is not over yet | {@link HttpStatus#FORBIDDEN} if the user is not an instructor
      */
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> assessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
 
@@ -746,7 +753,8 @@ public class StudentExamResource {
      * @return the deleted test run student exam
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);
 
@@ -765,7 +773,8 @@ public class StudentExamResource {
      * @return ResponseEntity containing the list of generated participations
      */
     @PostMapping(value = "courses/{courseId}/exams/{examId}/student-exams/start-exercises")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -796,7 +805,8 @@ public class StudentExamResource {
      * @return ResponseEntity containing the status
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/start-exercises/status")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExamExerciseStartPreparationStatus> getExerciseStartStatus(@PathVariable Long courseId, @PathVariable Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
@@ -891,7 +901,8 @@ public class StudentExamResource {
      *         200 if successful
      */
     @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<StudentExamDTO> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         // Only the login is used, for the audit event and the log line, and the login is already in the security
         // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
@@ -930,7 +941,8 @@ public class StudentExamResource {
      *         200 if successful
      */
     @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-unsubmitted")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<StudentExamDTO> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         // Only the login is used, for the audit event and the log line, and the login is already in the security
         // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
@@ -966,7 +978,8 @@ public class StudentExamResource {
      * @param examId   the exam to which the student exams belong to
      * @return the longest working time of the exam (in seconds)
      */
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @GetMapping("courses/{courseId}/exams/{examId}/longest-working-time")
     public ResponseEntity<Integer> getLongestWorkingTimeForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);

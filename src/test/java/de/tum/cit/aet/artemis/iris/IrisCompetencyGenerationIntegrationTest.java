@@ -46,7 +46,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void generateCompetencies_asEditor_shouldSucceed() throws Exception {
         String courseDescription = "Cool course description";
         var currentCompetencies = List.of(new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND));
@@ -88,7 +88,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void generateCompetencies_withNullCurrentCompetency_shouldReturnBadRequest() throws Exception {
         String requestBody = "{\"courseDescription\":\"Cool course description\",\"currentCompetencies\":[null]}";
 

@@ -84,7 +84,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCoursePersistsPresentationAssessmentsEnabled(boolean enabled) throws Exception {
         var configuration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         configuration.setPresentationAssessmentsEnabled(!enabled);
@@ -100,7 +100,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCoursePreservesOmittedPresentationAssessmentsEnabled(boolean enabled) throws Exception {
         var configuration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         configuration.setPresentationAssessmentsEnabled(enabled);
@@ -116,7 +116,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getCourse_asInstructor_shouldExposePersistedDataPrivacySettings() throws Exception {
         CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
         CourseConfigurationResponseDTO configuration = loaded.courseConfiguration();
@@ -129,7 +129,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_unrelatedChange_shouldPreserveDataPrivacySettingsAndRetentionBookkeeping() throws Exception {
         long configurationId = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow().getId();
 
@@ -159,7 +159,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_missingConfigurationRow_shouldRepairItInsteadOfFailing() throws Exception {
         // The form is opened while the course is complete, then the row goes missing like after a creation that failed half-way.
         CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);

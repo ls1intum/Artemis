@@ -286,7 +286,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = "instructor1", roles = "USER")
         void testDoesNotThrowExceptionForInstructors() {
             studentExam.setId(1L);
             studentExam.setSubmitted(false);

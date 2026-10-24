@@ -658,8 +658,10 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetSupportedTimeZonesAsStudentIsForbidden() throws Exception {
-        request.getList("/api/course/time-zones", HttpStatus.FORBIDDEN, String.class);
+    public void testGetSupportedTimeZonesAsStudent() throws Exception {
+        // the time zones are static data, so every authenticated user may read them
+        List<String> timeZones = request.getList("/api/course/time-zones", HttpStatus.OK, String.class);
+        assertThat(timeZones).contains("UTC", "Europe/Berlin");
     }
 
     // Test
@@ -1092,7 +1094,9 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseWithoutPermission() throws Exception {
-        request.getList("/api/course/courses", HttpStatus.FORBIDDEN, CourseManagementDTO.class);
+        // the list only contains the courses in which the user is at least tutor, so a student gets an empty list
+        List<CourseManagementDTO> courses = request.getList("/api/course/courses", HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(courses).isEmpty();
     }
 
     // Test
@@ -3602,7 +3606,14 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesForImportWithoutPermission() throws Exception {
-        request.getList("/api/course/courses/for-import", HttpStatus.FORBIDDEN, CourseForImportDTO.class);
+        // the list only contains the courses in which the user is at least editor, so a course without a role of the user is never offered
+        Course foreignCourse = courseUtilService.createCourse();
+        var searchTerm = pageableSearchUtilService.configureSearch("Course");
+
+        SearchResultPageDTO<CourseForImportDTO> result = request.getSearchResult("/api/course/courses/for-import", HttpStatus.OK, CourseForImportDTO.class,
+                pageableSearchUtilService.searchMapping(searchTerm));
+
+        assertThat(result.getResultsOnPage()).noneMatch(course -> Objects.equals(course.id(), foreignCourse.getId()));
     }
 
     // Test

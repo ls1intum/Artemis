@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Tutor, editor and instructor are roles within a course and are read from user_course_role. Only the administrator
+         roles and the user role remain global authorities. The baseline and the e2e seed data still insert the removed
+         authorities, so this also runs on a fresh installation. -->
+    <changeSet id="20261024201101-01-remove-global-teaching-authorities" author="krusche">
+        <comment>Remove the tutor, editor and instructor authorities from all users and from the authority table. Teaching roles live in user_course_role.</comment>
+        <delete tableName="jhi_user_authority">
+            <where>authority_name IN ('ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR')</where>
+        </delete>
+        <delete tableName="jhi_authority">
+            <where>name IN ('ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR')</where>
+        </delete>
+        <rollback>
+            <stop>The global teaching authorities are no longer used. They can be derived from user_course_role again by inserting the three authority rows and, for every user, one row per role held in at least one course.</stop>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

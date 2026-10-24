@@ -82,7 +82,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportWithMissingRepositories() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, 0);
         Optional<ProgrammingExercise> progrO = courses.getFirst().getExercises().stream().filter(e -> e instanceof ProgrammingExercise).map(e -> (ProgrammingExercise) e)
@@ -98,13 +98,13 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportWithRepositoriesAsInstructor() throws Exception {
         testExportWithRepositories();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testExportWithRepositoriesAsEditor() throws Exception {
         testExportWithRepositories();
     }
@@ -143,7 +143,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportWithRepositoriesAsStudentNotAuthorized() throws Exception {
         requestUtilService
                 .performMvcRequest(
@@ -164,7 +164,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExerciseZipdownloadInvalidToken() throws Exception {
 
         requestUtilService.performMvcRequest(get("/api/programming/sharing/export/INVALID_EXERCISE_TOKEN").queryParam("sec", "someSec")).andExpect(status().isUnauthorized());

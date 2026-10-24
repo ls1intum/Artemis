@@ -69,7 +69,7 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @ParameterizedTest
     @MethodSource("templateProvider")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBuildPhasesTemplateFile(String templateKey, int expectedPhases) throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
@@ -77,13 +77,13 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetNonExistingBuildPhasesTemplateFile() throws Exception {
         request.get("/api/localci/phases/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true&examMode=true", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFactTemplateUsesConfiguredDockerImage() throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/FACT?examMode=false", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
@@ -91,7 +91,7 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGccTemplateUsesConfiguredDockerImage() throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/GCC?examMode=true", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
@@ -100,7 +100,7 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @ParameterizedTest
     @ValueSource(strings = { "PYTHON?examMode=false", "PYTHON?sequentialRuns=true&examMode=false", "PYTHON?staticAnalysis=true&examMode=false" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPythonTemplatesOnlyCollectOfficialTestDirectories(String templateKey) throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();

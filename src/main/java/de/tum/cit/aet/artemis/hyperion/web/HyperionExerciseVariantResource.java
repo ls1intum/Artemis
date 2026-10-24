@@ -23,7 +23,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
@@ -133,7 +134,8 @@ public class HyperionExerciseVariantResource {
      */
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("variant-jobs")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<VariantJobDTO>> getJobsOfCurrentUser() {
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         return ResponseEntity.ok(jobService.getJobsOfUser(user.getLogin()).stream().map(VariantJobDTO::of).toList());
@@ -149,7 +151,8 @@ public class HyperionExerciseVariantResource {
      */
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("variant-jobs/{jobId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<VariantJobDetailDTO> getJobDetail(@PathVariable String jobId) {
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         return jobService.getJob(jobId, user.getLogin()).map(job -> ResponseEntity.ok(VariantJobDetailDTO.of(job))).orElseGet(() -> ResponseEntity.notFound().build());
@@ -163,7 +166,8 @@ public class HyperionExerciseVariantResource {
      * @return 204; 409 when the job already reached FINALIZING or a terminal phase
      */
     @DeleteMapping("variant-jobs/{jobId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> cancelJob(@PathVariable String jobId) {
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         jobService.requestCancel(jobId, user.getLogin());

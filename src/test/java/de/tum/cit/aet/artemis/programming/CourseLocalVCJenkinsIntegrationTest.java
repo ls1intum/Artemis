@@ -117,37 +117,37 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseWithTooHighMaxPoints() throws Exception {
         courseTestService.testUpdateCourseWithTooHighMaxPoints();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseWithMaxPointsAtLimit() throws Exception {
         courseTestService.testUpdateCourseWithMaxPointsAtLimit();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseWithPresentationScoreAtLimit() throws Exception {
         courseTestService.testUpdateCourseWithPresentationScoreAtLimit();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseWithPresentationScoreAboveLimit() throws Exception {
         courseTestService.testUpdateCourseWithPresentationScoreAboveLimit();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseWithMaxPointsZero() throws Exception {
         courseTestService.testUpdateCourseWithMaxPointsZero();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseWithBlankSemester() throws Exception {
         courseTestService.testUpdateCourseWithBlankSemester();
     }
@@ -165,27 +165,27 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseWithUnsupportedTimeZone() throws Exception {
         courseTestService.testUpdateCourseWithUnsupportedTimeZone();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseKeepingAnUnsupportedTimeZone() throws Exception {
         courseTestService.testUpdateCourseKeepingAnUnsupportedTimeZone();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetSupportedTimeZones() throws Exception {
         courseTestService.testGetSupportedTimeZones();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetSupportedTimeZonesAsStudentIsForbidden() throws Exception {
-        courseTestService.testGetSupportedTimeZonesAsStudentIsForbidden();
+    void testGetSupportedTimeZonesAsStudent() throws Exception {
+        courseTestService.testGetSupportedTimeZonesAsStudent();
     }
 
     @Test
@@ -252,13 +252,13 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     // so the old test case (sending a non-existent ID to create endpoint) is no longer applicable.
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testEditCourseWithPermission() throws Exception {
         courseTestService.testEditCourseWithPermission();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testEditCourseShouldPreserveAssociations() throws Exception {
         courseTestService.testEditCourseShouldPreserveAssociations();
     }
@@ -294,19 +294,19 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "tutor6", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor6", roles = "USER")
     void testGetCourse_tutorNotInCourse() throws Exception {
         courseTestService.testGetCourse_tutorNotInCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCoursesWithPermission() throws Exception {
         courseTestService.testGetCoursesWithPermission();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCoursesWithQuizExercises() throws Exception {
         courseTestService.testGetCoursesWithQuizExercises();
     }
@@ -396,7 +396,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = OTHER_PREFIX + "custom1", roles = { "USER", "TA", "EDITOR", "INSTRUCTOR" })
+    @WithMockUser(username = OTHER_PREFIX + "custom1", roles = "USER")
     @ValueSource(booleans = { true, false })
     void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
         courseTestService.testGetAllCoursesForDashboardExams(userRefresh);
@@ -415,13 +415,13 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetCoursesWithoutActiveExercises() throws Exception {
         courseTestService.testGetCoursesWithoutActiveExercises();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetCoursesAccurateTimezoneEvaluationAsTutor() throws Exception {
         courseTestService.testGetCoursesAccurateTimezoneEvaluation(true);
     }
@@ -433,19 +433,19 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseWithExercisesAndLecturesAndCompetencies() throws Exception {
         courseTestService.testGetCourseWithExercisesAndLecturesAndCompetencies();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseWithExercisesQueryCountStaysBoundedWithAllExerciseTypes() throws Exception {
         courseTestService.testGetCourseWithExercisesQueryCountStaysBoundedWithAllExerciseTypes();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseWithOrganizations() throws Exception {
         courseTestService.testGetCourseWithOrganizations();
     }
@@ -457,103 +457,103 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetCourseForAssessmentDashboardWithStats() throws Exception {
         courseTestService.testGetCourseForAssessmentDashboardWithStats();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
         courseTestService.testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor2", roles = "USER")
     void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
         courseTestService.testGetCourseForInstructorDashboardWithStats_instructorNotInCourse();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "tutor6", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor6", roles = "USER")
     void testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse() throws Exception {
         courseTestService.testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAssessmentDashboardStats_withoutAssessments() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_withoutAssessments();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAssessmentDashboardStats_countsOnlyLockedAssessments() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_countsOnlyLockedAssessments();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAssessmentDashboardStats_assessmentCounterMatchesSubmissionsOfManualExercises() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_assessmentCounterMatchesSubmissionsOfManualExercises();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseManagementDetailData_assessmentCounterMatchesSubmissionsOfManualExercises() throws Exception {
         courseTestService.testGetCourseManagementDetailData_assessmentCounterMatchesSubmissionsOfManualExercises();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAssessmentDashboardStats_withAssessments() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_withAssessments();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAssessmentDashboardStats_withAssessmentsAndComplaints() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_withAssessmentsAndComplaints();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourse() throws Exception {
         courseTestService.testGetCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCategoriesInCourse() throws Exception {
         courseTestService.testGetCategoriesInCourse();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor2", roles = "USER")
     void testGetCategoriesInCourse_instructorNotInCourse() throws Exception {
         courseTestService.testGetCategoriesInCourse_instructorNotInCourse();
     }
@@ -587,25 +587,25 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor2", roles = "USER")
     void testUpdateCourse_instructorNotInCourse() throws Exception {
         courseTestService.testUpdateCourse_instructorNotInCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllStudentsOrTutorsOrInstructorsInCourse() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchForStudentsInCourse() throws Exception {
         courseTestService.searchStudentsInCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllEditorsInCourse() throws Exception {
         courseTestService.testGetAllEditorsInCourse();
     }
@@ -683,31 +683,31 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_byLogin_returnsMatchingUsers() throws Exception {
         courseTestService.searchUsersForCourseRole_byLogin_returnsMatchingUsers();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_marksAlreadyEnrolledUser() throws Exception {
         courseTestService.searchUsersForCourseRole_marksAlreadyEnrolledUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_nonEnrolledUserNotFlagged() throws Exception {
         courseTestService.searchUsersForCourseRole_nonEnrolledUserNotFlagged();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_noResultsForUnknownTerm() throws Exception {
         courseTestService.searchUsersForCourseRole_noResultsForUnknownTerm();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void searchUsersForCourseRole_forbiddenForTutor() throws Exception {
         courseTestService.searchUsersForCourseRole_forbiddenForNonInstructor();
     }
@@ -719,49 +719,49 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_returnsRequestedPageSize() throws Exception {
         courseTestService.getPagedUsersInCourseRole_returnsRequestedPageSize();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_rejectsZeroPageSize() throws Exception {
         courseTestService.getPagedUsersInCourseRole_rejectsZeroPageSize();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_rejectsNegativePage() throws Exception {
         courseTestService.getPagedUsersInCourseRole_rejectsNegativePage();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_rejectsTooLargePageSize() throws Exception {
         courseTestService.getPagedUsersInCourseRole_rejectsTooLargePageSize();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_searchByEmail_returnsMatchingUser() throws Exception {
         courseTestService.getPagedUsersInCourseRole_searchByEmail_returnsMatchingUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_searchByRegistrationNumber_returnsMatchingUser() throws Exception {
         courseTestService.getPagedUsersInCourseRole_searchByRegistrationNumber_returnsMatchingUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void addUsersToCourseRole_unknownSlug_returnsBadRequest() throws Exception {
         courseTestService.addUsersToCourseRole_unknownSlug_returnsBadRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_rejectsOverflowingOffset() throws Exception {
         courseTestService.getPagedUsersInCourseRole_rejectsOverflowingOffset();
     }
@@ -773,7 +773,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_rejectsOverflowingOffset() throws Exception {
         courseTestService.searchUsersForCourseRole_rejectsOverflowingOffset();
     }
@@ -785,49 +785,49 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_searchByLogin_returnsMatchingUser() throws Exception {
         courseTestService.getPagedUsersInCourseRole_searchByLogin_returnsMatchingUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_searchByName_returnsMatchingUser() throws Exception {
         courseTestService.getPagedUsersInCourseRole_searchByName_returnsMatchingUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_sortsDescendingByLogin() throws Exception {
         courseTestService.getPagedUsersInCourseRole_sortsDescendingByLogin();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_sortsByConcatenatedNameNotTuple() throws Exception {
         courseTestService.getPagedUsersInCourseRole_sortsByConcatenatedNameNotTuple();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_returnsCorrectDtoFields() throws Exception {
         courseTestService.getPagedUsersInCourseRole_returnsCorrectDtoFields();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_setsTotalCountHeader() throws Exception {
         courseTestService.getPagedUsersInCourseRole_setsTotalCountHeader();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_returnsSecondPage() throws Exception {
         courseTestService.getPagedUsersInCourseRole_returnsSecondPage();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getPagedUsersInCourseRole_forbiddenForTutor() throws Exception {
         courseTestService.getPagedUsersInCourseRole_forbiddenForNonInstructor();
     }
@@ -839,49 +839,49 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_unknownSlug_returnsBadRequest() throws Exception {
         courseTestService.getPagedUsersInCourseRole_unknownSlug_returnsBadRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_rejectsZeroSize() throws Exception {
         courseTestService.searchUsersForCourseRole_rejectsZeroSize();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_rejectsTooLargeSize() throws Exception {
         courseTestService.searchUsersForCourseRole_rejectsTooLargeSize();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_rejectsNegativePage() throws Exception {
         courseTestService.searchUsersForCourseRole_rejectsNegativePage();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_searchByEmail_returnsMatchingUser() throws Exception {
         courseTestService.searchUsersForCourseRole_searchByEmail_returnsMatchingUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_searchByRegistrationNumber_returnsMatchingUser() throws Exception {
         courseTestService.searchUsersForCourseRole_searchByRegistrationNumber_returnsMatchingUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsTutor_forbidden() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse_AsTutor_forbidden();
     }
@@ -899,56 +899,56 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddStudentOrTutorOrInstructorToCourse() throws Exception {
         learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
         courseTestService.testAddStudentOrTutorOrEditorOrInstructorToCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddStudentOrTutorOrInstructorToCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         courseTestService.testAddStudentOrTutorOrInstructorToCourse_AsInstructorOfOtherCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAddStudentOrTutorOrInstructorToCourse_AsTutor_forbidden() throws Exception {
         courseTestService.testAddStudentOrTutorOrInstructorToCourse_AsTutor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddStudentOrTutorOrInstructorToCourse_WithNonExistingUser() throws Exception {
         courseTestService.testAddStudentOrTutorOrInstructorToCourse_WithNonExistingUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
         courseTestService.testRemoveStudentOrTutorOrInstructorFromCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRemoveStudentOrTutorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
         courseTestService.testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_WithNonExistingUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRemoveStudentOrTutorOrInstructorFromCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         courseTestService.testRemoveStudentOrTutorOrInstructorFromCourse_AsInstructorOfOtherCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testRemoveStudentOrTutorOrInstructorFromCourse_AsTutor_forbidden() throws Exception {
         courseTestService.testRemoveStudentOrTutorOrInstructorFromCourse_AsTutor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetLockedSubmissionsForCourseAsTutor() throws Exception {
         courseTestService.testGetLockedSubmissionsForCourseAsTutor();
     }
@@ -966,37 +966,37 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testArchiveCourseAsTutor_forbidden() throws Exception {
         courseTestService.testArchiveCourseAsTutor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercises();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourse_cannotCreateTmpDir() throws Exception {
         courseTestService.testExportCourse_cannotCreateTmpDir();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourse_cannotCreateCourseExercisesDir() throws Exception {
         courseTestService.testExportCourse_cannotCreateCourseExercisesDir();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseExam_cannotCreateTmpDir() throws Exception {
         courseTestService.testExportCourseExam_cannotCreateTmpDir();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseExam_cannotCreateExamExercisesDir() throws Exception {
         courseTestService.testExportCourseExam_cannotCreateExamsDir();
     }
@@ -1008,19 +1008,19 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testDownloadCourseArchiveAsTutor_forbidden() throws Exception {
         courseTestService.testDownloadCourseArchiveAsTutor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDownloadCourseArchiveAsInstructor_not_found() throws Exception {
         courseTestService.testDownloadCourseArchiveAsInstructor_not_found();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDownloadCourseArchiveAsInstructor() throws Exception {
         courseTestService.testDownloadCourseArchiveAsInstructor();
     }
@@ -1032,38 +1032,38 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCleanupCourseAsTutor_forbidden() throws Exception {
         courseTestService.testCleanupCourseAsTutor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCleanupCourseAsInstructor_no_Archive() throws Exception {
         courseTestService.testCleanupCourseAsInstructor_no_Archive();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCleanupCourseAsInstructor() throws Exception {
         courseTestService.testCleanupCourseAsInstructor();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseIncludesArchivePathWhenCourseIsArchived() throws Exception {
         courseTestService.testGetCourseIncludesArchivePathWhenCourseIsArchived();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseTitle() throws Exception {
         // Only user and role matter, so we can re-use the logic
         courseTestService.testGetCourseTitle();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetCourseTitleAsTeachingAssistant() throws Exception {
         // Only user and role matter, so we can re-use the logic
         courseTestService.testGetCourseTitle();
@@ -1083,26 +1083,26 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllCoursesForManagementOverview() throws Exception {
         courseTestService.testGetAllCoursesForManagementOverview();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseManagementDetailData() throws Exception {
         // This test uses a fixed clock to prevent flakiness related to weeks either included in the interval or not depending on the weekday.
         courseTestService.testGetCourseManagementDetailData();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseManagementDetailDataForFutureCourse() throws Exception {
         courseTestService.testGetCourseManagementDetailDataForFutureCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddUsersToCourseMembership() throws Exception {
         String group = "students";
         String registrationNumber1 = "1234567";
@@ -1196,19 +1196,19 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testEditCourseRemoveExistingIcon() throws Exception {
         courseTestService.testEditCourseRemoveExistingIcon();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetCoursesForImportWithoutPermission() throws Exception {
         courseTestService.testGetCoursesForImportWithoutPermission();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCoursesForImport_asInstuctor() throws Exception {
         courseTestService.testGetCoursesForImport();
     }
@@ -1220,7 +1220,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFindAllOnlineCoursesForLtiDashboard() throws Exception {
         courseTestService.testFindAllOnlineCoursesForLtiDashboard();
     }
@@ -1238,13 +1238,13 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExistingExerciseDetails_asTutor() throws Exception {
         courseTestService.testGetExistingExerciseDetails_asTutor();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetExistingExerciseDetails_asEditor() throws Exception {
         courseTestService.testGetExistingExerciseDetails_asEditor();
     }

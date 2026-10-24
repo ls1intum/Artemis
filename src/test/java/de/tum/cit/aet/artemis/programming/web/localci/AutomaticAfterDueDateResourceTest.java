@@ -77,14 +77,14 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void previewAutomaticAfterDueDate_asTutor_returnsForbidden() throws Exception {
         var requestDTO = newExerciseRequest();
         request.postWithoutLocation(BASE_URL, requestDTO, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void previewAutomaticAfterDueDate_asEditorOfCourse_returnsOk() throws Exception {
         var requestDTO = existingCourseExerciseRequest();
         ZonedDateTime result = request.postWithResponseBody(BASE_URL, requestDTO, ZonedDateTime.class, HttpStatus.OK);
@@ -97,7 +97,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void previewAutomaticAfterDueDate_asInstructorOfCourse_returnsOk() throws Exception {
         var requestDTO = existingCourseExerciseRequest();
         // Must not throw (i.e. response is 200 or the body is null — both are fine)
@@ -106,18 +106,17 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
 
     /**
      * An editor who does NOT belong to the exercise's course must be blocked by
-     * the exercise-level authorization check even though they pass the global
-     * {@code @EnforceAtLeastEditor} guard.
+     * the exercise-level authorization check of the endpoint.
      */
     @Test
-    @WithMockUser(username = OTHER_EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = OTHER_EDITOR_LOGIN, roles = "USER")
     void previewAutomaticAfterDueDate_asEditorOfOtherCourse_returnsForbidden() throws Exception {
         var requestDTO = existingCourseExerciseRequest();
         request.postWithoutLocation(BASE_URL, requestDTO, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void previewAutomaticAfterDueDate_asEditorForExamExercise_returnsOk() throws Exception {
         Exam exam = examExercise.getExerciseGroup().getExam();
         var requestDTO = new AutomaticAfterDueDatePreviewRequestDTO(null, exam.getId(), null, true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, false, false);
@@ -125,7 +124,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = OTHER_EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = OTHER_EDITOR_LOGIN, roles = "USER")
     void previewAutomaticAfterDueDate_asEditorNotInExamCourse_returnsForbidden() throws Exception {
         Exam exam = examExercise.getExerciseGroup().getExam();
         var requestDTO = new AutomaticAfterDueDatePreviewRequestDTO(null, exam.getId(), null, true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, false, false);
@@ -133,7 +132,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void previewAutomaticAfterDueDate_newCourseExercise_returnsDateOrNull() throws Exception {
         ZonedDateTime dueDate = BASE_TIME.plusDays(5);
         // Use hasAfterDueDateBuildPhase=true so the result is deterministic
@@ -143,7 +142,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void previewAutomaticAfterDueDate_newCourseExercise_noAfterDueDatePhase_returnsNull() throws Exception {
         ZonedDateTime dueDate = BASE_TIME.plusDays(5);
         var requestDTO = new AutomaticAfterDueDatePreviewRequestDTO(null, null, dueDate, false, null, null, null, null);
@@ -156,7 +155,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
      * date that is strictly after the (new) due date supplied in the request.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void previewAutomaticAfterDueDate_existingExerciseWithAfterDueDatePhase_returnsNonNullDate() throws Exception {
         // Give the exercise an after-due-date build phase so the service has something to compute.
         attachAfterDueDateBuildPhase(courseExercise);
@@ -175,7 +174,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
      * {@code newDueDate + offset} (within a small tolerance for timing).
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void previewAutomaticAfterDueDate_existingExerciseWithOffset_preservesOffsetForNewDueDate() throws Exception {
         attachAfterDueDateBuildPhase(courseExercise);
 

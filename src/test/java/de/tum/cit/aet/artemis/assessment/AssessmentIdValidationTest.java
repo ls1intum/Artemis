@@ -83,7 +83,7 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void textAssessmentRejectsFeedbackIdOfAnotherResult() throws Exception {
         Fixture fixture = setUpTextFixture("FeedbackX", "FeedbackY");
 
@@ -99,7 +99,7 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void textAssessmentRejectsTextBlockOfAnotherSubmission() throws Exception {
         Fixture fixture = setUpTextFixture("BlockX", "BlockY");
         TextBlock otherBlock = TextExerciseFactory.generateTextBlock(0, OTHER_SUBMISSION_TEXT.length(), OTHER_SUBMISSION_TEXT);
@@ -118,7 +118,7 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void textAssessmentAfterComplaintRejectsFeedbackIdOfAnotherResult() throws Exception {
         Fixture fixture = setUpTextFixture("ComplaintX", "ComplaintY");
         Result assessedResult = resultRepository.findByIdElseThrow(fixture.resultId());
@@ -145,7 +145,7 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void modelingAssessmentRejectsFeedbackIdOfAnotherResult() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise("ModelX");
         ModelingExercise exercise = (ModelingExercise) course.getExercises().iterator().next();

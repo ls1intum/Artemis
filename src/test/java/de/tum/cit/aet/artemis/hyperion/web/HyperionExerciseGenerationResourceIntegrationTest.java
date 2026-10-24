@@ -203,7 +203,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void recoveryRejectsCourseInstructor() throws Exception {
         request.performMvcRequest(get("/api/hyperion/admin/exercises/{exerciseId}/wedged-slot", exerciseId)).andExpect(status().isForbidden());
         request.performMvcRequest(delete("/api/hyperion/admin/exercises/{exerciseId}/wedged-slot/token", exerciseId).param("reason", "incident")).andExpect(status().isForbidden());
@@ -236,21 +236,21 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void generateExercise_tutor_returnsForbidden() throws Exception {
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise", exerciseId).contentType(MediaType.APPLICATION_JSON)
                 .content(generateExerciseRequestBody())).andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void generateExercise_editor_passesAuthorizationAndReachesRealValidation() throws Exception {
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise", exerciseId).contentType(MediaType.APPLICATION_JSON)
                 .content(generateExerciseRequestBody())).andExpect(status().isBadRequest());
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void generateExercise_wrongCourseInstructor_returnsForbidden() throws Exception {
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise", exerciseId).contentType(MediaType.APPLICATION_JSON)
                 .content(generateExerciseRequestBody())).andExpect(status().isForbidden());
@@ -276,19 +276,19 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getExerciseGenerationStatus_tutor_returnsForbidden() throws Exception {
         request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status", exerciseId)).andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getExerciseGenerationStatus_editor_passesAuthorizationAndReturnsNoContent() throws Exception {
         request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status", exerciseId)).andExpect(status().isNoContent());
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void getExerciseGenerationStatus_wrongCourseInstructor_returnsForbidden() throws Exception {
         request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status", exerciseId)).andExpect(status().isForbidden());
     }
@@ -313,19 +313,19 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void cancelExerciseGeneration_tutor_returnsForbidden() throws Exception {
         request.performMvcRequest(delete("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}", exerciseId, "job-1")).andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void cancelExerciseGeneration_editor_passesAuthorizationAndReturnsNotFound() throws Exception {
         request.performMvcRequest(delete("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}", exerciseId, "job-1")).andExpect(status().isNotFound());
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void cancelExerciseGeneration_wrongCourseInstructor_returnsForbidden() throws Exception {
         request.performMvcRequest(delete("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}", exerciseId, "job-1")).andExpect(status().isForbidden());
     }
@@ -349,19 +349,19 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void revertExerciseGeneration_tutor_returnsForbidden() throws Exception {
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/adapt-job/revert", exerciseId)).andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void revertExerciseGeneration_editor_passesAuthorizationAndReturnsNotFound() throws Exception {
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/adapt-job/revert", exerciseId)).andExpect(status().isNotFound());
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void revertExerciseGeneration_wrongCourseInstructor_returnsForbidden() throws Exception {
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/adapt-job/revert", exerciseId)).andExpect(status().isForbidden());
     }
@@ -385,19 +385,19 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getSupportedGenerationLanguages_tutor_returnsForbidden() throws Exception {
         request.performMvcRequest(get("/api/hyperion/programming-exercises/generation/supported-languages")).andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getSupportedGenerationLanguages_editor_returnsOk() throws Exception {
         request.performMvcRequest(get("/api/hyperion/programming-exercises/generation/supported-languages")).andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void getSupportedGenerationLanguages_instructorOfUnrelatedCourse_returnsOk() throws Exception {
         // This endpoint is not exercise-scoped: the global EDITOR role suffices regardless of course membership, so a non-member instructor is allowed.
         request.performMvcRequest(get("/api/hyperion/programming-exercises/generation/supported-languages")).andExpect(status().isOk());

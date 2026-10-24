@@ -62,7 +62,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testPageableResults() {
         // the database should contain 2 lectures (see courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits) both with the same title
         // to enable a proper search after title, we change it
@@ -91,7 +91,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetLecturesPageable() {
         // Use custom lecture name that is unique to test
         course.getLectures().forEach(lecture -> lecture.setTitle(lecture.getTitle() + "testGetLecturesPageable"));
@@ -104,7 +104,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetLecturesPageable_notFound() {
         SearchResultPageDTO<Lecture> result = searchQueryWithUser("VeryLongNameThatDoesNotExist", editor);
         assertThat(result.getNumberOfPages()).isZero();

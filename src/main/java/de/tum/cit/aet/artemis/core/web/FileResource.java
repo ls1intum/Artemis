@@ -51,11 +51,12 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastTutorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -177,14 +178,15 @@ public class FileResource {
      *
      * @param file         The file to save
      * @param keepFileName specifies if original file name should be kept
+     * @param courseId     The id of the course in which the file is used, the user needs at least the tutor role there
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
     @FeatureUsage(UserFeature.MARKDOWN_UPLOADS)
     @PostMapping("markdown-file-upload")
-    @EnforceAtLeastTutor
-    public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
-            throws URISyntaxException {
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName,
+            @RequestParam Long courseId) throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
         String publicPath = FileUtil.handleSaveFile(file, keepFileName, true).toString();
         String responsePath = getResponsePathFromPublicPathString(publicPath);
@@ -282,7 +284,7 @@ public class FileResource {
      */
     @FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
     @GetMapping({ "files/templates/{language}/{projectType}", "files/templates/{language}" })
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType) {
         log.debug("REST request to get readme file for programming language {} and project type {}", language, projectType);
 
@@ -463,7 +465,8 @@ public class FileResource {
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping({ "files/exam-users/{examUserId}/signatures/*", CoreLegacyFileRestPaths.EXAM_USER_SIGNATURE })
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
         log.debug("REST request to get signature for exam user : {}", examUserId);
         ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
@@ -482,7 +485,8 @@ public class FileResource {
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping({ "files/exam-users/{examUserId}/*", CoreLegacyFileRestPaths.EXAM_USER_IMAGE })
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
         ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
@@ -591,7 +595,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping({ "files/attachments/attachment-video-units/{attachmentVideoUnitId}/*", CoreLegacyFileRestPaths.ATTACHMENT_VIDEO_UNIT_FILE })
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the file for attachment video unit {} for tutors", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));

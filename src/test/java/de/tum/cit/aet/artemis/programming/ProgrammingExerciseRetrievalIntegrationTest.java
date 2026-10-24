@@ -78,7 +78,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     // ---------------------------------------------------------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExercise_courseExercise_carriesTheTracedFieldSet() throws Exception {
         ProgrammingExerciseResponseDTO response = assertThatDb(() -> request.get(EXERCISE_BASE + exercise.getId(), HttpStatus.OK, ProgrammingExerciseResponseDTO.class))
                 .hasBeenCalledAtMostTimes(10);
@@ -133,7 +133,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExercise_examExercise_carriesTheExamChain() throws Exception {
         var exerciseGroup = examExercise.getExerciseGroup();
         var exam = exerciseGroup.getExam();
@@ -161,7 +161,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExercise_emitsTheDiscriminatorsTheClientSwitchesOn() throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.get(new URI(EXERCISE_BASE + exercise.getId()))).andExpect(status().isOk())
                 .andExpect(jsonPath("$.type").value("programming")).andExpect(jsonPath("$.templateParticipation.type").value("template"))
@@ -169,7 +169,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExercise_withPlagiarismDetectionConfig_reportsThePermanentRowAndCreatesNone() throws Exception {
         String path = EXERCISE_BASE + exercise.getId() + "?withPlagiarismDetectionConfig=true";
 
@@ -190,7 +190,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExercise_withoutPlagiarismDetectionConfigFlag_omitsTheConfig() throws Exception {
         ProgrammingExerciseResponseDTO response = request.get(EXERCISE_BASE + exercise.getId(), HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
         assertThat(response.plagiarismDetectionConfig()).isNull();
@@ -201,7 +201,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     // ---------------------------------------------------------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExerciseWithSetupParticipations_carriesAllThreeParticipationSlots() throws Exception {
         AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(exercise);
         participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "instructor1");
@@ -232,7 +232,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     // ---------------------------------------------------------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExerciseWithTemplateAndSolutionParticipation_nestsResultsUnderSubmissions() throws Exception {
         ProgrammingSubmission solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(exercise.getSolutionParticipation(), false, "solution-hash");
         var solutionResult = participationUtilService.addResultToSubmission(exercise.getSolutionParticipation(), solutionSubmission);
@@ -260,7 +260,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExerciseWithTemplateAndSolutionParticipation_withoutSubmissionResults_omitsResults() throws Exception {
         ProgrammingSubmission solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(exercise.getSolutionParticipation(), false, "solution-hash");
         participationUtilService.addResultToSubmission(exercise.getSolutionParticipation(), solutionSubmission);
@@ -278,7 +278,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     // ---------------------------------------------------------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExerciseWithAuxiliaryRepository_carriesAuxiliaryRepositoriesAndNestedCourse() throws Exception {
         AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(exercise);
 
@@ -309,7 +309,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     // ---------------------------------------------------------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getAuxiliaryRepositories_carriesTheFullFieldSet() throws Exception {
         AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(exercise);
 
@@ -327,7 +327,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     // ---------------------------------------------------------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExercisesForCourse_carriesTheTableFieldSetAndWritesNothing() throws Exception {
         ProgrammingSubmission solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(exercise.getSolutionParticipation(), false, "solution-hash");
         var firstResult = participationUtilService.addResultToSubmission(exercise.getSolutionParticipation(), solutionSubmission);
@@ -398,7 +398,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
      * from the nested dates. Dropping the slot silently unlocks a timeline the group owns.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExercise_carriesTheVariantGroupTheTimelineLockReads() throws Exception {
         ExerciseVariantGroup group = attachVariantGroup();
 
@@ -418,7 +418,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
      * The course-management exercise table reads the same slot off the list endpoint to render the group column.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExercisesForCourse_carriesTheVariantGroup() throws Exception {
         ExerciseVariantGroup group = attachVariantGroup();
 
@@ -436,7 +436,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
      * the client's lock is computed from, so a present-but-blank slot would lock a free timeline.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getProgrammingExercise_withoutVariantGroup_omitsTheSlotEntirely() throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.get(new URI(EXERCISE_BASE + exercise.getId()))).andExpect(status().isOk())
                 .andExpect(jsonPath("$.exerciseVariantGroup").doesNotExist());

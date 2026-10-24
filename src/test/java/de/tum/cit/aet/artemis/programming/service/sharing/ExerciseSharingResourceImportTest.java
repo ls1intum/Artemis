@@ -130,7 +130,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      * Tests the import of a basket from the sharing platform. This test is also reused for priming of other tests
      */
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void shouldSuccessfullyImportBasketFromSharingPlatform() throws Exception {
         importBasket();
     }
@@ -139,31 +139,18 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      * Tests the import of a basket from the sharing platform. This test is also reused for priming of other tests
      */
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "EDITOR")
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void shouldSuccessfullyImportBasketFromSharingPlatformAsEditor() throws Exception {
         importBasket();
     }
 
     /**
-     * Tests the import of a basket from the sharing platform. This test is also reused for priming of other tests
+     * The basket is protected by the checksum and holds no Artemis data, so being authenticated is enough to load it.
      */
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
-    void shouldSuccessfullyImportBasketFromSharingPlatformAsStudentNotAuthorized() throws Exception {
-        var sampleBasketResource = this.getClass().getResource("./basket/sampleBasket.json");
-        assertThat(sampleBasketResource).isNotNull();
-        String sampleBasket = IOUtils.toString(sampleBasketResource, StandardCharsets.UTF_8);
-
-        URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
-
-        final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketURI))
-                .andExpect(method(HttpMethod.GET));
-        responseActions.andRespond(MockRestResponseCreators.withSuccess(sampleBasket, MediaType.APPLICATION_JSON));
-
-        requestUtilService
-                .performMvcRequest(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL,
-                        "apiBaseURL", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().is4xxClientError()).andReturn();
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSuccessfullyImportBasketFromSharingPlatformAsStudent() throws Exception {
+        importBasket();
     }
 
     /**
@@ -171,7 +158,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      *
      */
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void shouldReturnNotFoundWhenBasketImportFails() throws Exception {
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
 
@@ -189,7 +176,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      * tests the import of a basket from the sharing platform
      */
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void shouldReturnNotFoundWhenBasketDoesNotExist() throws Exception {
 
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/undefinedBasketToken");
@@ -219,7 +206,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      * tests the import of a basket from the sharing platform
      */
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void shouldReturnBadRequestWhenChecksumIsInvalid() throws Exception {
         requestUtilService.performMvcRequest(get("/api/programming/sharing/import/basket").queryParam("basketToken", "sampleBasket.json")
                 .queryParam("returnURL", "http://testing/xyz1").queryParam("apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString())
@@ -227,7 +214,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void setUpWithMissingExercise() throws Exception {
 
         SharingSetupInfoDTO emptySetupInfo = new SharingSetupInfoDTO(null, 0, correctSharingInfo());
@@ -243,7 +230,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      * a 500; a malformed request has to be rejected at the boundary instead.
      */
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void setUpWithMissingSharingInfoIsRejected() throws Exception {
         SharingSetupInfoDTO setupInfoWithoutSharingInfo = new SharingSetupInfoDTO(null, 0, null);
 
@@ -254,7 +241,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void importExerciseInfosWrongChecksum() throws Exception {
 
         SharingInfoDTO sharingInfo = new SharingInfoDTO("Some Basket Token", TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "Invalid Checksum", 0);
@@ -268,7 +255,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      * posted back to setup-import unchanged, so every field that form binds has to survive the round trip.
      */
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void shouldReturnExerciseDetailsFromBasket() throws Exception {
         mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN, ExpectedCount.once());
 
@@ -293,7 +280,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      * would be created with no links at all and nothing would fail loudly.
      */
     @Test
-    @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void shouldImportExerciseFromSharingPlatform() throws Exception {
         // Expectations have to be registered before the first request: the details call and the import each fetch the
         // basket item once.
@@ -334,6 +321,21 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
             // The project key is derived from the target course, not taken from the exported details.
             versionControlService.deleteProject(savedExercise != null ? savedExercise.getProjectKey() : exerciseDetails.projectKey());
         }
+    }
+
+    /**
+     * The target course is named by the request, so the role has to be checked there: somebody who does not edit that course must not create an exercise in it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRefuseTheImportIntoACourseTheUserDoesNotEdit() throws Exception {
+        mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN, ExpectedCount.once());
+        ImportProgrammingExerciseRequestDTO exerciseDetails = loadExerciseDetails();
+        Course course = courseUtilService.addEmptyCourse();
+        SharingSetupInfoDTO setupInfo = new SharingSetupInfoDTO(exerciseDetails, course.getId(), correctSharingInfo());
+
+        requestUtilService.performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(setupInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isForbidden());
     }
 
     /**

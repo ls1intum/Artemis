@@ -201,7 +201,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateConversationPostInCourseWideChannel(boolean isAnnouncement) throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test", isAnnouncement);
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
@@ -224,7 +224,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreatePostInChannelOfUnreleasedExerciseOnlyReachesStaff() throws Exception {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseChannel.getExercise().getId());
         exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
@@ -248,7 +248,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateAnnouncementInPrivateChannel() throws Exception {
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
@@ -690,7 +690,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testPinPost_asTutor() throws Exception {
         Post postToPin = existingConversationMessages.getFirst();
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -731,7 +731,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testEditConversationPost_forbidden() throws Exception {
         // conversation post of tutor1 must not be editable by tutor2
         Post conversationPostToUpdate = existingConversationMessages.getFirst();
@@ -760,7 +760,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of user must not be deletable by tutors
         Post conversationPostToDelete = existingConversationMessages.getFirst();
@@ -974,7 +974,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseWideMessagesWithPinnedOnly() throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "channel-for-pinned-test", false);
         ConversationParticipant instructorParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
@@ -1475,7 +1475,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldSendAnnouncementNotificationWhenFeatureIsEnabled() throws Exception {
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test-announcement");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
@@ -1499,7 +1499,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotSendAnAnnouncementEmailToATestUserThatNeverConfiguredIt() throws Exception {
         var regularMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         var testUserMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();

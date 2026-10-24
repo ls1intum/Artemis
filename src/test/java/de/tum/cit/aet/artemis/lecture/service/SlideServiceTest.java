@@ -55,7 +55,7 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleDueDateChange_withNewDueDate() {
         Exercise originalExercise = testExercise;
         ZonedDateTime newDueDate = testExercise.getDueDate().plusDays(3);
@@ -72,7 +72,7 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleDueDateChange_withNullOriginalDueDate() {
         // Create an exercise with null due date
         Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), null, ZonedDateTime.now().plusDays(8), testCourse);
@@ -99,7 +99,7 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleDueDateChange_withUnchangedDueDate() {
         // Create original exercise
         ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);

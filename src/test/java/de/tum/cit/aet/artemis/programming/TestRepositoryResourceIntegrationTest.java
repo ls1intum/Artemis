@@ -87,7 +87,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files", HttpStatus.OK, String.class, FileType.class);
@@ -107,7 +107,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -118,7 +118,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -131,7 +131,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateFile_alreadyExists() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -142,7 +142,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateFile_invalidRepository() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -152,7 +152,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -164,7 +164,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRenameFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat((Path.of(testRepo.workingCopyPath().toFile() + "/" + currentLocalFileName))).exists();
@@ -178,7 +178,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRenameFile_alreadyExists() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -192,7 +192,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRenameFile_invalidExistingFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         FileMove fileMove = new FileMove("../malicious", "newName");
@@ -202,7 +202,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRenameFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Path.of(testRepo.workingCopyPath().toFile() + "/" + currentLocalFolderName)).exists();
@@ -216,7 +216,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -227,7 +227,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteFile_nonExistingPath() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -237,7 +237,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteFile_invalidFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -247,7 +247,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -260,7 +260,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCommitChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var receivedStatusBeforeCommit = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
@@ -285,7 +285,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Path.of(testRepo.workingCopyPath().toFile() + "/" + currentLocalFileName)).exists();
@@ -298,7 +298,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveFilesAndCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Path.of(testRepo.workingCopyPath().toFile() + "/" + currentLocalFileName)).exists();
@@ -322,7 +322,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFiles_accessForbidden() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         // student1 should not have access to instructor1's tests repository even if they assume an INSTRUCTOR role.
@@ -331,7 +331,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPullChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "remoteFile";
@@ -366,7 +366,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetToLastCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "testFile";
@@ -425,7 +425,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetStatus() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var receivedStatusBeforeCommit = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
@@ -444,7 +444,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStatus_cannotAccessRepository() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         // student1 should not have access to instructor1's tests repository even if they assume the role of an INSTRUCTOR.
@@ -452,7 +452,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRepositoryState() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         // Create uncommitted changes via API (no commit)

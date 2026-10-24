@@ -122,7 +122,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var files = request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
@@ -142,7 +142,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFilesAsInstructor_checkoutConflict() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         Repository conflictedRepository = createMergeConflictInServerClone();
@@ -155,7 +155,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -167,7 +167,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -178,7 +178,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateFile_alreadyExists() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -188,7 +188,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateFile_invalidRepository() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -197,7 +197,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -208,7 +208,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRenameFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String newLocalFileName = "newFileName";
@@ -220,7 +220,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRenameFile_alreadyExists() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         deleteFileAndPush(currentLocalFileName);
@@ -229,7 +229,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRenameFile_invalidExistingFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         FileMove fileMove = new FileMove("../" + currentLocalFileName, "newFileName");
@@ -237,7 +237,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRenameFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Path.of(localAuxiliaryRepo.workingCopyPath().toFile() + "/" + currentLocalFolderName)).exists();
@@ -251,7 +251,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -263,7 +263,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteFile_notFound() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -274,7 +274,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteFile_invalidFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -283,7 +283,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteFile_validFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -296,7 +296,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     // TODO fix tests - breaks in getLocalVCRepositoryUri
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCommitChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + auxiliaryRepository.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -381,7 +381,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Path.of(localAuxiliaryRepo.workingCopyPath().toFile() + "/" + currentLocalFileName)).exists();
@@ -394,7 +394,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveFilesAndCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Path.of(localAuxiliaryRepo.workingCopyPath().toFile() + "/" + currentLocalFileName)).exists();
@@ -416,7 +416,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFiles_accessForbidden() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         // student1 should not have access to instructor1's tests repository even if they assume an INSTRUCTOR role.
@@ -424,7 +424,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveFiles_conflict() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         Repository conflictedRepository = createMergeConflictInServerClone();
@@ -437,7 +437,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveFiles_serviceUnavailable() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         deleteRemoteAuxiliaryRepository();
@@ -446,7 +446,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPullChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "remoteFile";
@@ -481,7 +481,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetToLastCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "testFile";
@@ -537,7 +537,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetStatus() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + auxiliaryRepository.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -554,7 +554,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStatus_cannotAccessRepository() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         // student1 should not have access to instructor1's tests repository even if they assume the role of an INSTRUCTOR.
@@ -563,7 +563,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testIsClean() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var status = request.get(testRepoBaseUrl + auxiliaryRepository.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -572,7 +572,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void handleAuxiliaryRepositoriesWhenUpdatingExercises_createsTheRepositoryOfANewlyAddedAuxiliaryRepository() {
         // An auxiliary repository without an id is one the instructor just added in the update form, so its repository does not exist yet.
         var added = new AuxiliaryRepository();
@@ -599,7 +599,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void handleAuxiliaryRepositoriesWhenUpdatingExercises_deletesTheRepositoryOfARemovedAuxiliaryRepository() {
         Path existingRepository = auxRepoUri.getLocalRepositoryPath(localVCBasePath);
         assertThat(existingRepository).as("the auxiliary repository exists before the update").isDirectory();
@@ -618,7 +618,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void handleAuxiliaryRepositoriesWhenUpdatingExercises_leavesUnchangedAuxiliaryRepositoriesAlone() {
         Path existingRepository = auxRepoUri.getLocalRepositoryPath(localVCBasePath);
 

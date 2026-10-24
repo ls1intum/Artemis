@@ -348,7 +348,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     // --- Happy path + job endpoints ---------------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldGenerateStandaloneQuizVariantEndToEnd() throws Exception {
         ScriptedModel script = scriptChatModel(PLAN_JSON, this::applyRetitleEdit, List.of());
 
@@ -398,7 +398,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldNotLetTheAgentChangeQuestionPointsOrScoringType() throws Exception {
         QuizQuestion sourceQuestion = quizExerciseRepository.findByIdWithQuestionsElseThrow(sourceQuiz.getId()).getQuizQuestions().getFirst();
         double sourcePoints = sourceQuestion.getPoints();
@@ -425,7 +425,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldReplaceMultipleQuizQuestionsInOneBatchCall() throws Exception {
         QuizExercise twoMcQuiz = createTwoMcQuiz(course);
         ScriptedModel script = scriptChatModel(PLAN_JSON, this::applyBatchRetitleEdit, List.of());
@@ -449,7 +449,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldRunTwoJobsForTheSameExerciseInParallel() throws Exception {
         scriptChatModel(PLAN_JSON, this::applyRetitleEdit, List.of());
 
@@ -467,7 +467,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     // --- Failure paths ------------------------------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldFailAfterRepromptsWhenPlannerOutputStaysMalformed() throws Exception {
         ScriptedModel script = scriptChatModel("this is not a change plan", tools -> "unused", List.of());
 
@@ -486,7 +486,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldKeepDraftWithWarningsWhenVerificationBudgetIsExhausted() throws Exception {
         // Agent rounds change nothing; the critique soft gate reports the same finding on every pass. The
         // finding carries a build-log section (like the programming build gate's findings): the warning list
@@ -537,7 +537,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     // --- Cooperative cancellation -------------------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldHonorCancellationAtThePhaseBoundaryAndDeleteTheClone() throws Exception {
         AtomicReference<Long> provisionedExerciseId = new AtomicReference<>();
         // Pick the job under test by its own id. Other tests in this class start jobs for the same login that
@@ -572,7 +572,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
      * into FINALIZING, which is past the last cancel window, and the job completed anyway.
      */
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldHonorCancellationRequestedDuringTheFinalVerification() throws Exception {
         AtomicReference<Long> provisionedExerciseId = new AtomicReference<>();
         AtomicReference<String> jobIdUnderTest = new AtomicReference<>();
@@ -597,7 +597,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     // --- REST validation + per-user scoping ---------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldRejectInvalidGenerationRequests() throws Exception {
         // No intent on any dimension.
         request.postWithResponseBody("/api/hyperion/exercises/" + sourceQuiz.getId() + "/generate-variant",
@@ -627,7 +627,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor2", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor2", roles = "USER")
     void shouldHideForeignJobsFromOtherUsers() throws Exception {
         // A job of editor1, created directly on the job map (no pipeline run needed for scoping checks).
         var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
@@ -640,7 +640,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldAcceptCancellationOfARunningJob() throws Exception {
         // A freshly started job sits in a cancellable phase and no pipeline is executing it.
         var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
@@ -652,7 +652,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldAcceptCancellationOfARunningJobOfTheInitiator() throws Exception {
         // Created directly on the job map: no pipeline thread runs, so the job stays cancellable while the endpoint is called.
         var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
@@ -666,7 +666,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     // --- Placement (NEW_GROUP + exam group) ---------------------------------------------------------------
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldPlaceVariantIntoNewVariantGroup() throws Exception {
         scriptChatModel(PLAN_JSON, this::applyRetitleEdit, List.of());
         VariantPlacementDTO placement = new VariantPlacementDTO(VariantPlacementDTO.PlacementType.NEW_GROUP, null,
@@ -689,7 +689,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
      * group: only the placement step may add a variant to one.
      */
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldKeepStandaloneVariantOfGroupedQuizOutOfTheSourceGroup() throws Exception {
         ExerciseVariantGroupDTO group = request.postWithResponseBody("/api/exercise/courses/" + course.getId() + "/exercise-variant-groups",
                 new CreateExerciseVariantGroupDTO("Inventory variants", 10.0, null, null, null, null, null), ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
@@ -709,7 +709,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
 
     /** NEW_GROUP promises to group the variant WITH its source, so a source that cannot join is rejected up front. */
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldRejectNewGroupPlacementWhenTheSourceCannotJoinTheGroup() throws Exception {
         QuizExercise synchronizedQuiz = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.SYNCHRONIZED, course);
         synchronizedQuiz.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
@@ -723,7 +723,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldPlaceExamVariantInTheSourcesExamExerciseGroup() throws Exception {
         Exam exam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), false);
         ExamFactory.generateExerciseGroup(true, exam);
@@ -747,7 +747,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     // --- Component sanity: DTO mapping (kept close to the pipeline tests) ----------------------------------
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldExposeStepOutputsAndRequestOnTheDetailDTO() {
         var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
         VariantJob job = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
@@ -765,7 +765,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldMarkNonTerminalJobsWithoutHeartbeatAsFailedStaleOnRead() {
         var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
         VariantJob job = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
@@ -783,7 +783,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void shouldNotMarkFreshlyStartedJobsAsStale() {
         var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
         VariantJob job = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));

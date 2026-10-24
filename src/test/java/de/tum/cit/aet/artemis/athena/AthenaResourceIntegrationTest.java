@@ -168,7 +168,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFeedbackSuggestionsSuccessText() throws Exception {
         // Enable Athena grading feedback at course level
         var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -185,7 +185,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFeedbackSuggestionsSuccessProgramming() throws Exception {
         // Enable Athena grading feedback at course level
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -203,7 +203,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFeedbackSuggestionsSuccessModeling() throws Exception {
         // Enable Athena grading feedback at course level
         var course = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -221,20 +221,20 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetTextFeedbackSuggestionsNotFound() throws Exception {
         request.get("/api/athena/text-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingFeedbackSuggestionsNotFound() throws Exception {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
         request.get("/api/athena/programming-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetModelingFeedbackSuggestionsNotFound() throws Exception {
         request.get("/api/athena/modeling-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
     }
@@ -263,7 +263,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFeedbackSuggestionsAthenaEnabled() throws Exception {
         // Create example participation with submission
         var participation = new StudentParticipation();
@@ -401,7 +401,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     // Removed legacy public endpoint test that expected BAD_REQUEST for invalid repository type
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testNextSubmissionToAssessIsTheOneAthenaProposed() throws Exception {
         // The endpoint asks Athena which submission to hand out next, gated on the course's grading feedback setting.
         // That setting is lazy, so the endpoint has to resolve it before the selection rather than only for the response.

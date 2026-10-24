@@ -146,6 +146,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     private void withAccessibleParticipation() throws Exception {
         lenient().when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation)).thenReturn(exercise);
+        lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
         lenient().when(userRepository.getUserWithAuthorities()).thenReturn(user);
         lenient().when(repositoryParticipationService.getRepositoryFromGitService(anyBoolean(), any())).thenReturn(repository);
     }

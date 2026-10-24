@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.assessment.repository.GradeStepRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -149,15 +149,14 @@ public class GradeStepResource {
      * @return ResponseEntity with status 200 (Ok) with body the grade steps if the grading scale and grade step exist and 404 (Not found) otherwise
      */
     @GetMapping("courses/{courseId}/grading-scale/grade-steps/{gradeStepId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<GradeStepDTO> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
         // TODO: no client usages found, is it even used anymore?
 
         log.debug("REST request to get grade step {} for course: {}", gradeStepId, courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         var gradeStep = gradeStepRepository.findByIdElseThrow(gradeStepId);
+        checkGradeStepBelongsToGradingScale(gradeStep, gradingScale);
         return ResponseEntity.ok(GradeStepDTO.of(gradeStep));
     }
 
@@ -170,16 +169,25 @@ public class GradeStepResource {
      * @return ResponseEntity with status 200 (Ok) with body the grade steps if the grading scale and grade step exist and 404 (Not found) otherwise
      */
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<GradeStepDTO> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
         // TODO: no client usages found, is it even used anymore?
 
         log.debug("REST request to get grade step {} for exam: {}", gradeStepId, examId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+        if (!api.findCourseIdById(examId).filter(courseId::equals).isPresent()) {
+            throw new AccessForbiddenException("The exam does not belong to the course");
+        }
+        GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         var gradeStep = gradeStepRepository.findByIdElseThrow(gradeStepId);
+        checkGradeStepBelongsToGradingScale(gradeStep, gradingScale);
         return ResponseEntity.ok(GradeStepDTO.of(gradeStep));
+    }
+
+    private void checkGradeStepBelongsToGradingScale(GradeStep gradeStep, GradingScale gradingScale) {
+        if (gradeStep.getGradingScale() == null || !gradeStep.getGradingScale().getId().equals(gradingScale.getId())) {
+            throw new AccessForbiddenException("The grade step does not belong to the grading scale");
+        }
     }
 
     /**

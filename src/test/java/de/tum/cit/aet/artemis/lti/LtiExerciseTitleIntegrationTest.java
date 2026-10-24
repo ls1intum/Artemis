@@ -50,7 +50,7 @@ class LtiExerciseTitleIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void tutorInOnlineCourseSeesReleasedAndUnreleasedExercisesWithoutLaunches() throws Exception {
         Course course = createEnrolledCourse(true);
         ZonedDateTime now = ZonedDateTime.now();

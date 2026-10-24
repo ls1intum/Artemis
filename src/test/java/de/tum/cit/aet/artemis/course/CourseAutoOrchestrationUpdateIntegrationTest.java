@@ -126,7 +126,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_asInstructor_changingAutoOrchestration_isRejected() throws Exception {
         // An instructor cannot enable auto-orchestration on the course's default settings.
         assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId()).orElseThrow().autoOrchestratorEnabled()).isFalse();
@@ -143,7 +143,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_asInstructor_unrelatedChange_keepsExistingConfiguration() throws Exception {
         long originalConfigId = persistConfiguration(120);
 

@@ -108,7 +108,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorParticipateInModelingExerciseWithExampleSubmission(boolean usedForTutorial) throws Exception {
         var tutorId = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId();
 
@@ -121,7 +121,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testModelingAssessmentMatchesSameElementAcrossReferenceTypeVersions() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
         var result = exampleSubmission.getSubmission().getLatestResult();
@@ -134,7 +134,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testModelingAssessmentRejectsFeedbackOnDifferentElement() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
         var result = exampleSubmission.getSubmission().getLatestResult();
@@ -155,7 +155,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
      * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
@@ -176,7 +176,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
      * Tests when tutor provides unnecessary unreferenced feedback in text example assessment, bad request exception is thrown
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
@@ -198,7 +198,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
      * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
 
@@ -218,7 +218,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
      * Tests when tutor provides unnecessry unreferenced feedback in modeling example assessment, bad request exception is thrown
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
 

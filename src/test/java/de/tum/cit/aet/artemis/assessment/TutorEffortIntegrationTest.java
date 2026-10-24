@@ -69,7 +69,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentBat
      * timestamps of 1 minute but
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCalculateTutorEfforts0MinutesOneTimestamp() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(1, 1);
 
@@ -89,7 +89,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentBat
      * between timestamps of 5 minutes.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCalculateTutorEffortsDistance5Minutes() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(6, 5);
 
@@ -110,7 +110,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentBat
      * as it is referred as a period of inactivity
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCalculateTutorEffortsDistance10Minutes() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(11, 10);
         textAssessmentEventRepository.saveAll(events);
