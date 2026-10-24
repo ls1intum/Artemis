@@ -249,6 +249,32 @@ describe('Formatted message composer', () => {
         buttons.forEach((button) => expect(button.hasAttribute('title')).toBe(false));
     });
 
+    it('lets the buttons of the compact toolbar wrap as one row instead of as a separately wrapping group', () => {
+        const toolbar = fixture.nativeElement.querySelector('[data-testid="message-editor-toolbar"]') as HTMLElement;
+        // the buttons of the hidden advanced controls are not part of the compact toolbar
+        const buttons = (Array.from(toolbar.querySelectorAll('button')) as HTMLButtonElement[]).filter((button) => button.closest('[hidden]') === null);
+
+        // A group that wraps by itself moves as one block, so its buttons can take a line of their own while the room next to it stays unused.
+        const wrappingParents = new Set(buttons.map((button) => button.parentElement!).filter((parent) => parent.classList.contains('flex-wrap')));
+
+        // Only the wrapper that anchors the emoji picker keeps its own box.
+        expect(buttons.length).toBeGreaterThan(9);
+        expect(wrappingParents.size).toBe(1);
+        expect(toolbar.querySelector('[role="group"]')!.classList.contains('contents')).toBe(true);
+    });
+
+    it('keeps the basic buttons of the expanded toolbar as one block, so that the expanded controls wrap below it', () => {
+        toggleToolbar();
+        const group = fixture.nativeElement.querySelector('[data-testid="message-editor-toolbar"] [role="group"]') as HTMLElement;
+
+        expect(group.classList.contains('contents')).toBe(false);
+        expect(group.classList.contains('flex-wrap')).toBe(true);
+
+        toggleToolbar();
+
+        expect(group.classList.contains('contents')).toBe(true);
+    });
+
     it('keeps advanced control IDs unique for simultaneously mounted composers', () => {
         const other = TestBed.createComponent(MessageEditorComponent);
         try {
