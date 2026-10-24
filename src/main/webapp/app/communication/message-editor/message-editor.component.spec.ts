@@ -415,6 +415,32 @@ describe('Formatted message composer', () => {
             toggleBar();
             expect(bar.classList.contains('bottom-full')).toBe(true);
         });
+
+        it('moves an open bar when scrolling an ancestor leaves no room above the toolbar', () => {
+            const bar = element('message-advanced-toolbar');
+            toggleBar();
+            expect(bar.classList.contains('bottom-full')).toBe(true);
+
+            // The page scrolls until the toolbar is 20 px below the top of what the ancestors show.
+            layout.toolbarTop = 20;
+            document.dispatchEvent(new Event('scroll'));
+            measured.detectChanges();
+            expect(bar.classList.contains('top-full')).toBe(true);
+
+            layout.toolbarTop = 400;
+            document.dispatchEvent(new Event('scroll'));
+            measured.detectChanges();
+            expect(bar.classList.contains('bottom-full')).toBe(true);
+        });
+
+        it('does not place a closed bar when an ancestor scrolls', () => {
+            const bar = element('message-advanced-toolbar');
+            layout.toolbarTop = 20;
+            document.dispatchEvent(new Event('scroll'));
+            measured.detectChanges();
+            expect(bar.hidden).toBe(true);
+            expect(bar.classList.contains('bottom-full')).toBe(true);
+        });
     });
 
     describe('hint of the empty editor', () => {

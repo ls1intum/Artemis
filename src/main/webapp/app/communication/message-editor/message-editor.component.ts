@@ -195,9 +195,12 @@ export class MessageEditorComponent {
         });
         const dismissOnAncestorScroll = (event: Event) => {
             const element = this.editable()?.nativeElement;
-            if (element && (event.target === element.ownerDocument || (event.target instanceof Element && event.target.contains(element)))) this.dismissSuggestions();
+            if (element && (event.target === element.ownerDocument || (event.target instanceof Element && event.target.contains(element)))) {
+                this.dismissSuggestions();
+                this.placeBar();
+            }
         };
-        // A viewport-point origin cannot follow ancestor scrolling. Scrolling the popup itself must remain possible.
+        // A viewport-point origin cannot follow ancestor scrolling, and neither can the place of an open bar above the toolbar. Scrolling the popup itself must remain possible.
         document.addEventListener('scroll', dismissOnAncestorScroll, true);
         effect(() => {
             const element = this.editable()?.nativeElement;
@@ -236,13 +239,10 @@ export class MessageEditorComponent {
         // The first measurement happens before the first paint, so a narrow toolbar never shows all buttons for a frame.
         afterNextRender(() => this.measureToolbarLine());
         afterRenderEffect(() => {
-            // The height of the bar changes with its buttons, and the place above the toolbar with the scrolling of its ancestors.
+            // The height of the bar changes with its buttons. The scrolling of the ancestors is handled by their scroll listener.
             this.toolbarExpanded();
             this.fittingItems();
-            const bar = this.advancedBar()?.nativeElement;
-            const toolbar = this.toolbar()?.nativeElement;
-            if (!bar || !toolbar || bar.hidden) return;
-            this.barBelow.set(barNeedsRoomBelow(bar.offsetHeight, toolbar.getBoundingClientRect().top, clippingTop(bar)));
+            this.placeBar();
         });
         effect(() => {
             const row = this.toolbarRow()?.nativeElement;
@@ -259,6 +259,14 @@ export class MessageEditorComponent {
             clearTimeout(this.searchTimer);
             this.request++;
         });
+    }
+
+    /** Opens the bar above the toolbar, or below it when an ancestor that clips or scrolls would cut it off above. */
+    private placeBar(): void {
+        const bar = this.advancedBar()?.nativeElement;
+        const toolbar = this.toolbar()?.nativeElement;
+        if (!bar || !toolbar || bar.hidden) return;
+        this.barBelow.set(barNeedsRoomBelow(bar.offsetHeight, toolbar.getBoundingClientRect().top, clippingTop(bar)));
     }
 
     /** Fits as many toolbar items on the line as its width allows next to the emoji and more options buttons. */
