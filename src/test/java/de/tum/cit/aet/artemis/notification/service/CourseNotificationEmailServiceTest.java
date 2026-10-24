@@ -113,8 +113,8 @@ class CourseNotificationEmailServiceTest {
         });
     }
 
-    @Test
-    void shouldRenderAnnouncementImagesFromTheInstallationUrl() {
+    /** Renders the announcement mail with the real templates and returns its content. */
+    private String renderAnnouncementMail() {
         var resolver = new ClassLoaderTemplateResolver();
         resolver.setPrefix("templates/");
         resolver.setSuffix(".html");
@@ -136,8 +136,19 @@ class CourseNotificationEmailServiceTest {
         assertThat(delivery).isCompletedWithValue(null);
         var contentCaptor = ArgumentCaptor.forClass(String.class);
         verify(mailSendingService).sendEmailSync(any(), eq("Test Subject"), contentCaptor.capture(), eq(false), eq(true), eq(MailPriority.BULK));
-        assertThat(contentCaptor.getValue()).contains("href=\"https://example.org/logo/favicon.svg\"", "src=\"https://example.org/public/images/logo.png\"",
+        return contentCaptor.getValue();
+    }
+
+    @Test
+    void shouldRenderAnnouncementImagesFromTheInstallationUrl() {
+        assertThat(renderAnnouncementMail()).contains("href=\"https://example.org/logo/favicon.svg\"", "src=\"https://example.org/public/images/logo.png\"",
                 "href=\"https://example.org/courses/123/settings\"").doesNotContain("null/");
+    }
+
+    @Test
+    void shouldKeepTheFooterLinkReadableOnTheDarkFooter() {
+        // Mail clients such as Gmail replace the color of links unless the rule is important, as it is for the buttons of the same stylesheet
+        assertThat(renderAnnouncementMail()).containsPattern("footer a\\s*\\{[^}]*color:\\s*#9cc9f2\\s*!important");
     }
 
     @Test

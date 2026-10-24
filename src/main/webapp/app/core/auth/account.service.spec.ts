@@ -1077,57 +1077,6 @@ describe('AccountService', () => {
         });
     });
 
-    describe('test setUserEnabledMemiris', () => {
-        it('should update user memiris setting on success', () => {
-            accountService.userIdentity.set({ id: 1, memirisEnabled: false } as User);
-
-            accountService.setUserEnabledMemiris(true);
-
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
-            req.flush({});
-
-            expect(accountService.userIdentity()?.memirisEnabled).toBe(true);
-        });
-
-        it('should emit a NEW identity reference so the signal notifies', () => {
-            accountService.userIdentity.set({ id: 1, memirisEnabled: false } as User);
-            const before = accountService.userIdentity();
-
-            accountService.setUserEnabledMemiris(true);
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
-            req.flush({});
-
-            const after = accountService.userIdentity();
-            // A new reference is what makes the signal notify (Object.is); mutating in place would not refresh the UI.
-            expect(after).not.toBe(before);
-            expect(after?.memirisEnabled).toBe(true);
-            expect(after?.id).toBe(1);
-        });
-
-        it('should not update user when user identity is undefined', () => {
-            accountService.userIdentity.set(undefined);
-
-            accountService.setUserEnabledMemiris(true);
-
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
-            req.flush({});
-
-            expect(accountService.userIdentity()).toBeUndefined();
-        });
-
-        it('should handle error gracefully', () => {
-            accountService.userIdentity.set({ id: 1, memirisEnabled: false } as User);
-
-            accountService.setUserEnabledMemiris(true);
-
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
-            req.error(new ProgressEvent('error'));
-
-            // User should remain unchanged
-            expect(accountService.userIdentity()?.memirisEnabled).toBe(false);
-        });
-    });
-
     describe('test getToolToken', () => {
         it('should get tool token', () => {
             const expectedToken = 'test-tool-token';

@@ -98,7 +98,53 @@ markdown.renderer.rules.image = (tokens, index) => {
     return referenceHtml(`![${label}](${source}${title ? ' ' + JSON.stringify(String(title)) : ''})`, label || source, 'image', source);
 };
 
-const serializer = new TurndownService({ bulletListMarker: '-', codeBlockStyle: 'fenced', emDelimiter: '*', strongDelimiter: '**' });
+// Markdown has no empty line that survives between two lines: a blank line only separates paragraphs and further blank lines
+// collapse into it. The first empty line of a run is therefore written as that separator, and each further one as a paragraph
+// holding a non-breaking space, which every Markdown renderer shows as a blank line.
+const emptyLineParagraph = '&nbsp;\n\n';
+// A paragraph break would end the formatting or the link that the empty line sits in, and leave its delimiters in two paragraphs
+const inlineFormatting = 'strong, b, em, i, ins, u, s, del, a';
+
+/** Whether the block is an empty line of the top level: a browser-created block holding at most a line break, or a non-breaking space paragraph. */
+function isEmptyLineBlock(node: Node | null): node is HTMLElement {
+    return (
+        node instanceof HTMLElement &&
+        (node.nodeName === 'P' || node.nodeName === 'DIV') &&
+        !node.closest('li') &&
+        !node.querySelector('img, [data-message-reference]') &&
+        node.querySelectorAll('br').length <= 1 &&
+        !(node.textContent ?? '').replace(/[\s\u00a0\u200b]/g, '').length
+    );
+}
+
+/** The first empty line between two lines is the paragraph break itself, and each further one is a paragraph of its own. */
+function emptyLineBlockReplacement(node: HTMLElement): string {
+    let previous = node.previousSibling;
+    while (previous?.nodeType === Node.TEXT_NODE && !previous.textContent?.trim()) {
+        previous = previous.previousSibling;
+    }
+    return /^\u00a0+$/.test(node.textContent ?? '') || isEmptyLineBlock(previous) ? emptyLineParagraph : '\n\n';
+}
+
+const serializer = new TurndownService({
+    bulletListMarker: '-',
+    codeBlockStyle: 'fenced',
+    emDelimiter: '*',
+    strongDelimiter: '**',
+    // Turndown drops blank blocks. Keep the paragraph of a further empty line, so reopening and saving a sent message retains it.
+    blankReplacement: (_content, node) => {
+        if (isEmptyLineBlock(node)) {
+            return emptyLineBlockReplacement(node);
+        }
+        // Turndown marks the nodes it visits, which its typings leave out
+        return (node as HTMLElement & { isBlock?: boolean }).isBlock ? '\n\n' : '';
+    },
+});
+// Turndown treats a block holding a line break as content rather than as blank
+serializer.addRule('message-empty-line-block', {
+    filter: (node) => isEmptyLineBlock(node),
+    replacement: (_content, node) => emptyLineBlockReplacement(node),
+});
 const underlineMarkdownStart = '<ins>';
 const underlineMarkdownEnd = '</ins>';
 const escapeMarkdown = serializer.escape.bind(serializer);
@@ -131,7 +177,20 @@ serializer.addRule('message-strikethrough', {
 });
 serializer.addRule('message-line-break', {
     filter: 'br',
-    replacement: (_content, node) => (node.hasAttribute('data-message-placeholder') ? '' : '\n'),
+    replacement: (_content, node) => {
+        if (node.hasAttribute('data-message-placeholder')) {
+            return '';
+        }
+        // A blank line inside a list item would turn the whole list loose, which changes the spacing of its other items
+        if (node.closest(`li, ${inlineFormatting}`)) {
+            return '\n';
+        }
+        let precedingBreaks = 0;
+        for (let sibling = node.previousSibling; sibling instanceof HTMLBRElement && !sibling.hasAttribute('data-message-placeholder'); sibling = sibling.previousSibling) {
+            precedingBreaks++;
+        }
+        return precedingBreaks === 0 ? '\n' : precedingBreaks === 1 ? '\n\n' : emptyLineParagraph;
+    },
 });
 serializer.addRule('message-inline-code', {
     filter: (node) => node.nodeName === 'CODE' && node.parentNode?.nodeName !== 'PRE',
@@ -301,7 +360,11 @@ export function editorToMessage(element: HTMLElement): string {
     content.normalize();
     protectMessagePostReferences(content);
     splitProtectedMessageMarks(content);
-    return serializer.turndown(content.innerHTML);
+    // Empty lines before the first and after the last line carry nothing to separate
+    return serializer
+        .turndown(content.innerHTML)
+        .replace(/^(?:&nbsp;(?:\n\n|$))+/, '')
+        .replace(/(?:(?:^|\n\n)&nbsp;)+$/, '');
 }
 
 /** Treat bare external hostnames as HTTPS while retaining explicitly relative Artemis links. */

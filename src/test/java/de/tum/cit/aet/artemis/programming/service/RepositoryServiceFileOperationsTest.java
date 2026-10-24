@@ -19,6 +19,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
@@ -135,6 +137,60 @@ class RepositoryServiceFileOperationsTest {
     @Test
     void renameFile_forAFileThatDoesNotExist_isRejected() {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.renameFile(repository, new FileMove("Missing.java", "New.java")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { ".git", ".GIT", ".Git" })
+    void renameFile_toAnInvalidName_isRejected(String newName) throws Exception {
+        FileUtils.write(workingTree.resolve("nested/prepared/content.txt").toFile(), "content", StandardCharsets.UTF_8);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).as("renaming a directory to '%s' must be rejected", newName)
+                .isThrownBy(() -> repositoryService.renameFile(repository, new FileMove("nested/prepared", newName)));
+
+        assertThat(workingTree.resolve("nested/prepared/content.txt")).as("nothing is moved").isRegularFile();
+        assertThat(workingTree.resolve("nested").resolve(newName)).as("nothing is created").doesNotExist();
+    }
+
+    @Test
+    void renameFile_aFileToAnInvalidName_isRejected() throws Exception {
+        FileUtils.write(workingTree.resolve("nested/prepared").toFile(), "content", StandardCharsets.UTF_8);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.renameFile(repository, new FileMove("nested/prepared", ".git")));
+
+        assertThat(workingTree.resolve("nested/prepared")).isRegularFile();
+        assertThat(workingTree.resolve("nested/.git")).doesNotExist();
+    }
+
+    @Test
+    void createFolder_withAnInvalidName_isRejected() throws Exception {
+        Files.createDirectories(workingTree.resolve("nested"));
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFolder(repository, "nested/.git", content("")));
+
+        assertThat(workingTree.resolve("nested/.git")).doesNotExist();
+    }
+
+    @Test
+    void createFile_withAnInvalidName_isRejected() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "nested/.git", content("content")));
+
+        assertThat(workingTree.resolve("nested/.git")).doesNotExist();
+    }
+
+    @Test
+    void createFile_insideAFolderWithAnInvalidName_isRejected() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "nested/.git/config", content("content")));
+
+        assertThat(workingTree.resolve("nested/.git")).doesNotExist();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { ".gitignore", ".gitattributes", ".github/workflows/ci.yml", "src/.gitkeep", "git/info/exclude" })
+    void createFile_withSimilarNames_isAllowed(String path) throws Exception {
+        // Only the exact name is invalid, similar names are ordinary content of an exercise.
+        repositoryService.createFile(repository, path, content("content"));
+
+        assertThat(workingTree.resolve(path)).isRegularFile().content(StandardCharsets.UTF_8).isEqualTo("content");
     }
 
     @Test

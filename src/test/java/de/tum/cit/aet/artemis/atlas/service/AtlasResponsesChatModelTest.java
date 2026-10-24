@@ -94,7 +94,7 @@ class AtlasResponsesChatModelTest {
         assertThat(secondInput.get(0).easyInputMessage()).isPresent();
         assertThat(secondInput.get(1).reasoning()).hasValue(firstReasoning);
         assertThat(secondInput.get(2).functionCall()).hasValue(functionCall);
-        assertThat(secondInput.get(3).functionCallOutput()).get().extracting(ResponseInputItem.FunctionCallOutput::callId).isEqualTo("call-1");
+        assertThat(secondInput.get(3).functionCallOutput()).get().extracting(ResponseInputItem.FunctionCallOutput::callId).isEqualTo(Optional.of("call-1"));
         assertThat(requestCaptor.getAllValues().get(0).store()).hasValue(false);
         assertThat(requestCaptor.getAllValues().get(0).include()).hasValue(List.of(com.openai.models.responses.ResponseIncludable.REASONING_ENCRYPTED_CONTENT));
     }
@@ -294,7 +294,7 @@ class AtlasResponsesChatModelTest {
         var input = request.getValue().input().orElseThrow().asResponse();
         assertThat(input).hasSize(1);
         var output = input.getFirst().asFunctionCallOutput();
-        assertThat(output.callId()).isEqualTo("call-9");
+        assertThat(output.callId()).hasValue("call-9");
         assertThat(output.output().asString()).isEmpty();
     }
 
@@ -324,7 +324,7 @@ class AtlasResponsesChatModelTest {
         org.mockito.Mockito.verify(responseService).create(request.capture());
         var input = request.getValue().input().orElseThrow().asResponse();
         assertThat(input).hasSize(2);
-        assertThat(input.get(0).asFunctionCallOutput().callId()).isEqualTo("call-1");
+        assertThat(input.get(0).asFunctionCallOutput().callId()).hasValue("call-1");
         assertThat(input.get(0).asFunctionCallOutput().output().asString()).isEmpty();
         assertThat(input.get(1).asFunctionCallOutput().output().asString()).isEqualTo("result");
     }

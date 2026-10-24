@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionCodeGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.service.BuildResultPollingSupport;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
@@ -816,13 +817,8 @@ public class HyperionCodeGenerationExecutionService {
 
                 Thread.sleep(POLL_INTERVAL);
             }
-            catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                throw ie;
-            }
             catch (Exception e) {
-                log.warn("Exception while polling for build result for commit {}: {}. Continuing...", commitHash, e.getMessage());
-                Thread.sleep(POLL_INTERVAL);
+                BuildResultPollingSupport.handleFailure(e, commitHash, POLL_INTERVAL, log);
             }
         }
         log.warn("Timed out waiting for build result for commit {} in exercise {} after {} polls ({}ms)", commitHash, exercise.getId(), pollCount, TIMEOUT);
