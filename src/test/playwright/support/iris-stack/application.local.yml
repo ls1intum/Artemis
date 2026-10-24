@@ -8,7 +8,8 @@
 #     (ARTEMIS_IRIS_SECRETTOKEN). Pyris raw-compares the incoming Authorization
 #     header to this token (no Bearer prefix).
 #   * weaviate.host = "weaviate" (the compose service name; same docker network).
-#   * memiris.enabled = false  -> no Ollama/embedding calls from memory pipelines.
+#   * memiris.enabled = false  -> only Pyris images from before the Memiris removal read
+#     this block (they refuse to start without it); newer Pyris ignores it.
 #   * local_llm_enabled = false -> only the `.cloud` llm ids must resolve; Artemis
 #     sends selection=CLOUD_AI by default, so only cloud ids are used at runtime.
 #   * llm_configuration adds the `chat_pipeline` key (the unified chat pipeline,

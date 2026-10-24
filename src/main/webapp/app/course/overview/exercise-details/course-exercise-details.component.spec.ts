@@ -1457,14 +1457,14 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(actionsOf({ type: ExerciseType.TEXT })).toEqual([]);
         });
 
-        it('should offer a tutor to see the exercise, its scores and participations', () => {
-            expect(actionsOf({ type: ExerciseType.TEXT, isAtLeastTutor: true })).toEqual(['text-exercises/5/', 'text-exercises/5/scores', 'text-exercises/5/participations']);
+        it('should offer a tutor to see the exercise and its participations', () => {
+            expect(actionsOf({ type: ExerciseType.TEXT, isAtLeastTutor: true })).toEqual(['text-exercises/5/', 'text-exercises/5/participations']);
         });
 
         it('should offer a tutor the preview and the solution of a quiz', () => {
             expect(actionsOf({ type: ExerciseType.QUIZ, isAtLeastTutor: true })).toEqual([
                 'quiz-exercises/5/',
-                'quiz-exercises/5/scores',
+                'quiz-exercises/5/participations',
                 'quiz-exercises/5/preview',
                 'quiz-exercises/5/solution',
             ]);
