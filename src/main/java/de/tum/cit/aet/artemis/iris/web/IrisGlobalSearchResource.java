@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Set;
 
@@ -17,17 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 
@@ -36,7 +32,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
  * Exposes two endpoints:
  * <ul>
  * <li>{@code POST api/iris/lecture-search} — synchronous semantic lecture-unit search via Pyris.</li>
- * <li>{@code POST api/iris/search-answer} — asynchronous Iris inline-answer pipeline; results are pushed to the client via WebSocket.</li>
+ * <li>{@code POST api/iris/search-answer} — the inline Iris answer, which is refused in this release, see {@link #ask()}.</li>
  * </ul>
  */
 @Conditional(IrisEnabled.class)
@@ -45,9 +41,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
 @RequestMapping("api/iris/")
 public class IrisGlobalSearchResource {
 
-    private final PyrisConnectorService pyrisConnectorService;
+    private static final String ENTITY_NAME = "iris";
 
-    private final PyrisJobService pyrisJobService;
+    private final PyrisConnectorService pyrisConnectorService;
 
     private final UserRepository userRepository;
 
@@ -55,10 +51,9 @@ public class IrisGlobalSearchResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository, CourseRepository courseRepository,
+    public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, UserRepository userRepository, CourseRepository courseRepository,
             AuthorizationCheckService authCheckService) {
         this.pyrisConnectorService = pyrisConnectorService;
-        this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -110,25 +105,17 @@ public class IrisGlobalSearchResource {
     }
 
     /**
-     * POST api/iris/search-answer: Ask Iris to answer a question using course content (async).
-     * Pyris classifies the query and sends webhook callbacks; results are pushed to the client via WebSocket.
+     * POST api/iris/search-answer: The inline Iris answer of the global search is not available in this release.
+     * <p>
+     * The request is refused with {@code 403 (Forbidden)} and {@code skipAlert}, so the client shows the search results without an answer card
+     * and without an error alert. The answer needs a course scope that the request to Pyris does not carry in this release.
      *
-     * @param requestDTO the request containing the query and result limit
-     * @param principal  the authenticated user (used to route the WebSocket response)
-     * @return the {@link ResponseEntity} with status {@code 202 (Accepted)}
+     * @return never; always refused
      */
     @PostMapping("search-answer")
     @EnforceAtLeastStudent
-    @LimitRequestsPerMinute(type = RateLimitType.AI_SEARCH_PIPELINE)
-    public ResponseEntity<Void> ask(@RequestBody @Valid GlobalSearchAskRequestDTO requestDTO, Principal principal) {
-        var user = userRepository.findOneByLogin(principal.getName()).orElseThrow(() -> new EntityNotFoundException("User", principal.getName()));
-        user.hasOptedIntoLLMUsageElseThrow();
-        pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
-        // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
-        // Pyris may have received the request and already started the pipeline. Removing the token
-        // would break WebSocket routing for any callbacks that arrive later.
-        // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
-        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), user.getSelectedLLMUsage());
-        return ResponseEntity.accepted().build();
+    public ResponseEntity<Void> ask() {
+        throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "The Iris answer of the global search is not available in this release", ENTITY_NAME,
+                "iris.searchAnswerUnavailable", true);
     }
 }
