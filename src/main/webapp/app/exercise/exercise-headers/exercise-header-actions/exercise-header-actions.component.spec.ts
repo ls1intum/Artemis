@@ -366,7 +366,7 @@ describe('ExerciseHeaderActionsComponent', () => {
     });
 
     describe('submitAndShowPopover', () => {
-        const submitPopoverRef = () => (fixture.componentInstance as unknown as { submitPopoverRef: () => { isOpen: () => boolean } }).submitPopoverRef();
+        const submitPopover = () => (fixture.componentInstance as unknown as { submitPopover: () => { isOpen: () => boolean } }).submitPopover();
 
         it('opens the AI-disabled recommendation popover even when the user has not accepted AI usage', () => {
             createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false });
@@ -375,7 +375,7 @@ describe('ExerciseHeaderActionsComponent', () => {
 
             fixture.componentInstance.submitAndShowPopover();
 
-            expect(submitPopoverRef().isOpen()).toBe(true);
+            expect(submitPopover().isOpen()).toBe(true);
         });
 
         it.each([
@@ -404,7 +404,7 @@ describe('ExerciseHeaderActionsComponent', () => {
             fixture.componentInstance.dismissAiFeedbackPopoverPermanently();
             fixture.componentInstance.submitAndShowPopover();
 
-            expect(submitPopoverRef().isOpen()).toBe(false);
+            expect(submitPopover().isOpen()).toBe(false);
         });
     });
 
@@ -995,7 +995,7 @@ describe('ExerciseHeaderActionsComponent', () => {
             const onSubmit = vi.fn();
             fixture.componentRef.setInput('onSubmitExercise', onSubmit);
             fixture.detectChanges();
-            const popover = fixture.componentInstance['submitPopoverRef']()!;
+            const popover = fixture.componentInstance['submitPopover']()!;
             return { onSubmit, popover };
         };
 
@@ -1027,39 +1027,6 @@ describe('ExerciseHeaderActionsComponent', () => {
             fixture.componentInstance.closeSubmitPopover();
 
             expect(closeSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should close an open popover on a click outside of the component', () => {
-            const { popover } = createWithSubmitAction();
-            vi.spyOn(popover, 'isOpen').mockReturnValue(true);
-            const closeSpy = vi.spyOn(popover, 'close').mockImplementation(() => {});
-
-            fixture.componentInstance.onDocumentClick({ target: document.body } as unknown as MouseEvent);
-
-            expect(closeSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should keep an open popover on a click inside of the component or the popover', () => {
-            const { popover } = createWithSubmitAction();
-            vi.spyOn(popover, 'isOpen').mockReturnValue(true);
-            const closeSpy = vi.spyOn(popover, 'close').mockImplementation(() => {});
-            const insidePopover = document.createElement('div');
-            insidePopover.className = 'popover';
-
-            fixture.componentInstance.onDocumentClick({ target: fixture.nativeElement } as unknown as MouseEvent);
-            fixture.componentInstance.onDocumentClick({ target: insidePopover } as unknown as MouseEvent);
-
-            expect(closeSpy).not.toHaveBeenCalled();
-        });
-
-        it('should ignore a click while the popover is closed', () => {
-            const { popover } = createWithSubmitAction();
-            vi.spyOn(popover, 'isOpen').mockReturnValue(false);
-            const closeSpy = vi.spyOn(popover, 'close').mockImplementation(() => {});
-
-            fixture.componentInstance.onDocumentClick({ target: document.body } as unknown as MouseEvent);
-
-            expect(closeSpy).not.toHaveBeenCalled();
         });
     });
 });

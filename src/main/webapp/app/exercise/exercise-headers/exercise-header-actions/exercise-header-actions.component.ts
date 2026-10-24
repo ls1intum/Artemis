@@ -1,12 +1,12 @@
 import { ProgrammingExerciseParticipationActionsComponent } from 'app/exercise/participation/programming-exercise-participation-actions/programming-exercise-participation-actions.component';
 import { StudentExerciseActionsDirective } from 'app/exercise/participation/student-exercise-actions.directive';
-import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faEye, faFileSignature, faListAlt, faPaperPlane, faPlayCircle, faRobot, faSignal, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -33,7 +33,7 @@ import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-d
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -62,14 +62,13 @@ export const AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY = 'artemisApp.aiFee
         StartPracticeModeButtonComponent,
         CodeButtonComponent,
         RequestFeedbackButtonComponent,
-        NgbPopover,
         TranslatePipe,
         TumAetUiButtonComponent,
+        TumAetUiPopoverComponent,
     ],
     providers: [ExternalCloningService],
 })
 export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirective {
-    private readonly elementRef = inject(ElementRef);
     private readonly quizExerciseService = inject(QuizExerciseService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
@@ -77,7 +76,8 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
 
     private readonly programmingActions = viewChildren(ProgrammingExerciseParticipationActionsComponent);
     private readonly actionButtons = viewChildren(ExerciseActionButtonComponent);
-    private readonly submitPopoverRef = viewChild<NgbPopover>('submitPopoverRef');
+    private readonly submitPopover = viewChild<TumAetUiPopoverComponent>('submitPopover');
+    private readonly submitPopoverAnchor = viewChild('submitPopoverAnchor', { read: ElementRef });
 
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
@@ -309,7 +309,7 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
     }
 
     closeSubmitPopover() {
-        this.submitPopoverRef()?.close();
+        this.submitPopover()?.close();
     }
 
     submitAndShowPopover() {
@@ -322,29 +322,15 @@ export class ExerciseHeaderActionsComponent extends StudentExerciseActionsDirect
         if (!this.hasUserAcceptedLLM() && this.aiFeedbackPopoverDismissed()) {
             return;
         }
-        this.submitPopoverRef()?.open();
+        const anchor = this.submitPopoverAnchor();
+        if (anchor) {
+            this.submitPopover()?.open(anchor);
+        }
     }
 
     dismissAiFeedbackPopoverPermanently() {
         this.aiFeedbackPopoverDismissed.set(true);
         this.localStorageService.store(AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY, true);
         this.closeSubmitPopover();
-    }
-
-    @HostListener('document:click', ['$event'])
-    onDocumentClick(event: MouseEvent) {
-        const pop = this.submitPopoverRef();
-        if (!pop?.isOpen()) {
-            return;
-        }
-
-        const target = event.target as HTMLElement;
-
-        // Don't close if clicking inside the popover, the trigger element, or an alert
-        if (target.closest('.popover') || target.closest('jhi-alert-overlay') || this.elementRef.nativeElement.contains(target)) {
-            return;
-        }
-
-        pop.close();
     }
 }

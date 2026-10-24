@@ -30,25 +30,22 @@
     }
     @if (onSubmitExercise()) {
         @if (showFeedbackPopover()) {
-            <span
-                [ngbPopover]="submitPopContent"
-                [autoClose]="false"
-                placement="bottom-end bottom-start bottom auto"
-                container="body"
-                triggers="manual"
-                popoverClass="ai-feedback-popover"
-                #submitPopoverRef="ngbPopover"
-            >
-                <button
-                    type="button"
-                    data-testid="submit-exercise-popover"
-                    jhi-exercise-action-button
-                    [buttonIcon]="faPaperPlane"
-                    [buttonLabel]="'entity.action.submit' | artemisTranslate"
-                    [smallButton]="smallButtons()"
-                    (click)="submitAndShowPopover()"
-                ></button>
-            </span>
+            <button
+                #submitPopoverAnchor
+                type="button"
+                data-testid="submit-exercise-popover"
+                jhi-exercise-action-button
+                [buttonIcon]="faPaperPlane"
+                [buttonLabel]="'entity.action.submit' | artemisTranslate"
+                [smallButton]="smallButtons()"
+                (click)="submitAndShowPopover()"
+            ></button>
+            <tumaet-ui-popover #submitPopover [ariaLabel]="'artemisApp.exercise.aiFeedbackPopover.title' | artemisTranslate" placement="bottom">
+                <!-- Projected content is created with the host, so it is only rendered while open, keeping the feedback button lazy. -->
+                @if (submitPopover.isOpen()) {
+                    <ng-container [ngTemplateOutlet]="submitPopContent" />
+                }
+            </tumaet-ui-popover>
         } @else {
             <button
                 type="button"
@@ -188,50 +185,53 @@
 </ng-template>
 
 <ng-template #submitPopContent>
-    <div class="d-flex align-items-center mb-2">
-        <fa-icon [icon]="faRobot" class="me-2" />
-        <h5 class="mb-0" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.title"></h5>
+    <!-- Same width (not just max-width) so the AI-enabled and AI-disabled variants render at the same size, capped for narrow screens. -->
+    <div class="flex w-[min(400px,calc(100vw-2rem))] flex-col gap-2">
+        <div class="flex items-center gap-2">
+            <fa-icon [icon]="faRobot" />
+            <h5 class="m-0!" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.title"></h5>
+        </div>
+        @if (hasUserAcceptedLLM()) {
+            <p class="m-0!" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <p
+                    class="m-0! text-muted-color"
+                    [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
+                    [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
+                ></p>
+                <jhi-request-feedback-button
+                    [exercise]="exercise()"
+                    [isSubmitted]="true"
+                    [participationId]="activeParticipationForCode()?.id"
+                    [asTumAetUiButton]="true"
+                    [alwaysShowLabel]="true"
+                    [smallButtons]="true"
+                    (click)="closeSubmitPopover()"
+                />
+            </div>
+        } @else {
+            <p class="m-0!" [jhiTranslate]="aiFeedbackPopoverDisabledDescriptionKey()"></p>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <tumaet-ui-button
+                    variant="outlined"
+                    severity="secondary"
+                    size="small"
+                    [id]="'ai-feedback-popover-dont-show-again-' + exercise().id"
+                    (clicked)="dismissAiFeedbackPopoverPermanently()"
+                >
+                    <span jhiTranslate="artemisApp.exercise.aiFeedbackPopover.dontShowAgain"></span>
+                </tumaet-ui-button>
+                <jhi-request-feedback-button
+                    [exercise]="exercise()"
+                    [isSubmitted]="true"
+                    [participationId]="activeParticipationForCode()?.id"
+                    [asTumAetUiButton]="true"
+                    [alwaysShowLabel]="true"
+                    [smallButtons]="true"
+                    [showAiExperiencePrompt]="true"
+                    (click)="closeSubmitPopover()"
+                />
+            </div>
+        }
     </div>
-    @if (hasUserAcceptedLLM()) {
-        <p class="mb-2" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <p
-                class="mb-0 text-muted"
-                [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
-                [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
-            ></p>
-            <jhi-request-feedback-button
-                [exercise]="exercise()"
-                [isSubmitted]="true"
-                [participationId]="activeParticipationForCode()?.id"
-                [asTumAetUiButton]="true"
-                [alwaysShowLabel]="true"
-                [smallButtons]="true"
-                (click)="closeSubmitPopover()"
-            />
-        </div>
-    } @else {
-        <p class="mb-2" [jhiTranslate]="aiFeedbackPopoverDisabledDescriptionKey()"></p>
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <tumaet-ui-button
-                variant="outlined"
-                severity="secondary"
-                size="small"
-                [id]="'ai-feedback-popover-dont-show-again-' + exercise().id"
-                (clicked)="dismissAiFeedbackPopoverPermanently()"
-            >
-                <span jhiTranslate="artemisApp.exercise.aiFeedbackPopover.dontShowAgain"></span>
-            </tumaet-ui-button>
-            <jhi-request-feedback-button
-                [exercise]="exercise()"
-                [isSubmitted]="true"
-                [participationId]="activeParticipationForCode()?.id"
-                [asTumAetUiButton]="true"
-                [alwaysShowLabel]="true"
-                [smallButtons]="true"
-                [showAiExperiencePrompt]="true"
-                (click)="closeSubmitPopover()"
-            />
-        </div>
-    }
 </ng-template>
