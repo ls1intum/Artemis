@@ -556,7 +556,7 @@ describe('ParticipationComponent', () => {
 
             expect(filters()).not.toContain(FilterProp.FAILED);
             expect(filters()).not.toContain(FilterProp.BUILD_FAILED);
-            expect(filters()).not.toContain(FilterProp.NO_PRACTICE);
+            expect(filters()).not.toContain(FilterProp.GRADED);
             expect(filters()).toContain(FilterProp.NO_SUBMISSIONS);
         });
 
@@ -565,7 +565,7 @@ describe('ParticipationComponent', () => {
 
             expect(filters()).toContain(FilterProp.FAILED);
             expect(filters()).toContain(FilterProp.BUILD_FAILED);
-            expect(filters()).toContain(FilterProp.NO_PRACTICE);
+            expect(filters()).toContain(FilterProp.GRADED);
         });
 
         it('uses exclusive submission and assessment choices while retaining programming build combinations', () => {
@@ -613,13 +613,22 @@ describe('ParticipationComponent', () => {
             expect(filters()).toContain(FilterProp.LOCKED);
         });
 
-        it('sends the quiz graded filter to the server', () => {
-            component.exercise.set({ ...exercise, type: ExerciseType.QUIZ });
+        it.each([ExerciseType.QUIZ, ExerciseType.PROGRAMMING])('sends the graded filter to the server (%s)', (type) => {
+            component.exercise.set({ ...exercise, type });
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
             component.onDataRequest({ pageIndex: 0, pageSize: 50 });
             searchSpy.mockClear();
             component.updateParticipationFilter([FilterProp.GRADED]);
             expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ filterProp: 'Graded' }));
+        });
+
+        it('keeps manual and locked filters when enabling graded programming participations', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.updateParticipationFilter([FilterProp.MANUAL, FilterProp.LOCKED]);
+            component.updateParticipationFilter([FilterProp.MANUAL, FilterProp.LOCKED, FilterProp.GRADED]);
+            expect(searchSpy).toHaveBeenLastCalledWith(exercise.id, expect.objectContaining({ filterProp: 'Manual,Locked,Graded' }));
         });
 
         it('should pass the score range to the search', () => {

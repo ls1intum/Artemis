@@ -95,7 +95,6 @@ export enum FilterProp {
     FAILED = 'Failed',
     NO_SUBMISSIONS = 'NoSubmissions',
     VALID_SUBMISSIONS = 'ValidSubmissions',
-    NO_PRACTICE = 'NoPracticeMode',
     GRADED = 'Graded',
     SUCCESSFUL = 'Successful',
     UNSUCCESSFUL = 'Unsuccessful',
@@ -245,8 +244,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                       },
                   ]
                 : []),
-            ...(isProgramming ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.NO_PRACTICE] }] : []),
-            ...(ex.type === ExerciseType.QUIZ ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.GRADED] }] : []),
+            ...(isProgramming || ex.type === ExerciseType.QUIZ ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.GRADED] }] : []),
             ...(manualAssessmentEnabled && ex.isAtLeastInstructor ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentStatus', items: [FilterProp.LOCKED] }] : []),
         ];
     });

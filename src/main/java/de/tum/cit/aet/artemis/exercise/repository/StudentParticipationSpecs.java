@@ -423,7 +423,7 @@ public class StudentParticipationSpecs {
         }
         var selected = Arrays.asList(filterProp.split(","));
         var groups = List.of(List.of("Failed", "BuildFailed", "NoSubmissions", "ValidSubmissions"), List.of("Successful", "Unsuccessful"),
-                List.of("Manual", "SemiAutomatic", "Automatic"), List.of("NoPracticeMode", "Graded"), List.of("Locked"));
+                List.of("Manual", "SemiAutomatic", "Automatic"), List.of("NoPracticeMode"), List.of("Graded"), List.of("Locked"));
         return Specification.allOf(groups.stream()
                 .map(group -> Specification.anyOf(group.stream().filter(selected::contains).map(filter -> managementFilter(filter, stuckBuildCutoff)).toList())).toList());
     }
