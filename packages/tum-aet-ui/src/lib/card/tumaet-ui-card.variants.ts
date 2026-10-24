@@ -9,7 +9,8 @@ const baseClasses = 'tumaet-ui-card tumaet:flex tumaet:flex-col tumaet:rounded-x
 
 const variantClasses: Record<TumAetUiCardVariant, string> = {
     elevated: 'tumaet:bg-overlay-background tumaet:shadow-sm',
-    muted: 'tumaet:bg-hover-background tumaet:border tumaet:border-border',
+    // the muted text color misses WCAG AA contrast on the neutral fill in both themes, so muted content inside uses the text color
+    muted: 'tumaet:bg-hover-background tumaet:border tumaet:border-border tumaet:[--tumaet-ui-muted-color:var(--tumaet-ui-text-color)]',
 };
 
 /**
