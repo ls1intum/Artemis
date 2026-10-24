@@ -24,7 +24,7 @@ export abstract class StudentExerciseActionsDirective {
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
     private participationService = inject(ParticipationService);
-    private profileService = inject(ProfileService);
+    protected readonly profileService = inject(ProfileService);
 
     constructor() {
         effect(() => {
