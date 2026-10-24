@@ -30,4 +30,15 @@
             <column name="email_change_new_key_id"/>
         </createIndex>
     </changeSet>
+
+    <!--
+        The link to the current address proves the mailbox the account had when the request was made, so the request is applied only while
+        the account still has that address. It is null for an account that had none. Nullable like the other columns, and a separate
+        changeset so that the checksums of the two above stay as they were.
+    -->
+    <changeSet id="20261013141637-03-add-original-email-to-pending-email-change" author="krusche">
+        <addColumn tableName="user_recovery_key">
+            <column name="email_change_original_email" type="varchar(100)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

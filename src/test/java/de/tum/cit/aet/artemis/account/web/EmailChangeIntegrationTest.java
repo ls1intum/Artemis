@@ -83,6 +83,8 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     private static final String NEW_EMAIL = "new-address@test.de";
 
+    private static final String ADDRESS_ASSIGNED_BY_ADMINISTRATOR = "assigned-by-administrator@test.de";
+
     private static final String CONFIRM_PATH = "/api/core/public/account/confirm-email-change";
 
     private static final String BASIC_INFORMATION_PATH = "/api/account/basic-information";
@@ -217,6 +219,16 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         request.putWithResponseBody(BASIC_INFORMATION_PATH, update, Map.class, HttpStatus.BAD_REQUEST, expectedError(errorKey));
     }
 
+    /**
+     * What an administrator's edit does to the address of an account: it writes the address and ends whatever request is pending.
+     */
+    private void assignAddressAsAdministrator(String email) {
+        User account = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
+        account.setEmail(email);
+        userTestRepository.save(account);
+        userRecoveryKeyService.clearPendingEmailChange(user.getId());
+    }
+
     private String emailOfAccount() {
         return userTestRepository.findOneByLogin(LOGIN).orElseThrow().getEmail();
     }
@@ -230,8 +242,8 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
      */
     private void ageRequestBy(Duration age) {
         PendingEmailChange pending = storedPendingChange().orElseThrow();
-        var aged = new PendingEmailChange(pending.getNewEmail(), pending.getCurrentKeyId(), pending.getCurrentKeyHash(), pending.getNewKeyId(), pending.getNewKeyHash(),
-                pending.getRequestedAt().minus(age), pending.getCurrentConfirmedAt());
+        var aged = new PendingEmailChange(pending.getNewEmail(), pending.getOriginalEmail(), pending.getCurrentKeyId(), pending.getCurrentKeyHash(), pending.getNewKeyId(),
+                pending.getNewKeyHash(), pending.getRequestedAt().minus(age), pending.getCurrentConfirmedAt());
         aged.setNewConfirmedAt(pending.getNewConfirmedAt());
         userRecoveryKeyService.storePendingEmailChange(user.getId(), aged);
     }
@@ -855,6 +867,48 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         assertThat(confirmationMails()).hasSize(1);
         assertThat(confirm(mailTo(NEW_EMAIL)).completed()).isTrue();
         assertThat(emailOfAccount()).isEqualTo(NEW_EMAIL);
+    }
+
+    /**
+     * The link to the current address proves the mailbox the account had when the request was made. A request is issued from an earlier read of the account and stored after
+     * the secrets were hashed, so an administrator can assign another address, which also ends the pending request, between the two, and the delayed write brings a request
+     * back that belongs to the old address. Confirming both of its mailboxes must not replace the address the administrator assigned.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aRequestIssuedFromAnOutdatedReadOfTheAccountDoesNotReplaceAnAddressAssignedMeanwhile() throws Exception {
+        User outdatedRead = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
+        assignAddressAsAdministrator(ADDRESS_ASSIGNED_BY_ADMINISTRATOR);
+
+        emailChangeService.requestChange(outdatedRead, NEW_EMAIL, null);
+
+        // The mailbox the request was made over confirms first, then the new one, which would complete the request.
+        assertThat(confirm(mailTo(originalEmail)).completed()).isFalse();
+        confirmFailing(mailTo(NEW_EMAIL), mailTo(NEW_EMAIL).keySecret(), "invalidEmailChangeKey");
+
+        assertThat(emailOfAccount()).isEqualTo(ADDRESS_ASSIGNED_BY_ADMINISTRATOR);
+        assertThat(storedPendingChange()).as("the request is dropped, so it cannot be retried").isEmpty();
+    }
+
+    /**
+     * The same for an account that had no address: its current side is confirmed from the start, so confirming the new address alone would complete the request.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aRequestIssuedForAnAccountThatHadNoAddressDoesNotReplaceAnAddressAssignedMeanwhile() throws Exception {
+        User withoutAddress = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
+        withoutAddress.setEmail(null);
+        userTestRepository.save(withoutAddress);
+        User outdatedRead = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
+        assignAddressAsAdministrator(ADDRESS_ASSIGNED_BY_ADMINISTRATOR);
+
+        emailChangeService.requestChange(outdatedRead, NEW_EMAIL, null);
+
+        assertThat(confirmationMails()).hasSize(1);
+        confirmFailing(mailTo(NEW_EMAIL), mailTo(NEW_EMAIL).keySecret(), "invalidEmailChangeKey");
+
+        assertThat(emailOfAccount()).isEqualTo(ADDRESS_ASSIGNED_BY_ADMINISTRATOR);
+        assertThat(storedPendingChange()).as("the request is dropped, so it cannot be retried").isEmpty();
     }
 
     @Test

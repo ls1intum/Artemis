@@ -279,10 +279,14 @@ public class EmailChangeService {
         String previousLangKey = user.getLangKey();
         if (userRepository.applyConfirmedEmailChange(userId, newEmail, change.getCurrentKeyId(), change.getNewKeyId()) == 0) {
             // Nothing was left to apply. Either the other confirmation completed the change a moment ago, which is not a failure for
-            // this one, or the request was cancelled or the account recovered in the meantime, which must not apply anything.
+            // this one, or the request was cancelled or the account recovered in the meantime, which must not apply anything. The same
+            // holds if the account has another address than the one the request was made over, for example because an administrator
+            // assigned one while the request was being issued.
             if (newEmail.equals(userRepository.findById(userId).map(User::getEmail).orElse(null))) {
                 return;
             }
+            // Dropped, so that it cannot be retried: it matches only the request that was read, a newer one stays.
+            userRecoveryKeyService.clearPendingEmailChangeOfRequest(userId, change);
             throw invalidKey();
         }
         userRecoveryKeyService.clearPendingEmailChangeOfRequest(userId, change);
@@ -311,8 +315,10 @@ public class EmailChangeService {
         // An account without an address has nothing for its owner to confirm, so it starts out confirmed on that side.
         Instant now = Instant.now();
         boolean hasCurrentAddress = user.getEmail() != null;
-        PendingEmailChange change = new PendingEmailChange(newEmail, currentKeyId, passwordService.hashPassword(currentSecret), newKeyId, passwordService.hashPassword(newSecret),
-                now, hasCurrentAddress ? null : now);
+        // The link to the current address is mailed to this address, so it is the one the change may only be applied over. The account is read before the secrets are
+        // hashed, which takes a moment, and the address can be replaced meanwhile: see the match in UserRepository#applyConfirmedEmailChange.
+        PendingEmailChange change = new PendingEmailChange(newEmail, user.getEmail(), currentKeyId, passwordService.hashPassword(currentSecret), newKeyId,
+                passwordService.hashPassword(newSecret), now, hasCurrentAddress ? null : now);
         userRecoveryKeyService.storePendingEmailChange(user.getId(), change);
 
         if (hasCurrentAddress) {
