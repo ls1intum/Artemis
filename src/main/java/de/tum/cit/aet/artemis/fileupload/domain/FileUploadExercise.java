@@ -8,8 +8,8 @@ import jakarta.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseWithExampleSolution;
 
 /**
  * A FileUploadExercise.
@@ -17,16 +17,13 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 @Entity
 @DiscriminatorValue(value = "F")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class FileUploadExercise extends Exercise {
+public class FileUploadExercise extends ExerciseWithExampleSolution {
 
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
     @Override
     public String getType() {
         return "file-upload";
     }
-
-    @Column(name = "example_solution")
-    private String exampleSolution;
 
     @Column(name = "filePattern")
     private String filePattern;
@@ -37,25 +34,6 @@ public class FileUploadExercise extends Exercise {
 
     public void setFilePattern(String filePattern) {
         this.filePattern = filePattern;
-    }
-
-    public String getExampleSolution() {
-        return exampleSolution;
-    }
-
-    public void setExampleSolution(String exampleSolution) {
-        this.exampleSolution = exampleSolution;
-    }
-
-    /**
-     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
-     */
-    @Override
-    public void filterSensitiveInformation() {
-        if (!isExampleSolutionPublished()) {
-            setExampleSolution(null);
-        }
-        super.filterSensitiveInformation();
     }
 
     @Override

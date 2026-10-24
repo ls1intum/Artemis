@@ -1,3 +1,4 @@
+import { QuestionStatisticsChartComponent } from '../question-statistics-chart/question-statistics-chart.component';
 import { Component, inject, signal } from '@angular/core';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
@@ -7,19 +8,16 @@ import { ShortAnswerQuestionStatistic } from 'app/quiz/shared/entities/short-ans
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
-import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiBarChartComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './short-answer-question-statistic.component.scss'],
-    imports: [TranslateDirective, TumAetUiBarChartComponent, FaIconComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+    imports: [QuestionStatisticsChartComponent, TranslateDirective, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
@@ -31,11 +29,6 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
     lettersForSolutions: number[] = [];
 
     sampleSolutions: ShortAnswerSolution[] = [];
-
-    // Icons
-    faSync = faSync;
-    faCheckCircle = faCheckCircle;
-    faTimesCircle = faTimesCircle;
 
     loadQuiz(quiz: QuizQuestionStatisticResponse, refresh: boolean) {
         const updatedQuestion = super.loadQuizCommon(quiz);

@@ -15,6 +15,9 @@ for directory in \
     python_version=3.10
     if [[ "$directory" == .github/python-dependencies ]]; then
         python_version=3.14
+    elif [[ "$directory" == supporting_scripts/lecture-transcription ]]; then
+        # filelock 4.2.1, the first release without the known lock races, needs Python 3.11.
+        python_version=3.11
     fi
     # Keep paths relative to the lock so Renovate can replay the generated command in that directory.
     (
