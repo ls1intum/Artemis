@@ -287,7 +287,8 @@ public class LocalVCServletService {
 
         log.debug("Path to resolve repository from: {}", sanitizedPath);
         if (!Files.exists(repositoryDir)) {
-            log.error("Could not find local repository with name {}", sanitizedPath);
+            // The client asked for a path that does not exist. Students' tools poll the predictable URL of their repository before they have started the exercise.
+            log.warn("Could not find local repository with name {}", sanitizedPath);
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
@@ -423,7 +424,7 @@ public class LocalVCServletService {
             }
         }
         catch (LocalVCForbiddenException e) {
-            log.error("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
+            log.warn("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
             saveFailedAccessVcsAccessLog(new AuthenticationContext.Request(request), repositoryTypeOrUserName, exercise.exerciseId(), localVCRepositoryUri, user, repositoryAction);
             throw e;
         }
