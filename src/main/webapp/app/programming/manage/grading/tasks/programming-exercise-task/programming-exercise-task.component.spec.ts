@@ -14,6 +14,7 @@ import { Subject } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Tooltip } from 'primeng/tooltip';
+import { typeIntoInputNumber } from 'test/helpers/input-number-test-helpers';
 
 describe('ProgrammingExerciseTaskComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseTaskComponent>;
@@ -272,5 +273,76 @@ describe('ProgrammingExerciseTaskComponent', () => {
         for (const debugEl of taskFieldDebugEls) {
             expect(debugEl.injector.get(Tooltip).appendTo()).toBe('body');
         }
+    });
+
+    describe('bonus points inputs', () => {
+        const bonusPointsInput = (name: string) => fixture.nativeElement.querySelector(`input[name="${name}"]`) as HTMLInputElement;
+
+        async function render(task: ProgrammingExerciseTask) {
+            taskService.currentTasks = [task, { taskName: 'Task2', testCases: [], stats: undefined }] as ProgrammingExerciseTask[];
+            vi.spyOn(taskService, 'initializeTask').mockReturnValue(task);
+            fixture.componentRef.setInput('task', task);
+            fixture.componentRef.setInput('index', 0);
+            comp.ngOnInit();
+            comp.open.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        it('should show the bonus points of the task and of each test and distribute the typed task bonus points over its tests', async () => {
+            const testCases = [
+                { testName: 'test1', weight: 1, bonusPoints: 1.5 },
+                { testName: 'test2', weight: 1, bonusPoints: 2 },
+            ];
+            const task = { taskName: 'Task1', bonusPoints: 3.5, testCases, stats: undefined } as ProgrammingExerciseTask;
+            await render(task);
+            expect(bonusPointsInput('Task1-bonusPoints').value).toBe('3.5');
+            expect(bonusPointsInput('test1-bonusPoints').value).toBe('1.5');
+            expect(bonusPointsInput('test2-bonusPoints').value).toBe('2');
+
+            typeIntoInputNumber(bonusPointsInput('Task1-bonusPoints'), '5,5');
+
+            expect(task.bonusPoints).toBe(5.5);
+            expect(testCases[0]).toEqual(expect.objectContaining({ bonusPoints: 2.75, changed: true }));
+            expect(testCases[1]).toEqual(expect.objectContaining({ bonusPoints: 2.75, changed: true }));
+            expect(comp.updateTasksEvent.emit).toHaveBeenCalled();
+        });
+
+        it('should mark a test as changed when its bonus points are typed', async () => {
+            const testCase = { testName: 'test1', weight: 1, bonusPoints: 1, changed: false };
+            const task = { taskName: 'Task1', testCases: [testCase], stats: undefined } as ProgrammingExerciseTask;
+            await render(task);
+
+            typeIntoInputNumber(bonusPointsInput('test1-bonusPoints'), '0.25');
+
+            expect(testCase.bonusPoints).toBe(0.25);
+            expect(testCase.changed).toBe(true);
+            expect(comp.updateTasksEvent.emit).toHaveBeenCalled();
+        });
+
+        it('should not accept negative bonus points of a test', async () => {
+            const testCase = { testName: 'test1', weight: 1, bonusPoints: 1, changed: false };
+            await render({ taskName: 'Task1', testCases: [testCase], stats: undefined } as ProgrammingExerciseTask);
+
+            typeIntoInputNumber(bonusPointsInput('test1-bonusPoints'), '-2');
+
+            expect(testCase.bonusPoints).toBe(0);
+        });
+
+        it('should disable the bonus points of the task that collects the tests without a task', async () => {
+            const task = { taskName: comp.NOT_ASSIGNED_TO_TASK_NAME, testCases: [], stats: undefined } as ProgrammingExerciseTask;
+            taskService.currentTasks = [task, { taskName: 'Task2', testCases: [], stats: undefined }] as ProgrammingExerciseTask[];
+            fixture.componentRef.setInput('task', task);
+            fixture.componentRef.setInput('index', 0);
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(bonusPointsInput(`${comp.NOT_ASSIGNED_TO_TASK_NAME}-bonusPoints`).disabled).toBe(true);
+        });
     });
 });
