@@ -1,5 +1,23 @@
-<div class="flex flex-wrap items-center gap-1" cdkOverlayOrigin #origin="cdkOverlayOrigin">
-    <div class="message-resource-controls flex flex-wrap items-center gap-1" [hidden]="!controlsVisible()">
+<div class="flex items-center" cdkOverlayOrigin #origin="cdkOverlayOrigin">
+    <button
+        type="button"
+        tumAetUiButton
+        variant="text"
+        severity="secondary"
+        size="small"
+        data-testid="message-emoji-button"
+        [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
+        tumAetUiTooltipDescribesHost="false"
+        [attr.aria-label]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
+        (mousedown)="remember($event)"
+        (click)="open('emoji')"
+    >
+        <fa-icon [icon]="icons.faFaceSmile" />
+    </button>
+</div>
+<!-- The editor places the attachment and resource buttons in its bar of further options, and the upload feedback below its toolbar row. -->
+<ng-template #resourceControls>
+    <div class="message-resource-controls flex items-center gap-1">
         <button
             type="button"
             tumAetUiButton
@@ -59,30 +77,17 @@
             data-testid="message-file-input"
         />
     </div>
-    <button
-        type="button"
-        tumAetUiButton
-        variant="text"
-        severity="secondary"
-        size="small"
-        data-testid="message-emoji-button"
-        [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
-        tumAetUiTooltipDescribesHost="false"
-        [attr.aria-label]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
-        (mousedown)="remember($event)"
-        (click)="open('emoji')"
-    >
-        <fa-icon [icon]="icons.faFaceSmile" />
-    </button>
-</div>
-@if (uploading()) {
-    <span role="status" class="message-editor-muted text-xs">{{ 'artemisApp.communication.formattedEditor.uploading' | artemisTranslate }}</span>
-}
-@if (error(); as errorKey) {
-    <span role="alert" data-testid="message-upload-error" class="min-w-0 basis-full px-2 py-1 text-xs text-state-danger wrap-anywhere">{{
-        'artemisApp.communication.formattedEditor.errors.' + errorKey | artemisTranslate: { name: errorFile(), max: maxFileSize }
-    }}</span>
-}
+</ng-template>
+<ng-template #status>
+    @if (uploading()) {
+        <span role="status" class="message-editor-muted text-xs">{{ 'artemisApp.communication.formattedEditor.uploading' | artemisTranslate }}</span>
+    }
+    @if (error(); as errorKey) {
+        <span role="alert" data-testid="message-upload-error" class="min-w-0 basis-full px-2 py-1 text-xs text-state-danger wrap-anywhere">{{
+            'artemisApp.communication.formattedEditor.errors.' + errorKey | artemisTranslate: { name: errorFile(), max: maxFileSize }
+        }}</span>
+    }
+</ng-template>
 <ng-template
     cdkConnectedOverlay
     [cdkConnectedOverlayOrigin]="origin"

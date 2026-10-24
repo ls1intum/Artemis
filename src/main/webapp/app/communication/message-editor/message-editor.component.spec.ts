@@ -249,30 +249,270 @@ describe('Formatted message composer', () => {
         buttons.forEach((button) => expect(button.hasAttribute('title')).toBe(false));
     });
 
-    it('lets the buttons of the compact toolbar wrap as one row instead of as a separately wrapping group', () => {
+    it('keeps the toolbar on one line and floats the bar of further options above the editor', () => {
         const toolbar = fixture.nativeElement.querySelector('[data-testid="message-editor-toolbar"]') as HTMLElement;
-        // the buttons of the hidden advanced controls are not part of the compact toolbar
-        const buttons = (Array.from(toolbar.querySelectorAll('button')) as HTMLButtonElement[]).filter((button) => button.closest('[hidden]') === null);
+        const line = fixture.nativeElement.querySelector('[data-testid="message-toolbar-line"]') as HTMLElement;
+        const group = line.querySelector('[role="group"]') as HTMLElement;
+        const advanced = fixture.nativeElement.querySelector('[data-testid="message-advanced-toolbar"]') as HTMLElement;
 
-        // A group that wraps by itself moves as one block, so its buttons can take a line of their own while the room next to it stays unused.
-        const wrappingParents = new Set(buttons.map((button) => button.parentElement!).filter((parent) => parent.classList.contains('flex-wrap')));
-
-        // Only the wrapper that anchors the emoji picker keeps its own box.
-        expect(buttons.length).toBeGreaterThan(9);
-        expect(wrappingParents.size).toBe(1);
-        expect(toolbar.querySelector('[role="group"]')!.classList.contains('contents')).toBe(true);
+        // A line that wraps could take a third line, so neither the line nor its group may wrap.
+        expect(line.classList.contains('flex-nowrap')).toBe(true);
+        expect(group.classList.contains('flex-nowrap')).toBe(true);
+        expect(line.classList.contains('flex-wrap')).toBe(false);
+        // The bar is out of the flow and sits on top of the toolbar, so opening it moves nothing.
+        expect(advanced.classList.contains('absolute')).toBe(true);
+        expect(advanced.classList.contains('bottom-full')).toBe(true);
+        expect(advanced.classList.contains('top-full')).toBe(false);
+        expect(toolbar.classList.contains('relative')).toBe(true);
+        // Its own stacking context keeps the bar from painting over other parts of the page, such as a drawer.
+        expect(advanced.closest('.message-composer')!.classList.contains('isolate')).toBe(true);
     });
 
-    it('keeps the basic buttons of the expanded toolbar as one block, so that the expanded controls wrap below it', () => {
-        toggleToolbar();
-        const group = fixture.nativeElement.querySelector('[data-testid="message-editor-toolbar"] [role="group"]') as HTMLElement;
+    describe('with a measured toolbar line', () => {
+        let measured: ComponentFixture<MessageEditorComponent>;
+        let measure: (lineWidth: number) => void;
+        // The buttons are 32 px wide without a gap. The test sets the width of the toolbar line, the height of the bar and the place of the toolbar.
+        const layout = { lineWidth: 1000, barHeight: 60, toolbarTop: 400 };
+        const is = (element: Element, testId: string) => element.matches(`[data-testid="${testId}"]`);
 
-        expect(group.classList.contains('contents')).toBe(false);
-        expect(group.classList.contains('flex-wrap')).toBe(true);
+        beforeEach(async () => {
+            const callbacks: (() => void)[] = [];
+            vi.stubGlobal(
+                'ResizeObserver',
+                class {
+                    constructor(callback: () => void) {
+                        callbacks.push(callback);
+                    }
+                    observe() {}
+                    disconnect() {}
+                },
+            );
+            Object.assign(layout, { lineWidth: 1000, barHeight: 60, toolbarTop: 400 });
+            vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+                return is(this, 'message-toolbar-toggle') ? 32 : 0;
+            });
+            vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+                return is(this, 'message-advanced-toolbar') ? layout.barHeight : 0;
+            });
+            vi.spyOn(Element.prototype, 'clientWidth', 'get').mockImplementation(function (this: Element) {
+                return is(this, 'message-toolbar-line') ? layout.lineWidth : 0;
+            });
+            vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+                return { top: is(this, 'message-editor-toolbar') ? layout.toolbarTop : 0, width: 0 } as DOMRect;
+            });
+            measured = TestBed.createComponent(MessageEditorComponent);
+            measured.componentRef.setInput('courseId', 1);
+            measured.detectChanges();
+            await measured.whenStable();
+            measure = (width) => {
+                layout.lineWidth = width;
+                callbacks.forEach((callback) => callback());
+                measured.detectChanges();
+            };
+        });
 
-        toggleToolbar();
+        afterEach(() => {
+            measured.destroy();
+            vi.restoreAllMocks();
+            vi.unstubAllGlobals();
+        });
 
-        expect(group.classList.contains('contents')).toBe(true);
+        const element = (testId: string) => measured.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement;
+        const toggleBar = () => {
+            element('message-toolbar-toggle').click();
+            // The place of the bar is decided after it has been rendered, and rendered again with that place.
+            measured.detectChanges();
+            measured.detectChanges();
+        };
+        const inLine = () => testIds(measured.nativeElement.querySelector('[data-testid="message-toolbar-line"] [role="group"]'));
+        const inBar = () => testIds(measured.nativeElement.querySelector('[data-testid="message-overflow-controls"]'));
+        const testIds = (container: HTMLElement | null) => Array.from(container?.querySelectorAll('button') ?? []).map((button) => button.getAttribute('data-testid'));
+        const all = [
+            'message-format-strong',
+            'message-format-em',
+            'message-format-ins',
+            'message-format-s',
+            'message-format-code',
+            'message-link-button',
+            'message-mention-button',
+            'message-reference-button',
+        ];
+
+        it('shows every item on the line when it is wide enough, and the bar has no overflow group', () => {
+            measure(1000);
+            expect(inLine()).toEqual(all);
+            expect(measured.nativeElement.querySelector('[data-testid="message-overflow-controls"]')).toBeNull();
+        });
+
+        it('moves the last items into the bar of further options when the line is too narrow, in order', () => {
+            // Room for the emoji, the more options button and five items.
+            measure(7 * 32);
+            expect(inLine()).toEqual(all.slice(0, 5));
+            expect(inBar()).toEqual(all.slice(5));
+
+            measure(3 * 32);
+            expect(inLine()).toEqual(all.slice(0, 1));
+            expect(inBar()).toEqual(all.slice(1));
+
+            measure(2 * 32);
+            expect(inLine()).toEqual([]);
+            expect(inBar()).toEqual(all);
+        });
+
+        it('keeps the overflowed items working from the bar and brings them back when the line grows', () => {
+            measure(7 * 32);
+            const bar = element('message-advanced-toolbar');
+            expect(bar.contains(element('message-link-button'))).toBe(true);
+            expect(bar.hidden).toBe(true);
+
+            toggleBar();
+            expect(bar.hidden).toBe(false);
+            expect(bar.querySelector('[data-testid="message-block-ul"]')).not.toBeNull();
+            expect(bar.querySelector('[data-testid="message-attachment-button"]')).not.toBeNull();
+
+            measure(1000);
+            expect(inLine()).toEqual(all);
+            expect(bar.querySelector('[data-testid="message-link-button"]')).toBeNull();
+        });
+
+        it('keeps every item while the toolbar has no width, for example in a hidden tab', () => {
+            measure(7 * 32);
+            measure(0);
+            expect(inLine()).toEqual(all);
+        });
+
+        it('shows the longer hint below the editor on a wide line and the short one on a narrow line', () => {
+            const hint = () => element('message-editor-hint').textContent!.trim();
+            measure(1000);
+            expect(hint()).toBe('artemisApp.communication.formattedEditor.hint');
+            measure(300);
+            expect(hint()).toBe('artemisApp.communication.formattedEditor.hintShort');
+            measure(479);
+            expect(hint()).toBe('artemisApp.communication.formattedEditor.hintShort');
+            measure(480);
+            expect(hint()).toBe('artemisApp.communication.formattedEditor.hint');
+            measure(0);
+            expect(hint()).toBe('artemisApp.communication.formattedEditor.hint');
+        });
+
+        it('opens the bar above the toolbar, and below it when the ancestors would clip it there', () => {
+            const bar = element('message-advanced-toolbar');
+            // Plenty of room above the toolbar.
+            toggleBar();
+            expect(bar.classList.contains('bottom-full')).toBe(true);
+            expect(bar.classList.contains('top-full')).toBe(false);
+            toggleBar();
+
+            // A 60 px bar plus its margin does not fit into the 20 px between the toolbar and the top of what the ancestors show.
+            layout.toolbarTop = 20;
+            toggleBar();
+            expect(bar.classList.contains('top-full')).toBe(true);
+            expect(bar.classList.contains('bottom-full')).toBe(false);
+            toggleBar();
+
+            // It goes back above when there is room again.
+            layout.toolbarTop = 400;
+            toggleBar();
+            expect(bar.classList.contains('bottom-full')).toBe(true);
+        });
+    });
+
+    describe('hint of the empty editor', () => {
+        const placeholder = () => fixture.nativeElement.querySelector('[data-testid="message-editor-placeholder"]') as HTMLElement | null;
+
+        async function emptyEditor(inputs: Record<string, unknown> = {}) {
+            fixture.componentRef.setInput('content', '');
+            for (const [name, value] of Object.entries(inputs)) fixture.componentRef.setInput(name, value);
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+
+        function type(text: string) {
+            editable.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: text, bubbles: true, cancelable: true }));
+            editable.textContent = text;
+            editable.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: text, bubbles: true }));
+            fixture.detectChanges();
+        }
+
+        it('names the conversation in the light grey hint of the empty editor and leaves it out without a name', async () => {
+            await emptyEditor();
+            expect(placeholder()).toBeNull();
+            expect(editable.hasAttribute('aria-placeholder')).toBe(false);
+
+            await emptyEditor({ conversationName: 'Katja' });
+            expect(placeholder()!.textContent).toContain('artemisApp.communication.formattedEditor.placeholder');
+            expect(placeholder()!.classList.contains('message-editor-muted')).toBe(true);
+        });
+
+        it('gives screen readers the hint as the placeholder of the editor instead of as loose text', async () => {
+            await emptyEditor({ conversationName: 'Katja' });
+            expect(placeholder()!.getAttribute('aria-hidden')).toBe('true');
+            expect(editable.getAttribute('aria-placeholder')).toContain('artemisApp.communication.formattedEditor.placeholder');
+
+            fixture.componentRef.setInput('content', 'Hello');
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(editable.hasAttribute('aria-placeholder')).toBe(false);
+        });
+
+        it('words the hint for a reply in a thread, and has none while an existing message is edited', async () => {
+            await emptyEditor({ conversationName: 'Katja', reply: true });
+            expect(placeholder()!.textContent).toContain('artemisApp.communication.formattedEditor.replyPlaceholder');
+
+            await emptyEditor({ conversationName: 'Katja', reply: false, editing: true });
+            expect(placeholder()).toBeNull();
+        });
+
+        it('hides the hint with the first content and shows it again when the editor is emptied, also from an external reset', async () => {
+            await emptyEditor({ conversationName: 'Katja' });
+            expect(placeholder()).not.toBeNull();
+
+            fixture.componentRef.setInput('content', 'Hello');
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(placeholder()).toBeNull();
+
+            fixture.componentRef.setInput('content', '');
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(placeholder()).not.toBeNull();
+        });
+
+        it.each([' ', '\n', '  \n  '])('hides the hint for content that only looks empty: %j', async (content) => {
+            await emptyEditor({ conversationName: 'Katja' });
+            expect(placeholder()).not.toBeNull();
+
+            fixture.componentRef.setInput('content', content);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(placeholder()).toBeNull();
+        });
+
+        it('hides the hint while typing and while a composition is pending', async () => {
+            await emptyEditor({ conversationName: 'Katja' });
+            editable.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+            fixture.detectChanges();
+            expect(placeholder()).toBeNull();
+            editable.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+            fixture.detectChanges();
+            expect(placeholder()).not.toBeNull();
+
+            type('H');
+            expect(placeholder()).toBeNull();
+        });
+    });
+
+    it('keeps the full hint in the tooltip of the help button and in the description of the editor', () => {
+        const hint = fixture.nativeElement.querySelector('[data-testid="message-editor-hint"]') as HTMLElement;
+        const help = fixture.nativeElement.querySelector('[data-testid="message-editor-help"]') as HTMLButtonElement;
+
+        // The visible text is one of two short sentences, and screen readers get the full text as the description of the editor instead.
+        expect(hint.textContent!.trim()).toMatch(/formattedEditor\.hint(Short)?$/);
+        expect(hint.getAttribute('aria-hidden')).toBe('true');
+        const description = fixture.nativeElement.querySelector(`[id="${editable.getAttribute('aria-describedby')}"]`) as HTMLElement;
+        expect(description.textContent).toContain('artemisApp.communication.formattedEditor.hintDetails');
+        expect(help.getAttribute('aria-label')).toBe('artemisApp.communication.formattedEditor.help');
+        expect(fixture.debugElement.queryAll(By.directive(TumAetUiTooltipDirective)).map((debugElement) => debugElement.nativeElement)).toContain(help);
     });
 
     it('keeps advanced control IDs unique for simultaneously mounted composers', () => {
