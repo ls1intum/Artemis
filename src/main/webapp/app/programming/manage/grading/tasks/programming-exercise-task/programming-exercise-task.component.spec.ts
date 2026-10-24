@@ -311,6 +311,21 @@ describe('ProgrammingExerciseTaskComponent', () => {
             expect(comp.updateTasksEvent.emit).toHaveBeenCalled();
         });
 
+        it('should remove the bonus points of every test when the bonus points of the task are cleared', async () => {
+            const testCases = [
+                { testName: 'test1', weight: 1, bonusPoints: 1.5 },
+                { testName: 'test2', weight: 1, bonusPoints: 2 },
+            ];
+            const task = { taskName: 'Task1', bonusPoints: 3.5, testCases, stats: undefined } as ProgrammingExerciseTask;
+            await render(task);
+
+            typeIntoInputNumber(bonusPointsInput('Task1-bonusPoints'), '');
+
+            expect(task.bonusPoints).toBeUndefined();
+            expect(testCases[0]).toEqual(expect.objectContaining({ bonusPoints: 0, changed: true }));
+            expect(testCases[1]).toEqual(expect.objectContaining({ bonusPoints: 0, changed: true }));
+        });
+
         it('should mark a test as changed when its bonus points are typed', async () => {
             const testCase = { testName: 'test1', weight: 1, bonusPoints: 1, changed: false };
             const task = { taskName: 'Task1', testCases: [testCase], stats: undefined } as ProgrammingExerciseTask;

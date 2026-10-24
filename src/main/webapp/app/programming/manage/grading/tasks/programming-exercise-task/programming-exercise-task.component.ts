@@ -72,9 +72,8 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
             if (task.bonusMultiplier !== undefined) {
                 testCase.bonusMultiplier = task.bonusMultiplier;
             }
-            if (task.bonusPoints !== undefined) {
-                testCase.bonusPoints = task.bonusPoints / testCasesAmount;
-            }
+            // An emptied field has no value, which means no bonus: the tests lose theirs as well.
+            testCase.bonusPoints = (task.bonusPoints ?? 0) / testCasesAmount;
             if (task.visibility !== undefined) {
                 testCase.visibility = task.visibility;
             }

@@ -33,6 +33,7 @@
                     <jhi-points-input
                         inputId="score"
                         class="score-input"
+                        [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
                         fluid
                         [(ngModel)]="shortAnswerQuestion.points"
                         (ngModelChange)="questionUpdated.emit()"

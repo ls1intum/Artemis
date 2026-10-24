@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -7,12 +7,13 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 
 @Component({
-    template: `<jhi-points-input inputId="points" name="points" [min]="min" [max]="max" [formControl]="control" />`,
+    template: `<jhi-points-input inputId="points" name="points" showButtons [step]="0.5" [snapToStep]="snapToStep()" [min]="min" [max]="max" [formControl]="control" />`,
     imports: [PointsInputComponent, ReactiveFormsModule],
 })
 class ReactiveHostComponent {
     min: number | undefined = 1;
     max: number | undefined = 100;
+    readonly snapToStep = signal(false);
     readonly control = new FormControl<number | undefined>(undefined);
 }
 
@@ -125,6 +126,24 @@ describe('PointsInputComponent', () => {
             input().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
 
             expect(host.control.touched).toBe(true);
+        });
+
+        it('should add the step to an off-grid value with the arrow key unless snapToStep is set', async () => {
+            typeIntoInputNumber(input(), '1.3', { leave: false });
+            input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+            await settle();
+            expect(host.control.value).toBe(1.8);
+
+            host.snapToStep.set(true);
+            await settle();
+            typeIntoInputNumber(input(), '1.3', { leave: false });
+            input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+            await settle();
+            expect(host.control.value).toBe(1.5);
+            typeIntoInputNumber(input(), '1.3', { leave: false });
+            input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+            await settle();
+            expect(host.control.value).toBe(1);
         });
 
         it('should use the same input as every other points input', () => {

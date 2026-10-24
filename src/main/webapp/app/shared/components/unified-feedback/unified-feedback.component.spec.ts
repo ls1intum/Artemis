@@ -404,6 +404,27 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackCredits()).toBe(1);
     });
 
+    it('should step an off-grid typed value to the next half point in the direction of travel without leaving the field', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        await settle();
+
+        typeIntoInputNumber(creditsInputElement(), '1.3', { leave: false });
+        pressArrow('ArrowUp');
+        expect(component.feedbackCredits()).toBe(1.5);
+
+        typeIntoInputNumber(creditsInputElement(), '1.3', { leave: false });
+        pressArrow('ArrowDown');
+        expect(component.feedbackCredits()).toBe(1);
+
+        typeIntoInputNumber(creditsInputElement(), '-1.3', { leave: false });
+        pressArrow('ArrowUp');
+        expect(component.feedbackCredits()).toBe(-1);
+        typeIntoInputNumber(creditsInputElement(), '-1.3', { leave: false });
+        pressArrow('ArrowDown');
+        expect(component.feedbackCredits()).toBe(-1.5);
+    });
+
     it('should step the credits below zero because negative credits are valid', async () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(0);

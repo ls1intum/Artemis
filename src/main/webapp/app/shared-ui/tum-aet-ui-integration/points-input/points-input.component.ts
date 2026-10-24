@@ -32,6 +32,8 @@ export class PointsInputComponent implements ControlValueAccessor, Validator {
     readonly max = input<number>();
     /** Increment of the arrow keys and of the step buttons. */
     readonly step = input(1, { transform: numberAttribute });
+    /** Steps a value that is not a multiple of the step to the next multiple in the direction of travel instead of adding the step to it. */
+    readonly snapToStep = input(false, { transform: booleanAttribute });
     readonly showButtons = input(false, { transform: booleanAttribute });
     readonly fluid = input(false, { transform: booleanAttribute });
     readonly invalid = input(false, { transform: booleanAttribute });
