@@ -263,6 +263,9 @@ public class TutorParticipationService {
         }
 
         ExampleSubmission originalExampleSubmission = exampleSubmissionFromDatabase.get();
+        if (originalExampleSubmission.getExercise() == null || !exercise.getId().equals(originalExampleSubmission.getExercise().getId())) {
+            throw new BadRequestAlertException("The example submission does not belong to this exercise", ENTITY_NAME, "exampleSubmissionExerciseMismatch");
+        }
 
         // Cannot start an example submission if the tutor hasn't participated in the exercise yet
         if (existingTutorParticipation.getStatus() == NOT_PARTICIPATED) {

@@ -30,6 +30,7 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
@@ -178,6 +180,9 @@ public class IrisMessageResource {
     @ManualConfig
     public ResponseEntity<Void> sendTutorSuggestionMessage(@PathVariable Long sessionId) throws URISyntaxException {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+        if (!(session instanceof IrisTutorSuggestionSession)) {
+            throw new AccessForbiddenException("Only tutor suggestion sessions can request a tutor suggestion");
+        }
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, userRepository.getUser());
 

@@ -190,6 +190,9 @@ public class ParticipationRetrievalResource {
         else if (exercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         }
+        else {
+            throw new AccessForbiddenException("The exercise belongs to neither a course nor an exam");
+        }
 
         boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
         Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search);

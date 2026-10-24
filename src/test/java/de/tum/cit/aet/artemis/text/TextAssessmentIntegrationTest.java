@@ -1062,14 +1062,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void getExampleResultForTutor_wrongExerciseId() throws Exception {
+    void getExampleResultForTutor_unknownExerciseId() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
         final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
         participationUtilService.addExampleSubmission(exampleSubmission);
         long randomId = 23454;
-        ResultDTO result = request.get("/api/text/exercises/" + randomId + "/submissions/" + textSubmission.getId() + "/example-result", HttpStatus.BAD_REQUEST, ResultDTO.class);
+        ResultDTO result = request.get("/api/text/exercises/" + randomId + "/submissions/" + textSubmission.getId() + "/example-result", HttpStatus.FORBIDDEN, ResultDTO.class);
 
         assertThat(result).as("result found").isNull();
     }

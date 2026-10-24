@@ -211,6 +211,12 @@ public abstract class AssessmentResource {
     protected ResponseEntity<Void> cancelAssessment(long submissionId, @Nullable Long resultId) {
         log.debug("REST request to cancel assessment of submission {} and result {}", submissionId, resultId);
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
+        // The caller has to be a tutor of the course before anything about the assessment state is revealed.
+        User user = userRepository.getUserWithAuthorities();
+        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        checkAuthorization(exercise, user);
         // Release the result the caller named. A submission can hold one result per correction round, and the caller is
         // the only one that knows which round its button belongs to: resolving it here always released the newest round,
         // so "cancel assessment of correction round 1" released round 2 instead and round 1 stayed locked (#13396).
@@ -251,11 +257,6 @@ public abstract class AssessmentResource {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
-        User user = userRepository.getUserWithAuthorities();
-        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-        long exerciseId = studentParticipation.getExercise().getId();
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         boolean isAssessorOfResult = resultForAuthorization.getAssessor() != null && user.getId().equals(resultForAuthorization.getAssessor().getId());
         if (!(isAtLeastInstructor || isAssessorOfResult)) {
@@ -272,11 +273,11 @@ public abstract class AssessmentResource {
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = submission.getParticipation();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         if (!participation.getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in path does not match the id of the participation to submission " + submissionId + "!", "Participation", "400");
         }
-        Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         if (!submission.getResults().contains(result)) {
             throw new BadRequestAlertException("The specified result does not belong to the submission.", "Result", "invalidResultId");

@@ -493,6 +493,10 @@ public class StudentExamResource {
             throw new ConflictException("Current user is not the user of the test run", "StudentExam", "userMismatch");
         }
 
+        if (!testRun.isTestRun() || !examId.equals(testRun.getExam().getId())) {
+            throw new AccessForbiddenException("The requested student exam is not a test run of this exam");
+        }
+
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
         prepareStudentExamForConduction(request, currentUser, testRun);
 
@@ -759,6 +763,11 @@ public class StudentExamResource {
         log.info("REST request to delete the test run with id {}", testRunId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        StudentExam testRun = studentExamRepository.findById(testRunId).orElseThrow(() -> new EntityNotFoundException("StudentExam", testRunId));
+        if (!testRun.isTestRun() || !examId.equals(testRun.getExam().getId())) {
+            throw new AccessForbiddenException("The requested student exam is not a test run of this exam");
+        }
 
         examDeletionService.deleteTestRun(testRunId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, testRunId.toString())).build();

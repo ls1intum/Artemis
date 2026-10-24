@@ -154,6 +154,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
 
         User user = userRepository.getUserWithAuthorities();
+        var programmingExercise = (ProgrammingExercise) participation.getExercise();
+        checkAuthorization(programmingExercise, user);
 
         // Write the manual result the tutor loaded. A submission can hold several manual results (correction rounds, overlapping
         // lock requests), and the feedback ids in the request only belong to the loaded one. Without an id, the most recent one is used.
@@ -179,9 +181,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // The correction round is server-owned state stamped at lock time; the entity binding used to smuggle it back
         // in from the client echo. Copy it from the stored result so the replace-by-id save cannot wipe it.
         newManualResult.setCorrectionRound(existingManualResult.getCorrectionRound());
-
-        var programmingExercise = (ProgrammingExercise) participation.getExercise();
-        checkAuthorization(programmingExercise, user);
 
         final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(programmingExercise, user);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(existingManualResult, programmingExercise, participation, user, isAtLeastInstructor)) {

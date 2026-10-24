@@ -3374,6 +3374,33 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteTestRunRejectsStudentExamThatIsNoTestRun() throws Exception {
+        var studentExam = examUtilService.addStudentExam(exam1);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-runs/" + studentExam.getId(), HttpStatus.FORBIDDEN);
+        assertThat(studentExamRepository.existsById(studentExam.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteTestRunRejectsTestRunOfAnotherExam() throws Exception {
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var otherExam = examUtilService.addExam(course1);
+        var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam1.getExerciseGroups());
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + otherExam.getId() + "/test-runs/" + testRun.getId(), HttpStatus.FORBIDDEN);
+        assertThat(studentExamRepository.existsById(testRun.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetTestRunForConductionRejectsTestRunOfAnotherExam() throws Exception {
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var otherExam = examUtilService.addExam(course1);
+        var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam1.getExerciseGroups());
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + otherExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateTestRun() throws Exception {
         createTestRun();
     }
