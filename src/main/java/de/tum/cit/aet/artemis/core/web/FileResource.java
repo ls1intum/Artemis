@@ -432,6 +432,10 @@ public class FileResource {
     public ResponseEntity<byte[]> getProfilePicture(@PathVariable Long userId) {
         log.debug("REST request to get profile picture for user : {}", userId);
         User user = userRepository.findByIdElseThrow(userId);
+        // A client can still hold the URL of a picture the user has removed since
+        if (user.getImageUrl() == null) {
+            throw new EntityNotFoundException("ProfilePicture", userId);
+        }
         return responseEntityForFilePath(new FileSystemLocation.ProfilePicture(user.getImageUrl()).path());
     }
 
