@@ -249,6 +249,21 @@ describe('Formatted message composer', () => {
         buttons.forEach((button) => expect(button.hasAttribute('title')).toBe(false));
     });
 
+    it('lets the toolbar buttons wrap as one row instead of as separately wrapping groups', () => {
+        toggleToolbar();
+        const toolbar = fixture.nativeElement.querySelector('[data-testid="message-editor-toolbar"]') as HTMLElement;
+        const buttons = Array.from(toolbar.querySelectorAll('button')) as HTMLButtonElement[];
+
+        // A group that wraps by itself moves as one block, so its buttons can take a line of their own while the room next to it stays unused.
+        const wrappingParents = new Set(buttons.map((button) => button.parentElement!).filter((parent) => parent.classList.contains('flex-wrap')));
+
+        // Only the wrapper that anchors the emoji and resource pickers keeps its own box.
+        expect(wrappingParents.size).toBe(1);
+        for (const group of Array.from(toolbar.querySelectorAll('[role="group"]'))) {
+            expect(group.classList.contains('contents')).toBe(true);
+        }
+    });
+
     it('keeps advanced control IDs unique for simultaneously mounted composers', () => {
         const other = TestBed.createComponent(MessageEditorComponent);
         try {

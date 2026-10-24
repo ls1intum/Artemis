@@ -196,6 +196,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly targetTimestamp = computed(() => this.matchedDeepLink()?.timestamp);
     readonly targetPdfPage = computed(() => this.matchedDeepLink()?.page);
 
+    // The positions the student had reached when the combined view and the split layout swapped, which recreated the video player and the PDF viewer.
+    private readonly resumeVideoTimestamp = signal<number | undefined>(undefined);
+    private readonly resumePdfPage = signal<number | undefined>(undefined);
+    readonly videoInitialTimestamp = computed(() => this.resumeVideoTimestamp() ?? this.targetTimestamp());
+    readonly pdfInitialPage = computed(() => this.resumePdfPage() ?? this.targetPdfPage());
+
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
@@ -406,6 +412,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private applyDeepLink(deepLink: LectureDeepLink): void {
+        // A new target takes precedence over the position the viewers resumed from.
+        this.resumeVideoTimestamp.set(undefined);
+        this.resumePdfPage.set(undefined);
         const pdfViewer = this.pdfViewer();
         const pageShownBefore = pdfViewer?.getCurrentPage();
 
@@ -849,6 +858,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     protected onFullscreenChange(isFullscreen: boolean): void {
+        // The viewers still exist here: they are destroyed by the change detection that follows the layout switch.
+        this.rememberMediaPositions();
         this.fullscreenState.set(isFullscreen);
         if (!isFullscreen) {
             // The view was closed before a point-out could be applied, so its target is now unreachable.
@@ -859,6 +870,21 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // The toggle it explains goes away with the view; a later reopen starts without a stale explanation.
             this.syncDisabledByPointOutState.set(undefined);
         }
+    }
+
+    /**
+     * Fullscreen switches a unit with a video and a PDF between the combined view and the split layout, and each layout
+     * creates its own video player and PDF viewer. The recreated ones start where the student stopped.
+     */
+    private rememberMediaPositions(): void {
+        if (!this.hasRenderableVideo() || !this.hasPdf()) {
+            return;
+        }
+        const page = this.pdfViewer()?.getCurrentPage();
+        this.resumeVideoTimestamp.set(this.activePlayer()?.getCurrentTime());
+        this.resumePdfPage.set(page);
+        // The new viewer reports the page it starts on, which must not move the video away from where it resumes. It reports nothing for the first page.
+        this.pendingPdfTargetPage = page !== undefined && page > 1 ? page : undefined;
     }
 
     protected onSynchronizationToggleChange(enabled: boolean): void {

@@ -2,11 +2,14 @@ package de.tum.cit.aet.artemis.athena.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -142,6 +145,47 @@ class AthenaRepositoryExportServiceUnitTest {
 
         assertThat(filesContent).isEqualTo(expected);
         verify(repositoryService).getFilesContentFromBareRepositoryForLastCommit(participation.getVcsRepositoryUri());
+    }
+
+    @Test
+    void getStudentRepositoryFilesContentShouldUseLatestCommitForPracticeParticipationAfterDueDate() throws IOException {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        participation.setExercise(programmingExercise);
+        participation.setPracticeMode(true);
+        participation.setRepositoryUri(new LocalVCRepositoryUri(URI.create("http://localhost"), "TEST", "TEST-practice-student").getURI().toString());
+
+        when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
+        when(programmingSubmissionRepository.findByIdElseThrow(SUBMISSION_ID)).thenReturn(programmingSubmission);
+        when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+
+        var expected = Map.of("Test.java", "class Test {}");
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(participation.getVcsRepositoryUri())).thenReturn(expected);
+
+        Map<String, String> filesContent = athenaRepositoryExportService.getStudentRepositoryFilesContent(EXERCISE_ID, SUBMISSION_ID);
+
+        assertThat(filesContent).isEqualTo(expected);
+        verify(repositoryService).getFilesContentFromBareRepositoryForLastCommit(participation.getVcsRepositoryUri());
+        verify(repositoryService, never()).getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(any(LocalVCRepositoryUri.class), any(ZonedDateTime.class));
+    }
+
+    @Test
+    void getStudentRepositoryFilesContentShouldUseLastCommitBeforeDueDateForGradedParticipation() throws IOException {
+        ZonedDateTime dueDate = ZonedDateTime.now().minusDays(1);
+        programmingExercise.setDueDate(dueDate);
+        participation.setExercise(programmingExercise);
+        participation.setRepositoryUri(new LocalVCRepositoryUri(URI.create("http://localhost"), "TEST", "TEST-student").getURI().toString());
+
+        when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
+        when(programmingSubmissionRepository.findByIdElseThrow(SUBMISSION_ID)).thenReturn(programmingSubmission);
+        when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+
+        var expected = Map.of("Test.java", "class Test {}");
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(participation.getVcsRepositoryUri(), dueDate)).thenReturn(expected);
+
+        Map<String, String> filesContent = athenaRepositoryExportService.getStudentRepositoryFilesContent(EXERCISE_ID, SUBMISSION_ID);
+
+        assertThat(filesContent).isEqualTo(expected);
+        verify(repositoryService, never()).getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class));
     }
 
     @Test

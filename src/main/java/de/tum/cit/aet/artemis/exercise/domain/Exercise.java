@@ -913,7 +913,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * Validates score settings
-     * 1. The maxScore needs to be greater than 0, except for not included programming exercises
+     * 1. The maxScore needs to be greater than 0 for every exercise, also for exercises that are not included in the score, because the points are the weight of the exercise
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
      */
     public void validateScoreSettings() {
@@ -922,16 +922,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
         }
 
-        if (this instanceof ProgrammingExercise && getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
-            if (getMaxPoints() == null) {
-                setMaxPoints(0.0);
-            }
-            else if (getMaxPoints() < 0) {
-                throw new BadRequestAlertException("The max points must not be negative", "Exercise", "maxScoreInvalid");
-            }
-        }
-        // Check if max score is set for exercises that contribute to the score calculation.
-        else if (getMaxPoints() == null || getMaxPoints() <= 0) {
+        if (getMaxPoints() == null || getMaxPoints() <= 0) {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 

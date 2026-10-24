@@ -40,6 +40,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
+import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { WritableSignal, signal } from '@angular/core';
 
 // Mock ResizeObserver for VideoPlayerComponent
@@ -140,6 +141,62 @@ describe('AttachmentVideoUnitComponent', () => {
 
         component['onFullscreenChange'](false);
         expect(component.isFullscreen()).toBe(false);
+    });
+
+    describe('fullscreen change of a unit with a video and a PDF', () => {
+        function stubViewers(currentTime: number | undefined, currentPage: number) {
+            Object.defineProperty(component, 'pdfViewer', { value: () => ({ getCurrentPage: () => currentPage }), writable: true, configurable: true });
+            Object.defineProperty(component, 'videoPlayer', { value: () => ({ getCurrentTime: () => currentTime }), writable: true, configurable: true });
+        }
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, videoSource: 'https://example.com/video.mp4' });
+        });
+
+        it.each([true, false])('starts the recreated video player and PDF viewer where the student stopped when fullscreen changes to %s', (isFullscreen) => {
+            stubViewers(42, 3);
+
+            component['onFullscreenChange'](isFullscreen);
+
+            expect(component.videoInitialTimestamp()).toBe(42);
+            expect(component.pdfInitialPage()).toBe(3);
+        });
+
+        it('does not let the page the recreated PDF viewer reports on start move the video', () => {
+            stubViewers(42, 3);
+
+            component['onFullscreenChange'](true);
+
+            expect(component['pendingPdfTargetPage']).toBe(3);
+        });
+
+        it('waits for no page report when the PDF viewer restarts on its first page, because it reports none', () => {
+            stubViewers(42, 1);
+
+            component['onFullscreenChange'](true);
+
+            expect(component['pendingPdfTargetPage']).toBeUndefined();
+        });
+
+        it('lets a new deep link take precedence over the position the viewers resumed from', () => {
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+
+            component['applyDeepLink']({} as LectureDeepLink);
+
+            expect(component.videoInitialTimestamp()).toBeUndefined();
+            expect(component.pdfInitialPage()).toBeUndefined();
+        });
+
+        it('keeps the initial positions of a unit without a PDF, whose layout does not change', () => {
+            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, attachment: undefined, videoSource: 'https://example.com/video.mp4' });
+            stubViewers(42, 3);
+
+            component['onFullscreenChange'](true);
+
+            expect(component.videoInitialTimestamp()).toBeUndefined();
+            expect(component.pdfInitialPage()).toBeUndefined();
+        });
     });
 
     it('should get file name', () => {
