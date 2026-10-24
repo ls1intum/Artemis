@@ -609,15 +609,26 @@ describe('QuizQuestionListEditExistingComponent question preview', () => {
         expect(document.body.querySelector('jhi-quiz-question-preview')).not.toBeNull();
     });
 
-    it('should select the previewed question for the import and close the dialog when it is added', () => {
+    it('should label the preview button of a question with its title', () => {
+        const button = fixture.nativeElement.querySelector('[data-testid="preview-question-1"] button') as HTMLButtonElement;
+
+        expect(button.getAttribute('aria-label')).toBe('artemisApp.quizExercise.previewQuestion');
+    });
+
+    it('should select the previewed question for the import and close the dialog when it is added', async () => {
         fixture.nativeElement.querySelector('[data-testid="preview-question-1"] button').click();
         fixture.detectChanges();
 
         overlayElement('question-preview-add')!.querySelector('button')!.click();
         fixture.detectChanges();
+        // ngModel writes the checkbox in a microtask
+        await fixture.whenStable();
 
         expect(question.exportQuiz).toBe(true);
         expect(otherQuestion.exportQuiz).toBe(false);
+        // the row of the question shows it as ticked, the other row does not
+        expect((fixture.nativeElement.querySelector('#cbExportQuizQuestion1') as HTMLInputElement).checked).toBe(true);
+        expect((fixture.nativeElement.querySelector('#cbExportQuizQuestion2') as HTMLInputElement).checked).toBe(false);
         expect(component.previewVisible()).toBe(false);
         expect(overlayElement('question-preview-add')).toBeNull();
         expect(component.previewQuestion()).toBeUndefined();

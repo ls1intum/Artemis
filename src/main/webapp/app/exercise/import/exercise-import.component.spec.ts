@@ -609,6 +609,54 @@ describe('ExerciseImportComponent template', () => {
             expect(dialogRefCloseSpy).not.toHaveBeenCalled();
         });
 
+        it('should give the focus back to the preview button of the row when the preview is closed', () => {
+            showRows([row]);
+            clickPreview(1);
+            expect(overlayElement('exercise-import-preview')).not.toBeNull();
+
+            overlayElement('exercise-import-preview-close')!.querySelector('button')!.click();
+            fixture.detectChanges();
+
+            expect(overlayElement('exercise-import-preview')).toBeNull();
+            expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[data-testid="preview-exercise-1"] button'));
+        });
+
+        it('should label the preview button of the row with the title of the quiz', () => {
+            showRows([row]);
+
+            const button = fixture.nativeElement.querySelector('[data-testid="preview-exercise-1"] button') as HTMLButtonElement;
+            expect(button.getAttribute('aria-label')).toBe('artemisApp.exercise.import.preview.buttonLabel');
+        });
+
+        it('should not alert about a failed preview that was requested by a component that is gone', () => {
+            const response = new Subject<HttpResponse<QuizExercise>>();
+            findStub.mockReturnValue(response);
+            const alertErrorStub = vi.spyOn(TestBed.inject(AlertService), 'error');
+            showRows([row]);
+            clickPreview(1);
+
+            fixture.destroy();
+            response.error(new HttpErrorResponse({ status: 500 }));
+
+            expect(alertErrorStub).not.toHaveBeenCalled();
+        });
+
+        it('should stop handling Escape for the preview when the component is destroyed while the preview is open', () => {
+            const outerEscapeListener = vi.fn();
+            document.addEventListener('keydown', outerEscapeListener);
+            try {
+                showRows([row]);
+                clickPreview(1);
+                fixture.destroy();
+
+                document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+                expect(outerEscapeListener).toHaveBeenCalledOnce();
+            } finally {
+                document.removeEventListener('keydown', outerEscapeListener);
+            }
+        });
+
         it('should not let Escape reach the import dialog while the preview is open', () => {
             // The PrimeNG dialog hosting the import closes on a document keydown listener, which this one stands in for.
             const importDialogEscapeListener = vi.fn();

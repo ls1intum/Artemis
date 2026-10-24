@@ -79,9 +79,11 @@
                                     [icon]="faEye"
                                     [loading]="previewLoadingId() === exercise.id"
                                     [disabled]="previewLoadingId() !== undefined"
-                                    [ariaLabel]="'entity.action.preview' | artemisTranslate"
+                                    [ariaLabel]="'artemisApp.exercise.import.preview.buttonLabel' | artemisTranslate: { title: exercise.title }"
+                                    [tumAetUiTooltip]="'entity.action.preview' | artemisTranslate"
+                                    tumAetUiTooltipDescribesHost="false"
                                     [attr.data-testid]="'preview-exercise-' + exercise.id"
-                                    (clicked)="openPreview(exercise)"
+                                    (clicked)="openPreview(exercise, $event)"
                                 />
                             }
                             <jhi-button (onClick)="selectImport(exercise)" class="import" [title]="'artemisApp.exercise.import.table.doImport'" />
@@ -99,10 +101,10 @@
     [(visible)]="previewVisible"
     [header]="'artemisApp.exercise.import.preview.title' | artemisTranslate: { title: preview()?.quiz.title }"
     size="large"
-    (hidden)="preview.set(undefined)"
+    (hidden)="onPreviewHidden()"
 >
     @if (preview(); as current) {
-        <div class="flex flex-col gap-4" data-testid="exercise-import-preview">
+        <div class="flex flex-col gap-4!" data-testid="exercise-import-preview">
             <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm" data-testid="exercise-import-preview-summary">
                 <span>
                     <span class="font-semibold" jhiTranslate="artemisApp.quizExercise.totalPoints"></span>:

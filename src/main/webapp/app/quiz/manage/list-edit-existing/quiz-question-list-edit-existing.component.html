@@ -156,7 +156,9 @@
                                                 variant="outlined"
                                                 size="small"
                                                 [icon]="faEye"
-                                                [ariaLabel]="'entity.action.preview' | artemisTranslate"
+                                                [ariaLabel]="'artemisApp.quizExercise.previewQuestion' | artemisTranslate: { title: question.title }"
+                                                [tumAetUiTooltip]="'entity.action.preview' | artemisTranslate"
+                                                tumAetUiTooltipDescribesHost="false"
                                                 [attr.data-testid]="'preview-question-' + question.id"
                                                 (clicked)="openPreview(question)"
                                             />

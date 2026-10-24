@@ -6,7 +6,8 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 
 /**
- * Read-only rendering of one quiz question as a student would see it, without any answer state.
+ * Rendering of one quiz question as a student would see it, starting without any answer.
+ * The question can be tried out like the preview of the quiz editor, but nothing is stored and the question itself is never changed.
  * Used by the import dialogs so that an instructor can look at a question or a whole quiz before importing it.
  */
 @Component({

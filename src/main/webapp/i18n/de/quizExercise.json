@@ -199,6 +199,7 @@
             "selectQuizExercise": "Wähle eine Quiz Übung aus",
             "addSelectedQuestions": "Ausgewählte Fragen hinzufügen",
             "addThisQuestion": "Diese Frage hinzufügen",
+            "previewQuestion": "Vorschau der Frage {{ title }}",
             "status": "Status",
             "quizPointStatistic": "Quiz-Punkte-Statistik",
             "releaseDate": "Sichtbar ab",

@@ -1,5 +1,6 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, Injector, OnInit, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, Injector, OnInit, computed, effect, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
@@ -21,7 +22,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -58,6 +59,7 @@ const DEFAULT_SORT_COLUMN = 'ID';
         ArtemisDurationFromSecondsPipe,
         TumAetUiButtonComponent,
         TumAetUiDialogComponent,
+        TumAetUiTooltipDirective,
         QuizQuestionPreviewComponent,
     ],
 })
@@ -66,6 +68,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     private quizExerciseService = inject(QuizExerciseService);
     private alertService = inject(AlertService);
     private document = inject(DOCUMENT);
+    private previewDestroyRef = inject(DestroyRef);
     readonly ExerciseType = ExerciseType;
 
     exerciseType = input<ExerciseType | undefined>();
@@ -91,6 +94,8 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     readonly previewVisible = signal(false);
     /** The id of the exercise whose quiz is currently loaded for the preview. */
     readonly previewLoadingId = signal<number | undefined>(undefined);
+    /** The button that opened the preview. It is disabled while the quiz loads, so the dialog cannot restore the focus to it on its own. */
+    private previewTrigger?: HTMLElement;
     protected readonly previewTotalPoints = computed(() => (this.preview()?.quiz.quizQuestions ?? []).reduce((total, question) => total + (question.points ?? 0), 0));
 
     titleKey?: string;
@@ -202,27 +207,42 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
      * Only one quiz is loaded at a time.
      *
      * @param exercise the row the user wants to preview
+     * @param event    the click on the preview button of the row, whose button gets the focus back when the preview is closed
      */
-    openPreview(exercise: Exercise): void {
+    openPreview(exercise: Exercise, event?: MouseEvent): void {
         if (exercise.id === undefined || this.previewLoadingId() !== undefined) {
             return;
         }
+        this.previewTrigger = event?.currentTarget instanceof HTMLElement ? event.currentTarget : undefined;
         this.previewLoadingId.set(exercise.id);
-        this.quizExerciseService.find(exercise.id).subscribe({
-            next: (response) => {
-                this.previewLoadingId.set(undefined);
-                if (response.body) {
-                    this.preview.set({ exercise, quiz: response.body });
-                    this.previewVisible.set(true);
-                } else {
+        this.quizExerciseService
+            .find(exercise.id)
+            .pipe(takeUntilDestroyed(this.previewDestroyRef))
+            .subscribe({
+                next: (response) => {
+                    this.previewLoadingId.set(undefined);
+                    if (response.body) {
+                        this.preview.set({ exercise, quiz: response.body });
+                        this.previewVisible.set(true);
+                    } else {
+                        this.alertService.error('artemisApp.exercise.import.preview.loadFailed');
+                    }
+                },
+                error: () => {
+                    this.previewLoadingId.set(undefined);
                     this.alertService.error('artemisApp.exercise.import.preview.loadFailed');
-                }
-            },
-            error: () => {
-                this.previewLoadingId.set(undefined);
-                this.alertService.error('artemisApp.exercise.import.preview.loadFailed');
-            },
-        });
+                },
+            });
+    }
+
+    /**
+     * Forgets the previewed quiz once its dialog is gone and gives the focus back to the button that opened it.
+     * The dialog restores the focus on its own only to what was focused when it opened, and that is no longer the button.
+     */
+    protected onPreviewHidden(): void {
+        this.preview.set(undefined);
+        this.previewTrigger?.focus();
+        this.previewTrigger = undefined;
     }
 
     /**
