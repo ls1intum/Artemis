@@ -1,3 +1,6 @@
+import { By } from '@angular/platform-browser';
+import { InputNumber } from 'primeng/inputnumber';
+import { decimalSeparatorOf, typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApplicationRef } from '@angular/core';
@@ -305,6 +308,25 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.shortAnswerQuestion.text).toEqual(question.text);
 
         expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should accept a decimal number of points', () => {
+        const pointsInput = fixture.debugElement.query(By.directive(InputNumber)).componentInstance as InputNumber;
+
+        // PrimeNG only accepts a decimal separator while fraction digits are allowed
+        expect(pointsInput.maxFractionDigits).toBe(2);
+    });
+
+    it('should take the points that are typed with a decimal separator and two fraction digits', () => {
+        const pointsInput = fixture.debugElement.query(By.directive(InputNumber)).componentInstance as InputNumber;
+        const separator = decimalSeparatorOf(pointsInput);
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('input#score');
+
+        // the third fraction digit is dropped
+        typeIntoInputNumber(input, `5${separator}555`);
+
+        expect(input.value).toBe(`5${separator}55`);
+        expect(component.shortAnswerQuestion.points).toBe(5.55);
     });
 
     describe('telling the parent when validity changes', () => {

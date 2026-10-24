@@ -148,18 +148,18 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
-        void getTutorialGroupsForCourse_asEditor_shouldHidePrivateInformation() throws Exception {
+        void getTutorialGroupsForCourse_asEditor_shouldHidePrivateInformationExceptTutorNameAndRegistrationCount() throws Exception {
             var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
             assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroupSummaryDTO::id).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
                     firstCourseTutorialGroup2.getId());
-            for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
-                verifyPrivateInformationIsHidden(tutorialGroup);
+            for (var tutorialGroup : tutorialGroupsOfCourse) {
+                verifyOnlyTutorNameAndRegistrationCountAreShown(tutorialGroup);
             }
         }
 
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
-        void getTutorialGroupsForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup() throws Exception {
+        void getTutorialGroupsForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroupAndOverviewForOthers() throws Exception {
             var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
             assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroupSummaryDTO::id).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
                     firstCourseTutorialGroup2.getId());
@@ -168,7 +168,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
             var groupWhereNotTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.id().equals(firstCourseTutorialGroup2.getId())).findFirst()
                     .orElseThrow();
-            verifyPrivateInformationIsHidden(groupWhereNotTutor);
+            verifyOnlyTutorNameAndRegistrationCountAreShown(groupWhereNotTutor);
         }
 
         @Test
@@ -189,6 +189,17 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             assertThat(tutorialGroup.tutorialGroupSessions()).isNull();
             assertThat(tutorialGroup.numberOfRegisteredUsers()).isNull();
             assertThat(tutorialGroup.teachingAssistantName()).isNull();
+            assertThat(tutorialGroup.teachingAssistantId()).isNull();
+            assertThat(tutorialGroup.teachingAssistantImageUrl()).isNull();
+            assertThat(tutorialGroup.courseTitle()).isNull();
+        }
+
+        private void verifyOnlyTutorNameAndRegistrationCountAreShown(TutorialGroupSummaryDTO tutorialGroup) {
+            assertThat(tutorialGroup).isNotNull();
+            assertThat(tutorialGroup.teachingAssistantName()).isNotBlank();
+            assertThat(tutorialGroup.numberOfRegisteredUsers()).isNotNull();
+            assertThat(tutorialGroup.numberOfRegisteredUsers()).isPositive();
+            assertThat(tutorialGroup.tutorialGroupSessions()).isNull();
             assertThat(tutorialGroup.teachingAssistantId()).isNull();
             assertThat(tutorialGroup.teachingAssistantImageUrl()).isNull();
             assertThat(tutorialGroup.courseTitle()).isNull();
