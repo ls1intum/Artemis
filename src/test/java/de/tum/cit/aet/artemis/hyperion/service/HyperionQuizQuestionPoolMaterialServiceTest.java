@@ -80,9 +80,7 @@ class HyperionQuizQuestionPoolMaterialServiceTest {
         videoOnly.setId(6L);
         AttachmentVideoUnit withTranscript = new AttachmentVideoUnit();
         withTranscript.setId(1L);
-        when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(Set.of(9L))).thenReturn(Set.of(3L, 4L, 5L, 6L, 1L));
-        when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(Set.of(8L))).thenReturn(Set.of(4L));
-        when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(Set.of(7L))).thenReturn(Set.of());
+        when(competencyRelationApi.findLectureUnitIdsPerCompetency(Set.of(9L, 8L, 7L))).thenReturn(Map.of(9L, Set.of(3L, 4L, 5L, 6L, 1L), 8L, Set.of(4L)));
         when(lectureUnitApi.findAllByIds(anyCollection())).thenReturn(List.of(withContent, blank, online, videoOnly, withTranscript));
         when(transcriptionsApi.findByLectureUnit_Id(6L)).thenReturn(Optional.empty());
         when(transcriptionsApi.findByLectureUnit_Id(1L)).thenReturn(Optional.of(transcription(withTranscript, "Welcome back.")));

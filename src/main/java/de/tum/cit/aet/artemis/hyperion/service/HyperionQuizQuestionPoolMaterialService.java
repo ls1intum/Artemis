@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,9 +76,10 @@ public class HyperionQuizQuestionPoolMaterialService {
      */
     public Map<Long, List<LectureUnit>> findGroundableUnits(Collection<Long> competencyIds) {
         CompetencyRelationApi relationApi = competencyRelationApi.orElseThrow(() -> new ApiConditionNotPresentException(CompetencyRelationApi.class, "artemis.atlas.enabled"));
+        Map<Long, Set<Long>> linkedUnitIds = relationApi.findLectureUnitIdsPerCompetency(new HashSet<>(competencyIds));
         Map<Long, Set<Long>> unitIdsByCompetency = new LinkedHashMap<>();
         for (Long competencyId : competencyIds) {
-            unitIdsByCompetency.put(competencyId, relationApi.findLectureUnitIdsByCompetencyIds(Set.of(competencyId)));
+            unitIdsByCompetency.put(competencyId, linkedUnitIds.getOrDefault(competencyId, Set.of()));
         }
         Map<Long, LectureUnit> units = findUnits(unitIdsByCompetency.values().stream().flatMap(Set::stream).collect(Collectors.toSet()));
         Map<Long, List<LectureUnit>> result = new LinkedHashMap<>();
