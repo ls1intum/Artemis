@@ -3,7 +3,7 @@
 </div>
 
 <!-- As wide as Iris's settings page, so the two AI-feedback settings pages share the same content width. -->
-<div class="mx-auto flex max-w-[800px] flex-col gap-5 pt-4">
+<div class="mx-auto flex max-w-[800px] flex-col gap-12! pt-6!">
     @if (loadFailed()) {
         <button tumAetUiButton type="button" size="small" severity="secondary" variant="outlined" class="self-start" data-testid="athena-settings-retry" (click)="retryLoad()">
             <span jhiTranslate="entity.action.retry"></span>
@@ -12,7 +12,7 @@
     @for (feature of features; track feature.key) {
         @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
         <tumaet-ui-card>
-            <div class="flex items-start gap-3">
+            <div class="flex items-start gap-4!">
                 <tumaet-ui-toggle-switch
                     [inputId]="feature.testId + '-toggle'"
                     [ngModel]="feature.enabled()"
