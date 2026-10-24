@@ -20,7 +20,21 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faCheck, faCircleNotch, faDownload, faEraser, faFilePowerpoint, faFolderOpen, faPencil, faSync, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    faCheck,
+    faChevronDown,
+    faCircleInfo,
+    faCircleNotch,
+    faComment,
+    faDownload,
+    faEraser,
+    faFilePowerpoint,
+    faFolderOpen,
+    faPencil,
+    faSync,
+    faTimes,
+    faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -29,7 +43,18 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import {
+    CellTemplateRef,
+    ColumnDef,
+    TumAetUiButtonDirective,
+    TumAetUiDatePickerComponent,
+    TumAetUiInputDirective,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiTableComponent,
+    TumAetUiTableQueryEvent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -37,10 +62,8 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { TableLazyLoadEvent } from 'primeng/table';
-import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { ParticipationManagementDTO } from './participation-management-dto.model';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { ParticipationSearch } from 'app/foundation/pagination/pageable-table';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
@@ -58,11 +81,8 @@ import { Range } from 'app/foundation/util/utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { TooltipModule } from 'primeng/tooltip';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
@@ -72,9 +92,9 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 
 export enum FilterProp {
-    ALL = 'All',
     FAILED = 'Failed',
     NO_SUBMISSIONS = 'NoSubmissions',
+    VALID_SUBMISSIONS = 'ValidSubmissions',
     NO_PRACTICE = 'NoPracticeMode',
     SUCCESSFUL = 'Successful',
     UNSUCCESSFUL = 'Unsuccessful',
@@ -95,7 +115,12 @@ export enum FilterProp {
         ProgrammingExerciseInstructorSubmissionStateComponent,
         RouterLink,
         FaIconComponent,
-        TableViewComponent,
+        TumAetUiTableComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiTooltipDirective,
         CodeButtonComponent,
         TumAetUiDatePickerComponent,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
@@ -107,11 +132,8 @@ export enum FilterProp {
         TeamStudentsListComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
-        NgbPopover,
-        TooltipModule,
         TumAetUiTagComponent,
         ExternalSubmissionButtonComponent,
-        ExerciseActionButtonComponent,
         ExerciseScoresExportButtonComponent,
         ProgrammingAssessmentRepoExportButtonComponent,
         SubmissionExportButtonComponent,
@@ -135,6 +157,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly gradingService = inject(GradingService);
     private readonly websocketService = inject(WebsocketService);
 
+    protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faComment = faComment;
+    protected readonly faChevronDown = faChevronDown;
     protected readonly faDownload = faDownload;
     protected readonly faSync = faSync;
     protected readonly faFolderOpen = faFolderOpen;
@@ -180,7 +205,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly totalRows = signal(0);
     readonly isLoading = signal(false);
     readonly isSaving = signal(false);
-    readonly activeFilter = signal<FilterProp>(FilterProp.ALL);
+    readonly activeFilters = signal<FilterProp[]>([]);
     readonly hasLoadedPendingSubmissions = signal(false);
     readonly isAdmin = signal(false);
     readonly isLocalCIEnabled = signal(true);
@@ -201,22 +226,21 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         if (!ex) return [];
         const isProgramming = ex.type === ExerciseType.PROGRAMMING;
         const assessmentTypeFilterable = this.newManualResultAllowed() || !!ex.allowComplaintsForAutomaticAssessments;
-        const submissions = [...(isProgramming ? [FilterProp.FAILED, FilterProp.BUILD_FAILED] : []), FilterProp.NO_SUBMISSIONS, ...(isProgramming ? [FilterProp.NO_PRACTICE] : [])];
-        const results = [
-            FilterProp.SUCCESSFUL,
-            FilterProp.UNSUCCESSFUL,
-            ...(assessmentTypeFilterable ? [FilterProp.MANUAL, FilterProp.AUTOMATIC] : []),
-            ...(this.newManualResultAllowed() && ex.isAtLeastInstructor ? [FilterProp.LOCKED] : []),
-        ];
         return [
-            { labelKey: 'artemisApp.participation.filterGroup.submissions', items: submissions },
-            { labelKey: 'artemisApp.participation.filterGroup.results', items: results },
+            {
+                labelKey: 'artemisApp.participation.filterGroup.submissions',
+                items: [...(isProgramming ? [FilterProp.FAILED, FilterProp.BUILD_FAILED] : []), FilterProp.NO_SUBMISSIONS, FilterProp.VALID_SUBMISSIONS],
+            },
+            { labelKey: 'artemisApp.participation.filterGroup.results', items: [FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL], single: true },
+            ...(assessmentTypeFilterable ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentType', items: [FilterProp.MANUAL, FilterProp.AUTOMATIC] }] : []),
+            ...(isProgramming ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.NO_PRACTICE] }] : []),
+            ...(this.newManualResultAllowed() && ex.isAtLeastInstructor ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentStatus', items: [FilterProp.LOCKED] }] : []),
         ];
     });
 
     readonly isExamExercise = computed(() => !!this.exercise()?.exerciseGroup);
 
-    private lastLazyEvent: TableLazyLoadEvent | undefined;
+    private lastQuery: TumAetUiTableQueryEvent | undefined;
     private currentLoadRequestId = 0;
     // private exerciseSubmissionState: ExerciseSubmissionState = {};
     private paramSub?: Subscription;
@@ -234,13 +258,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     /** Rows whose due date text is not a date: the picker keeps its last valid date then, so it cannot be told from the pending date. */
     private readonly invalidDueDateTextIds = signal<ReadonlySet<number>>(new Set());
 
-    readonly tableOptions = computed<TableViewOptions>(() => ({
-        dataKey: 'participationId',
-        striped: true,
-        scrollable: true,
-        scrollHeight: 'flex',
+    readonly tableOptions = computed(() => ({
         showSearch: !this.hideParticipantInformation(),
-        searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
+        searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.participation.searchTeams' : 'artemisApp.participation.searchStudents',
     }));
 
     // Template refs
@@ -254,7 +274,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly individualDueDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('individualDueDateCellTemplate');
     readonly completionDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('completionDateCellTemplate');
     readonly lastResultCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('lastResultCellTemplate');
-    readonly exportPopover = viewChild<NgbPopover>('exportPopover');
+    readonly exportPopover = viewChild<TumAetUiPopoverComponent>('exportPopover');
 
     /** Whether the result cell names how the result was produced; only meaningful where manual results can exist. */
     readonly showAssessmentType = computed(() => this.newManualResultAllowed() || !!this.exercise()?.allowComplaintsForAutomaticAssessments);
@@ -443,7 +463,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     private setupFailedFilterWebsocket(exerciseId: number) {
         const reloadIfFailedFilterActive = () => {
-            if (this.activeFilter() === FilterProp.FAILED) {
+            if (this.activeFilters().includes(FilterProp.FAILED)) {
                 this.loadPage();
             }
         };
@@ -452,22 +472,28 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.websocketSubscriptions.push(submissionSub, resultSub);
     }
 
-    onLazyLoad(event: TableLazyLoadEvent) {
-        this.lastLazyEvent = event;
+    onDataRequest(event: TumAetUiTableQueryEvent) {
+        this.lastQuery = event;
         this.loadPage();
     }
 
     private loadPage() {
         const ex = this.exercise();
-        if (!ex?.id || !this.lastLazyEvent) return;
+        if (!ex?.id || !this.lastQuery) return;
 
         this.isLoading.set(true);
         const requestId = ++this.currentLoadRequestId;
-        const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
+        const base = {
+            page: this.lastQuery.pageIndex,
+            pageSize: this.lastQuery.pageSize,
+            searchTerm: this.lastQuery.searchTerm ?? '',
+            sortedColumn: this.lastQuery.sort?.field ?? 'id',
+            sortingOrder: this.lastQuery.sort?.direction === 'desc' ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
+        };
         const search: ParticipationSearch = cloneWith(base, {
             searchTerm: this.hideParticipantInformation() ? '' : base.searchTerm,
             sortedColumn: this.hideParticipantInformation() && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
-            filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
+            filterProp: this.activeFilters().join(',') || undefined,
             scoreRangeLower: this.rangeFilter()?.lowerBound,
             scoreRangeUpper: this.rangeFilter()?.upperBound,
         });
@@ -493,17 +519,17 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
-    updateParticipationFilter(newValue: string) {
-        this.activeFilter.set(newValue as FilterProp);
+    updateParticipationFilter(newValue: string[]) {
+        this.activeFilters.set(newValue.filter((value): value is FilterProp => Object.values(FilterProp).includes(value as FilterProp)));
         this.loadPage();
     }
 
     /**
-     * Resets the score range filter and active filter, then reloads data
+     * Resets the score range and selected filters, then reloads data
      */
     resetFilterOptions(): void {
         this.rangeFilter.set(undefined);
-        this.activeFilter.set(FilterProp.ALL);
+        this.activeFilters.set([]);
         void this.router.navigate([], { relativeTo: this.route, queryParams: { scoreRangeFilter: undefined }, queryParamsHandling: 'merge', replaceUrl: true });
         this.loadPage();
     }

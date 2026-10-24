@@ -202,11 +202,15 @@ export class TumAetUiMultiSelectComponent extends OptionControl implements Contr
         const initialIndex = firstSelected >= 0 ? firstSelected : this.options().length > 0 ? 0 : -1;
         this.keyManager.setActiveItem(initialIndex);
         const origin = this.trigger();
-        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { hasBackdrop: true });
+        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom');
         this.overlayRef.updateSize({ minWidth: Math.max(origin.nativeElement.getBoundingClientRect().width, MIN_PANEL_WIDTH_PX) });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.scrollOptionIntoView(initialIndex);
-        this.overlayRef.backdropClick().subscribe(() => this.close());
+        this.overlayRef.outsidePointerEvents().subscribe((event) => {
+            if (!origin.nativeElement.contains(event.target as Node)) {
+                this.close(false);
+            }
+        });
         this.overlayRef.keydownEvents().subscribe((event) => {
             if (event.key === 'Escape') {
                 this.close();

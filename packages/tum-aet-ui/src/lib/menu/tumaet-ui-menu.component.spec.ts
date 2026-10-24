@@ -15,14 +15,25 @@ import { TumAetUiMenuTriggerDirective } from './tumaet-ui-menu-trigger.directive
         <button id="after">After</button>
         <ng-template #actions>
             <tumaet-ui-menu>
-                <button tumAetUiMenuItem (triggered)="picked.set('students')">Add students</button>
-                <button tumAetUiMenuItem [disabled]="tutorsDisabled()" (triggered)="picked.set('tutors')">Add tutors</button>
+                <button tumAetUiMenuItem [menuItemRole]="radio() ? 'menuitemradio' : 'menuitem'" [checked]="picked() === 'students'" (triggered)="picked.set('students')">
+                    Add students
+                </button>
+                <button
+                    tumAetUiMenuItem
+                    [menuItemRole]="radio() ? 'menuitemradio' : 'menuitem'"
+                    [checked]="picked() === 'tutors'"
+                    [disabled]="tutorsDisabled()"
+                    (triggered)="picked.set('tutors')"
+                >
+                    Add tutors
+                </button>
                 <a tumAetUiMenuItem href="#editors" (click)="$event.preventDefault(); linkClicks = linkClicks + 1" (triggered)="picked.set('editors')">Add editors</a>
             </tumaet-ui-menu>
         </ng-template>
     `,
 })
 class HostComponent {
+    readonly radio = signal(false);
     readonly picked = signal<string | undefined>(undefined);
     readonly tutorsDisabled = signal(false);
     readonly events: string[] = [];
@@ -44,7 +55,7 @@ describe('TumAetUiMenuComponent', () => {
 
     const trigger = () => fixture.debugElement.query(By.css('#trigger')).nativeElement as HTMLButtonElement;
     const menu = () => document.querySelector('[role="menu"]') as HTMLElement | null;
-    const items = () => Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
+    const items = () => Array.from(document.querySelectorAll('[role="menuitem"], [role="menuitemradio"]')) as HTMLElement[];
 
     async function settle(): Promise<void> {
         fixture.detectChanges();
@@ -77,6 +88,40 @@ describe('TumAetUiMenuComponent', () => {
         expect(trigger().getAttribute('aria-controls')).toBe(menu()!.id);
         expect(items().map((item) => item.textContent!.trim())).toEqual(['Add students', 'Add tutors', 'Add editors']);
         expect(host.events).toEqual(['opened']);
+    });
+
+    it.each(['Enter', ' '])('keeps radio-item semantics and keyboard navigation with %j activation', async (key) => {
+        host.radio.set(true);
+        host.picked.set('students');
+        await open();
+        expect(
+            items()
+                .slice(0, 2)
+                .map((item) => item.getAttribute('role')),
+        ).toEqual(['menuitemradio', 'menuitemradio']);
+        expect(
+            items()
+                .slice(0, 2)
+                .map((item) => item.getAttribute('aria-checked')),
+        ).toEqual(['true', 'false']);
+        await press(items()[0], 'End');
+        expect(document.activeElement).toBe(items()[2]);
+        await press(items()[2], 'Home');
+        expect(document.activeElement).toBe(items()[0]);
+        await press(items()[0], 'ArrowDown');
+        expect(document.activeElement).toBe(items()[1]);
+        await press(items()[1], 'ArrowUp');
+        expect(document.activeElement).toBe(items()[0]);
+        await press(items()[0], 'ArrowDown');
+        await press(items()[1], key);
+        expect(host.picked()).toBe('tutors');
+        expect(menu()).toBeNull();
+        await open();
+        expect(
+            items()
+                .slice(0, 2)
+                .map((item) => item.getAttribute('aria-checked')),
+        ).toEqual(['false', 'true']);
     });
 
     it('renders a link item as an anchor so it keeps native link behaviour', async () => {

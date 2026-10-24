@@ -7,20 +7,35 @@
                     resultForRound(correctionRound)?.assessmentType !== AssessmentType.AUTOMATIC &&
                     resultForRound(correctionRound)?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA))
         ) {
-            <div class="d-flex align-items-center gap-1">
+            <div class="flex items-center gap-1">
                 <a
                     [routerLink]="getAssessmentLink(correctionRound)"
                     [queryParams]="{ 'correction-round': getCorrectionRoundForAssessmentLink(correctionRound) }"
-                    class="btn btn-sm"
-                    [class.btn-success]="
-                        (!resultForRound(correctionRound)?.assessmentType || resultForRound(correctionRound)?.assessmentType === AssessmentType.AUTOMATIC) &&
-                        !resultForRound(correctionRound)?.hasComplaint
+                    [attr.aria-label]="
+                        resultForRound(correctionRound)?.hasComplaint
+                            ? ('artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate)
+                            : ('artemisApp.assessment.dashboard.actions.' +
+                                  (this.examMode ? 'examCorrectionRound.' : '') +
+                                  (!resultForRound(correctionRound)?.hasComplaint
+                                      ? !resultForRound(correctionRound)?.assessmentType || resultForRound(correctionRound)?.assessmentType === AssessmentType.AUTOMATIC
+                                          ? 'assess'
+                                          : resultForRound(correctionRound)?.completionDate
+                                            ? 'open'
+                                            : 'continue'
+                                      : 'open') | artemisTranslate: { correctionRound: correctionRound + 1 })
                     "
-                    [class.btn-primary]="resultForRound(correctionRound)?.completionDate || resultForRound(correctionRound)?.hasComplaint"
-                    [class.btn-warning]="resultForRound(correctionRound) && !resultForRound(correctionRound)?.completionDate && !resultForRound(correctionRound)?.hasComplaint"
+                    tumAetUiButton
+                    size="small"
+                    [severity]="
+                        resultForRound(correctionRound)?.completionDate || resultForRound(correctionRound)?.hasComplaint
+                            ? 'primary'
+                            : resultForRound(correctionRound) && resultForRound(correctionRound)?.assessmentType !== AssessmentType.AUTOMATIC
+                              ? 'warn'
+                              : 'success'
+                    "
                 >
                     <fa-icon [icon]="faClipboardList" [fixedWidth]="true" />
-                    <span class="d-none d-xl-inline ms-1">
+                    <span class="hidden xl:inline">
                         @if (!resultForRound(correctionRound)?.hasComplaint) {
                             {{
                                 'artemisApp.assessment.dashboard.actions.' +
@@ -42,9 +57,20 @@
                     !resultForRound(correctionRound)?.completionDate &&
                     resultForRound(correctionRound)?.assessmentType !== AssessmentType.AUTOMATIC
                 ) {
-                    <button type="button" (click)="cancelAssessment(resultForRound(correctionRound)!, participation())" [disabled]="isLoading()" class="btn btn-sm btn-danger">
+                    <button
+                        type="button"
+                        [attr.aria-label]="
+                            'artemisApp.assessment.dashboard.actions.' + (this.examMode ? 'examCorrectionRound.' : '') + 'cancel'
+                                | artemisTranslate: { correctionRound: correctionRound + 1 }
+                        "
+                        (click)="cancelAssessment(resultForRound(correctionRound)!, participation())"
+                        [disabled]="isLoading()"
+                        tumAetUiButton
+                        size="small"
+                        severity="danger"
+                    >
                         <fa-icon [fixedWidth]="true" [icon]="faBan" />
-                        <span class="d-none d-xl-inline ms-1">
+                        <span class="hidden xl:inline">
                             {{
                                 'artemisApp.assessment.dashboard.actions.' + (this.examMode ? 'examCorrectionRound.' : '') + 'cancel'
                                     | artemisTranslate: { correctionRound: correctionRound + 1 }

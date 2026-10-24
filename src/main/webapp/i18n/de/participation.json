@@ -1,6 +1,10 @@
 {
     "artemisApp": {
         "participation": {
+            "triggerOptions": "Builds auslösen",
+            "searchHint": "Suchbegriffe durch Kommas trennen",
+            "searchStudents": "Studierende suchen",
+            "searchTeams": "Teams suchen",
             "onlineEditor": "Online-Editor",
             "home": {
                 "title": "Teilnahmen",
@@ -8,7 +12,10 @@
             },
             "filterGroup": {
                 "submissions": "Abgaben",
-                "results": "Ergebnisse"
+                "results": "Ergebnisse",
+                "assessmentType": "Bewertungsart",
+                "mode": "Teilnahmemodus",
+                "assessmentStatus": "Bewertungsstatus"
             },
             "created": "Teilnahme erstellt mit ID {{ param }}",
             "updated": "Teilnahme von {{ param }} aktualisiert",
@@ -80,6 +87,9 @@
                 "anonymousAssessment": "Die Einreichungsfrist der Aufgabe ist abgelaufen und die manuelle Bewertung ist aktiviert. Namen der Studierenden und der direkte Repositoryzugriff sind ausgeblendet, damit die Bewertung anonym bleibt. Im Bewertungsdashboard kannst du weiterhin anonymisierte Einreichungen ansehen und herunterladen.",
                 "assessmentDashboard": "Bewertungsdashboard öffnen",
                 "noDueDate": "Du kannst die Namen der Studierenden sehen und über Code ihre Repositorys öffnen oder klonen, um Fragen zu beantworten. Tutor:innen haben nur Lesezugriff. Die manuelle Bewertung ist aktiviert, aber für die Aufgabe ist keine Einreichungsfrist festgelegt. Sobald eine Frist festgelegt wird und abläuft, werden Namen und der direkte Repositoryzugriff ausgeblendet."
+            },
+            "filters": {
+                "remove": "Filter entfernen: {{ filter }}"
             }
         }
     }

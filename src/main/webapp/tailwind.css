@@ -68,6 +68,15 @@
 @source './app/exercise/result';
 @source './app/exercise/participation-submission';
 @source './app/exercise/import';
+@source './app/exercise/shared/filter-dropdown';
+@source './app/exercise/participation';
+@source './app/exercise/external-submission';
+@source './app/exercise/submission-export/button';
+@source './app/exercise/exercise-scores/export-button';
+@source './app/exercise/exercise-scores/manage-assessment-buttons';
+@source './app/programming/shared/actions';
+@source './app/programming/manage/assess/repo-export/export-button';
+@source './app/shared-ui/components/buttons/code-button';
 @source './app/iris/manage/settings';
 @source './app/editor/markdown-editor';
 @source './app/communication/message-editor';

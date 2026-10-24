@@ -1,51 +1,90 @@
-@if (buildingSummary(); as buildingSummary) {
-    <div class="d-flex gap-2 align-items-center">
+@if (buildingSummary()) {
+    <div class="flex flex-wrap items-center gap-2">
         @if (hasBuildingSubmissions()) {
-            <div id="result-eta" class="badge bg-secondary d-flex flex-column justify-content-between">
+            <div id="result-eta" class="flex flex-col items-center text-sm">
                 <fa-icon [icon]="faClock" />
                 <span
-                    [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
+                    [tumAetUiTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
                     [innerHTML]="'artemisApp.programmingExercise.resultETA' | artemisTranslate: { eta: resultEtaInMs() | duration }"
                     >Result ETA: {{ resultEtaInMs() | duration }}</span
                 >
             </div>
         }
-        <div id="build-state" class="d-flex flex-column justify-content-between">
-            <span
+        @let buildingLabel =
+            'artemisApp.programmingExercise.buildingSubmissions'
+                | artemisTranslate: { number: buildingSummary()?.[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0 };
+        @let failedLabel =
+            'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate: { number: buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0 };
+        <div id="build-state" class="flex shrink-0 flex-col gap-0.5">
+            <tumaet-ui-tag
                 id="build-state-building"
-                class="badge bg-primary flex-grow-0"
-                [innerHTML]="
-                    'artemisApp.programmingExercise.buildingSubmissions'
-                        | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
-                "
+                class="[&>span]:w-full"
+                severity="info"
+                size="sm"
+                role="img"
+                [attr.aria-label]="buildingLabel"
+                [tumAetUiTooltip]="buildingLabel"
+                tabindex="0"
             >
-                Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}
-            </span>
-            <span
+                <span [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''">{{ buildingLabel }}</span>
+                <span [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'inline-flex items-center gap-1 md:hidden' : 'inline-flex items-center gap-1 xl:hidden') : 'hidden'">
+                    <fa-icon [icon]="faClock" />{{ buildingSummary()?.[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0 }}
+                </span>
+            </tumaet-ui-tag>
+            <tumaet-ui-tag
                 id="build-state-failed"
-                [ngClass]="['badge', buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0 ? 'bg-danger' : 'bg-success', 'flex-grow-0']"
-                [innerHTML]="
-                    'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }
-                "
+                class="[&>span]:w-full [&>span]:justify-center"
+                [severity]="(buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0 ? 'danger' : 'success'"
+                size="sm"
+                role="img"
+                [attr.aria-label]="failedLabel"
+                [tumAetUiTooltip]="failedLabel"
+                tabindex="0"
             >
-                Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
-            </span>
+                <span [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''">{{ failedLabel }}</span>
+                <span [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'inline-flex items-center gap-1 md:hidden' : 'inline-flex items-center gap-1 xl:hidden') : 'hidden'">
+                    <fa-icon [icon]="faExclamationTriangle" />{{ buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0 }}
+                </span>
+            </tumaet-ui-tag>
         </div>
-        <jhi-programming-exercise-trigger-all-button [btnSize]="ButtonSize.SMALL" [exercise]="exercise()" [shouldToggle]="shouldToggle()" [toggleBreakpoint]="toggleBreakpoint()" />
-        <jhi-button
-            id="trigger-failed-button"
-            [btnSize]="ButtonSize.SMALL"
-            [disabled]="!hasFailedSubmissions()"
-            [isLoading]="isBuildingFailedSubmissions()"
-            [icon]="faRedo"
-            [title]="'artemisApp.programmingExercise.resubmitFailed'"
-            [shouldToggle]="shouldToggle()"
-            [toggleBreakpoint]="toggleBreakpoint()"
-            [tooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip'"
-            [tooltipPlacement]="TooltipPlacement.BOTTOM"
-            [featureToggle]="FeatureToggle.ProgrammingExercises"
-            (onClick)="triggerBuildOfFailedSubmissions()"
-        />
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            data-testid="participation-trigger-dropdown"
+            [tumAetUiPopoverTrigger]="triggerPopover"
+            [attr.aria-label]="'artemisApp.participation.triggerOptions' | artemisTranslate"
+        >
+            <fa-icon [icon]="faRedo" />
+            <span>{{ 'artemisApp.participation.triggerOptions' | artemisTranslate }}</span>
+            <fa-icon [icon]="faChevronDown" />
+        </button>
+        <tumaet-ui-popover class="contents" #triggerPopover [ariaLabel]="'artemisApp.participation.triggerOptions' | artemisTranslate">
+            <div class="flex min-w-44 flex-col gap-1">
+                <jhi-programming-exercise-trigger-all-button [btnSize]="ButtonSize.SMALL" [exercise]="exercise()" [inDropdown]="true" />
+                <button
+                    type="button"
+                    tumAetUiButton
+                    id="trigger-failed-button"
+                    size="small"
+                    severity="secondary"
+                    variant="text"
+                    class="w-full justify-start!"
+                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                    [overwriteDisabled]="!hasFailedSubmissions() || isBuildingFailedSubmissions()"
+                    [attr.aria-label]="'artemisApp.programmingExercise.resubmitFailed' | artemisTranslate"
+                    [attr.aria-busy]="isBuildingFailedSubmissions()"
+                    [tumAetUiTooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip' | artemisTranslate"
+                    tumAetUiTooltipPlacement="bottom"
+                    (click)="triggerBuildOfFailedSubmissions()"
+                >
+                    <fa-icon [icon]="faRedo" [animation]="isBuildingFailedSubmissions() ? 'spin' : undefined" />
+                    <span [jhiTranslate]="'artemisApp.programmingExercise.resubmitFailed'"></span>
+                </button>
+            </div>
+        </tumaet-ui-popover>
     </div>
 } @else {
     <fa-icon [icon]="faCircleNotch" animation="spin" />

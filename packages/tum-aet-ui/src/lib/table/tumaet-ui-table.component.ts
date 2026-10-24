@@ -54,6 +54,8 @@ export class TumAetUiTableComponent<T> {
     readonly rows = input.required<T[]>();
     readonly totalRecords = input(0, { transform: numberAttribute });
     readonly loading = input(false, { transform: booleanAttribute });
+    /** Controls rendered beside the search field, such as category filters. */
+    readonly tableActions = input<TemplateRef<unknown> | undefined>(undefined);
     /** Optional action template receiving the row as its implicit value. */
     readonly rowActions = input<TemplateRef<{ $implicit: T }> | undefined>(undefined);
     /** Predicate identifying rows to highlight. */

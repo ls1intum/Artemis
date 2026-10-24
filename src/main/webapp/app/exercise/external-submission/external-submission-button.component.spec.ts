@@ -33,7 +33,7 @@ describe('ExternalSubmissionButtonComponent', () => {
         fixture.componentRef.setInput('exercise', exercise);
 
         fixture.detectChanges();
-        fixture.debugElement.query(By.css('.btn')).nativeElement.click();
+        fixture.debugElement.query(By.css('button[tumAetUiButton]')).nativeElement.click();
 
         expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
         expect(dialogServiceOpenSpy).toHaveBeenCalledWith(

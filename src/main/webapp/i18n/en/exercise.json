@@ -266,6 +266,7 @@
             "showLocked": "Locked Assessments",
             "showAll": "All",
             "showFailed": "Latest Submission without Result",
+            "showValidSubmissions": "Valid Submissions",
             "showNoSubmissions": "No Submissions",
             "showNoPracticeMode": "Only graded participations",
             "showingOnlyInRange": "Showing only results in range: {{ range }}",
