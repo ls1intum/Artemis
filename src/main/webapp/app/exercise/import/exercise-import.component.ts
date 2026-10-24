@@ -1,4 +1,5 @@
-import { Component, Injector, OnInit, computed, inject, input, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, Injector, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
@@ -19,10 +20,23 @@ import { PaginatorModule } from 'primeng/paginator';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 export interface ExerciseImportDialogData {
     exerciseType: ExerciseType;
     programmingLanguage?: ProgrammingLanguage;
+}
+
+/** The row the user asked a preview for, together with the complete quiz loaded for it. */
+interface ExerciseImportPreview {
+    exercise: Exercise;
+    quiz: QuizExercise;
 }
 
 const DEFAULT_SORT_COLUMN = 'ID';
@@ -41,10 +55,17 @@ const DEFAULT_SORT_COLUMN = 'ID';
         PaginatorModule,
         ExerciseCourseTitlePipe,
         ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+        TumAetUiButtonComponent,
+        TumAetUiDialogComponent,
+        QuizQuestionPreviewComponent,
     ],
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     private injector = inject(Injector);
+    private quizExerciseService = inject(QuizExerciseService);
+    private alertService = inject(AlertService);
+    private document = inject(DOCUMENT);
     readonly ExerciseType = ExerciseType;
 
     exerciseType = input<ExerciseType | undefined>();
@@ -63,6 +84,15 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     readonly isCourseFilter = signal(true);
     readonly isExamFilter = signal(true);
 
+    protected readonly faEye = faEye;
+    /** A preview shows the questions of a quiz, which the other exercise types do not have. */
+    protected readonly isPreviewAvailable = computed(() => this.selectedExerciseType() === ExerciseType.QUIZ);
+    readonly preview = signal<ExerciseImportPreview | undefined>(undefined);
+    readonly previewVisible = signal(false);
+    /** The id of the exercise whose quiz is currently loaded for the preview. */
+    readonly previewLoadingId = signal<number | undefined>(undefined);
+    protected readonly previewTotalPoints = computed(() => (this.preview()?.quiz.quizQuestions ?? []).reduce((total, question) => total + (question.points ?? 0), 0));
+
     titleKey?: string;
 
     constructor() {
@@ -70,6 +100,23 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         // This gets determined based on the exercise type, which is not set when invoking the constructor
         // Therefore we temporally use this empty paging service which directly gets overwritten in ngOnInit().
         super(undefined);
+
+        // The preview is a dialog of its own on top of the PrimeNG import dialog, which closes on every Escape press at document level.
+        // Handle Escape for the preview first, so that it closes only the preview and the import dialog stays open.
+        effect((onCleanup) => {
+            if (!this.previewVisible()) {
+                return;
+            }
+            const closePreviewOnEscape = (event: KeyboardEvent) => {
+                if (event.key === 'Escape') {
+                    event.stopPropagation();
+                    this.previewVisible.set(false);
+                }
+            };
+            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- removed via the effect's onCleanup, which runs on destroy
+            this.document.addEventListener('keydown', closePreviewOnEscape, true);
+            onCleanup(() => this.document.removeEventListener('keydown', closePreviewOnEscape, true));
+        });
     }
 
     override ngOnInit(): void {
@@ -148,6 +195,46 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         if (this.sortedColumn === 'COURSE_TITLE' || this.sortedColumn === 'EXAM_TITLE') {
             this.sortedColumn = DEFAULT_SORT_COLUMN;
         }
+    }
+
+    /**
+     * Loads the complete quiz of the given row, which the paged search does not contain, and shows it in the preview dialog.
+     * Only one quiz is loaded at a time.
+     *
+     * @param exercise the row the user wants to preview
+     */
+    openPreview(exercise: Exercise): void {
+        if (exercise.id === undefined || this.previewLoadingId() !== undefined) {
+            return;
+        }
+        this.previewLoadingId.set(exercise.id);
+        this.quizExerciseService.find(exercise.id).subscribe({
+            next: (response) => {
+                this.previewLoadingId.set(undefined);
+                if (response.body) {
+                    this.preview.set({ exercise, quiz: response.body });
+                    this.previewVisible.set(true);
+                } else {
+                    this.alertService.error('artemisApp.exercise.import.preview.loadFailed');
+                }
+            },
+            error: () => {
+                this.previewLoadingId.set(undefined);
+                this.alertService.error('artemisApp.exercise.import.preview.loadFailed');
+            },
+        });
+    }
+
+    /**
+     * Imports the previewed exercise, as if the user had pressed the import button of its row.
+     */
+    importPreviewed(): void {
+        const preview = this.preview();
+        if (!preview) {
+            return;
+        }
+        this.previewVisible.set(false);
+        this.selectImport(preview.exercise);
     }
 
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {

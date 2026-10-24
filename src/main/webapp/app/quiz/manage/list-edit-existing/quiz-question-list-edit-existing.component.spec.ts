@@ -5,7 +5,7 @@ import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-ma
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent, State } from 'app/quiz/manage/list-edit-existing/quiz-question-list-edit-existing.component';
@@ -39,6 +39,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FileService } from 'app/foundation/service/file.service';
+import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
 
 const createValidMCQuestion = () => {
     const question = new MultipleChoiceQuestion();
@@ -539,5 +540,98 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(images.size).toBe(1);
             expect(images.has('image1')).toBe(true);
         });
+    });
+});
+
+describe('QuizQuestionListEditExistingComponent question preview', () => {
+    let fixture: ComponentFixture<QuizQuestionListEditExistingComponent>;
+    let component: QuizQuestionListEditExistingComponent;
+    let question: MultipleChoiceQuestion;
+    let otherQuestion: MultipleChoiceQuestion;
+
+    const overlayElement = (testId: string): HTMLElement | null => document.body.querySelector(`[data-testid="${testId}"]`);
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(DialogService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
+        })
+            // The preview rendering of the question types is covered by the spec of the preview component.
+            .overrideComponent(QuizQuestionListEditExistingComponent, {
+                remove: { imports: [QuizQuestionPreviewComponent] },
+                add: { imports: [MockComponent(QuizQuestionPreviewComponent)] },
+            })
+            .compileComponents();
+
+        vi.spyOn(TestBed.inject(CourseManagementService), 'getAllCoursesWithQuizExercises').mockReturnValue(of(new HttpResponse<Course[]>({ body: [] })));
+        vi.spyOn(TestBed.inject(ExamManagementService), 'findAllExamsAccessibleToUser').mockReturnValue(of(new HttpResponse<Exam[]>({ body: [] })));
+
+        question = createValidMCQuestion().question;
+        question.id = 1;
+        otherQuestion = createValidMCQuestion().question;
+        otherQuestion.id = 2;
+
+        fixture = TestBed.createComponent(QuizQuestionListEditExistingComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('show', true);
+        fixture.componentRef.setInput('courseId', 1);
+        component.existingQuestions.set([question, otherQuestion]);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+    });
+
+    it('should offer a preview button for every existing question', () => {
+        expect(fixture.nativeElement.querySelector('[data-testid="preview-question-1"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="preview-question-2"]')).not.toBeNull();
+    });
+
+    it('should not show the preview dialog before a preview is requested', () => {
+        expect(component.previewVisible()).toBe(false);
+        expect(overlayElement('question-preview-add')).toBeNull();
+    });
+
+    it('should open the preview of the question whose button was clicked', () => {
+        fixture.nativeElement.querySelector('[data-testid="preview-question-2"] button').click();
+        fixture.detectChanges();
+
+        expect(component.previewVisible()).toBe(true);
+        expect(component.previewQuestion()).toBe(otherQuestion);
+        expect(overlayElement('question-preview-add')).not.toBeNull();
+        expect(document.body.querySelector('jhi-quiz-question-preview')).not.toBeNull();
+    });
+
+    it('should select the previewed question for the import and close the dialog when it is added', () => {
+        fixture.nativeElement.querySelector('[data-testid="preview-question-1"] button').click();
+        fixture.detectChanges();
+
+        overlayElement('question-preview-add')!.querySelector('button')!.click();
+        fixture.detectChanges();
+
+        expect(question.exportQuiz).toBe(true);
+        expect(otherQuestion.exportQuiz).toBe(false);
+        expect(component.previewVisible()).toBe(false);
+        expect(overlayElement('question-preview-add')).toBeNull();
+        expect(component.previewQuestion()).toBeUndefined();
+    });
+
+    it('should close the preview without selecting the question', () => {
+        fixture.nativeElement.querySelector('[data-testid="preview-question-1"] button').click();
+        fixture.detectChanges();
+
+        overlayElement('question-preview-close')!.querySelector('button')!.click();
+        fixture.detectChanges();
+
+        expect(question.exportQuiz).toBe(false);
+        expect(component.previewVisible()).toBe(false);
+        expect(overlayElement('question-preview-add')).toBeNull();
     });
 });
