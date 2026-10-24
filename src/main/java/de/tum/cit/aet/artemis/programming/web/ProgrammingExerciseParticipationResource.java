@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -55,9 +54,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
-import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
-import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -124,15 +120,11 @@ public class ProgrammingExerciseParticipationResource {
 
     private final RepositoryService repositoryService;
 
-    private final Optional<StudentExamApi> studentExamApi;
-
     private final Optional<VcsAccessLogRepository> vcsAccessLogRepository;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     private final Optional<SharedQueueManagementService> sharedQueueManagementService;
-
-    private final Optional<ExamApi> examApi;
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
@@ -140,9 +132,8 @@ public class ProgrammingExerciseParticipationResource {
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+            Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -153,11 +144,9 @@ public class ProgrammingExerciseParticipationResource {
         this.resultService = resultService;
         this.participationAuthCheckService = participationAuthCheckService;
         this.repositoryService = repositoryService;
-        this.studentExamApi = studentExamApi;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
-        this.examApi = examApi;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
     }
 
@@ -175,7 +164,7 @@ public class ProgrammingExerciseParticipationResource {
                 .findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
         hasAccessToParticipationElseThrow(participation);
 
-        boolean hideResults = shouldHideExamExerciseResults(participation);
+        boolean hideResults = participationAuthCheckService.shouldHideExamExerciseResults(participation);
         ProgrammingSubmission submission = participation.getSubmissions().isEmpty() ? null : (ProgrammingSubmission) participation.getSubmissions().iterator().next();
         // hide details that should not be shown to the students; masking happens by mapping fewer DTOs, never by mutating the loaded (possibly managed) submission
         Collection<Result> results = submission == null || hideResults ? List.of() : submission.getResults();
@@ -210,7 +199,7 @@ public class ProgrammingExerciseParticipationResource {
 
         // TODO: improve access checks to avoid fetching the user multiple times
         hasAccessToParticipationElseThrow(participation);
-        boolean hideResults = shouldHideExamExerciseResults(participation);
+        boolean hideResults = participationAuthCheckService.shouldHideExamExerciseResults(participation);
 
         List<ProgrammingSubmission> submissions = participation.getSubmissions().stream().filter(ProgrammingSubmission.class::isInstance).map(ProgrammingSubmission.class::cast)
                 .toList();
@@ -295,11 +284,13 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
-                && shouldHideExamExerciseResults(programmingExerciseStudentParticipation)) {
+                && participationAuthCheckService.shouldHideExamExerciseResults(programmingExerciseStudentParticipation)) {
             return ResponseEntity.ok(null);
         }
 
-        Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
+        // Apply the same release gate as the sibling student endpoints: a not-yet-released manual assessment must not leak its score, so only a visible result (automatic, or a
+        // completed manual assessment after the assessment due date) is returned, falling back to an earlier automatic result. The exam hiding above runs first.
+        Optional<Result> result = resultRepository.findLatestVisibleResultWithFeedbacksForParticipation(participation.getId(), withSubmission, ZonedDateTime.now());
         // the automatic test-case and SCA feedback lives in the compact typed tables and has to be attached as legacy views before filtering
         result.ifPresent(value -> resultService.attachAutomaticFeedbackAndFilterSensitiveInformation(participation, List.of(value)));
 
@@ -707,31 +698,6 @@ public class ProgrammingExerciseParticipationResource {
                 throw new AccessForbiddenException("Participation not yet started");
             }
         }
-    }
-
-    /**
-     * Checks if the results should be hidden for the given participation.
-     *
-     * @param participation the participation to check
-     * @return true if the results should be hidden, false otherwise
-     */
-    private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
-        // Test-run results are never hidden as a whole: the conductor is the instructor who created the test run. The lookup below cannot resolve a test run either, because a test
-        // run has no regular (non-test-run) student exam. The feedback of a test run is still filtered like a student's, see ResultService#filterSensitiveInformationIfNecessary.
-        if (participation.isTestRun()) {
-            return false;
-        }
-        var exercise = participation.getExercise();
-        if (exercise.isExamExercise() && !exercise.isTestExamExercise()) {
-            var examApi = this.examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
-            var studentExamApi = this.studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-            User student = participation.getStudent()
-                    .orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
-            var studentExam = studentExamApi.findByExerciseIdAndUserId(participation.getExercise().getId(), student.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Participation " + participation.getId() + " does not have a student exam!"));
-            return !examApi.shouldStudentSeeResult(studentExam, participation);
-        }
-        return false;
     }
 
 }

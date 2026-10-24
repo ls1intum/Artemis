@@ -151,23 +151,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
     Optional<Result> findResultWithFeedbacksById(long resultId);
 
-    /**
-     * Finds the first result by participation ID, including its feedback, ordered by completion date in descending order.
-     * This method avoids in-memory paging by retrieving the first result directly from the database.
-     *
-     * @param participationId the ID of the participation to find the result for
-     * @return an {@code Optional} containing the first {@code Result} with feedback, ordered by completion date in descending order,
-     *         or an empty {@code Optional} if no result is found
-     */
-    default Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(long participationId) {
-        var resultOptional = findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
-        if (resultOptional.isEmpty()) {
-            return Optional.empty();
-        }
-        var id = resultOptional.get().getId();
-        return findResultWithFeedbacksById(id);
-    }
-
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "submission" })
     Optional<Result> findResultWithSubmissionAndFeedbacksById(long resultId);
 
@@ -832,19 +815,51 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Get the latest result from the database by participation id together with the list of feedback items.
+     * Finds the latest result of a participation that a student is allowed to see, ordered by completion date descending. A result is visible when it is automatic, or when it is a
+     * completed manual assessment whose exercise has no assessment due date or one that has already passed. This is the same release gate the student-facing retrieval endpoints
+     * use ({@link #findLatestResultWithFeedbacksBySubmissionId}); it prevents the score of a not-yet-released manual assessment from leaking, while still returning an earlier
+     * automatic result as a fallback. The exam-specific hiding is applied separately by the caller before this query runs.
+     *
+     * @param participationId the id of the participation to load the visible results for
+     * @param dateTime        the reference time the assessment due date is compared against (usually now)
+     * @return the visible results of the participation ordered by completion date descending (the first element is the latest visible result)
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+                JOIN r.submission s
+                JOIN s.participation p
+                LEFT JOIN p.exercise e
+            WHERE p.id = :participationId
+                AND (
+                    r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                    OR (
+                        r.completionDate IS NOT NULL
+                        AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate < :dateTime)
+                    )
+                )
+            ORDER BY r.completionDate DESC
+            """)
+    List<Result> findVisibleResultsForParticipationOrderByCompletionDateDesc(@Param("participationId") long participationId, @Param("dateTime") ZonedDateTime dateTime);
+
+    /**
+     * Get the latest result a student may see for a participation, together with the list of feedback items, applying the course release gate.
      *
      * @param participationId the id of the participation to load from the database
      * @param withSubmission  determines whether the submission should also be fetched
+     * @param dateTime        the reference time the assessment due date is compared against (usually now)
      * @return an optional result (might exist or not).
      */
-    default Optional<Result> findLatestResultWithFeedbacksForParticipation(long participationId, boolean withSubmission) {
+    default Optional<Result> findLatestVisibleResultWithFeedbacksForParticipation(long participationId, boolean withSubmission, ZonedDateTime dateTime) {
+        List<Result> visibleResults = findVisibleResultsForParticipationOrderByCompletionDateDesc(participationId, dateTime);
+        if (visibleResults.isEmpty()) {
+            return Optional.empty();
+        }
+        long id = visibleResults.getFirst().getId();
         if (withSubmission) {
-            return findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findResultWithSubmissionAndFeedbacksById(id);
         }
-        else {
-            return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
-        }
+        return findResultWithFeedbacksById(id);
     }
 
     default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(long resultId) {

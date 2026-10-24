@@ -14,10 +14,13 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
@@ -56,11 +59,13 @@ public class ParticipationAuthorizationCheckService {
 
     private final Optional<StudentExamApi> studentExamApi;
 
+    private final Optional<ExamApi> examApi;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ParticipationAuthorizationCheckService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, TeamRepository teamRepository, ExerciseDateService exerciseDateService,
-            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, Optional<StudentExamApi> studentExamApi,
+            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, Optional<StudentExamApi> studentExamApi, Optional<ExamApi> examApi,
             StudentParticipationRepository studentParticipationRepository) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -70,6 +75,7 @@ public class ParticipationAuthorizationCheckService {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.submissionRepository = submissionRepository;
         this.studentExamApi = studentExamApi;
+        this.examApi = examApi;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -92,6 +98,38 @@ public class ParticipationAuthorizationCheckService {
      */
     public boolean canSeeParticipantInformation(StudentParticipation participation) {
         return authCheckService.isOwnerOfParticipation(participation) || canSeeParticipantInformation(participation.getExercise());
+    }
+
+    /**
+     * Decides whether the results of an exam exercise participation have to be hidden from the participation's student.
+     * <p>
+     * Exam results stay hidden until the student may see them (the exam is running for a programming exercise, or the
+     * results have been published), unlike a course exercise whose manual results are released by the assessment due
+     * date. Read endpoints that serve a student participation of an exam exercise must apply this before returning any
+     * result, so that the score of a not-yet-published assessment does not leak. It is owner-based, like the sibling
+     * programming endpoints: a tutor or instructor reading a student's exam participation sees the same hiding and uses
+     * the dedicated assessment endpoints to access unpublished results.
+     *
+     * @param participation the student participation whose results are about to be served
+     * @return true if the results must be hidden, false otherwise (also for course exercises and test runs)
+     */
+    public boolean shouldHideExamExerciseResults(StudentParticipation participation) {
+        // Test-run results are never hidden as a whole: the conductor is the instructor who created the test run. Its feedback is still filtered for the student view, see
+        // ResultService#filterSensitiveInformationIfNecessary.
+        if (participation.isTestRun()) {
+            return false;
+        }
+        Exercise exercise = participation.getExercise();
+        if (!exercise.isExamExercise() || exercise.isTestExamExercise()) {
+            return false;
+        }
+        StudentExamApi studentExamApiValue = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+        ExamApi examApiValue = examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
+        // Exam exercises are individual, so the student exam is resolved by the exercise and the participation's student, as the programming retrieval endpoints have always done.
+        User student = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
+        StudentExam studentExam = studentExamApiValue.findByExerciseIdAndUserId(exercise.getId(), student.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Participation " + participation.getId() + " does not have a student exam!"));
+        return !examApiValue.shouldStudentSeeResult(studentExam, participation);
     }
 
     /**

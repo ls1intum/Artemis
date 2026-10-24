@@ -67,6 +67,8 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationSubmissionResultDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
@@ -329,6 +331,59 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(1);
     }
 
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("argumentsForGetParticipationResults")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResultGeneric_hidesPreliminaryManualResult(ZonedDateTime startDate, ZonedDateTime releaseDate, AssessmentType assessmentType,
+            ZonedDateTime completionDate, ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult) throws Exception {
+        programmingExercise.setStartDate(startDate);
+        programmingExercise.setReleaseDate(releaseDate);
+        programmingExercise.setAssessmentDueDate(assessmentDueDate);
+        programmingExerciseRepository.save(programmingExercise);
+        var result = addStudentParticipationWithResult(assessmentType, completionDate);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+
+        var requestedParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipationDTO.class);
+
+        var resultIds = extractResultIds(requestedParticipation);
+        if (expectLastCreatedResult) {
+            assertThat(resultIds).as("A released result is returned").contains(result.getId());
+        }
+        else {
+            assertThat(resultIds).as("The score of a not-yet-released manual result must not leak via with-latest-result").doesNotContain(result.getId());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResultGeneric_showsResultsDuringExam() throws Exception {
+        var result = setupExamExerciseWithParticipationAndResult(1, TEST_PREFIX + "student1");
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        var requestedParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipationDTO.class);
+        var resultIds = extractResultIds(requestedParticipation);
+        assertThat(resultIds).contains(result.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResultGeneric_afterExam_hidesResultsBeforeExamResultsPublished() throws Exception {
+        var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        var requestedParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipationDTO.class);
+        var resultIds = extractResultIds(requestedParticipation);
+        assertThat(resultIds).as("An exam result must not leak before the results are published").doesNotContain(result.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResultGeneric_showsResultsAfterExamResultsPublished() throws Exception {
+        var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        var requestedParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipationDTO.class);
+        var resultIds = extractResultIds(requestedParticipation);
+        assertThat(resultIds).contains(result.getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetParticipationWithLatestResult_showsResultsDuringTestRun() throws Exception {
@@ -512,7 +567,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksAsStudent() throws Exception {
-        var result = addStudentParticipationWithResult(null, null);
+        // An automatic result is always visible to the student; the endpoint only filters the invisible feedback.
+        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
@@ -566,10 +622,57 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 .findByExerciseIdAndStudentId(programmingExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId()).getFirst();
 
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
-        assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
         if (AssessmentType.AUTOMATIC == assessmentType) {
+            assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
             assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
         }
+        else {
+            // A non-automatic result that has not been submitted yet (no completion date) is not released, so its score must not reach the student via this endpoint either.
+            assertThat(requestedResult).as("A preliminary manual result must not be returned to the student").isNull();
+        }
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("argumentsForGetParticipationResults")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLatestResultWithFeedbacks_hidesPreliminaryManualResult(ZonedDateTime startDate, ZonedDateTime releaseDate, AssessmentType assessmentType,
+            ZonedDateTime completionDate, ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult) throws Exception {
+        programmingExercise.setStartDate(startDate);
+        programmingExercise.setReleaseDate(releaseDate);
+        programmingExercise.setAssessmentDueDate(assessmentDueDate);
+        programmingExerciseRepository.save(programmingExercise);
+        var result = addStudentParticipationWithResult(assessmentType, completionDate);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+
+        if (expectLastCreatedResult) {
+            assertThat(requestedResult).isNotNull();
+            assertThat(requestedResult.getId()).isEqualTo(result.getId());
+        }
+        else {
+            assertThat(requestedResult).as("The score of a not-yet-released manual result must not leak via latest-result-with-feedbacks").isNull();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLatestResultWithFeedbacks_fallsBackToAutomaticResultWhenManualNotReleased() throws Exception {
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        // An automatic result the student is always allowed to see
+        var automaticResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2));
+        StudentParticipation participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(automaticResult.getSubmission().getParticipation().getId())
+                .orElseThrow();
+        // A newer, completed manual result that is not released yet (assessment due date in the future)
+        Result manualResult = participationUtilService.addResultToSubmission(participation, participation.getSubmissions().iterator().next());
+        manualResult.successful(true).rated(true).score(88D).assessmentType(AssessmentType.SEMI_AUTOMATIC).completionDate(ZonedDateTime.now().minusHours(1));
+        participationUtilService.addVariousVisibilityFeedbackToResult(manualResult);
+
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+
+        assertThat(requestedResult).as("The endpoint falls back to the visible automatic result instead of leaking the manual one").isNotNull();
+        assertThat(requestedResult.getId()).isEqualTo(automaticResult.getId());
     }
 
     @Test
@@ -2063,6 +2166,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var commits = request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
         assertThat(commits).isNotEmpty();
         assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(commitMessage));
+    }
+
+    private static List<Long> extractResultIds(StudentParticipationDTO participation) {
+        if (participation.submissions() == null) {
+            return List.of();
+        }
+        // A submission with no visible result serializes without a results field (@JsonInclude NON_EMPTY), so results() is null there.
+        return participation.submissions().stream().flatMap(submission -> submission.results() == null ? Stream.empty() : submission.results().stream())
+                .map(ParticipationSubmissionResultDTO::id).toList();
     }
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
