@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.web;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import jakarta.validation.Valid;
@@ -141,6 +142,10 @@ public class IrisGlobalSearchResource {
      * Narrows a search to the courses the caller asked for, minus the ones it asked to hide, and, for the Iris answer, to the courses whose Iris
      * course settings are enabled.
      * <p>
+     * The courses the caller asked for are validated against the courses the caller can access: an id the caller has no access to is dropped, so
+     * the list sent to Pyris is always a subset of the access context and never relies on Pyris to narrow it. Only an unrestricted caller is
+     * not limited this way.
+     * <p>
      * The Iris answer is an interactive Iris feature, like the chat it can be continued in, so it must not draw on a course whose instructor
      * switched Iris off. An unscoped request cannot be forwarded untouched for it: Pyris falls back to the access context when it receives no
      * course list, and that context is built from course roles alone. Switching Iris off does not remove what was already ingested, and the
@@ -168,10 +173,14 @@ public class IrisGlobalSearchResource {
         }
         // An unscoped request is narrowed from every course the caller can access, a scoped one from what it asked for.
         var candidateCourseIds = isUnscoped ? accessContext.courseIds() : requestedCourseIds;
-        // Every other caller travels with a ceiling, so a hidden course is subtracted here and never named to Pyris.
-        var scopedCourseIds = candidateCourseIds.stream().filter(courseId -> !excludedCourseIds.contains(courseId)).toList();
+        // Every other caller travels with a ceiling, so a hidden course is subtracted here and never named to Pyris. A course the caller cannot
+        // access is dropped the same way, which only changes a scoped request: an unscoped one already starts from the accessible courses. An
+        // unrestricted caller lists no courses in its context, but is not limited to any, so it keeps every course it asked for.
+        var accessibleCourseIds = Set.copyOf(accessContext.courseIds());
+        var scopedCourseIds = candidateCourseIds.stream().filter(courseId -> !excludedCourseIds.contains(courseId))
+                .filter(courseId -> accessContext.unrestricted() || accessibleCourseIds.contains(courseId)).toList();
         if (scopedCourseIds.isEmpty() && !candidateCourseIds.isEmpty()) {
-            // The exclusions removed every course in scope. An empty list is dropped on the wire and read as unscoped, so
+            // The exclusions or the access check removed every course in scope. An empty list is dropped on the wire and read as unscoped, so
             // answering here is what keeps "hide all of them" from searching all of them.
             return LectureSearchScope.nothing();
         }
