@@ -671,6 +671,29 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(textarea.getAttribute('aria-invalid')).toBe('true');
     });
 
+    it('forwards aria-describedby and aria-invalid to the native-edit-context element when Monaco uses the EditContext API', () => {
+        fixture.detectChanges();
+
+        // Newer Monaco builds (Chromium with EditContext API) render a focusable `<div class="native-edit-context" role="textbox">`
+        // instead of a `<textarea>`. Prove the forwarding reaches that element too — regression for a reviewer finding where the
+        // aria attributes landed nowhere on Chromium because the selector only looked for `<textarea>`.
+        const nativeEditContext = document.createElement('div');
+        nativeEditContext.className = 'native-edit-context';
+        nativeEditContext.setAttribute('role', 'textbox');
+        const domNode = document.createElement('div');
+        domNode.appendChild(nativeEditContext);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({
+            getDomNode: () => domNode,
+        });
+
+        fixture.componentRef.setInput('ariaDescribedBy', 'field_codeOfConduct_error');
+        fixture.componentRef.setInput('ariaInvalid', true);
+        fixture.detectChanges();
+
+        expect(nativeEditContext.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+        expect(nativeEditContext.getAttribute('aria-invalid')).toBe('true');
+    });
+
     it('re-pushes aria attributes to the new diff-mode textarea even when the inputs did not change', () => {
         fixture.detectChanges();
         // Set the aria state with the normal-mode textarea in place first. The effect fires here.

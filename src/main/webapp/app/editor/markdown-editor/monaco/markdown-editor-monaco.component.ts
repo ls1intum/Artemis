@@ -400,14 +400,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Pushes the current `ariaDescribedBy` / `ariaInvalid` inputs into the active Monaco editor's inner textarea
-     * (the editing control that actually receives focus and that screen readers describe). Safe to call before the
-     * editor exists; it just no-ops in that case.
+     * Pushes the current `ariaDescribedBy` / `ariaInvalid` inputs into the active Monaco editor's accessible
+     * editing control (the element that actually receives focus and that screen readers describe). Safe to call
+     * before the editor exists; it just no-ops in that case. Monaco uses an input `<textarea>` on older builds
+     * and a `div.native-edit-context` (role=textbox, backed by the EditContext API) on newer ones; the sync
+     * covers whichever the active editor currently renders so Chromium users get the same wiring as the textarea
+     * path.
      */
     private syncAriaAttributes(): void {
-        const textarea = this.monacoEditor()?.getActiveEditor()?.getDomNode()?.querySelector<HTMLTextAreaElement>('textarea');
-        if (textarea) {
-            this.applyAriaAttributesToTextarea(textarea, this.ariaDescribedBy(), this.ariaInvalid());
+        const target = this.monacoEditor()?.getActiveEditor()?.getDomNode()?.querySelector<HTMLElement>('textarea, .native-edit-context');
+        if (target) {
+            this.applyAriaAttributesToTextarea(target, this.ariaDescribedBy(), this.ariaInvalid());
         }
     }
 
@@ -645,17 +648,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Applies the given accessibility attributes to Monaco's inner input textarea so screen readers
-     * reach them when focus is on the editing control (the host wrapper would be ignored). Exposed
-     * for direct unit testing because the hosting effect depends on Monaco having been initialized.
+     * Applies the given accessibility attributes to Monaco's accessible editing control (either the inner
+     * `<textarea>` or the newer `div.native-edit-context` role=textbox element) so screen readers reach them
+     * when focus is on that control. The host wrapper would be ignored. Exposed for direct unit testing
+     * because the hosting effect depends on Monaco having been initialized.
      */
-    applyAriaAttributesToTextarea(textarea: HTMLTextAreaElement, describedBy: string | undefined, invalid: boolean): void {
+    applyAriaAttributesToTextarea(target: HTMLElement, describedBy: string | undefined, invalid: boolean): void {
         if (describedBy) {
-            textarea.setAttribute('aria-describedby', describedBy);
+            target.setAttribute('aria-describedby', describedBy);
         } else {
-            textarea.removeAttribute('aria-describedby');
+            target.removeAttribute('aria-describedby');
         }
-        textarea.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+        target.setAttribute('aria-invalid', invalid ? 'true' : 'false');
     }
 
     /**
