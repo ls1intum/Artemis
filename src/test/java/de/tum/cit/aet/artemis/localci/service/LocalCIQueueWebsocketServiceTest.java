@@ -31,6 +31,7 @@ import org.springframework.messaging.simp.user.SimpUserRegistry;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics;
@@ -59,6 +60,19 @@ class LocalCIQueueWebsocketServiceTest {
 
     @InjectMocks
     private LocalCIQueueWebsocketService localCIQueueWebsocketService;
+
+    @Test
+    void shouldSendAChangedFinishedJobAsAChangeAndToItsDetailTopicButNotAsAFurtherFinishedJob() {
+        var finishedBuildJob = new FinishedBuildJobDTO("job-1", "job-1", "agent", 2L, COURSE_ID, 3L, BuildStatus.SUCCESSFUL, RepositoryType.USER, "repo", RepositoryType.USER,
+                SUBMISSION_DATE, SUBMISSION_DATE, SUBMISSION_DATE, "commit", null);
+
+        localCIQueueWebsocketService.sendChangedFinishedBuildJobOverWebsocket(finishedBuildJob);
+
+        verify(localCIWebsocketMessagingService).sendFinishedBuildJobChange(finishedBuildJob);
+        verify(localCIWebsocketMessagingService).sendFinishedBuildJobDetailUpdate(finishedBuildJob);
+        // the clients count every job announced as finished, so a changed job must not be announced again
+        verify(localCIWebsocketMessagingService, never()).sendFinishedBuildJobUpdate(any());
+    }
 
     @Test
     void shouldNotSendAnythingUntilTheBroadcastRuns() {
@@ -185,7 +199,7 @@ class LocalCIQueueWebsocketServiceTest {
         return new BuildJobQueueItem(id, id, new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), 1L, courseId, 3L, 0, 1, BuildStatus.QUEUED,
                 new RepositoryInfo("repo", RepositoryType.USER, RepositoryType.USER, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(SUBMISSION_DATE, null, null, null, 0),
-                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null);
+                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null, null);
     }
 
     @Test

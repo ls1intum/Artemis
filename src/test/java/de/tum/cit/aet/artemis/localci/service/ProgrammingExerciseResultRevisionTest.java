@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -17,9 +18,11 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
@@ -30,6 +33,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
+import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.MergedBuildRun;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -254,5 +258,76 @@ class ProgrammingExerciseResultRevisionTest {
         verify(exercises).save(same(current));
         assertThat(current.getProblemStatement()).isEqualTo("Instructor's latest instructions");
         verify(exercises, never()).save(same(stale));
+    }
+
+    @Test
+    void multiContainerBuildCompletesTheExpectedSynchronizationOnlyOnceEveryContainerReported() {
+        try (var writer = saves.reserveWrite(1L)) {
+            saves.expectTestCaseSynchronization(1L, solutionHead.get(), testsHead.get());
+            // each container reports only its share of the test cases
+            service.extractTestCasesFromResultAndBroadcastUpdates(result(solutionHead.get(), testsHead.get(), "firstContainerTest"), stale, false);
+            assertThat(saves.testCaseSynchronizationCompleted(1L, solutionHead.get(), testsHead.get())).as("one container's share does not complete it").isFalse();
+            service.extractTestCasesFromResultAndBroadcastUpdates(result(solutionHead.get(), testsHead.get(), "secondContainerTest"), stale, false);
+            assertThat(saves.testCaseSynchronizationCompleted(1L, solutionHead.get(), testsHead.get())).isFalse();
+
+            service.reconcileTestCasesOfMergedSolutionBuild(Set.of("generatedTest", "firstContainerTest", "secondContainerTest"), stale,
+                    new MergedBuildRun(solutionHead.get(), testsHead.get(), true), true);
+            assertThat(saves.testCaseSynchronizationCompleted(1L, solutionHead.get(), testsHead.get())).as("the finalization completes it").isTrue();
+            writer.verify();
+        }
+        ArgumentCaptor<Set<ProgrammingExerciseTestCase>> saved = ArgumentCaptor.captor();
+        verify(cases, atLeastOnce()).saveAll(saved.capture());
+        assertThat(saved.getAllValues().stream().flatMap(Set::stream).map(ProgrammingExerciseTestCase::getTestName)).as("every container's test cases are registered")
+                .contains("firstContainerTest", "secondContainerTest");
+        assertThat(generated.isActive()).isTrue();
+    }
+
+    @Test
+    void mergedSolutionBuildOfSupersededRevisionsCannotDeactivateTheCurrentSuite() {
+        service.reconcileTestCasesOfMergedSolutionBuild(Set.of("oldTest"), stale, new MergedBuildRun("old-solution", "old-tests", true), true);
+        assertThat(generated.isActive()).isTrue();
+        assertThat(old.isActive()).isFalse();
+        verify(cases, never()).saveAll(any());
+
+        service.reconcileTestCasesOfMergedSolutionBuild(Set.of("oldTest"), stale, new MergedBuildRun(solutionHead.get(), testsHead.get(), true), true);
+        assertThat(old.isActive()).as("a build of the current revisions reconciles").isTrue();
+        assertThat(generated.isActive()).isFalse();
+        verify(exercises).save(same(current));
+    }
+
+    @Test
+    void mergedSolutionBuildWithUnknownRevisionsLeavesTheTestCasesAlone() {
+        service.reconcileTestCasesOfMergedSolutionBuild(Set.of("oldTest"), stale, null, true);
+        assertThat(generated.isActive()).isTrue();
+        assertThat(old.isActive()).isFalse();
+        verify(cases, never()).saveAll(any());
+    }
+
+    @Test
+    void mergedSolutionBuildOfAReleasedExerciseReconcilesWithoutCoordination() {
+        stale.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        service.reconcileTestCasesOfMergedSolutionBuild(Set.of("oldTest"), stale, null, true);
+        assertThat(old.isActive()).isTrue();
+        assertThat(generated.isActive()).isFalse();
+        verifyNoInteractions(git, configs);
+    }
+
+    @Test
+    void aNewFailingTestOfOneContainerKeepsTheMergedBuildFromCompletingTheExpectedSynchronization() {
+        try (var writer = saves.reserveWrite(1L)) {
+            saves.expectTestCaseSynchronization(1L, solutionHead.get(), testsHead.get());
+            service.extractTestCasesFromResultAndBroadcastUpdates(result(solutionHead.get(), testsHead.get(), "passingTest"), stale, false);
+            var failing = new BuildResult("main", solutionHead.get(), testsHead.get(), false, null,
+                    List.of(new LocalCIJobDTO(List.of(new LocalCITestJobDTO("newFailingTest", List.of("expected true"))), List.of())), List.of(), List.of(), false, 0);
+            service.extractTestCasesFromResultAndBroadcastUpdates(failing, stale, false);
+
+            // the merged feedback lacks the unknown failing test, but the group's jobs record that a container did not run clean
+            service.reconcileTestCasesOfMergedSolutionBuild(Set.of("generatedTest", "passingTest"), stale, new MergedBuildRun(solutionHead.get(), testsHead.get(), false), false);
+            assertThat(saves.testCaseSynchronizationCompleted(1L, solutionHead.get(), testsHead.get())).isFalse();
+            writer.verify();
+        }
+        ArgumentCaptor<Set<ProgrammingExerciseTestCase>> saved = ArgumentCaptor.captor();
+        verify(cases, atLeastOnce()).saveAll(saved.capture());
+        assertThat(saved.getAllValues().stream().flatMap(Set::stream).map(ProgrammingExerciseTestCase::getTestName)).contains("passingTest").doesNotContain("newFailingTest");
     }
 }

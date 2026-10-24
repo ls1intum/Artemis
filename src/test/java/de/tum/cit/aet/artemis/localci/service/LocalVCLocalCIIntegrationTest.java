@@ -557,19 +557,78 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testAPlanWithSeveralContainersIsRefusedUntilTheyCanRunAsSeparateJobs() {
-            // a plan with two containers must not silently build its first container only
-            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
-            BuildPhaseDTO phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of());
-            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null,
-                    List.of(new BuildContainerDTO("instructor_tests", null, List.of(phase)), new BuildContainerDTO("student_tests", null, List.of(phase))))
-                    .toBuildPlanConfiguration());
+        void testMultipleContainersScheduleOneBuildJobEach() throws Exception {
+            BuildPhaseDTO phaseA = new BuildPhaseDTO("phase_a", "echo container-a", BuildPhaseCondition.ALWAYS, false, List.of("results/a/*.xml"));
+            BuildPhaseDTO phaseB = new BuildPhaseDTO("phase_b", "echo container-b", BuildPhaseCondition.ALWAYS, false, List.of("results/b/*.xml"));
+            // container_a bounds its own job more tightly than the exercise timeout, container_b uses the exercise timeout
+            BuildContainerDTO containerA = new BuildContainerDTO("container_a", "image-a:1", null, List.of(phaseA), 90);
+            BuildContainerDTO containerB = new BuildContainerDTO("container_b", "image-b:2", List.of(phaseB));
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(containerA, containerB)).toBuildPlanConfiguration());
+            buildConfig.setTimeoutSeconds(200);
             programmingExerciseBuildConfigRepository.save(buildConfig);
-            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-            assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(LocalCIException.class)
-                    .hasMessageContaining("more than one container is not supported yet");
-            assertThat(queuedJobs.getAll()).noneMatch(job -> job.participationId() == studentParticipation.getId());
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).count() == 2);
+
+            List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
+            assertThat(jobs).extracting(job -> job.buildGroup().containerName()).containsExactlyInAnyOrder("container_a", "container_b");
+            assertThat(jobs).extracting(BuildJobQueueItem::id).doesNotHaveDuplicates();
+            // every job carries the number of jobs scheduled for the commit; the result processing waits for that many
+            assertThat(jobs).extracting(job -> job.buildGroup().expectedContainerCount()).containsOnly(2);
+            // both jobs belong to the same build group, under which their results are merged
+            assertThat(jobs).extracting(job -> job.buildGroup().buildGroupId()).containsOnly(jobs.getFirst().buildGroup().buildGroupId());
+
+            BuildJobQueueItem jobA = jobs.stream().filter(job -> "container_a".equals(job.buildGroup().containerName())).findFirst().orElseThrow();
+            BuildJobQueueItem jobB = jobs.stream().filter(job -> "container_b".equals(job.buildGroup().containerName())).findFirst().orElseThrow();
+            assertThat(jobA.buildConfig().dockerImage()).isEqualTo("image-a:1");
+            assertThat(jobB.buildConfig().dockerImage()).isEqualTo("image-b:2");
+            assertThat(jobA.buildConfig().buildScript()).isNotEqualTo(jobB.buildConfig().buildScript());
+            assertThat(jobA.buildConfig().timeoutSeconds()).isEqualTo(90);
+            assertThat(jobB.buildConfig().timeoutSeconds()).isEqualTo(200);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSingleContainerBuildPlanSchedulesOneJobWithoutContainerName() {
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> queuedJobs.getAll().stream().anyMatch(job -> job.participationId() == studentParticipation.getId()));
+
+            List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
+            assertThat(jobs).hasSize(1);
+            assertThat(jobs.getFirst().buildGroup()).as("a single-container build carries no build group membership").isNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testContainerRepositoriesAreScopedPerContainer() throws Exception {
+            // only the instructor container lists the test repository, so student code never receives the tests
+            BuildPhaseDTO phase = new BuildPhaseDTO("phase", "echo build", BuildPhaseCondition.ALWAYS, false, List.of("results/*.xml"));
+            BuildContainerDTO instructorContainer = new BuildContainerDTO("instructor_tests", "image-a:1", List.of(new BuildContainerRepositoryDTO(RepositoryType.TESTS)),
+                    List.of(phase));
+            BuildContainerDTO studentContainer = new BuildContainerDTO("student_tests", "image-b:2", List.of(), List.of(phase));
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(instructorContainer, studentContainer)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).count() == 2);
+
+            List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
+            BuildJobQueueItem instructorJob = jobs.stream().filter(job -> "instructor_tests".equals(job.buildGroup().containerName())).findFirst().orElseThrow();
+            BuildJobQueueItem studentJob = jobs.stream().filter(job -> "student_tests".equals(job.buildGroup().containerName())).findFirst().orElseThrow();
+
+            // both containers build the student's own submission, so both keep the assignment repository
+            assertThat(instructorJob.repositoryInfo().assignmentRepositoryUri()).isNotNull();
+            assertThat(studentJob.repositoryInfo().assignmentRepositoryUri()).isNotNull();
+            assertThat(instructorJob.repositoryInfo().testRepositoryUri()).isNotNull();
+            assertThat(studentJob.repositoryInfo().testRepositoryUri()).isNull();
         }
 
         @Test

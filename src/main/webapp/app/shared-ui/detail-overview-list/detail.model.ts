@@ -12,7 +12,7 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BuildContainer } from 'app/programming/shared/entities/build-plan-phases.model';
 
 export type Detail = NotShownDetail | ShownDetail;
 
@@ -35,7 +35,7 @@ export type ShownDetail =
     | ProgrammingProblemStatementDetail
     | ProgrammingTimelineDetail
     | ProgrammingCheckoutDirectoriesDetail
-    | ProgrammingBuildPhasesDetail
+    | ProgrammingBuildContainersDetail
     | ExerciseCategoriesDetail;
 
 export interface DetailBase {
@@ -151,9 +151,15 @@ interface ProgrammingCheckoutDirectoriesDetail extends DetailBase {
     };
 }
 
-interface ProgrammingBuildPhasesDetail extends DetailBase {
-    type: DetailType.ProgrammingBuildPhases;
-    data: { phases: BuildPhase[]; isExamMode?: boolean };
+interface ProgrammingBuildContainersDetail extends DetailBase {
+    type: DetailType.ProgrammingBuildContainers;
+    data: {
+        containers: BuildContainer[];
+        isExamMode?: boolean;
+        // a signal like the diff report's fields above: the language default arrives after the sections rendered, and
+        // rebuilding the sections for it would re-create each one and re-run its deferred blocks
+        defaultDockerImage: Signal<string | undefined>;
+    };
 }
 
 export interface ExerciseCategoriesDetail extends DetailBase {

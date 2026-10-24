@@ -258,6 +258,19 @@ public class LocalCIQueueWebsocketService {
     }
 
     /**
+     * Sends a finished build job over websocket whose data changed after it was announced as finished.
+     *
+     * @param finishedBuildJob the finished build job DTO to send
+     */
+    void sendChangedFinishedBuildJobOverWebsocket(FinishedBuildJobDTO finishedBuildJob) {
+        if (finishedBuildJob == null) {
+            return;
+        }
+        localCIWebsocketMessagingService.sendFinishedBuildJobChange(finishedBuildJob);
+        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob);
+    }
+
+    /**
      * Sends build agent information over websocket. This method is called when a new build agent is added or removed.
      *
      * @param agentName the name of the build agent
@@ -294,7 +307,7 @@ public class LocalCIQueueWebsocketService {
             // record component is what actually keeps it out of every payload, including the single-item updates and
             // the admin endpoints that do not pass through here; clearing it is a redundant second layer on this path.
             filteredQueuedJobs.add(new BuildJobQueueItem(job.id(), job.name(), job.buildAgent(), job.participationId(), job.courseId(), job.exerciseId(), job.retryCount(),
-                    job.priority(), job.status(), repositoryInfo, job.jobTimingInfo(), buildConfig, null, null));
+                    job.priority(), job.status(), repositoryInfo, job.jobTimingInfo(), buildConfig, null, job.buildGroup(), null));
 
         }
         return filteredQueuedJobs;

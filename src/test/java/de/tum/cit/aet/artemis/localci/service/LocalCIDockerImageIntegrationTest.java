@@ -190,6 +190,11 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
             ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", originalImageArchitecture);
             originalImageArchitecture = null;
         }
+        // Reopen the services with the original connection and restart the queue listener: the test classes that share
+        // this context expect a live build agent, and a closed one leaves its build executor null for the rest of the JVM.
+        buildAgentConfiguration.openBuildAgentServices();
+        sharedQueueProcessingService.resetInitializedState();
+        sharedQueueProcessingService.init();
     }
 
     @Test

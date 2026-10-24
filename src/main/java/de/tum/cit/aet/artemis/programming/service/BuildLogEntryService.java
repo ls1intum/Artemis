@@ -95,9 +95,13 @@ public class BuildLogEntryService {
      * @return the entries as they were stored, which is what a subsequent read returns
      */
     public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result result) {
+        ZonedDateTime retentionTime = result.getCompletionDate() != null ? result.getCompletionDate() : programmingSubmission.getSubmissionDate();
+        return saveBuildLogs(buildLogs, programmingSubmission, result, retentionTime);
+    }
+
+    private List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result result, ZonedDateTime retentionTime) {
         List<BuildLogEntry> stored;
         try {
-            ZonedDateTime retentionTime = result.getCompletionDate() != null ? result.getCompletionDate() : programmingSubmission.getSubmissionDate();
             stored = failedBuildLogService.saveBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), result.getId(), retentionTime, buildLogs);
         }
         catch (UncheckedIOException e) {
@@ -111,6 +115,73 @@ public class BuildLogEntryService {
         // both stores and the read below never has to decide which of the two is newer. Once the table has drained this is a delete that matches nothing.
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
         return stored;
+    }
+
+    /**
+     * Stores the build logs of one failed container of a multi-container build, labeled with its name, in the file of the
+     * build's aggregated result, see {@link FailedBuildLogService#appendBuildLogs}.
+     * <p>
+     * The file lies under the exercise of the aggregated result. The submission cannot name it: the template and solution
+     * participations store no exercise, and the detached submission a build result is matched to carries only a skeleton
+     * of its earlier result, so {@link #exerciseIdOf} would fall back to that skeleton's unset exercise.
+     *
+     * @param buildLogs             build logs of the container
+     * @param programmingSubmission submission shared by all containers of the build
+     * @param aggregatedResult      the aggregated result of the build, which names the file
+     * @param containerName         the container the logs came from
+     * @param buildRunDate          when the container's build ran, from which the logs' retention period counts
+     * @return the entries as they were stored for this container
+     */
+    public List<BuildLogEntry> appendContainerBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result aggregatedResult, String containerName,
+            ZonedDateTime buildRunDate) {
+        List<BuildLogEntry> stored;
+        try {
+            // the build's own date, as for a single-container result: a rebuild of an old submission keeps its logs for the full period
+            ZonedDateTime retentionTime = buildRunDate != null ? buildRunDate : ZonedDateTime.now();
+            stored = failedBuildLogService.appendBuildLogs(aggregatedResult.getExerciseId(), programmingSubmission.getId(), aggregatedResult.getId(), retentionTime, containerName,
+                    buildLogs);
+        }
+        catch (UncheckedIOException e) {
+            log.error("Could not store the build logs of container {} of submission {}", containerName, programmingSubmission.getId(), e);
+            return List.of();
+        }
+        // as for a single-container build: a submission is never represented in both stores
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
+        return stored;
+    }
+
+    /**
+     * Moves the logs of a multi-container build from its aggregated result to the tutor's assessment its feedback was
+     * merged into, before the aggregate is deleted.
+     *
+     * @param programmingSubmission submission shared by the aggregate and the assessment
+     * @param aggregatedResult      the aggregated result of the build, whose file is removed
+     * @param manualResult          the assessment the build's feedback was merged into
+     * @param buildFailed           whether a container of the build failed to build
+     */
+    public void moveContainerBuildLogs(ProgrammingSubmission programmingSubmission, Result aggregatedResult, Result manualResult, boolean buildFailed) {
+        long exerciseId = aggregatedResult.getExerciseId();
+        if (buildFailed) {
+            // retained from this build's completion, which the assessment's own dates do not reflect
+            ZonedDateTime retentionTime = aggregatedResult.getCompletionDate() != null ? aggregatedResult.getCompletionDate() : ZonedDateTime.now();
+            failedBuildLogService.getBuildLogs(exerciseId, programmingSubmission.getId(), aggregatedResult.getId())
+                    .ifPresent(buildLogs -> saveBuildLogs(buildLogs, programmingSubmission, manualResult, retentionTime));
+        }
+        else {
+            deleteBuildLogsOfSucceededResult(programmingSubmission, manualResult);
+        }
+        failedBuildLogService.deleteBuildLogs(exerciseId, programmingSubmission.getId(), aggregatedResult.getId());
+    }
+
+    /**
+     * Deletes the stored logs of the aggregated result of a multi-container build that is discarded, under the exercise
+     * the result names, see {@link #appendContainerBuildLogs}.
+     *
+     * @param programmingSubmission submission the aggregated result belongs to
+     * @param aggregatedResult      the aggregated result being discarded
+     */
+    public void deleteContainerBuildLogs(ProgrammingSubmission programmingSubmission, Result aggregatedResult) {
+        failedBuildLogService.deleteBuildLogs(aggregatedResult.getExerciseId(), programmingSubmission.getId(), aggregatedResult.getId());
     }
 
     /**

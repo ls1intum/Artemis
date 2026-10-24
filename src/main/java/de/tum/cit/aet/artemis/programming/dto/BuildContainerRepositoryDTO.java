@@ -12,8 +12,10 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * A container only selects which of the exercise's repositories are provisioned into it; where a repository is checked
  * out remains configured per exercise via the checkout paths of its build config. Scoping the repositories per
  * container is what keeps trusted and untrusted code apart: a container that does not list the test repository never
- * receives the instructor's test files. A repository is selected by its type alone; {@link RepositoryType#AUXILIARY}
- * selects every auxiliary repository of the exercise.
+ * receives the instructor's test files.
+ * <p>
+ * {@link RepositoryType#AUXILIARY} selects every auxiliary repository of the exercise. The type is wrapped in a record
+ * so that a field, such as an auxiliary repository's name, can be added without changing the stored build plan format.
  *
  * @param type the type of the repository
  */

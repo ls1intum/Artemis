@@ -79,7 +79,7 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
                 new RepositoryInfo("repo", RepositoryType.TEMPLATE, RepositoryType.TEMPLATE, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), null, 60),
                 new BuildConfig(null, "ghcr.io/example/image:1", "commit", "commit", "test-commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null,
-                null);
+                null, null);
     }
 
     /**
