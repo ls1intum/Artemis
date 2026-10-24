@@ -133,7 +133,7 @@ public class AccountService {
         if (emailChangeNeedsConfirmation) {
             // Asked for before anything is saved, so a refused address leaves the account as it was. What is saved below keeps the
             // address the account has: the new one is applied when both addresses have confirmed.
-            pendingEmailChange = emailChangeService.requestChange(currentUser, userDTO.getEmail());
+            pendingEmailChange = emailChangeService.requestChange(currentUser, userDTO.getEmail(), userDTO.getLangKey());
         }
 
         userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), emailToSave, userDTO.getLangKey(), userDTO.getImageUrl());
