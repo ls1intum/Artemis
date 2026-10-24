@@ -3,10 +3,14 @@ package de.tum.cit.aet.artemis.deimos.service;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,7 +21,10 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import com.openai.errors.OpenAIServiceException;
 
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
@@ -54,6 +61,13 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
 
     private static final String RATIONALE_FIELD = "rationale";
 
+    private static final String CREDENTIALS_REJECTED_MESSAGE = "LLM endpoint rejected the credentials (HTTP %d): API key missing or wrong, or not authorised for this endpoint or model";
+
+    /**
+     * Upper bound on the causes inspected when classifying a failure. Real chains are a handful of wrappers deep.
+     */
+    private static final int MAX_CAUSE_DEPTH = 32;
+
     // Trailing tokens are rejected so a response containing an early guess followed by a corrected verdict is not
     // silently resolved to the first object; such a response falls through to the fenced and balanced candidates.
     private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).build();
@@ -71,6 +85,12 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
             content = chatClient.prompt().system(request.systemPrompt()).user(request.userPrompt()).call().content();
         }
         catch (Exception ex) {
+            OptionalInt rejectedStatus = credentialRejectionStatus(ex);
+            if (rejectedStatus.isPresent()) {
+                // Fixed text and no cause: the SDK exception can carry the rejected request, and a cause attached here
+                // would be printed in full wherever this exception is logged.
+                throw new DeimosLlmException(DeimosFailureType.LLM_AUTHENTICATION_FAILED, CREDENTIALS_REJECTED_MESSAGE.formatted(rejectedStatus.getAsInt()));
+            }
             throw new DeimosLlmException(classifyCallFailure(ex), "LLM call failed for participation " + request.participationId() + ": " + ex.getMessage(), ex);
         }
 
@@ -215,13 +235,51 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
     }
 
     /**
+     * Finds an HTTP 401 or 403 answer of the LLM endpoint anywhere in the cause chain.
+     * <p>
+     * Checked over the whole chain before any of the heuristics in {@link #classifyCallFailure}, so a wrapper whose
+     * message happens to mention a timeout, or an outer {@link IOException}, cannot hide that the credentials were
+     * rejected.
+     *
+     * @param exception the exception thrown by the chat client
+     * @return the rejecting HTTP status, or empty if the credentials were not rejected
+     */
+    static OptionalInt credentialRejectionStatus(Throwable exception) {
+        for (Throwable current : causeChain(exception)) {
+            if (current instanceof OpenAIServiceException serviceException) {
+                int status = serviceException.statusCode();
+                if (status == HttpStatus.UNAUTHORIZED.value() || status == HttpStatus.FORBIDDEN.value()) {
+                    return OptionalInt.of(status);
+                }
+            }
+        }
+        return OptionalInt.empty();
+    }
+
+    /**
+     * Returns the cause chain of an exception, bounded in length and stopping at the first repeated element, so a cyclic
+     * chain cannot loop forever.
+     *
+     * @param exception the outermost exception
+     * @return the exception followed by its causes
+     */
+    private static List<Throwable> causeChain(Throwable exception) {
+        List<Throwable> chain = new ArrayList<>();
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (Throwable current = exception; current != null && chain.size() < MAX_CAUSE_DEPTH && visited.add(current); current = current.getCause()) {
+            chain.add(current);
+        }
+        return chain;
+    }
+
+    /**
      * Maps a failure surviving the SDK's transport retries onto a reportable failure type.
      *
      * @param exception the exception thrown by the chat client
      * @return the matching failure type
      */
     private static DeimosFailureType classifyCallFailure(Exception exception) {
-        for (Throwable current = exception; current != null; current = current.getCause() == current ? null : current.getCause()) {
+        for (Throwable current : causeChain(exception)) {
             if (current instanceof SocketTimeoutException || current instanceof TimeoutException) {
                 return DeimosFailureType.LLM_TIMEOUT;
             }

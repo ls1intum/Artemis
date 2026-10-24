@@ -173,6 +173,16 @@ artemis:
             core-pool-size: 2
             max-pool-size: 4
             queue-capacity: 25
+        # Bounds of the evidence sent to the LLM for one participation, in bytes. Each must be at least 1024; the final-state
+        # reservation must be smaller than the total, and the per-file diff cap must not exceed it.
+        payload:
+            max-file-input-bytes: 262144 # 256 KiB: larger files are not diffed at all
+            max-file-diff-bytes: 32768 # 32 KiB: larger per-file diffs are truncated
+            max-payload-bytes: 131072 # 128 KiB: hard bound on the whole payload
+            final-state-reserved-bytes: 32768 # 32 KiB: held back so the final state is always included
+        batch:
+            max-participations-per-run: 5000
+            max-window-days: 31
         llm:
             # Must be https: student source code and the api-key below travel to this endpoint on every analysis.
             base-url: # required when enabled, e.g. https://llm.example.com

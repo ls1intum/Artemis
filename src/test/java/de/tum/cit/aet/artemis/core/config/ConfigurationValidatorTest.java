@@ -4,8 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.util.Map;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,6 +20,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.env.Environment;
 
 import de.tum.cit.aet.artemis.core.exception.InsecureDefaultCredentialException;
+import de.tum.cit.aet.artemis.deimos.config.DeimosLimits;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosConfigurationException;
 import de.tum.cit.aet.artemis.deimos.exception.failureAnalyzer.DeimosConfigurationFailureAnalyzer;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
@@ -67,15 +73,90 @@ class ConfigurationValidatorTest {
     }
 
     private ConfigurationValidator createDeimosValidator(boolean deimosEnabled, String baseUrl, String model, String completionsPath, long timeoutSeconds, int maxRetries) {
+        return createDeimosValidator(deimosEnabled, baseUrl, model, completionsPath, timeoutSeconds, maxRetries, Map.of());
+    }
+
+    /**
+     * Creates a validator whose environment answers the Deimos limit properties with {@code limits}, and with the
+     * requested default for every limit not listed, exactly as a real environment without those properties would.
+     */
+    private ConfigurationValidator createDeimosValidator(boolean deimosEnabled, String baseUrl, String model, String completionsPath, long timeoutSeconds, int maxRetries,
+            Map<String, Number> limits) {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
         when(mockEnvironment.getProperty(Constants.DEIMOS_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(deimosEnabled);
+        when(mockEnvironment.getProperty(anyString(), eq(Integer.class), any(Integer.class))).thenAnswer(
+                invocation -> limits.containsKey(invocation.<String>getArgument(0)) ? limits.get(invocation.<String>getArgument(0)).intValue() : invocation.getArgument(2));
+        when(mockEnvironment.getProperty(anyString(), eq(Long.class), any(Long.class))).thenAnswer(
+                invocation -> limits.containsKey(invocation.<String>getArgument(0)) ? limits.get(invocation.<String>getArgument(0)).longValue() : invocation.getArgument(2));
         return new ConfigurationValidator(mockEnvironment, false, null, null, false, null, 0, 0, null, VALID_VECTORIZER_MODULE, null, null, false, "http://localhost", baseUrl,
                 model, completionsPath, timeoutSeconds, maxRetries);
     }
 
     @Nested
     class DeimosConfigurationTest {
+
+        @Test
+        void testCustomDeimosLimitsWithinTheBoundsShouldPass() {
+            Map<String, Number> limits = Map.of(DeimosLimits.MAX_FILE_INPUT_BYTES_PROPERTY, 1024, DeimosLimits.MAX_FILE_DIFF_BYTES_PROPERTY, 2048,
+                    DeimosLimits.MAX_PAYLOAD_BYTES_PROPERTY, 2048, DeimosLimits.FINAL_STATE_RESERVED_BYTES_PROPERTY, 1024, DeimosLimits.MAX_PARTICIPATIONS_PER_RUN_PROPERTY, 1,
+                    DeimosLimits.MAX_WINDOW_DAYS_PROPERTY, 1);
+            ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3, limits);
+
+            assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { DeimosLimits.MAX_FILE_INPUT_BYTES_PROPERTY, DeimosLimits.MAX_FILE_DIFF_BYTES_PROPERTY, DeimosLimits.MAX_PAYLOAD_BYTES_PROPERTY,
+                DeimosLimits.FINAL_STATE_RESERVED_BYTES_PROPERTY })
+        void testByteLimitBelowTheMinimumShouldFailValidation(String property) {
+            ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3,
+                    Map.of(property, DeimosLimits.MIN_BYTE_LIMIT - 1));
+
+            var exception = catchThrowableOfType(DeimosConfigurationException.class, validator::validateConfigurations);
+            assertThat(exception.getMissingOrInvalidProperties()).anySatisfy(entry -> assertThat(entry).startsWith(property + " (must be at least 1024 bytes"));
+        }
+
+        @ParameterizedTest
+        @ValueSource(longs = { 0, -1 })
+        void testNonPositiveBatchLimitsShouldFailValidation(long value) {
+            ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3,
+                    Map.of(DeimosLimits.MAX_PARTICIPATIONS_PER_RUN_PROPERTY, value, DeimosLimits.MAX_WINDOW_DAYS_PROPERTY, value));
+
+            var exception = catchThrowableOfType(DeimosConfigurationException.class, validator::validateConfigurations);
+            assertThat(exception.getMissingOrInvalidProperties()).anySatisfy(entry -> assertThat(entry).startsWith(DeimosLimits.MAX_PARTICIPATIONS_PER_RUN_PROPERTY))
+                    .anySatisfy(entry -> assertThat(entry).startsWith(DeimosLimits.MAX_WINDOW_DAYS_PROPERTY));
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = { 4096, 8192 })
+        void testFinalStateReservationNotSmallerThanThePayloadShouldFailValidation(int reservedBytes) {
+            ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3,
+                    Map.of(DeimosLimits.MAX_PAYLOAD_BYTES_PROPERTY, 4096, DeimosLimits.FINAL_STATE_RESERVED_BYTES_PROPERTY, reservedBytes,
+                            DeimosLimits.MAX_FILE_DIFF_BYTES_PROPERTY, 1024));
+
+            var exception = catchThrowableOfType(DeimosConfigurationException.class, validator::validateConfigurations);
+            assertThat(exception.getMissingOrInvalidProperties()).singleElement()
+                    .satisfies(entry -> assertThat(entry).startsWith(DeimosLimits.FINAL_STATE_RESERVED_BYTES_PROPERTY + " (must be smaller than"));
+        }
+
+        @Test
+        void testPerFileDiffCapAboveThePayloadShouldFailValidation() {
+            ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3,
+                    Map.of(DeimosLimits.MAX_PAYLOAD_BYTES_PROPERTY, 4096, DeimosLimits.FINAL_STATE_RESERVED_BYTES_PROPERTY, 1024, DeimosLimits.MAX_FILE_DIFF_BYTES_PROPERTY, 4097));
+
+            var exception = catchThrowableOfType(DeimosConfigurationException.class, validator::validateConfigurations);
+            assertThat(exception.getMissingOrInvalidProperties()).singleElement()
+                    .satisfies(entry -> assertThat(entry).startsWith(DeimosLimits.MAX_FILE_DIFF_BYTES_PROPERTY + " (must not exceed"));
+        }
+
+        @Test
+        void testInvalidDeimosLimitsAreSkippedWhenDeimosIsDisabled() {
+            ConfigurationValidator validator = createDeimosValidator(false, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3,
+                    Map.of(DeimosLimits.MAX_PAYLOAD_BYTES_PROPERTY, 1, DeimosLimits.MAX_WINDOW_DAYS_PROPERTY, 0));
+
+            assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+        }
 
         @Test
         void testDeimosDisabledShouldSkipValidationEvenWithInvalidConfiguration() {

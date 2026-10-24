@@ -17,6 +17,16 @@ public record DeimosFailureBreakdownEntry(DeimosFailureType failureType, String 
      * @return the breakdown entry, carrying the i18n key for the category
      */
     public static DeimosFailureBreakdownEntry of(DeimosFailureType failureType, long count) {
-        return new DeimosFailureBreakdownEntry(failureType, "email.deimos.analysisComplete.failureType." + failureType.name(), count);
+        return new DeimosFailureBreakdownEntry(failureType, translationKey(failureType), count);
+    }
+
+    /**
+     * Returns the i18n key describing a failure category in the completion email.
+     *
+     * @param failureType the failure category
+     * @return the i18n key
+     */
+    public static String translationKey(DeimosFailureType failureType) {
+        return "email.deimos.analysisComplete.failureType." + failureType.name();
     }
 }

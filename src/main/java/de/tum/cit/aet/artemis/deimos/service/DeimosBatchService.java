@@ -1,5 +1,10 @@
 package de.tum.cit.aet.artemis.deimos.service;
 
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_PARTICIPATIONS_PER_RUN;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_WINDOW_DAYS;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_PARTICIPATIONS_PER_RUN_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_WINDOW_DAYS_PROPERTY;
+
 import java.net.URL;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -35,8 +40,11 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchTriggerResponseDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailedAnalysisDetail;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureBreakdownEntry;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosIncompletelyCheckedLink;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosManipulationAttemptLink;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosVerdict;
 import de.tum.cit.aet.artemis.deimos.repository.DeimosBatchParticipationRepository;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -69,15 +77,21 @@ public class DeimosBatchService {
 
     private final URL artemisServerUrl;
 
-    private static final long MAX_PARTICIPATIONS_PER_RUN = 5000;
-
-    private static final long MAX_MANUAL_WINDOW_DAYS = 31;
-
+    /**
+     * Number of candidate participation ids fetched per query while collecting a run. Only bounds the size of a single
+     * result page; how many participations a run may contain is {@link #maxParticipationsPerRun}.
+     */
     private static final int PAGE_SIZE = 200;
+
+    private final long maxParticipationsPerRun;
+
+    private final long maxManualWindowDays;
 
     public DeimosBatchService(DeimosBatchParticipationRepository deimosBatchParticipationRepository, DeimosAnalysisService deimosAnalysisService,
             MailSendingService mailSendingService, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            @Value("${server.url}") URL artemisServerUrl, @Qualifier("deimosTaskExecutor") Executor deimosTaskExecutor) {
+            @Value("${server.url}") URL artemisServerUrl, @Qualifier("deimosTaskExecutor") Executor deimosTaskExecutor,
+            @Value("${" + MAX_PARTICIPATIONS_PER_RUN_PROPERTY + ":" + DEFAULT_MAX_PARTICIPATIONS_PER_RUN + "}") long maxParticipationsPerRun,
+            @Value("${" + MAX_WINDOW_DAYS_PROPERTY + ":" + DEFAULT_MAX_WINDOW_DAYS + "}") long maxManualWindowDays) {
         this.deimosBatchParticipationRepository = deimosBatchParticipationRepository;
         this.deimosAnalysisService = deimosAnalysisService;
         this.mailSendingService = mailSendingService;
@@ -85,6 +99,8 @@ public class DeimosBatchService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.artemisServerUrl = artemisServerUrl;
         this.deimosTaskExecutor = deimosTaskExecutor;
+        this.maxParticipationsPerRun = maxParticipationsPerRun;
+        this.maxManualWindowDays = maxManualWindowDays;
     }
 
     /**
@@ -146,8 +162,9 @@ public class DeimosBatchService {
             long totalCandidates = ex instanceof ParticipationLimitExceededException limitExceeded ? limitExceeded.getObservedCandidates() : participationIds.size();
             long failed = totalCandidates > 0 ? totalCandidates : 1;
             String failureReason = ex.getClass().getSimpleName() + ": " + ex.getMessage();
-            List<DeimosBatchSummaryDTO.FailedAnalysis> failedAnalyses = List.of(new DeimosBatchSummaryDTO.FailedAnalysis(0, DeimosFailureType.OTHER, failureReason));
-            DeimosBatchSummaryDTO failureSummary = new DeimosBatchSummaryDTO(runId, DeimosTriggerType.MANUAL.name(), scope.name(), from, to, totalCandidates, 0, 0, 0, failed,
+            List<DeimosBatchSummaryDTO.FailedAnalysis> failedAnalyses = List
+                    .of(new DeimosBatchSummaryDTO.FailedAnalysis(DeimosBatchSummaryDTO.BATCH_LEVEL_FAILURE_PARTICIPATION_ID, DeimosFailureType.OTHER, failureReason));
+            DeimosBatchSummaryDTO failureSummary = new DeimosBatchSummaryDTO(runId, DeimosTriggerType.MANUAL.name(), scope.name(), from, to, totalCandidates, 0, 0, 0, 0, 0, failed,
                     List.of(), failedAnalyses);
             log.error("Deimos manual batch {} failed for scope {} with id {}", runId, scope, scopeId, ex);
             sendManualRunFinishedNotification(scope, scopeId, failureSummary, triggerUser);
@@ -193,29 +210,46 @@ public class DeimosBatchService {
         }
         String notificationUrl = base + "/courses/" + courseId;
 
+        List<DeimosManipulationAttemptLink> manipulationAttemptLinks = new ArrayList<>();
         List<DeimosMaliciousParticipationLink> maliciousParticipationLinks = new ArrayList<>();
+        List<DeimosIncompletelyCheckedLink> incompletelyCheckedLinks = new ArrayList<>();
         for (DeimosBatchSummaryDTO.ParticipationAnalysis participationAnalysis : summary.analyzedParticipations()) {
-            if (!participationAnalysis.malicious()) {
+            if (participationAnalysis.verdict() == DeimosVerdict.BENIGN) {
                 continue;
             }
             if (participationAnalysis.exerciseId() <= 0) {
-                log.warn("Omitting deep link in Deimos completion email: malicious participation {} has no exercise id", participationAnalysis.participationId());
+                log.warn("Omitting deep link in Deimos completion email: participation {} has no exercise id", participationAnalysis.participationId());
                 continue;
             }
             String participationUrl = base + "/course-management/" + courseId + "/programming-exercises/" + participationAnalysis.exerciseId() + "/participations/"
                     + participationAnalysis.participationId() + "/submissions";
             String rationale = participationAnalysis.rationale() != null ? participationAnalysis.rationale().strip() : "";
-            maliciousParticipationLinks.add(new DeimosMaliciousParticipationLink(participationUrl, participationAnalysis.participationId(), rationale));
+            switch (participationAnalysis.verdict()) {
+                case MANIPULATION_ATTEMPT -> {
+                    String failureTranslationKey = participationAnalysis.failureType() != null ? DeimosFailureBreakdownEntry.translationKey(participationAnalysis.failureType())
+                            : null;
+                    String llmRationale = participationAnalysis.rationale() != null ? rationale : null;
+                    manipulationAttemptLinks.add(new DeimosManipulationAttemptLink(participationUrl, participationAnalysis.participationId(), participationAnalysis.findings(),
+                            participationAnalysis.findingCount(), participationAnalysis.llmMalicious(), llmRationale, failureTranslationKey));
+                }
+                case MALICIOUS -> maliciousParticipationLinks.add(new DeimosMaliciousParticipationLink(participationUrl, participationAnalysis.participationId(), rationale));
+                case INCOMPLETELY_CHECKED -> incompletelyCheckedLinks.add(new DeimosIncompletelyCheckedLink(participationUrl, participationAnalysis.participationId(),
+                        participationAnalysis.omissions(), participationAnalysis.omissionCount(), rationale));
+                case BENIGN -> {
+                    // Benign participations are only counted, never listed.
+                }
+            }
         }
 
         List<DeimosFailedAnalysisDetail> failedAnalysisDetails = summary.failedAnalyses().stream()
-                .map(fa -> new DeimosFailedAnalysisDetail(fa.participationId(), fa.failureType(), fa.reason())).toList();
+                .map(fa -> DeimosFailedAnalysisDetail.of(fa.participationId(), fa.failureType(), fa.reason())).toList();
 
         List<DeimosFailureBreakdownEntry> failureBreakdown = summary.failureCountsByType().entrySet().stream()
                 .map(entry -> DeimosFailureBreakdownEntry.of(entry.getKey(), entry.getValue())).toList();
 
-        var emailData = new DeimosAnalysisCompleteEmailDTO(courseId, courseTitle, scopeTitle, summary.analyzed(), summary.maliciousCount(), summary.benignCount(), summary.failed(),
-                notificationUrl, maliciousParticipationLinks, failedAnalysisDetails, failureBreakdown);
+        var emailData = new DeimosAnalysisCompleteEmailDTO(courseId, courseTitle, scopeTitle, summary.analyzed(), summary.manipulationAttemptCount(), summary.maliciousCount(),
+                summary.incompletelyCheckedCount(), summary.benignCount(), summary.failed(), notificationUrl, manipulationAttemptLinks, maliciousParticipationLinks,
+                incompletelyCheckedLinks, failedAnalysisDetails, failureBreakdown);
         mailSendingService.buildAndSendAsync(MailRecipientDTO.from(triggerUser), DEIMOS_ANALYSIS_COMPLETE_EMAIL_SUBJECT, DEIMOS_ANALYSIS_COMPLETE_EMAIL_TEMPLATE,
                 Map.of("analysis", emailData, "notificationUrl", notificationUrl));
     }
@@ -226,8 +260,8 @@ public class DeimosBatchService {
         while (true) {
             Slice<Long> slice = sliceProvider.apply(pageable);
             ids.addAll(slice.getContent());
-            if (ids.size() > MAX_PARTICIPATIONS_PER_RUN) {
-                throw new ParticipationLimitExceededException(ids.size());
+            if (ids.size() > maxParticipationsPerRun) {
+                throw new ParticipationLimitExceededException(ids.size(), maxParticipationsPerRun);
             }
             if (!slice.hasNext()) {
                 break;
@@ -238,7 +272,7 @@ public class DeimosBatchService {
     }
 
     /**
-     * Signals that the candidate set grew past {@link #MAX_PARTICIPATIONS_PER_RUN} while it was being collected.
+     * Signals that the candidate set grew past the configured participation limit while it was being collected.
      * <p>
      * The count observed at that point is carried along, because the caller's list is still empty when this is thrown
      * and the completion email would otherwise report the run as having had no candidates at all.
@@ -247,8 +281,8 @@ public class DeimosBatchService {
 
         private final long observedCandidates;
 
-        ParticipationLimitExceededException(long observedCandidates) {
-            super("Participation count exceeded " + MAX_PARTICIPATIONS_PER_RUN + " during collection, observed at least " + observedCandidates);
+        ParticipationLimitExceededException(long observedCandidates, long participationLimit) {
+            super("Participation count exceeded " + participationLimit + " during collection, observed at least " + observedCandidates);
             this.observedCandidates = observedCandidates;
         }
 
@@ -262,14 +296,14 @@ public class DeimosBatchService {
             throw new BadRequestAlertException("The start date must be before or equal to the end date", DEIMOS_ENTITY_NAME, "invalidRange");
         }
         Duration selectedWindow = Duration.between(request.from(), request.to());
-        if (selectedWindow.compareTo(Duration.ofDays(MAX_MANUAL_WINDOW_DAYS)) > 0) {
+        if (selectedWindow.compareTo(Duration.ofDays(maxManualWindowDays)) > 0) {
             throw new BadRequestAlertException("The selected window exceeds the configured maximum", DEIMOS_ENTITY_NAME, "windowTooLarge");
         }
         long participationCount = switch (scope) {
             case COURSE -> deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(scopeId, request.from(), request.to());
             case EXERCISE -> deimosBatchParticipationRepository.countDistinctParticipationIdsForExerciseInRange(scopeId, request.from(), request.to());
         };
-        if (participationCount > MAX_PARTICIPATIONS_PER_RUN) {
+        if (participationCount > maxParticipationsPerRun) {
             throw new BadRequestAlertException("The selected window exceeds the configured participation limit", DEIMOS_ENTITY_NAME, "participationLimitExceeded");
         }
     }

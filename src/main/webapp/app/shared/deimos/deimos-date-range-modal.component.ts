@@ -1,6 +1,7 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
 import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -17,9 +18,17 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
     imports: [TumAetUiDialogComponent, TumAetUiDatePickerComponent, TumAetUiButtonDirective, TumAetUiMessageComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class DeimosDateRangeModalComponent {
+    private readonly profileService = inject(ProfileService);
+
     titleTranslationKey = input.required<string>();
-    maxWindowDays = input<number | undefined>(undefined);
     isSubmitting = input(false);
+
+    /**
+     * The longest window the server accepts, published by the server so the two cannot diverge. It is only absent when
+     * the Deimos module is disabled, in which case no trigger opens this dialog; the dialog then skips its own check
+     * and the server stays authoritative.
+     */
+    protected readonly maxWindowDays = this.profileService.getProfileInfo()?.deimosMaxWindowDays;
 
     confirmSelection = output<DeimosDateRangeSelection>();
 
@@ -39,7 +48,7 @@ export class DeimosDateRangeModalComponent {
     });
 
     readonly isWindowTooLarge = computed(() => {
-        const maxDays = this.maxWindowDays();
+        const maxDays = this.maxWindowDays;
         const from = this.fromDate();
         const to = this.toDate();
         if (!maxDays || !from || !to || this.isOrderInvalid()) {

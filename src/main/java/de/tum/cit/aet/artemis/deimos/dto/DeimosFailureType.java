@@ -33,6 +33,12 @@ public enum DeimosFailureType {
     LLM_RATE_LIMITED,
 
     /**
+     * The LLM endpoint rejected the credentials (HTTP 401 or 403): the API key is missing or wrong, or not authorised
+     * for the endpoint or model. Every further request would fail the same way, so the run is aborted on the first one.
+     */
+    LLM_AUTHENTICATION_FAILED,
+
+    /**
      * The LLM answered, but no valid verdict could be extracted from its response.
      */
     LLM_UNPARSEABLE,

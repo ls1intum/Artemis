@@ -1,11 +1,29 @@
 package de.tum.cit.aet.artemis.deimos.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.ai.chat.client.ChatClient;
+
+import com.openai.core.http.Headers;
+import com.openai.errors.OpenAIServiceException;
+import com.openai.errors.PermissionDeniedException;
+import com.openai.errors.RateLimitException;
+import com.openai.errors.UnauthorizedException;
+
+import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmRequest;
+import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
 
 /**
  * Tests the verdict parsing of {@link DefaultDeimosLlmClient}.
@@ -165,5 +183,61 @@ class DefaultDeimosLlmClientTest {
 
         assertThat(repeated).isPresent();
         assertThat(repeated.get().malicious()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 401, 403 })
+    void shouldReportRejectedCredentialsWithoutTheProviderResponse(int status) {
+        OpenAIServiceException rejection = status == 401 ? UnauthorizedException.builder().headers(Headers.builder().build()).build()
+                : PermissionDeniedException.builder().headers(Headers.builder().build()).build();
+        // The provider's answer, and with it possibly the rejected request, travels in the exception chain.
+        var wrapped = new IllegalStateException("SECRET-REQUEST-BODY", rejection);
+
+        var exception = callFailingWith(wrapped);
+
+        assertThat(exception.getFailureType()).isEqualTo(DeimosFailureType.LLM_AUTHENTICATION_FAILED);
+        assertThat(exception.getMessage()).contains("HTTP " + status).contains("API key missing or wrong").doesNotContain("SECRET-REQUEST-BODY");
+        assertThat(exception.getCause()).isNull();
+    }
+
+    @Test
+    void shouldNotLetAMisleadingWrapperHideRejectedCredentials() {
+        var rejection = UnauthorizedException.builder().headers(Headers.builder().build()).build();
+        // Both the message and the type of the wrapper match the heuristics for a timeout and a rate limit.
+        var wrapper = new RuntimeException("Read timed out after 429 too many requests", new IOException("timeout", rejection));
+
+        assertThat(callFailingWith(wrapper).getFailureType()).isEqualTo(DeimosFailureType.LLM_AUTHENTICATION_FAILED);
+    }
+
+    @Test
+    void shouldStillClassifyOtherFailuresByTheirHeuristics() {
+        var rateLimited = RateLimitException.builder().headers(Headers.builder().build()).build();
+
+        var exception = callFailingWith(new RuntimeException("429 Too Many Requests", rateLimited));
+
+        assertThat(exception.getFailureType()).isEqualTo(DeimosFailureType.LLM_RATE_LIMITED);
+        assertThat(exception.getCause()).isNotNull();
+    }
+
+    @Test
+    void shouldStopAtACyclicCauseChain() {
+        var first = new RuntimeException("first");
+        var second = new RuntimeException("second");
+        first.initCause(second);
+        second.initCause(first);
+
+        assertThat(DefaultDeimosLlmClient.credentialRejectionStatus(first)).isEmpty();
+        assertThat(callFailingWith(first).getFailureType()).isEqualTo(DeimosFailureType.LLM_ERROR);
+    }
+
+    private static DeimosLlmException callFailingWith(RuntimeException failure) {
+        ChatClient chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
+        when(chatClient.prompt().system(anyString()).user(anyString()).call().content()).thenThrow(failure);
+        var client = new DefaultDeimosLlmClient(chatClient);
+
+        Throwable thrown = catchThrowable(() -> client.analyze(new DeimosLlmRequest(7L, "system", "user")));
+
+        assertThat(thrown).isInstanceOf(DeimosLlmException.class);
+        return (DeimosLlmException) thrown;
     }
 }
