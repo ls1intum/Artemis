@@ -6,14 +6,7 @@ import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiInputDirective,
-    TumAetUiInputNumberComponent,
-    TumAetUiMessageComponent,
-    TumAetUiSelectComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDatePickerComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -28,6 +21,7 @@ import {
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { TranslateService } from '@ngx-translate/core';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const resultPoints = control.get('resultPoints')?.value;
@@ -59,7 +53,7 @@ export type PresentationAssessmentInstanceFormResult =
         TumAetUiButtonComponent,
         TumAetUiDatePickerComponent,
         TumAetUiInputDirective,
-        TumAetUiInputNumberComponent,
+        PointsInputComponent,
         TumAetUiMessageComponent,
         TumAetUiSelectComponent,
     ],
@@ -83,7 +77,6 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     protected readonly dateTextValid = signal(true);
     protected readonly timeTextValid = signal(true);
     protected readonly resultPointsUpperBound = RESULT_POINTS_UPPER_BOUND;
-    protected readonly acceptedPointsDecimalSeparators = ['.', ','];
     readonly languageOptions = computed(() => {
         this.translationChanges();
         return [

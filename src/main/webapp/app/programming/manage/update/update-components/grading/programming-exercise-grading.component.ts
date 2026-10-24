@@ -22,7 +22,7 @@ import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Message } from 'primeng/message';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
-import { CustomNoScientificNotationValidatorDirective } from 'app/foundation/validators/custom-no-scientific-notation-validator.directive';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -41,7 +41,7 @@ import { CustomNoScientificNotationValidatorDirective } from 'app/foundation/val
         KeyValuePipe,
         ArtemisTranslatePipe,
         Message,
-        CustomNoScientificNotationValidatorDirective,
+        PointsInputComponent,
     ],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit {
