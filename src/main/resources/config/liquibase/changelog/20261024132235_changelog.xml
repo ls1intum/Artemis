@@ -22,6 +22,9 @@
 
         The chats to remove are collected in a helper table first, because MySQL does not allow a statement to read the table it changes.
         The latest message date of a merged chat is the latest of its chats: it decides whether the other user sees the chat at all.
+
+        The state of a user in a removed chat (unread count, last read date, favorite, hidden, muted) is not carried over. It is meaningless for a
+        chat that holds the messages of two chats, and production has 3 messages in the chats that are removed.
     -->
     <changeSet id="20261024132235-02-merge-duplicate-one-to-one-chats" author="krusche">
         <comment>Set the pair key of every one-to-one chat with two participants and merge the chats of a pair that exist more than once.</comment>
@@ -39,7 +42,7 @@
         </sql>
         <createTable tableName="tmp_one_to_one_chat_duplicate">
             <column name="duplicate_id" type="BIGINT">
-                <constraints nullable="false"/>
+                <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="keep_id" type="BIGINT">
                 <constraints nullable="false"/>

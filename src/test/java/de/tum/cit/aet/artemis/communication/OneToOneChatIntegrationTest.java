@@ -130,6 +130,17 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnBadRequestWhenTheChatPartnerIsTheRequestingUser() throws Exception {
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", new OneToOneChatCreationDTO(student1.getId(), null),
+                OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(oneToOneChatRepository.findAll().stream().filter(chat -> chat.getCourse().getId().equals(exampleCourseId))).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCompleteAChatThatWasLeftWithoutParticipants() throws Exception {
         // A request that failed after inserting the chat left it behind without participants. The pair is not blocked by it: the next request completes it.
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");

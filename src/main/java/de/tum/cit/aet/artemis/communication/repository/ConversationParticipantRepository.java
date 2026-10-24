@@ -11,6 +11,7 @@ import java.util.Set;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -139,8 +140,10 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     /**
      * Creates the participant of a user in a conversation unless the user already is one, also when another request creates it at the very same time.
      * <p>
-     * {@link #insertIfAbsent} leaves a window of a single statement, in which a concurrent request can still insert first. The unique index then refuses the later insert. That
-     * is the outcome this method wants, so it counts it as "exists". An integrity violation while the participant does not exist, for example a missing user, is a real error.
+     * {@link #insertIfAbsent} leaves a window of a single statement, in which a concurrent request can still insert first. On PostgreSQL the unique index then refuses the later
+     * insert. On MySQL (REPEATABLE READ) two such statements can instead deadlock on the gap of the unique index, and the database rolls one back. Both outcomes are what this
+     * method wants, because the other request created the participant, so it counts them as "exists". The deadlock victim retries a few times, because the other request may
+     * not have committed yet when the victim looks. An integrity violation while the participant does not exist, for example a missing user, is a real error.
      *
      * @param conversationId      the id of the conversation
      * @param userId              the id of the user
@@ -150,14 +153,25 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
      * @return true if this call created the participant, false if it existed already or another request created it
      */
     default boolean createIfAbsent(Long conversationId, Long userId, boolean isModerator, ZonedDateTime lastRead, Long unreadMessagesCount) {
-        try {
-            return insertIfAbsent(conversationId, userId, isModerator, lastRead, unreadMessagesCount) == 1;
-        }
-        catch (DataIntegrityViolationException e) {
-            if (existsByConversationIdAndUserId(conversationId, userId)) {
-                return false;
+        int maxAttempts = 3;
+        for (int attempt = 1;; attempt++) {
+            try {
+                return insertIfAbsent(conversationId, userId, isModerator, lastRead, unreadMessagesCount) == 1;
             }
-            throw e;
+            catch (DataIntegrityViolationException e) {
+                if (existsByConversationIdAndUserId(conversationId, userId)) {
+                    return false;
+                }
+                throw e;
+            }
+            catch (PessimisticLockingFailureException e) {
+                if (existsByConversationIdAndUserId(conversationId, userId)) {
+                    return false;
+                }
+                if (attempt >= maxAttempts) {
+                    throw e;
+                }
+            }
         }
     }
 

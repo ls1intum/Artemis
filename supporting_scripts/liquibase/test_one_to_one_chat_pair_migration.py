@@ -31,10 +31,11 @@ class OneToOneChatPairMigrationTest(unittest.TestCase):
                             id BIGINT PRIMARY KEY, course_id BIGINT, discriminator VARCHAR(31) NOT NULL, last_message_date TIMESTAMP NULL
                         );
                         CREATE TABLE conversation_participant (
-                            id BIGINT PRIMARY KEY, conversation_id BIGINT, user_id BIGINT
+                            id BIGINT PRIMARY KEY, conversation_id BIGINT, user_id BIGINT,
+                            FOREIGN KEY (conversation_id) REFERENCES conversation(id) ON UPDATE RESTRICT ON DELETE RESTRICT
                         );
                         CREATE UNIQUE INDEX conversation_participant_uq ON conversation_participant (conversation_id, user_id);
-                        CREATE TABLE post (id BIGINT PRIMARY KEY, conversation_id BIGINT);
+                        CREATE TABLE post (id BIGINT PRIMARY KEY, conversation_id BIGINT, FOREIGN KEY (conversation_id) REFERENCES conversation(id) ON UPDATE RESTRICT ON DELETE RESTRICT);
 
                         -- Course 1, users 10 and 20: three chats created by concurrent requests. The oldest has no message yet,
                         -- the two newer ones carry the messages. Written by either user first, so the participants are in both orders.
