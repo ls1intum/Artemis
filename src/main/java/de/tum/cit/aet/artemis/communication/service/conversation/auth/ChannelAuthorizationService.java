@@ -94,6 +94,9 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      */
     public void isAllowedToUpdateChannel(@NonNull Channel channel, @NonNull User user) {
         var userToCheck = getUserIfNecessary(user);
+        if (!channel.isVisibleToStudents() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), userToCheck)) {
+            throw new AccessForbiddenException("This channel is not visible to students yet");
+        }
         if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to update this channel");
         }
@@ -216,6 +219,9 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
 
         var isPrivateChannel = !channel.getIsPublic();
         if (isJoinRequest) {
+            if (!channel.isVisibleToStudents() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), userToCheck)) {
+                throw new AccessForbiddenException("This channel is not visible to students yet");
+            }
             if (isPrivateChannel && !isAtLeastInstructor) {
                 throw new AccessForbiddenException("You are not allowed to join this channel");
             }

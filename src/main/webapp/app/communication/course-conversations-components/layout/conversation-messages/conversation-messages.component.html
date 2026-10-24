@@ -1,4 +1,7 @@
 @if (course()) {
+    @if (newPost() && _activeConversation() && getAsChannel(_activeConversation())?.isAnnouncementChannel) {
+        <jhi-post-create-edit-modal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
+    }
     <div class="justify-content-center conversation-messages">
         <div class="channel-content">
             <!-- loading messages -->
@@ -83,10 +86,9 @@
                                         <button
                                             type="button"
                                             class="btn btn-md btn-primary"
-                                            (click)="createEditModal.open()"
+                                            (click)="createEditModal()?.open()"
                                             jhiTranslate="artemisApp.communication.newAnnouncement"
                                         ></button>
-                                        <jhi-post-create-edit-modal #createEditModal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                                     </div>
                                 } @else {
                                     <jhi-message-inline-input
@@ -110,10 +112,9 @@
                                 <button
                                     type="button"
                                     class="btn btn-md btn-primary"
-                                    (click)="createEditModal.open()"
+                                    (click)="createEditModal()?.open()"
                                     jhiTranslate="artemisApp.communication.newAnnouncement"
                                 ></button>
-                                <jhi-post-create-edit-modal #createEditModal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                             </div>
                         } @else {
                             <jhi-message-inline-input

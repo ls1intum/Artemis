@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Comparator;
@@ -15,7 +16,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -554,21 +554,22 @@ public class FileResource {
 
         List<AttachmentVideoUnit> lectureAttachments = attachmentApi.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream().filter(
                 unit -> authorizationCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
-                .toList();
-
-        unitApi.setCompletedForAllLectureUnits(lectureAttachments, user, true);
+                // External PDF links contribute no stored file and must not be marked complete by downloading the lecture's own PDFs.
+                .filter(unit -> unit.getAttachment().getStudentVersion() != null || unit.getAttachment().fileLocation().isPresent()).toList();
 
         // Modified to use studentVersion if available
-        List<Path> attachmentLinks = lectureAttachments.stream().flatMap(unit -> {
+        List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> {
             Attachment attachment = unit.getAttachment();
             // The attachment says where its own file is: a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory.
             if (attachment.getStudentVersion() != null) {
-                return Stream.of(new FileSystemLocation.StudentVersionSlides(unit.getId(), attachment.getStudentVersion()).path());
+                return new FileSystemLocation.StudentVersionSlides(unit.getId(), attachment.getStudentVersion()).path();
             }
-            // An attachment linking to a document hosted elsewhere contributes nothing: there is no file of ours to merge, and the `.pdf` its URL ends in is enough to pass the
-            // extension filter above. Dropping it merges the lecture's own PDFs rather than failing the whole download over one external link.
-            return attachment.fileLocation().map(FileSystemLocation::path).stream();
+            return attachment.fileLocation().orElseThrow().path();
         }).toList();
+
+        if (attachmentLinks.isEmpty() || attachmentLinks.stream().anyMatch(path -> !Files.isRegularFile(path))) {
+            return ResponseEntity.notFound().build();
+        }
 
         Optional<byte[]> file = FileUtil.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
         if (file.isEmpty()) {
@@ -576,6 +577,7 @@ public class FileResource {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
+        unitApi.setCompletedForAllLectureUnits(lectureAttachments, user, true);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
     }
 

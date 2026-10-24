@@ -149,7 +149,8 @@ public class AnswerMessageService extends PostingService {
         var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
         usersInvolved.add(post.getAuthor());
 
-        var notificationRecipientsList = getNotificationRecipients(conversation).toList();
+        boolean visibleToStudents = !(conversation instanceof Channel channel) || channel.isVisibleToStudents();
+        var notificationRecipientsList = getNotificationRecipients(conversation).filter(recipient -> visibleToStudents || recipient.isAtLeastTutorInCourse()).toList();
 
         var explicitMentionRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
                 .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), newAnswerMessage.getAuthor().getId())).toList();
@@ -245,6 +246,7 @@ public class AnswerMessageService extends PostingService {
         Conversation conversation = conversationService.getConversationById(existingAnswerMessage.getPost().getConversation().getId());
         ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
+        conversationService.checkConversationVisibilityElseThrow(conversation, user);
 
         // A pending (unverified) Iris reply is invisible to students and must also be immutable for them: block any
         // non-tutor (e.g. the author of the parent post, who would otherwise pass mayMarkAnswerMessageAsResolvingElseThrow)

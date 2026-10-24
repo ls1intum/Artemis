@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationSummary;
@@ -132,11 +133,11 @@ public class ConversationService {
      * @return an optional conversation
      */
     public Optional<Conversation> isMemberOrCreateForCourseWideElseThrow(Long conversationId, User user, Optional<ZonedDateTime> lastReadDate) {
+        Conversation conversation = getConversationById(conversationId);
+        checkConversationVisibilityElseThrow(conversation, user);
         if (isMember(conversationId, user.getId())) {
             return Optional.empty();
         }
-
-        Conversation conversation = loadConversationWithParticipantsIfGroupChat(conversationId);
 
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
@@ -360,6 +361,15 @@ public class ConversationService {
     }
 
     private void sendToConversationMembershipChannel(CommunicationCrudAction crudAction, Conversation conversation, User user, long courseId) {
+        if (!isConversationVisibleToUser(conversation, user)) {
+            // Remove a previously visible channel from the student's cache after its date is postponed, without
+            // disclosing its current name, description or linked item through the membership update.
+            var hiddenChannel = new ChannelDTO();
+            hiddenChannel.setId(conversation.getId());
+            websocketMessagingService.sendMessageToUser(user.getLogin(), CONVERSATION_MEMBERSHIP.at(courseId, user.getId()),
+                    new ConversationWebsocketDTO(hiddenChannel, CommunicationCrudAction.DELETE));
+            return;
+        }
         ConversationDTO dto;
         if (crudAction.equals(CommunicationCrudAction.NEW_MESSAGE)) {
             // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
@@ -595,6 +605,32 @@ public class ConversationService {
      */
     public boolean isChannelVisibleToStudents(@NonNull Channel channel) {
         return channel.isVisibleToStudents();
+    }
+
+    /**
+     * Enforces the release gate even when a student already belongs to the channel or knows its id.
+     * Staff can prepare a channel before its exercise or exam becomes visible to students.
+     *
+     * @param conversation the conversation being accessed
+     * @param user         the requesting user
+     * @throws AccessForbiddenException if the conversation is not visible to the user yet
+     */
+    public void checkConversationVisibilityElseThrow(Conversation conversation, User user) {
+        if (!isConversationVisibleToUser(conversation, user)) {
+            throw new AccessForbiddenException("This channel is not visible to students yet");
+        }
+    }
+
+    /**
+     * Whether a conversation's metadata and notifications may be delivered to the given user.
+     *
+     * @param conversation the conversation whose visibility is checked
+     * @param user         the recipient
+     * @return whether the recipient may see the conversation
+     */
+    public boolean isConversationVisibleToUser(Conversation conversation, User user) {
+        return !(conversation instanceof Channel channel) || channel.isVisibleToStudents()
+                || authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), user);
     }
 
     private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {

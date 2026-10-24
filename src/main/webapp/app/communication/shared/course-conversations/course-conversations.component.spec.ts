@@ -872,6 +872,23 @@ examples.forEach((activeConversation) => {
                 expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
             });
 
+            it('updates a direct chat after a membership update without fetching conversations', () => {
+                const updatedChat = { ...usedChat, isFavorite: true };
+                conversationsOfUser$.next([emptyChat, updatedChat]);
+
+                expect(component.sidebarConversations()[0].conversation).toBe(updatedChat);
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('adds a newly received direct chat immediately without a refresh', () => {
+                const receivedChat = { id: 103, type: ConversationType.ONE_TO_ONE, lastMessageDate: dayjs() } as ConversationDTO;
+                conversationsOfUser$.next([emptyChat, usedChat, receivedChat]);
+
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id, receivedChat.id]);
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
             it('should keep the chat out of the sidebar while it is still empty', () => {
                 conversationsOfUser$.next([emptyChat, usedChat]);
 

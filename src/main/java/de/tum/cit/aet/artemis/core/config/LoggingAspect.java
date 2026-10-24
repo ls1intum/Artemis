@@ -77,12 +77,25 @@ public class LoggingAspect {
     }
 
     /**
+     * Mail arguments include recipients, rendered content and recovery keys. Mail services log delivery metadata themselves;
+     * their exceptions can also contain addresses echoed by SMTP servers or templates.
+     */
+    @Pointcut("!within(de.tum.cit.aet.artemis.notification.service.notifications.MailService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.notifications.MailRetryQueueService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.CourseNotificationEmailService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.TestAccountEmailService)")
+    public void notAMailHandlingBean() {
+        // Method is empty as this is just a Pointcut, the implementations are in the advices.
+    }
+
+    /**
      * Advice that logs methods throwing exceptions.
      *
      * @param joinPoint join point for advice.
      * @param e         exception.
      */
-    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "e")
+    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut() && notAMailHandlingBean()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
         if (AbstractVersionControlService.isReadFullyShortReadOfBlockException(e)) {
             // ignore
@@ -111,13 +124,24 @@ public class LoggingAspect {
     }
 
     /**
+     * Keeps the failing mail operation and exception type visible without recording the exception's recipient data.
+     *
+     * @param joinPoint the failing mail operation
+     * @param e         the exception, whose message and cause must not be logged
+     */
+    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut() && !notAMailHandlingBean()", throwing = "e")
+    public void logMailFailure(JoinPoint joinPoint, Throwable e) {
+        log.error("Exception in {}.{}() (exception {})", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(), e.getClass().getSimpleName());
+    }
+
+    /**
      * Advice that logs when a method is entered and exited.
      *
      * @param joinPoint join point for advice.
      * @return result.
      * @throws Throwable throws {@link IllegalArgumentException}.
      */
-    @Around("applicationPackagePointcut() && springBeanPointcut() && notACredentialHandlingBean()")
+    @Around("applicationPackagePointcut() && springBeanPointcut() && notACredentialHandlingBean() && notAMailHandlingBean()")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         if (log.isDebugEnabled()) {
             log.debug("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(),

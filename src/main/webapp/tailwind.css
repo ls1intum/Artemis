@@ -106,6 +106,7 @@
 @source './app/notification';
 @source './app/communication/faq';
 @source './app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component.html';
+@source './app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component.html';
 @source './app/calendar';
 @source './app/shared-ui/profile-picture';
 @source './app/localci/build-agent-summary';

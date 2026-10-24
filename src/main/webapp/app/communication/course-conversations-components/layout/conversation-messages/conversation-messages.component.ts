@@ -113,6 +113,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     // A required query throws NG0951 in both cases, so this must stay optional and every read guarded.
     readonly content = viewChild<ElementRef>('container');
     readonly messageListContent = viewChild<ElementRef>('messageListContent');
+    readonly createEditModal = viewChild(PostCreateEditModalComponent);
     private resizeObserver?: ResizeObserver;
     private bottomScrollFrame: number | undefined;
     private readonly postPageRequest = new PostPageRequestState();
