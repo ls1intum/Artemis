@@ -27,7 +27,7 @@
     />
 }
 <!-- Footer controls keep their native Enter activation without triggering the parent composer's Enter-to-send handler. -->
-<div class="mt-2 flex flex-wrap items-center justify-end gap-2">
+<div class="my-2 flex flex-wrap items-center justify-end gap-2">
     @if (showCloseButton()) {
         <button type="button" tumAetUiButton size="small" variant="text" data-testid="close-message-editor" (keydown.enter)="$event.stopPropagation()" (click)="closeEditor.emit()">
             {{ 'artemisApp.communication.cancel' | artemisTranslate }}
