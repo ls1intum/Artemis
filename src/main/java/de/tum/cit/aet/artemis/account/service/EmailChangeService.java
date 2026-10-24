@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -141,12 +142,14 @@ public class EmailChangeService {
      *
      * @param user           the account that asks for the change
      * @param requestedEmail the address the account should get
+     * @param langKey        the language the owner saves with the same request, which the mails are written in because it is saved only after this call;
+     *                           {@code null} or blank for the language the account has
      * @return the pending change
      * @throws BadRequestAlertException with {@code emailChangeUnavailable} if no mail is configured, {@code emailInvalid} if the
      *                                      address is empty or not allowed, and {@code emailChangeRequestedTooRecently} if
      *                                      another request was made a moment ago
      */
-    public PendingEmailChangeDTO requestChange(User user, String requestedEmail) {
+    public PendingEmailChangeDTO requestChange(User user, String requestedEmail, @Nullable String langKey) {
         // A session that survived a password reset must not be able to start a new request, which the owner could otherwise only keep cancelling.
         sessionFreshnessService.requireCurrentSession();
         String newEmail = User.canonicalEmail(requestedEmail);
@@ -163,7 +166,7 @@ public class EmailChangeService {
         if (existing.isPresent() && Objects.equals(existing.get().getNewEmail(), newEmail)) {
             return PendingEmailChangeDTO.of(existing.get(), VALIDITY);
         }
-        return startRequest(user, newEmail);
+        return startRequest(user, newEmail, langKey);
     }
 
     /**
@@ -180,7 +183,7 @@ public class EmailChangeService {
         requireMailConfigured();
         PendingEmailChange pending = findValidPendingChange(user.getId())
                 .orElseThrow(() -> new BadRequestAlertException("No e-mail change is pending", ENTITY_NAME, "noPendingEmailChange"));
-        return startRequest(user, pending.getNewEmail());
+        return startRequest(user, pending.getNewEmail(), null);
     }
 
     /**
@@ -295,10 +298,12 @@ public class EmailChangeService {
      *
      * @param user     the account requesting the change
      * @param newEmail the canonical destination address, validated by the caller
+     * @param langKey  the language of both mails, or {@code null} or blank for the language the account has
      * @return the newly stored pending request without confirmation secrets
      */
-    private PendingEmailChangeDTO startRequest(User user, String newEmail) {
+    private PendingEmailChangeDTO startRequest(User user, String newEmail, @Nullable String langKey) {
         requireNotRequestedTooRecently(user.getId());
+        String mailLangKey = langKey == null || langKey.isBlank() ? user.getLangKey() : langKey;
         String currentKeyId = RandomUtil.generateResetKeyId();
         String currentSecret = RandomUtil.generateResetKeySecret();
         String newKeyId = RandomUtil.generateResetKeyId();
@@ -311,10 +316,11 @@ public class EmailChangeService {
         userRecoveryKeyService.storePendingEmailChange(user.getId(), change);
 
         if (hasCurrentAddress) {
-            sendConfirmationMail(MailRecipientDTO.from(user), true, newEmail, currentKeyId, currentSecret);
+            sendConfirmationMail(new MailRecipientDTO(user.getEmail(), mailLangKey, user.getLogin(), user.getFirstName(), user.getLastName(), null, null, user.isTestUser()), true,
+                    newEmail, currentKeyId, currentSecret);
         }
-        sendConfirmationMail(new MailRecipientDTO(newEmail, user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null, user.isTestUser()), false,
-                newEmail, newKeyId, newSecret);
+        sendConfirmationMail(new MailRecipientDTO(newEmail, mailLangKey, user.getLogin(), user.getFirstName(), user.getLastName(), null, null, user.isTestUser()), false, newEmail,
+                newKeyId, newSecret);
         accountSecurityEventService.recordEmailChangeRequested(user);
         return PendingEmailChangeDTO.of(change, VALIDITY);
     }

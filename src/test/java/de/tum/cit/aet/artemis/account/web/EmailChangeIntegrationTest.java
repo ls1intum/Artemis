@@ -187,6 +187,12 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         return mails;
     }
 
+    private List<MailRecipientDTO> confirmationRecipients() {
+        ArgumentCaptor<MailRecipientDTO> recipients = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailSendingService, atLeast(0)).buildAndSendAsync(recipients.capture(), anyString(), eq(CONFIRMATION_TEMPLATE), anyMap());
+        return recipients.getAllValues();
+    }
+
     private ConfirmationMail mailTo(String email) {
         return confirmationMails().reversed().stream().filter(mail -> mail.recipientEmail().equals(email)).findFirst().orElseThrow();
     }
@@ -441,6 +447,30 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         verify(mailSendingService, atLeast(1)).buildAndSendAsync(recipients.capture(), anyString(), eq("mail/notification/emailChangedEmail"), anyMap());
         boolean noticeSentToThePreviousAddress = recipients.getAllValues().stream().anyMatch(recipient -> originalEmail.equals(recipient.email()));
         assertThat(noticeSentToThePreviousAddress).isTrue();
+    }
+
+    /**
+     * The language that is saved together with a new address is the one both confirmation mails are written in. The change is requested before the language is saved,
+     * so reading it from the account would write the mails in the language the owner has just switched away from.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void theConfirmationMailsAreWrittenInTheLanguageSavedWithTheRequest() throws Exception {
+        assertThat(user.getLangKey()).as("the account starts in another language than the one it is switched to").isNotEqualTo("de");
+        UserDTO update = updateWithEmail(NEW_EMAIL);
+        update.setLangKey("de");
+
+        request.putWithResponseBody(BASIC_INFORMATION_PATH, update, BasicInformationUpdateResultDTO.class, HttpStatus.OK);
+
+        assertThat(userTestRepository.findOneByLogin(LOGIN).orElseThrow().getLangKey()).isEqualTo("de");
+        List<MailRecipientDTO> recipients = confirmationRecipients();
+        assertThat(recipients).extracting(MailRecipientDTO::email).containsExactlyInAnyOrder(originalEmail, NEW_EMAIL);
+        assertThat(recipients).extracting(MailRecipientDTO::langKey).containsOnly("de");
+
+        // A resend takes the language the account has by then, which is the saved one.
+        waitOutTheCooldown();
+        request.postWithResponseBody(PENDING_PATH + "/resend", null, PendingEmailChangeDTO.class, HttpStatus.OK);
+        assertThat(confirmationRecipients()).hasSize(4).extracting(MailRecipientDTO::langKey).containsOnly("de");
     }
 
     /**
@@ -856,6 +886,28 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         assertThat(emailOfAccount()).isEqualTo(originalEmail);
         // The request is dropped, so it cannot be retried into an address that is no longer free.
         assertThat(storedPendingChange()).isEmpty();
+    }
+
+    /**
+     * The warning of the change notice is followed by a colon and the link. Whichever of the two warnings is not rendered must not leave white space in front of the colon,
+     * which a mail client shows as a gap.
+     */
+    @Test
+    void theChangeNoticeHasNoGapInFrontOfTheColonThatLeadsToTheLink() throws Exception {
+        for (Locale locale : List.of(Locale.ENGLISH, Locale.GERMAN)) {
+            for (boolean emailRemoved : List.of(true, false)) {
+                Context context = new Context(locale);
+                context.setVariable("user", new MailRecipientDTO("owner@test.de", locale.getLanguage(), LOGIN, "First", "Last", null, null));
+                context.setVariable("baseUrl", URI.create("https://artemis.example.org").toURL());
+                context.setVariable("newEmail", NEW_EMAIL);
+                context.setVariable("emailRemoved", emailRemoved);
+
+                String html = templateEngine.process("mail/notification/emailChangedEmail", context);
+
+                assertThat(html).as("%s, removed=%s", locale, emailRemoved).containsPattern("</span>:").doesNotContainPattern("</span>\\s+:");
+                assertThat(html).contains("https://artemis.example.org/");
+            }
+        }
     }
 
     @Test
