@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -60,6 +61,10 @@ public class PasskeyTokenRenewalService {
      * deactivated or soft-deleted, and its credentials have changed since the session started. Both are evaluated only when
      * a rotation is due, so the cost is one lookup per rotation interval per session rather than one per request. The
      * consequence is that these events end a session within at most one rotation interval rather than immediately.
+     * <p>
+     * This is also the predicate that {@link SessionFreshnessService} applies before an operation creates a credential,
+     * so that a session which survived a credential change cannot be used to plant new access. The comparison is made in
+     * whole seconds, the resolution of the token's {@code iat} claim.
      *
      * @param login    the account the session belongs to
      * @param issuedAt when the session was originally established
@@ -79,7 +84,7 @@ public class PasskeyTokenRenewalService {
         // Read from user_activity rather than from the user row: this is the only caller that needs it, and as a column it
         // was loaded with every user everywhere else.
         var credentialsChangedDate = userActivityService.findCredentialsChangedDate(user.get().getId());
-        if (credentialsChangedDate != null && issuedAt.isBefore(credentialsChangedDate)) {
+        if (credentialsChangedDate != null && issuedAt.truncatedTo(ChronoUnit.SECONDS).isBefore(credentialsChangedDate.truncatedTo(ChronoUnit.SECONDS))) {
             log.info("Not extending a session of user {}: it was established before the credentials last changed", login);
             return false;
         }

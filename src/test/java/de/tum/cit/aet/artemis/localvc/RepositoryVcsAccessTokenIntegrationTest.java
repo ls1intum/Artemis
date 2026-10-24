@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -18,12 +20,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.SessionTestUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
@@ -66,6 +70,9 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
 
     @Autowired
     private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     private ProgrammingExercise exercise;
 
@@ -225,6 +232,40 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         // GET now returns the same token.
         String fetched = request.get(url, HttpStatus.OK, String.class);
         assertThat(fetched).isEqualTo(token);
+    }
+
+    /**
+     * Regression test: a repository access token is a credential that survives a password reset, so the session that was in use during
+     * an intrusion must not be able to create one after the credentials changed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void createRepositoryVcsAccessToken_isRefusedForASessionThatPredatesTheCredentialsChange() throws Exception {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        userActivityService.recordCredentialsChanged(tutor.getId(), Instant.now());
+        SessionTestUtil.actAsSessionStartedAt(tutor.getLogin(), Instant.now().minus(Duration.ofHours(1)));
+        String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
+
+        request.put(url, null, HttpStatus.UNAUTHORIZED);
+
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isEmpty();
+    }
+
+    /**
+     * The tokens of course staff are provisioned whenever an exercise is created or updated, so reading one back is how a session would get a
+     * credential that outlives it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getRepositoryVcsAccessToken_isRefusedForASessionThatPredatesTheCredentialsChange() throws Exception {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
+        Instant credentialsChangedAt = Instant.parse("2026-01-01T12:00:00Z");
+        userActivityService.recordCredentialsChanged(tutor.getId(), credentialsChangedAt);
+        SessionTestUtil.actAsSessionStartedAt(tutor.getLogin(), credentialsChangedAt.minus(Duration.ofHours(1)));
+        String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
+
+        request.get(url, HttpStatus.UNAUTHORIZED, String.class);
     }
 
     @Test

@@ -309,6 +309,8 @@ public final class Constants {
 
     public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";
 
+    public static final String MAIL_CONFIGURED = "mailConfigured";
+
     public static final String ALLOWED_EMAIL_PATTERN = "allowedEmailPattern";
 
     public static final String ALLOWED_EMAIL_PATTERN_READABLE = "allowedEmailPatternReadable";

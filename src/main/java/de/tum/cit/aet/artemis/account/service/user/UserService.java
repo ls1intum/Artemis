@@ -238,6 +238,8 @@ public class UserService {
             // back off the argument would depend on whether the save persisted or merged.
             if (internalAdminPasswordChanged) {
                 userActivityService.recordCredentialsChanged(savedInternalAdmin.getId(), Instant.now());
+                // A request to change the address that was made before the password was rotated must not stay confirmable.
+                userRecoveryKeyService.clearPendingEmailChange(savedInternalAdmin.getId());
             }
         }
         else {
@@ -349,6 +351,9 @@ public class UserService {
                     // Hashing can reject the password; keep the reset link usable if it fails.
                     user.setPassword(passwordService.hashPassword(newPassword));
                     userRecoveryKeyService.clearResetKey(user.getId());
+                    // A request to change the address that was made before the reset must not stay confirmable: it may have been made by
+                    // whoever the reset takes the account back from.
+                    userRecoveryKeyService.clearPendingEmailChange(user.getId());
                     saveUser(user);
                     // Stops sessions established before the reset from being extended any further.
                     userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
@@ -653,6 +658,9 @@ public class UserService {
             user.setPassword(newPasswordHash);
             saveUser(user);
             userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
+            // Changing the password is how an owner reacts to a suspected intrusion, and a pending change of the address would let that
+            // intruder carry on from there.
+            userRecoveryKeyService.clearPendingEmailChange(user.getId());
             // What else is revoked is the user's decision: only they know whether the old password may have been seen by
             // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.
             accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password changed");

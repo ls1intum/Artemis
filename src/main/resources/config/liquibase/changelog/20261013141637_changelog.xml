@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        An internal account changes its e-mail address only after the current and the new address have both confirmed the change by
+        mail. The pending request lives on the row of user_recovery_key, next to the activation and reset keys: it is short-lived,
+        set on few accounts, and has to disappear together with them when an account is deactivated or deleted. Every column is
+        nullable, so the previous version of the application, which does not know them, keeps reading and writing the table.
+    -->
+    <changeSet id="20261013141637-01-add-pending-email-change-to-user-recovery-key" author="krusche">
+        <addColumn tableName="user_recovery_key">
+            <column name="email_change_new_email" type="varchar(100)"/>
+            <column name="email_change_current_key_id" type="varchar(20)"/>
+            <column name="email_change_current_key_hash" type="varchar(255)"/>
+            <column name="email_change_new_key_id" type="varchar(20)"/>
+            <column name="email_change_new_key_hash" type="varchar(255)"/>
+            <column name="email_change_requested_at" type="DATETIME(3)"/>
+            <column name="email_change_current_confirmed_at" type="DATETIME(3)"/>
+            <column name="email_change_new_confirmed_at" type="DATETIME(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- The confirmation links find the request by the key id they carry. -->
+    <changeSet id="20261013141637-02-index-pending-email-change-keys" author="krusche">
+        <createIndex indexName="uc_user_recovery_key_email_change_current_key" tableName="user_recovery_key" unique="true">
+            <column name="email_change_current_key_id"/>
+        </createIndex>
+        <createIndex indexName="uc_user_recovery_key_email_change_new_key" tableName="user_recovery_key" unique="true">
+            <column name="email_change_new_key_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!--
+        The link to the current address proves the mailbox the account had when the request was made, so the request is applied only while
+        the account still has that address. It is null for an account that had none. Nullable like the other columns, and a separate
+        changeset so that the checksums of the two above stay as they were.
+    -->
+    <changeSet id="20261013141637-03-add-original-email-to-pending-email-change" author="krusche">
+        <addColumn tableName="user_recovery_key">
+            <column name="email_change_original_email" type="varchar(100)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

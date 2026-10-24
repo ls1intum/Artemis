@@ -8,6 +8,7 @@ import dayjs from 'dayjs/esm';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Authority } from 'app/foundation/constants/authority.constants';
+import { PendingEmailChangeDTO, UpdateBasicInformationResponseDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 
 export class MockAccountService implements IAccountService {
     userIdentity = signal<User | undefined>(undefined);
@@ -42,7 +43,10 @@ export class MockAccountService implements IAccountService {
     isAuthenticated = () => true;
     isOwnerOfParticipation = () => true;
     isAdmin = () => true;
-    save = (account: any) => ({}) as any;
+    save = (account: any) => of({ pendingEmailChange: null } as UpdateBasicInformationResponseDTO);
+    getPendingEmailChange = () => of(undefined as PendingEmailChangeDTO | undefined);
+    cancelPendingEmailChange = () => of(undefined as void);
+    resendPendingEmailChange = () => of({} as PendingEmailChangeDTO);
     getVcsAccessToken = (participationId: number) => of();
     createVcsAccessToken = (participationId: number) => of();
     getToolToken = () => of();

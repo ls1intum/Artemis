@@ -12,10 +12,10 @@ import { SettingsComponent } from 'app/account/settings/settings.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { User } from 'app/account/user/user.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { HttpResponse } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
+import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 
 describe('SettingsComponent', () => {
     let comp: SettingsComponent;
@@ -32,6 +32,14 @@ describe('SettingsComponent', () => {
         login: 'john',
         authorities: [],
         imageUrl: '',
+    };
+
+    const pendingEmailChange: PendingEmailChangeDTO = {
+        newEmail: 'new.email@mail.com',
+        requestedAt: '2026-10-13T10:00:00Z',
+        expiresAt: '2026-10-14T10:00:00Z',
+        currentAddressConfirmed: false,
+        newAddressConfirmed: true,
     };
 
     beforeEach(() => {
@@ -53,7 +61,7 @@ describe('SettingsComponent', () => {
     beforeEach(() => {
         // Mock ProfileService to return registrationEnabled: true before component creation
         const profileService = TestBed.inject(ProfileService);
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ registrationEnabled: true } as any);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ registrationEnabled: true, mailConfigured: true } as any);
         vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
 
@@ -65,7 +73,7 @@ describe('SettingsComponent', () => {
     it('should send the current identity upon save', async () => {
         // GIVEN
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of({ pendingEmailChange: null }));
         vi.spyOn(accountService, 'authenticate');
 
         const settingsFormValues = {
@@ -90,7 +98,7 @@ describe('SettingsComponent', () => {
     it('should notify of success upon successful save', async () => {
         // GIVEN
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of({ pendingEmailChange: null }));
 
         // WHEN
         comp.ngOnInit();
@@ -146,7 +154,7 @@ describe('SettingsComponent', () => {
         const translateService = TestBed.inject(TranslateService);
         const userWithDifferentLang = { ...accountValues, langKey: 'de' };
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(userWithDifferentLang));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of({ pendingEmailChange: null }));
         vi.spyOn(translateService, 'getCurrentLang').mockReturnValue('en');
         const useSpy = vi.spyOn(translateService, 'use');
 
@@ -163,7 +171,7 @@ describe('SettingsComponent', () => {
         // GIVEN
         const translateService = TestBed.inject(TranslateService);
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of({ pendingEmailChange: null }));
         vi.spyOn(translateService, 'getCurrentLang').mockReturnValue('en'); // Same as accountValues.langKey
         const useSpy = vi.spyOn(translateService, 'use');
 
@@ -180,7 +188,7 @@ describe('SettingsComponent', () => {
         // GIVEN
         const userWithEmptyValues = { ...accountValues };
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(userWithEmptyValues));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of({ pendingEmailChange: null }));
 
         // WHEN
         comp.ngOnInit();
@@ -196,13 +204,13 @@ describe('SettingsComponent', () => {
         comp.saveSettings();
 
         // THEN
-        expect(accountService.save).toHaveBeenCalled();
-        // The account values should have undefined for empty string values
-        const savedUser = comp.currentUser();
-        expect(savedUser?.firstName).toBeUndefined();
-        expect(savedUser?.lastName).toBeUndefined();
-        expect(savedUser?.email).toBeUndefined();
-        expect(savedUser?.langKey).toBeUndefined();
+        const sentUser = vi.mocked(accountService.save).mock.calls[0][0];
+        expect(sentUser.firstName).toBeUndefined();
+        expect(sentUser.lastName).toBeUndefined();
+        expect(sentUser.email).toBeUndefined();
+        expect(sentUser.langKey).toBeUndefined();
+        // The email address of the account is never changed by a save
+        expect(comp.currentUser()?.email).toBe(accountValues.email);
     });
 
     it('should set errorEmailExists when email is already used', async () => {
@@ -225,25 +233,180 @@ describe('SettingsComponent', () => {
         expect(comp.success()).toBe(false);
     });
 
-    it('should update email when saving settings', async () => {
+    it('should keep the current email and show the pending change after requesting a new email', async () => {
         // GIVEN
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of({ pendingEmailChange }));
+        vi.spyOn(accountService, 'authenticate');
 
-        // WHEN
         comp.ngOnInit();
         await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
 
-        // Update email in form
-        comp.settingsForm.patchValue({
-            email: 'new.email@mail.com',
-        });
+        // WHEN
+        comp.settingsForm.patchValue({ email: 'new.email@mail.com', firstName: 'Johnny' });
         comp.saveSettings();
 
-        // THEN
-        expect(accountService.save).toHaveBeenCalled();
-        const savedUser = comp.currentUser();
-        expect(savedUser?.email).toBe('new.email@mail.com');
+        // THEN the new email is sent to the server
+        expect(vi.mocked(accountService.save).mock.calls[0][0].email).toBe('new.email@mail.com');
+        // the pending change is shown, the form and the in-memory user keep the current email
+        expect(comp.success()).toBe(true);
+        expect(comp.emailChangeRequested()).toBe(true);
+        expect(comp.pendingEmailChange()).toEqual(pendingEmailChange);
+        expect(comp.settingsForm.controls.email.value).toBe('john.doe@mail.com');
+        expect(comp.currentUser()?.email).toBe('john.doe@mail.com');
+        // other changes are applied right away
+        expect(comp.currentUser()?.firstName).toBe('Johnny');
+        const authenticatedUser = vi.mocked(accountService.authenticate).mock.calls[0][0];
+        expect(authenticatedUser?.email).toBe('john.doe@mail.com');
+        expect(authenticatedUser?.firstName).toBe('Johnny');
+    });
+
+    it('should not announce confirmation mails when the email was not changed', async () => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        vi.spyOn(accountService, 'save').mockReturnValue(of({ pendingEmailChange }));
+
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+        comp.saveSettings();
+
+        expect(comp.success()).toBe(true);
+        expect(comp.emailChangeRequested()).toBe(false);
+        // an earlier request is kept and still shown
+        expect(comp.pendingEmailChange()).toEqual(pendingEmailChange);
+    });
+
+    it('should load the pending email change on init', async () => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        const getSpy = vi.spyOn(accountService, 'getPendingEmailChange').mockReturnValue(of(pendingEmailChange));
+
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.pendingEmailChange()).toEqual(pendingEmailChange));
+
+        expect(getSpy).toHaveBeenCalled();
+    });
+
+    it('should not load a pending email change for a non-internal user', async () => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ ...accountValues, internal: false }));
+        const getSpy = vi.spyOn(accountService, 'getPendingEmailChange');
+
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+
+        expect(getSpy).not.toHaveBeenCalled();
+    });
+
+    it('should resend the confirmation mails and show the restarted request', async () => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        vi.spyOn(accountService, 'getPendingEmailChange').mockReturnValue(of(pendingEmailChange));
+        const restarted = { ...pendingEmailChange, newAddressConfirmed: false, expiresAt: '2026-10-15T10:00:00Z' };
+        const resendSpy = vi.spyOn(accountService, 'resendPendingEmailChange').mockReturnValue(of(restarted));
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.pendingEmailChange()).toBeDefined());
+
+        comp.resendConfirmationMails();
+
+        expect(resendSpy).toHaveBeenCalledOnce();
+        expect(comp.pendingEmailChange()).toEqual(restarted);
+        expect(comp.confirmationMailsResent()).toBe(true);
+        expect(comp.pendingChangeRequestRunning()).toBe(false);
+    });
+
+    it('should show the error when resending too soon', () => {
+        vi.spyOn(accountService, 'resendPendingEmailChange').mockReturnValue(throwError(() => ({ status: 400, error: { errorKey: 'emailChangeRequestedTooRecently' } })));
+
+        comp.resendConfirmationMails();
+
+        expect(comp.errorMessageKey()).toBe('settings.messages.error.emailChangeRequestedTooRecently');
+        expect(comp.confirmationMailsResent()).toBe(false);
+        expect(comp.pendingChangeRequestRunning()).toBe(false);
+    });
+
+    it('should cancel the pending email change', async () => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        vi.spyOn(accountService, 'getPendingEmailChange').mockReturnValue(of(pendingEmailChange));
+        const cancelSpy = vi.spyOn(accountService, 'cancelPendingEmailChange').mockReturnValue(of(undefined));
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.pendingEmailChange()).toBeDefined());
+
+        comp.cancelEmailChange();
+
+        expect(cancelSpy).toHaveBeenCalledOnce();
+        expect(comp.pendingEmailChange()).toBeUndefined();
+        expect(comp.emailChangeCancelled()).toBe(true);
+    });
+
+    it('should keep the pending email change when cancelling fails', async () => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        vi.spyOn(accountService, 'getPendingEmailChange').mockReturnValue(of(pendingEmailChange));
+        vi.spyOn(accountService, 'cancelPendingEmailChange').mockReturnValue(throwError(() => ({ status: 500 })));
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.pendingEmailChange()).toBeDefined());
+
+        comp.cancelEmailChange();
+
+        expect(comp.pendingEmailChange()).toEqual(pendingEmailChange);
+        expect(comp.errorMessageKey()).toBe('settings.messages.error.fail');
+    });
+
+    it.each(['emailInvalid', 'emailChangeUnavailable', 'emailChangeRequestedTooRecently', 'noPendingEmailChange'])(
+        'should map the server error %s to its message',
+        async (errorKey) => {
+            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+            vi.spyOn(accountService, 'save').mockReturnValue(throwError(() => ({ status: 400, error: { errorKey } })));
+            comp.ngOnInit();
+            await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+
+            comp.saveSettings();
+
+            expect(comp.errorMessageKey()).toBe(`settings.messages.error.${errorKey}`);
+            expect(comp.success()).toBe(false);
+        },
+    );
+
+    it('should map the emailAlreadyUsed error key to the email exists message', async () => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        vi.spyOn(accountService, 'save').mockReturnValue(throwError(() => ({ status: 400, error: { errorKey: 'emailAlreadyUsed' } })));
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+
+        comp.saveSettings();
+
+        expect(comp.errorEmailExists()).toBe(true);
+        expect(comp.errorMessageKey()).toBeUndefined();
+    });
+
+    it('should show a generic message for an unknown failure', async () => {
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        vi.spyOn(accountService, 'save').mockReturnValue(throwError(() => ({ status: 429 })));
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+
+        comp.saveSettings();
+
+        expect(comp.errorMessageKey()).toBe('settings.messages.error.fail');
+    });
+
+    describe('when the server cannot send mails', () => {
+        let compNoMail: SettingsComponent;
+
+        beforeEach(() => {
+            const profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ registrationEnabled: true, mailConfigured: false } as any);
+
+            compNoMail = TestBed.createComponent(SettingsComponent).componentInstance;
+        });
+
+        it('should disable the email field but keep the name editable', async () => {
+            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+
+            compNoMail.ngOnInit();
+            await vi.waitFor(() => expect(compNoMail.currentUser()).toBeDefined());
+
+            expect(compNoMail.mailConfigured()).toBe(false);
+            expect(compNoMail.settingsForm.controls.email.disabled).toBe(true);
+            expect(compNoMail.settingsForm.controls.firstName.enabled).toBe(true);
+            expect(compNoMail.settingsForm.controls.langKey.enabled).toBe(true);
+        });
     });
 
     describe('when registration is disabled', () => {
@@ -271,6 +434,7 @@ describe('SettingsComponent', () => {
             const profileService = TestBed.inject(ProfileService);
             vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
                 registrationEnabled: true,
+                mailConfigured: true,
                 allowedEmailPattern: '^.*@university\\.edu$',
                 allowedEmailPatternReadable: '@university.edu',
             } as any);
@@ -365,7 +529,7 @@ describe('SettingsComponent', () => {
                 imageUrl: '',
             };
             vi.spyOn(accountServiceSaml2, 'identity').mockReturnValue(Promise.resolve(user));
-            vi.spyOn(accountServiceSaml2, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
+            vi.spyOn(accountServiceSaml2, 'save').mockReturnValue(of({ pendingEmailChange: null }));
             vi.spyOn(accountServiceSaml2, 'authenticate');
 
             compSaml2.ngOnInit();

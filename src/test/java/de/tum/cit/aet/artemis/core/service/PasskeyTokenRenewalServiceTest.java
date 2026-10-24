@@ -145,4 +145,19 @@ class PasskeyTokenRenewalServiceTest {
         assertThat(service.mayExtendSessionForAccount(LOGIN, credentialsChanged.minusSeconds(1))).isFalse();
         assertThat(service.mayExtendSessionForAccount(LOGIN, credentialsChanged.plusSeconds(1))).isTrue();
     }
+
+    /**
+     * The token stores the start of the session in whole seconds, so a login directly after the change, in the same second, would
+     * otherwise look as if it had started before it and be refused.
+     */
+    @Test
+    void aSessionStartedInTheSameSecondAsTheCredentialChangeIsCurrent() {
+        Instant credentialsChanged = Instant.parse("2026-10-13T10:00:00.700Z");
+        lenient().when(userActivityService.findCredentialsChangedDate(USER_ID)).thenReturn(credentialsChanged);
+        lenient().when(userRepository.findOneByLogin(LOGIN)).thenReturn(Optional.of(activeUser()));
+        PasskeyTokenRenewalService service = serviceWithPasskeys(true);
+
+        assertThat(service.mayExtendSessionForAccount(LOGIN, Instant.parse("2026-10-13T10:00:00Z"))).isTrue();
+        assertThat(service.mayExtendSessionForAccount(LOGIN, Instant.parse("2026-10-13T09:59:59Z"))).isFalse();
+    }
 }
