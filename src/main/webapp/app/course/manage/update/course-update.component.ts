@@ -55,6 +55,7 @@ import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/featur
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 /**
  * Something that keeps the course from being saved, shown in the footer so the reason is visible instead of a
@@ -134,6 +135,7 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
         TumAetUiInputDirective,
         TumAetUiFormFieldComponent,
         TumAetUiSelectComponent,
+        PointsInputComponent,
         ImageCropperModalComponent,
         OrganizationSelectorComponent,
     ],

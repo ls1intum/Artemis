@@ -229,6 +229,19 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     /**
+     * A client can hold the URL of a profile picture the user has removed since. That is a missing file, not a server error.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProfilePictureOfUserWithoutPictureIsNotFound() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setImageUrl(null);
+        userTestRepository.save(user);
+
+        request.get("/api/core/files/users/" + user.getId() + "/profile-pictures/ProfilePicture_removed.jpeg", HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    /**
      * A post written before this release embeds everything after {@code attachments/} of the attachment link the server was serving at the time, and the client re-expands that
      * fragment against {@code api/core/files/attachments/}. Those posts are user-authored prose in the database that no migration reaches, so the singular spelling they carry
      * has to keep resolving for as long as the posts exist. This walks the two fragments the editor records for an attachment video unit reference, the attachment itself and
