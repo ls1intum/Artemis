@@ -428,6 +428,70 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         });
     }
 
+    test('keeps an empty line typed with Shift+Enter in the sent message and when it is edited again', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('first');
+        await editor.press('Shift+Enter');
+        await editor.press('Shift+Enter');
+        await editor.pressSequentially('second');
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('first\n\nsecond');
+        await expect(postContent(page, saved.id!).locator('p')).toHaveText(['first', 'second']);
+        const { posting } = await reopen(page, saved);
+        const edited = await saveEdited(page, composer, posting, saved);
+        expect(edited.content).toBe('first\n\nsecond');
+    });
+
+    test('keeps each further empty line typed with Shift+Enter as a blank paragraph that survives editing', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('first');
+        for (let emptyLine = 0; emptyLine < 3; emptyLine++) {
+            await editor.press('Shift+Enter');
+        }
+        await editor.pressSequentially('second');
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('first\n\n&nbsp;\n\nsecond');
+        await expect(postContent(page, saved.id!).locator('p')).toHaveCount(3);
+        const { posting } = await reopen(page, saved);
+        const edited = await saveEdited(page, composer, posting, saved);
+        expect(edited.content).toBe('first\n\n&nbsp;\n\nsecond');
+    });
+
+    test('keeps a single line break a line break and sends nothing for empty lines only', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('first');
+        await editor.press('Shift+Enter');
+        await editor.pressSequentially('second');
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('first\nsecond');
+        await expect(postContent(page, saved.id!).locator('p')).toHaveCount(1);
+
+        for (let emptyLine = 0; emptyLine < 3; emptyLine++) {
+            await editor.press('Shift+Enter');
+        }
+        await expect(page.getByTestId('send-formatted-message')).toBeDisabled();
+    });
+
+    for (const list of ['ul', 'ol']) {
+        test(`Backspace at the start of the ${list} on the first line removes the list and keeps its text`, async ({ page, composer }) => {
+            const { editor } = composer;
+            await editor.click();
+            await page.getByTestId(`message-block-${list}`).click();
+            await editor.pressSequentially('first');
+            await editor.press('Shift+Enter');
+            await editor.pressSequentially('second');
+            await expect(editor.locator(`${list} > li`)).toHaveText(['first', 'second']);
+            await selectText(editor, 0, 0);
+            await editor.press('Backspace');
+            // only the first item leaves the list, the other one stays in it
+            await expect(editor.locator(`${list} > li`)).toHaveText(['second']);
+            await expect(editor.locator(':scope > p').first()).toHaveText('first');
+            const saved = await send(page, composer);
+            // like with the list button, an ordered list keeps the number of the item that stays in it
+            expect(saved.content).toBe(list === 'ul' ? 'first\n\n- second' : 'first\n\n2. second');
+        });
+    }
+
     for (const list of ['ul', 'ol']) {
         test(`repeated native ${list} item creation and two Backspaces retain the original content and height`, async ({ page, composer }) => {
             await composer.editor.pressSequentially('first');

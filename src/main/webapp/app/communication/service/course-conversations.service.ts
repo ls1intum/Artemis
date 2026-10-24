@@ -128,6 +128,17 @@ export class CourseConversationsService implements OnDestroy {
     get conversationsOfUser$(): Observable<ConversationDTO[]> {
         return this._conversationsOfUser$.asObservable();
     }
+
+    /**
+     * Looks up one of the user's conversations in the cache, without a request. Views that show posts outside of a selected
+     * conversation (e.g. the course-wide search) use it to learn what the user may do in the conversation of a post.
+     *
+     * @param conversationId the id of the conversation
+     * @return the cached conversation, or undefined if the user has no such conversation
+     */
+    getCachedConversation(conversationId: number): ConversationDTO | undefined {
+        return this.conversationsOfUser.find((conversation) => conversation.id === conversationId);
+    }
     get activeConversation$(): Observable<ConversationDTO | undefined> {
         return this._activeConversation$.asObservable();
     }

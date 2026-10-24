@@ -1146,4 +1146,73 @@ describe('Message editor editing transactions', () => {
         editor.setLink('Bad', 'javascript:alert(1)');
         expect(changed).not.toHaveBeenCalled();
     });
+
+    describe('removing the list format of the first line with Backspace', () => {
+        it.each([
+            ['ul', '- first\n- second'],
+            ['ol', '1. first\n2. second'],
+        ])('turns the first item of a %s list into text and keeps the remaining items', (list, markdown) => {
+            editor.load(markdown);
+            select(root.querySelector('li')!.firstChild!, 0);
+
+            expect(editor.exitFirstListItem()).toBe(true);
+
+            expect(root.querySelector(':scope > p')?.textContent).toBe('first');
+            expect(root.querySelectorAll(`${list} > li`)).toHaveLength(1);
+            expect(root.querySelector(`${list} > li`)?.textContent).toBe('second');
+            expect(root.firstElementChild?.matches('p')).toBe(true);
+        });
+
+        it('turns a sole first item into text', () => {
+            editor.load('- only');
+            select(root.querySelector('li')!.firstChild!, 0);
+
+            expect(editor.exitFirstListItem()).toBe(true);
+
+            expect(root.querySelector('li')).toBeNull();
+            expect(root.textContent).toBe('only');
+        });
+
+        it('leaves a caret inside the text to the browser', () => {
+            editor.load('- first');
+            select(root.querySelector('li')!.firstChild!, 2);
+
+            expect(editor.exitFirstListItem()).toBe(false);
+            expect(root.querySelectorAll('li')).toHaveLength(1);
+        });
+
+        it('leaves the later items of the list to the browser', () => {
+            editor.load('- first\n- second');
+            select(root.querySelectorAll('li')[1].firstChild!, 0);
+
+            expect(editor.exitFirstListItem()).toBe(false);
+            expect(root.querySelectorAll('li')).toHaveLength(2);
+        });
+
+        it('leaves a list below other text to the browser', () => {
+            editor.load('Intro\n\n- first');
+            select(root.querySelector('li')!.firstChild!, 0);
+
+            expect(editor.exitFirstListItem()).toBe(false);
+            expect(root.querySelectorAll('li')).toHaveLength(1);
+        });
+
+        it('leaves a caret on a later line of the first item to the browser', () => {
+            editor.load('- first');
+            const item = root.querySelector('li')!;
+            item.prepend(document.createElement('br'));
+            select(item.lastChild!, 0);
+
+            expect(editor.exitFirstListItem()).toBe(false);
+            expect(root.querySelectorAll('li')).toHaveLength(1);
+        });
+
+        it('leaves a selection to the browser', () => {
+            editor.load('- first');
+            select(root.querySelector('li')!.firstChild!, 0, 3);
+
+            expect(editor.exitFirstListItem()).toBe(false);
+            expect(root.querySelectorAll('li')).toHaveLength(1);
+        });
+    });
 });
