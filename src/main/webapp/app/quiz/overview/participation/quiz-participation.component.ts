@@ -167,6 +167,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
 
     readonly submissionConfirmationDismissed = signal(false);
+    private submissionConfirmationQuizId?: number;
 
     quizId!: number; // set in ngOnInit() from route params / inputs
     courseId!: number; // set in ngOnInit() from route params / inputs
@@ -294,7 +295,10 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads latest submission from server and sets up socket connection
      */
     initLiveMode() {
-        this.submissionConfirmationDismissed.set(false);
+        if (this.submissionConfirmationQuizId !== this.quizId) {
+            this.submissionConfirmationDismissed.set(false);
+            this.submissionConfirmationQuizId = this.quizId;
+        }
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             if (status.connected && this.disconnected) {

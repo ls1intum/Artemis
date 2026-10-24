@@ -111,6 +111,7 @@ class CourseNotificationEmailServiceTest {
         String privateEmail = "private-notification-recipient@example.org";
         String privateLogin = "private-notification-login";
         User user = createUser(privateLogin, "en");
+        user.setId(7391564280L);
         user.setEmail(privateEmail);
         var notification = createNotification("ANNOUNCEMENT", 123L);
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Subject");
@@ -143,8 +144,9 @@ class CourseNotificationEmailServiceTest {
             String logged = appender.list.stream()
                     .map(event -> event.getFormattedMessage() + (event.getThrowableProxy() == null ? "" : ThrowableProxyUtil.asString(event.getThrowableProxy())))
                     .collect(java.util.stream.Collectors.joining("\n"));
-            assertThat(logged).doesNotContain(privateEmail, privateLogin);
+            assertThat(logged).doesNotContain("7391564280", privateEmail, privateLogin);
             assertThat(logged).contains(subjectFails ? "NoSuchMessageException" : "TemplateProcessingException");
+            assertThat(logged).contains(subjectFails ? "email.courseNotification.ANNOUNCEMENT.title" : "mail/course_notification/ANNOUNCEMENT");
         }
         finally {
             serviceLogger.detachAppender(appender);

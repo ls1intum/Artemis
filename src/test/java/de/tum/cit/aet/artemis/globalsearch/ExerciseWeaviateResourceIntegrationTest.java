@@ -1229,6 +1229,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentDoesNotSeeExamChannelBeforeVisibleDate() throws Exception {
             indexChannelOfExam(ZonedDateTime.now().plusDays(1), "hidden-exam-channel");
+            awaitKeywordSearchable("hidden-exam-channel");
 
             assertThat(searchChannelTitles("hidden-exam-channel")).doesNotContain("hidden-exam-channel");
         }

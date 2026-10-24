@@ -1,5 +1,5 @@
 @if (course()) {
-    @if (newPost() && _activeConversation() && getAsChannel(_activeConversation())?.isAnnouncementChannel) {
+    @if (newPost() && isAnnouncementChannel()) {
         <jhi-post-create-edit-modal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
     }
     <div class="justify-content-center conversation-messages">

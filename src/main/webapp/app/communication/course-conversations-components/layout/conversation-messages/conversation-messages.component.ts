@@ -147,6 +147,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private readonly search$ = new Subject<string>();
     searchText = '';
     readonly _activeConversation = signal<ConversationDTO | undefined>(undefined);
+    readonly isAnnouncementChannel = computed(() => !!getAsChannelDTO(this._activeConversation())?.isAnnouncementChannel);
     // Keep the opening divider stable while successful reads advance the shared conversation cache.
     private readonly openingLastReadDate = computed(() => this._activeConversation()?.lastReadDate);
     readonly onNavigateToPost = output<Posting>();

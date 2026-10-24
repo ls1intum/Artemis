@@ -156,8 +156,8 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
                 subject = messageSource.getMessage(getLocalePrefix(courseNotification) + ".title", null, context.getLocale());
             }
             catch (NoSuchMessageException e) {
-                log.error("Subject for e-mail to user {} could not be generated (exception {}). Make sure to create the locale key {}.title.", recipient.id(),
-                        e.getClass().getSimpleName(), getLocalePrefix(courseNotification));
+                log.error("Subject for e-mail could not be generated (exception {}). Make sure to create the locale key {}.title.", e.getClass().getSimpleName(),
+                        getLocalePrefix(courseNotification));
                 skippedRecipients.incrementAndGet();
                 return;
             }
@@ -165,8 +165,8 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
                 content = templateEngine.process(getMailTemplateDirectory(courseNotification), context);
             }
             catch (TemplateProcessingException e) {
-                log.error("Content for e-mail to user {} could not be generated (exception {}). Make sure to create the template file {}.", recipient.id(),
-                        e.getClass().getSimpleName(), getMailTemplateDirectory(courseNotification));
+                log.error("Content for e-mail could not be generated (exception {}). Make sure to create the template file {}.", e.getClass().getSimpleName(),
+                        getMailTemplateDirectory(courseNotification));
                 skippedRecipients.incrementAndGet();
                 return;
             }

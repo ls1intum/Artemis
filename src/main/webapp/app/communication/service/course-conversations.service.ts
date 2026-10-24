@@ -19,7 +19,7 @@ import dayjs from 'dayjs/esm';
 import { Params } from '@angular/router';
 import { PostBroadcastDTO } from 'app/communication/shared/entities/post-broadcast-dto.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
 /** A superseded snapshot is cancellation, never evidence that a conversation is absent. */
 class SupersededUnreadSnapshot extends Error {}
@@ -99,7 +99,7 @@ export class CourseConversationsService implements OnDestroy {
             const conversationTopic = `/topic/user/${this.userId}/notifications/conversations`;
             this.activeConversationSubscription = this.websocketService.subscribe<PostBroadcastDTO>(conversationTopic).subscribe((postDTO: PostBroadcastDTO) => {
                 if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post?.author?.id !== this.userId) {
-                    this.handleNewMessage(postDTO.post?.conversation?.id, postDTO.post?.conversation?.lastMessageDate);
+                    this.handleNewMessage(postDTO.post?.conversation?.id);
                 }
             });
         });
@@ -658,7 +658,7 @@ export class CourseConversationsService implements OnDestroy {
                 this.handleDeleteConversation(conversationDTO);
                 break;
             case CommunicationCrudAction.NEW_MESSAGE:
-                this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
+                this.handleNewMessage(conversationDTO.id);
                 break;
         }
         this._conversationsOfUser$.next(this.conversationsOfUser);
@@ -680,16 +680,22 @@ export class CourseConversationsService implements OnDestroy {
             // conversation is not yet cached -> add it
             conversationsCopy.push(updatedOrNewConversation);
         } else {
-            // conversation is already cached -> update it
-            conversationsCopy[indexOfCachedConversation] = updatedOrNewConversation;
+            // Membership frames have no read-state version and can arrive after a newer list or read.
+            // Apply display metadata immediately, but reconcile unread state with an authoritative list.
+            const cachedConversation = conversationsCopy[indexOfCachedConversation];
+            conversationsCopy[indexOfCachedConversation] = cloneWith(updatedOrNewConversation, {
+                lastReadDate: cachedConversation.lastReadDate,
+                lastMessageDate: cachedConversation.lastMessageDate,
+                unreadMessagesCount: cachedConversation.unreadMessagesCount,
+                hasUnreadMessage: cachedConversation.hasUnreadMessage,
+            });
         }
         this.conversationsOfUser = conversationsCopy;
         this.hasUnreadMessagesCheck();
+        this.refreshUnreadState();
 
-        // Note: We do not update the active conversation here because it would cause a UI refresh for all users whenever
-        // for example a new users joins.
-        // This would disrupt the user experience, because the user might be in the middle of writing a message.
-        // Therefore we live with a small inconsistency until the users opens the conversation again.
+        // Do not emit a new active selection when membership changes. Silent reconciliation retains its DTO identity
+        // so metadata updates do not interrupt the message draft or reset the message view.
     }
 
     private handleDeleteConversation(deletedConversation: ConversationDTO) {
@@ -708,8 +714,8 @@ export class CourseConversationsService implements OnDestroy {
         }
     }
 
-    /** Apply arrivals only to this course's cache; startup arrivals queue a later authoritative reconciliation. */
-    handleNewMessage(conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined) {
+    /** Reconcile arrivals without counting a delayed or duplicate notification twice. */
+    handleNewMessage(conversationId: number | undefined) {
         if (!this.conversationsLoaded) {
             this.refreshUnreadState();
             return;
@@ -720,19 +726,9 @@ export class CourseConversationsService implements OnDestroy {
             this.readNewMessage(conversationId);
             return;
         }
-        const conversationsCopy = [...this.conversationsOfUser];
-        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationId);
-        if (indexOfCachedConversation !== -1) {
-            conversationsCopy[indexOfCachedConversation].lastMessageDate = lastMessageDate;
-            conversationsCopy[indexOfCachedConversation].hasUnreadMessage = true;
-            conversationsCopy[indexOfCachedConversation].unreadMessagesCount = (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1;
-            if (this.activeConversation && this.activeConversation.id === conversationId) {
-                hydrate(this.activeConversation, conversationsCopy[indexOfCachedConversation]);
-            }
-        }
-        this.conversationsOfUser = conversationsCopy;
-        this.hasUnreadMessagesCheck();
-        this._conversationsOfUser$.next(this.conversationsOfUser);
+        // Replies can carry the parent's older top-level timestamp, or none while its update is pending.
+        // Neither timestamp nor delivery order proves whether a snapshot already includes this arrival.
+        this.refreshUnreadState();
     }
 
     static getQueryParamsForConversation(conversationId: number): Params {
