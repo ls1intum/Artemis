@@ -46,6 +46,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
@@ -3134,6 +3136,27 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var semiAutomaticResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class,
                     pageableSearchUtilService.searchMapping(semiAutomaticSearch));
             assertThat(semiAutomaticResults).extracting(ParticipationManagementDTO::participationId).containsExactly(p1.getId());
+        }
+
+        @Test
+        void getParticipationsPage_filterSemiAutomaticModelingAssessment() throws Exception {
+            var participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+            var result = participationUtilService.createSubmissionAndResult(participation, 80, true);
+            result.addFeedback(new Feedback().type(FeedbackType.AUTOMATIC).credits(1.0));
+            result.determineAssessmentType();
+            assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            resultRepository.save(result);
+
+            var url = "/api/exercise/exercises/" + modelingExercise.getId() + "/participations/page";
+            var search = buildParticipationSearch("", "SemiAutomatic", "id", SortingOrder.ASCENDING);
+            var results = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(participation.getId());
+            assertThat(results.getFirst().assessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            for (var filter : List.of("Manual", "Automatic")) {
+                var exclusiveSearch = buildParticipationSearch("", filter, "id", SortingOrder.ASCENDING);
+                var excluded = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(exclusiveSearch));
+                assertThat(excluded).isEmpty();
+            }
         }
 
         @Test

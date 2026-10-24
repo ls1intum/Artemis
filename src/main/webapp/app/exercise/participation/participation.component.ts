@@ -238,7 +238,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 ? [
                       {
                           labelKey: 'artemisApp.participation.filterGroup.assessmentType',
-                          items: [FilterProp.MANUAL, ...(isProgramming ? [FilterProp.SEMI_AUTOMATIC] : []), FilterProp.AUTOMATIC],
+                          items: [FilterProp.MANUAL, FilterProp.SEMI_AUTOMATIC, FilterProp.AUTOMATIC],
                           single: true,
                       },
                   ]
