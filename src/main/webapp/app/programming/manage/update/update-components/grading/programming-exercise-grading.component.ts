@@ -123,15 +123,11 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
 
     calculateFormStatus() {
         const programmingExercise = this.programmingExercise();
-        const maxScoreMissingAndOptional =
-            programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED &&
-            (programmingExercise.maxPoints === undefined || programmingExercise.maxPoints === null);
-        const maxScoreValidOrOptional = this.maxScoreField()?.valid || maxScoreMissingAndOptional;
         // Bonus points are only entered (and the field only rendered) when the exercise is INCLUDED_COMPLETELY,
         // so its validity must not block the form in the other modes (the field is hidden via [hidden]).
         const bonusPointsValidOrHidden = this.bonusPointsField()?.valid || programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
         const maxPenaltyValidOrDisabled = this.maxPenaltyField()?.valid || !programmingExercise.staticCodeAnalysisEnabled;
-        const scoreFieldsValid = maxScoreValidOrOptional && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
+        const scoreFieldsValid = this.maxScoreField()?.valid && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
         const timelineStatus = this.timelineStatus();
         const dependentComponentsValid = !this.submissionPolicyUpdateComponent()?.invalid && timelineStatus.valid;
         const newFormValidValue = Boolean(scoreFieldsValid && dependentComponentsValid);
@@ -150,9 +146,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
     onIncludedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore): void {
         const programmingExercise = this.programmingExercise();
         programmingExercise.includedInOverallScore = includedInOverallScore;
-        if (includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-            programmingExercise.maxPoints = 0;
-        } else if (!programmingExercise.maxPoints) {
+        if (!programmingExercise.maxPoints) {
             programmingExercise.maxPoints = 1;
         }
         if (includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
