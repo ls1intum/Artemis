@@ -195,6 +195,16 @@
                     "tutorialPeriodEnd": "Tutorial Period End",
                     "location": "Location"
                 },
+                "placeholder": {
+                    "title": "e.g. Tuesday 14:00 Group 3",
+                    "tutor": "Select a tutor",
+                    "language": "e.g. English",
+                    "mode": "Select a mode",
+                    "campus": "e.g. Garching",
+                    "capacity": "e.g. 30",
+                    "additionalInformation": "e.g. Bring your laptop",
+                    "location": "e.g. Room 00.08.038"
+                },
                 "validationError": {
                     "titleContent": "Title must start with a letter or digit, and can otherwise only contain letters, digits, colons, spaces and dashes.",
                     "titleLength": "Title must contain at most 19 characters. The system automatically removes leading/trailing whitespaces.",
@@ -203,16 +213,20 @@
                     "languageLength": "Language must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
                     "additionalInformationLength": "Additional information must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
                     "firstSessionStartRequired": "Please choose a date.",
+                    "firstSessionStartInvalid": "Please enter a valid date and time.",
                     "firstSessionEndRequired": "Please choose a date.",
+                    "firstSessionEndInvalid": "Please enter a valid date and time.",
                     "firstSessionEndNotAfterStart": "The end of the first session must be after its start.",
                     "firstSessionEndNotOnSameDayAsStart": "The end of the first session must be on the same day as its start.",
                     "teachingPeriodRequired": "Please choose a date.",
+                    "tutorialPeriodEndInvalid": "Please enter a valid date.",
                     "teachingPeriodNotAfterFirstSessionStart": "The end of the teaching period must be after the first session's start.",
                     "teachingPeriodMoreThanTwoYearsAfterFirstSessionStart": "The end of the teaching period must be at most 2 years after the first session's start.",
                     "teachingPeriodNotAfterFirstSessionEnd": "The end of the teaching period must be after the first session's end.",
                     "tutorRequired": "Please choose a tutor.",
                     "locationRequired": "Please choose a location.",
-                    "locationLength": "Location must contain at most 255 characters. The system automatically removes leading/trailing whitespaces."
+                    "locationLength": "Location must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "noChanges": "Make a change before saving."
                 },
                 "networkError": {
                     "updateGroup": "Something went wrong while updating the tutorial group. Please try again.",
