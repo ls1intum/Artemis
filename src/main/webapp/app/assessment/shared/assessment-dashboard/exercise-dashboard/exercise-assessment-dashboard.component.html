@@ -34,6 +34,24 @@
                     <p>
                         {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation().status!.toString() | artemisTranslate }}
                     </p>
+
+                    @if (canOfferManualAssessmentUpload()) {
+                        <div class="mt-2">
+                            <span [pTooltip]="manualAssessmentUploadDisabledTooltip()">
+                                <tumaet-ui-button
+                                    data-testid="open-assessment-upload"
+                                    severity="primary"
+                                    size="small"
+                                    [disabled]="!canUploadManualAssessments()"
+                                    (clicked)="openAssessmentUpload()"
+                                >
+                                    <fa-icon [icon]="faFileImport" />
+                                    <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.openButton"></span>
+                                </tumaet-ui-button>
+                            </span>
+                        </div>
+                        <jhi-assessment-upload-dialog [(visible)]="uploadDialogVisible" [exerciseId]="exerciseId()" (uploaded)="onAssessmentsUploaded()" />
+                    }
                 </div>
 
                 @if (numberOfSubmissions().total > 0) {
