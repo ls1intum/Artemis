@@ -1,0 +1,17 @@
+// The headings are styled here rather than with Tailwind utilities: Bootstrap's Reboot styles <h2> and <h3> in unlayered
+// CSS, which beats Tailwind's utility layer whatever the specificity, so `text-lg font-semibold` on them never applied.
+// A component class is unlayered too and more specific than the element rule. Values match the About Iris dialog.
+
+.about-athena-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--body-color);
+}
+
+.about-athena-section-title {
+    margin: 0 0 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--body-color);
+}
