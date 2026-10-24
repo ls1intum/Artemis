@@ -85,14 +85,14 @@
             </button>
         </div>
         <div
-            class="message-editor-advanced-toolbar contents"
+            class="message-editor-advanced-toolbar flex max-w-full flex-wrap items-center gap-1"
             [id]="advancedToolbarId"
             [hidden]="!toolbarExpanded()"
             [attr.role]="toolbarExpanded() ? 'group' : null"
             [attr.aria-label]="toolbarExpanded() ? ('artemisApp.communication.formattedEditor.moreOptions' | artemisTranslate) : null"
             data-testid="message-advanced-toolbar"
         >
-            <div class="message-editor-advanced-controls contents" [hidden]="!toolbarExpanded()">
+            <div class="message-editor-advanced-controls flex flex-wrap gap-1" [hidden]="!toolbarExpanded()">
                 @for (block of blocks; track block.tag) {
                     <button
                         type="button"
