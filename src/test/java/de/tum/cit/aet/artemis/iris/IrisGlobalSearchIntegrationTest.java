@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -154,6 +155,18 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     /**
+     * The course filter is client input: an entry without an id is refused instead of failing while the lists are compared.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_withANullCourseId_shouldReturnBadRequest() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new PyrisLectureSearchRequestDTO("machine learning", 5, Arrays.asList(1L, null)),
+                PyrisLectureSearchResultDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * A course id that does not exist is just as inaccessible as one the caller is not enrolled in.
      */
     @Test
@@ -215,6 +228,8 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
         var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5, List.of(taCourse.getId(), instructorCourse.getId()));
         request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        irisRequestMockProvider.verify();
     }
 
     /**
@@ -230,6 +245,8 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
         var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5, List.of(firstCourse.getId(), secondCourse.getId()));
         request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        irisRequestMockProvider.verify();
     }
 
     /**
