@@ -4,6 +4,8 @@ import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * How many tutorial group sessions a course holds on one calendar day.
  * <p>
@@ -15,5 +17,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param count how many sessions start on that day, whatever their status
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupSessionCountDTO(LocalDate date, long count) {
+public record TutorialGroupSessionCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) LocalDate date, long count) {
 }

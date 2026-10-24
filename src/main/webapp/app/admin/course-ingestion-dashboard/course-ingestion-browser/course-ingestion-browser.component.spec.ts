@@ -7,7 +7,9 @@ import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionBrowserComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser/course-ingestion-browser.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { CourseBrowserData, IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+
+import { IngestionCoverage } from 'app/openapi/model/ingestion-coverage';
+import { CourseBrowserData } from 'app/openapi/model/course-browser-data';
 
 describe('CourseIngestionBrowserComponent', () => {
     let component: CourseIngestionBrowserComponent;
@@ -194,6 +196,83 @@ describe('CourseIngestionBrowserComponent', () => {
         expect(component.typeCounts()).toEqual(course.typeCounts);
     });
 
+    it('uses no counts while a row with empty counts is loading, then honors an empty live list', async () => {
+        const pending = new Subject<CourseBrowserData>();
+        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(pending);
+        fixture.componentRef.setInput('course', { ...course, typeCounts: [] });
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        expect(component.loading()).toBe(true);
+        expect(component.typeCounts()).toEqual([]);
+        expect(component.incompleteTypeCount()).toBe(0);
+        pending.next({ ...browserData, typeCounts: [] });
+        fixture.detectChanges();
+        expect(component.loading()).toBe(false);
+        expect(component.typeCounts()).toEqual([]);
+    });
+
+    it('replaces stale row counts with an empty live count list', async () => {
+        const pending = new Subject<CourseBrowserData>();
+        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(pending);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        expect(component.typeCounts()).toEqual(course.typeCounts);
+        expect(component.incompleteTypeCount()).toBeGreaterThan(0);
+        pending.next({ ...browserData, typeCounts: [] });
+        fixture.detectChanges();
+        expect(component.typeCounts()).toEqual([]);
+        expect(component.incompleteTypeCount()).toBe(0);
+    });
+
+    it('treats a successful empty-list payload as loaded empty data and drops stale row counts', async () => {
+        const pending = new Subject<CourseBrowserData>();
+        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(pending);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        expect(component.typeCounts()).toEqual(course.typeCounts);
+        const empty: CourseBrowserData = { entities: [], contentPresence: [], missingEntities: [], contentGaps: [], typeCounts: [] };
+        pending.next(empty);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(component.data()).toEqual(empty);
+        expect(component.typeCounts()).toEqual([]);
+        expect(component.incompleteTypeCount()).toBe(0);
+        expect(component.isEmpty()).toBe(true);
+        expect(document.querySelector('[data-testid="browser-empty"]')).toBeTruthy();
+    });
+
+    it('renders missing-only sparse data and cancels on close and destruction', async () => {
+        const pending = new Subject<CourseBrowserData>();
+        const load = vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(pending);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        pending.next({
+            entities: [],
+            contentPresence: [],
+            missingEntities: [{ type: 'course', entityId: 7, title: null, lectureId: null }],
+            contentGaps: [],
+            typeCounts: [],
+        });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(component.isEmpty()).toBe(false);
+        expect(document.querySelector('[data-testid="browser-master-detail"]')).toBeTruthy();
+        component.close();
+        expect(pending.observed).toBe(false);
+        pending.next(browserData);
+        expect(component.data()).toBeUndefined();
+        const reopened = new Subject<CourseBrowserData>();
+        load.mockReturnValue(reopened);
+        component.visible.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(reopened.observed).toBe(true);
+        fixture.destroy();
+        expect(reopened.observed).toBe(false);
+    });
+
     it('should drop the loaded data on close so reopening shows current state', async () => {
         vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(of(browserData));
         fixture.componentRef.setInput('visible', true);
@@ -221,15 +300,15 @@ describe('CourseIngestionBrowserComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const newer: CourseBrowserData = { ...browserData, entities: [{ type: 'lecture', entityId: 1, title: 'Course 8 lecture' }] };
-        const stale: CourseBrowserData = { ...browserData, entities: [{ type: 'lecture', entityId: 2, title: 'Course 7 lecture' }] };
+        const newer: CourseBrowserData = { ...browserData, entities: [{ type: 'lecture', entityId: 1, title: 'Course 8 lecture', expected: true }] };
+        const stale: CourseBrowserData = { ...browserData, entities: [{ type: 'lecture', entityId: 2, title: 'Course 7 lecture', expected: true }] };
         forSecondCourse.next(newer);
         forFirstCourse.next(stale);
         fixture.detectChanges();
 
         // Without cancellation the stale read wins, and it also rewinds loadedCourseId to the course no longer shown,
         // so the modal displays one course's content under another course's heading.
-        expect(component.data()?.entities[0].title).toBe('Course 8 lecture');
+        expect(component.data()?.entities?.[0].title).toBe('Course 8 lecture');
         expect(component['loadedCourseId']).toBe(8);
     });
 

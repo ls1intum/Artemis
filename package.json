@@ -113,7 +113,6 @@
         "sass": "catalog:",
         "semver": "catalog:",
         "stylelint": "catalog:",
-        "stylelint-config-html": "2.0.0",
         "stylelint-config-standard-scss": "17.0.0",
         "stylelint-scss": "7.3.0",
         "tailwindcss": "catalog:",

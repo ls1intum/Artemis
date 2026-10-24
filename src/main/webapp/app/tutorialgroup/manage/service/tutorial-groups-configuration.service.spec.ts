@@ -1,17 +1,21 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { take } from 'rxjs/operators';
+import { provideHttpClient } from '@angular/common/http';
 import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
-import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
-import { provideHttpClient } from '@angular/common/http';
-import { TutorialGroupConfigurationDTO, tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
+
+const CONFIGURATIONS_URL = '/api/tutorialgroup/courses/1/tutorial-groups-configurations';
 
 describe('TutorialGroupsConfigurationService', () => {
     let service: TutorialGroupsConfigurationService;
     let httpMock: HttpTestingController;
-    let elemDefault: TutorialGroupConfigurationDTO;
+    const loaded: TutorialGroupConfiguration = {
+        ...generateExampleTutorialGroupsConfigurationDTO({ id: 5 }),
+        tutorialGroupFreePeriods: [{ id: 1, start: '2021-01-10T00:00:00Z', end: '2021-01-15T00:00:00Z', reason: 'Holiday' }],
+    };
+    const settings = { period: [new Date(2021, 0, 1), new Date(2021, 1, 1)], useTutorialGroupChannels: true, usePublicTutorialGroupChannels: false };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -19,82 +23,53 @@ describe('TutorialGroupsConfigurationService', () => {
         });
         service = TestBed.inject(TutorialGroupsConfigurationService);
         httpMock = TestBed.inject(HttpTestingController);
-
-        elemDefault = generateExampleTutorialGroupsConfigurationDTO({});
     });
 
     afterEach(() => {
         httpMock.verify();
-        vi.restoreAllMocks();
     });
 
-    it('getOneOfCourse', () => {
-        const returnedFromService = { ...elemDefault };
-        let result: any;
-        service
-            .getOneOfCourse(1)
-            .pipe(take(1))
-            .subscribe((resp) => (result = resp));
+    it('should get the configuration of a course', () => {
+        let result: TutorialGroupConfiguration | undefined;
+        service.getOneOfCourse(1).subscribe((configuration) => (result = configuration));
 
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        expect(result).toMatchObject({ body: elemDefault });
+        httpMock.expectOne({ method: 'GET', url: CONFIGURATIONS_URL }).flush(loaded);
+        expect(result).toEqual(loaded);
     });
 
-    it('create', () => {
-        const returnedFromService = { ...elemDefault, id: 0 };
-        const expected = { ...returnedFromService };
-        let result: any;
-        service
-            .create(tutorialGroupConfigurationDtoFromEntity(new TutorialGroupsConfiguration()), 1, [])
-            .pipe(take(1))
-            .subscribe((resp) => (result = resp));
+    it('should emit undefined when the course has no configuration', () => {
+        let result: TutorialGroupConfiguration | undefined = loaded;
+        service.getOneOfCourse(1).subscribe((configuration) => (result = configuration));
 
-        const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(returnedFromService);
-        expect(result).toMatchObject({ body: expected });
+        httpMock.expectOne({ method: 'GET', url: CONFIGURATIONS_URL }).flush(null);
+        expect(result).toBeUndefined();
     });
 
-    it('update', () => {
-        const returnedFromService = { ...elemDefault, location: 'Test' };
-        const expected = { ...returnedFromService };
-        let result: any;
+    it('should create a configuration from the form settings', () => {
+        let result: TutorialGroupConfiguration | undefined;
+        service.create(1, settings).subscribe((configuration) => (result = configuration));
 
-        service
-            .update(1, 1, tutorialGroupConfigurationDtoFromEntity(new TutorialGroupsConfiguration()), [])
-            .pipe(take(1))
-            .subscribe((resp) => (result = resp));
-
-        const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(returnedFromService);
-        expect(result).toMatchObject({ body: expected });
-    });
-
-    it('should convert dates from server in getOneOfCourse response with free periods', () => {
-        const freePeriod = {
-            id: 1,
-            start: '2021-01-10',
-            end: '2021-01-15',
-            reason: 'Holiday',
-        };
-
-        const returnedFromService = {
-            ...elemDefault,
+        const req = httpMock.expectOne({ method: 'POST', url: CONFIGURATIONS_URL });
+        expect(req.request.body).toEqual({
+            id: undefined,
             tutorialPeriodStartInclusive: '2021-01-01',
             tutorialPeriodEndInclusive: '2021-02-01',
-            tutorialGroupFreePeriods: [freePeriod],
-        };
+            useTutorialGroupChannels: true,
+            usePublicTutorialGroupChannels: false,
+            tutorialGroupFreePeriods: [],
+        });
+        req.flush(loaded);
+        expect(result).toEqual(loaded);
+    });
 
-        let result: any;
-        service
-            .getOneOfCourse(1)
-            .pipe(take(1))
-            .subscribe((resp) => (result = resp));
+    it('should update a configuration, keeping its id and free periods', () => {
+        service.update(1, 5, loaded, settings).subscribe();
 
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-
-        expect(result.body).toBeDefined();
-        expect(result.body.tutorialGroupFreePeriods).toHaveLength(1);
+        const req = httpMock.expectOne({ method: 'PUT', url: `${CONFIGURATIONS_URL}/5` });
+        expect(req.request.body.id).toBe(5);
+        expect(req.request.body.tutorialGroupFreePeriods).toEqual(loaded.tutorialGroupFreePeriods);
+        expect(req.request.body.useTutorialGroupChannels).toBe(true);
+        expect(req.request.body.usePublicTutorialGroupChannels).toBe(false);
+        req.flush(loaded);
     });
 });
