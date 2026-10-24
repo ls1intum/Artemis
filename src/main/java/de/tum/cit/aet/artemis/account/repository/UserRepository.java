@@ -966,9 +966,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     /**
      * Applies a confirmed e-mail change, as one statement that only matches while the request still exists, is the one identified by the two keys and has been confirmed from both
      * addresses, and while the account is active. Cancelling, replacing or recovering the account before this statement runs therefore stops the change, and no stale copy of the
-     * request that was read earlier can apply it afterwards. The address is written straight to the column, bypassing {@code User.setEmail}, so the caller has to pass the
-     * canonical address, see {@code User.canonicalEmail}. It matches only once: when two confirmations complete the request at the same moment, the second finds the address
-     * already changed and applies nothing.
+     * request that was read earlier can apply it afterwards. It also matches only while the account still has the address it had when the request was made, null for an
+     * account that had none: the confirmation of the current address proves that mailbox and no other, so an address that was assigned in between is never replaced. The
+     * address is written straight to the column, bypassing {@code User.setEmail}, so the caller has to pass the canonical address, see {@code User.canonicalEmail}. It
+     * matches only once: when two confirmations complete the request at the same moment, the second finds the address already changed and applies nothing.
      *
      * @param userId       the id of the account
      * @param email        the canonical new address
@@ -993,6 +994,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                         AND recoveryKey.pendingEmailChange.newKeyId = :newKeyId
                         AND recoveryKey.pendingEmailChange.currentConfirmedAt IS NOT NULL
                         AND recoveryKey.pendingEmailChange.newConfirmedAt IS NOT NULL
+                        AND (user.email = recoveryKey.pendingEmailChange.originalEmail
+                            OR (user.email IS NULL AND recoveryKey.pendingEmailChange.originalEmail IS NULL))
                 )
             """)
     int applyConfirmedEmailChange(@Param("userId") long userId, @Param("email") String email, @Param("currentKeyId") String currentKeyId, @Param("newKeyId") String newKeyId);

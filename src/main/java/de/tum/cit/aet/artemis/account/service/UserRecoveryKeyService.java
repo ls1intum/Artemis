@@ -137,8 +137,8 @@ public class UserRecoveryKeyService {
      * @param change the change to store
      */
     public void storePendingEmailChange(long userId, PendingEmailChange change) {
-        writeColumns(userId, () -> userRecoveryKeyRepository.updatePendingEmailChange(userId, change.getNewEmail(), change.getCurrentKeyId(), change.getCurrentKeyHash(),
-                change.getNewKeyId(), change.getNewKeyHash(), change.getRequestedAt(), change.getCurrentConfirmedAt(), change.getNewConfirmedAt()));
+        writeColumns(userId, () -> userRecoveryKeyRepository.updatePendingEmailChange(userId, change.getNewEmail(), change.getOriginalEmail(), change.getCurrentKeyId(),
+                change.getCurrentKeyHash(), change.getNewKeyId(), change.getNewKeyHash(), change.getRequestedAt(), change.getCurrentConfirmedAt(), change.getNewConfirmedAt()));
     }
 
     /**

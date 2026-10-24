@@ -29,6 +29,15 @@ public class PendingEmailChange {
     @Column(name = "email_change_new_email", length = 100)
     private String newEmail;
 
+    /**
+     * The address the account had when the request was made, which is where the link to the current address was mailed; null for an account that had none. The change is
+     * applied only while the account still has it: confirming that mailbox proves nothing about an address that was assigned after the request was made.
+     */
+    @Nullable
+    @JsonIgnore
+    @Column(name = "email_change_original_email", length = 100)
+    private String originalEmail;
+
     /** Identifies the key sent to the current address. */
     @JsonIgnore
     @Column(name = "email_change_current_key_id", length = 20, unique = true)
@@ -70,9 +79,10 @@ public class PendingEmailChange {
         // needed by Hibernate
     }
 
-    public PendingEmailChange(String newEmail, String currentKeyId, String currentKeyHash, String newKeyId, String newKeyHash, Instant requestedAt,
+    public PendingEmailChange(String newEmail, @Nullable String originalEmail, String currentKeyId, String currentKeyHash, String newKeyId, String newKeyHash, Instant requestedAt,
             @Nullable Instant currentConfirmedAt) {
         this.newEmail = newEmail;
+        this.originalEmail = originalEmail;
         this.currentKeyId = currentKeyId;
         this.currentKeyHash = currentKeyHash;
         this.newKeyId = newKeyId;
@@ -83,6 +93,11 @@ public class PendingEmailChange {
 
     public String getNewEmail() {
         return newEmail;
+    }
+
+    @Nullable
+    public String getOriginalEmail() {
+        return originalEmail;
     }
 
     public String getCurrentKeyId() {
