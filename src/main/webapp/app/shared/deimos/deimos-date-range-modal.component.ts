@@ -9,6 +9,8 @@ export interface DeimosDateRangeSelection {
     to: Dayjs;
 }
 
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
 @Component({
     selector: 'jhi-deimos-date-range-modal',
     templateUrl: './deimos-date-range-modal.component.html',
@@ -43,7 +45,11 @@ export class DeimosDateRangeModalComponent {
         if (!maxDays || !from || !to || this.isOrderInvalid()) {
             return false;
         }
-        return to.diff(from, 'day', true) > maxDays;
+        // Compared in elapsed milliseconds to match the server, which uses Duration.between(from, to) on instants.
+        // dayjs' .diff(..., 'day', true) compensates for UTC-offset changes, so across a DST transition it reports one
+        // hour less than the server measures. That let the client enable Submit for a window the server then rejected.
+        const rangeInMilliseconds = to.valueOf() - from.valueOf();
+        return rangeInMilliseconds > maxDays * MILLISECONDS_PER_DAY;
     });
 
     /** Ids of the messages that explain a rejected range, for the pickers to point at. */
