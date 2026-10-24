@@ -10,6 +10,8 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -100,6 +102,78 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     void updateMultipleLastRead(@Param("userId") Long userId, @Param("conversationIds") List<Long> conversationIds, @Param("now") ZonedDateTime now);
 
     boolean existsByConversationIdAndUserId(Long conversationId, Long userId);
+
+    /**
+     * Creates the participant of a user in a conversation unless the user already is one, in one statement.
+     * <p>
+     * Several requests create the same participant at once, for example the three message requests the client sends when a student opens a course-wide channel for the first
+     * time. Reading first and inserting afterwards leaves every one of them a window in which the participant is still missing, and all but the first fail on the unique index
+     * {@code conversation_participant_uq}. Checking inside the insert shrinks the window to a single statement. Use {@link #createIfAbsent} to also cover what is left of it.
+     * <p>
+     * The participant is not a favorite, not hidden and not muted, like {@link ConversationParticipant#createWithDefaultValues}.
+     *
+     * @param conversationId      the id of the conversation
+     * @param userId              the id of the user
+     * @param isModerator         whether the user moderates the conversation
+     * @param lastRead            the time the user read the conversation last
+     * @param unreadMessagesCount the number of messages the user has not read
+     * @return 1 if the participant was created, 0 if it existed or the conversation or the user does not exist
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            INSERT INTO ConversationParticipant (conversation, user, isModerator, isFavorite, isHidden, isMuted, lastRead, unreadMessagesCount)
+            SELECT conversation, user, :isModerator, FALSE, FALSE, FALSE, :lastRead, :unreadMessagesCount
+            FROM Conversation conversation, User user
+            WHERE conversation.id = :conversationId
+                AND user.id = :userId
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM ConversationParticipant existing
+                    WHERE existing.conversation = conversation
+                        AND existing.user = user
+                )
+            """)
+    int insertIfAbsent(@Param("conversationId") Long conversationId, @Param("userId") Long userId, @Param("isModerator") boolean isModerator,
+            @Param("lastRead") ZonedDateTime lastRead, @Param("unreadMessagesCount") Long unreadMessagesCount);
+
+    /**
+     * Creates the participant of a user in a conversation unless the user already is one, also when another request creates it at the very same time.
+     * <p>
+     * {@link #insertIfAbsent} leaves a window of a single statement, in which a concurrent request can still insert first. On PostgreSQL the unique index then refuses the later
+     * insert. On MySQL (REPEATABLE READ) two such statements can instead deadlock on the gap of the unique index, and the database rolls one back. Both outcomes are what this
+     * method wants, because the other request created the participant, so it counts them as "exists". The deadlock victim retries a few times, because the other request may
+     * not have committed yet when the victim looks. An integrity violation while the participant does not exist, for example a missing user, is a real error.
+     *
+     * @param conversationId      the id of the conversation
+     * @param userId              the id of the user
+     * @param isModerator         whether the user moderates the conversation
+     * @param lastRead            the time the user read the conversation last
+     * @param unreadMessagesCount the number of messages the user has not read
+     * @return true if this call created the participant, false if it existed already or another request created it
+     */
+    default boolean createIfAbsent(Long conversationId, Long userId, boolean isModerator, ZonedDateTime lastRead, Long unreadMessagesCount) {
+        int maxAttempts = 3;
+        for (int attempt = 1;; attempt++) {
+            try {
+                return insertIfAbsent(conversationId, userId, isModerator, lastRead, unreadMessagesCount) == 1;
+            }
+            catch (DataIntegrityViolationException e) {
+                if (existsByConversationIdAndUserId(conversationId, userId)) {
+                    return false;
+                }
+                throw e;
+            }
+            catch (PessimisticLockingFailureException e) {
+                if (existsByConversationIdAndUserId(conversationId, userId)) {
+                    return false;
+                }
+                if (attempt >= maxAttempts) {
+                    throw e;
+                }
+            }
+        }
+    }
 
     @Query("""
             SELECT DISTINCT conversationParticipant.conversation.id
