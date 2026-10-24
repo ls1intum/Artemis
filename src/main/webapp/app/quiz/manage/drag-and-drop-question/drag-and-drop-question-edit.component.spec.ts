@@ -25,6 +25,8 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import type { Mock } from 'vitest';
 import { By } from '@angular/platform-browser';
+import { InputNumber } from 'primeng/inputnumber';
+import { decimalSeparatorOf, typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { NgModel } from '@angular/forms';
 
 /**
@@ -166,6 +168,27 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.backupQuestion).toEqual(question1);
         expect(component.filePreviewPaths()).toEqual(new Map<string, string>());
         expect(component.mouse).toStrictEqual(new DragAndDropMouseEvent());
+    });
+
+    it('should accept a decimal number of points', () => {
+        fixture.detectChanges();
+        const pointsInput = fixture.debugElement.query(By.directive(InputNumber)).componentInstance as InputNumber;
+
+        // PrimeNG only accepts a decimal separator while fraction digits are allowed
+        expect(pointsInput.maxFractionDigits).toBe(2);
+    });
+
+    it('should take the points that are typed with a decimal separator and two fraction digits', () => {
+        fixture.detectChanges();
+        const pointsInput = fixture.debugElement.query(By.directive(InputNumber)).componentInstance as InputNumber;
+        const separator = decimalSeparatorOf(pointsInput);
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('input#score');
+
+        // the third fraction digit is dropped
+        typeIntoInputNumber(input, `5${separator}555`);
+
+        expect(input.value).toBe(`5${separator}55`);
+        expect(component.question().points).toBe(5.55);
     });
 
     it('should detect changes and update component', () => {
