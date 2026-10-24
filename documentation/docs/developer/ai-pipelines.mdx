@@ -51,10 +51,12 @@ Iris owns the ingestion implementation, transcription behavior, RAG collections,
 
 Do not conflate Artemis Global Search with the two Iris-backed endpoints in `IrisGlobalSearchResource`:
 
-- `lecture-search` is a synchronous request. `PyrisConnectorService.searchLectures` forwards the query and Artemis returns the Iris search result list directly.
-- `search-answer` is an asynchronous answer pipeline. Artemis checks the user’s LLM-usage consent, stores a `GlobalSearchAnswerJob` with a time-to-live, and calls `PyrisConnectorService.executeGlobalSearchIrisAnswer`. The callback first emits a thinking frame when applicable and later sends the final answer and sources on the `global-search-answer` WebSocket topic. Transport failures do not eagerly remove the job because a callback may still arrive.
+- `lecture-search` is a synchronous request for the **Slides & Videos** search. `PyrisConnectorService.searchLectures` forwards the query and Artemis returns the Iris search result list directly. It covers every course the user can access, including courses with Iris switched off, because it is search rather than an Iris feature.
+- `search-answer` is an asynchronous answer pipeline. Artemis checks the user’s LLM-usage consent, narrows the course scope to courses with Iris enabled, prefetches up to 25 entity candidates from the Artemis index with the same access filter as the search palette (`SearchableEntityPrefetchApi`), stores a `GlobalSearchAnswerJob` with a time-to-live, captures the lecture material versions of the courses in scope, and calls `PyrisConnectorService.executeGlobalSearchIrisAnswer`. The callbacks send a thinking frame, stage updates and streamed drafts, and finally the answer with its lecture and entity sources on the `global-search-answer` WebSocket topic. Transport failures do not eagerly remove the job because a callback may still arrive.
 
-Both paths use Iris retrieval rather than Artemis’s Global Search schemas or query authorization layer.
+Both requests carry a `PyrisAccessContextDTO` from `IrisAccessContextService`: the user's courses grouped by role, the request time and, for administrators, an `unrestricted` flag. Iris applies it as a filter on its lecture collections, including release dates and hidden slides. Iris never queries the Artemis index itself; the entity candidates are the only part of the answer that comes from it, and Artemis has authorized them before they leave. The Iris side is described in the [Iris global search reference](https://ls1intum.github.io/edutelligence/iris/docs/developer/global-search).
+
+`POST api/iris/chat/sessions/global-search-handoff` continues a finished answer in the course chat. It creates a new session on the lecture or exercise the answer cites most, authorized like **New Chat**, appends the question and the answer, and pins the answer's citations to the material versions captured when the answer started.
 
 ## Athena
 
@@ -121,9 +123,9 @@ AtlasML owns its ML pipeline implementation, including its own persistence and v
 
 Artemis Global Search is a standalone Artemis feature, not an Iris pipeline. When `artemis.weaviate.enabled` enables the integration, Artemis uses `WeaviateService`, `SearchableEntityWeaviateService`, `WeaviateSchemas`, and the searchable-entity DTOs to maintain Artemis-owned schemas and documents. `GlobalSearchResource` applies Artemis authorization and course/entity filters before returning query results.
 
-The searchable-entity schema covers Artemis content such as courses, exercises, exams, lectures and lecture units, FAQs, and communication entities. Entity lifecycle callers update or remove the corresponding Artemis documents; startup migration services manage the Artemis schema lifecycle.
+The searchable-entity schema covers Artemis content such as courses, exercises, exams, lectures and lecture units, FAQs, channels, posts and answer posts. Search returns only the types in `SearchableEntityAccessFilterService.SEARCHABLE_TYPES`, which leaves out posts and answer posts because the reconcile passes do not keep them current. Entity lifecycle callers update or remove the corresponding Artemis documents through the outbox; startup migration services manage the Artemis schema lifecycle.
 
-A Weaviate instance can be shared with Iris, but the two consumers use independent collection namespaces and data flows. Artemis Global Search does not call Iris RAG, and Iris lecture answers do not use the Artemis Global Search authorization/query contract. For setup and operational details, use [Global Search & Weaviate Setup](../admin/global-search-weaviate) and [Weaviate Setup](./weaviate-setup).
+A Weaviate instance can be shared with Iris, but the two consumers use independent collection namespaces and data flows. The entity search of Artemis Global Search does not call Iris RAG. The Iris answer is the one point where they meet: Artemis prefetches authorized entity candidates from its own index and sends them to Iris, as described above. For setup and operational details, use [Global Search & Weaviate Setup](../admin/global-search-weaviate) and [Weaviate Setup](./weaviate-setup).
 
 ## Change guidance
 
