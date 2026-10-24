@@ -13,7 +13,7 @@ import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { Authority } from 'app/foundation/constants/authority.constants';
+import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -38,7 +38,7 @@ describe('AccountService', () => {
     const user2 = { id: 2 } as User;
     const user3 = { id: 3, authorities: [Authority.STUDENT] } as User;
 
-    const authorities = [Authority.STUDENT, Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR];
+    const authorities = [Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN];
     const course = { id: 1 } as Course;
     const exercise = { course } as Exercise;
     const examExercise = { exerciseGroup: { exam: { course } } } as Exercise;
@@ -159,13 +159,56 @@ describe('AccountService', () => {
 
         it.each(authorities)('should return false if authority does not match', async (authority: Authority) => {
             const index = authorities.indexOf(authority);
-            accountService.userIdentity.set({ id: index + 1, authorities: [authorities[(index + 1) % 5]] } as User);
+            accountService.userIdentity.set({ id: index + 1, authorities: [authorities[(index + 1) % authorities.length]] } as User);
 
             await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
         });
 
         it.each(authorities)('should return false if not authenticated', async (authority: Authority) => {
-            await expect(accountService.hasAuthority(authority)).resolves.toBe(false);
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
+        });
+
+        describe('of the teaching roles', () => {
+            const inCourse = (...roles: string[]) => ({ id: 7, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles }] }) as unknown as User;
+
+            it.each([
+                ['TEACHING_ASSISTANT', IS_AT_LEAST_TUTOR, true],
+                ['TEACHING_ASSISTANT', IS_AT_LEAST_EDITOR, false],
+                ['EDITOR', IS_AT_LEAST_EDITOR, true],
+                ['EDITOR', IS_AT_LEAST_INSTRUCTOR, false],
+                ['INSTRUCTOR', IS_AT_LEAST_INSTRUCTOR, true],
+                ['STUDENT', IS_AT_LEAST_TUTOR, false],
+            ])('should answer a user with the course role %s for the authority list of %s as %s', (role, list, expected) => {
+                accountService.userIdentity.set(inCourse(role));
+
+                expect(accountService.hasAnyAuthorityDirect(list as readonly Authority[])).toBe(expected);
+            });
+
+            it('should count a role in any of the courses', () => {
+                accountService.userIdentity.set({
+                    id: 7,
+                    authorities: [Authority.STUDENT],
+                    courseRoles: [
+                        { courseId: 1, roles: ['STUDENT'] },
+                        { courseId: 2, roles: ['INSTRUCTOR'] },
+                    ],
+                } as unknown as User);
+
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR)).toBe(true);
+            });
+
+            it('should ignore a teaching authority that the server sends without a course role', () => {
+                accountService.userIdentity.set({ id: 7, authorities: [Authority.STUDENT, Authority.INSTRUCTOR, Authority.TUTOR, Authority.EDITOR] } as User);
+
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR)).toBe(false);
+            });
+
+            it('should leave the global authorities to the authority list of the user', () => {
+                accountService.userIdentity.set({ id: 7, authorities: [Authority.STUDENT, Authority.ADMIN] } as User);
+
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)).toBe(true);
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR)).toBe(true);
+            });
         });
     });
 
@@ -446,13 +489,13 @@ describe('AccountService', () => {
             expect(accountService.hasEditorAccess()).toBe(false);
         });
 
-        it.each([[Authority.STUDENT], [Authority.TUTOR]])('should deny editor access to a user with the authority %s', (authority) => {
-            accountService.userIdentity.set({ id: 1, authorities: [authority] } as User);
+        it.each([['STUDENT'], ['TEACHING_ASSISTANT']])('should deny editor access to a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
             expect(accountService.hasEditorAccess()).toBe(false);
         });
 
-        it.each([[Authority.EDITOR], [Authority.INSTRUCTOR]])('should grant editor access to a user with the authority %s without a passkey', (authority) => {
-            accountService.userIdentity.set({ id: 1, authorities: [authority] } as User);
+        it.each([['EDITOR'], ['INSTRUCTOR']])('should grant editor access to a user with the course role %s without a passkey', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
             expect(accountService.hasEditorAccess()).toBe(true);
         });
 
@@ -901,24 +944,6 @@ describe('AccountService', () => {
 
             expect(authState$).toBeDefined();
             expect(authState$).toHaveProperty('subscribe');
-        });
-    });
-
-    describe('test hasAuthority with identity', () => {
-        it('should resolve true when user has the authority', async () => {
-            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN] } as User);
-
-            const result = await accountService.hasAuthority(Authority.ADMIN);
-
-            expect(result).toBe(true);
-        });
-
-        it('should resolve false when user does not have the authority', async () => {
-            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT] } as User);
-
-            const result = await accountService.hasAuthority(Authority.ADMIN);
-
-            expect(result).toBe(false);
         });
     });
 

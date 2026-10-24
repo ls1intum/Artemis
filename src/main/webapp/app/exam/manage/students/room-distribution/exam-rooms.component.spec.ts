@@ -8,6 +8,9 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { provideRouter } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 import { ExamRoomsComponent } from 'app/exam/manage/students/room-distribution/exam-rooms.component';
 import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exam-rooms.service';
@@ -35,6 +38,8 @@ describe('ExamRoomsComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 ExamRoomsService,

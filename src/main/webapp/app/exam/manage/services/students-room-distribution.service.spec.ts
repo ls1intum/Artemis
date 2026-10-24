@@ -41,9 +41,9 @@ describe('StudentsRoomDistributionService', () => {
                 { id: 2, name: 'Room 2', roomNumber: 'R2', building: 'B2' },
             ];
 
-            service.loadRoomData();
+            service.loadRoomData(42, 7);
 
-            const req = httpMock.expectOne(`${BASE_URL}/rooms/distribution-data`);
+            const req = httpMock.expectOne(`${BASE_URL}/courses/42/exams/7/rooms/distribution-data`);
             expect(req.request.method).toBe('GET');
             req.flush(mockRooms);
 
@@ -51,9 +51,9 @@ describe('StudentsRoomDistributionService', () => {
         });
 
         it('should reset availableRooms to empty array on error', () => {
-            service.loadRoomData();
+            service.loadRoomData(42, 7);
 
-            const req = httpMock.expectOne(`${BASE_URL}/rooms/distribution-data`);
+            const req = httpMock.expectOne(`${BASE_URL}/courses/42/exams/7/rooms/distribution-data`);
             req.error(new ProgressEvent('error'));
 
             expect(service.availableRooms()).toEqual([]);
@@ -67,7 +67,7 @@ describe('StudentsRoomDistributionService', () => {
         };
 
         it('should immediately reset capacity data if no room IDs are provided', () => {
-            service.updateCapacityData([], 0.2);
+            service.updateCapacityData(42, 7, [], 0.2);
             expect(service.capacityData()).toEqual({
                 combinedDefaultCapacity: 0,
                 combinedMaximumCapacity: 0,
@@ -78,9 +78,9 @@ describe('StudentsRoomDistributionService', () => {
             const roomIds = [1, 2];
             const reserveFactor = 0.1;
 
-            service.updateCapacityData(roomIds, reserveFactor);
+            service.updateCapacityData(42, 7, roomIds, reserveFactor);
 
-            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/rooms/distribution-capacities` && r.method === 'GET');
+            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/courses/42/exams/7/rooms/distribution-capacities` && r.method === 'GET');
             expect(req.request.params.getAll('examRoomIds')).toEqual(['1', '2']);
             expect(req.request.params.get('reserveFactor')).toBe(reserveFactor.toString());
 
@@ -91,9 +91,9 @@ describe('StudentsRoomDistributionService', () => {
 
         it('should reset capacityData on error', () => {
             const roomIds = [1];
-            service.updateCapacityData(roomIds, 0.1);
+            service.updateCapacityData(42, 7, roomIds, 0.1);
 
-            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/rooms/distribution-capacities` && r.method === 'GET');
+            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/courses/42/exams/7/rooms/distribution-capacities` && r.method === 'GET');
             req.error(new ProgressEvent('error'));
 
             expect(service.capacityData()).toEqual({
@@ -162,9 +162,9 @@ describe('StudentsRoomDistributionService', () => {
 
             let actualSeats: any;
 
-            service.loadSeatsOfExamRoom(examRoomId).subscribe((resp) => (actualSeats = resp));
+            service.loadSeatsOfExamRoom(42, 7, examRoomId).subscribe((resp) => (actualSeats = resp));
 
-            const req = httpMock.expectOne(`${BASE_URL}/rooms/${examRoomId}/seats`);
+            const req = httpMock.expectOne(`${BASE_URL}/courses/42/exams/7/rooms/${examRoomId}/seats`);
 
             expect(req.request.method).toBe('GET');
             req.flush(mockSeats);

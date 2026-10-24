@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { Mock, vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -363,6 +364,18 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(upload).not.toHaveBeenCalled();
     });
 
+    it('should upload files for the course of the current route if no course is given', async () => {
+        const router = TestBed.inject(Router);
+        const routeSnapshot = { params: {}, firstChild: { params: { courseId: '5' }, firstChild: { params: { examId: '9' }, firstChild: null } } };
+        vi.spyOn(router, 'routerState', 'get').mockReturnValue({ snapshot: { root: routeSnapshot } } as unknown as Router['routerState']);
+        const uploadMarkdownFileStub = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('Test error'));
+        vi.spyOn(TestBed.inject(AlertService), 'addAlert').mockReturnValue({} as ReturnType<AlertService['addAlert']>);
+        const files = [new File([''], 'test.png')];
+        fixture.detectChanges();
+        comp.embedFiles(files);
+        await vi.waitFor(() => expect(uploadMarkdownFileStub).toHaveBeenCalledWith(files[0], 5));
+    });
+
     it('should notify if the upload of a markdown file failed', async () => {
         const alertService = TestBed.inject(AlertService);
         const alertSpy = vi.spyOn(alertService, 'addAlert');
@@ -402,6 +415,7 @@ describe('MarkdownEditorMonacoComponent', () => {
             { file: new File([''], 'test.pdf'), url: 'https://test.invalid/generated1234.pdf' },
         ];
         fixture.componentRef.setInput('defaultActions', [urlAction, attachmentAction]);
+        fixture.componentRef.setInput('courseId', 7);
         const files = [new File([''], 'test.png'), new File([''], 'test.pdf')];
         const uploadMarkdownFileStub = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockImplementation((file: File) => {
             const path = file.name.endsWith('.png') ? fileInformation[0].url : fileInformation[1].url;
@@ -417,8 +431,8 @@ describe('MarkdownEditorMonacoComponent', () => {
             expect(urlStub).toHaveBeenCalledOnce();
         });
         // Each file should be uploaded.
-        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(1, files[0]);
-        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(2, files[1]);
+        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(1, files[0], 7);
+        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(2, files[1], 7);
         // Each file should be embedded. PDFs should be embedded as URLs.
         expect(attachmentStub).toHaveBeenCalledWith({
             url: fileInformation[0].url,
