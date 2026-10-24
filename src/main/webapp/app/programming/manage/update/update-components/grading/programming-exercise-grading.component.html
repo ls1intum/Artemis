@@ -21,15 +21,13 @@
                     @if (programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED) {
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
-                    <input
+                    <jhi-points-input
                         [required]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED"
-                        type="number"
-                        class="form-control"
+                        fluid
                         [min]="programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED ? 0 : 1"
-                        max="9999"
-                        noScientificNotation
+                        [max]="9999"
                         name="points"
-                        id="field_points"
+                        inputId="field_points"
                         [(ngModel)]="programmingExercise().maxPoints"
                         #maxScore="ngModel"
                     />
@@ -46,15 +44,13 @@
                     @if (programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
-                    <input
-                        type="number"
+                    <jhi-points-input
                         [required]="programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
-                        class="form-control"
-                        min="0"
-                        max="9999"
-                        noScientificNotation
+                        fluid
+                        [min]="0"
+                        [max]="9999"
                         name="bonusPoints"
-                        id="field_bonusPoints"
+                        inputId="field_bonusPoints"
                         [(ngModel)]="programmingExercise().bonusPoints"
                         #bonusPoints="ngModel"
                     />
