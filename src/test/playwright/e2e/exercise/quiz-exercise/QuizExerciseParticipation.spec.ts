@@ -351,7 +351,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await login(studentOne, `/courses/${course.id}/exercises/${practiceQuiz.id}`);
 
             // --- First practice attempt ---
-            await courseOverview.startQuizPracticeWaitingForLoad(practiceQuiz.id!);
+            await courseOverview.startQuizPractice(practiceQuiz.id!);
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
             await quizExerciseMultipleChoice.tickAnswerOption(practiceQuiz.id!, 0);
             const firstSubmit = await quizExerciseParticipation.submitPractice();

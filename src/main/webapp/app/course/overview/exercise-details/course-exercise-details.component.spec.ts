@@ -714,6 +714,27 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.participationMode()).toBe('practice');
         });
 
+        it('selects quiz practice mode from the running navigation before the child route and details are loaded', () => {
+            getExerciseDetailsMock.mockReturnValue(NEVER);
+            vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([]);
+            const router = TestBed.inject(Router) as unknown as MockRouter & { getCurrentNavigation?: () => { finalUrl: { toString: () => string } } };
+            router.setUrl('/courses/1/exercises/42');
+            router.getCurrentNavigation = () => ({ finalUrl: { toString: () => '/courses/1/exercises/quiz-exercises/42/practice' } });
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('practice');
+        });
+
+        it('restores graded mode when navigating from quiz practice to live', () => {
+            fixture.detectChanges();
+            comp.participationMode.set('practice');
+
+            (TestBed.inject(Router) as unknown as MockRouter).setUrl('/courses/1/exercises/quiz-exercises/42/live');
+
+            expect(comp.participationMode()).toBe('graded');
+        });
+
         it('selects the practice mode from the URL while the child route is not activated yet', async () => {
             // Angular activates the editor's child route only after this component has initialised, so on the first
             // pass the participation is named by the URL alone. Held before the response lands, because that is where

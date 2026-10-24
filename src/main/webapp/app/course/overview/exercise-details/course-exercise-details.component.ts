@@ -275,7 +275,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Selects the mode of the participation the URL addresses, e.g. practice for
+     * Selects the mode named by a quiz route or the participation the URL addresses, e.g. practice for
      * `/courses/1/exercises/programming-exercises/2/code-editor/680` with 680 being the practice participation.
      * <p>
      * The routed participation is what the student asked to see, so it decides the mode. Without this the mode fell
@@ -289,6 +289,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * that belongs to neither participation (not loaded yet) leaves the mode untouched.
      */
     private syncModeWithRoutedParticipation(): void {
+        // Quiz routes name the mode directly, even before the first practice participation exists.
+        const navigationUrl = this.router.getCurrentNavigation?.()?.finalUrl?.toString() ?? this.router.url;
+        const quizMode = /\/quiz-exercises\/\d+\/(practice|live)(?:\/|\?|#|$)/.exec(navigationUrl)?.[1];
+        if (quizMode) {
+            this.participationMode.set(quizMode === 'practice' ? 'practice' : 'graded');
+            return;
+        }
         const routedParticipationId = this.routedParticipationId();
         if (routedParticipationId === undefined) {
             return;
