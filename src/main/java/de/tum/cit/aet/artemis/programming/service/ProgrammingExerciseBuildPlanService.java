@@ -168,9 +168,8 @@ public class ProgrammingExerciseBuildPlanService {
      */
     public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig,
             UpdateBuildPlanConfigurationDTO buildPlanConfiguration) {
-        // reuse the shared build phase validation so a misconfiguration is rejected with the same error and key as on the
-        // full exercise update path
-        programmingExerciseValidationService.validateBuildPhases(buildPlanConfiguration.buildPlan().phases());
+        BuildPlanConfigurationValidator.validate(buildPlanConfiguration.buildPlan(), buildPlanConfiguration.timeoutSeconds());
+        // a blank top-level image would be persisted verbatim and leave a legacy configuration with an unusable image
         validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
 
         final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
@@ -191,6 +190,7 @@ public class ProgrammingExerciseBuildPlanService {
         // disallowed networks, invalid resource limits), so the build plan editor cannot persist a configuration the
         // regular editing path would reject. This runs before any save, so a rejected payload leaves the config unchanged.
         programmingExerciseValidationService.validateDockerFlags(buildConfig);
+        programmingExerciseValidationService.validateContainerDockerFlags(buildPlanConfiguration.buildPlan(), buildConfig);
 
         // this endpoint is LocalCI-only, so updateBuildPlanForExercise never takes its non-LocalCI delete-and-recreate
         // branch here; it is still called for parity with the shared full exercise update path
