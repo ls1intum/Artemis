@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettingsEntity;
@@ -12,7 +13,8 @@ import de.tum.cit.aet.artemis.hyperion.repository.HyperionCourseSettingsReposito
 /**
  * Reads and writes the Hyperion settings of a course.
  * <p>
- * A course without a settings row has the defaults; the row is created by the first update.
+ * Every course owns one settings row from its creation. A course whose row is missing reads as the defaults, and an update adds the
+ * missing row before it writes.
  */
 @Service
 @Lazy
@@ -21,12 +23,15 @@ public class HyperionCourseSettingsService {
 
     private final HyperionCourseSettingsRepository settingsRepository;
 
-    public HyperionCourseSettingsService(HyperionCourseSettingsRepository settingsRepository) {
+    private final CourseRepository courseRepository;
+
+    public HyperionCourseSettingsService(HyperionCourseSettingsRepository settingsRepository, CourseRepository courseRepository) {
         this.settingsRepository = settingsRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
-     * Returns the settings of a course, or the defaults when none were saved yet.
+     * Returns the settings of a course, or the defaults when the course has no settings row.
      *
      * @param courseId the course
      * @return the settings
@@ -36,19 +41,17 @@ public class HyperionCourseSettingsService {
     }
 
     /**
-     * Replaces the settings of a course, creating the settings row when the course has none.
+     * Replaces the settings of a course in place. A course whose settings row is missing receives its default rows first.
      *
      * @param courseId the course
      * @param settings the settings to store
      * @return the stored settings
      */
     public HyperionCourseSettings updateSettings(long courseId, HyperionCourseSettings settings) {
-        HyperionCourseSettingsEntity entity = settingsRepository.findByCourseId(courseId).orElseGet(() -> {
-            HyperionCourseSettingsEntity created = new HyperionCourseSettingsEntity();
-            created.setCourseId(courseId);
-            return created;
-        });
-        entity.setSettings(settings);
-        return settingsRepository.save(entity).getSettings();
+        if (settingsRepository.updateSettings(courseId, settings) == 0) {
+            courseRepository.ensureDefaultConfigurations(courseId);
+            settingsRepository.updateSettings(courseId, settings);
+        }
+        return settings;
     }
 }
