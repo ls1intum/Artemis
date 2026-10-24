@@ -263,6 +263,18 @@ describe('Formatted message composer', () => {
         expect(toolbar.querySelector('[role="group"]')!.classList.contains('contents')).toBe(true);
     });
 
+    it('keeps the basic buttons of the expanded toolbar as one block, so that the expanded controls wrap below it', () => {
+        toggleToolbar();
+        const group = fixture.nativeElement.querySelector('[data-testid="message-editor-toolbar"] [role="group"]') as HTMLElement;
+
+        expect(group.classList.contains('contents')).toBe(false);
+        expect(group.classList.contains('flex-wrap')).toBe(true);
+
+        toggleToolbar();
+
+        expect(group.classList.contains('contents')).toBe(true);
+    });
+
     it('keeps advanced control IDs unique for simultaneously mounted composers', () => {
         const other = TestBed.createComponent(MessageEditorComponent);
         try {

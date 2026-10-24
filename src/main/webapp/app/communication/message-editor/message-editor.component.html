@@ -1,6 +1,14 @@
 <div class="message-composer rounded-md">
     <div class="message-editor-divider flex flex-wrap items-center gap-1 border-b p-1" data-testid="message-editor-toolbar">
-        <div class="contents" role="group" [attr.aria-label]="'artemisApp.communication.formattedEditor.formatting' | artemisTranslate">
+        <!--
+            The compact toolbar lets its buttons wrap as one row with the emoji button, so a narrow editor needs no more lines than the buttons take.
+            The expanded controls wrap as one block below the basic toolbar, which needs the basic buttons to stay one block as well.
+        -->
+        <div
+            [class]="toolbarExpanded() ? 'flex max-w-full flex-wrap items-center gap-1' : 'contents'"
+            role="group"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.formatting' | artemisTranslate"
+        >
             @for (format of basicFormats; track format.tag) {
                 <button
                     type="button"
