@@ -95,17 +95,14 @@
             @if (isExam()) {
                 <fa-icon [icon]="faExclamationTriangle" class="text-warning" [ngbTooltip]="'artemisApp.examManagement.maxPoints.warning' | artemisTranslate" container="body" />
             }
-            <input
-                [attr.aria-label]="'artemisApp.gradingSystem.info.maxPoints.title' | artemisTranslate"
-                type="number"
-                class="form-control"
+            <jhi-points-input
+                fluid
+                [ariaLabel]="'artemisApp.gradingSystem.info.maxPoints.title' | artemisTranslate"
                 [ngModel]="maxPoints()"
-                (ngModelChange)="maxPoints.set($event)"
-                min="1"
-                step="1"
+                (ngModelChange)="maxPoints.set($event); onChangeMaxPoints($event)"
+                [min]="1"
                 pattern="\d*"
                 [max]="MAX_GRADING_POINTS"
-                (change)="onChangeMaxPoints(maxPoints())"
             />
         </div>
         <div class="form-group">
@@ -249,14 +246,15 @@
                                     }
                                     @if (gradeEditMode === GradeEditMode.POINTS) {
                                         <td>
-                                            <input
-                                                [attr.aria-label]="'accessibility.pointsInterval' | artemisTranslate"
-                                                #pointsInput
-                                                [value]="getPointsInterval(gradeStep)"
-                                                type="number"
-                                                step="0.5"
-                                                min="0.5"
-                                                (change)="setPointsInterval(i, pointsInput.valueAsNumber)"
+                                            <jhi-points-input
+                                                fluid
+                                                #pointsInput="ngModel"
+                                                [ariaLabel]="'accessibility.pointsInterval' | artemisTranslate"
+                                                [ngModel]="getPointsInterval(gradeStep)"
+                                                [step]="0.5"
+                                                [min]="0.5"
+                                                (focusout)="onPointsIntervalInput(i, pointsInput.value)"
+                                                (keydown.enter)="onPointsIntervalInput(i, pointsInput.value)"
                                                 [required]="maxPoints() !== undefined && maxPoints()! > 0"
                                                 [disabled]="maxPoints() === undefined || maxPoints()! <= 0"
                                             />
@@ -344,16 +342,17 @@
                                     />
                                 </td>
                                 <td>
-                                    <input
-                                        [attr.aria-label]="'artemisApp.gradingSystem.minPoints' | artemisTranslate"
-                                        #pointsInput
-                                        [value]="gradeStep.lowerBoundPoints"
-                                        type="number"
-                                        step="0.5"
-                                        min="0"
+                                    <jhi-points-input
+                                        fluid
+                                        #lowerPointsInput="ngModel"
+                                        [ariaLabel]="'artemisApp.gradingSystem.minPoints' | artemisTranslate"
+                                        [ngModel]="gradeStep.lowerBoundPoints"
+                                        [step]="0.5"
+                                        [min]="0"
                                         [required]="maxPoints() !== undefined && maxPoints()! > 0"
                                         [disabled]="!maxPointsValid()"
-                                        (change)="onDetailedPointsInput(i, true, pointsInput.valueAsNumber)"
+                                        (focusout)="onDetailedPointsInput(i, true, lowerPointsInput.value)"
+                                        (keydown.enter)="onDetailedPointsInput(i, true, lowerPointsInput.value)"
                                     />
                                 </td>
                                 <td>
@@ -366,16 +365,17 @@
                                     />
                                 </td>
                                 <td>
-                                    <input
-                                        [attr.aria-label]="'artemisApp.gradingSystem.maxPoints' | artemisTranslate"
-                                        #pointsInput
-                                        [value]="gradeStep.upperBoundPoints"
-                                        type="number"
-                                        step="0.5"
-                                        min="0"
+                                    <jhi-points-input
+                                        fluid
+                                        #upperPointsInput="ngModel"
+                                        [ariaLabel]="'artemisApp.gradingSystem.maxPoints' | artemisTranslate"
+                                        [ngModel]="gradeStep.upperBoundPoints"
+                                        [step]="0.5"
+                                        [min]="0"
                                         [required]="maxPoints() !== undefined && maxPoints()! > 0"
                                         [disabled]="!maxPointsValid()"
-                                        (change)="onDetailedPointsInput(i, false, pointsInput.valueAsNumber)"
+                                        (focusout)="onDetailedPointsInput(i, false, upperPointsInput.value)"
+                                        (keydown.enter)="onDetailedPointsInput(i, false, upperPointsInput.value)"
                                     />
                                 </td>
                                 @if (gradingScale.gradeType !== GradeType.BONUS) {
