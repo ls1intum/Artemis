@@ -1,5 +1,6 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, linkedSignal } from '@angular/core';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -23,4 +24,10 @@ export class QuizQuestionPreviewComponent {
     readonly questionIndex = input<number>(1);
 
     protected readonly multipleChoiceQuestion = computed(() => this.question() as MultipleChoiceQuestion);
+
+    /**
+     * The items that have been dropped while trying out a drag and drop question. The question component only reports a changed mapping, so they have to be kept
+     * here to stay where they were dropped. They start empty for every question, are never stored, and do not change the question.
+     */
+    protected readonly dragAndDropMappings = linkedSignal<QuizQuestion, DragAndDropMapping[]>({ source: this.question, computation: () => [] });
 }
