@@ -2,6 +2,7 @@ import { Component, OnInit, inject, output, signal, viewChild } from '@angular/c
 import { NgbActiveModal, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TypeaheadScrollActiveOptionDirective } from 'app/shared-ui/directives/typeahead-scroll-active-option.directive';
 
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
@@ -37,6 +38,7 @@ import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
         CustomExerciseCategoryBadgeComponent,
         RangeSliderComponent,
         NgbTypeahead,
+        TypeaheadScrollActiveOptionDirective,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
