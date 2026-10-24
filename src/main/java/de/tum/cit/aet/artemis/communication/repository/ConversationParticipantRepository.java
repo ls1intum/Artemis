@@ -8,10 +8,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -107,8 +110,9 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
      * Creates the participant of a user in a conversation unless the user already is one, in one statement.
      * <p>
      * Several requests create the same participant at once, for example the three message requests the client sends when a student opens a course-wide channel for the first
-     * time. Reading first and inserting afterwards leaves every one of them a window in which the participant is still missing, and all but the first fail on the unique index
-     * {@code conversation_participant_uq}. Checking inside the insert shrinks the window to a single statement. Use {@link #createIfAbsent} to also cover what is left of it.
+     * time. Checking inside the insert leaves no gap between the check and the insert, but two such statements that run at the same instant still both find the participant
+     * missing, and the later one fails on the unique index {@code conversation_participant_uq}, which Hibernate logs at WARN. That is what the three requests of the client do,
+     * because they run the same steps in lockstep. Call {@link #createIfAbsent} instead, which makes them wait for each other.
      * <p>
      * The participant is not a favorite, not hidden and not muted, like {@link ConversationParticipant#createWithDefaultValues}.
      *
@@ -138,12 +142,47 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             @Param("lastRead") ZonedDateTime lastRead, @Param("unreadMessagesCount") Long unreadMessagesCount);
 
     /**
+     * Locks the row of a conversation until the end of the surrounding transaction. Every transaction that wants the lock waits until the one that holds it has committed.
+     * The lock is released at the end of the transaction, so this only has an effect inside a transaction that also does the work, see {@link #lockAndInsertIfAbsent}.
+     *
+     * @param conversationId the id of the conversation
+     * @return the id of the conversation, empty if it does not exist
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT conversation.id
+            FROM Conversation conversation
+            WHERE conversation.id = :conversationId
+            """)
+    Optional<Long> lockConversation(@Param("conversationId") Long conversationId);
+
+    /**
+     * Creates the participant like {@link #insertIfAbsent}, after taking the lock on the conversation in the same transaction.
+     * <p>
+     * Requests that create a participant of the same conversation at the same time queue up on the lock. The one that gets it inserts and commits, and the others then
+     * run their statement in a new snapshot that contains the participant, so they insert nothing and no request fails on the unique index. The lock is per conversation and is
+     * held only for the one insert, which happens once per user and conversation.
+     *
+     * @param conversationId      the id of the conversation
+     * @param userId              the id of the user
+     * @param isModerator         whether the user moderates the conversation
+     * @param lastRead            the time the user read the conversation last
+     * @param unreadMessagesCount the number of messages the user has not read
+     * @return 1 if the participant was created, 0 if it existed or the conversation or the user does not exist
+     */
+    @Transactional // ok because the lock only holds for the insert if both are one transaction
+    default int lockAndInsertIfAbsent(Long conversationId, Long userId, boolean isModerator, ZonedDateTime lastRead, Long unreadMessagesCount) {
+        lockConversation(conversationId);
+        return insertIfAbsent(conversationId, userId, isModerator, lastRead, unreadMessagesCount);
+    }
+
+    /**
      * Creates the participant of a user in a conversation unless the user already is one, also when another request creates it at the very same time.
      * <p>
-     * {@link #insertIfAbsent} leaves a window of a single statement, in which a concurrent request can still insert first. On PostgreSQL the unique index then refuses the later
-     * insert. On MySQL (REPEATABLE READ) two such statements can instead deadlock on the gap of the unique index, and the database rolls one back. Both outcomes are what this
-     * method wants, because the other request created the participant, so it counts them as "exists". The deadlock victim retries a few times, because the other request may
-     * not have committed yet when the victim looks. An integrity violation while the participant does not exist, for example a missing user, is a real error.
+     * Concurrent requests wait for each other on the lock of {@link #lockAndInsertIfAbsent}, so normally exactly one of them inserts and the others find the participant. If
+     * the unique index refuses an insert anyway, or on MySQL (REPEATABLE READ) the database rolls back a deadlock victim, the other request created the participant. This
+     * method counts both as "exists". The deadlock victim retries a few times, because the other request may not have committed yet when the victim looks. An integrity
+     * violation while the participant does not exist, for example a missing user, is a real error.
      *
      * @param conversationId      the id of the conversation
      * @param userId              the id of the user
@@ -156,7 +195,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
         int maxAttempts = 3;
         for (int attempt = 1;; attempt++) {
             try {
-                return insertIfAbsent(conversationId, userId, isModerator, lastRead, unreadMessagesCount) == 1;
+                return lockAndInsertIfAbsent(conversationId, userId, isModerator, lastRead, unreadMessagesCount) == 1;
             }
             catch (DataIntegrityViolationException e) {
                 if (existsByConversationIdAndUserId(conversationId, userId)) {

@@ -16,8 +16,12 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
@@ -37,6 +41,12 @@ class ConversationParticipantCreationTest extends AbstractConversationTest {
     @Autowired
     private ConversationService conversationService;
 
+    /**
+     * Hibernate logs every SQL error at WARN, also one that the code handles. A participant that two requests create at once used to log the violation of
+     * {@code conversation_participant_uq} once for every request that lost, so the tests look at this log and not only at the exceptions.
+     */
+    private final ListAppender<ILoggingEvent> sqlErrors = new ListAppender<>();
+
     private Channel channel;
 
     private User student;
@@ -49,10 +59,14 @@ class ConversationParticipantCreationTest extends AbstractConversationTest {
         userUtilService.enrollPrefixedUsersInCourse(exampleCourse, TEST_PREFIX);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         channel = conversationUtilService.createCourseWideChannel(exampleCourse, "participantcreation");
+        sqlErrors.start();
+        ((Logger) LoggerFactory.getLogger("org.hibernate.orm.jdbc.error")).addAppender(sqlErrors);
     }
 
     @AfterEach
     void tearDown() {
+        ((Logger) LoggerFactory.getLogger("org.hibernate.orm.jdbc.error")).detachAppender(sqlErrors);
+        sqlErrors.stop();
         conversationRepository.deleteAllByCourseId(exampleCourseId);
     }
 
@@ -118,6 +132,7 @@ class ConversationParticipantCreationTest extends AbstractConversationTest {
                 assertThat(created).as("requests that created the participant in round %d", round).isEqualTo(1);
                 assertThat(getParticipants(otherChannel.getId())).hasSize(1);
             }
+            assertThat(sqlErrors.list).as("SQL errors that Hibernate logged").isEmpty();
         }
         finally {
             executor.shutdownNow();
@@ -144,6 +159,7 @@ class ConversationParticipantCreationTest extends AbstractConversationTest {
                 result.get(30, TimeUnit.SECONDS);
             }
             assertThat(getParticipants(channel.getId())).hasSize(1);
+            assertThat(sqlErrors.list).as("SQL errors that Hibernate logged").isEmpty();
         }
         finally {
             executor.shutdownNow();
