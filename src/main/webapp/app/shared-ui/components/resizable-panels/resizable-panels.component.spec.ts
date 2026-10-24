@@ -1,3 +1,4 @@
+import { SPLITTER_GUTTER_SIZE } from 'app/assessment/manage/assessment-workspace/splitter-pass-through';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
@@ -23,7 +24,12 @@ class ResizeObserverMock {
 
 @Component({
     template: `
-        <jhi-resizable-panels [useViewportWidthForCollapse]="useViewportWidthForCollapse" [storageKey]="storageKey" [flushLeftPanel]="flushLeftPanel">
+        <jhi-resizable-panels
+            [useViewportWidthForCollapse]="useViewportWidthForCollapse"
+            [storageKey]="storageKey"
+            [flushLeftPanel]="flushLeftPanel"
+            [leftMinSizePercent]="leftMinSizePercent"
+        >
             <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft"><div id="left-marker">Left Content</div></ng-template>
             <ng-template jhiPanel [label]="'right'">Right Content</ng-template>
             <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed">Iris Content</ng-template>
@@ -37,6 +43,7 @@ class ResizablePanelsTestComponent {
     irisStartsCollapsed = false;
     useViewportWidthForCollapse = false;
     flushLeftPanel = false;
+    leftMinSizePercent = 0;
     storageKey: string | undefined = undefined;
 }
 
@@ -73,8 +80,8 @@ describe('ResizablePanelsComponent', () => {
         // Drag-to-collapse: the splitter leaves the panels at the near-zero position they were dragged to.
         component['onResizeEnd']([100, 0]);
         const [left, right] = panels();
-        left.style.flexBasis = 'calc(100% - 6px)';
-        right.style.flexBasis = 'calc(0% - 6px)';
+        left.style.flexBasis = `calc(100% - ${SPLITTER_GUTTER_SIZE}px)`;
+        right.style.flexBasis = `calc(0% - ${SPLITTER_GUTTER_SIZE}px)`;
         fixture.detectChanges();
         expect(component.isRightPanelCollapsed()).toBe(true);
 
@@ -83,8 +90,8 @@ describe('ResizablePanelsComponent', () => {
         fixture.detectChanges();
 
         expect(component.isRightPanelCollapsed()).toBe(false);
-        expect(right.style.flexBasis).toBe('calc(35% - 6px)');
-        expect(left.style.flexBasis).toBe('calc(65% - 6px)');
+        expect(right.style.flexBasis).toBe(`calc(35% - ${SPLITTER_GUTTER_SIZE}px)`);
+        expect(left.style.flexBasis).toBe(`calc(65% - ${SPLITTER_GUTTER_SIZE}px)`);
         expect(component.savedSizes()).toEqual([65, 35]);
     });
 
@@ -193,7 +200,53 @@ describe('ResizablePanelsComponent', () => {
         expect(component.savedSizes()).toEqual([72, 28]);
         const splitter = fixture.nativeElement.querySelector('p-splitter');
         const [, right] = Array.from(splitter.querySelectorAll('[data-pc-section="panel"]')) as HTMLElement[];
-        expect(right.style.flexBasis).toBe('calc(28% - 6px)');
+        expect(right.style.flexBasis).toBe(`calc(28% - ${SPLITTER_GUTTER_SIZE}px)`);
+    });
+
+    it('keeps the left panel at its minimum size while dragging', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.leftMinSizePercent = 36;
+        fixture.detectChanges();
+
+        // The splitter refuses a drag that would leave the left panel below the minimum; the right panel stays unbounded.
+        expect(fixture.debugElement.query(By.css('p-splitter')).componentInstance.minSizes).toEqual([36, 0]);
+    });
+
+    it('widens a remembered split whose left panel is below the minimum, so the slider is not frozen', () => {
+        localStorage.setItem('test-split', JSON.stringify([20, 80]));
+
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.storageKey = 'test-split';
+        fixture.componentInstance.leftMinSizePercent = 36;
+        fixture.detectChanges();
+        fixture.detectChanges();
+        const component = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+        expect(component.savedSizes()).toEqual([36, 64]);
+        const splitter = fixture.nativeElement.querySelector('p-splitter');
+        const [left] = Array.from(splitter.querySelectorAll('[data-pc-section="panel"]')) as HTMLElement[];
+        expect(left.style.flexBasis).toBe(`calc(36% - ${SPLITTER_GUTTER_SIZE}px)`);
+    });
+
+    it('widens the default split to a minimum above it, on init and when reopening', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.leftMinSizePercent = 75;
+        fixture.detectChanges();
+        const component = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        const splitter = fixture.nativeElement.querySelector('p-splitter');
+        const [left, right] = Array.from(splitter.querySelectorAll('[data-pc-section="panel"]')) as HTMLElement[];
+
+        expect(component.savedSizes()).toBeUndefined();
+        expect(left.style.flexBasis).toBe(`calc(75% - ${SPLITTER_GUTTER_SIZE}px)`);
+
+        component.onResizeEnd([100, 0]);
+        fixture.detectChanges();
+        component.expandRightPanel(0);
+        fixture.detectChanges();
+
+        expect(component.savedSizes()).toEqual([75, 25]);
+        expect(left.style.flexBasis).toBe(`calc(75% - ${SPLITTER_GUTTER_SIZE}px)`);
+        expect(right.style.flexBasis).toBe(`calc(25% - ${SPLITTER_GUTTER_SIZE}px)`);
     });
 
     it('keeps the usable split when snap-collapsing after a reopen (splitter buffer is not aliased to savedSizes)', () => {

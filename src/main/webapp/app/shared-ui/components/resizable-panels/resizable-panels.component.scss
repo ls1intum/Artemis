@@ -13,50 +13,24 @@
 
     // The current PrimeNG Splitter renders its panels as `p-splitterpanel`. This class name has
     // changed across PrimeNG majors, so revisit these selectors when upgrading PrimeNG.
-    .p-splitterpanel {
+    // Only the panels of this splitter: the editors inside them may hold splitters of their own, which these rules would reach
+    // through a descendant selector (and did: their handles showed this one's grip on top of their own).
+    > .p-splitterpanel {
         display: flex;
         min-width: 0;
         min-height: 0;
         overflow: hidden;
     }
 
-    // Thin transparent gutter showing two vertical grip bars, like the previous split.js gutter.
-    .p-splitter-gutter {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: col-resize;
-        background: transparent;
-    }
-
-    .p-splitter-gutter-handle {
-        // Center the two grip bars within the handle. Without explicit centering and sizing, PrimeNG sizes the
-        // handle to fill the gutter and the bars sit at flex-start (visually left of the divider) instead of centered.
-        // The handle is as wide as the gutter, which is one divider: the two 2px bars and their 1px gap fit in it.
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        width: var(--spacing-divider);
-        height: 12px;
-        gap: 1px;
-        background: transparent;
-        pointer-events: none;
-
-        &::before,
-        &::after {
-            content: '';
-            display: block;
-            width: 2px;
-            height: 12px;
-            background: var(--bs-body-color);
-            border-radius: 1px;
-        }
-    }
+    // The gutter and its grip are styled by the pass-through (splitterPassThrough), the same as on the assessment pages.
 
     // Collapsed state: the splitter stays mounted (so the left panel survives), but the right panel shrinks to the
     // icon rail and the gutter is hidden. !important overrides PrimeNG's inline flex-basis from panelSizes.
     &.right-collapsed {
+        // The rail keeps the width of the divider as a margin, which shows the splitter's own background: the grey of the shell,
+        // like the divider it stands in for, not the colour of the panels. The root's inline background needs the !important.
+        background-color: var(--bs-body-bg) !important;
+
         > .p-splitterpanel:first-child {
             flex: 1 1 auto !important;
         }
@@ -71,6 +45,19 @@
     }
 }
 
+// Framed like the panels it sits beside (the general feedback panel, the editor's cards) and like its own collapsed rail
+.right-panel {
+    border: var(--bs-border-width) solid var(--bs-border-color);
+}
+
+// The tab row of the right panel is grey like the header of the general feedback panel, so the headers of the page read alike. It
+// draws the line below the tabs, and the tabs run down to it, so the indicator of the selected tab sits on that line.
+.right-panel-header {
+    background-color: var(--hover-slightly-darker-body-bg);
+    // Inside the header, not a border: the tabs lie over it by paint order, so the indicator covers it at every zoom
+    box-shadow: inset 0 calc(-1 * var(--bs-border-width)) 0 var(--bs-border-color);
+}
+
 .right-panel-collapse-button {
     display: flex;
     align-items: center;
@@ -82,17 +69,20 @@
     background: transparent;
     border: 0;
     border-left: var(--bs-border-width) solid var(--bs-border-color);
-    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
 
     &:hover,
     &:focus-visible {
         color: var(--bs-primary);
-        background: var(--bs-tertiary-bg);
+        background: var(--hover-slightly-darker-body-bg);
     }
 }
 
 .right-panel-tabs {
     min-width: 0;
+
+    tumaet-ui-tab-list {
+        flex: 1 1 auto;
+    }
 }
 
 .collapsed-right-panel {
@@ -102,6 +92,13 @@
     /* Stands in for the gutter, which is hidden while collapsed, so the grey divider stays the same width. */
     margin-left: var(--spacing-divider);
     border: var(--bs-border-width) solid var(--bs-border-color);
+}
+
+// The rail that stands for the collapsed panel is grey like a header, so it recedes instead of reading as one more white card.
+// It is also a `module-bg` element, whose class has the same weight as this rule without the second class.
+.collapsed-right-panel.module-bg {
+    // The colour of the headers of the code editor (the file tab above its editor), so every rail is the colour of a collapsed header
+    background: var(--code-editor-file-browser-header-background);
 }
 
 .collapsed-right-panel-tab {
@@ -117,47 +114,8 @@
     border-bottom: var(--bs-border-width) solid var(--bs-border-color);
 
     &:hover,
-    &:focus-visible,
-    &.active {
+    &:focus-visible {
         color: var(--bs-primary);
-        background: var(--bs-tertiary-bg);
-    }
-}
-
-:host ::ng-deep {
-    .p-tablist-tab-list {
-        border-width: 0 0 var(--bs-border-width) 0;
-        border-color: var(--bs-border-color);
-        gap: 0.5rem;
-    }
-
-    .p-tablist-active-bar {
-        display: none;
-    }
-
-    .p-tab {
-        border-width: 0 0 var(--bs-border-width) 0;
-        padding: 8px;
-
-        &.p-tab-active {
-            color: var(--bs-body-color);
-            border-color: var(--bs-primary);
-            background: transparent;
-        }
-
-        &:not(.p-disabled):focus-visible {
-            outline: 2px solid var(--bs-primary);
-            outline-offset: 2px;
-        }
-
-        &:not(.p-tab-active):not(.p-disabled):hover {
-            color: var(--bs-body-color);
-            background: transparent;
-            border-color: transparent;
-        }
-    }
-
-    .p-tablist {
-        background: transparent;
+        background: var(--hover-slightly-darker-body-bg);
     }
 }
