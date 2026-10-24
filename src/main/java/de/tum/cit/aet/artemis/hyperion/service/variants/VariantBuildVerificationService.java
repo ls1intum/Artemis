@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.BuildResultPollingSupport;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -199,13 +200,8 @@ public class VariantBuildVerificationService {
 
                 Thread.sleep(POLL_INTERVAL);
             }
-            catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                throw ie;
-            }
             catch (Exception e) {
-                log.warn("Exception while polling for build result for commit {}: {}. Continuing...", commitHash, e.getMessage());
-                Thread.sleep(POLL_INTERVAL);
+                BuildResultPollingSupport.handleFailure(e, commitHash, POLL_INTERVAL, log);
             }
         }
         log.warn("Timed out waiting for build result for commit {} in exercise {} after {} polls ({}ms)", commitHash, exercise.getId(), pollCount, TIMEOUT);

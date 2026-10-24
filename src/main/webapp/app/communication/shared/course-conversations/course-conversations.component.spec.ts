@@ -1,3 +1,4 @@
+import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -9,6 +10,7 @@ import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { SortDirection } from 'app/communication/communication.util';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
@@ -16,7 +18,7 @@ import { CourseWideSearchComponent } from 'app/communication/course-conversation
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
-import { BehaviorSubject, EMPTY, Subject, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
@@ -42,7 +44,7 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { ElementRef, signal } from '@angular/core';
+import { ElementRef, computed, signal } from '@angular/core';
 import {
     ChannelAction,
     ChannelsOverviewDialogComponent,
@@ -212,7 +214,7 @@ examples.forEach((activeConversation) => {
             courseConversationsService.setActiveConversation = vi.fn();
             courseConversationsService.setUpConversationService = vi.fn().mockReturnValue(EMPTY);
             courseConversationsService.forceRefresh = vi.fn().mockReturnValue(EMPTY);
-            courseConversationsService.markAsRead = vi.fn();
+            courseConversationsService.prepareConversationView = vi.fn().mockReturnValue(of(true));
             courseConversationsService.acceptCodeOfConduct = vi.fn();
             courseConversationsService.createGroupChat = vi.fn().mockReturnValue(EMPTY);
             courseConversationsService.createOneToOneChat = vi.fn().mockReturnValue(EMPTY);
@@ -271,12 +273,158 @@ examples.forEach((activeConversation) => {
             vi.resetAllMocks();
         });
 
+        it('waits for accepted view-entry metadata before replaying the retained selection or rewriting its URL', () => {
+            const ready = new Subject<boolean>();
+            vi.mocked(courseConversationsService.prepareConversationView).mockReturnValue(ready);
+            const retained = generateExampleChannelDTO({ id: 21, name: 'Lecture questions' } as ChannelDTO);
+            activeConversation$.next(retained);
+            queryParamsSubject.next({ conversationId: 21 });
+            const navigate = vi.spyOn(router, 'navigate').mockClear();
+            const mount = vi.spyOn(courseConversationsService, 'setConversationViewOpen');
+            fixture.detectChanges();
+            expect(mount).not.toHaveBeenCalled();
+            expect(component.activeConversation()).toBeUndefined();
+            expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            expect(navigate).not.toHaveBeenCalled();
+
+            ready.next(false);
+            expect(component.isLoading()).toBe(false);
+            expect(component.activeConversation()).toBeUndefined();
+            expect(navigate).not.toHaveBeenCalled();
+            ready.next(true);
+            fixture.detectChanges();
+            expect(mount).toHaveBeenCalledExactlyOnceWith(true);
+            expect(component.activeConversation()?.id).toBe(retained.id);
+            expect(setActiveConversationSpy).toHaveBeenCalledWith(retained.id);
+        });
+
+        it('initializes an absent sidebar from accepted conversations after the initial refresh is cancelled', () => {
+            const recovered = generateExampleChannelDTO({ id: 21, name: 'Lecture questions', unreadMessagesCount: 2 } as ChannelDTO);
+            const conversations = new Subject<ConversationDTO[]>();
+            vi.spyOn(courseConversationsService, 'conversationsOfUser$', 'get').mockReturnValue(conversations);
+            vi.mocked(courseConversationsService.forceRefresh).mockReturnValue(throwError(() => new Error('snapshot superseded')));
+            const cards = [{ id: 21, title: 'Lecture questions', isCurrent: false, conversation: recovered, size: 'S' as const }];
+            vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockReturnValue(cards);
+            vi.mocked(courseOverviewService.groupConversationsByChannelType).mockReturnValue({ recents: { entityData: [] }, generalChannels: { entityData: cards } });
+            fixture.detectChanges();
+            expect(component.sidebarData()).toBeUndefined();
+            expect(courseConversationsService.forceRefresh).toHaveBeenCalled();
+
+            conversations.next([recovered]);
+            fixture.detectChanges();
+
+            expect(component.sidebarData()).toBeDefined();
+            expect(component.conversationsOfUser()).toEqual([recovered]);
+            expect(component.sidebarConversations()).toEqual(cards);
+            expect(component.accordionConversationGroups().generalChannels.entityData[0].conversation?.unreadMessagesCount).toBe(2);
+            expect(courseConversationsService.forceRefresh).toHaveBeenCalledTimes(1);
+        });
+
+        it('should refresh an already open thread after its forwarded sources finish loading', () => {
+            activeConversation$.next({ id: 5, type: ConversationType.CHANNEL });
+            fixture.detectChanges();
+            const openedPost = new Post();
+            openedPost.id = 42;
+            openedPost.conversation = { id: 5 };
+            component.postInThread.set(openedPost);
+            fixture.detectChanges();
+            const sidebar = fixture.debugElement.query(By.directive(ConversationThreadSidebarComponent));
+            const forwardedContent = computed(() => sidebar.componentInstance.activePost()?.forwardedPosts?.[0]?.content);
+            expect(forwardedContent()).toBeUndefined();
+
+            // Forwarded sources arrive after the user opened the bare wrapper in the thread.
+            openedPost.forwardedPosts = [{ id: 43, content: 'Loaded forwarded message' }];
+            fixture.debugElement.query(By.directive(ConversationMessagesComponent)).triggerEventHandler('forwardedMessagesLoaded', [openedPost]);
+            fixture.detectChanges();
+
+            expect(sidebar.componentInstance.activePost()).not.toBe(openedPost);
+            expect(forwardedContent()).toBe('Loaded forwarded message');
+        });
+
         it('should have service set up', () => {
             fixture.detectChanges();
             expect(component.isServiceSetUp()).toBe(true);
             expect(component.isLoading()).toBe(false);
             expect(component.conversationsOfUser()).toHaveLength(1);
             expect(component.activeConversation()).toEqual(activeConversation);
+        });
+
+        it('should open and close a thread without retaining a pending source', () => {
+            const opened = { id: 42 } as Post;
+            const setOpenPost = vi.spyOn(component['selectionState'], 'setOpenPostId');
+            component['pendingThreadPostId'] = 99;
+
+            component.openThread(opened);
+            expect(component.postInThread()).toBe(opened);
+            expect(setOpenPost).toHaveBeenCalledWith(42);
+            expect(component['pendingThreadPostId']).toBeUndefined();
+
+            component.closeThread();
+            expect(component.postInThread()).toBeUndefined();
+            expect(component['pendingThreadPostId']).toBeUndefined();
+        });
+
+        it.each(['post', 'reply'] as const)('should scroll to and temporarily highlight an existing original %s', (kind) => {
+            const host = document.createElement('div');
+            host.id = 'item-987654';
+            const target = kind === 'post' ? document.createElement('div') : host;
+            if (kind === 'post') {
+                target.className = 'post';
+                host.appendChild(target);
+            }
+            const scroll = vi.fn();
+            target.scrollIntoView = scroll;
+            document.body.appendChild(host);
+            try {
+                if (kind === 'post') component['scrollToAndHighlightPost'](987654);
+                else component['scrollToAndHighlightReply'](987654);
+
+                expect(scroll).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'center' });
+                expect(target.classList.contains('highlight-' + kind)).toBe(true);
+                vi.advanceTimersByTime(2000);
+                expect(target.classList.contains('highlight-' + kind)).toBe(false);
+            } finally {
+                host.remove();
+            }
+        });
+
+        it.each(['post', 'reply'] as const)('should wait for a lazily rendered original %s and disconnect its observer', async (kind) => {
+            if (kind === 'post') component['scrollToAndHighlightPost'](987655);
+            else component['scrollToAndHighlightReply'](987655);
+            const observer = kind === 'post' ? component['highlightPostObserver']! : component['highlightReplyObserver']!;
+            const disconnect = vi.spyOn(observer, 'disconnect');
+            const host = document.createElement('div');
+            host.id = 'item-987655';
+            const target = kind === 'post' ? document.createElement('div') : host;
+            if (kind === 'post') {
+                target.className = 'post';
+                host.appendChild(target);
+            }
+            const scroll = vi.fn();
+            target.scrollIntoView = scroll;
+            document.body.appendChild(host);
+            try {
+                // Deliver the real DOM mutation observer microtask.
+                await Promise.resolve();
+                expect(scroll).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'center' });
+                expect(target.classList.contains('highlight-' + kind)).toBe(true);
+                expect(disconnect).toHaveBeenCalled();
+                vi.advanceTimersByTime(2000);
+                expect(target.classList.contains('highlight-' + kind)).toBe(false);
+            } finally {
+                host.remove();
+            }
+        });
+
+        it('should stop waiting for an unavailable original reply after five seconds', () => {
+            component['focusReplyId'] = 987656;
+            component['scrollToAndHighlightReply'](987656);
+            const disconnect = vi.spyOn(component['highlightReplyObserver']!, 'disconnect');
+
+            vi.advanceTimersByTime(5000);
+
+            expect(disconnect).toHaveBeenCalled();
+            expect(component['focusReplyId']).toBeUndefined();
         });
 
         it('should store the highlight observers and disconnect them in ngOnDestroy', () => {
@@ -332,6 +480,70 @@ examples.forEach((activeConversation) => {
                 component.openCreateChannelDialog();
 
                 expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsCreateDialogComponent, expect.anything());
+            });
+
+            for (const kind of ['group', 'direct'] as const) {
+                it.each(['complete', 'error', 'cancel'] as const)(`preserves sidebar read state when ${kind} chat creation ends with %s`, (outcome) => {
+                    fixture.detectChanges();
+                    const previousSidebar = component.sidebarData();
+                    const previousCards = component.sidebarConversations();
+                    const replacement = [{ id: 44, title: 'Study group', isCurrent: false, conversation: { id: 44, unreadMessagesCount: 2 }, size: 'S' as const }];
+                    vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockReturnValue(replacement);
+                    const create = kind === 'group' ? vi.mocked(courseConversationsService.createGroupChat) : vi.mocked(courseConversationsService.createOneToOneChat);
+                    create.mockReturnValue(outcome === 'error' ? throwError(() => new Error('conversation reload failed')) : EMPTY);
+                    const ref = new DynamicDialogRef();
+                    vi.spyOn(dialogService, 'open').mockReturnValue(ref);
+                    if (kind === 'group') component.openCreateGroupChatDialog();
+                    else component.openCreateOneToOneChatDialog();
+
+                    const partners = [
+                        { id: 41, login: 'student-a' },
+                        { id: 42, login: 'student-b' },
+                    ];
+                    ref.close(outcome === 'cancel' ? undefined : kind === 'group' ? partners : partners[0]);
+
+                    if (outcome === 'cancel') {
+                        expect(create).not.toHaveBeenCalled();
+                    } else {
+                        expect(create).toHaveBeenCalledExactlyOnceWith(kind === 'group' ? ['student-a', 'student-b'] : 'student-a');
+                    }
+                    if (outcome === 'complete') {
+                        expect(component.sidebarData()).not.toBe(previousSidebar);
+                        expect(component.sidebarConversations()).toEqual(replacement);
+                        expect(component.sidebarConversations()[0].conversation?.unreadMessagesCount).toBe(2);
+                    } else {
+                        expect(component.sidebarData()).toBe(previousSidebar);
+                        expect(component.sidebarConversations()).toBe(previousCards);
+                    }
+                });
+            }
+
+            it.each([
+                ['modified', true, false],
+                ['unmodified', false, false],
+                ['failed reload', true, true],
+            ] as const)('opens the overview selection only after a valid %s result and retains unread cards on failure', (_context, modified, failed) => {
+                fixture.detectChanges();
+                const previousSidebar = component.sidebarData();
+                const previousCards = component.sidebarConversations();
+                const selected = generateExampleChannelDTO({ id: 77, unreadMessagesCount: 2 } as ChannelDTO);
+                const ref = new DynamicDialogRef();
+                vi.spyOn(dialogService, 'open').mockReturnValue(ref);
+                vi.mocked(courseConversationsService.forceRefresh).mockReturnValue(failed ? throwError(() => new Error('reload failed')) : EMPTY);
+                setActiveConversationSpy.mockClear();
+                component.openChannelOverviewDialog();
+
+                ref.close([selected, modified]);
+
+                if (failed) {
+                    expect(setActiveConversationSpy).not.toHaveBeenCalled();
+                    expect(component.sidebarData()).toBe(previousSidebar);
+                    expect(component.sidebarConversations()).toBe(previousCards);
+                } else {
+                    expect(setActiveConversationSpy).toHaveBeenCalledExactlyOnceWith(selected);
+                    expect(component.sidebarData()).not.toBe(previousSidebar);
+                }
+                if (modified) expect(courseConversationsService.forceRefresh).toHaveBeenCalledWith(false, true);
             });
         });
 
@@ -396,6 +608,22 @@ examples.forEach((activeConversation) => {
             });
             fixture.changeDetectorRef.detectChanges();
             expect(component.courseWideSearchConfig.searchTerm).toBe('test');
+        });
+
+        it('should tell the service for as long as the conversation view is open', () => {
+            const setConversationViewOpen = vi.spyOn(courseConversationsService, 'setConversationViewOpen');
+
+            fixture.detectChanges();
+            expect(setConversationViewOpen).toHaveBeenCalledWith(true);
+
+            fixture.destroy();
+            expect(setConversationViewOpen).toHaveBeenLastCalledWith(false);
+        });
+
+        it('should show the newest messages of the course first when no search is active', () => {
+            fixture.detectChanges();
+            component.initializeCourseWideSearchConfig();
+            expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.DESCENDING);
         });
 
         it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
@@ -649,6 +877,48 @@ examples.forEach((activeConversation) => {
 
                 expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
                 expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id]);
+            });
+        });
+
+        describe('the unread count of a conversation changes while the sidebar is shown', () => {
+            let channel: ConversationDTO;
+            let conversationsOfUser$: BehaviorSubject<ConversationDTO[]>;
+
+            beforeEach(() => {
+                channel = { id: 301, type: ConversationType.CHANNEL, unreadMessagesCount: 0 } as ConversationDTO;
+                conversationsOfUser$ = new BehaviorSubject<ConversationDTO[]>([channel]);
+                Object.defineProperty(courseConversationsService, 'conversationsOfUser$', { get: () => conversationsOfUser$.asObservable() });
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
+                vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockImplementation((conversations) =>
+                    conversations.map((conversation) => ({ id: conversation.id!, title: 'channel', size: 'S', conversation })),
+                );
+                fixture.detectChanges();
+                component.prepareSidebarData();
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockClear();
+                vi.mocked(courseOverviewService.groupConversationsByChannelType).mockClear();
+            });
+
+            it('should rebuild the sidebar so that a message or reply that arrived is shown', () => {
+                // the service raises the count of the cached channel in place, so the sidebar cards, which read it from that
+                // object, would not notice it without being rebuilt
+                channel.unreadMessagesCount = 1;
+                conversationsOfUser$.next([channel]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('should rebuild the sidebar when the conversation was marked as unread without a count', () => {
+                channel.hasUnreadMessage = true;
+                conversationsOfUser$.next([channel]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+            });
+
+            it('should leave the sidebar alone when no unread count changed', () => {
+                conversationsOfUser$.next([channel]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
             });
         });
 

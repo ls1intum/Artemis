@@ -334,6 +334,33 @@ class DockerSandboxTest {
     }
 
     @Test
+    void interruptedCopyOutInvalidatesSessionAndKeepsInterruptStatus() {
+        ExecCreateCmd create = mock(ExecCreateCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        ExecCreateCmdResponse created = mock(ExecCreateCmdResponse.class);
+        ExecStartCmd start = mock(ExecStartCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        RemoveContainerCmd remove = mock(RemoveContainerCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        when(dockerClient.execCreateCmd("container-1")).thenReturn(create);
+        when(create.exec()).thenReturn(created);
+        when(created.getId()).thenReturn("copy-1");
+        when(dockerClient.execStartCmd("copy-1")).thenReturn(start);
+        doAnswer(invocation -> invocation.getArgument(0)).when(start).exec(any());
+        when(dockerClient.removeContainerCmd("container-1")).thenReturn(remove);
+        DockerSandboxService service = new DockerSandboxService(dockerClient, sandboxPolicy("worker-1", IMAGE_ID, "runc", 1024 * 1024 * 1024, 100_000, 128));
+        service.markActive("container-1");
+        Thread.currentThread().interrupt();
+        try {
+            assertThatExceptionOfType(SandboxUnavailableException.class).isThrownBy(() -> service.copyOut("container-1", "/workspace"))
+                    .withMessageContaining("Interrupted while copying files from sandbox session container-1");
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            assertThat(service.lastActivity("container-1")).isEmpty();
+            verify(remove).exec();
+        }
+        finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
     void oversizedCopyOutPreservesCompletedReadOnlySession() {
         ExecCreateCmd create = mock(ExecCreateCmd.class, org.mockito.Mockito.RETURNS_SELF);
         ExecCreateCmdResponse created = mock(ExecCreateCmdResponse.class);

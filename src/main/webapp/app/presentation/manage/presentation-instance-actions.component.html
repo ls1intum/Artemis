@@ -1,0 +1,26 @@
+<div class="flex justify-end gap-2">
+    <tumaet-ui-button
+        size="small"
+        variant="text"
+        [icon]="faPencilAlt"
+        [ariaLabel]="'entity.action.edit' | artemisTranslate"
+        (clicked)="editRequested.emit()"
+        data-testid="edit-instance-button"
+    />
+    @if (canDelete()) {
+        <tumaet-ui-button
+            size="small"
+            severity="danger"
+            variant="text"
+            [icon]="faTrash"
+            [ariaLabel]="'entity.action.delete' | artemisTranslate"
+            jhiDeleteButton
+            [renderButtonStyle]="false"
+            [renderButtonText]="false"
+            [actionType]="ActionType.Delete"
+            deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
+            (delete)="deleteRequested.emit()"
+            data-testid="delete-instance-button"
+        />
+    }
+</div>

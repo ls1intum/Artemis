@@ -244,6 +244,27 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
     long countAccessibleAnswerPosts(@Param("answerPostIds") Collection<Long> answerPostIds, @Param("userId") Long userId);
 
     /**
+     * Returns only IDs readable through the original conversation, without granting access through forwards.
+     *
+     * @param answerPostIds message IDs to check
+     * @param userId        requesting user ID
+     * @return IDs accessible through conversation membership or a course-wide channel
+     */
+    @Query("""
+            SELECT DISTINCT answerPost.id
+            FROM AnswerPost answerPost
+                LEFT JOIN answerPost.post post
+                LEFT JOIN post.conversation conv
+                LEFT JOIN conv.conversationParticipants cp
+            WHERE answerPost.id IN :answerPostIds
+                AND (
+                    (TYPE(conv) = Channel AND TREAT(conv AS Channel).isCourseWide = TRUE)
+                    OR (cp.user.id = :userId)
+                )
+            """)
+    Set<Long> findAccessibleAnswerPostIds(@Param("answerPostIds") Collection<Long> answerPostIds, @Param("userId") Long userId);
+
+    /**
      * Ensures that the given user has access to all specified {@link AnswerPost} IDs.
      * <p>
      * Access is granted under the same conditions as described in {@link #countAccessibleAnswerPosts(Collection, Long)}.

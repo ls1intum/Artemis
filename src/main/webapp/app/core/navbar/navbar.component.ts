@@ -574,8 +574,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 }
                 break;
             case 'submissions':
-                // only a scores list exists, no special one for submissions
-                const updatedLink = currentPath.replace('/submissions/', '/scores/');
+                // Link submission breadcrumbs to the exercise's participation page.
+                const updatedLink = currentPath.replace(/\/(?:participations\/\d+\/)?submissions\/$/, '/participations/');
                 this.addTranslationAsCrumb(updatedLink, 'submissions');
                 break;
             case 'tutorial-lectures':

@@ -72,6 +72,8 @@
 @source './app/course/manage/athena-settings-update';
 @source './app/course/manage/control-center/about-athena-modal';
 @source './app/editor/markdown-editor';
+@source './app/communication/message-editor';
+@source './app/communication/posting-markdown-editor';
 
 /* The whole exam mode, and the example solution that only its summary shows. */
 @source './app/exam';
@@ -113,6 +115,12 @@
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/quiz/manage/apollon-diagrams';
+@source './app/exercise/participation/programming-exercise-participation-actions';
+@source './app/quiz/manage/question-reevaluation-actions';
+@source './app/exercise/statistics/statistics-span-selector';
+@source './app/plagiarism/shared/case-header';
+@source './app/communication/saved-posting-banner';
+@source './app/quiz/manage/statistics/question-statistics-chart';
 
 /* AI exercise variant generation: the navbar progress tray and the wizard modal. */
 @source './app/core/navbar/variant-generation-tray';
