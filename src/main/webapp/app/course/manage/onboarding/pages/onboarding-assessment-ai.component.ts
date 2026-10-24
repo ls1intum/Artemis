@@ -8,12 +8,13 @@ import { faChartLine, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-onboarding-assessment-ai',
     templateUrl: './onboarding-assessment-ai.component.html',
     styleUrls: ['./_onboarding-pages.scss'],
-    imports: [FormsModule, TranslateDirective, FaIconComponent, DocumentationButtonComponent, NgClass, ArtemisTranslatePipe],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, DocumentationButtonComponent, NgClass, ArtemisTranslatePipe, PointsInputComponent],
 })
 export class OnboardingAssessmentAiComponent {
     readonly course = input.required<Course>();

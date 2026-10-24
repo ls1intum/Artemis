@@ -19,15 +19,13 @@
                 <div class="form-group">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
                     <span class="text-state-danger" aria-hidden="true">*</span>
-                    <input
-                        required
-                        type="number"
-                        class="form-control"
-                        min="1"
-                        max="9999"
-                        noScientificNotation
+                    <jhi-points-input
+                        [required]="true"
+                        fluid
+                        [min]="1"
+                        [max]="9999"
                         name="points"
-                        id="field_points"
+                        inputId="field_points"
                         [(ngModel)]="programmingExercise().maxPoints"
                         #maxScore="ngModel"
                     />
@@ -44,15 +42,13 @@
                     @if (programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
-                    <input
-                        type="number"
+                    <jhi-points-input
                         [required]="programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
-                        class="form-control"
-                        min="0"
-                        max="9999"
-                        noScientificNotation
+                        fluid
+                        [min]="0"
+                        [max]="9999"
                         name="bonusPoints"
-                        id="field_bonusPoints"
+                        inputId="field_bonusPoints"
                         [(ngModel)]="programmingExercise().bonusPoints"
                         #bonusPoints="ngModel"
                     />

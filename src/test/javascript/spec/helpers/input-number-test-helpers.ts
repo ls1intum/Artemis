@@ -1,24 +1,22 @@
-import { InputNumber } from 'primeng/inputnumber';
-
 /**
- * The decimal separator that the given PrimeNG number input accepts, which depends on the locale of the runtime.
+ * Replaces the content of a TUM AET UI number input with the given text by typing it character by character, as a
+ * user does, and by default leaves the field. The input reformats its text after every character, so the typed text
+ * is appended to what it shows. A character that the input does not allow is dropped by it.
+ *
+ * @param options.leave whether to leave the field afterwards, which applies the bounds of the input; pass `false` to
+ * check what happens while the field is still focused
  */
-export function decimalSeparatorOf(inputNumber: InputNumber): string {
-    return new Intl.NumberFormat(inputNumber.locale).formatToParts(1.1).find((part) => part.type === 'decimal')!.value;
-}
-
-/**
- * Replaces the content of a PrimeNG number input with the given text by typing it key by key, as a user does, and leaves the input.
- * PrimeNG validates every key press, so a character that the input does not allow is dropped.
- */
-export function typeIntoInputNumber(input: HTMLInputElement, text: string): void {
+export function typeIntoInputNumber(input: HTMLInputElement, text: string, options: { leave?: boolean } = {}): void {
     input.focus();
-    input.setSelectionRange(0, input.value.length);
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
     for (const character of text) {
-        const code = character.charCodeAt(0);
-        const key = { key: character, charCode: code, keyCode: code, which: code, bubbles: true, cancelable: true };
-        input.dispatchEvent(new KeyboardEvent('keydown', key));
-        input.dispatchEvent(new KeyboardEvent('keypress', key));
+        input.value += character;
+        input.setSelectionRange(input.value.length, input.value.length);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
     }
-    input.dispatchEvent(new Event('blur'));
+    if (options.leave ?? true) {
+        input.dispatchEvent(new Event('blur'));
+        input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    }
 }

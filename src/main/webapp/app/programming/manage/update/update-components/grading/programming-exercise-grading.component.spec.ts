@@ -395,6 +395,10 @@ describe('ProgrammingExerciseGradingComponent', () => {
             fixture.componentRef.setInput('isEditFieldDisplayedRecord', { ...editFieldRecord, points: true });
             fixture.detectChanges();
             await fixture.whenStable();
+            // The points input hands a written value to its inner input one microtask late.
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
             expect(valueOf('#field_points')).toBe('10');
             expect(comp.formValid).toBe(true);
             const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
@@ -420,6 +424,10 @@ describe('ProgrammingExerciseGradingComponent', () => {
             fixture.componentRef.setInput('isEditFieldDisplayedRecord', { ...editFieldRecord, bonusPoints: true });
             fixture.detectChanges();
             await fixture.whenStable();
+            // The points input hands a written value to its inner input one microtask late.
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
             expect(valueOf('#field_bonusPoints')).toBe('2');
             expect(comp.formValid).toBe(true);
             const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
@@ -430,6 +438,18 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
             await type(fixture.debugElement.nativeElement.querySelector('#field_bonusPoints'), '3');
             expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
+            expect(comp.formValid).toBe(true);
+        });
+
+        it('should take decimal points and bonus points typed with a comma or a point', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            await type(fixture.debugElement.nativeElement.querySelector('#field_points'), '2,5');
+            await type(fixture.debugElement.nativeElement.querySelector('#field_bonusPoints'), '0.75');
+
+            expect(comp.programmingExercise().maxPoints).toBe(2.5);
+            expect(comp.programmingExercise().bonusPoints).toBe(0.75);
             expect(comp.formValid).toBe(true);
         });
 
@@ -489,8 +509,9 @@ describe('ProgrammingExerciseGradingComponent', () => {
         fixture.detectChanges(false);
 
         const pointsInput = fixture.debugElement.nativeElement.querySelector('#field_points') as HTMLInputElement;
-        expect(pointsInput.required).toBe(true);
-        expect(pointsInput.min).toBe('1');
+        const pointsField = fixture.debugElement.query(By.css('jhi-points-input[name=points]'));
+        expect(pointsField.injector.get(NgModel).control.hasError('required')).toBe(true);
+        expect(pointsField.componentInstance.min()).toBe(1);
         const pointsFormGroup = pointsInput.closest('.form-group') as HTMLElement | null;
         expect(pointsFormGroup).not.toBeNull();
         expect(pointsFormGroup?.hidden).toBe(false);

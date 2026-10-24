@@ -2,20 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, model, out
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiDialogComponent,
-    TumAetUiInputDirective,
-    TumAetUiInputNumberComponent,
-    TumAetUiMessageComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 /**
  * Declarative group-edit dialog. The edited group comes in via {@link group} and is shown while {@link visible} is
@@ -28,7 +22,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         FormsModule,
         TumAetUiDialogComponent,
         TumAetUiInputDirective,
-        TumAetUiInputNumberComponent,
+        PointsInputComponent,
         TumAetUiButtonComponent,
         TumAetUiMessageComponent,
         TumAetUiTooltipDirective,
