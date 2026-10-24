@@ -3125,6 +3125,15 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().participantIdentifier()).contains("student1");
+
+            r1.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            resultRepository.save(r1);
+            var manualResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(manualResults).isEmpty();
+            var semiAutomaticSearch = buildParticipationSearch("", "SemiAutomatic", "id", SortingOrder.ASCENDING);
+            var semiAutomaticResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class,
+                    pageableSearchUtilService.searchMapping(semiAutomaticSearch));
+            assertThat(semiAutomaticResults).extracting(ParticipationManagementDTO::participationId).containsExactly(p1.getId());
         }
 
         @Test

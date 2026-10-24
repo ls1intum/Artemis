@@ -261,6 +261,7 @@
             "showBuildFailed": "Fehlgeschlagene Builds",
             "showUnsuccessful": "Nicht erfolgreiche",
             "showSuccessful": "Erfolgreiche",
+            "showSemiAutomatic": "Halbautomatisch",
             "showManual": "Manuelle",
             "showAutomatic": "Automatische",
             "showLocked": "Gesperrte Bewertungen",

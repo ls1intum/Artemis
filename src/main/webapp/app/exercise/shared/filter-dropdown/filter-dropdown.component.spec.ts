@@ -114,20 +114,23 @@ describe('Participation filter toolbar', () => {
         expect(Array.from(checkboxes, (checkbox) => checkbox.checked)).toEqual([false, false]);
     });
 
-    it('selects only one result category and can return to all results', async () => {
-        fixture.componentRef.setInput('groupedFilters', [{ labelKey: 'Results', items: ['Successful', 'Unsuccessful'], single: true }]);
-        fixture.componentRef.setInput('activeFilters', ['Manual']);
+    it('selects one assessment type from three choices and can return to all types', async () => {
+        fixture.componentRef.setInput('groupedFilters', [{ labelKey: 'Assessment', items: ['Manual', 'SemiAutomatic', 'Automatic'], single: true }]);
+        fixture.componentRef.setInput('activeFilters', ['Successful']);
         fixture.detectChanges();
         await fixture.whenStable();
         openGroup(0);
         toggleOption(1);
-        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Successful']);
+        expect(changed).toHaveBeenLastCalledWith(['Successful', 'Manual']);
         openGroup(0);
         toggleOption(2);
-        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Unsuccessful']);
+        expect(changed).toHaveBeenLastCalledWith(['Successful', 'SemiAutomatic']);
+        openGroup(0);
+        toggleOption(3);
+        expect(changed).toHaveBeenLastCalledWith(['Successful', 'Automatic']);
         openGroup(0);
         toggleOption(0);
-        expect(changed).toHaveBeenLastCalledWith(['Manual']);
+        expect(changed).toHaveBeenLastCalledWith(['Successful']);
     });
 
     it('places checkboxes after dropdowns regardless of category order', () => {

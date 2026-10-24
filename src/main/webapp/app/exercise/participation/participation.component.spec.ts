@@ -568,13 +568,24 @@ describe('ParticipationComponent', () => {
             expect(filters()).toContain(FilterProp.NO_PRACTICE);
         });
 
+        it('uses exclusive submission and assessment choices while retaining programming build combinations', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
+            component.newManualResultAllowed.set(true);
+            expect(component.filterGroups().filter((group) => group.items.includes(FilterProp.NO_SUBMISSIONS) || group.items.includes(FilterProp.MANUAL))).toHaveLength(2);
+            expect(component.filterGroups().every((group) => group.items.length === 1 || group.single)).toBe(true);
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
+            expect(filters()).toContain(FilterProp.SEMI_AUTOMATIC);
+            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.NO_SUBMISSIONS))?.single).toBe(false);
+            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.SEMI_AUTOMATIC))?.single).toBe(true);
+        });
+
         it.each([
             [FilterProp.SUCCESSFUL, { type: ExerciseType.PROGRAMMING } as Exercise, false, true],
             [FilterProp.UNSUCCESSFUL, { type: ExerciseType.TEXT }, true, true],
             [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: true }, false, true],
-            [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+            [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, true],
             [FilterProp.MANUAL, { type: ExerciseType.TEXT }, true, true],
-            [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, true],
             [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],

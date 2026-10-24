@@ -261,6 +261,7 @@
             "showBuildFailed": "Build Failed",
             "showUnsuccessful": "Unsuccessful",
             "showSuccessful": "Successful",
+            "showSemiAutomatic": "Semi-automatic",
             "showManual": "Manual",
             "showAutomatic": "Automatic",
             "showLocked": "Locked Assessments",

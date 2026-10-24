@@ -100,6 +100,7 @@ export enum FilterProp {
     UNSUCCESSFUL = 'Unsuccessful',
     BUILD_FAILED = 'BuildFailed',
     MANUAL = 'Manual',
+    SEMI_AUTOMATIC = 'SemiAutomatic',
     AUTOMATIC = 'Automatic',
     LOCKED = 'Locked',
 }
@@ -225,14 +226,23 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         const ex = this.exercise();
         if (!ex) return [];
         const isProgramming = ex.type === ExerciseType.PROGRAMMING;
-        const assessmentTypeFilterable = this.newManualResultAllowed() || !!ex.allowComplaintsForAutomaticAssessments;
+        const assessmentTypeFilterable = isProgramming || this.newManualResultAllowed() || !!ex.allowComplaintsForAutomaticAssessments;
         return [
             {
                 labelKey: 'artemisApp.participation.filterGroup.submissions',
+                single: !isProgramming,
                 items: [...(isProgramming ? [FilterProp.FAILED, FilterProp.BUILD_FAILED] : []), FilterProp.NO_SUBMISSIONS, FilterProp.VALID_SUBMISSIONS],
             },
             { labelKey: 'artemisApp.participation.filterGroup.results', items: [FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL], single: true },
-            ...(assessmentTypeFilterable ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentType', items: [FilterProp.MANUAL, FilterProp.AUTOMATIC] }] : []),
+            ...(assessmentTypeFilterable
+                ? [
+                      {
+                          labelKey: 'artemisApp.participation.filterGroup.assessmentType',
+                          items: [FilterProp.MANUAL, ...(isProgramming ? [FilterProp.SEMI_AUTOMATIC] : []), FilterProp.AUTOMATIC],
+                          single: true,
+                      },
+                  ]
+                : []),
             ...(isProgramming ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.NO_PRACTICE] }] : []),
             ...(this.newManualResultAllowed() && ex.isAtLeastInstructor ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentStatus', items: [FilterProp.LOCKED] }] : []),
         ];

@@ -12,11 +12,7 @@
         } @else if (group.single) {
             <tumaet-ui-select
                 [matchTriggerWidth]="false"
-                [options]="[
-                    { value: 'All', label: (group.labelKey | artemisTranslate) + ': ' + ('artemisApp.exercise.showAll' | artemisTranslate) },
-                    { value: group.items[0], label: 'artemisApp.exercise.show' + group.items[0] | artemisTranslate },
-                    { value: group.items[1], label: 'artemisApp.exercise.show' + group.items[1] | artemisTranslate },
-                ]"
+                [options]="singleOptions(group)"
                 optionLabel="label"
                 optionValue="value"
                 [ngModel]="group.selected.length === 1 ? group.selected[0] : 'All'"

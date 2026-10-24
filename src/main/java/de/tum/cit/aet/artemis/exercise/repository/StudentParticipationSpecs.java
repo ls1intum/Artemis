@@ -300,13 +300,13 @@ public class StudentParticipationSpecs {
     }
 
     /**
-     * Matches participations whose latest result has a manual or semi-automatic assessment type.
+     * Matches participations whose latest result has a manual assessment type.
      *
-     * @return specification matching participations with a manual or semi-automatic latest result
+     * @return specification matching participations with a manual latest result
      */
     @NonNull
     public static Specification<StudentParticipation> hasManualAssessment() {
-        return (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> r.get(Result_.ASSESSMENT_TYPE).in(AssessmentType.MANUAL, AssessmentType.SEMI_AUTOMATIC));
+        return (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> c.equal(r.get(Result_.ASSESSMENT_TYPE), AssessmentType.MANUAL));
     }
 
     /**
@@ -422,8 +422,8 @@ public class StudentParticipationSpecs {
             return noOp();
         }
         var selected = Arrays.asList(filterProp.split(","));
-        var groups = List.of(List.of("Failed", "BuildFailed", "NoSubmissions", "ValidSubmissions"), List.of("Successful", "Unsuccessful"), List.of("Manual", "Automatic"),
-                List.of("NoPracticeMode"), List.of("Locked"));
+        var groups = List.of(List.of("Failed", "BuildFailed", "NoSubmissions", "ValidSubmissions"), List.of("Successful", "Unsuccessful"),
+                List.of("Manual", "SemiAutomatic", "Automatic"), List.of("NoPracticeMode"), List.of("Locked"));
         return Specification.allOf(groups.stream()
                 .map(group -> Specification.anyOf(group.stream().filter(selected::contains).map(filter -> managementFilter(filter, stuckBuildCutoff)).toList())).toList());
     }
@@ -450,6 +450,8 @@ public class StudentParticipationSpecs {
             case "Unsuccessful" -> isUnsuccessful();
             case "BuildFailed" -> isBuildFailed();
             case "Manual" -> hasManualAssessment();
+            case "SemiAutomatic" ->
+                (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> c.equal(r.get(Result_.ASSESSMENT_TYPE), AssessmentType.SEMI_AUTOMATIC));
             case "Automatic" -> hasAutomaticAssessment();
             case "Locked" -> isLocked();
             default -> noOp();
