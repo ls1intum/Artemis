@@ -69,6 +69,8 @@
 @source './app/exercise/participation-submission';
 @source './app/exercise/import';
 @source './app/iris/manage/settings';
+@source './app/course/manage/athena-settings-update';
+@source './app/course/manage/control-center/about-athena-modal';
 @source './app/editor/markdown-editor';
 @source './app/communication/message-editor';
 @source './app/communication/posting-markdown-editor';
