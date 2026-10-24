@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 
 /**
@@ -31,6 +33,9 @@ class ConversationParticipantCreationTest extends AbstractConversationTest {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private ConversationService conversationService;
 
     private Channel channel;
 
@@ -113,6 +118,32 @@ class ConversationParticipantCreationTest extends AbstractConversationTest {
                 assertThat(created).as("requests that created the participant in round %d", round).isEqualTo(1);
                 assertThat(getParticipants(otherChannel.getId())).hasSize(1);
             }
+        }
+        finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void severalMembershipChecksAtTheSameTimeCreateExactlyOneParticipantWithoutAnError() throws Exception {
+        int requests = 8;
+        var executor = Executors.newFixedThreadPool(requests);
+        try {
+            var start = new CountDownLatch(1);
+            List<Future<?>> results = new ArrayList<>();
+            for (int request = 0; request < requests; request++) {
+                results.add(executor.submit(() -> {
+                    start.await();
+                    return conversationService.isMemberOrCreateForCourseWideElseThrow(channel.getId(), student, Optional.empty());
+                }));
+            }
+            start.countDown();
+
+            for (var result : results) {
+                // get() rethrows an error of the request, which this test must not see
+                result.get(30, TimeUnit.SECONDS);
+            }
+            assertThat(getParticipants(channel.getId())).hasSize(1);
         }
         finally {
             executor.shutdownNow();

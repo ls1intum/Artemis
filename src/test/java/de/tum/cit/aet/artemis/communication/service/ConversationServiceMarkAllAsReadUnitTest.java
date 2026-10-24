@@ -1,13 +1,9 @@
 package de.tum.cit.aet.artemis.communication.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -20,7 +16,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -96,25 +91,5 @@ class ConversationServiceMarkAllAsReadUnitTest {
         ArgumentCaptor<ZonedDateTime> markedAsReadAt = ArgumentCaptor.forClass(ZonedDateTime.class);
         verify(conversationParticipantRepository).updateMultipleLastRead(eq(user.getId()), eq(List.of(openedConcurrently.getId())), markedAsReadAt.capture());
         assertThat(createdAsReadAt.getAllValues()).as("every participant is read at the same time, the one created concurrently as well").containsOnly(markedAsReadAt.getValue());
-    }
-
-    @Test
-    void createIfAbsent_whenAConcurrentRequestInsertedFirst_countsItAsExisting() {
-        var repository = mock(ConversationParticipantTestRepository.class, CALLS_REAL_METHODS);
-        var lastRead = ZonedDateTime.now();
-        doThrow(new DataIntegrityViolationException("conversation_participant_uq")).when(repository).insertIfAbsent(10L, 42L, false, lastRead, 0L);
-        doReturn(true).when(repository).existsByConversationIdAndUserId(10L, 42L);
-
-        assertThat(repository.createIfAbsent(10L, 42L, false, lastRead, 0L)).isFalse();
-    }
-
-    @Test
-    void createIfAbsent_whenTheInsertFailsForAnotherReason_rethrowsTheError() {
-        var repository = mock(ConversationParticipantTestRepository.class, CALLS_REAL_METHODS);
-        var lastRead = ZonedDateTime.now();
-        doThrow(new DataIntegrityViolationException("foreign key violation")).when(repository).insertIfAbsent(12L, 42L, false, lastRead, 0L);
-        doReturn(false).when(repository).existsByConversationIdAndUserId(12L, 42L);
-
-        assertThatExceptionOfType(DataIntegrityViolationException.class).isThrownBy(() -> repository.createIfAbsent(12L, 42L, false, lastRead, 0L));
     }
 }
