@@ -213,18 +213,19 @@ public class SubmissionService {
         List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
-            // No manual result means that no tutor has started an assessment for the corresponding submission yet.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
                     correctionRound);
         }
         else {
             // Get all participations of submissions that are submitted and do not already have a manual result.
-            // No manual result means that no user has started an assessment for the corresponding submission yet.
             // Does not fetch participations for which the due date has not yet passed.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(exercise.getId(),
                     ZonedDateTime.now());
         }
 
+        if (participations.isEmpty()) {
+            return List.of();
+        }
         var user = userRepository.getUserWithAuthorities();
         var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).flatMap(Optional::stream)
                 .filter(submission -> assessmentEligibilityService.canStartAssessment(submission, exercise, correctionRound, user)).toList();
