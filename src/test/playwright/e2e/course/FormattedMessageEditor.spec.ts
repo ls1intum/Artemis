@@ -1777,6 +1777,9 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
                 await expectWithinViewport(host.getByTestId(id), ['left', 'right'], { name: id });
             }
             // The bar floats above the toolbar, so opening it neither moves the editor nor adds a line to the toolbar.
+            // The buttons of the bar wrap one by one, not group by group, so it needs at most two rows at these widths.
+            const barRows = new Set(await advanced.getByRole('button').evaluateAll((buttons) => buttons.map((button) => Math.round(button.getBoundingClientRect().top))));
+            expect(barRows.size, `rows of the bar at ${viewport.width}px`).toBeLessThanOrEqual(2);
             const bar = (await advanced.boundingBox())!;
             expect(bar.y + bar.height, `the bar ends above the toolbar at ${viewport.width}px`).toBeLessThanOrEqual(toolbarTop + 1);
             expect((await composer.editor.boundingBox())!.y).toBe(editorTop);

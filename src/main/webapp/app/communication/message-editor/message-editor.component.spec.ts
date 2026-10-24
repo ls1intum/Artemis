@@ -395,6 +395,23 @@ describe('Formatted message composer', () => {
             expect(hint()).toBe('artemisApp.communication.formattedEditor.hint');
         });
 
+        it('lets the buttons of the bar wrap one by one and shows its dividers only on a wide line', () => {
+            const bar = element('message-advanced-toolbar');
+            const dividers = () => bar.querySelectorAll('.message-editor-bar-separator').length;
+
+            // Every group is display: contents, so a narrow bar needs as few rows as its buttons take, not one row per group.
+            measure(7 * 32);
+            const groups = Array.from(bar.querySelectorAll('[role="group"], .message-editor-advanced-controls, .message-resource-controls'));
+            expect(groups.length).toBe(3);
+            groups.forEach((group) => expect(group.classList.contains('contents')).toBe(true));
+            // A narrow bar wraps, and a divider could end a row.
+            expect(dividers()).toBe(0);
+
+            // A wide line has no overflow, and one divider separates the blocks from the resource buttons.
+            measure(1000);
+            expect(dividers()).toBe(1);
+        });
+
         it('opens the bar above the toolbar, and below it when the ancestors would clip it there', () => {
             const bar = element('message-advanced-toolbar');
             // Plenty of room above the toolbar.

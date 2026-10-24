@@ -51,16 +51,21 @@
                 [attr.aria-label]="toolbarExpanded() ? ('artemisApp.communication.formattedEditor.moreOptions' | artemisTranslate) : null"
                 data-testid="message-advanced-toolbar"
             >
-                <!-- The dividers only show where the bar fits one row; in a narrower bar the groups wrap and a divider could end a row. -->
+                <!--
+                    The groups of buttons are display: contents, so that the buttons of all groups wrap one by one and a narrow bar needs as few rows as its buttons take.
+                    The dividers only show where the bar fits one row; in a narrower bar a divider could end a row.
+                -->
                 @if (overflowItems().length) {
-                    <div class="flex flex-wrap items-center gap-1" role="group" data-testid="message-overflow-controls">
+                    <div class="contents" role="group" data-testid="message-overflow-controls">
                         @for (item of overflowItems(); track item.id) {
                             <ng-container [ngTemplateOutlet]="toolbarButton" [ngTemplateOutletContext]="{ $implicit: item }" />
                         }
                     </div>
-                    <span class="message-editor-bar-separator hidden @md:block" aria-hidden="true"></span>
+                    @if (wideHint()) {
+                        <span class="message-editor-bar-separator" aria-hidden="true"></span>
+                    }
                 }
-                <div class="message-editor-advanced-controls flex flex-wrap items-center gap-1">
+                <div class="message-editor-advanced-controls contents">
                     @for (block of blocks; track block.tag) {
                         <button
                             type="button"
@@ -80,7 +85,9 @@
                         </button>
                     }
                 </div>
-                <span class="message-editor-bar-separator hidden @md:block" aria-hidden="true"></span>
+                @if (wideHint()) {
+                    <span class="message-editor-bar-separator" aria-hidden="true"></span>
+                }
                 <ng-container [ngTemplateOutlet]="tools()?.resourceControls() ?? null" />
             </div>
         </div>
