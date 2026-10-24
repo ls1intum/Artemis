@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.SessionOutdatedException;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
@@ -29,7 +30,9 @@ import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
  * This service closes that gap where it matters, at the moment a credential is created. Every operation that creates one
  * calls {@link #requireCurrentSession()} first, which compares the time the session was established, the {@code iat} of the
  * token, to the time the credentials last changed. The check costs two lookups, and only on those rare operations: nothing
- * is added to ordinary requests, which is why it can live here and not in the request filter.
+ * is added to ordinary requests, which is why it can live here and not in the request filter. One more place applies it,
+ * because the client reads the account on every load of the app: the personal access token is left out for an outdated
+ * session. That read already has the account at hand, so it costs one lookup, and only for an account that has such a token.
  * <p>
  * It deliberately leaves everything else alone. A stale token can still read what the account may read until it expires.
  * Ending that earlier would need a lookup, or a cache of revocations, on every authenticated request.
@@ -80,6 +83,28 @@ public class SessionFreshnessService {
             return true;
         }
         return passkeyTokenRenewalService.mayExtendSessionForAccount(authentication.getName(), sessionStartedAt.get());
+    }
+
+    /**
+     * The same decision for a caller that has loaded the account of the request already, which saves looking it up by login.
+     * <p>
+     * An account that is not the one the session belongs to is not used: the decision is then made from the account that the
+     * authentication names, as in {@link #isCurrentSession(Authentication)}, so that passing the wrong account can never make a
+     * session look current.
+     *
+     * @param authentication the authentication of the request, may be {@code null}
+     * @param account        the account the request is made for, as it is now
+     * @return {@code true} if the session may create credentials, or if the authentication carries no session start to check
+     */
+    public boolean isCurrentSession(Authentication authentication, User account) {
+        Optional<Instant> sessionStartedAt = sessionStartedAt(authentication);
+        if (sessionStartedAt.isEmpty()) {
+            return true;
+        }
+        if (!authentication.getName().equals(account.getLogin())) {
+            return passkeyTokenRenewalService.mayExtendSessionForAccount(authentication.getName(), sessionStartedAt.get());
+        }
+        return passkeyTokenRenewalService.mayExtendSessionOf(account, sessionStartedAt.get());
     }
 
     /**

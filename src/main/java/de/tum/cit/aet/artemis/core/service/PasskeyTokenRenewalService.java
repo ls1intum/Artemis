@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
@@ -76,14 +77,28 @@ public class PasskeyTokenRenewalService {
             log.info("Not extending a session: its account no longer exists");
             return false;
         }
-        if (!user.get().getActivated() || user.get().isDeleted()) {
+        return mayExtendSessionOf(user.get(), issuedAt);
+    }
+
+    /**
+     * The same decision for a caller that has the account of the session at hand already, which saves looking it up by login.
+     * <p>
+     * The caller has to pass the account the session belongs to. {@link SessionFreshnessService} checks that before it calls this.
+     *
+     * @param user     the account the session belongs to, as it is now
+     * @param issuedAt when the session was originally established
+     * @return {@code true} if the session may be extended
+     */
+    public boolean mayExtendSessionOf(User user, Instant issuedAt) {
+        String login = user.getLogin();
+        if (!user.getActivated() || user.isDeleted()) {
             log.info("Not extending a session of user {}: the account is deactivated or deleted", login);
             return false;
         }
 
         // Read from user_activity rather than from the user row: this is the only caller that needs it, and as a column it
         // was loaded with every user everywhere else.
-        var credentialsChangedDate = userActivityService.findCredentialsChangedDate(user.get().getId());
+        var credentialsChangedDate = userActivityService.findCredentialsChangedDate(user.getId());
         if (credentialsChangedDate != null && issuedAt.truncatedTo(ChronoUnit.SECONDS).isBefore(credentialsChangedDate.truncatedTo(ChronoUnit.SECONDS))) {
             log.info("Not extending a session of user {}: it was established before the credentials last changed", login);
             return false;

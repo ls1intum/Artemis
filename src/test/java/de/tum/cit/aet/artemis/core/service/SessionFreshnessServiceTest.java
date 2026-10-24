@@ -3,6 +3,10 @@ package de.tum.cit.aet.artemis.core.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.SessionOutdatedException;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
@@ -100,6 +105,49 @@ class SessionFreshnessServiceTest {
     @Test
     void aRequestWithoutAnAuthenticationIsNotChecked() {
         assertThat(service().isCurrentSession(null)).isTrue();
+        verifyNoInteractions(passkeyTokenRenewalService);
+    }
+
+    private static User account(String login) {
+        User user = new User();
+        user.setLogin(login);
+        return user;
+    }
+
+    /**
+     * The read of the account has loaded the account already, so deciding must not look it up by login a second time. That lookup is paid on every load of the app by
+     * everyone who has a personal access token.
+     */
+    @Test
+    void anAccountThatIsAlreadyLoadedIsUsedInsteadOfBeingLookedUpAgain() {
+        Instant startedAt = Instant.parse("2026-10-13T10:00:00Z");
+        User account = account(LOGIN);
+        when(passkeyTokenRenewalService.mayExtendSessionOf(account, startedAt)).thenReturn(true, false);
+        Authentication authentication = authenticationWithSessionStartedAt(startedAt);
+
+        assertThat(service().isCurrentSession(authentication, account)).isTrue();
+        assertThat(service().isCurrentSession(authentication, account)).isFalse();
+        verify(passkeyTokenRenewalService, never()).mayExtendSessionForAccount(anyString(), any(Instant.class));
+    }
+
+    /**
+     * Passing another account must never make a session look current: the decision is then made for the account that the session names.
+     */
+    @Test
+    void anAccountThatIsNotTheOneOfTheSessionIsNotTrusted() {
+        Instant startedAt = Instant.parse("2026-10-13T10:00:00Z");
+        when(passkeyTokenRenewalService.mayExtendSessionForAccount(LOGIN, startedAt)).thenReturn(false);
+
+        assertThat(service().isCurrentSession(authenticationWithSessionStartedAt(startedAt), account("someone-else"))).isFalse();
+        verify(passkeyTokenRenewalService, never()).mayExtendSessionOf(any(User.class), any(Instant.class));
+    }
+
+    @Test
+    void aSessionWithoutAStartIsNotCheckedAgainstTheLoadedAccount() {
+        Authentication withoutSessionStart = new UsernamePasswordAuthenticationToken(LOGIN, "token", List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+        assertThat(service().isCurrentSession(withoutSessionStart, account(LOGIN))).isTrue();
+        assertThat(service().isCurrentSession(null, account(LOGIN))).isTrue();
         verifyNoInteractions(passkeyTokenRenewalService);
     }
 }
