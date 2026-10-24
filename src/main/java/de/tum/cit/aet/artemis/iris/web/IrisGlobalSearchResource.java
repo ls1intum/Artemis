@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.web;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import jakarta.validation.Valid;
@@ -124,7 +125,7 @@ public class IrisGlobalSearchResource {
      *
      * @param courseIds        the courses to search, or {@code null} to leave an unrestricted caller unscoped
      * @param excludeCourseIds the courses Pyris has to hide itself, or {@code null} when Artemis already removed them from {@link #courseIds}
-     * @param searchesNothing  whether the caller's own exclusions left no course to search, which is answered without asking Pyris
+     * @param searchesNothing  whether the caller's exclusions, the access check or a missing course left no course to search, which is answered without asking Pyris
      */
     private record LectureSearchScope(@Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds, boolean searchesNothing) {
 
@@ -140,6 +141,10 @@ public class IrisGlobalSearchResource {
     /**
      * Narrows a search to the courses the caller asked for, minus the ones it asked to hide, and, for the Iris answer, to the courses whose Iris
      * course settings are enabled.
+     * <p>
+     * The courses the caller asked for are validated against the courses the caller can access: an id the caller has no access to is dropped, so
+     * the list sent to Pyris is always a subset of the access context and never relies on Pyris to narrow it. Only an unrestricted caller is
+     * not limited this way.
      * <p>
      * The Iris answer is an interactive Iris feature, like the chat it can be continued in, so it must not draw on a course whose instructor
      * switched Iris off. An unscoped request cannot be forwarded untouched for it: Pyris falls back to the access context when it receives no
@@ -168,20 +173,22 @@ public class IrisGlobalSearchResource {
         }
         // An unscoped request is narrowed from every course the caller can access, a scoped one from what it asked for.
         var candidateCourseIds = isUnscoped ? accessContext.courseIds() : requestedCourseIds;
-        // Every other caller travels with a ceiling, so a hidden course is subtracted here and never named to Pyris.
-        var scopedCourseIds = candidateCourseIds.stream().filter(courseId -> !excludedCourseIds.contains(courseId)).toList();
-        if (scopedCourseIds.isEmpty() && !candidateCourseIds.isEmpty()) {
-            // The exclusions removed every course in scope. An empty list is dropped on the wire and read as unscoped, so
-            // answering here is what keeps "hide all of them" from searching all of them.
+        // Every other caller travels with a ceiling, so a hidden course is subtracted here and never named to Pyris. A course the caller cannot
+        // access is dropped the same way, which only changes a scoped request: an unscoped one already starts from the accessible courses. An
+        // unrestricted caller lists no courses in its context, but is not limited to any, so it keeps every course it asked for.
+        var accessibleCourseIds = Set.copyOf(accessContext.courseIds());
+        var scopedCourseIds = candidateCourseIds.stream().filter(courseId -> !excludedCourseIds.contains(courseId))
+                .filter(courseId -> accessContext.unrestricted() || accessibleCourseIds.contains(courseId)).toList();
+        if (scopedCourseIds.isEmpty()) {
+            // The exclusions or the access check removed every course in scope, or the caller has no course at all. An empty list is dropped on
+            // the wire and read as unscoped, so answering here is what keeps "hide all of them" from searching all of them.
             return LectureSearchScope.nothing();
         }
         if (!onlyIrisEnabled) {
-            // A caller without any course has nothing to narrow; its access context is empty too, so Pyris searches nothing.
             return LectureSearchScope.of(scopedCourseIds, null);
         }
         var enabledCourseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(scopedCourseIds);
-        // A caller without any course has nothing to narrow; its access context is empty too, so Pyris searches nothing.
-        if (enabledCourseIds.isEmpty() && !scopedCourseIds.isEmpty()) {
+        if (enabledCourseIds.isEmpty()) {
             // suppress the error alert with skipAlert: true so that the client can fall back to its standard metadata search
             throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Iris is disabled for every course in the search scope", ENTITY_NAME, "iris.course_disabled",
                     true);
@@ -219,7 +226,7 @@ public class IrisGlobalSearchResource {
         // none of it may leave an orphaned token behind either. A genuine Weaviate hiccup is still
         // swallowed below rather than failing the whole answer, since the lecture-content-only
         // answer could still succeed.
-        // searchesNothing (every requested course excluded) still answers rather than short-circuiting
+        // searchesNothing (every requested course excluded or inaccessible) still answers rather than short-circuiting
         // like /lecture-search does, but "search nothing" means nothing: entity candidates are skipped
         // entirely rather than falling back to an unscoped candidate search (an empty, non-null
         // courseIds list is read as "unscoped" by the access filter, not "scoped to nothing").
