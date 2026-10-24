@@ -45,11 +45,14 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
@@ -71,6 +74,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Autowired
     private ResultTestRepository resultRepository;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -1084,6 +1090,51 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(storedSubmission).isNull();
         // The dashboard reads "no submission left to assess" from a genuinely empty 200 body, not from an empty object.
         assertThat(request.get(url, HttpStatus.OK, String.class)).isNullOrEmpty();
+    }
+
+    /**
+     * Only the team tutor may assess a team submission, so the next submission handed out in a team exercise must
+     * come from one of the teams the requesting tutor owns.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingSubmissionWithoutAssessmentInTeamModeOnlyReturnsOwnTeams() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
+        Team otherTeam = teamUtilService.createTeam(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student3")), userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"),
+                exercise, "otherteam");
+        addSubmissionForTeam(otherTeam);
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
+
+        assertThat(request.get(url, HttpStatus.OK, ProgrammingSubmission.class)).as("the team of another tutor is not handed out").isNull();
+
+        Team ownTeam = teamUtilService.createTeam(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student4")), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
+                exercise, "ownteam");
+        var ownSubmission = addSubmissionForTeam(ownTeam);
+
+        assertThat(request.get(url, HttpStatus.OK, ProgrammingSubmission.class).getId()).as("the own team is handed out").isEqualTo(ownSubmission.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void instructorsCanSelectSubmissionsFromOtherTutorsTeams() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
+        Team team = teamUtilService.createTeam(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student3")), userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"), exercise,
+                "othertutor");
+        addSubmissionForTeam(team);
+        var response = request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK, ProgrammingSubmission.class);
+        assertThat(response).as("instructors may select teams they do not own").isNotNull();
+    }
+
+    private ProgrammingSubmission addSubmissionForTeam(Team team) {
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team));
+        return submissionRepository.saveAndFlush(submission);
     }
 
     private void createTenLockedSubmissionsForExercise(String assessor) {

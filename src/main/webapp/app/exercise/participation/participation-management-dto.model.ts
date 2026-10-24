@@ -16,6 +16,8 @@ export interface CorrectionRoundResultDTO {
     assessmentType?: AssessmentType;
     completionDate?: dayjs.Dayjs;
     hasComplaint?: boolean;
+    ownedByCurrentUser?: boolean;
+    score?: number;
 }
 
 export interface ParticipationManagementDTO {
@@ -37,6 +39,7 @@ export interface ParticipationManagementDTO {
     buildFailed?: boolean;
     lastResultIsManual?: boolean;
     submissionId?: number;
+    submissionDate?: dayjs.Dayjs;
     // The fields below describe the newest result of the latest submission
     resultId?: number;
     score?: number;
@@ -49,4 +52,5 @@ export interface ParticipationManagementDTO {
     passedTestCaseCount?: number;
     codeIssueCount?: number;
     correctionRoundResults?: CorrectionRoundResultDTO[];
+    assessableCorrectionRounds?: number[];
 }

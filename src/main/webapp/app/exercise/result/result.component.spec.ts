@@ -1,3 +1,5 @@
+import { scoreDtoToParticipation, scoreDtoToResult } from 'app/exercise/exercise-scores/participation-score.util';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -137,6 +139,35 @@ describe('ResultComponent', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         (global as any).URL.revokeObjectURL = vi.fn();
+    });
+
+    it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD])('renders on-time queue submissions as waiting for grading (%s)', (type) => {
+        const exercise = {
+            ...mockExercise,
+            type,
+            assessmentType: AssessmentType.MANUAL,
+            dueDate: dayjs().subtract(2, 'hours'),
+            assessmentDueDate: dayjs().add(1, 'day'),
+        };
+        const dto: ParticipationManagementDTO = {
+            participationId: 1,
+            submissionCount: 1,
+            testRun: false,
+            submissionId: 2,
+            submissionDate: dayjs().subtract(1, 'hour'),
+            individualDueDate: dayjs().add(1, 'hour'),
+            resultId: 3,
+            score: 80,
+            assessmentType: AssessmentType.MANUAL,
+            completionDate: dayjs(),
+        };
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', scoreDtoToParticipation(dto, exercise));
+        fixture.componentRef.setInput('result', scoreDtoToResult(dto));
+        fixture.detectChanges();
+
+        expect(comp.templateStatus()).toBe(ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING);
+        expect(fixture.nativeElement.querySelector('#test-submitted-waiting-grading')).not.toBeNull();
     });
 
     it.each([false, true])('only exposes result details when actionable (missing: %s)', (missing) => {

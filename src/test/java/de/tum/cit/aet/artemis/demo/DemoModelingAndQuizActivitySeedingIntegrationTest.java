@@ -137,8 +137,10 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
                 }));
 
         // What a tutor gets when they start the next assessment on the assessment dashboard of the exercise.
-        assertThat(modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(false, 0, exercise, false)).as("the submissions are in the assessment queue")
-                .isPresent();
+        SecurityUtils.runAs(userTestRepository.findOneWithAuthoritiesByLogin(UserDemoService.DEMO_TUTOR_LOGIN).orElseThrow(), () -> {
+            assertThat(modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(false, 0, exercise, false)).as("the submissions are in the assessment queue")
+                    .isPresent();
+        });
     }
 
     @Test

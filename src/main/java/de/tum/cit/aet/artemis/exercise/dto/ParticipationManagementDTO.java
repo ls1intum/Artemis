@@ -16,8 +16,9 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 public record ParticipationManagementDTO(long participationId, InitializationState initializationState, ZonedDateTime initializationDate, int submissionCount,
         String participantName, String participantIdentifier, Long studentId, String studentLogin, Long teamId, List<UserNameAndLoginDTO> teamStudents, boolean testRun,
         Double presentationScore, ZonedDateTime individualDueDate, String buildPlanId, String repositoryUri, Boolean buildFailed, Boolean lastResultIsManual, Long submissionId,
-        Long resultId, Double score, Boolean successful, ZonedDateTime completionDate, AssessmentType assessmentType, String assessmentNote, Long durationInSeconds,
-        Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount, List<CorrectionRoundResultDTO> correctionRoundResults) {
+        ZonedDateTime submissionDate, Long resultId, Double score, Boolean successful, ZonedDateTime completionDate, AssessmentType assessmentType, String assessmentNote,
+        Long durationInSeconds, Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount, List<CorrectionRoundResultDTO> correctionRoundResults,
+        List<Integer> assessableCorrectionRounds) {
 
     /**
      * Removes participant information, including repository identifiers that contain the student login or team name.
@@ -26,8 +27,8 @@ public record ParticipationManagementDTO(long participationId, InitializationSta
      */
     public ParticipationManagementDTO withoutParticipantInformation() {
         return new ParticipationManagementDTO(participationId, initializationState, initializationDate, submissionCount, null, null, null, null, null, null, testRun,
-                presentationScore, individualDueDate, null, null, buildFailed, lastResultIsManual, submissionId, resultId, score, successful, completionDate, assessmentType,
-                assessmentNote, durationInSeconds, testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults);
+                presentationScore, individualDueDate, null, null, buildFailed, lastResultIsManual, submissionId, submissionDate, resultId, score, successful, completionDate,
+                assessmentType, assessmentNote, durationInSeconds, testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults, assessableCorrectionRounds);
     }
 
 }

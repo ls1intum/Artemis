@@ -105,6 +105,18 @@ export class ParticipationService {
     }
 
     searchParticipations(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
+        return this.searchParticipationResults(exerciseId, search, 'participations/page');
+    }
+
+    searchAssessmentQueue(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
+        return this.searchParticipationResults(exerciseId, search, 'assessment-queue');
+    }
+
+    private searchParticipationResults(
+        exerciseId: number,
+        search: ParticipationSearch,
+        resource: 'participations/page' | 'assessment-queue',
+    ): Observable<PageableResult<ParticipationManagementDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,
             pageSize: search.pageSize,
@@ -112,6 +124,9 @@ export class ParticipationService {
             sortedColumn: search.sortedColumn,
             searchTerm: search.searchTerm,
         };
+        if (resource === 'assessment-queue' && search.ownTeams) {
+            params['ownTeams'] = 'true';
+        }
         if (search.filterProp) {
             params['filterProp'] = search.filterProp;
         }
@@ -122,7 +137,7 @@ export class ParticipationService {
             params['scoreRangeUpper'] = search.scoreRangeUpper;
         }
         return this.http
-            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page`, {
+            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/${resource}`, {
                 params,
                 observe: 'response',
             })
@@ -133,6 +148,7 @@ export class ParticipationService {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
                         dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
                         dto.completionDate = convertDateFromServer(dto.completionDate);
+                        dto.submissionDate = convertDateFromServer(dto.submissionDate);
                         dto.correctionRoundResults?.forEach((result) => {
                             result.completionDate = convertDateFromServer(result.completionDate);
                         });
