@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.notification.dto;
 
 import java.time.ZonedDateTime;
 
+import jakarta.validation.constraints.Size;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -16,7 +18,7 @@ import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotificatio
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SystemNotificationUpdateDTO(@Nullable Long id, @Nullable String title, @Nullable String text, @Nullable ZonedDateTime notificationDate,
+public record SystemNotificationUpdateDTO(@Nullable Long id, @Nullable String title, @Size(max = 2000) @Nullable String text, @Nullable ZonedDateTime notificationDate,
         @Nullable ZonedDateTime expireDate, @Nullable SystemNotificationType type) {
 
     /**
