@@ -179,6 +179,36 @@ describe('Formatted message composer', () => {
         fixture.nativeElement.removeEventListener('keydown', bubbled);
     });
 
+    it('removes the list format with Backspace at the start of the first item of the first line only', () => {
+        fixture.componentRef.setInput('content', '- first\n- second');
+        fixture.detectChanges();
+        const caretIn = (item: Element, offset: number) => {
+            const range = document.createRange();
+            range.setStart(item.firstChild!, offset);
+            range.collapse(true);
+            window.getSelection()!.removeAllRanges();
+            window.getSelection()!.addRange(range);
+        };
+        const backspace = () => {
+            const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true });
+            editable.dispatchEvent(event);
+            return event;
+        };
+
+        caretIn(editable.querySelector('li')!, 2);
+        expect(backspace().defaultPrevented).toBe(false);
+        expect(editable.querySelectorAll('li')).toHaveLength(2);
+
+        caretIn(editable.querySelectorAll('li')[1], 0);
+        expect(backspace().defaultPrevented).toBe(false);
+        expect(editable.querySelectorAll('li')).toHaveLength(2);
+
+        caretIn(editable.querySelector('li')!, 0);
+        expect(backspace().defaultPrevented).toBe(true);
+        expect(editable.querySelector(':scope > p')?.textContent).toBe('first');
+        expect(Array.from(editable.querySelectorAll('li'), (item) => item.textContent)).toEqual(['second']);
+    });
+
     it.each(['-', '*', '+', '1.', '1)'])('turns a typed leading %s and space into a list before sending', (marker) => {
         fixture.componentRef.setInput('content', marker.replace(/[-*+.)]/g, '\\$&'));
         fixture.detectChanges();
