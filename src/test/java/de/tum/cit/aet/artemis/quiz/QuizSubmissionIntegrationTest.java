@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -506,6 +507,35 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         Map<Double, Integer> recalculatedUnratedByPoints = recalculated.getQuizPointStatistic().getPointCounters().stream()
                 .collect(Collectors.toMap(PointCounter::getPoints, PointCounter::getUnRatedCounter));
         assertThat(incrementalUnratedByPoints).isEqualTo(recalculatedUnratedByPoints);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testQuizSubmitPracticeWithUninitializedGradedParticipation() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8),
+                QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(2);
+        quizExerciseService.save(quizExercise);
+
+        // Opening the exercise can create a graded participation before the student starts practicing.
+        StudentParticipation gradedParticipation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, TEST_PREFIX + "student1");
+        gradedParticipation.setInitializationState(InitializationState.UNINITIALIZED);
+        participationRepository.saveAndFlush(gradedParticipation);
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            QuizSubmission submission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, attempt + 1, true, null);
+            request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", QuizSubmissionFromStudentDTO.of(submission), Result.class,
+                    HttpStatus.OK);
+        }
+
+        var participations = participationRepository.findByExerciseId(quizExercise.getId());
+        assertThat(participations).hasSize(2);
+        assertThat(participations).filteredOn(participation -> participation.isPracticeMode()).singleElement().satisfies(practiceParticipation -> {
+            assertThat(practiceParticipation.getAttempt()).isEqualTo(1);
+            assertThat(practiceParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        });
+        assertThat(participationRepository.findById(gradedParticipation.getId()).orElseThrow().getInitializationState()).isEqualTo(InitializationState.UNINITIALIZED);
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(2);
     }
 
     /**

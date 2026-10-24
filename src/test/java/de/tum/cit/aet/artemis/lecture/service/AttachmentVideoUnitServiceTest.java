@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -80,8 +81,9 @@ class AttachmentVideoUnitServiceTest {
     private AttachmentVideoUnitService service;
 
     @BeforeEach
-    void setUp() {
-        FilePathConverter.setFileUploadPath(tempDir);
+    void setUp(@Mock MockedStatic<FilePathConverter> filePathConverter) {
+        // Keep file paths local to this test thread instead of changing the shared upload root.
+        filePathConverter.when(() -> FilePathConverter.fileSystemPathForExternalUri(any(), any())).thenReturn(tempDir.resolve("unit.pdf"));
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.<CompetencyProgressApi>empty(),
                 lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository,
                 irisLectureUnitSyncService);
