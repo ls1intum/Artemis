@@ -128,7 +128,8 @@ Any Git client works just as well — the addresses are ordinary Git URLs.
 
 **User Settings → Access Tokens** lists every access token you hold, saying which exercise and repository each one
 covers. No token value is shown anywhere in Artemis — not here, and not in the clone dialog, which masks it.
-**Copy URL** is the only way to get one.
+**Copy URL** is the only way to get one. If opening the clone dialog signs you out, your password was changed or reset
+after you signed in; see [Signing in again](/student/getting-started/account#signing-in-again-before-you-add-a-key-passkey-or-token).
 
 <Image src={accessTokens} alt="The Access Tokens overview, listing one participation token per exercise with a revoke action" size={ImageSize.large} caption="One token per repository, each revocable on its own" />
 
@@ -202,6 +203,9 @@ the computer, so that a key you want to remove later is the one you can recognis
 **Expiry** decides how long the key stays valid. **Do not expire** keeps it until you delete it; **Expire
 automatically** takes a date and stops it working after that. Setting an expiry on a key you use from a shared or
 borrowed machine limits what a forgotten key can do.
+
+If Artemis signs you out when you save the key, your password was changed or reset after you signed in. Sign in again
+and add the key again; see [Signing in again](/student/getting-started/account#signing-in-again-before-you-add-a-key-passkey-or-token).
 
 **Save** adds the key, and it works immediately. Adding more than one is normal — one per computer means losing a
 laptop costs you one key, not all of them. Remove a key with the **…** menu beside it.

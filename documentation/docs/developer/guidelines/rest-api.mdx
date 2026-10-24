@@ -823,6 +823,35 @@ public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId")
 1. Verify the tool type is defined in `ToolTokenType.java`
 2. Send a POST request to `{{base_url}}/api/core/public/authenticate?tool=TOOLTYPE`
 
+### Endpoints That Create a Credential
+
+A token that has been issued cannot be revoked, so a session that was in use during an intrusion keeps working until its token
+expires, even after the password was reset. If that session could add a passkey, an SSH key or an access token, the new
+credential would outlive the reset. Every endpoint that creates a credential of that kind therefore calls
+`SessionFreshnessService.requireCurrentSession()` before it does anything else:
+
+```java
+@PostMapping({ "public-keys", "public-key" })
+@EnforceAtLeastStudent
+public ResponseEntity<Void> addSshPublicKey(@RequestBody UserSshPublicKeyDTO sshPublicKey) throws GeneralSecurityException, IOException {
+    sessionFreshnessService.requireCurrentSession();
+    [...]
+}
+```
+
+* The method compares the start of the session, the `iat` claim of its token, to the time the credentials of the account last
+  changed. It throws a `SessionOutdatedException`, which answers `401` with the error key `sessionOutdated`. The client signs the
+  user out on the server and returns to the page after the next sign-in, for every request that goes through `HttpClient`.
+* The same holds for an endpoint that **reads a credential back**, such as the access token of a participation, and for one that
+  turns a session into another token. In a servlet filter, which has to write the response itself, use `isCurrentSession` and
+  `SessionOutdatedResponse`.
+* Do not add the check to ordinary reads. It costs a lookup of the account and of its credential change time. When the account is
+  loaded already, pass it to `isCurrentSession(authentication, account)`, which saves the first of the two.
+* An authentication without a session start, such as an internal call or a test with a mock user, is not checked. A test makes
+  a session outdated with `SessionTestUtil.actAsSessionStartedAt`.
+
+See [Sessions and new credentials](/admin/user-registration#sessions-and-new-credentials) for what this means for operators.
+
 ## JSON Serialization
 
 Always use Jackson for JSON serialization and deserialization. Do not use other libraries.
