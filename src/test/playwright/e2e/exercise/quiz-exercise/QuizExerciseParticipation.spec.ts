@@ -493,6 +493,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             const dragItem = page.locator('#drag-item-0');
             await dragItem.waitFor({ state: 'visible' });
             await dragItem.scrollIntoViewIfNeeded();
+            // Explicitly scroll down: scrollIntoViewIfNeeded leaves scrollTop at zero when the item already fits.
             // Find the scroll container hosting the quiz and record its scroll state and position.
             const before = await page.evaluate(() => {
                 let el = document.getElementById('drag-item-0')?.parentElement;
@@ -506,6 +507,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 if (!el) {
                     return undefined;
                 }
+                el.scrollTo({ top: el.scrollHeight, behavior: 'instant' });
                 el.setAttribute('data-e2e-scroll-container', 'true');
                 const rect = el.getBoundingClientRect();
                 return { scrollTop: el.scrollTop, top: rect.top, left: rect.left, width: rect.width };
@@ -514,6 +516,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 throw new Error('the drag item must be inside a scrollable container');
             }
             expect(before.scrollTop, 'precondition: the container must be scrolled down so it can scroll up during the drag').toBeGreaterThan(0);
+            await expect(dragItem).toBeInViewport({ ratio: 1 });
 
             const box = await dragItem.boundingBox();
             if (!box) {
