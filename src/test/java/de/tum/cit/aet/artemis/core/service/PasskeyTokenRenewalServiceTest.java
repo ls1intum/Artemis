@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -159,5 +160,41 @@ class PasskeyTokenRenewalServiceTest {
 
         assertThat(service.mayExtendSessionForAccount(LOGIN, Instant.parse("2026-10-13T10:00:00Z"))).isTrue();
         assertThat(service.mayExtendSessionForAccount(LOGIN, Instant.parse("2026-10-13T09:59:59Z"))).isFalse();
+    }
+
+    /**
+     * A caller that has the account decides from it and does not look it up by login. The account is read on every load of the app, so the lookup would be paid there
+     * by everyone who has a personal access token.
+     */
+    @Test
+    void anAccountThatIsAlreadyLoadedIsNotLookedUpByLogin() {
+        PasskeyTokenRenewalService service = serviceWithPasskeys(true);
+
+        assertThat(service.mayExtendSessionOf(activeUser(), Instant.now())).isTrue();
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void aLoadedAccountThatIsDeactivatedOrDeletedEndsItsSession() {
+        User deactivated = activeUser();
+        deactivated.setActivated(false);
+        User deleted = activeUser();
+        deleted.setDeleted(true);
+        PasskeyTokenRenewalService service = serviceWithPasskeys(true);
+
+        assertThat(service.mayExtendSessionOf(deactivated, Instant.now())).isFalse();
+        assertThat(service.mayExtendSessionOf(deleted, Instant.now())).isFalse();
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void aLoadedAccountEndsTheSessionsThatStartedBeforeItsCredentialsChanged() {
+        Instant credentialsChanged = Instant.parse("2026-10-13T10:00:00.700Z");
+        when(userActivityService.findCredentialsChangedDate(USER_ID)).thenReturn(credentialsChanged);
+        PasskeyTokenRenewalService service = serviceWithPasskeys(true);
+
+        assertThat(service.mayExtendSessionOf(activeUser(), Instant.parse("2026-10-13T09:59:59Z"))).isFalse();
+        assertThat(service.mayExtendSessionOf(activeUser(), Instant.parse("2026-10-13T10:00:00Z"))).isTrue();
+        verifyNoInteractions(userRepository);
     }
 }

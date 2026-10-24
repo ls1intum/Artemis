@@ -156,16 +156,16 @@ public class AccountService {
      * <p>
      * An outdated session is not refused here, because the client reads the account on every page load and would otherwise be signed out of a session that may still read.
      * It only does not get the secret: it could otherwise copy a token that was created after the change and keep using it once its own session has expired.
-     * The check only runs for an account that has a token.
+     * The check only runs for an account that has a token, and it uses the account that the caller has loaded already, so it costs one lookup.
      *
      * @param userDTO the account that is returned to the client
-     * @param userId  the id of the account
+     * @param user    the account of the request, as it was loaded for it
      */
-    public void addPersonalVcsAccessTokenIfSessionIsCurrent(UserDTO userDTO, long userId) {
-        String token = userVcsAccessTokenService.findToken(userId);
-        if (token != null && sessionFreshnessService.isCurrentSession(SecurityContextHolder.getContext().getAuthentication())) {
+    public void addPersonalVcsAccessTokenIfSessionIsCurrent(UserDTO userDTO, User user) {
+        String token = userVcsAccessTokenService.findToken(user.getId());
+        if (token != null && sessionFreshnessService.isCurrentSession(SecurityContextHolder.getContext().getAuthentication(), user)) {
             userDTO.setVcsAccessToken(token);
-            userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(userId));
+            userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(user.getId()));
         }
     }
 
