@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 
 /**
@@ -49,15 +50,20 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             """)
     List<QuizQuestionPoolItem> findAllByCourseIdAndCompetencyIdOrdered(@Param("courseId") long courseId, @Param("competencyId") long competencyId);
 
+    /**
+     * Counts the items of a course per cell. Cells without items are absent from the result.
+     *
+     * @param courseId the course
+     * @return one count per cell that holds at least one item
+     */
     @Query("""
-            SELECT COUNT(item)
+            SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO(item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty,
+                COUNT(item))
             FROM QuizQuestionPoolItem item
-            WHERE item.course.id = :courseId AND item.competencyId = :competencyId AND item.lectureUnitId = :lectureUnitId AND item.language = :language
-                AND item.questionType = :questionType AND item.difficulty = :difficulty
+            WHERE item.course.id = :courseId
+            GROUP BY item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty
             """)
-    int countInCell(@Param("courseId") long courseId, @Param("competencyId") long competencyId, @Param("lectureUnitId") long lectureUnitId,
-            @Param("language") QuizQuestionGenerationLanguage language, @Param("questionType") QuizQuestionGenerationType questionType,
-            @Param("difficulty") QuizQuestionDifficulty difficulty);
+    List<QuizQuestionPoolCellCountDTO> countByCellForCourse(@Param("courseId") long courseId);
 
     /**
      * Finds the items of a course in a state, ordered by cell and index, so the first result names the next cell to work on.

@@ -18,6 +18,7 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
@@ -26,17 +27,24 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolBuildService.Cell;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 
 class HyperionQuizQuestionPoolBuildServiceTest {
 
@@ -123,6 +131,29 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     void constructor_rejectsEmptyGridDimensions() {
         assertThatThrownBy(() -> service(List.of(" "), List.of("medium"))).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("question-types");
         assertThatThrownBy(() -> service(List.of("single-choice"), List.of())).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("difficulties");
+    }
+
+    @Test
+    void enqueue_topsEveryCellUpToItsTargetFromOneCountQuery() {
+        HyperionQuizQuestionPoolBuildService service = service(List.of("single-choice"), List.of("medium"));
+        Course course = new Course();
+        course.setId(5L);
+        Competency competency = new Competency();
+        competency.setId(9L);
+        TextUnit unit = new TextUnit();
+        unit.setId(4L);
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.<CourseCompetency>of(competency));
+        when(materialService.findGroundableUnits(List.of(9L))).thenReturn(Map.of(9L, List.<LectureUnit>of(unit)));
+        when(settingsService.getSettings(5L)).thenReturn(HyperionCourseSettings.defaultSettings());
+        when(itemRepository.countByCellForCourse(5L)).thenReturn(
+                List.of(new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 10)));
+
+        int created = service.enqueue(course);
+
+        ArgumentCaptor<List<QuizQuestionPoolItem>> saved = ArgumentCaptor.captor();
+        verify(itemRepository).saveAll(saved.capture());
+        assertThat(created).isEqualTo(2);
+        assertThat(saved.getValue()).extracting(QuizQuestionPoolItem::getItemIndex).containsExactly(10, 11);
     }
 
     @Test

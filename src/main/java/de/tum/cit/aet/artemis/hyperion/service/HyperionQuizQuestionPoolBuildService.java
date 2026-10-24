@@ -327,9 +327,11 @@ public class HyperionQuizQuestionPoolBuildService {
         int target = itemsPerCell(settings.questionsPerLectureUnit(), questionTypes.size() * difficulties.size());
         List<Cell> cells = deriveCells(unitIdsByCompetency, languageOf(course), questionTypes, difficulties);
 
+        Map<Cell, Integer> existingByCell = itemRepository.countByCellForCourse(course.getId()).stream().collect(Collectors
+                .toMap(count -> new Cell(count.competencyId(), count.lectureUnitId(), count.language(), count.questionType(), count.difficulty()), count -> (int) count.count()));
         List<QuizQuestionPoolItem> created = new ArrayList<>();
         for (Cell cell : cells) {
-            int existing = itemRepository.countInCell(course.getId(), cell.competencyId(), cell.lectureUnitId(), cell.language(), cell.questionType(), cell.difficulty());
+            int existing = existingByCell.getOrDefault(cell, 0);
             for (int index = existing; index < target; index++) {
                 QuizQuestionPoolItem item = new QuizQuestionPoolItem();
                 item.setCourse(course);
