@@ -21,16 +21,6 @@ const MIN_LEVEL = 1;
 const NEUTRAL_LEVEL = 2;
 const MAX_LEVEL = 3;
 
-/** The level each key moves a feedback style slider to, from the level it shows. */
-const FEEDBACK_STYLE_KEY_STEPS: Readonly<Record<string, (level: number) => number>> = {
-    ArrowLeft: (level) => level - 1,
-    ArrowDown: (level) => level - 1,
-    ArrowRight: (level) => level + 1,
-    ArrowUp: (level) => level + 1,
-    Home: () => MIN_LEVEL,
-    End: () => MAX_LEVEL,
-};
-
 /** One clickable tick of a feedback style slider: its stored value (1-3) and the i18n key for its label. */
 interface FeedbackStyleTick {
     value: number;
@@ -212,9 +202,24 @@ export class AthenaSettingsUpdateComponent {
      */
     onFeedbackStyleKeydown(field: AthenaFeedbackStyleField, event: KeyboardEvent) {
         const shown = field === 'defaultFeedbackDetail' ? this.feedbackDetailLevel() : this.feedbackFormalityLevel();
-        const target = FEEDBACK_STYLE_KEY_STEPS[event.key]?.(shown);
-        if (target === undefined) {
-            return;
+        let target: number;
+        switch (event.key) {
+            case 'ArrowLeft':
+            case 'ArrowDown':
+                target = shown - 1;
+                break;
+            case 'ArrowRight':
+            case 'ArrowUp':
+                target = shown + 1;
+                break;
+            case 'Home':
+                target = MIN_LEVEL;
+                break;
+            case 'End':
+                target = MAX_LEVEL;
+                break;
+            default:
+                return;
         }
         event.preventDefault();
         this.selectFeedbackStyleLevel(field, Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, target)));
