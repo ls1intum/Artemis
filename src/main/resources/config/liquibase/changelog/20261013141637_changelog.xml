@@ -41,4 +41,16 @@
             <column name="email_change_original_email" type="varchar(100)"/>
         </addColumn>
     </changeSet>
+
+    <!--
+        The moment the credentials of the account last changed, as it was read when the request was made, null if they never had.
+        A password reset or change ends a pending request, but a request that is stored late can come back after that. The request is
+        therefore applied only while the credentials have not changed since, which is checked in the statement that applies it.
+        The type is that of user_activity.credentials_changed_date, so that the two compare equal.
+    -->
+    <changeSet id="20261013141637-04-add-credentials-version-to-pending-email-change" author="krusche">
+        <addColumn tableName="user_recovery_key">
+            <column name="email_change_credentials_changed_at" type="DATETIME(3)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

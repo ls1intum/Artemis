@@ -38,6 +38,15 @@ public class PendingEmailChange {
     @Column(name = "email_change_original_email", length = 100)
     private String originalEmail;
 
+    /**
+     * The moment the credentials of the account last changed, as it was read when the request was made; null if they never had. The change is applied only while the
+     * credentials have not changed since: a password change ends a pending request, but a request that is stored late would otherwise survive it.
+     */
+    @Nullable
+    @JsonIgnore
+    @Column(name = "email_change_credentials_changed_at")
+    private Instant credentialsChangedAt;
+
     /** Identifies the key sent to the current address. */
     @JsonIgnore
     @Column(name = "email_change_current_key_id", length = 20, unique = true)
@@ -79,10 +88,11 @@ public class PendingEmailChange {
         // needed by Hibernate
     }
 
-    public PendingEmailChange(String newEmail, @Nullable String originalEmail, String currentKeyId, String currentKeyHash, String newKeyId, String newKeyHash, Instant requestedAt,
-            @Nullable Instant currentConfirmedAt) {
+    public PendingEmailChange(String newEmail, @Nullable String originalEmail, @Nullable Instant credentialsChangedAt, String currentKeyId, String currentKeyHash, String newKeyId,
+            String newKeyHash, Instant requestedAt, @Nullable Instant currentConfirmedAt) {
         this.newEmail = newEmail;
         this.originalEmail = originalEmail;
+        this.credentialsChangedAt = credentialsChangedAt;
         this.currentKeyId = currentKeyId;
         this.currentKeyHash = currentKeyHash;
         this.newKeyId = newKeyId;
@@ -98,6 +108,11 @@ public class PendingEmailChange {
     @Nullable
     public String getOriginalEmail() {
         return originalEmail;
+    }
+
+    @Nullable
+    public Instant getCredentialsChangedAt() {
+        return credentialsChangedAt;
     }
 
     public String getCurrentKeyId() {

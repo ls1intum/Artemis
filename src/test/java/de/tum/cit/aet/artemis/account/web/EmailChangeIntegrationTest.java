@@ -242,8 +242,8 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
      */
     private void ageRequestBy(Duration age) {
         PendingEmailChange pending = storedPendingChange().orElseThrow();
-        var aged = new PendingEmailChange(pending.getNewEmail(), pending.getOriginalEmail(), pending.getCurrentKeyId(), pending.getCurrentKeyHash(), pending.getNewKeyId(),
-                pending.getNewKeyHash(), pending.getRequestedAt().minus(age), pending.getCurrentConfirmedAt());
+        var aged = new PendingEmailChange(pending.getNewEmail(), pending.getOriginalEmail(), pending.getCredentialsChangedAt(), pending.getCurrentKeyId(),
+                pending.getCurrentKeyHash(), pending.getNewKeyId(), pending.getNewKeyHash(), pending.getRequestedAt().minus(age), pending.getCurrentConfirmedAt());
         aged.setNewConfirmedAt(pending.getNewConfirmedAt());
         userRecoveryKeyService.storePendingEmailChange(user.getId(), aged);
     }
@@ -909,6 +909,58 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         assertThat(emailOfAccount()).isEqualTo(ADDRESS_ASSIGNED_BY_ADMINISTRATOR);
         assertThat(storedPendingChange()).as("the request is dropped, so it cannot be retried").isEmpty();
+    }
+
+    /**
+     * A password change ends a pending request, but a request is stored after its secrets were hashed, so one whose session was checked before the change can be stored after
+     * it. The credentials change is stamped without ending the request here, which is what such a late write leaves behind. Confirming both mailboxes must not apply it, or the
+     * holder of an old session would get the address, and with it the password reset.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aRequestThatWasStoredAfterTheCredentialsChangedIsNotApplied() throws Exception {
+        requestChangeTo(NEW_EMAIL);
+        userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
+
+        confirm(mailTo(originalEmail));
+        confirmFailing(mailTo(NEW_EMAIL), mailTo(NEW_EMAIL).keySecret(), "invalidEmailChangeKey");
+
+        assertThat(emailOfAccount()).isEqualTo(originalEmail);
+        assertThat(storedPendingChange()).as("the request is dropped, so it cannot be retried").isEmpty();
+    }
+
+    /**
+     * For an account without an address the current side is confirmed from the start, so the new mailbox alone would complete the request.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aRequestForAnAccountWithoutAnAddressThatWasStoredAfterTheCredentialsChangedIsNotApplied() throws Exception {
+        User withoutAddress = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
+        withoutAddress.setEmail(null);
+        userTestRepository.save(withoutAddress);
+        UserDTO update = new UserDTO(withoutAddress);
+        update.setEmail(NEW_EMAIL);
+        request.putWithResponseBody(BASIC_INFORMATION_PATH, update, BasicInformationUpdateResultDTO.class, HttpStatus.OK);
+        userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
+
+        confirmFailing(mailTo(NEW_EMAIL), mailTo(NEW_EMAIL).keySecret(), "invalidEmailChangeKey");
+
+        assertThat(emailOfAccount()).isNull();
+    }
+
+    /**
+     * Credentials that changed before the request was made do not stand in its way: it is bound to the moment it saw.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aRequestMadeAfterTheCredentialsChangedIsApplied() throws Exception {
+        userActivityService.recordCredentialsChanged(user.getId(), Instant.now().minusSeconds(3600));
+        requestChangeTo(NEW_EMAIL);
+
+        confirm(mailTo(originalEmail));
+        assertThat(confirm(mailTo(NEW_EMAIL)).completed()).isTrue();
+
+        assertThat(emailOfAccount()).isEqualTo(NEW_EMAIL);
     }
 
     @Test
