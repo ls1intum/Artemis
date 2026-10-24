@@ -1,12 +1,12 @@
-@if (!showConfirm()) {
-    <fa-icon [icon]="linkIcon()" [tumAetUiTooltip]="setTooltip(instruction()!)" (click)="toggle()" />
-}
-@if (showConfirm()) {
-    <fa-icon
-        class="grading-instruction-link-icon-danger"
-        [icon]="confirmIcon"
-        [tumAetUiTooltip]="'artemisApp.assessment.messages.removeAssessmentInstructionLink' | artemisTranslate"
-        (mouseleave)="toggle()"
-        (click)="removeLink()"
-    />
-}
+@let label = showConfirm() ? ('artemisApp.assessment.messages.removeAssessmentInstructionLink' | artemisTranslate) : setTooltip(instruction());
+<button
+    type="button"
+    class="grading-instruction-link-button"
+    [class.grading-instruction-link-icon-danger]="showConfirm()"
+    [attr.aria-label]="label"
+    [tumAetUiTooltip]="label"
+    (mouseleave)="showConfirm() && toggle()"
+    (click)="showConfirm() ? removeLink() : toggle()"
+>
+    <fa-icon [icon]="showConfirm() ? confirmIcon : linkIcon()" />
+</button>

@@ -105,17 +105,20 @@ describe('ProgrammingFeedbackItemService', () => {
         const feedback = {
             id: 1,
             type: FeedbackType.MANUAL,
+            text: 'Old title',
             gradingInstruction,
         } as Feedback;
 
         const expected = {
             type: 'Reviewer',
             name: 'artemisApp.course.reviewer',
+            title: undefined,
             text: 'gradingInstruction.feedback',
             feedbackReference: feedback,
         } as FeedbackItem;
 
         expect(service.create([feedback], true)).toEqual([expected]);
+        expect(feedback.text).toBe('Old title');
     });
 
     it('should include the grading instruction text for an accepted AI feedback suggestion matched to a criterion', () => {
@@ -133,8 +136,9 @@ describe('ProgrammingFeedbackItemService', () => {
 
         const item = service.create([feedback], false)[0];
 
-        expect(item.title).toBe('City identification is incorrect');
+        expect(item.title).toBeUndefined();
         expect(item.text).toBe('gradingInstruction.feedback\nThe answer provided does not name the capital of France.');
+        expect(feedback.text).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}City identification is incorrect`);
     });
 
     it('should fall back to the detail text alone for a feedback suggestion without a matched grading instruction', () => {

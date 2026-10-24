@@ -74,6 +74,7 @@ describe('CodeEditorContainerComponent', () => {
         // grid, fileBrowser and monacoEditor are now viewChild() signals; in the template-less
         // spec they never resolve, so we stub them by reassigning the signal with a callable.
         monacoEditorStub = {
+            hasUnsavedInlineFeedback: vi.fn().mockReturnValue(false),
             onFileChange: vi.fn(),
             storeAnnotations: vi.fn(),
             getText: vi.fn().mockReturnValue('content'),
@@ -491,6 +492,26 @@ describe('CodeEditorContainerComponent', () => {
         event.preventDefault.mockClear();
         expect(component.unloadNotification(event)).toBe(true);
         expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('should block file switches and unload while inline feedback is unsaved', () => {
+        fixture.componentRef.setInput('isTutorAssessment', true);
+        fixture.detectChanges();
+        component.selectedFile = 'Current.java';
+        monacoEditorStub.hasUnsavedInlineFeedback.mockReturnValue(true);
+        const event = { preventDefault: vi.fn() } as any;
+
+        component.selectedFile = 'Next.java';
+        expect(component.selectedFile).toBe('Current.java');
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
+        expect(component.canDeactivate()).toBe(false);
+        expect(component.unloadNotification(event)).toBe('pendingChanges');
+        expect(event.preventDefault).toHaveBeenCalled();
+
+        monacoEditorStub.hasUnsavedInlineFeedback.mockReturnValue(false);
+        component.selectedFile = 'Next.java';
+        expect(component.selectedFile).toBe('Next.java');
+        expect(component.canDeactivate()).toBe(true);
     });
 
     it('jumpToLine should call monaco revealLine with Immediate scroll type', () => {

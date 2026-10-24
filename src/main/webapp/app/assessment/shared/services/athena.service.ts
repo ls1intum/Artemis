@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, of, switchMap } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -96,7 +96,7 @@ export class AthenaService {
      *
      * @param exercise
      * @param submissionId the id of the submission
-     * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:accepted:" prefix
+     * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:" prefix
      */
     public getProgrammingFeedbackSuggestions(exercise: Exercise, submissionId: number): Observable<Feedback[]> {
         return this.getFeedbackSuggestions<ProgrammingFeedbackSuggestion>(exercise, submissionId).pipe(
@@ -104,8 +104,7 @@ export class AthenaService {
                 return suggestions.map((suggestion) => {
                     const feedback = new Feedback();
                     feedback.credits = suggestion.credits;
-                    // Programming feedback suggestions are automatically accepted, so we can set the text directly:
-                    feedback.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + suggestion.title;
+                    feedback.text = FEEDBACK_SUGGESTION_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
                     if (suggestion.filePath && Number.isInteger(suggestion.lineStart) && suggestion.lineStart! > 0) {
                         // Referenced feedback
