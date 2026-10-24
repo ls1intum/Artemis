@@ -286,6 +286,12 @@ export class CourseUpdateComponent implements OnInit {
         return (this.courseForm.get('courseInformationSharingMessagingCodeOfConduct')?.value as string | null | undefined)?.length ?? 0;
     });
 
+    /**
+     * Reference to the Code of Conduct markdown editor so {@link onSubmit} can flush its debounced textChanged
+     * emission before the submit guard reads the form state.
+     */
+    private readonly codeOfConductEditor = viewChild<MarkdownEditorMonacoComponent>('codeOfConductEditor');
+
     ngOnInit() {
         this.timeZones = (Intl as typeof Intl & { supportedValuesOf(key: string): string[] }).supportedValuesOf('timeZone');
         this.isSaving.set(false);
@@ -315,6 +321,9 @@ export class CourseUpdateComponent implements OnInit {
                         if (res.body) {
                             this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
                             this.commitCourse();
+                            // Mirror the template content into the FormControl so the length counter and the
+                            // Validators.maxLength check inspect the content the editor is actually showing.
+                            this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(res.body);
                         }
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -539,6 +548,10 @@ export class CourseUpdateComponent implements OnInit {
         if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
             active.blur();
         }
+        // The Code of Conduct markdown editor debounces its textChanged emission by 200 ms. Pressing Save inside that
+        // window would otherwise let issues() and save() read the pre-edit value and persist stale content. Flush the
+        // pending edit synchronously so both see the current text.
+        this.codeOfConductEditor()?.flushPendingTextChange();
         const issues = this.issues();
         if (issues.length > 0) {
             this.submitAttempted.set(true);

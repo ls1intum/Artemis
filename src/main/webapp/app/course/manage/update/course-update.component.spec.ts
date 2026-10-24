@@ -876,6 +876,21 @@ describe('Course Management Update Component', () => {
 
             expect(saveSpy).not.toHaveBeenCalled();
         });
+
+        it('flushes the debounced code-of-conduct editor before the submit guard reads the form state', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            Element.prototype.scrollIntoView = vi.fn();
+            const flushSpy = vi.fn();
+            // Pretend the inline Monaco editor is wired up (it is mocked away in the test module).
+            (comp as unknown as { codeOfConductEditor: () => { flushPendingTextChange: () => void } }).codeOfConductEditor = () => ({
+                flushPendingTextChange: flushSpy,
+            });
+
+            comp.onSubmit();
+
+            expect(flushSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('changeComplaintsEnabled', () => {

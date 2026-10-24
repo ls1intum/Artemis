@@ -645,6 +645,7 @@
                                     <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.codeOfConduct.tooltip' | artemisTranslate" />
                                 </span>
                                 <jhi-markdown-editor-monaco
+                                    #codeOfConductEditor
                                     class="markdown-editor"
                                     [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"
                                     (markdownChange)="updateCourseInformationSharingMessagingCodeOfConduct($event)"
