@@ -32,7 +32,7 @@
                             <div class="row mb-2">
                                 <jhi-posting-markdown-editor
                                     formControlName="content"
-                                    [editorHeight]="editorHeight"
+                                    [draftIdentity]="'post:' + (posting()?.id ?? 'new')"
                                     [maxContentLength]="maxContentLength"
                                     [suppressNewlineOnEnter]="false"
                                     [isButtonLoading]="isLoading()"

@@ -1,13 +1,14 @@
 <ng-template #postingEditor>
-    <form [formGroup]="formGroup" (ngSubmit)="markdownEditor.flushPendingTextChange(); confirm()">
+    <form [formGroup]="formGroup" (ngSubmit)="confirm()">
         <div class="me-2">
             <jhi-posting-markdown-editor
-                #markdownEditor
                 formControlName="content"
-                [editorHeight]="editorHeight"
+                [draftIdentity]="'reply:' + posting()?.post?.id + ':' + (posting()?.id ?? 'new')"
                 [maxContentLength]="maxContentLength"
                 [isInputLengthDisplayed]="false"
                 (keydown.enter)="confirm()"
+                (keydown.control.enter)="confirm()"
+                (keydown.meta.enter)="confirm()"
                 [isButtonLoading]="isLoading()"
                 [isFormGroupValid]="formGroup.valid"
                 [editType]="editType"

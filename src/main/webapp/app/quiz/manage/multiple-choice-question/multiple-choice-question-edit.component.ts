@@ -1,3 +1,4 @@
+import { QuestionReevaluationActionsComponent } from '../question-reevaluation-actions/question-reevaluation-actions.component';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -6,7 +7,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { generateExerciseHintExplanation } from 'app/foundation/util/markdown.util';
-import { faAngleDown, faAngleRight, faChevronDown, faChevronUp, faQuestionCircle, faTrash, faUndo, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faQuestionCircle, faTrash, faUndo, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/foundation/constants/input.constants';
 import { QuizHintAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-hint.action';
@@ -35,6 +36,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        QuestionReevaluationActionsComponent,
         FaIconComponent,
         FormsModule,
         TranslateDirective,
@@ -109,8 +111,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
     faQuestionCircle = faQuestionCircle;
-    faChevronUp = faChevronUp;
-    faChevronDown = faChevronDown;
     faUndo = faUndo;
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;

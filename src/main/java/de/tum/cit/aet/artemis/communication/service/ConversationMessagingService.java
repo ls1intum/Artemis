@@ -144,8 +144,7 @@ public class ConversationMessagingService extends PostingService {
         conversationService.updateLastMessageDate(conversation);
 
         // update last read date and unread message count of author
-        // invoke async due to db write access to avoid that the client has to wait
-        conversationParticipantRepository.updateLastReadAsync(author.getId(), conversation.getId(), ZonedDateTime.now());
+        conversationParticipantRepository.updateLastRead(author.getId(), conversation.getId(), ZonedDateTime.now());
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         log.debug("      conversationMessageRepository.save DONE");
@@ -320,8 +319,7 @@ public class ConversationMessagingService extends PostingService {
                 }
             }
             else {
-                // invoke async due to db write access to avoid that the client has to wait
-                conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), conversationId, ZonedDateTime.now());
+                conversationParticipantRepository.updateLastRead(requestingUser.getId(), conversationId, ZonedDateTime.now());
             }
         }
 
@@ -392,7 +390,7 @@ public class ConversationMessagingService extends PostingService {
             service.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
             service.deleteAllAnswerPostsForPostAsync(postId);
         });
-        conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
+        conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), post.getAuthor().getId(), post.getCreationDate());
         conversation = conversationService.getConversationById(conversation.getId());
 
         // Delete all connected saved posts
