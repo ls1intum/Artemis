@@ -9,7 +9,7 @@ jhi-message-editor .message-composer {
     color: var(--artemis-control-color);
 }
 
-// Explicitly override the flex utility while retaining the tools and pending uploads.
+// Explicitly override the `contents` utility of these groups, so that a hidden group stays hidden while the tools and pending uploads are retained.
 jhi-message-editor .message-editor-advanced-toolbar[hidden],
 jhi-message-editor .message-editor-advanced-controls[hidden],
 jhi-message-editor .message-resource-controls[hidden] {

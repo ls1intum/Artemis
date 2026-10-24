@@ -412,9 +412,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private applyDeepLink(deepLink: LectureDeepLink): void {
-        // A new target takes precedence over the position the viewers resumed from.
-        this.resumeVideoTimestamp.set(undefined);
-        this.resumePdfPage.set(undefined);
+        // A new target takes precedence over the position the viewers resumed from, but only for what it names: a changed start time of a live player would
+        // cue its video again and stop it, so a link to a page leaves the resumed time alone.
+        if (deepLink.timestamp !== undefined) {
+            this.resumeVideoTimestamp.set(undefined);
+        }
+        if (deepLink.page !== undefined) {
+            this.resumePdfPage.set(undefined);
+        }
         const pdfViewer = this.pdfViewer();
         const pageShownBefore = pdfViewer?.getCurrentPage();
 
@@ -721,6 +726,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.clearPdfState();
             this.synchronizeVideoAndSlides.set(false);
             this.clearSynchronizationTargets();
+            // The viewers that were started from these positions are gone, so the next ones start from the deep link again.
+            this.resumeVideoTimestamp.set(undefined);
+            this.resumePdfPage.set(undefined);
         }
     }
 
@@ -880,9 +888,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (!this.hasRenderableVideo() || !this.hasPdf()) {
             return;
         }
-        const page = this.pdfViewer()?.getCurrentPage();
-        this.resumeVideoTimestamp.set(this.activePlayer()?.getCurrentTime());
-        this.resumePdfPage.set(page);
+        // A viewer or player that has not reached its start position yet reports the first page or time 0, which must not replace the target of a deep link that is still pending.
+        const pdfViewer = this.pdfViewer();
+        const player = this.activePlayer();
+        const page = pdfViewer && pdfViewer.getTotalPages() > 0 ? pdfViewer.getCurrentPage() : undefined;
+        const timestamp = player?.isSeekable() ? player.getCurrentTime() : undefined;
+        this.resumePdfPage.set(page ?? this.pdfInitialPage());
+        this.resumeVideoTimestamp.set(timestamp ?? this.videoInitialTimestamp());
         // The new viewer reports the page it starts on, which must not move the video away from where it resumes. It reports nothing for the first page.
         this.pendingPdfTargetPage = page !== undefined && page > 1 ? page : undefined;
     }

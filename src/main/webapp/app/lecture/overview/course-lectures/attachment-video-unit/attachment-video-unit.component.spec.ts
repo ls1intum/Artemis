@@ -40,7 +40,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
-import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { WritableSignal, signal } from '@angular/core';
 
 // Mock ResizeObserver for VideoPlayerComponent
@@ -144,9 +143,18 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     describe('fullscreen change of a unit with a video and a PDF', () => {
-        function stubViewers(currentTime: number | undefined, currentPage: number) {
-            Object.defineProperty(component, 'pdfViewer', { value: () => ({ getCurrentPage: () => currentPage }), writable: true, configurable: true });
-            Object.defineProperty(component, 'videoPlayer', { value: () => ({ getCurrentTime: () => currentTime }), writable: true, configurable: true });
+        /** A viewer and a player that are ready, or that have not reached their start position yet (no document, not seekable). */
+        function stubViewers(currentTime: number | undefined, currentPage: number, ready = true) {
+            Object.defineProperty(component, 'pdfViewer', {
+                value: () => ({ getCurrentPage: () => currentPage, getTotalPages: () => (ready ? 20 : 0), goToPage: vi.fn(() => true) }),
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(component, 'videoPlayer', {
+                value: () => ({ getCurrentTime: () => currentTime, isSeekable: () => ready, seekTo: vi.fn(() => true) }),
+                writable: true,
+                configurable: true,
+            });
         }
 
         beforeEach(() => {
@@ -178,11 +186,53 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPdfTargetPage']).toBeUndefined();
         });
 
-        it('lets a new deep link take precedence over the position the viewers resumed from', () => {
+        it('keeps the page and the time of a pending deep link when the viewer and the player have not reached them yet', () => {
+            fixture.componentRef.setInput('deepLink', { unitId: 1, page: 5, timestamp: 12 });
+            stubViewers(0, 1, false);
+
+            component['onFullscreenChange'](true);
+
+            expect(component.pdfInitialPage()).toBe(5);
+            expect(component.videoInitialTimestamp()).toBe(12);
+            expect(component['pendingPdfTargetPage']).toBeUndefined();
+        });
+
+        it('lets a new deep link with a page and a time take precedence over the position the viewers resumed from', () => {
             stubViewers(42, 3);
             component['onFullscreenChange'](true);
 
-            component['applyDeepLink']({} as LectureDeepLink);
+            component['applyDeepLink']({ unitId: 1, page: 8, timestamp: 9 });
+
+            expect(component.videoInitialTimestamp()).toBeUndefined();
+            expect(component.pdfInitialPage()).toBeUndefined();
+        });
+
+        it('keeps the resumed time when a new deep link names only a page, because a live player would cue its video again', () => {
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+
+            component['applyDeepLink']({ unitId: 1, page: 8 });
+
+            expect(component.videoInitialTimestamp()).toBe(42);
+            expect(component.pdfInitialPage()).toBeUndefined();
+        });
+
+        it('keeps the resumed page when a new deep link names only a time', () => {
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+
+            component['applyDeepLink']({ unitId: 1, timestamp: 9 });
+
+            expect(component.videoInitialTimestamp()).toBeUndefined();
+            expect(component.pdfInitialPage()).toBe(3);
+        });
+
+        it('forgets the resumed positions when the unit is collapsed, because the viewers that started from them are gone', () => {
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+            expect(component.videoInitialTimestamp()).toBe(42);
+
+            component.toggleCollapse(true);
 
             expect(component.videoInitialTimestamp()).toBeUndefined();
             expect(component.pdfInitialPage()).toBeUndefined();
