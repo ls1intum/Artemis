@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -371,7 +370,11 @@ public class ProgrammingExerciseImportBasicService {
      */
     private Map<Long, Long> importTestCases(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
         Map<Long, Long> newIdByOldId = new HashMap<>();
-        newExercise.setTestCases(sourceExercise.getTestCases().stream().map(testCase -> {
+        if (newExercise.getTestCases() == null) {
+            newExercise.setTestCases(new LinkedHashSet<>());
+        }
+        newExercise.getTestCases().clear();
+        sourceExercise.getTestCases().forEach(testCase -> {
             final var copy = new ProgrammingExerciseTestCase();
 
             // Copy everything except for the referenced exercise
@@ -385,8 +388,8 @@ public class ProgrammingExerciseImportBasicService {
             copy.setType(testCase.getType());
             programmingExerciseTestCaseRepository.save(copy);
             newIdByOldId.put(testCase.getId(), copy.getId());
-            return copy;
-        }).collect(Collectors.toSet()));
+            newExercise.getTestCases().add(copy);
+        });
 
         return newIdByOldId;
     }
@@ -400,8 +403,11 @@ public class ProgrammingExerciseImportBasicService {
      * @param testCaseIdMapping a map from each source test case id to the id of its copy (see {@link #importTestCases})
      */
     private void importTasks(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise, Map<Long, Long> testCaseIdMapping) {
-        List<ProgrammingExerciseTask> newTasks = sourceExercise.getTasks().stream().map(sourceTask -> createTaskCopy(sourceTask, newExercise, testCaseIdMapping)).toList();
-        newExercise.setTasks(new ArrayList<>(newTasks));
+        if (newExercise.getTasks() == null) {
+            newExercise.setTasks(new ArrayList<>());
+        }
+        newExercise.getTasks().clear();
+        sourceExercise.getTasks().forEach(sourceTask -> newExercise.getTasks().add(createTaskCopy(sourceTask, newExercise, testCaseIdMapping)));
     }
 
     /**

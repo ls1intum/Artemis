@@ -21,7 +21,7 @@ import type { TumAetUiEmptyStateVariant } from './tumaet-ui-empty-state.variants
 })
 export class TumAetUiEmptyStateComponent {
     /** Decorative icon shown above the empty state content. */
-    readonly icon = input.required<IconProp>();
+    readonly icon = input<IconProp>();
 
     /** Visual treatment of the decorative icon container. */
     readonly variant = input<TumAetUiEmptyStateVariant>('outlined');

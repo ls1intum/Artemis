@@ -5,7 +5,6 @@ import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise
 import { translateValidationReasons } from 'app/exercise/util/exercise-validation.util';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { faBan, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SwitchEditModeButtonComponent } from 'app/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
@@ -39,9 +38,9 @@ export class FormFooterComponent {
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
     protected readonly faSpinner = faSpinner;
-    protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     isSaving = input(false);
+    showGenerateWithAi = input(false);
     isDisabled = input(false);
     invalidReasons = input<ValidationReason[]>([]);
     /**
@@ -50,8 +49,6 @@ export class FormFooterComponent {
      * picker still processes a blur and a selection), so a click that they block is checked against the form again.
      */
     revalidate = input<(() => ValidationReason[]) | undefined>();
-    showGenerateWithAi = input(false);
-    isGeneratingWithAi = input(false);
     notificationText = input<string | undefined>();
     switchEditMode = input<(() => void) | undefined>();
     isImport = input<boolean>();
@@ -66,7 +63,7 @@ export class FormFooterComponent {
 
     saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
 
-    isSubmitDisabled = computed<boolean>(() => !!this.invalidReasons().length || this.isDisabled() || this.isSaving() || this.isGeneratingWithAi());
+    isSubmitDisabled = computed<boolean>(() => !!this.invalidReasons().length || this.isDisabled() || this.isSaving());
 
     /** Target of the submit buttons' aria-describedby; the reason list is rendered under this id. */
     protected readonly invalidReasonsId = 'form-footer-invalid-reasons';
@@ -88,10 +85,8 @@ export class FormFooterComponent {
         }
     }
 
-    onGenerateWithAi() {
-        if (!this.isBlocked()) {
-            this.generateWithAi.emit();
-        }
+    onGenerateWithAi(): void {
+        if (this.showGenerateWithAi() && !this.isBlocked()) this.generateWithAi.emit();
     }
 
     /**
@@ -100,7 +95,7 @@ export class FormFooterComponent {
      * something a fresh read of the form could change.
      */
     private isBlocked(): boolean {
-        if (this.isDisabled() || this.isSaving() || this.isGeneratingWithAi()) {
+        if (this.isDisabled() || this.isSaving()) {
             return true;
         }
         if (!this.invalidReasons().length) {

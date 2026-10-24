@@ -1,0 +1,52 @@
+<div class="flex items-center gap-2" data-testid="legacy-code-generation">
+    <button tumAetUiButton type="button" severity="secondary" [disabled]="controlsBlocked()" (click)="generateCode()" data-testid="legacy-generate-code">
+        {{ (isGeneratingCode() ? 'artemisApp.programmingExercise.codeGeneration.generating' : 'artemisApp.programmingExercise.codeGeneration.generateCode') | artemisTranslate }}
+    </button>
+    <button tumAetUiButton type="button" severity="secondary" variant="outlined" [tumAetUiPopoverTrigger]="settings" data-testid="legacy-generation-details">
+        {{ 'artemisApp.programmingExercise.codeGeneration.statusTitle' | artemisTranslate }}
+    </button>
+</div>
+<tumaet-ui-popover #settings [ariaLabel]="'artemisApp.programmingExercise.codeGeneration.settingsTitle' | artemisTranslate">
+    <div class="flex max-h-[70vh] w-[min(30rem,80vw)] flex-col gap-3 overflow-y-auto">
+        <p class="text-sm text-muted-color" jhiTranslate="artemisApp.programmingExercise.codeGeneration.executionOrder"></p>
+        @for (status of displayedStatuses(); track status.repositoryType) {
+            <section class="flex flex-col gap-2 border-b border-control-border py-2" [attr.data-testid]="'legacy-generation-' + status.repositoryType">
+                <label class="flex items-center gap-2">
+                    <tumaet-ui-checkbox
+                        [checked]="status.enabled"
+                        (checkedChange)="setCodeGenerationRepositoryEnabled(status.repositoryType, $event)"
+                        [disabled]="isGeneratingCode()"
+                        [ariaLabel]="status.labelKey | artemisTranslate"
+                    />
+                    <span>{{ status.labelKey | artemisTranslate }}</span>
+                </label>
+                <p class="text-sm" role="status">{{ status.stateKey | artemisTranslate }}</p>
+                @if (status.feedbackCount) {
+                    <p class="text-sm text-muted-color">
+                        {{ 'artemisApp.programmingExercise.codeGeneration.selectedFeedback.count' | artemisTranslate: { count: status.feedbackCount } }}
+                    </p>
+                }
+                @for (thread of status.feedbackThreads; track thread.id) {
+                    <button tumAetUiButton type="button" severity="secondary" variant="text" (click)="navigateToFeedback(thread)">
+                        {{ 'artemisApp.programmingExercise.codeGeneration.selectedFeedback.viewThread' | artemisTranslate }}: {{ thread.locationLabel }}
+                    </button>
+                }
+                @if (status.attempts !== undefined) {
+                    <p class="text-sm">{{ 'artemisApp.programmingExercise.codeGeneration.attempts' | artemisTranslate: { attempts: status.attempts } }}</p>
+                }
+                @if (status.message) {
+                    <p class="text-sm">{{ status.message }}</p>
+                }
+                @for (activity of status.fileActivities; track $index) {
+                    <p class="break-all text-sm">
+                        {{ activity.path }} — {{ activity.actionKey | artemisTranslate }}
+                        @if (activity.iteration !== undefined) {
+                            <span>{{ 'artemisApp.programmingExercise.codeGeneration.iteration' | artemisTranslate: { iteration: activity.iteration } }}</span>
+                        }
+                    </p>
+                }
+            </section>
+        }
+    </div>
+</tumaet-ui-popover>
+<tumaet-ui-confirm-dialog />

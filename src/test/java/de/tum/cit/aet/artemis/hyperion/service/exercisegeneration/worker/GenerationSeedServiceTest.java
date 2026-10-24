@@ -6,10 +6,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -18,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -26,6 +30,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.TreeFormatter;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -35,7 +40,9 @@ import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -43,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 class GenerationSeedServiceTest {
@@ -54,6 +62,8 @@ class GenerationSeedServiceTest {
     Path temporary;
 
     private final GitService git = mock();
+
+    private final BareGitRepositoryService bareRepositories = mock();
 
     private final GenerationRequestService requests = mock();
 
@@ -71,18 +81,22 @@ class GenerationSeedServiceTest {
 
     private FileMode sourceMode = FileMode.REGULAR_FILE;
 
+    private boolean harnessFilesPresent = true;
+
     private byte[] sourceBytes = "class App {}".getBytes(StandardCharsets.UTF_8);
 
     @BeforeEach
     void setup() throws Exception {
         org.mockito.Mockito.when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
-        service = new GenerationSeedService(buildConfigRepository, git, new TempFileUtilService(temporary), requests, testCases, taskService, "main");
+        service = new GenerationSeedService(buildConfigRepository, git, new TempFileUtilService(temporary), requests, testCases, taskService, bareRepositories, "main");
         when(exercise.getRepositoryURI(any())).thenReturn(uri);
         when(exercise.getId()).thenReturn(42L);
         when(exercise.getProblemStatement()).thenReturn("The instructor's specification.");
         when(requests.isAuthoritativeProblemStatement(any())).thenReturn(true);
         when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenAnswer(invocation -> createRepository(invocation.getArgument(1)));
+        when(bareRepositories.getExistingBareRepository(uri, "main"))
+                .thenAnswer(invocation -> createHarnessRepository(temporary.resolve("harness.git"), "current harness".getBytes(StandardCharsets.UTF_8), FileMode.REGULAR_FILE));
     }
 
     @Test
@@ -266,6 +280,103 @@ class GenerationSeedServiceTest {
         when(exercise.getRepositoryURI(RepositoryType.TEMPLATE)).thenReturn(null);
         assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasStackTraceContaining("Missing generation repository");
         assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @Test
+    void readsOnlyThreeCommittedHarnessBlobsWithoutCloningOrMaterializingOtherFiles() {
+        Map<String, String> harness = service.readTestHarness(exercise);
+        assertThat(harness).containsOnlyKeys("build.gradle", "gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml");
+        assertThat(harness.get("build.gradle")).isEqualTo("current harness");
+        assertThat(harness.get("gradle/AresReservedPackages.gradle")).isEqualTo("reserved");
+        verify(exercise, times(1)).getRepositoryURI(RepositoryType.TESTS);
+        verifyNoInteractions(git, requests, testCases, taskService);
+        assertThat(temporary.toFile().list()).containsExactly("harness.git");
+    }
+
+    @Test
+    void missingHarnessFilesRemainAbsentInsteadOfInventingDefaults() {
+        harnessFilesPresent = false;
+        assertThat(service.readTestHarness(exercise)).isEmpty();
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void oversizedHarnessBlobRemainsAbsentForValidationWithoutCloning() {
+        doAnswer(invocation -> createHarnessRepository(temporary.resolve("harness.git"), new byte[WorkspaceFile.MAX_FILE_BYTES + 1], FileMode.REGULAR_FILE)).when(bareRepositories)
+                .getExistingBareRepository(uri, "main");
+        Map<String, String> harness = service.readTestHarness(exercise);
+        assertThat(harness).containsOnlyKeys("gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml");
+        assertThat(AresTestHarness.reasons(harness)).anyMatch(reason -> reason.contains("Gradle harness file"));
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void harnessSymlinkRemainsAbsentForValidationWithoutCloning() {
+        doAnswer(invocation -> createHarnessRepository(temporary.resolve("harness.git"), "somewhere".getBytes(StandardCharsets.UTF_8), FileMode.SYMLINK)).when(bareRepositories)
+                .getExistingBareRepository(uri, "main");
+        Map<String, String> harness = service.readTestHarness(exercise);
+        assertThat(harness).containsOnlyKeys("gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml");
+        assertThat(AresTestHarness.reasons(harness)).anyMatch(reason -> reason.contains("Gradle harness file"));
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void harnessRepositoryReadFailureRemainsAnAccessFailure() {
+        var failure = new GitException("repository read failed", new IOException("disk unavailable"));
+        doThrow(failure).when(bareRepositories).getExistingBareRepository(uri, "main");
+
+        assertThatThrownBy(() -> service.readTestHarness(exercise)).isInstanceOf(IllegalStateException.class).hasCause(failure);
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void readsConfiguredBranchInsteadOfBareRepositoryHead() throws Exception {
+        buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(42L).setBranch("exercise-branch");
+        Repository repository = createHarnessRepository(temporary.resolve("harness.git"), "exercise branch harness".getBytes(StandardCharsets.UTF_8), FileMode.REGULAR_FILE);
+        var branch = repository.updateRef(Constants.R_HEADS + "exercise-branch");
+        branch.setNewObjectId(repository.resolve(Constants.R_HEADS + "main"));
+        branch.update();
+        repository.updateRef(Constants.HEAD, true).link(Constants.R_HEADS + "missing-default");
+        when(bareRepositories.getExistingBareRepository(uri, "exercise-branch")).thenReturn(repository);
+        assertThat(service.readTestHarness(exercise).get("build.gradle")).isEqualTo("exercise branch harness");
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void missingConfiguredBranchDoesNotFallBackToBareHead() {
+        buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(42L).setBranch("missing-branch");
+        when(bareRepositories.getExistingBareRepository(uri, "missing-branch"))
+                .thenAnswer(invocation -> createHarnessRepository(temporary.resolve("harness.git"), "default harness".getBytes(StandardCharsets.UTF_8), FileMode.REGULAR_FILE));
+        assertThatThrownBy(() -> service.readTestHarness(exercise)).isInstanceOf(IllegalStateException.class).hasStackTraceContaining("Missing generation tests branch");
+        verifyNoInteractions(git);
+    }
+
+    private Repository createHarnessRepository(Path path, byte[] build, FileMode mode) throws Exception {
+        Repository repository = new Repository(new FileRepositoryBuilder().setBare().setGitDir(path.toFile()).setup(), path, uri);
+        repository.create(true);
+        try (var objects = repository.newObjectInserter()) {
+            TreeFormatter nested = new TreeFormatter();
+            nested.append("AresReservedPackages.gradle", FileMode.REGULAR_FILE, objects.insert(Constants.OBJ_BLOB, "reserved".getBytes(StandardCharsets.UTF_8)));
+            TreeFormatter tree = new TreeFormatter();
+            if (harnessFilesPresent) {
+                tree.append("SecurityPolicy.yaml", FileMode.REGULAR_FILE, objects.insert(Constants.OBJ_BLOB, "policy".getBytes(StandardCharsets.UTF_8)));
+                tree.append("build.gradle", mode, objects.insert(Constants.OBJ_BLOB, build));
+                tree.append("gradle", FileMode.TREE, objects.insert(nested));
+            }
+            tree.append("unrelated-large.bin", FileMode.REGULAR_FILE, objects.insert(Constants.OBJ_BLOB, new byte[WorkspaceFile.MAX_FILE_BYTES + 1]));
+            CommitBuilder commit = new CommitBuilder();
+            commit.setTreeId(objects.insert(tree));
+            commit.setAuthor(new PersonIdent("Instructor", "instructor@example.org"));
+            commit.setCommitter(commit.getAuthor());
+            commit.setMessage("Committed harness");
+            var id = objects.insert(commit);
+            objects.flush();
+            var head = repository.updateRef(Constants.R_HEADS + "main");
+            head.setNewObjectId(id);
+            head.update();
+            repository.updateRef(Constants.HEAD, true).link(Constants.R_HEADS + "main");
+        }
+        return repository;
     }
 
     private Repository createRepository(Path path) throws Exception {

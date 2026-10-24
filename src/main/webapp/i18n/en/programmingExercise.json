@@ -389,6 +389,7 @@
                 "noActivity": "No files have been created, updated, or removed yet.",
                 "attempts": "Attempts made: {{attempts}}",
                 "status": {
+                    "unknown": "Outcome unavailable",
                     "idle": "Not started",
                     "queued": "Queued",
                     "running": "Running",
@@ -847,7 +848,9 @@
             },
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
+                "GRADLE_GRADLE": "Gradle",
                 "PLAIN_MAVEN": "Maven",
+                "MAVEN_MAVEN": "Maven",
                 "MAVEN_BLACKBOX": "DejaGnu",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",

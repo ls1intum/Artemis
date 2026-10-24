@@ -7,7 +7,7 @@ sidebar_label: Hyperion Setup
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 import Callout from '../../src/components/Callout/Callout';
 
-Hyperion extends Artemis with AI-assisted authoring features. For programming exercises, it offers consistency checks for problem statements and exercise artifacts and can rewrite instructions with the help of generative AI. For programming exercises and quizzes (except quizzes with drag-and-drop questions) it can generate a verified [exercise variant](/instructor/exercises/variant-generation) from an existing exercise, in courses and in exams. A programming variant is verified with real template and solution builds, a quiz variant by checking that the generated questions are valid. For quiz exercises, it generates Multiple-Choice questions from a topic or, in courses with competencies, from the course's competencies and linked lecture content ([see here](/instructor/exercises/quiz-exercise#generate-multiple-choice-questions-with-ai)), and it can refine existing Multiple-Choice questions from a natural-language instruction, either individually or in bulk ([see here](/instructor/exercises/quiz-exercise#refine-multiple-choice-questions-with-ai)). The functionality is provided by Artemis and Spring AI, so no EduTelligence service needs to be deployed. Competency-grounded quiz generation additionally requires the Atlas module to be enabled. Pyris is used only for semantic lecture search when it is deployed, and quiz generation falls back gracefully to the other context sources if Pyris is not available.
+Hyperion extends Artemis with AI-assisted authoring features. For programming exercises, it offers consistency checks for problem statements and exercise artifacts and can rewrite instructions with the help of generative AI. For programming exercises and quizzes (except quizzes with drag-and-drop questions) it can generate a verified [exercise variant](/instructor/exercises/variant-generation) from an existing exercise. Programming variants are limited to courses; quiz variants are also available in exams. A programming variant is verified with real template and solution builds, a quiz variant by checking that the generated questions are valid. For quiz exercises, it generates Multiple-Choice questions from a topic or, in courses with competencies, from the course's competencies and linked lecture content ([see here](/instructor/exercises/quiz-exercise#generate-multiple-choice-questions-with-ai)), and it can refine existing Multiple-Choice questions from a natural-language instruction, either individually or in bulk ([see here](/instructor/exercises/quiz-exercise#refine-multiple-choice-questions-with-ai)). The functionality is provided by Artemis and Spring AI, so no EduTelligence service needs to be deployed. Competency-grounded quiz generation additionally requires the Atlas module to be enabled. Pyris is used only for semantic lecture search when it is deployed, and quiz generation falls back gracefully to the other context sources if Pyris is not available.
 
 <Callout variant={CalloutVariant.info}>
     For local development setups using LM Studio, refer to the [Spring AI Development Guide](/developer/spring-ai) in the Developer documentation.
@@ -21,7 +21,7 @@ Hyperion extends Artemis with AI-assisted authoring features. For programming ex
 
 ## Enable the Hyperion module
 
-Hyperion is disabled by default. Activate it by overriding the `artemis.hyperion.enabled` property in the configuration that the server reads on startup (for example `application-prod.yml`).
+Hyperion is disabled by default. Set `artemis.hyperion.enabled=true` on a core node to enable AI help for problem statements, quizzes, FAQs, and quiz variants. This does not enable programming exercise generation. That workflow also needs `artemis.hyperion.exercise-generation.enabled=true`, LocalCI, LocalVC, and an AI Worker. When generation is enabled anywhere in a deployment, all writer nodes must enable cluster fencing through the selected distributed provider. Default-off deployments do not claim generation slots.
 
 ```yaml
 artemis:
@@ -102,7 +102,9 @@ Add entries for each model you use. The key must match the model name returned b
 
 Cache pricing and cache usage are separate inputs. When the provider explicitly reports **zero cache-read tokens**, configured input and output rates suffice for a complete estimate. When cache reads are positive, also configure `cached-input-cost-per-million-eur`. An omitted cache count means **unknown**, not zero: without a reported split, a complete estimate is possible only when the configured cached and uncached input rates are equal. Artemis does not silently substitute the uncached rate for a missing cache price.
 
-The shared usage ledger stores the configured uncached input, cache-read, cache-write, and output rates separately. `cost_per_million_input_tokens` is the uncached input rate, not a blended rate. To reproduce the estimate, subtract cache-read and cache-write tokens from total input tokens, multiply each token count by its own stored rate, add the output cost, and divide by 1,000,000. This applies to all LLM services using the ledger, including Iris, Athena and Atlas. A missing cache-read count contributes zero to this numeric calculation, but does not prove that cache usage was zero. Incomplete estimates remain incomplete even if the ledger has a numeric value.
+For whole-exercise generation, the shared usage ledger stores the configured uncached input and cache-read rates separately, together with the reported cache-read token count. `cost_per_million_input_tokens` is the uncached input rate, not a blended rate. To reproduce the estimate, subtract cache-read tokens from total input tokens, multiply the uncached and cached counts by their own stored rates, add the output cost, and divide by 1,000,000. A missing cache-read count contributes zero to this numeric calculation, but does not prove that cache usage was zero.
+
+Other LLM services keep their existing accounting rules and default prices. Hyperion reads explicitly configured prices from the same `artemis.llm.model-costs` keys, without inheriting those defaults. Generation activity reports estimate completeness; the existing ledger does not persist that flag. A numeric ledger entry alone does not prove that all prices or the cache split were known.
 
 When using catalogue prices as a reference for another provider, retain the catalogue retrieval date and currency conversion with the deployment configuration. A reference estimate is not an invoice or evidence of provider billing.
 
@@ -243,7 +245,6 @@ artemis:
         exercise-generation:
             enabled: true
     aiworker:
-        enabled: true
         ids: [worker-1]
 ```
 
@@ -252,7 +253,7 @@ worker connects as a Hazelcast client or to Redis/Valkey; it does not join the
 core Hazelcast cluster as a member. Worker IDs must match the configured pool. A missing capable worker returns `503 generationCapacityUnavailable`;
 starting a supervisor process is not evidence that generation is available.
 
-Generation accepts only unreleased Java Gradle exercises (`PLAIN_GRADLE` or
+Generation and adaptation accept mutable Java Gradle exercises (`PLAIN_GRADLE` or
 `GRADLE_GRADLE`; both share the Gradle test harness) without auxiliary
 repositories, sequential test runs, or static code analysis. Maven projects are
 not supported. The current offline sandbox uses the canonical Java 25 / Ares 2
@@ -331,17 +332,17 @@ Redis/Valkey; asynchronous provider failover is not certified as lossless owners
 
 ### Authoring history and version restoration
 
-The capabilities in this section require the later unified authoring/history
-layer. The worker and core integration layers alone provide memory-backed
-retention and per-exercise job reservations, but no durable SQL authoring journal,
-history endpoints, or restoration after a full cluster restart.
-
 Programming Create, Adapt, and Variant share the worker lifecycle. Variant
 preparation copies a source to a separate destination;
 quiz generation remains separate. Whole-exercise programming generation, adaptation,
 and variants are limited to course exercises. Exams remain unsupported, including
 future exams without assigned students. Generation does not change exam assignment
 or add exam-row coordination.
+Existing quiz and legacy repository generation behavior is unchanged.
+
+Source metadata and baseline capture share a short read reservation with draft
+creation. A separate reservation covers source validation and repository copying
+in the worker. Neither stays held while the job waits or the model authors.
 
 Hyperion introduces no database schema changes. Saved exercise content and
 before/after snapshots use the existing exercise version history. Existing
@@ -464,9 +465,9 @@ coordinated upgrade when the distributed-data schema number is unchanged; do not
 3. Before recovering any reservation, stop or drain generation and build-result processing on every affected core,
    following the [save and recovery procedure](#save-cancellation-and-recovery). No remaining callback may still update
    grading. Inspect remaining reservations with the old application. For each affected exercise, an administrator can use
-   `GET /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot`. Stop its old core/worker execution and reconcile
+   `GET /api/hyperion/admin/exercises/{exerciseId}/wedged-slot`. Stop its old core/worker execution and reconcile
    repository heads, metadata and grading before using the matching
-   `DELETE /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/{token}?reason=...` recovery operation.
+   `DELETE /api/hyperion/admin/exercises/{exerciseId}/wedged-slot/{token}?reason=...` recovery operation.
    Recovery is audited but does not establish process liveness or repair incomplete writes. A legacy reservation may
    remain visible because its stored bytes prevent the recovery endpoint's conditional removal. Record the token,
    stopped execution and evidence that repository heads, metadata and grading have been reconciled. Treat this as a
@@ -510,7 +511,7 @@ entered reason so the operator can refresh and assess the current state.
 Administrator-only APIs expose the same metadata and controls:
 
 - `GET /api/aiworker/admin/workers` (404 when AI Worker coordination is disabled).
-- `GET /api/hyperion/admin/exercises/generations` (active runs only).
+- `GET /api/hyperion/admin/generations` (active runs only).
 - `DELETE /api/hyperion/admin/exercises/{exerciseId}/generations/{generationId}?reason=...`
   (202 when accepted, 409 if no longer cancellable).
 
@@ -526,17 +527,19 @@ This view contains no prompts, generated artifacts, or credentials. It cannot
 execute commands, terminate a worker, or release a generation reservation.
 Ordinary LocalCI monitoring continues to report ordinary build agents separately.
 
-The **Configured workers** count includes offline identities. **Free / total
-slots** includes only workers with a current heartbeat; an offline row displays
-an unknown capacity, not a usable zero-slot worker. **Toolchain** identifies the
-advertised language/build adapter. Free capacity is not necessarily compatible
-with every exercise. **Technical details** contains every active execution with
-its one-based slot number, the core reservation, worker instance and sandbox
-image digest. These identifiers support incident diagnosis, not host control.
+The unified **AI Generation** page shows worker state, free/total slots, last
+contact and running jobs. Offline capacity is unknown, not a usable zero-slot
+worker. Compatibility and ownership identifiers remain internal safeguards rather
+than instructor-facing configuration. See [AI Worker operations](/admin/aiworker)
+for the column definitions and live-update behavior.
 
 ### Save, cancellation, and recovery
 
-Cancellation before persistence changes no exercise repositories or metadata.
+Cancellation before persistence saves no generated candidate. A variant can
+already have an imported destination draft, which remains available for inspection.
+Activity admission is synchronous and precedes the variant draft transaction's
+commit. If recording that identity fails, draft preparation rolls back and no
+worker is dispatched; a later executor rejection retains an inspectable failed run.
 Read-only retained artifacts and job transcripts are temporary inspection data,
 not saved exercises. A worker disconnect cannot authorize a replacement to save
 under the old execution identity. Inspect incomplete accounting as unknown usage,
@@ -591,9 +594,9 @@ request, or a network disconnect is not proof that execution has finished. Stop
 the old execution if necessary; do not start a replacement while it can still run.
 
 An administrator can inspect a stale authoring, save, or undo reservation with
-`GET /api/hyperion/admin/exercises/{id}/hyperion-wedged-slot` and release its exact
+`GET /api/hyperion/admin/exercises/{id}/wedged-slot` and release its exact
 token with
-`DELETE /api/hyperion/admin/exercises/{id}/hyperion-wedged-slots/{token}?reason=...`.
+`DELETE /api/hyperion/admin/exercises/{id}/wedged-slot/{token}?reason=...`.
 Supply an incident reason after confirming that the old executions have stopped
 and reconciling the exercise. The diagnostic can report a job or a `LIVE_SAVE` reservation, including one left
 by an ordinary write or template copy. If both remain, release and recheck each
@@ -618,13 +621,22 @@ Hyperion uses the same startup module condition as Iris and Athena, not an
 administrator-switchable runtime feature toggle. Core configuration and the
 `activeModuleFeatures` reported to the client use the same condition:
 
-| Control                                                                                             | Effect                                                                                                                          |
-| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `artemis.hyperion.enabled=false`                                                                    | Disables Hyperion, including generation.                                                                                        |
-| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent                    | Other Hyperion tools remain available; no generation transport beans or worker configuration are required.                      |
-| Both Hyperion properties true, `artemis.aiworker.enabled=true`, and profiles `core,localci,localvc` | Enables generation coordination and advertises its module feature. A compatible worker and provider configuration are required. |
-| Missing a required profile or AI Worker coordination flag                                           | Generation remains unavailable even when both Hyperion properties are true.                                                     |
-| No ready worker or no free slot                                                                     | Enabled but unavailable; capacity errors do not turn off the module flag.                                                       |
+| Node and settings                                                | What happens                                                                                                                                                           |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core with both settings false                                    | No Hyperion tools, generation, or cross-node Hyperion mutation coordination.                                                                                           |
+| Core with only `artemis.hyperion.enabled=true`                   | AI help for problem statements, quizzes, FAQs, and quiz variants. No programming exercise generation, worker connection, or cross-node Hyperion mutation coordination. |
+| Core with both settings true and profiles `core,localci,localvc` | All Hyperion tools plus programming exercise generation and AI Worker coordination. Worker and provider configuration is required.                                     |
+| Writer with both Hyperion settings false                         | Does not coordinate repository writes with generation on another node. Do not admit generation elsewhere until this writer enables the generation setting.             |
+| Core with both settings true but a required profile missing      | Generation stays off. Cross-node mutation coordination remains active if this node is a core or LocalVC writer.                                                        |
+
+The Administration > Features page shows AI authoring and programming exercise
+generation as separate module cards. Their status reports which features this
+core offers; it does not report worker capacity. A missing ready worker or a
+full worker returns `503 generationCapacityUnavailable` without changing the
+status. A core or LocalVC writer participates in cross-node mutation coordination
+only when `artemis.hyperion.exercise-generation.enabled=true`, even if its
+generation card is inactive. Set this flag on every writer before admitting
+generation on any node.
 
 The standalone worker is a separate process of the normal Artemis WAR, not an additional core
 profile. It uses the normal Artemis component scan, with profiles and feature
@@ -644,11 +656,11 @@ continuation of interrupted runs.
 
 ### Build-agent and worker deployment boundaries
 
-| Process                               | Application contents    | Activation and exclusions                                                                                                                                                                 |
-| ------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Standalone LocalCI build agent        | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.                   |
-| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                                   |
-| Hyperion generation worker            | Normal Artemis WAR      | The `aiworker` profile loads worker services and the selected workload, not core or database services. It uses the distributed-data provider as a client and has no incoming HTTP server. |
+| Process                               | Application contents    | Activation and exclusions                                                                                                                                                                          |
+| ------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standalone LocalCI build agent        | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.                            |
+| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                                            |
+| Hyperion generation worker            | Normal Artemis WAR      | The `aiworker` profile loads worker services and the selected Hyperion workload, not core or database services. It uses the distributed-data provider as a client and has no incoming HTTP server. |
 
 The generation worker uses chat models only; its bundled configuration excludes
 OpenAI embedding, image, speech, transcription, and moderation auto-configuration.

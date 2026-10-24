@@ -38,26 +38,20 @@
             <span class="hidden sm:inline" jhiTranslate="entity.action.cancel"></span>
         </button>
         @if (showGenerateWithAi()) {
-            <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
-                 events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
             <button
                 tumAetUiButton
                 type="button"
-                id="generate-with-ai"
-                class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                 size="small"
-                [tumAetUiTooltip]="invalidReasonTexts()"
-                [tumAetUiTooltipDescribesHost]="false"
+                severity="secondary"
+                id="generate-with-ai"
+                data-testid="legacy-generate-with-ai"
                 [attr.aria-disabled]="isSubmitDisabled()"
                 [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
+                [tumAetUiTooltip]="invalidReasonTexts()"
+                [tumAetUiTooltipDescribesHost]="false"
                 (click)="onGenerateWithAi()"
             >
-                @if (isGeneratingWithAi()) {
-                    <fa-icon [fixedWidth]="true" [icon]="faSpinner" animation="spin" class="sm" />
-                } @else {
-                    <fa-icon [fixedWidth]="true" [icon]="facArtemisIntelligence" class="sm" />
-                }
-                <span class="hidden sm:inline" jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateWithAi"></span>
+                <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateWithAi"></span>
             </button>
         }
         <button

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -43,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
@@ -259,7 +258,7 @@ public class GenerationPersistenceService {
         boolean shouldSaveProblemStatement = !producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement());
         // Only from scratch: the brief-derived draft title yields to a valid generated H1. An adapt run keeps the instructor's title.
         if (mode == GenerationMode.GENERATE && shouldSaveProblemStatement && (exercise.getProblemStatement() == null || exercise.getProblemStatement().isBlank())) {
-            String generatedTitle = fromProblemStatementHeading(producedProblemStatement);
+            String generatedTitle = HyperionExerciseTitleSanitizer.fromProblemStatementHeading(producedProblemStatement);
             if (generatedTitle != null) {
                 targetTitle = generatedTitle;
             }
@@ -401,7 +400,11 @@ public class GenerationPersistenceService {
         return Map.copyOf(copy);
     }
 
-    private String repositoryBranch(ProgrammingExercise exercise) {
+    /**
+     * @param exercise destination exercise
+     * @return branch shared by persistence and recovery, falling back to the deployment default
+     */
+    public String repositoryBranch(ProgrammingExercise exercise) {
         String branch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
         return branch == null || branch.isBlank() ? defaultBranch : branch;
     }
@@ -465,10 +468,7 @@ public class GenerationPersistenceService {
         return currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, problemStatement, title).isPresent();
     }
 
-    /**
-     * @return the id of the {@code ExerciseVersion} row created for this save, or {@code null} when none was recorded (a tolerated failure with
-     *         {@code failOnFinalizationFailure == false}, or a snapshot the version service judged unchanged)
-     */
+    /** Returns the saved version ID, or null for an unchanged snapshot or a tolerated finalization failure. */
     private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
             Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds, Runnable updateGrading) {
         finalizationGuard.run();
@@ -730,8 +730,7 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Thrown when a push fails inconclusively: the local commit succeeded, but the remote branch could not be confirmed to still be at its pre-persist state, so whether the push
-     * landed is unknown. Carries the repository and the best-known unconfirmed hash so the caller can report the live exercise as conservatively changed.
+     * An unconfirmed push: the local commit exists, but the remote state is unknown. Carries the repository and possible pushed hash so the caller reports the exercise as changed.
      */
     static final class AmbiguousCommitFailure extends IllegalStateException {
 
