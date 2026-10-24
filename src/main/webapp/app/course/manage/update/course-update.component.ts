@@ -99,6 +99,7 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
         labelKey: 'artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.label',
         targetId: 'field_maxDailyOrchestrationOverride',
     },
+    { control: 'courseInformationSharingMessagingCodeOfConduct', labelKey: 'artemisApp.codeOfConduct.title', targetId: 'field_codeOfConduct' },
     { control: 'enrollmentStartDate', labelKey: 'artemisApp.course.enrollmentStartDate', targetId: 'field_enrollmentStartDate_input' },
     { control: 'enrollmentEndDate', labelKey: 'artemisApp.course.enrollmentEndDate', targetId: 'field_enrollmentEndDate_input' },
     { control: 'enrollmentConfirmationMessage', labelKey: 'artemisApp.course.enrollmentConfirmationMessage', targetId: 'field_enrollmentConfirmationMessage' },
@@ -273,6 +274,23 @@ export class CourseUpdateComponent implements OnInit {
     readonly COMPLAINT_TEXT_LIMIT = 65535;
     readonly COURSE_TITLE_LIMIT = 255;
     readonly COURSE_DESCRIPTION_LIMIT = 2000;
+    readonly CODE_OF_CONDUCT_LIMIT = 10000;
+
+    /**
+     * Live source-length of the code-of-conduct markdown. Readback counts UTF-16 code units,
+     * matching the server-side @Size(max = 10000) on CourseUpdateDTO so the client preview
+     * and the server rejection never disagree.
+     */
+    readonly codeOfConductLength = computed(() => {
+        this.formRevision();
+        return (this.courseForm.get('courseInformationSharingMessagingCodeOfConduct')?.value as string | null | undefined)?.length ?? 0;
+    });
+
+    /**
+     * Reference to the Code of Conduct markdown editor so {@link onSubmit} can flush its debounced textChanged
+     * emission before the submit guard reads the form state.
+     */
+    private readonly codeOfConductEditor = viewChild<MarkdownEditorMonacoComponent>('codeOfConductEditor');
 
     ngOnInit() {
         this.timeZones = (Intl as typeof Intl & { supportedValuesOf(key: string): string[] }).supportedValuesOf('timeZone');
@@ -303,6 +321,9 @@ export class CourseUpdateComponent implements OnInit {
                         if (res.body) {
                             this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
                             this.commitCourse();
+                            // Mirror the template content into the FormControl so the length counter and the
+                            // Validators.maxLength check inspect the content the editor is actually showing.
+                            this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(res.body);
                         }
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -356,7 +377,9 @@ export class CourseUpdateComponent implements OnInit {
                 description: new FormControl(this.course.description, {
                     validators: [Validators.maxLength(this.COURSE_DESCRIPTION_LIMIT)],
                 }),
-                courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct, {
+                    validators: [Validators.maxLength(this.CODE_OF_CONDUCT_LIMIT)],
+                }),
                 startDate: new FormControl(this.course.startDate, { validators: [Validators.required] }),
                 endDate: new FormControl(this.course.endDate, { validators: [Validators.required] }),
                 semester: new FormControl(this.course.semester, { validators: [Validators.required] }),
@@ -525,6 +548,10 @@ export class CourseUpdateComponent implements OnInit {
         if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
             active.blur();
         }
+        // The Code of Conduct markdown editor debounces its textChanged emission by 200 ms. Pressing Save inside that
+        // window would otherwise let issues() and save() read the pre-edit value and persist stale content. Flush the
+        // pending edit synchronously so both see the current text.
+        this.codeOfConductEditor()?.flushPendingTextChange();
         const issues = this.issues();
         if (issues.length > 0) {
             this.submitAttempted.set(true);
@@ -926,7 +953,11 @@ export class CourseUpdateComponent implements OnInit {
      * @param message new courseInformationSharingMessagingCodeOfConduct
      */
     updateCourseInformationSharingMessagingCodeOfConduct(message: string) {
-        this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(message);
+        const control = this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'];
+        control.setValue(message);
+        // markdownChange only fires on genuine user edits (never on the programmatic [(markdown)] load), so marking the
+        // control dirty here lets showError reveal the length error and aria-invalid while typing, not only after a save attempt.
+        control.markAsDirty();
     }
 
     /**
