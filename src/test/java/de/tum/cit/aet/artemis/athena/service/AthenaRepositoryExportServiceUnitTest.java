@@ -43,6 +43,9 @@ class AthenaRepositoryExportServiceUnitTest {
 
     private static final long PARTICIPATION_ID = 99L;
 
+    /** A fixed due date that has passed for the participations of the tests; the clock is not what they check. */
+    private static final ZonedDateTime PAST_DUE_DATE = ZonedDateTime.parse("2026-01-15T12:00:00Z");
+
     @Mock
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
@@ -149,7 +152,7 @@ class AthenaRepositoryExportServiceUnitTest {
 
     @Test
     void getStudentRepositoryFilesContentShouldUseLatestCommitForPracticeParticipationAfterDueDate() throws IOException {
-        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setDueDate(PAST_DUE_DATE);
         participation.setExercise(programmingExercise);
         participation.setPracticeMode(true);
         participation.setRepositoryUri(new LocalVCRepositoryUri(URI.create("http://localhost"), "TEST", "TEST-practice-student").getURI().toString());
@@ -170,8 +173,7 @@ class AthenaRepositoryExportServiceUnitTest {
 
     @Test
     void getStudentRepositoryFilesContentShouldUseLastCommitBeforeDueDateForGradedParticipation() throws IOException {
-        ZonedDateTime dueDate = ZonedDateTime.now().minusDays(1);
-        programmingExercise.setDueDate(dueDate);
+        programmingExercise.setDueDate(PAST_DUE_DATE);
         participation.setExercise(programmingExercise);
         participation.setRepositoryUri(new LocalVCRepositoryUri(URI.create("http://localhost"), "TEST", "TEST-student").getURI().toString());
 
@@ -180,7 +182,7 @@ class AthenaRepositoryExportServiceUnitTest {
         when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
 
         var expected = Map.of("Test.java", "class Test {}");
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(participation.getVcsRepositoryUri(), dueDate)).thenReturn(expected);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(participation.getVcsRepositoryUri(), PAST_DUE_DATE)).thenReturn(expected);
 
         Map<String, String> filesContent = athenaRepositoryExportService.getStudentRepositoryFilesContent(EXERCISE_ID, SUBMISSION_ID);
 
