@@ -146,6 +146,61 @@ export function isAthenaAIResult(result: Result): boolean {
     return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
 }
 
+/**
+ * Tracks which Athena feedback results have already triggered a success/failure notification, so a later,
+ * unrelated participation update that still carries the same (already-notified) result does not show it again.
+ *
+ * A failed non-graded request for modeling/text is broadcast without ever being saved (see
+ * TextExerciseFeedbackService/ModelingExerciseFeedbackService: "does not save empty result"), so it never gets an
+ * id. ParticipationWebsocketService keeps such an unsaved placeholder cached indefinitely until a persisted Athena
+ * result for the same submission replaces it (see getNewestResult/isUnfinishedAthenaPlaceholder), so it can
+ * resurface as the current result on a later, unrelated event. Such failures are therefore deduplicated by
+ * submission id instead of result id, and that dedup is cleared once a fresh (pending) request for the same
+ * submission is observed, so a genuine retry's own failure is still shown.
+ */
+export class AthenaResultNotificationTracker {
+    private readonly notifiedResultIds = new Set<number>();
+    private readonly notifiedFailureSubmissionIds = new Set<number>();
+
+    /**
+     * Call once per incoming result.
+     *
+     * @param result the result to evaluate
+     * @param submissionId id of the submission the result belongs to. Callers should pass this explicitly rather
+     * than relying on `result.submission?.id`, which is not reliably populated on every code path that reaches
+     * this method (e.g. before a defensive re-attachment step such as `sortResults()` has run). Falls back to
+     * `result.submission?.id` when omitted.
+     * @return whether a success/failure notification should be shown for this result
+     */
+    shouldNotify(result: Result | undefined, submissionId?: number): boolean {
+        if (!result || !isAthenaAIResult(result)) {
+            return false;
+        }
+        const resolvedSubmissionId = submissionId ?? result.submission?.id;
+        if (result.successful === undefined) {
+            // Pending broadcast for a fresh request: allow the next failure for this submission to be shown again.
+            if (resolvedSubmissionId !== undefined) {
+                this.notifiedFailureSubmissionIds.delete(resolvedSubmissionId);
+            }
+            return false;
+        }
+        if (result.id !== undefined) {
+            if (this.notifiedResultIds.has(result.id)) {
+                return false;
+            }
+            this.notifiedResultIds.add(result.id);
+            return true;
+        }
+        if (resolvedSubmissionId !== undefined) {
+            if (this.notifiedFailureSubmissionIds.has(resolvedSubmissionId)) {
+                return false;
+            }
+            this.notifiedFailureSubmissionIds.add(resolvedSubmissionId);
+        }
+        return true;
+    }
+}
+
 const getAthenaFeedbackTemplateStatus = (result: Result | undefined): ResultTemplateStatus | undefined => {
     if (!result || !isAthenaAIResult(result)) {
         return undefined;
