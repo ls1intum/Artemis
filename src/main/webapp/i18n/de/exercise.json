@@ -269,6 +269,7 @@
             "showFailed": "Letzte Einreichung ohne Ergebnis",
             "showValidSubmissions": "Gültige Einreichungen",
             "showNoSubmissions": "Nur ohne Einreichungen",
+            "showGraded": "Nur bewertete Teilnahmen",
             "showNoPracticeMode": "Nur bewertete Abgaben",
             "showingOnlyInRange": "Zeige nur Ergebnisse im Bereich: {{ range }}",
             "showingOfResults": "Zeigt {{ filtered }} von {{ total }} ({{ percent }}%) Bewertungen",

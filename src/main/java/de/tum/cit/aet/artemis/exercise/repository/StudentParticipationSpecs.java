@@ -423,7 +423,7 @@ public class StudentParticipationSpecs {
         }
         var selected = Arrays.asList(filterProp.split(","));
         var groups = List.of(List.of("Failed", "BuildFailed", "NoSubmissions", "ValidSubmissions"), List.of("Successful", "Unsuccessful"),
-                List.of("Manual", "SemiAutomatic", "Automatic"), List.of("NoPracticeMode"), List.of("Locked"));
+                List.of("Manual", "SemiAutomatic", "Automatic"), List.of("NoPracticeMode", "Graded"), List.of("Locked"));
         return Specification.allOf(groups.stream()
                 .map(group -> Specification.anyOf(group.stream().filter(selected::contains).map(filter -> managementFilter(filter, stuckBuildCutoff)).toList())).toList());
     }
@@ -431,7 +431,8 @@ public class StudentParticipationSpecs {
     /**
      * Returns the filter specification for the management view based on filter name.
      *
-     * @param filterProp       filter name (Failed, NoSubmissions, NoPracticeMode, Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
+     * @param filterProp       filter name (Failed, NoSubmissions, ValidSubmissions, NoPracticeMode, Graded, Successful, Unsuccessful, BuildFailed, Manual, SemiAutomatic,
+     *                             Automatic, Locked)
      * @param stuckBuildCutoff cutoff timestamp for the Failed filter
      * @return specification, or null for unrecognized filterProp
      */
@@ -446,6 +447,7 @@ public class StudentParticipationSpecs {
             case "ValidSubmissions" -> Specification.not(hasNoSubmissions()).and(Specification.not(isBuildFailed())).and((root, query, cb) -> cb
                     .or(cb.notEqual(root.get(Participation_.EXERCISE).type(), ProgrammingExercise.class), existsLatestResultMatching(root, query, cb, null)));
             case "NoPracticeMode" -> isNotPracticeMode();
+            case "Graded" -> (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> c.isTrue(r.get(Result_.RATED)));
             case "Successful" -> isSuccessful();
             case "Unsuccessful" -> isUnsuccessful();
             case "BuildFailed" -> isBuildFailed();

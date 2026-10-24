@@ -587,17 +587,39 @@ describe('ParticipationComponent', () => {
             [FilterProp.MANUAL, { type: ExerciseType.TEXT }, true, true],
             [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.MODELING }, true, true],
             [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
-            [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.FILE_UPLOAD }, true, true],
+            [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.FILE_UPLOAD }, true, false],
             [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, true],
-            [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, false],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
             [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.MODELING }, true, false],
+            [FilterProp.MANUAL, { type: ExerciseType.FILE_UPLOAD }, true, false],
+            [FilterProp.GRADED, { type: ExerciseType.QUIZ }, false, true],
+            [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC, isAtLeastInstructor: true }, false, true],
+            [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, isAtLeastInstructor: true }, false, false],
         ])('should offer the result filter %s only where it applies', (filter: FilterProp, ex: Partial<Exercise>, newManualResultsAllowed: boolean, expected: boolean) => {
             component.exercise.set(ex as Exercise);
             component.newManualResultAllowed.set(newManualResultsAllowed);
 
             expect(filters().includes(filter)).toBe(expected);
+        });
+
+        it('keeps programming lock filtering visible before and after the deadline', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC, isAtLeastInstructor: true });
+            component.newManualResultAllowed.set(false);
+            expect(filters()).toContain(FilterProp.LOCKED);
+            component.newManualResultAllowed.set(true);
+            expect(filters()).toContain(FilterProp.LOCKED);
+        });
+
+        it('sends the quiz graded filter to the server', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.QUIZ });
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            searchSpy.mockClear();
+            component.updateParticipationFilter([FilterProp.GRADED]);
+            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ filterProp: 'Graded' }));
         });
 
         it('should pass the score range to the search', () => {

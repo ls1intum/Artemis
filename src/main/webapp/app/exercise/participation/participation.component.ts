@@ -96,6 +96,7 @@ export enum FilterProp {
     NO_SUBMISSIONS = 'NoSubmissions',
     VALID_SUBMISSIONS = 'ValidSubmissions',
     NO_PRACTICE = 'NoPracticeMode',
+    GRADED = 'Graded',
     SUCCESSFUL = 'Successful',
     UNSUCCESSFUL = 'Unsuccessful',
     BUILD_FAILED = 'BuildFailed',
@@ -226,7 +227,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         const ex = this.exercise();
         if (!ex) return [];
         const isProgramming = ex.type === ExerciseType.PROGRAMMING;
-        const assessmentTypeFilterable = isProgramming || this.newManualResultAllowed() || !!ex.allowComplaintsForAutomaticAssessments;
+        const assessmentTypeFilterable = isProgramming || ex.type === ExerciseType.TEXT || ex.type === ExerciseType.MODELING;
+        const manualAssessmentEnabled = ex.type !== ExerciseType.QUIZ && (!isProgramming || ex.assessmentType !== AssessmentType.AUTOMATIC);
         return [
             {
                 labelKey: 'artemisApp.participation.filterGroup.submissions',
@@ -238,13 +240,14 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 ? [
                       {
                           labelKey: 'artemisApp.participation.filterGroup.assessmentType',
-                          items: [FilterProp.MANUAL, FilterProp.SEMI_AUTOMATIC, FilterProp.AUTOMATIC],
+                          items: [FilterProp.MANUAL, FilterProp.SEMI_AUTOMATIC, ...(isProgramming ? [FilterProp.AUTOMATIC] : [])],
                           single: true,
                       },
                   ]
                 : []),
             ...(isProgramming ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.NO_PRACTICE] }] : []),
-            ...(this.newManualResultAllowed() && ex.isAtLeastInstructor ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentStatus', items: [FilterProp.LOCKED] }] : []),
+            ...(ex.type === ExerciseType.QUIZ ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.GRADED] }] : []),
+            ...(manualAssessmentEnabled && ex.isAtLeastInstructor ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentStatus', items: [FilterProp.LOCKED] }] : []),
         ];
     });
 

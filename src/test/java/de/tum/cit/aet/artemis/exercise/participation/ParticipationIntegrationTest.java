@@ -95,6 +95,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -3333,6 +3334,22 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var validSearch = buildParticipationSearch("", "ValidSubmissions", "id", SortingOrder.ASCENDING);
             var validResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(validSearch));
             assertThat(validResults).extracting(ParticipationManagementDTO::participationId).containsExactly(p1.getId());
+        }
+
+        @Test
+        void getParticipationsPage_filterGradedQuizParticipations() throws Exception {
+            var course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Graded filter", TEST_PREFIX);
+            var quiz = ExerciseUtilService.getFirstExerciseWithType(course, QuizExercise.class);
+            var graded = participationUtilService.createAndSaveParticipationForExercise(quiz, TEST_PREFIX + "student1");
+            var ungraded = participationUtilService.createAndSaveParticipationForExercise(quiz, TEST_PREFIX + "student2");
+            var missingResult = participationUtilService.createAndSaveParticipationForExercise(quiz, TEST_PREFIX + "student3");
+            participationUtilService.createSubmissionAndResult(graded, 80, true);
+            participationUtilService.createSubmissionAndResult(ungraded, 80, false);
+            var url = "/api/exercise/exercises/" + quiz.getId() + "/participations/page";
+            var search = buildParticipationSearch("", "Graded", "id", SortingOrder.ASCENDING);
+            var results = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(graded.getId());
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).doesNotContain(ungraded.getId(), missingResult.getId());
         }
 
         @Test
