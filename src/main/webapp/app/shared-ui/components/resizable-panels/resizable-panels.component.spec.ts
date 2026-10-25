@@ -212,6 +212,15 @@ describe('ResizablePanelsComponent', () => {
         expect(fixture.debugElement.query(By.css('p-splitter')).componentInstance.minSizes).toEqual([36, 0]);
     });
 
+    it('caps the left minimum so the right panel can be dragged wider than the collapse threshold', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.leftMinSizePercent = 90;
+        fixture.detectChanges();
+
+        // With the default threshold of 12%, a minimum of 90% would leave every drag at a right panel of 10% or less, which snaps it shut
+        expect(fixture.debugElement.query(By.css('p-splitter')).componentInstance.minSizes).toEqual([76, 0]);
+    });
+
     it('widens a remembered split whose left panel is below the minimum, so the slider is not frozen', () => {
         localStorage.setItem('test-split', JSON.stringify([20, 80]));
 
@@ -226,6 +235,27 @@ describe('ResizablePanelsComponent', () => {
         const splitter = fixture.nativeElement.querySelector('p-splitter');
         const [left] = Array.from(splitter.querySelectorAll('[data-pc-section="panel"]')) as HTMLElement[];
         expect(left.style.flexBasis).toBe(`calc(36% - ${SPLITTER_GUTTER_SIZE}px)`);
+    });
+
+    it('widens the default split to a minimum above it, on init and when reopening', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.leftMinSizePercent = 75;
+        fixture.detectChanges();
+        const component = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        const splitter = fixture.nativeElement.querySelector('p-splitter');
+        const [left, right] = Array.from(splitter.querySelectorAll('[data-pc-section="panel"]')) as HTMLElement[];
+
+        expect(component.savedSizes()).toBeUndefined();
+        expect(left.style.flexBasis).toBe(`calc(75% - ${SPLITTER_GUTTER_SIZE}px)`);
+
+        component.onResizeEnd([100, 0]);
+        fixture.detectChanges();
+        component.expandRightPanel(0);
+        fixture.detectChanges();
+
+        expect(component.savedSizes()).toEqual([75, 25]);
+        expect(left.style.flexBasis).toBe(`calc(75% - ${SPLITTER_GUTTER_SIZE}px)`);
+        expect(right.style.flexBasis).toBe(`calc(25% - ${SPLITTER_GUTTER_SIZE}px)`);
     });
 
     it('keeps the usable split when snap-collapsing after a reopen (splitter buffer is not aliased to savedSizes)', () => {
