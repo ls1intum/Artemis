@@ -66,9 +66,12 @@
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
 @source './app/exercise/result';
+@source './app/exercise/participation-submission';
 @source './app/exercise/import';
 @source './app/iris/manage/settings';
 @source './app/editor/markdown-editor';
+@source './app/communication/message-editor';
+@source './app/communication/posting-markdown-editor';
 
 /* The whole exam mode, and the example solution that only its summary shows. */
 @source './app/exam';
@@ -103,6 +106,7 @@
 @source './app/notification';
 @source './app/communication/faq';
 @source './app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component.html';
+@source './app/communication/posting-create-edit-modal/post-create-edit-modal';
 @source './app/calendar';
 @source './app/shared-ui/profile-picture';
 @source './app/localci/build-agent-summary';
@@ -111,6 +115,12 @@
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/shared-ui/components/buttons/code-button';
 @source './app/quiz/manage/apollon-diagrams';
+@source './app/exercise/participation/programming-exercise-participation-actions';
+@source './app/quiz/manage/question-reevaluation-actions';
+@source './app/exercise/statistics/statistics-span-selector';
+@source './app/plagiarism/shared/case-header';
+@source './app/communication/saved-posting-banner';
+@source './app/quiz/manage/statistics/question-statistics-chart';
 
 /* AI exercise variant generation: the navbar progress tray and the wizard modal. */
 @source './app/core/navbar/variant-generation-tray';

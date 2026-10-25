@@ -85,7 +85,8 @@ export class ProgrammingExerciseParticipationsPage {
     }
 
     async checkParticipationStudents(participantName: string, studentUsernames: string[]) {
-        const studentsCell = await this.getParticipationCell(participantName, 'Students');
+        // The members are listed below the team name
+        const studentsCell = await this.getParticipationCell(participantName, 'Team');
         expect(studentsCell).not.toBeUndefined();
         for (const studentName of studentUsernames) {
             await expect(studentsCell!.filter({ hasText: studentName })).toBeVisible();

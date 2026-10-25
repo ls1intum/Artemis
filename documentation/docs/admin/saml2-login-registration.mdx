@@ -115,6 +115,19 @@ info:
         syncUserData: false
 ```
 
+## Startup fails while decoding IdP certificates
+
+If startup fails while creating the SAML2 configuration or relying-party registration, check the deepest exception.
+`Unable to base64 decode data: Strict decoding: Invalid line separator or line length` can indicate an incompatibility
+between commons-codec 1.23.0 and the Base64 decoder used by OpenSAML/Shibboleth.
+Other symptoms include `Missing or incomplete final line separator` for valid certificates in IdP metadata.
+
+[commons-codec 1.23.0 changed strict decoding](https://commons.apache.org/proper/commons-codec/changes.html)
+to require the encoder's exact line layout. Shibboleth 9.2.3 uses a strict 76-column decoder for input that can have
+different line lengths or XML whitespace. Artemis therefore constrains commons-codec to 1.22.1 until a compatible
+upstream decoder is available. For affected installations, use an Artemis build containing this constraint;
+when rebuilding an affected version, constrain commons-codec to 1.22.1 as well.
+
 ## Example configuration
 
 The SAML2 configuration of Artemis could look like this:

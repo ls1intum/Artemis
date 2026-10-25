@@ -231,14 +231,14 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         /**
-         * The scores overview builds its rows from ParticipationScoreDTO, and those results have no submission back
+         * The participation page builds its rows from ParticipationManagementDTO, and those results have no submission back
          * reference. Guarding on result.submission?.id therefore swallowed every click and no request was sent (#13396).
          */
         it('should cancel even when the result has no submission back reference', () => {
             const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             vi.spyOn(window, 'confirm').mockReturnValue(true);
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
-            // Exactly the shape ExerciseScoresComponent#toParticipation produces: no `submission` on the result.
+            // Exactly the shape ParticipationComponent#toParticipation produces: no `submission` on the result.
             const dtoShapedResult = { id: 30 } as Result;
 
             comp.cancelAssessment(dtoShapedResult, comp.participation());
