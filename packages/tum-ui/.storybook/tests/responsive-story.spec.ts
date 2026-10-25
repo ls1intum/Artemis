@@ -1,16 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Locator } from '@playwright/test';
 
-function observeTransition(element: Locator): Promise<boolean> {
-    return element.evaluate(
-        (node) =>
-            new Promise<boolean>((resolve) => {
-                node.addEventListener('transitionrun', () => resolve(true), { once: true });
-                setTimeout(() => resolve(false), 500);
-            }),
-    );
-}
-
 test('applies the compact viewport to responsive table columns', async ({ page }) => {
     await page.goto('./?path=/story/data-display-table--compact-viewport');
 
@@ -168,22 +158,24 @@ test('renders the initial radio selection in AutoDocs', async ({ page }) => {
 });
 
 test('preserves component transitions in AutoDocs', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('./iframe.html?id=forms-toggle-switch--docs&viewMode=docs');
     const toggle = page.getByRole('switch').first();
     const handle = page.locator('.tum-ui-toggle-switch-handle').first();
 
-    const toggleTransition = observeTransition(handle);
+    await expect(handle).toHaveCSS('transition-property', /inset-inline-start/);
+    await expect(handle).toHaveCSS('transition-duration', /0\.2s/);
     await toggle.click();
-    expect(await toggleTransition).toBe(true);
     await expect(toggle).toBeChecked();
 
     await page.goto('./iframe.html?id=navigation-tabs--docs&viewMode=docs');
     const indicator = page.locator('.tum-ui-tab-indicator').first();
     const settings = page.getByRole('tab', { name: 'Settings' }).first();
 
-    const tabTransition = observeTransition(indicator);
     await settings.click();
-    expect(await tabTransition).toBe(true);
+    await expect(indicator).toHaveClass(/tum-ui-tab-indicator-animated/);
+    await expect(indicator).toHaveCSS('transition-property', /transform/);
+    await expect(indicator).toHaveCSS('transition-duration', /0\.25s/);
     await expect.poll(async () => Math.round((await indicator.boundingBox())?.width ?? 0)).toBe(Math.round((await settings.boundingBox())?.width ?? 0));
     await expect.poll(async () => Math.round((await indicator.boundingBox())?.x ?? 0)).toBe(Math.round((await settings.boundingBox())?.x ?? 0));
 });
