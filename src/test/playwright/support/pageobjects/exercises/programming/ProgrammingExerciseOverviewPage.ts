@@ -79,44 +79,27 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     async openCloneMenu(cloneMethod: GitCloneMethod, codeButton?: Locator) {
-        const gitCloneMethodSelector = {
-            [GitCloneMethod.https]: '#useHTTPSButton',
-            [GitCloneMethod.httpsWithToken]: '#useHTTPSWithTokenButton',
-            [GitCloneMethod.ssh]: '#useSSHButton',
+        const authenticationMethodTestId = {
+            [GitCloneMethod.https]: 'authentication-method-password',
+            [GitCloneMethod.httpsWithToken]: 'authentication-method-token',
+            [GitCloneMethod.ssh]: 'authentication-method-ssh',
         };
 
         const codeButtonLocator = codeButton ?? this.getCodeButton();
         await Commands.reloadUntilFound(this.page, codeButtonLocator, 10000, 40000);
 
-        // The popover loads SSH-key / token status asynchronously after it opens (see
-        // code-button.component: getCachedSshKeys / getVcsAccessToken run in ngOnInit). As those
-        // signals resolve, the `@if` alert blocks appear/disappear, the popover height changes and
-        // ngb repositions it — so the `.https-or-ssh-button` toggle and the dropdown options
-        // re-render and briefly detach. Under heavy multi-node load this churn window is long
-        // enough that a single click races a detach ("element is not stable" / "element was
-        // detached from the DOM"). Retry opening the popover plus the toggle and option selection as
-        // a unit, re-finding the elements each attempt and only re-toggling when the dropdown is not
-        // already open.
-        const popover = this.page.locator('.popover-body');
-        const toggle = this.page.locator('.https-or-ssh-button');
-        const cloneMethodOption = this.page.locator(gitCloneMethodSelector[cloneMethod]);
+        const popover = this.getRepositoryActionsDialog();
+        const menuTrigger = popover.getByTestId('authentication-method-menu-trigger');
+        const cloneMethodOption = this.page.getByTestId(authenticationMethodTestId[cloneMethod]);
         const maxAttempts = 5;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             try {
-                // Opening the popover belongs inside the retry: the page keeps rendering after
-                // `reloadUntilFound` returns, and because the popover is attached to `body` with
-                // `autoClose: 'outside'`, any re-render of the code button dismisses it again. The toggle
-                // exists only while the popover is open, so waiting for the toggle alone cannot recover
-                // from that — every attempt would wait out its timeout on an element that can no longer
-                // appear. Reopen instead, and skip the click when the popover is already showing (clicking
-                // the trigger again would close it).
                 if (!(await popover.isVisible())) {
                     await codeButtonLocator.click();
                     await popover.waitFor({ state: 'visible', timeout: 15_000 });
                 }
-                await toggle.waitFor({ state: 'visible', timeout: 15_000 });
                 if (!(await cloneMethodOption.isVisible())) {
-                    await toggle.click({ timeout: 10_000 });
+                    await menuTrigger.click({ timeout: 10_000 });
                 }
                 await cloneMethodOption.waitFor({ state: 'visible', timeout: 10_000 });
                 await cloneMethodOption.click({ timeout: 10_000 });
@@ -125,7 +108,6 @@ export class ProgrammingExerciseOverviewPage {
                 if (attempt === maxAttempts - 1) {
                     throw error;
                 }
-                // Give the popover a moment to finish its async-driven re-render before retrying.
                 await this.page.waitForTimeout(1_000);
             }
         }
@@ -142,7 +124,7 @@ export class ProgrammingExerciseOverviewPage {
      * @param cloneMethod the clone method whose URL is expected to be on screen.
      */
     async getCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https) {
-        const cloneUrl = this.page.locator('.clone-url');
+        const cloneUrl = this.getRepositoryActionsDialog().getByTestId('clone-url');
         await expect.poll(async () => this.cloneUrlBelongsTo(cloneMethod, (await cloneUrl.innerText()).trim()), { timeout: 15000 }).toBeTruthy();
         return (await cloneUrl.innerText()).trim();
     }
@@ -180,13 +162,9 @@ export class ProgrammingExerciseOverviewPage {
             await codeButtonLocator.click();
             await this.page.waitForTimeout(500);
             await codeButtonLocator.click();
-            await this.page.locator('.popover-body').waitFor({ state: 'visible' });
+            await this.getRepositoryActionsDialog().waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
         }
-        // The copy button is enabled before the URL next to it has switched, so copying right away can put the previous
-        // plain HTTPS URL on the clipboard and the caller clones without the token it asked for. Wait for the displayed
-        // URL to be the tokenized one first; it is the same source the button copies from.
-        await this.getCloneUrl(GitCloneMethod.httpsWithToken);
         await button.click();
         return await this.page.evaluate(async () => {
             return await navigator.clipboard.readText();
@@ -202,7 +180,11 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     getCloneUrlButton() {
-        return this.page.getByTestId('copyRepoUrlButton');
+        return this.getRepositoryActionsDialog().getByTestId('copy-repository-url');
+    }
+
+    private getRepositoryActionsDialog() {
+        return this.page.getByRole('dialog', { name: /repository actions/i });
     }
 
     /**

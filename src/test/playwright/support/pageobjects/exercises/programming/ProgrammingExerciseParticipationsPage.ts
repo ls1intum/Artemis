@@ -50,7 +50,7 @@ export class ProgrammingExerciseParticipationsPage {
         console.log('[openRepositoryOnNewPage] Clicked code button, waiting for popover...');
 
         // Wait for the popover to appear and the button to be visible
-        const openRepoButton = this.page.locator('.open-repository-button');
+        const openRepoButton = this.page.getByTestId('open-repository-button');
         await openRepoButton.waitFor({ state: 'visible' });
         // The href is bound via an Angular routerLink that can resolve a tick AFTER the button becomes visible, so
         // reading getAttribute('href') immediately occasionally returns null (the rare "Could not find href" flake).

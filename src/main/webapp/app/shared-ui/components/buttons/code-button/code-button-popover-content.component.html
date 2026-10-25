@@ -36,19 +36,21 @@
                     type="button"
                     class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-3 text-(--tumaet-ui-primary-contrast-color)"
                     [tumAetUiMenuTrigger]="authenticationMenu"
+                    data-testid="authentication-method-menu-trigger"
                 >
                     {{ selectedMethod.label }}
                     <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
                 </button>
 
                 <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-3 py-2">
-                    <code class="block truncate">{{ repositoryDisplayUrl() }}</code>
+                    <code class="block truncate" data-testid="clone-url">{{ repositoryDisplayUrl() }}</code>
                 </div>
             </div>
 
             <a
                 class="flex items-center justify-center rounded-sm text-(--tumaet-ui-text-color)!"
                 [routerLink]="repositoryViewLink()"
+                data-testid="open-repository-button"
                 target="_blank"
                 rel="noopener noreferrer"
                 [tumAetUiTooltip]="'artemisApp.exerciseActions.openRepositoryReadOnly' | artemisTranslate"
@@ -153,7 +155,12 @@
     <tumaet-ui-menu>
         @for (item of labeledAuthenticationMethodData(); track item.authenticationMethodData.authenticationMethod) {
             @let label = item.label;
-            <button type="button" tumAetUiMenuItem (triggered)="selectAuthenticationMethod(item)">
+            <button
+                type="button"
+                tumAetUiMenuItem
+                (triggered)="selectAuthenticationMethod(item)"
+                [attr.data-testid]="'authentication-method-' + item.authenticationMethodData.authenticationMethod"
+            >
                 {{ label }}
             </button>
         }
