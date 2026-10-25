@@ -82,6 +82,15 @@ public class ProgrammingAssessmentService extends AssessmentService {
         return testCasePointsService.calculateTestCasePoints(exercise, result);
     }
 
+    /**
+     * The points of test cases and static code analysis findings are derived from the exercise configuration (see {@link #calculateTestCasePoints}), not from the credits
+     * the client echoes for them.
+     */
+    @Override
+    protected boolean isScoredByServer(Feedback feedback) {
+        return feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback();
+    }
+
     @Override
     protected void attachSynthesizedAutomaticFeedback(ProgrammingExercise exercise, Result result) {
         // a complaint always concerns a student participation, never the solution participation

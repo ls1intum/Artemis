@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
@@ -377,9 +378,9 @@ public class AssessmentService {
     }
 
     /**
-     * Checks that no feedback given by the assessor exceeds {@link Feedback#MAX_MANUAL_CREDITS} in either direction. Two kinds of feedback may exceed it: automatic feedback the
-     * server owns (a stored row, a test case or a static code analysis finding), and feedback linked to a grading instruction whose credits are the stored credits of that
-     * instruction. The client sends type, credits and instruction, so everything else, including a new automatic feedback, counts as given by the assessor.
+     * Checks that every feedback given by the assessor has finite credits within {@link Feedback#MAX_MANUAL_CREDITS} in either direction. The client sends type, id, text
+     * and credits, so none of them proves where a feedback comes from. A feedback above the bound is only accepted when the database confirms its credits: a stored automatic
+     * feedback with the same credits, or a feedback linked to a grading instruction whose stored credits are the same.
      *
      * @param feedbackList the feedback list sent by the client
      */
@@ -387,24 +388,40 @@ public class AssessmentService {
         if (feedbackList == null) {
             return;
         }
-        List<Feedback> outOfBounds = feedbackList.stream()
-                .filter(feedback -> feedback.getCredits() != null && Math.abs(feedback.getCredits()) > Feedback.MAX_MANUAL_CREDITS && !isServerOwnedAutomaticFeedback(feedback))
-                .toList();
+        List<Feedback> outOfBounds = feedbackList.stream().filter(feedback -> feedback.getCredits() != null
+                && (!Double.isFinite(feedback.getCredits()) || Math.abs(feedback.getCredits()) > Feedback.MAX_MANUAL_CREDITS) && !isScoredByServer(feedback)).toList();
         if (outOfBounds.isEmpty()) {
             return;
         }
         // only read when a feedback exceeds the bounds, which a regular assessment never does
         Map<Long, Double> instructionCredits = resultService.getGradingInstructionCredits(outOfBounds);
-        if (outOfBounds.stream().anyMatch(
-                feedback -> feedback.getGradingInstruction() == null || !Objects.equals(instructionCredits.get(feedback.getGradingInstruction().getId()), feedback.getCredits()))) {
+        Set<Long> feedbackIds = outOfBounds.stream().map(Feedback::getId).filter(id -> id != null && id > 0).collect(Collectors.toSet());
+        Map<Long, Feedback> storedFeedback = feedbackIds.isEmpty() ? Map.of()
+                : feedbackRepository.findAllById(feedbackIds).stream().collect(Collectors.toMap(Feedback::getId, Function.identity()));
+        if (outOfBounds.stream().anyMatch(feedback -> !hasStoredInstructionCredits(feedback, instructionCredits) && !hasStoredAutomaticCredits(feedback, storedFeedback))) {
             throw new BadRequestAlertException("The points of a feedback must be between -" + Feedback.MAX_MANUAL_CREDITS + " and " + Feedback.MAX_MANUAL_CREDITS, "Feedback",
                     "feedbackCreditsOutOfBounds");
         }
     }
 
-    private static boolean isServerOwnedAutomaticFeedback(Feedback feedback) {
-        return feedback.getType() == FeedbackType.AUTOMATIC
-                && ((feedback.getId() != null && feedback.getId() > 0) || feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback());
+    /**
+     * Whether the server computes the points of this feedback itself, so that the credits the client sends for it are not counted. No feedback of a non-programming exercise
+     * is, see the programming subclass.
+     *
+     * @param feedback a feedback sent by the client
+     * @return true if its credits do not count towards the score
+     */
+    protected boolean isScoredByServer(Feedback feedback) {
+        return false;
+    }
+
+    private static boolean hasStoredInstructionCredits(Feedback feedback, Map<Long, Double> instructionCredits) {
+        return feedback.getGradingInstruction() != null && Objects.equals(instructionCredits.get(feedback.getGradingInstruction().getId()), feedback.getCredits());
+    }
+
+    private static boolean hasStoredAutomaticCredits(Feedback feedback, Map<Long, Feedback> storedFeedback) {
+        Feedback stored = feedback.getId() != null ? storedFeedback.get(feedback.getId()) : null;
+        return stored != null && stored.getType() == FeedbackType.AUTOMATIC && Objects.equals(stored.getCredits(), feedback.getCredits());
     }
 
     /**

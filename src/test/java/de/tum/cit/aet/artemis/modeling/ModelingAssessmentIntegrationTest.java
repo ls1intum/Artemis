@@ -460,10 +460,26 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         var automaticFeedback = new Feedback().credits(Feedback.MAX_MANUAL_CREDITS + 1.0).type(FeedbackType.AUTOMATIC).detailText("client automatic feedback");
         createAssessment(submission, List.of(automaticFeedback), "/assessment", HttpStatus.BAD_REQUEST);
 
+        // a new automatic feedback with the marker of a static code analysis finding is still sent by the client
+        var markedFeedback = new Feedback().credits(1000.0).type(FeedbackType.AUTOMATIC).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "fake");
+        createAssessment(submission, List.of(markedFeedback), "/assessment", HttpStatus.BAD_REQUEST);
+
+        var notANumberFeedback = new Feedback().credits(Double.NaN).type(FeedbackType.MANUAL_UNREFERENCED).detailText("not a number");
+        createAssessment(submission, List.of(notANumberFeedback), "/assessment", HttpStatus.BAD_REQUEST);
+
         assertThat(resultRepository.findDistinctBySubmissionId(submission.getId())).as("no result is saved for a refused assessment").isNotPresent();
 
         linkedFeedback.setCredits(instruction.getCredits());
         createAssessment(submission, List.of(linkedFeedback), "/assessment", HttpStatus.OK);
+
+        // a stored manual feedback relabelled as automatic is not a stored automatic feedback
+        var storedResult = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
+        var storedFeedback = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(storedResult.getId()).getFeedbacks().iterator().next();
+        storedFeedback.setGradingInstruction(null);
+        storedFeedback.setType(FeedbackType.AUTOMATIC);
+        storedFeedback.setCredits(1000.0);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + storedResult.getId() + "/assessment",
+                new ModelingAssessmentDTO(toFeedbackDTOs(List.of(storedFeedback)), null), HttpStatus.BAD_REQUEST);
     }
 
     @Test
