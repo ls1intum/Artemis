@@ -261,3 +261,4 @@
     --color-text: var(--tumaet-ui-text-color);
     --color-text-secondary: var(--tumaet-ui-muted-color);
 }
+@source "./app/course/manage/update/course-home-welcome-context-form.component.html";
