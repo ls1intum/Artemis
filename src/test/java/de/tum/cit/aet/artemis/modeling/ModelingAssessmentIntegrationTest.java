@@ -445,6 +445,29 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testManualAssessmentSave_creditsOutOfBoundsNotExemptedByClientData() throws Exception {
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(classExercise));
+        var instruction = criteria.getFirst().getStructuredGradingInstructions().iterator().next();
+
+        // a linked feedback whose credits differ from the stored instruction would still count its own credits
+        var linkedFeedback = new Feedback().credits(1000.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("linked with other credits");
+        linkedFeedback.setGradingInstruction(instruction);
+        createAssessment(submission, List.of(linkedFeedback), "/assessment", HttpStatus.BAD_REQUEST);
+
+        // a new automatic feedback is sent by the client, not computed by the server
+        var automaticFeedback = new Feedback().credits(Feedback.MAX_MANUAL_CREDITS + 1.0).type(FeedbackType.AUTOMATIC).detailText("client automatic feedback");
+        createAssessment(submission, List.of(automaticFeedback), "/assessment", HttpStatus.BAD_REQUEST);
+
+        assertThat(resultRepository.findDistinctBySubmissionId(submission.getId())).as("no result is saved for a refused assessment").isNotPresent();
+
+        linkedFeedback.setCredits(instruction.getCredits());
+        createAssessment(submission, List.of(linkedFeedback), "/assessment", HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_classDiagram() throws Exception {
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",

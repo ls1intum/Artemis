@@ -377,18 +377,34 @@ public class AssessmentService {
     }
 
     /**
-     * Checks that no feedback given by the assessor exceeds {@link Feedback#MAX_MANUAL_CREDITS} in either direction. Feedback linked to a grading instruction takes its credits
-     * from the instruction, and automatic feedback (e.g. a test case of a programming exercise echoed by the client) is computed by the server, so neither is limited here. A
-     * feedback without a type counts as manual, since it becomes one when it is stored.
+     * Checks that no feedback given by the assessor exceeds {@link Feedback#MAX_MANUAL_CREDITS} in either direction. Two kinds of feedback may exceed it: automatic feedback the
+     * server owns (a stored row, a test case or a static code analysis finding), and feedback linked to a grading instruction whose credits are the stored credits of that
+     * instruction. The client sends type, credits and instruction, so everything else, including a new automatic feedback, counts as given by the assessor.
      *
      * @param feedbackList the feedback list sent by the client
      */
     protected void checkManualFeedbackCreditsWithinBoundsElseThrow(final Collection<Feedback> feedbackList) {
-        if (feedbackList != null && feedbackList.stream().anyMatch(feedback -> feedback.getType() != FeedbackType.AUTOMATIC && feedback.getGradingInstruction() == null
-                && feedback.getCredits() != null && Math.abs(feedback.getCredits()) > Feedback.MAX_MANUAL_CREDITS)) {
+        if (feedbackList == null) {
+            return;
+        }
+        List<Feedback> outOfBounds = feedbackList.stream()
+                .filter(feedback -> feedback.getCredits() != null && Math.abs(feedback.getCredits()) > Feedback.MAX_MANUAL_CREDITS && !isServerOwnedAutomaticFeedback(feedback))
+                .toList();
+        if (outOfBounds.isEmpty()) {
+            return;
+        }
+        // only read when a feedback exceeds the bounds, which a regular assessment never does
+        Map<Long, Double> instructionCredits = resultService.getGradingInstructionCredits(outOfBounds);
+        if (outOfBounds.stream().anyMatch(
+                feedback -> feedback.getGradingInstruction() == null || !Objects.equals(instructionCredits.get(feedback.getGradingInstruction().getId()), feedback.getCredits()))) {
             throw new BadRequestAlertException("The points of a feedback must be between -" + Feedback.MAX_MANUAL_CREDITS + " and " + Feedback.MAX_MANUAL_CREDITS, "Feedback",
                     "feedbackCreditsOutOfBounds");
         }
+    }
+
+    private static boolean isServerOwnedAutomaticFeedback(Feedback feedback) {
+        return feedback.getType() == FeedbackType.AUTOMATIC
+                && ((feedback.getId() != null && feedback.getId() > 0) || feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback());
     }
 
     /**
