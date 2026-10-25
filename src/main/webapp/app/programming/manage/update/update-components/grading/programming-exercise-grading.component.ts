@@ -1,5 +1,7 @@
 import { AfterViewInit, Component, EffectCleanupRegisterFn, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ActivatedRoute } from '@angular/router';
+import { FeatureBonusService } from 'app/assessment/shared/services/feature-bonus.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,7 +24,7 @@ import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Message } from 'primeng/message';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
-import { CustomNoScientificNotationValidatorDirective } from 'app/foundation/validators/custom-no-scientific-notation-validator.directive';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -41,11 +43,13 @@ import { CustomNoScientificNotationValidatorDirective } from 'app/foundation/val
         KeyValuePipe,
         ArtemisTranslatePipe,
         Message,
-        CustomNoScientificNotationValidatorDirective,
+        PointsInputComponent,
     ],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit {
     private translateService = inject(TranslateService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly featureBonusService = inject(FeatureBonusService);
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly AssessmentType = AssessmentType;
@@ -76,8 +80,15 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
     formValidChanges = new Subject<boolean>();
 
     readonly editPolicyUrl = signal<string | undefined>(undefined);
+    /** Exercises can only allow the feature bonus while their course converts the points into a bonus on the final grade. */
+    readonly courseUsesFeatureBonus = signal(false);
 
     constructor() {
+        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (courseId) {
+            this.featureBonusService.getSettings(courseId).subscribe((settings) => this.courseUsesFeatureBonus.set(settings.percentPerPoint !== undefined));
+        }
+
         // A field only exists while its part of the form is shown: the max penalty once static code analysis is on, the policy
         // with its edit field. That can begin after the first render, and a subscription made once after that render would
         // never see such a field, leaving the form status stale. Each subscription therefore follows its field.
@@ -123,15 +134,11 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
 
     calculateFormStatus() {
         const programmingExercise = this.programmingExercise();
-        const maxScoreMissingAndOptional =
-            programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED &&
-            (programmingExercise.maxPoints === undefined || programmingExercise.maxPoints === null);
-        const maxScoreValidOrOptional = this.maxScoreField()?.valid || maxScoreMissingAndOptional;
         // Bonus points are only entered (and the field only rendered) when the exercise is INCLUDED_COMPLETELY,
         // so its validity must not block the form in the other modes (the field is hidden via [hidden]).
         const bonusPointsValidOrHidden = this.bonusPointsField()?.valid || programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
         const maxPenaltyValidOrDisabled = this.maxPenaltyField()?.valid || !programmingExercise.staticCodeAnalysisEnabled;
-        const scoreFieldsValid = maxScoreValidOrOptional && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
+        const scoreFieldsValid = this.maxScoreField()?.valid && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
         const timelineStatus = this.timelineStatus();
         const dependentComponentsValid = !this.submissionPolicyUpdateComponent()?.invalid && timelineStatus.valid;
         const newFormValidValue = Boolean(scoreFieldsValid && dependentComponentsValid);
@@ -150,9 +157,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
     onIncludedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore): void {
         const programmingExercise = this.programmingExercise();
         programmingExercise.includedInOverallScore = includedInOverallScore;
-        if (includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-            programmingExercise.maxPoints = 0;
-        } else if (!programmingExercise.maxPoints) {
+        if (!programmingExercise.maxPoints) {
             programmingExercise.maxPoints = 1;
         }
         if (includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {

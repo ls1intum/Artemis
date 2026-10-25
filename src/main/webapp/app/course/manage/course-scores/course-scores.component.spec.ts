@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { FeatureBonusService } from 'app/assessment/shared/services/feature-bonus.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { FEATURE_BONUS_PERCENT_KEY, FEATURE_BONUS_POINTS_KEY } from 'app/shared-ui/export/export-constants';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -712,6 +715,40 @@ describe('CourseScoresComponent', () => {
         validateUserExportRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '5', '50%', '0', '0%', '10', '0%', '0', '0%', '15', '37.5%');
         const maxRow = generatedRows[3];
         expect(maxRow[COURSE_OVERALL_POINTS_KEY]).toBe('40');
+    });
+
+    it('should export the feature bonus once an exercise allowing it is past its due date', () => {
+        const featureBonusExercise = {
+            title: 'project',
+            id: 7,
+            dueDate: dayjs().subtract(1, 'day'),
+            type: ExerciseType.PROGRAMMING,
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            maxPoints: 10,
+            bonusPoints: 0,
+            featureBonusEnabled: true,
+        } as ProgrammingExercise;
+        course.exercises!.push(featureBonusExercise);
+        try {
+            vi.spyOn(TestBed.inject(FeatureBonusService), 'getFeatureBonusOfCourse').mockReturnValue(of([{ studentId: user1.id!, points: 3, bonusPercent: 1.5 }]));
+            setupMocks();
+            const exportAsCsvStub = vi.spyOn(component, 'exportAsCsv').mockImplementation(() => {});
+            component.exportResults({
+                fieldSeparator: CsvFieldSeparator.SEMICOLON,
+                quoteStrings: true,
+                quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+                decimalSeparator: CsvDecimalSeparator.PERIOD,
+            });
+
+            expect(component.exportReady()).toBe(true);
+            const [keys, rows] = exportAsCsvStub.mock.calls[0];
+            expect(keys).toContain(FEATURE_BONUS_POINTS_KEY);
+            expect(rows[0][FEATURE_BONUS_POINTS_KEY]).toBe('3');
+            expect(rows[0][FEATURE_BONUS_PERCENT_KEY]).toBe('1.5%');
+            expect(rows[1][FEATURE_BONUS_PERCENT_KEY]).toBe('0%');
+        } finally {
+            course.exercises!.pop();
+        }
     });
 
     it('should set grading scale properties correctly', () => {

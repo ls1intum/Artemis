@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.FeatureBonusAward;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.CourseFeatureBonusSettingsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeatureBonusAwardDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeatureBonusAwardRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeatureBonusPointsSumDTO;
@@ -179,6 +180,16 @@ public class FeatureBonusService {
                 .orElse(null);
     }
 
+    /**
+     * @param courseId the id of the course
+     * @return the conversion the course uses, empty while the course does not use the feature bonus
+     */
+    public CourseFeatureBonusSettingsDTO getSettings(long courseId) {
+        return courseConfigurationRepository.findByCourseId(courseId)
+                .map(config -> new CourseFeatureBonusSettingsDTO(config.getFeatureBonusPercentPerPoint(), config.getFeatureBonusMaxPercent()))
+                .orElse(new CourseFeatureBonusSettingsDTO(null, null));
+    }
+
     private Optional<CourseConfiguration> findConfiguration(Course course) {
         return course == null ? Optional.empty() : courseConfigurationRepository.findByCourseId(course.getId());
     }
@@ -195,6 +206,9 @@ public class FeatureBonusService {
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         if (!(participation.getExercise() instanceof ProgrammingExercise exercise) || !exercise.isCourseExercise() || !exercise.isFeatureBonusEnabled()) {
             throw new BadRequestAlertException("The exercise does not allow feature bonus points", ENTITY_NAME, "featureBonusDisabled");
+        }
+        if (getSettings(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).percentPerPoint() == null) {
+            throw new BadRequestAlertException("The course does not use the feature bonus", ENTITY_NAME, "featureBonusDisabled");
         }
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);

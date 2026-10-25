@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.FeatureBonusAward;
+import de.tum.cit.aet.artemis.assessment.dto.CourseFeatureBonusSettingsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeatureBonusAwardDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeatureBonusAwardRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ParticipationFeatureBonusDTO;
@@ -55,7 +56,7 @@ class ProgrammingFeatureBonusIntegrationTest extends AbstractProgrammingIntegrat
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 3, 2, 1, 1);
         var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -103,6 +104,24 @@ class ProgrammingFeatureBonusIntegrationTest extends AbstractProgrammingIntegrat
     void assessmentPageLearnsThatTheExerciseAllowsFeatureBonus() throws Exception {
         var assessment = request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, ProgrammingSubmissionForTutorAssessmentDTO.class);
         assertThat(assessment.participation().exercise().featureBonusEnabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void cannotAwardWhileTheCourseDoesNotUseTheFeatureBonus() throws Exception {
+        CourseConfiguration configuration = courseConfigurationRepository.findByCourseId(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).orElseThrow();
+        configuration.setFeatureBonus(null, null);
+        courseConfigurationRepository.save(configuration);
+        request.postWithResponseBody(awardsUrl(), new FeatureBonusAwardRequestDTO("Feature", null, 1.0), FeatureBonusAwardDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void editorReadsTheFeatureBonusSettingsOfTheCourse() throws Exception {
+        long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        var settings = request.get("/api/assessment/courses/" + courseId + "/feature-bonus-settings", HttpStatus.OK, CourseFeatureBonusSettingsDTO.class);
+        assertThat(settings.percentPerPoint()).isEqualTo(0.5);
+        assertThat(settings.maxPercent()).isEqualTo(5.0);
     }
 
     @Test

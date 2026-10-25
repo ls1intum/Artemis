@@ -30,3 +30,9 @@ export interface StudentFeatureBonus {
     /** The points converted with the course settings and capped at their maximum; unset while the course has no conversion. */
     bonusPercent?: number;
 }
+
+/** The conversion of feature bonus points a course uses; both unset while the course does not use the feature bonus. */
+export interface CourseFeatureBonusSettings {
+    percentPerPoint?: number;
+    maxPercent?: number;
+}

@@ -3,7 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ChangeDetectorRef, Signal, signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
-import { ActivatedRoute, UrlSegment } from '@angular/router';
+import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
+import { FeatureBonusService } from 'app/assessment/shared/services/feature-bonus.service';
 import { Subject, of } from 'rxjs';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
@@ -46,7 +47,8 @@ describe('ProgrammingExerciseGradingComponent', () => {
     const route = {
         queryParams: of({}),
         url: of([{ path: 'programming-exercises' }] as UrlSegment[]),
-    } as ActivatedRoute;
+        snapshot: { paramMap: convertToParamMap({ courseId: '1' }) },
+    } as unknown as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -58,6 +60,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: BuildPhasesTemplateService, useValue: { getTemplate: vi.fn() } },
+                { provide: FeatureBonusService, useValue: { getSettings: vi.fn().mockReturnValue(of({ percentPerPoint: 0.5, maxPercent: 5 })) } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -91,6 +94,19 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should only offer the feature bonus while the course uses it', () => {
+        const featureBonusCheckbox = () => fixture.nativeElement.querySelector('[data-testid="feature-bonus-enabled"]');
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', { ...editFieldRecord, featureBonus: true });
+        fixture.detectChanges();
+        expect(TestBed.inject(FeatureBonusService).getSettings).toHaveBeenCalledWith(1);
+        expect(featureBonusCheckbox()).not.toBeNull();
+
+        comp.courseUsesFeatureBonus.set(false);
+        fixture.detectChanges();
+        expect(featureBonusCheckbox()).toBeNull();
     });
 
     it('should initialize', () => {
@@ -395,6 +411,10 @@ describe('ProgrammingExerciseGradingComponent', () => {
             fixture.componentRef.setInput('isEditFieldDisplayedRecord', { ...editFieldRecord, points: true });
             fixture.detectChanges();
             await fixture.whenStable();
+            // The points input hands a written value to its inner input one microtask late.
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
             expect(valueOf('#field_points')).toBe('10');
             expect(comp.formValid).toBe(true);
             const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
@@ -420,6 +440,10 @@ describe('ProgrammingExerciseGradingComponent', () => {
             fixture.componentRef.setInput('isEditFieldDisplayedRecord', { ...editFieldRecord, bonusPoints: true });
             fixture.detectChanges();
             await fixture.whenStable();
+            // The points input hands a written value to its inner input one microtask late.
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
             expect(valueOf('#field_bonusPoints')).toBe('2');
             expect(comp.formValid).toBe(true);
             const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
@@ -430,6 +454,18 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
             await type(fixture.debugElement.nativeElement.querySelector('#field_bonusPoints'), '3');
             expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
+            expect(comp.formValid).toBe(true);
+        });
+
+        it('should take decimal points and bonus points typed with a comma or a point', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            await type(fixture.debugElement.nativeElement.querySelector('#field_points'), '2,5');
+            await type(fixture.debugElement.nativeElement.querySelector('#field_bonusPoints'), '0.75');
+
+            expect(comp.programmingExercise().maxPoints).toBe(2.5);
+            expect(comp.programmingExercise().bonusPoints).toBe(0.75);
             expect(comp.formValid).toBe(true);
         });
 
@@ -481,7 +517,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
         });
     });
 
-    it('should not require points when exercise is not included in the course score', () => {
+    it('should require points greater than zero when exercise is not included in the course score', () => {
         exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
         exercise.maxPoints = undefined;
         exercise.staticCodeAnalysisEnabled = false;
@@ -489,8 +525,9 @@ describe('ProgrammingExerciseGradingComponent', () => {
         fixture.detectChanges(false);
 
         const pointsInput = fixture.debugElement.nativeElement.querySelector('#field_points') as HTMLInputElement;
-        expect(pointsInput.required).toBe(false);
-        expect(pointsInput.min).toBe('0');
+        const pointsField = fixture.debugElement.query(By.css('jhi-points-input[name=points]'));
+        expect(pointsField.injector.get(NgModel).control.hasError('required')).toBe(true);
+        expect(pointsField.componentInstance.min()).toBe(1);
         const pointsFormGroup = pointsInput.closest('.form-group') as HTMLElement | null;
         expect(pointsFormGroup).not.toBeNull();
         expect(pointsFormGroup?.hidden).toBe(false);
@@ -501,7 +538,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         comp.calculateFormStatus();
 
-        expect(comp.formValid).toBe(true);
+        expect(comp.formValid).toBe(false);
     });
 
     it('should keep invalid points invalid when exercise is not included in the course score', () => {
@@ -520,9 +557,9 @@ describe('ProgrammingExerciseGradingComponent', () => {
         expect(comp.formValid).toBe(false);
     });
 
-    it('should set points to zero when exercise is not included in the course score', () => {
+    it('should keep the points and reset the bonus points when exercise is not included in the course score', () => {
         exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
-        exercise.maxPoints = 1;
+        exercise.maxPoints = 7;
         exercise.bonusPoints = 5;
         const programmingExercise = Object.assign(new ProgrammingExercise(undefined, undefined), exercise);
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
@@ -531,8 +568,20 @@ describe('ProgrammingExerciseGradingComponent', () => {
         comp.onIncludedInOverallScoreChange(IncludedInOverallScore.NOT_INCLUDED);
 
         expect(programmingExercise.includedInOverallScore).toBe(IncludedInOverallScore.NOT_INCLUDED);
-        expect(programmingExercise.maxPoints).toBe(0);
+        expect(programmingExercise.maxPoints).toBe(7);
         expect(programmingExercise.bonusPoints).toBe(0);
+    });
+
+    it('should replace legacy zero points with the minimum valid points when exercise is not included in the course score', () => {
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        exercise.maxPoints = 0;
+        const programmingExercise = Object.assign(new ProgrammingExercise(undefined, undefined), exercise);
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.detectChanges(false);
+
+        comp.onIncludedInOverallScoreChange(IncludedInOverallScore.NOT_INCLUDED);
+
+        expect(programmingExercise.maxPoints).toBe(1);
     });
 
     it('should set bonus points to zero when exercise is included as bonus', () => {

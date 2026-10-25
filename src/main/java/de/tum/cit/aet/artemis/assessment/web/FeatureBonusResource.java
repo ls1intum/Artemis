@@ -19,12 +19,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.assessment.dto.CourseFeatureBonusSettingsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeatureBonusAwardDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeatureBonusAwardRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ParticipationFeatureBonusDTO;
 import de.tum.cit.aet.artemis.assessment.dto.StudentFeatureBonusDTO;
 import de.tum.cit.aet.artemis.assessment.service.FeatureBonusService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -134,5 +136,18 @@ public class FeatureBonusResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<StudentFeatureBonusDTO>> getFeatureBonusOfCourse(@PathVariable long courseId) {
         return ResponseEntity.ok(featureBonusService.getFeatureBonusPerStudent(courseRepository.findByIdElseThrow(courseId)));
+    }
+
+    /**
+     * GET courses/{courseId}/feature-bonus-settings : the conversion of feature bonus points the course uses; exercises can only
+     * allow the feature bonus while it is set.
+     *
+     * @param courseId the id of the course
+     * @return the percent per point and the maximum, both unset while the course does not use the feature bonus
+     */
+    @GetMapping("courses/{courseId}/feature-bonus-settings")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<CourseFeatureBonusSettingsDTO> getFeatureBonusSettings(@PathVariable long courseId) {
+        return ResponseEntity.ok(featureBonusService.getSettings(courseId));
     }
 }

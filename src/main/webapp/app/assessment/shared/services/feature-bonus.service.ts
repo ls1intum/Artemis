@@ -1,7 +1,13 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { FeatureBonusAward, FeatureBonusAwardRequest, ParticipationFeatureBonus, StudentFeatureBonus } from 'app/assessment/shared/entities/feature-bonus.model';
+import {
+    CourseFeatureBonusSettings,
+    FeatureBonusAward,
+    FeatureBonusAwardRequest,
+    ParticipationFeatureBonus,
+    StudentFeatureBonus,
+} from 'app/assessment/shared/entities/feature-bonus.model';
 
 /**
  * Feature bonus: points tutors award for additional features while assessing, converted by the course into a bonus on the final grade.
@@ -30,6 +36,10 @@ export class FeatureBonusService {
 
     getFeatureBonusOfExercise(exerciseId: number): Observable<ParticipationFeatureBonus[]> {
         return this.http.get<ParticipationFeatureBonus[]>(`${this.resourceUrl}/exercises/${exerciseId}/feature-bonus`);
+    }
+
+    getSettings(courseId: number): Observable<CourseFeatureBonusSettings> {
+        return this.http.get<CourseFeatureBonusSettings>(`${this.resourceUrl}/courses/${courseId}/feature-bonus-settings`);
     }
 
     getFeatureBonusOfCourse(courseId: number): Observable<StudentFeatureBonus[]> {
