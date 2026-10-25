@@ -29,12 +29,7 @@
                         <td>
                             <div class="font-semibold">{{ request.title }}</div>
                             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <span class="text-muted-color">{{ request.shortName }}</span>
-                                @if (request.testCourse) {
-                                    <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
-                                } @else if (request.gradeRelevant === false) {
-                                    <tumaet-ui-tag severity="warn" [rounded]="true" [value]="'artemisApp.courseRequest.admin.notGradeRelevant' | artemisTranslate" />
-                                }
+                                <ng-container [ngTemplateOutlet]="courseRequestFlags" [ngTemplateOutletContext]="{ $implicit: request }" />
                             </div>
                         </td>
                         <td class="whitespace-nowrap">{{ request.semester }}</td>
@@ -172,12 +167,7 @@
                         <td>
                             <div class="font-semibold">{{ request.title }}</div>
                             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <span class="text-muted-color">{{ request.shortName }}</span>
-                                @if (request.testCourse) {
-                                    <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
-                                } @else if (request.gradeRelevant === false) {
-                                    <tumaet-ui-tag severity="warn" [rounded]="true" [value]="'artemisApp.courseRequest.admin.notGradeRelevant' | artemisTranslate" />
-                                }
+                                <ng-container [ngTemplateOutlet]="courseRequestFlags" [ngTemplateOutletContext]="{ $implicit: request }" />
                                 <tumaet-ui-tag
                                     [severity]="badgeSeverity(request.status)"
                                     [value]="'artemisApp.courseRequest.status.' + (request.status ?? 'PENDING') | artemisTranslate"
@@ -286,3 +276,12 @@
         </tumaet-ui-button>
     </ng-template>
 </tumaet-ui-dialog>
+
+<ng-template #courseRequestFlags let-request>
+    <span class="text-muted-color">{{ request.shortName }}</span>
+    @if (request.testCourse) {
+        <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
+    } @else if (request.gradeRelevant === false) {
+        <tumaet-ui-tag severity="warn" [rounded]="true" [value]="'artemisApp.courseRequest.admin.notGradeRelevant' | artemisTranslate" />
+    }
+</ng-template>

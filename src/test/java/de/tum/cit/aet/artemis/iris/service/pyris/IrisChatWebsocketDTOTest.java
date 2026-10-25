@@ -85,8 +85,37 @@ class IrisChatWebsocketDTOTest {
         assertThat(dto.runState()).isEqualTo(PyrisRunState.RUNNING);
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 })
+    void websocketEqualityDetectsChangesInEveryWireField(int changedField) {
+        var original = frameWithChange(-1);
+        var identical = frameWithChange(-1);
+        var changed = frameWithChange(changedField);
+        assertThat(original).isEqualTo(identical).hasSameHashCodeAs(identical);
+        assertThat(original).isNotEqualTo(changed);
+        assertThat(changed).isNotEqualTo(original);
+    }
+
+    @Test
+    void websocketEqualityHandlesIdentityNullAndOtherPayloadTypes() {
+        var frame = frameWithChange(-1);
+        assertThat(frame.equals(frame)).isTrue();
+        assertThat(frame.equals(null)).isFalse();
+        assertThat(frame.equals("frame")).isFalse();
+    }
+
+    private IrisChatWebsocketDTO frameWithChange(int field) {
+        var tokens = List.of(new de.tum.cit.aet.artemis.admin.domain.LLMRequest("model", 10, 1f, 5, 1f, "pipeline"));
+        var citations = List.of(new de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO(1L, "Lecture", "Unit", 2L, 3L));
+        return new IrisChatWebsocketDTO(field == 0 ? IrisWebsocketMessageType.MESSAGE : IrisWebsocketMessageType.STATUS, field == 1 ? null : message(),
+                field == 2 ? null : new de.tum.cit.aet.artemis.iris.service.IrisRateLimitService.IrisRateLimitInformation(1, 10, 1),
+                field == 3 ? PyrisRunState.FAILED : PyrisRunState.RUNNING, field == 4 ? null : new PyrisStatusErrorDTO("message", "code"), field == 5 ? "Changed" : "Title",
+                field == 6 ? List.of("other") : List.of("Suggestion"), field == 7 ? List.of() : tokens, field == 8 ? List.of() : citations, field == 9 ? "other-run" : "run",
+                field == 10 ? "other draft" : "draft", field == 11 ? 2 : 1, field == 12 ? List.of() : List.of(activity()), field == 13 ? 2 : 1, field == 14 ? true : false);
+    }
+
     private static IrisMessageResponseDTO message() {
-        return new IrisMessageResponseDTO(1L, ZonedDateTime.parse("2026-07-05T12:00:00Z"), null, IrisMessageSender.LLM, null, null, null, List.of(), null, null, null, null, null);
+        return new IrisMessageResponseDTO(1L, ZonedDateTime.parse("2026-07-05T12:00:00Z"), null, IrisMessageSender.LLM, null, null, null, List.of(), null, null, null);
     }
 
     private static PyrisActivityDTO activity() {

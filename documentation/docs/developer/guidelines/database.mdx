@@ -278,7 +278,7 @@ A `String`, or an attribute converted to one, needs no annotation at all: bound 
 private List<PyrisActivityDTO> toolActivity;
 ```
 
-Where the value is structured rather than free text, `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column is the other option - `IrisMessage.accessedMemories` uses it. It costs the column its equality operator on PostgreSQL, which is why a query fetching such an entity cannot use `DISTINCT`; `IrisChatSessionRepository.findAllWithMessagesByCourseId` returns a `Set` and deduplicates in Java for exactly that reason.
+Where the value is structured rather than free text, `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column is the other option. It costs the column its equality operator on PostgreSQL, so a query fetching such an entity cannot use `DISTINCT` and has to deduplicate in Java instead.
 
 ## Relationships
 

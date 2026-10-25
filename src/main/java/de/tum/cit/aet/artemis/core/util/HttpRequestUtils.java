@@ -207,7 +207,8 @@ public final class HttpRequestUtils {
             return OperatingSystem.LINUX;
         }
 
-        log.warn("Could not detect operating system from user agent: {}, secure user agent platform: {}", userAgent, secureClientHintsUserAgentPlatform);
+        // Clients that are not browsers (desktop and mobile apps, scripts) do not name an operating system the way a browser does
+        log.debug("Could not detect operating system from user agent: {}, secure user agent platform: {}", userAgent, secureClientHintsUserAgentPlatform);
         return null;
     }
 

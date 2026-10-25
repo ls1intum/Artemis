@@ -46,7 +46,6 @@ export class MockAccountService implements IAccountService {
     getVcsAccessToken = (participationId: number) => of();
     createVcsAccessToken = (participationId: number) => of();
     getToolToken = () => of();
-    setUserEnabledMemiris = (enabled: boolean) => of();
     setUserAcceptedExternalLLMUsage = (accepted: boolean) => of();
     // Both mirror the real service so specs can observe the cached decision (the Iris chatbot gates its
     // AI-selection modal on it). restore… keeps an absent timestamp absent, exactly like production.

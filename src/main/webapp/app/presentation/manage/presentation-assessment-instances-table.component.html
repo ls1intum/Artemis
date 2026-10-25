@@ -1,0 +1,57 @@
+<table tumAetUiTable data-testid="presentation-instances-table">
+    <thead>
+        <tr>
+            <th><span jhiTranslate="artemisApp.presentationAssessment.student"></span></th>
+            <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
+            <th><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
+            <th><span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span></th>
+            <th><span jhiTranslate="artemisApp.presentationAssessment.remark"></span></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (row of rows(); track row.rowKey) {
+            @let expanded = expandedRowKeys().includes(row.rowKey);
+            <tr>
+                <td>
+                    <jhi-presentation-student-toggle [row]="row" [expanded]="expanded" [detailsId]="'presentation-detail-' + row.rowKey" (toggled)="toggleDetails(row)" />
+                </td>
+                <td>
+                    @if (row.assessed) {
+                        <tumaet-ui-tag severity="success" size="sm" [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate" />
+                    } @else {
+                        <tumaet-ui-tag severity="warn" size="sm" [value]="'artemisApp.presentationAssessment.pending' | artemisTranslate" />
+                    }
+                </td>
+                <td>
+                    @if (row.assessed) {
+                        <tumaet-ui-tag
+                            severity="info"
+                            size="sm"
+                            [value]="row.instance.resultPoints + ' / ' + presentationAssessment().maxPoints"
+                            data-testid="instance-result-points"
+                        />
+                    } @else {
+                        -
+                    }
+                </td>
+                <td>{{ row.instance.presentationDate ? (row.instance.presentationDate | artemisDate) : '-' }}</td>
+                <td class="text-muted-color">{{ row.instance.remark || '-' }}</td>
+                <td>
+                    <jhi-presentation-instance-actions [canDelete]="canDelete()" (editRequested)="editInstance.emit(row)" (deleteRequested)="deleteInstance.emit(row)" />
+                </td>
+            </tr>
+            @if (expanded) {
+                <tr class="presentation-detail-row" [id]="'presentation-detail-' + row.rowKey">
+                    <td colspan="6">
+                        <jhi-presentation-assessment-instance-details [instance]="row.instance" />
+                    </td>
+                </tr>
+            }
+        } @empty {
+            <tr>
+                <td colspan="6" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
+            </tr>
+        }
+    </tbody>
+</table>

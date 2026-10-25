@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.Size;
+
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -25,9 +27,9 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime releaseDate, String description, String videoSource, Set<CompetencyLinkDTO> competencyLinks,
-        AttachmentDTO attachment, List<SlideDTO> slides, boolean completed, boolean visibleToStudents, LectureReferenceDTO lecture, AttachmentUpdateIntent attachmentUpdateIntent,
-        @JsonProperty("type") String type) implements LectureUnitDTO {
+public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime releaseDate, @Size(max = 1000) String description, String videoSource,
+        Set<CompetencyLinkDTO> competencyLinks, AttachmentDTO attachment, List<SlideDTO> slides, boolean completed, boolean visibleToStudents, LectureReferenceDTO lecture,
+        AttachmentUpdateIntent attachmentUpdateIntent, @JsonProperty("type") String type) implements LectureUnitDTO {
 
     public AttachmentVideoUnitDTO {
         type = "attachment";

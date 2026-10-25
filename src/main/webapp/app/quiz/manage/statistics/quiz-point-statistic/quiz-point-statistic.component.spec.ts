@@ -15,9 +15,7 @@ import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { QuizPointStatisticComponent } from 'app/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
-import dayjs from 'dayjs/esm';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
-import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -50,7 +48,6 @@ describe('QuizExercise Point Statistic Component', () => {
     let websocketService: MockWebsocketService;
     let accountSpy: any;
     let router: Router;
-    let translateService: TranslateService;
     let quizServiceFindSpy: any;
 
     beforeEach(async () => {
@@ -78,7 +75,6 @@ describe('QuizExercise Point Statistic Component', () => {
         websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
         accountService = TestBed.inject(AccountService);
         router = TestBed.inject(Router);
-        translateService = TestBed.inject(TranslateService);
         quizServiceFindSpy = vi.spyOn(quizService, 'findPointStatistic').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
@@ -88,12 +84,10 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('onInit', () => {
-        it('should call functions on Init', async () => {
+        it('should load the point statistic and configure websocket channels on Init', () => {
             // setup
-            vi.useFakeTimers();
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
-            const updateDisplayedTimesSpy = vi.spyOn(comp, 'updateDisplayedTimes');
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
             comp.quizExercise.set(quizExercise);
@@ -102,16 +96,12 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // call
             comp.ngOnInit();
-            await fixture.whenStable();
-            vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
             // check
             expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
             expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');
-            expect(updateDisplayedTimesSpy).toHaveBeenCalled();
-            vi.clearAllTimers();
         });
 
         it('should refresh when a waiting quiz starts', () => {
@@ -180,33 +170,6 @@ describe('QuizExercise Point Statistic Component', () => {
         });
     });
 
-    describe('updateDisplayedTimes', () => {
-        it('should update remaining time', () => {
-            // setup
-            quizExercise.dueDate = dayjs();
-            comp.quizExercise.set(quizExercise);
-
-            // call
-            comp.updateDisplayedTimes();
-
-            // check
-            expect(comp.remainingTimeSeconds()).toBe(-1);
-            expect(comp.remainingTimeText()).toEqual(translateService.instant('artemisApp.showStatistic.quizHasEnded'));
-        });
-
-        it('should show remaining time as zero if time unknown', () => {
-            // setup
-            comp.quizExercise.set(quizExercise);
-
-            // call
-            comp.updateDisplayedTimes();
-
-            // check
-            expect(comp.remainingTimeSeconds()).toBe(0);
-            expect(comp.remainingTimeText()).toBe('?');
-        });
-    });
-
     describe('loadQuizSuccess', () => {
         let loadDataSpy: any;
         let routerSpy: any;
@@ -249,17 +212,6 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(comp.waitingForQuizStart).toBe(false);
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
-    });
-
-    it('should return remaining Time', () => {
-        // only minutes if time > 2min 30sec
-        expect(comp.relativeTimeText(220)).toBe('4 min');
-
-        // minutes and seconds if time in minutes between 1 <= x < 2.5
-        expect(comp.relativeTimeText(130)).toBe('2 min 10 s');
-
-        // only seconds if time < 1min
-        expect(comp.relativeTimeText(50)).toBe('50 s');
     });
 
     it('should calculate the MaxScore if no quiz questions are contained', () => {

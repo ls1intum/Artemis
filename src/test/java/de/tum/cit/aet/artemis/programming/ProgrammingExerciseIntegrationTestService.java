@@ -1344,6 +1344,16 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
+    void createProgrammingExercise_notIncludedZeroMaxScore_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        programmingExercise.setMaxPoints(0.0);
+        // The error key tells the rejected points apart from the title of the fixture, which already exists in the course and is checked later.
+        request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/programming/programming-exercises/setup")).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig)))).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("maxScoreInvalid"));
+    }
+
     void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(10.0);

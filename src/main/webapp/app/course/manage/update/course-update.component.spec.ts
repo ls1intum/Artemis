@@ -25,6 +25,7 @@ import { CourseAdminService } from 'app/course/manage/services/course-admin.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
@@ -197,6 +198,26 @@ describe('Course Management Update Component', () => {
             maxPointsControl.setValue(10);
             expect(maxPointsControl.hasError('notInteger')).toBe(false);
             expect(maxPointsControl.hasError('min')).toBe(false);
+        });
+
+        it('should write the typed max points into the form control and report a fractional value as not an integer', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const maxPointsInput = fixture.nativeElement.querySelector('#field_maxPoints') as HTMLInputElement;
+            const maxPointsControl = comp.courseForm.get('maxPoints')!;
+
+            typeIntoInputNumber(maxPointsInput, '120');
+            expect(maxPointsControl.value).toBe(120);
+            expect(maxPointsControl.valid).toBe(true);
+
+            typeIntoInputNumber(maxPointsInput, '10.5');
+            expect(maxPointsControl.value).toBe(10.5);
+            expect(maxPointsControl.hasError('notInteger')).toBe(true);
         });
     });
 

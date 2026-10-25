@@ -26,6 +26,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockReset;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
@@ -276,7 +277,7 @@ class SpringContextConfigurationArchitectureTest extends AbstractArchitectureTes
      * <p>
      * A bean counts as reset when the class that declares it reads it in a method annotated with {@code @AfterEach},
      * or in one named {@code resetSpyBeans} - the root base class declares that method without the annotation and
-     * lets its subclasses annotate their override.
+     * lets its subclasses annotate their override. A spy declared with {@code reset = MockReset.NONE} is exempt, see {@link #isStubbedOnlyOnce(JavaField)}.
      */
     @Test
     void testEveryMockedBeanIsResetAfterEachTest() {
@@ -306,12 +307,22 @@ class SpringContextConfigurationArchitectureTest extends AbstractArchitectureTes
                 Set<String> resetBeans = testClass.getMethods().stream().filter(method -> method.isAnnotatedWith(AfterEach.class) || "resetSpyBeans".equals(method.getName()))
                         .flatMap(method -> method.getFieldAccesses().stream()).map(access -> access.getTarget().getName()).collect(Collectors.toSet());
 
-                testClass.getFields().stream().filter(SpringContextConfigurationArchitectureTest::isMockedBean).filter(field -> !resetBeans.contains(field.getName()))
+                testClass.getFields().stream().filter(SpringContextConfigurationArchitectureTest::isMockedBean).filter(field -> !isStubbedOnlyOnce(field))
+                        .filter(field -> !resetBeans.contains(field.getName()))
                         .forEach(field -> events.add(SimpleConditionEvent.violated(field,
                                 "%s is never reset. Add it to the Mockito.reset(...) call in %s, so that stubbing it cannot leak into the tests that run afterwards."
                                         .formatted(field.getFullName(), testClass.getSimpleName()))));
             }
         };
+    }
+
+    /**
+     * A spy declared with {@code reset = MockReset.NONE} is never stubbed or reset by a test: it is stubbed once when the context is built, and tests change what it
+     * returns through a holder of their own (see {@code BuildAgentConfigurationOverrides}). Resetting such a spy is what must not happen, because it would drop the stubbing
+     * that the other threads of the application rely on.
+     */
+    private static boolean isStubbedOnlyOnce(JavaField field) {
+        return field.isAnnotatedWith(MockitoSpyBean.class) && field.getAnnotationOfType(MockitoSpyBean.class).reset() == MockReset.NONE;
     }
 
     private static boolean isMockedBean(JavaField field) {

@@ -701,6 +701,71 @@ describe('PostingReactionsBarComponent', () => {
         expect(communicationServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
     });
 
+    describe('pinning outside of a selected conversation (e.g. in the course-wide search)', () => {
+        const searchResultInConversation = (conversationId: number | undefined) => {
+            const searchResult = new Post();
+            searchResult.id = 99;
+            searchResult.displayPriority = DisplayPriority.NONE;
+            searchResult.conversation = conversationId === undefined ? undefined : ({ id: conversationId, type: ConversationType.CHANNEL } as Conversation);
+            return searchResult;
+        };
+
+        beforeEach(() => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined);
+            vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(true);
+        });
+
+        it('should not offer pinning to a tutor who has no moderation rights in the channel of the post', () => {
+            vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockReturnValue({
+                id: 5,
+                type: ConversationType.CHANNEL,
+                hasChannelModerationRights: false,
+            } as ChannelDTO);
+            fixture.componentRef.setInput('posting', searchResultInConversation(5));
+
+            component.ngOnInit();
+
+            expect(component.canPin()).toBe(false);
+        });
+
+        it('should offer pinning to a user who has moderation rights in the channel of the post', () => {
+            const cachedConversationSpy = vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockReturnValue({
+                id: 5,
+                type: ConversationType.CHANNEL,
+                hasChannelModerationRights: true,
+            } as ChannelDTO);
+            fixture.componentRef.setInput('posting', searchResultInConversation(5));
+
+            component.ngOnInit();
+
+            expect(cachedConversationSpy).toHaveBeenCalledExactlyOnceWith(5);
+            expect(component.canPin()).toBe(true);
+        });
+
+        it('should recalculate the pin permission when the component gets a post of another conversation', () => {
+            vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockImplementation(
+                (conversationId) => ({ id: conversationId, type: ConversationType.CHANNEL, hasChannelModerationRights: conversationId === 5 }) as ChannelDTO,
+            );
+
+            fixture.componentRef.setInput('posting', searchResultInConversation(5));
+            fixture.detectChanges();
+            expect(component.canPin()).toBe(true);
+
+            fixture.componentRef.setInput('posting', searchResultInConversation(6));
+            fixture.detectChanges();
+            expect(component.canPin()).toBe(false);
+        });
+
+        it('should not offer pinning when the conversation of the post is not known', () => {
+            vi.spyOn(TestBed.inject(CourseConversationsService), 'getCachedConversation').mockReturnValue(undefined);
+            fixture.componentRef.setInput('posting', searchResultInConversation(undefined));
+
+            component.ngOnInit();
+
+            expect(component.canPin()).toBe(false);
+        });
+    });
+
     it('should emit isDeleteEvent when deletePosting is called', () => {
         const spy = vi.spyOn(component.isDeleteEvent, 'emit');
         component.deletePosting();
@@ -755,6 +820,29 @@ describe('PostingReactionsBarComponent', () => {
         expect(openForwardMessageViewSpy).toHaveBeenCalledWith(originalPost, false);
     });
 
+    it.each([
+        { id: 42, content: 'Forwarded reply', resolvesPost: false },
+        { id: 42, content: 'Forwarded reply', post: { id: 41 } },
+    ])('forwards a received reply as an answer using the selected source', (source) => {
+        const openForwardMessageViewSpy = vi.spyOn(component, 'openForwardMessageView').mockImplementation(() => undefined);
+        fixture.componentRef.setInput('posting', { id: 1, content: '', hasForwardedMessages: true } as Post);
+        fixture.componentRef.setInput('originalPostDetails', source);
+
+        component.forwardMessage();
+
+        expect(openForwardMessageViewSpy).toHaveBeenCalledExactlyOnceWith(source, true);
+    });
+
+    it('does not open a forward dialog when the received source is unavailable', () => {
+        const openForwardMessageViewSpy = vi.spyOn(component, 'openForwardMessageView').mockImplementation(() => undefined);
+        fixture.componentRef.setInput('posting', { id: 1, content: '', hasForwardedMessages: true } as Post);
+        fixture.componentRef.setInput('originalPostDetails', undefined);
+
+        component.forwardMessage();
+
+        expect(openForwardMessageViewSpy).not.toHaveBeenCalled();
+    });
+
     it('should call openForwardMessageView with posting when posting content is not empty', () => {
         const openForwardMessageViewSpy = vi.spyOn(component, 'openForwardMessageView');
         const postingWithContent = { id: 1, content: 'Non-empty content' } as Post;
@@ -763,6 +851,36 @@ describe('PostingReactionsBarComponent', () => {
 
         expect(openForwardMessageViewSpy).toHaveBeenCalledOnce();
         expect(openForwardMessageViewSpy).toHaveBeenCalledWith(postingWithContent, false);
+    });
+
+    it.each([{ logins: ['student-two'] }, { logins: ['student-two', 'student-three'] }])('keeps the reply source type when forwarding to $logins', async ({ logins }) => {
+        const source = { id: 42, content: 'Shared reply', resolvesPost: false };
+        const destination = { id: 1337, type: logins.length === 1 ? ConversationType.ONE_TO_ONE : ConversationType.GROUP_CHAT } as ConversationDTO;
+        const selection = new Subject<{ channels: Conversation[]; users: { id: number; login: string }[]; messageContent: string }>();
+        vi.spyOn(TestBed.inject(ConversationService), 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(component['dialogService'], 'open').mockReturnValue({ onClose: selection.asObservable() } as any);
+        const conversations = TestBed.inject(CourseConversationsService);
+        const directSpy = vi.fn().mockReturnValue(of(new HttpResponse({ body: destination })));
+        conversations.createDirectConversation = directSpy;
+        const groupSpy = vi.fn().mockReturnValue(of(new HttpResponse({ body: destination })));
+        conversations.createGroupConversation = groupSpy;
+        createForwardedMessagesSpy.mockReturnValue(of([]));
+        fixture.componentRef.setInput('course', { id: 1 });
+        fixture.componentRef.setInput('posting', { id: 1, content: '', hasForwardedMessages: true } as Post);
+        fixture.componentRef.setInput('originalPostDetails', source);
+
+        component.forwardMessage();
+        selection.next({ channels: [], users: logins.map((login, index) => ({ id: index + 2, login })), messageContent: 'For next week' });
+
+        await vi.waitFor(() => expect(createForwardedMessagesSpy).toHaveBeenCalledExactlyOnceWith([source], destination, true, 'For next week'));
+        if (logins.length === 1) {
+            expect(directSpy).toHaveBeenCalledExactlyOnceWith(logins[0]);
+            expect(groupSpy).not.toHaveBeenCalled();
+        } else {
+            expect(groupSpy).toHaveBeenCalledExactlyOnceWith(logins);
+            expect(directSpy).not.toHaveBeenCalled();
+        }
+        selection.complete();
     });
 
     it('should not call openForwardMessageView when course id is not set', async () => {

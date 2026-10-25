@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseImportSettingsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
@@ -31,7 +32,7 @@ public record ImportTextExerciseDTO(Long id, String title, String channelName, S
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String gradingInstructions, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, Long courseId, Long exerciseGroupId,
         TeamAssignmentConfigDTO teamAssignmentConfig, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, Set<GradingCriterionDTO> gradingCriteria,
-        Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO, ExerciseImportSettingsDTO {
 
     /**
      * Creates an ImportTextExerciseDTO from the given source/target text exercise (used for tests and import flows).

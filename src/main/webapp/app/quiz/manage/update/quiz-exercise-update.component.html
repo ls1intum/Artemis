@@ -54,7 +54,7 @@
                             <span class="subsection-header-title" jhiTranslate="artemisApp.quizExercise.sections.general"></span>
                         </div>
                         <form name="editForm" role="form" novalidate>
-                            <jhi-exercise-title-channel-name-primeng
+                            <jhi-exercise-title-channel-name
                                 [exercise]="quizExercise()"
                                 [course]="quizExercise().course"
                                 [courseId]="quizExercise().course?.id ?? courseId()"
@@ -323,7 +323,7 @@
                                     <span class="subsection-header-title" jhiTranslate="artemisApp.quizExercise.sections.competencies"></span>
                                 </div>
                                 <div class="form-group">
-                                    <jhi-competency-selection-primeng
+                                    <jhi-competency-selection
                                         id="competencies"
                                         [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                                         [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"

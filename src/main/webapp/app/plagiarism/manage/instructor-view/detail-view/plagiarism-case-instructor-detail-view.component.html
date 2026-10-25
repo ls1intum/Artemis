@@ -1,27 +1,7 @@
 @if (plagiarismCase(); as plagiarismCase) {
     <div class="plagiarism-case">
         <div class="case-header">
-            <div class="row">
-                <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
-                    <h1 class="h2" jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></h1>
-                </div>
-                <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
-                    <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" class="my-2" />
-                </div>
-                <div class="col-12 col-lg-6 col-xl-3 d-flex flex-column">
-                    <p class="mb-1 text-truncate">
-                        <fa-icon [icon]="faUser" />
-                        {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})
-                    </p>
-                    @if (plagiarismCase?.exercise) {
-                        <p class="mb-0 text-truncate">
-                            @if (plagiarismCase.exercise!.type!) {
-                                <fa-icon [icon]="getIcon(plagiarismCase.exercise!.type!)" />
-                            }
-                            {{ plagiarismCase.exercise!.title! }}
-                        </p>
-                    }
-                </div>
+            <div class="row" jhi-plagiarism-case-header [plagiarismCase]="plagiarismCase">
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center justify-content-xl-end">
                     <button type="button" class="btn btn-secondary my-1" (click)="printPlagiarismCase()">
                         <fa-icon [icon]="faPrint" />

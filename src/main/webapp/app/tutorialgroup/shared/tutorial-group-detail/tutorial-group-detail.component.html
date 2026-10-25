@@ -119,13 +119,20 @@
         </section>
     </div>
     <div class="card-row">
-        <section class="card narrow" aria-labelledby="attendance-card-title">
+        <section class="card narrow" aria-labelledby="attendance-card-title" data-testid="tutorial-group-attendance-card">
             <h3 id="attendance-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h3>
             @let attendancePercentage = averageAttendancePercentage();
             @if (attendancePercentage) {
                 <div class="attendance-card-content">
                     <span class="doughnut-chart-text">{{ attendancePercentage }}</span>
-                    <tumaet-ui-doughnut-chart class="h-[122px] w-[122px]" [labels]="chartData().labels" [series]="chartData().series" [config]="chartConfig" aria-hidden="true" />
+                    <tumaet-ui-doughnut-chart
+                        class="h-[122px] w-[122px]"
+                        data-testid="tutorial-group-attendance-chart"
+                        [labels]="chartData().labels"
+                        [series]="chartData().series"
+                        [config]="chartConfig"
+                        aria-hidden="true"
+                    />
                 </div>
             } @else {
                 <div class="disclaimer" data-testid="no-attendance-data-available-disclaimer">

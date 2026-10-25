@@ -7,7 +7,7 @@ import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-di
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Observable, Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,7 +36,6 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     protected readonly ActionType = ActionType;
     readonly faEye = faEye;
     readonly faSignal = faSignal;
-    readonly faTable = faTable;
     readonly faFileExport = faFileExport;
     readonly faWrench = faWrench;
     readonly faTrash = faTrash;

@@ -4,7 +4,7 @@ title: AI Pipelines and Service Boundaries
 sidebar_label: AI Pipelines
 ---
 
-This catalog describes the **Artemis-owned control plane** for AI-enabled workflows: the requests Artemis creates, the data and authorization it owns, and the integration contracts it exposes. It is not generated API documentation and does not replace the implementation documentation of Iris, Athena, AtlasML, Logos, or Memiris.
+This catalog describes the **Artemis-owned control plane** for AI-enabled workflows: the requests Artemis creates, the data and authorization it owns, and the integration contracts it exposes. It is not generated API documentation and does not replace the implementation documentation of Iris, Athena, AtlasML, or Logos.
 
 Use this page together with the [Artemis Intelligence ecosystem map](../admin/artemis-intelligence). It intentionally avoids deployment-specific hosts, credentials, model assignments, provider aliases, capacity, topology, and rollout state. Feature flags and configuration determine whether a boundary is enabled; they do not establish how a particular deployment is configured.
 
@@ -55,17 +55,6 @@ Do not conflate Artemis Global Search with the two Iris-backed endpoints in `Iri
 - `search-answer` is an asynchronous answer pipeline. Artemis checks the user’s LLM-usage consent, stores a `GlobalSearchAnswerJob` with a time-to-live, and calls `PyrisConnectorService.executeGlobalSearchIrisAnswer`. The callback first emits a thinking frame when applicable and later sends the final answer and sources on the `global-search-answer` WebSocket topic. Transport failures do not eagerly remove the job because a callback may still arrive.
 
 Both paths use Iris retrieval rather than Artemis’s Global Search schemas or query authorization layer.
-
-### Memiris management through Iris
-
-`IrisMemoryResource` exposes the Artemis user-management boundary for memories when both Iris and `Feature.Memiris` are enabled. It obtains the current Artemis user and delegates to `PyrisConnectorService` for:
-
-- aggregated memory data;
-- a single memory with its learning and connection details;
-- single-memory deletion; and
-- delete-all forwarding.
-
-Artemis owns the authenticated user boundary and the response DTOs. Iris and Memiris own memory creation, semantic retrieval, relationships, memory storage, and periodic sleep orchestration. For the Iris integration and runtime pipeline details, use the [Iris pipeline system](https://ls1intum.github.io/edutelligence/iris/docs/developer/pipeline-system); the reusable library is documented in the [Memiris source repository](https://github.com/ls1intum/edutelligence/tree/main/memiris).
 
 ## Athena
 

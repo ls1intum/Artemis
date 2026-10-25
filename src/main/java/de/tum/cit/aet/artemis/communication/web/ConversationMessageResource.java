@@ -35,12 +35,14 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
+import de.tum.cit.aet.artemis.communication.service.ForwardedMessageService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -72,15 +74,15 @@ public class ConversationMessageResource {
 
     private final CourseRepository courseRepository;
 
-    private final PostRepository postRepository;
+    private final ForwardedMessageService forwardedMessageService;
 
     public ConversationMessageResource(ConversationMessagingService conversationMessagingService, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, PostRepository postRepository) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, ForwardedMessageService forwardedMessageService) {
         this.conversationMessagingService = conversationMessagingService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
-        this.postRepository = postRepository;
+        this.forwardedMessageService = forwardedMessageService;
     }
 
     /**
@@ -242,11 +244,16 @@ public class ConversationMessageResource {
             return ResponseEntity.notFound().build();
         }
 
-        // authorization: the caller may only retrieve posts they can access (course-wide channel or participant of the conversation).
-        // We check access against the posts that were actually found (not the requested IDs) so that non-existent IDs yield 404, not 403.
+        // Reading the original conversation and receiving a forward are separate permissions. Only the former
+        // permits returning conversation metadata and replies; a forward grants access to its source content alone.
         User user = userRepository.getUser();
         Set<Long> foundPostIds = posts.stream().map(Post::getId).collect(Collectors.toSet());
-        postRepository.userHasAccessToAllPostsElseThrow(foundPostIds, user.getId());
+        Set<Long> directlyAccessibleIds = forwardedMessageService.findDirectlyAccessibleIds(posts, PostingType.POST, courseId, user);
+        Set<Long> forwardedSourceIds = directlyAccessibleIds.size() == foundPostIds.size() ? Set.of()
+                : forwardedMessageService.findAccessibleSourceIds(foundPostIds, PostingType.POST, courseId, user);
+        if (foundPostIds.stream().anyMatch(id -> !directlyAccessibleIds.contains(id) && !forwardedSourceIds.contains(id))) {
+            throw new AccessForbiddenException("Post", foundPostIds);
+        }
 
         if (posts.stream().anyMatch(post -> !post.getConversation().getCourse().getId().equals(courseId))) {
             throw new BadRequestAlertException("Some posts do not belong to the specified course", conversationMessagingService.getEntityName(), "invalidCourse");
@@ -256,7 +263,8 @@ public class ConversationMessageResource {
         conversationMessagingService.hidePendingIrisRepliesFromStudents(posts, courseId);
 
         log.debug("getSourcePostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
-        List<PostResponseDTO> body = posts.stream().map(PostResponseDTO::from).toList();
+        List<PostResponseDTO> body = posts.stream()
+                .map(source -> directlyAccessibleIds.contains(source.getId()) ? PostResponseDTO.from(source) : PostResponseDTO.fromForwardedSource(source)).toList();
         return ResponseEntity.ok().body(body);
     }
 }

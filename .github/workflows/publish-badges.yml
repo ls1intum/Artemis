@@ -1,0 +1,56 @@
+name: Publish README Badges
+
+on:
+    release:
+        types: [published, edited, deleted, unpublished]
+    schedule:
+        - cron: '23 5 * * *'
+    workflow_dispatch:
+
+permissions: {}
+
+jobs:
+    publish:
+        name: Publish release and license badges
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        # Cosmetic state must never fail a release. Failed sources leave the last good files.
+        continue-on-error: true
+        permissions:
+            contents: write
+        steps:
+            - name: Check out trusted badge tooling
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  # A release event may point at an older tag or a scoped UI package tag.
+                  ref: ${{ github.event.repository.default_branch }}
+                  sparse-checkout: supporting_scripts/badges
+                  persist-credentials: false
+            - name: Check out the badges branch
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: badges
+                  path: badges-branch
+                  fetch-depth: 1
+            - name: Setup Node.js
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version: '24'
+            - name: Render and publish badges
+              env:
+                  GITHUB_TOKEN: ${{ github.token }}
+              run: |
+                  set -Eeuo pipefail
+                  if ! node supporting_scripts/badges/render-badges.mjs metadata badges-branch; then
+                    echo "::warning::Could not render README badges; the published values stand."
+                    exit 0
+                  fi
+                  # coverage.json is already our authoritative source. Rendering it here also bootstraps
+                  # coverage.svg during migration without waiting for another full develop test run.
+                  files=(latest-version.svg license.svg)
+                  if [ -f badges-branch/coverage.svg ]; then
+                    files+=(coverage.svg)
+                  fi
+                  if ! node supporting_scripts/badges/publish-badges.mjs badges-branch "${files[@]}"; then
+                    echo "::warning::Could not publish README badges; the published values stand."
+                  fi

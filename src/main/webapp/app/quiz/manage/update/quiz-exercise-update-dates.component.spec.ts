@@ -22,9 +22,8 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
-import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
@@ -99,19 +98,12 @@ describe('QuizExerciseUpdateComponent schedule section', () => {
         })
             .overrideComponent(QuizExerciseUpdateComponent, {
                 remove: {
-                    imports: [
-                        ExerciseTitleChannelNamePrimengComponent,
-                        CategorySelectorPrimengComponent,
-                        CompetencySelectionPrimengComponent,
-                        QuizQuestionListEditComponent,
-                        QuizAiGenerationModalComponent,
-                    ],
+                    imports: [CategorySelectorPrimengComponent, CompetencySelectionComponent, QuizQuestionListEditComponent, QuizAiGenerationModalComponent],
                 },
                 add: {
                     imports: [
-                        MockComponent(ExerciseTitleChannelNamePrimengComponent),
                         MockComponent(CategorySelectorPrimengComponent),
-                        MockComponent(CompetencySelectionPrimengComponent),
+                        MockComponent(CompetencySelectionComponent),
                         MockComponent(QuizQuestionListEditComponent),
                         MockComponent(QuizAiGenerationModalComponent),
                     ],

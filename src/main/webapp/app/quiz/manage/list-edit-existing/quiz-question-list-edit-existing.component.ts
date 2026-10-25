@@ -23,6 +23,9 @@ import { FormsModule } from '@angular/forms';
 import { FileService } from 'app/foundation/service/file.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
 
 export enum State {
     COURSE = 'Course',
@@ -36,7 +39,17 @@ export enum State {
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [NgClass, TranslateDirective, FormsModule, KeyValuePipe, ArtemisTranslatePipe],
+    imports: [
+        NgClass,
+        TranslateDirective,
+        FormsModule,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        TumAetUiButtonComponent,
+        TumAetUiDialogComponent,
+        TumAetUiTooltipDirective,
+        QuizQuestionPreviewComponent,
+    ],
 })
 export class QuizQuestionListEditExistingComponent {
     private dialogService = inject(DialogService);
@@ -72,6 +85,9 @@ export class QuizQuestionListEditExistingComponent {
     shortAnswerFilterEnabled = true;
     readonly importFile = signal<File | undefined>(undefined);
     readonly importFileName = signal<string>('');
+    readonly previewVisible = signal(false);
+    readonly previewQuestion = signal<QuizQuestion | undefined>(undefined);
+    protected readonly faEye = faEye;
 
     constructor() {
         effect(() => {
@@ -134,6 +150,26 @@ export class QuizQuestionListEditExistingComponent {
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
+    }
+
+    /**
+     * Opens the preview dialog for the given question so that it can be looked at before it is selected for the import.
+     * @param question the existing question to preview
+     */
+    openPreview(question: QuizQuestion): void {
+        this.previewQuestion.set(question);
+        this.previewVisible.set(true);
+    }
+
+    /**
+     * Selects the previewed question for the import and closes the preview dialog.
+     */
+    addPreviewedQuestion(): void {
+        const question = this.previewQuestion();
+        if (question) {
+            question.exportQuiz = true;
+        }
+        this.previewVisible.set(false);
     }
 
     /**

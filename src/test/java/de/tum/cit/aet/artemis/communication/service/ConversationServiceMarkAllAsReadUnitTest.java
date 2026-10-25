@@ -78,7 +78,7 @@ class ConversationServiceMarkAllAsReadUnitTest {
         ArgumentCaptor<ConversationParticipant> savedParticipants = ArgumentCaptor.forClass(ConversationParticipant.class);
         verify(conversationParticipantRepository, times(2)).save(savedParticipants.capture());
         ArgumentCaptor<ZonedDateTime> lastRead = ArgumentCaptor.forClass(ZonedDateTime.class);
-        verify(conversationParticipantRepository).updateMultipleLastReadAsync(eq(user.getId()), eq(List.of(openedConcurrently.getId())), lastRead.capture());
+        verify(conversationParticipantRepository).updateMultipleLastRead(eq(user.getId()), eq(List.of(openedConcurrently.getId())), lastRead.capture());
         assertThat(savedParticipants.getAllValues()).as("both participants are saved one by one, marked as read").hasSize(2).allSatisfy(participant -> {
             assertThat(participant.getUnreadMessagesCount()).isZero();
             assertThat(participant.getLastRead()).isEqualTo(lastRead.getValue());

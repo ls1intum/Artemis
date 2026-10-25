@@ -1,17 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
-import java.util.Map;
-
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
-import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -42,41 +37,6 @@ public class HyperionSolutionRepositoryService extends HyperionCodeGenerationSer
     @Override
     protected String testContext(ProgrammingExercise exercise) {
         return contextRenderer.getExistingTestCode(exercise, gitService);
-    }
-
-    @Override
-    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
-        templateVariables.put("problemStatement", exercise.getProblemStatement());
-        templateVariables.put("previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "");
-        return callChatClient(user, exercise, courseId, "/prompts/hyperion/solution/1_plan.st", templateVariables);
-    }
-
-    @Override
-    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
-        templateVariables.put("solutionPlan", solutionPlan);
-        return callChatClient(user, exercise, courseId, "/prompts/hyperion/solution/2_file_structure.st", templateVariables);
-    }
-
-    @Override
-    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO fileStructure) throws NetworkingException {
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
-        templateVariables.put("solutionPlan", solutionPlan);
-        templateVariables.put("fileStructure", fileStructure.getFiles());
-        return callChatClient(user, exercise, courseId, "/prompts/hyperion/solution/3_headers.st", templateVariables);
-    }
-
-    @Override
-    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO headers) throws NetworkingException {
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
-        templateVariables.put("solutionPlan", solutionPlan);
-        templateVariables.put("filesWithHeaders", headers.getFiles());
-        return callChatClient(user, exercise, courseId, "/prompts/hyperion/solution/4_logic.st", templateVariables);
     }
 
     @Override

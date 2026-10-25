@@ -29,8 +29,7 @@ public final class ProviderUsageTransport {
         if (usage.getPromptTokens() == null || usage.getCompletionTokens() == null) {
             throw new IllegalArgumentException("Provider response contains incomplete token counts");
         }
-        return new ProviderUsageUpdate.Call(metadata.getModel() == null ? "" : metadata.getModel(), metadata.getId(), usage.getPromptTokens(), usage.getCompletionTokens(),
-                usage.getCacheReadInputTokens());
+        return new ProviderUsageUpdate.Call(metadata.getModel(), metadata.getId(), usage.getPromptTokens(), usage.getCompletionTokens(), usage.getCacheReadInputTokens());
     }
 
     /**

@@ -27,6 +27,7 @@ import { getElement } from 'test/helpers/utils/general-test.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { PostContextFilter } from '../../communication.util';
 
 @Directive({
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
@@ -61,9 +62,11 @@ describe('CourseWideSearchComponent', () => {
     courseWideSearchConfig.filterToUnresolved = false;
     courseWideSearchConfig.filterToCourseWide = false;
     courseWideSearchConfig.filterToAnsweredOrReacted = false;
-    courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
+    courseWideSearchConfig.sortingOrder = SortDirection.DESCENDING;
     courseWideSearchConfig.selectedConversations = [];
     courseWideSearchConfig.selectedAuthors = [];
+
+    let postsSubject: BehaviorSubject<Post[]>;
 
     beforeEach(() => {
         vi.useFakeTimers();
@@ -112,7 +115,8 @@ describe('CourseWideSearchComponent', () => {
         Object.defineProperty(communicationService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(1).asObservable() });
         Object.defineProperty(communicationService, 'createEmptyPostForContext', { value: () => new Post() });
         Object.defineProperty(courseConversationsService, 'course', { get: () => course });
-        Object.defineProperty(communicationService, 'posts', { get: () => new BehaviorSubject([examplePost]).asObservable() });
+        postsSubject = new BehaviorSubject<Post[]>([examplePost]);
+        Object.defineProperty(communicationService, 'posts', { get: () => postsSubject.asObservable() });
 
         fixture = TestBed.createComponent(CourseWideSearchComponent);
         component = fixture.componentInstance;
@@ -125,6 +129,252 @@ describe('CourseWideSearchComponent', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.clearAllMocks();
+    });
+
+    describe('when images load after the list was positioned at its end', () => {
+        let container: HTMLElement;
+        let top: number;
+        let listHeight: number;
+
+        const imageLoaded = () => {
+            const image = document.createElement('img');
+            container.appendChild(image);
+            // load events do not bubble, so the component has to listen while the event travels down to the image
+            image.dispatchEvent(new Event('load'));
+        };
+
+        beforeEach(() => {
+            container = component.content()!.nativeElement;
+            top = 0;
+            listHeight = 1000;
+            Object.defineProperties(container, {
+                scrollHeight: { get: () => listHeight, configurable: true },
+                clientHeight: { get: () => 400, configurable: true },
+                scrollTop: {
+                    get: () => top,
+                    set: (value: number) => {
+                        top = Math.max(0, Math.min(value, listHeight - 400));
+                    },
+                    configurable: true,
+                },
+            });
+            // the freshly loaded posts are shown starting at the newest message
+            component.handleScrollOnNewMessage();
+            vi.runAllTimers();
+        });
+
+        it('should keep the newest message in view until the user scrolls', () => {
+            expect(top).toBe(600);
+
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+
+            container.dispatchEvent(new Event('wheel'));
+            listHeight = 2000;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it.each(['a', 'Enter', 'Tab'])('keeps the end after the non-scrolling %s key', (key) => {
+            container.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it.each(['input', 'textarea', 'button', 'div'])('keeps the end when a key belongs to a nested %s', (tag) => {
+            const target = document.createElement(tag);
+            if (tag === 'div') target.setAttribute('contenteditable', 'true');
+            container.appendChild(target);
+            target.dispatchEvent(new KeyboardEvent('keydown', { key: tag === 'button' ? ' ' : 'ArrowUp', bubbles: true }));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it.each([false, true])('keeps the end after an ordinary pointer press (nested: %s)', (nested) => {
+            const target = nested ? document.createElement('button') : container;
+            if (nested) container.appendChild(target);
+            Object.defineProperty(container, 'clientWidth', { value: 300, configurable: true });
+            vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ left: 10, right: 330, top: 20, bottom: 420 } as DOMRect);
+            target.dispatchEvent(new MouseEvent('pointerdown', { clientX: 150, clientY: 100, bubbles: true }));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it('keeps the end when a descendant prevents a scrolling key', () => {
+            const event = new KeyboardEvent('keydown', { key: 'PageUp', bubbles: true, cancelable: true });
+            event.preventDefault();
+            container.dispatchEvent(event);
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it('keeps the end after a touch tap and releases it when the touch moves', () => {
+            container.dispatchEvent(new Event('touchstart'));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+            container.dispatchEvent(new Event('touchmove'));
+            listHeight = 2000;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it.each(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '])('releases the end for the scrolling %s key', (key) => {
+            container.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(600);
+        });
+
+        it.each(['left', 'right'])('releases the end when a drag starts in the %s scrollbar gutter', (side) => {
+            Object.defineProperties(container, {
+                clientWidth: { value: 300, configurable: true },
+                clientLeft: { value: side === 'left' ? 20 : 0, configurable: true },
+            });
+            vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ left: 10, right: 330, top: 20, bottom: 420 } as DOMRect);
+            container.dispatchEvent(new MouseEvent('pointerdown', { clientX: side === 'left' ? 15 : 320, clientY: 100, bubbles: true }));
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(600);
+        });
+
+        it('should hold the end again for the next search', () => {
+            container.dispatchEvent(new Event('wheel'));
+            component.onSearch();
+            // the new results arrive
+            component.isFetchingPosts.set(false);
+            component.handleScrollOnNewMessage();
+            vi.runAllTimers();
+
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it('should not follow the end after the component is destroyed', () => {
+            fixture.destroy();
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(600);
+        });
+    });
+
+    describe('when result layout changes after initial positioning', () => {
+        let resize: () => void;
+        let observe: ReturnType<typeof vi.fn>;
+        let disconnect: ReturnType<typeof vi.fn>;
+        let container: HTMLElement;
+        let top: number;
+        let listHeight: number;
+        let visibleHeight: number;
+
+        beforeEach(() => {
+            fixture.destroy();
+            resize = () => {};
+            observe = vi.fn();
+            disconnect = vi.fn();
+            vi.stubGlobal(
+                'ResizeObserver',
+                class {
+                    constructor(callback: () => void) {
+                        resize = callback;
+                    }
+                    observe = observe;
+                    disconnect = disconnect;
+                },
+            );
+            fixture = TestBed.createComponent(CourseWideSearchComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
+            fixture.detectChanges();
+            component.isFetchingPosts.set(false);
+            container = component.content()!.nativeElement;
+            top = 0;
+            listHeight = 1000;
+            visibleHeight = 400;
+            Object.defineProperties(container, {
+                scrollHeight: { get: () => listHeight, configurable: true },
+                clientHeight: { get: () => visibleHeight, configurable: true },
+                scrollTop: {
+                    get: () => top,
+                    set: (value: number) => {
+                        top = Math.max(0, Math.min(value, listHeight - visibleHeight));
+                    },
+                    configurable: true,
+                },
+            });
+            component.handleScrollOnNewMessage();
+            vi.runAllTimers();
+        });
+
+        afterEach(() => vi.unstubAllGlobals());
+
+        it('holds the newest result through row-height changes and stops following after user input', () => {
+            expect(top).toBe(600);
+            listHeight = 1500;
+            resize();
+            expect(top).toBe(1100);
+
+            container.dispatchEvent(new Event('wheel'));
+            listHeight = 2000;
+            resize();
+            expect(top).toBe(1100);
+        });
+
+        it('holds the end through viewport resizing but does not override a pending older page', () => {
+            visibleHeight = 600;
+            resize();
+            expect(top).toBe(400);
+
+            component.totalNumberOfPosts.set(100);
+            component.fetchNextPage();
+            listHeight = 1500;
+            resize();
+            expect(top).toBe(400);
+        });
+
+        it.each([false, true])('keeps the newest result through automatic older-page prefetch (before initial positioning: %s)', (beforeInitialPositioning) => {
+            if (beforeInitialPositioning) {
+                container.dispatchEvent(new Event('wheel'));
+                component.onSearch();
+                component.isFetchingPosts.set(false);
+            }
+            component.totalNumberOfPosts.set(100);
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
+            component.fetchNextPage();
+            const callbacks = request.mock.calls.at(-1)![3]!;
+            callbacks.beforeApply();
+            listHeight = 1500;
+            callbacks.complete(true);
+            vi.runAllTimers();
+            expect(top).toBe(1100);
+            listHeight = 2000;
+            resize();
+            expect(top).toBe(1600);
+
+            // Deliberate reader input releases the end; subsequent older pages preserve that position.
+            container.dispatchEvent(new Event('wheel'));
+            top = 300;
+            component.fetchNextPage();
+            const olderPage = request.mock.calls.at(-1)![3]!;
+            olderPage.beforeApply();
+            listHeight = 2500;
+            olderPage.complete(true);
+            vi.runAllTimers();
+            expect(top).toBe(800);
+        });
+
+        it('observes both result height and viewport size and disconnects on destruction', () => {
+            expect(observe).toHaveBeenCalledWith(container);
+            expect(observe).toHaveBeenCalledWith(fixture.nativeElement.querySelector('[data-testid="course-wide-search-results"]'));
+            fixture.destroy();
+            expect(disconnect).toHaveBeenCalledOnce();
+        });
     });
 
     it('should leave the oldest search result reachable when all pages are loaded', () => {
@@ -177,6 +427,7 @@ describe('CourseWideSearchComponent', () => {
         expect(fetchPosts).toHaveBeenCalledOnce();
         expect(container.scrollTop).toBe(20);
 
+        container.dispatchEvent(new Event('wheel'));
         container.scrollTop = 220; // The reader moves while the response is pending.
         callbacks!.beforeApply();
         component.setPosts([{ id: 2 } as Post, examplePost]);
@@ -234,7 +485,7 @@ describe('CourseWideSearchComponent', () => {
             pageSize: 50,
             pagingEnabled: true,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
-            sortingOrder: SortDirection.ASCENDING,
+            sortingOrder: SortDirection.DESCENDING,
         });
     });
 
@@ -257,7 +508,7 @@ describe('CourseWideSearchComponent', () => {
             pageSize: 50,
             pagingEnabled: true,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
-            sortingOrder: SortDirection.ASCENDING,
+            sortingOrder: SortDirection.DESCENDING,
         });
     });
 
@@ -383,14 +634,20 @@ describe('CourseWideSearchComponent', () => {
     });
 
     it('should initialize sorting direction correctly', () => {
-        expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.ASCENDING);
+        expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.DESCENDING);
+    });
+
+    it('should show the newest messages first by default', () => {
+        // The list is displayed oldest to newest and starts at its end, so the page it shows must be the newest one.
+        expect(new CourseWideSearchConfig().sortingOrder).toBe(SortDirection.DESCENDING);
+        expect(component.sortingOrder()).toBe(SortDirection.DESCENDING);
     });
 
     it('should change sorting direction after clicking the order direction button', () => {
         fixture.changeDetectorRef.detectChanges();
         const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
         selectedDirectionOption.dispatchEvent(new Event('click'));
-        expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.DESCENDING);
+        expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.ASCENDING);
     });
 
     it('should change sorting direction once when a held Space key is released', () => {
@@ -420,5 +677,28 @@ describe('CourseWideSearchComponent', () => {
         sortControl.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
         expect(changeDirection).toHaveBeenCalledOnce();
         expect(component.sortingOrder()).not.toBe(initialDirection);
+    });
+
+    it('should filter out resolved messages with unresolved filter active otherwise not', () => {
+        // Setup and initial assertions
+        const post1 = { id: 1, content: 'test', resolved: true } as Post;
+        const post2 = { id: 2, content: 'test2', resolved: false } as Post;
+
+        // Simulate a change in the posts that includes a resolved post.
+        const updatedPosts = [post1, post2];
+
+        // Retrigger the subscription avoiding setup for an answer and a resolve action.
+        postsSubject.next(updatedPosts);
+
+        // Assert that the component's posts are filtered to only include unresolved posts.
+        expect(component.posts()).toHaveLength(updatedPosts.length);
+        updatedPosts.forEach((post) => {
+            expect(component.posts()).toContainEqual(post);
+        });
+
+        // Now activate the unresolved filter and check that the resolved post is filtered out.
+        component.currentPostContextFilter = { filterToUnresolved: true } as PostContextFilter;
+        postsSubject.next(updatedPosts);
+        expect(component.posts()).toStrictEqual([post2]);
     });
 });

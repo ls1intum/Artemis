@@ -10,7 +10,7 @@
         [style.cursor]="isResizing() ? 'ns-resize' : undefined"
         [style.min-height.px]="minWrapperHeight()"
     >
-        <!-- Tab header row: tabs, close button and (in edit mode) the action toolbar share one wrapping flex row. -->
+        <!-- Tab header row: tabs and (in edit mode) the action toolbar share one wrapping flex row. -->
         <div #actionPalette class="md-action-palette flex items-center flex-wrap gap-x-[0.1rem]">
             <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="md-tabs shrink-0">
                 <p-tablist>
@@ -26,99 +26,73 @@
                 </p-tablist>
             </p-tabs>
 
-            @if (showCloseButton()) {
-                <button type="button" pButton [text]="true" [rounded]="true" severity="secondary" size="small" class="close-btn ml-auto" (click)="onCloseButtonClick()">
-                    <fa-icon [icon]="faTimes" />
-                </button>
-            }
-
             @if (inEditMode()) {
                 <div class="flex items-center flex-wrap">
                     <!-- Standard -->
-                    @if (showTextStyleActions()) {
-                        @for (action of displayedActions().style; track action.id) {
-                            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
-                        }
-                    } @else {
-                        <button
-                            type="button"
-                            class="md-toolbar-btn inline-block leading-[0.75em] text-[1.1em]"
-                            [pTooltip]="'artemisApp.multipleChoiceQuestion.editor.textFormat' | artemisTranslate"
-                            (click)="showTextStyleActions.set(true)"
-                        >
-                            Aa
-                        </button>
+                    @for (action of displayedActions().style; track action.id) {
+                        <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
                     }
-                    @if (showNonTextStyleActions()) {
-                        @for (action of displayedActions().standard; track action.id) {
-                            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
-                        }
-                        <!-- Headers -->
-                        @if (displayedActions().header.length) {
-                            <div class="flex" role="group" aria-label="Button group with nested dropdown">
-                                <button class="md-toolbar-btn" type="button" (click)="headerPopover.toggle($event)">
-                                    <span [jhiTranslate]="headerActions()?.translationKey ?? ''"></span>
-                                </button>
-                                <p-popover #headerPopover [dismissable]="true" styleClass="md-action-popover">
-                                    @for (action of displayedActions().header; track action.id) {
-                                        <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor(); headerPopover.hide()">
-                                            <span [jhiTranslate]="action.translationKey"></span>
+                    @for (action of displayedActions().standard; track action.id) {
+                        <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                    }
+                    <!-- Headers -->
+                    @if (displayedActions().header.length) {
+                        <div class="flex" role="group" aria-label="Button group with nested dropdown">
+                            <button class="md-toolbar-btn" type="button" (click)="headerPopover.toggle($event)">
+                                <span [jhiTranslate]="headerActions()?.translationKey ?? ''"></span>
+                            </button>
+                            <p-popover #headerPopover [dismissable]="true" styleClass="md-action-popover">
+                                @for (action of displayedActions().header; track action.id) {
+                                    <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor(); headerPopover.hide()">
+                                        <span [jhiTranslate]="action.translationKey"></span>
+                                    </button>
+                                }
+                            </p-popover>
+                        </div>
+                    }
+                    @if (displayedActions().color; as color) {
+                        <div class="flex">
+                            <button type="button" class="color-preview md-toolbar-btn" (click)="colorPopover.toggle($event)">
+                                <span [jhiTranslate]="color.translationKey"></span>
+                            </button>
+                            <p-popover #colorPopover [dismissable]="true" styleClass="md-action-popover">
+                                <div class="flex flex-wrap gap-1 w-[13.75rem]">
+                                    @for (tagColor of colors; track tagColor) {
+                                        <button
+                                            type="button"
+                                            class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer rounded-[3px] border border-[var(--color-selector-border)] hover:outline-2 hover:outline-[var(--color-selector-border)]"
+                                            [style.background-color]="tagColor"
+                                            (click)="onSelectColor(tagColor); colorPopover.hide()"
+                                        ></button>
+                                    }
+                                </div>
+                            </p-popover>
+                        </div>
+                    }
+                    <!-- Domain (without options) -->
+                    @for (action of displayedActions().domain.withoutOptions; track action.id) {
+                        <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                    }
+                    <!-- Domain (with options) -->
+                    @for (action of displayedActions().domain.withOptions; track action.id) {
+                        <div class="flex" role="group" aria-label="Button group with nested dropdown">
+                            <button class="md-toolbar-btn" type="button" (click)="domainPopover.toggle($event)">
+                                <span [jhiTranslate]="action.translationKey"></span>
+                            </button>
+                            <p-popover #domainPopover [dismissable]="true" styleClass="md-action-popover">
+                                @if (action.values.length) {
+                                    @for (value of action.values; track value.id) {
+                                        <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value }); domainPopover.hide()">
+                                            <span>{{ value.value }}</span>
                                         </button>
                                     }
-                                </p-popover>
-                            </div>
-                        }
-                        @if (displayedActions().color; as color) {
-                            <div class="flex">
-                                <button type="button" class="color-preview md-toolbar-btn" (click)="colorPopover.toggle($event)">
-                                    <span [jhiTranslate]="color.translationKey"></span>
-                                </button>
-                                <p-popover #colorPopover [dismissable]="true" styleClass="md-action-popover">
-                                    <div class="flex flex-wrap gap-1 w-[13.75rem]">
-                                        @for (tagColor of colors; track tagColor) {
-                                            <button
-                                                type="button"
-                                                class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer rounded-[3px] border border-[var(--color-selector-border)] hover:outline-2 hover:outline-[var(--color-selector-border)]"
-                                                [style.background-color]="tagColor"
-                                                (click)="onSelectColor(tagColor); colorPopover.hide()"
-                                            ></button>
-                                        }
-                                    </div>
-                                </p-popover>
-                            </div>
-                        }
-                        <!-- Domain (without options) -->
-                        @for (action of displayedActions().domain.withoutOptions; track action.id) {
-                            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
-                        }
-                        <!-- Domain (with options) -->
-                        @for (action of displayedActions().domain.withOptions; track action.id) {
-                            <div class="flex" role="group" aria-label="Button group with nested dropdown">
-                                <button class="md-toolbar-btn" type="button" (click)="domainPopover.toggle($event)">
-                                    <span [jhiTranslate]="action.translationKey"></span>
-                                </button>
-                                <p-popover #domainPopover [dismissable]="true" styleClass="md-action-popover">
-                                    @if (action.values.length) {
-                                        @for (value of action.values; track value.id) {
-                                            <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value }); domainPopover.hide()">
-                                                <span>{{ value.value }}</span>
-                                            </button>
-                                        }
-                                    } @else {
-                                        <button type="button" class="md-dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
-                                    }
-                                </p-popover>
-                            </div>
-                        }
-                        <!-- Special case: Lecture attachment reference (nested PrimeNG tiered menu). -->
-                        @if (displayedActions().lecture; as lectureAction) {
-                            <button type="button" class="md-toolbar-btn m-0" (click)="openLectureMenu(lectureMenu, $event, lectureAction)">
-                                <span [jhiTranslate]="lectureAction.translationKey"></span>
-                                <fa-icon [icon]="faAngleDown" class="ml-1" />
-                            </button>
-                            <p-tieredmenu #lectureMenu [model]="lectureMenuModel()" [popup]="true" appendTo="body" />
-                        }
+                                } @else {
+                                    <button type="button" class="md-dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
+                                }
+                            </p-popover>
+                        </div>
                     }
+                    <!-- Special case: Lecture attachment reference (nested PrimeNG tiered menu). -->
                     <!-- AI Assistance -->
                     @if (displayedActions().artemisIntelligence.length > 0) {
                         @if (artemisIntelligenceService.isLoading() || isAiLoading()) {
@@ -221,10 +195,6 @@
                             <fa-icon [icon]="faQuestionCircle" [pTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
                         </a>
                     }
-                    @if (editType() !== EditType.UPDATE && isInCommunication()) {
-                        <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ml-1 shrink-0' }" />
-                        <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ml-1 shrink-0', testId: 'save' }" />
-                    }
                 </div>
             }
         </div>
@@ -247,10 +217,6 @@
                     <div class="p-0 m-0 overflow-auto markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
                 }
             </ng-content>
-            @if (editType() !== EditType.UPDATE && isInCommunication()) {
-                <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-auto' }" />
-                <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-auto' }" />
-            }
         </div>
     </div>
     @if (enableResize() && inEditMode()) {
@@ -271,35 +237,11 @@
 </div>
 
 <ng-template #simpleActionButton let-action="action">
-    <button type="button" class="md-toolbar-btn" [pTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="handleActionClick($event, action)">
+    <button type="button" class="md-toolbar-btn" [pTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="action.executeInCurrentEditor()">
         @if (action.icon) {
             <fa-icon [icon]="action.icon" />
         } @else {
             <span [jhiTranslate]="action.translationKey"></span>
         }
     </button>
-</ng-template>
-
-<ng-template #sendButton let-extraClass="extraClass" let-testId="testId">
-    <button
-        jhi-posting-button
-        [buttonIcon]="faPaperPlane"
-        [buttonLabel]="'artemisApp.conversationsLayout.sendMessage' | artemisTranslate"
-        [buttonLoading]="isButtonLoading()"
-        [disabled]="isButtonLoading() || !isFormGroupValid()"
-        class="btn btn-sm btn-outline-secondary"
-        [ngClass]="extraClass ?? ''"
-        [id]="testId ?? ''"
-        type="submit"
-    ></button>
-</ng-template>
-
-<ng-template #irisButton let-extraClass="extraClass">
-    <jhi-redirect-to-iris-button
-        [question]="currentMarkdown()"
-        [course]="course()"
-        [buttonLoading]="isButtonLoading()"
-        [disabled]="isButtonLoading() || !isFormGroupValid()"
-        [extraClass]="extraClass ?? ''"
-    />
 </ng-template>

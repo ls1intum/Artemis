@@ -1,7 +1,7 @@
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
@@ -59,7 +59,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
@@ -78,6 +78,7 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { translateValidationReasons } from 'app/exercise/util/exercise-validation.util';
 
 /** Largest delay setTimeout accepts before its signed 32-bit truncation makes it fire immediately. */
 const MAX_TIMEOUT_DELAY = 2_147_483_647;
@@ -93,10 +94,10 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
         TranslateDirective,
         DocumentationButtonComponent,
         FormsModule,
-        ExerciseTitleChannelNamePrimengComponent,
+        ExerciseTitleChannelNameComponent,
         HelpIconComponent,
         CategorySelectorPrimengComponent,
-        CompetencySelectionPrimengComponent,
+        CompetencySelectionComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
         TumAetUiTooltipDirective,
@@ -135,6 +136,20 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
     private readonly datePickers = viewChildren(TumAetUiDatePickerComponent);
+    private readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
+
+    /** Follow child signals directly: existing titles can arrive after the quiz validity was cached. */
+    private readonly titleChannelInvalidReasons = computed<ValidationReason[]>(() => {
+        const titleChannelName = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        const reasons: ValidationReason[] = [];
+        if (titleChannelName?.isTitleDisallowed()) {
+            reasons.push({ translateKey: 'artemisApp.exercise.form.title.disallowedValue', translateValues: {} });
+        }
+        if (titleChannelName?.isChannelFieldDisplayed() && !titleChannelName.channelName()) {
+            reasons.push({ translateKey: 'artemisApp.exercise.form.channelName.empty', translateValues: {} });
+        }
+        return reasons;
+    });
 
     /**
      * Whether a date field holds text that is not a date. A picker keeps its last valid date while its text is not one,
@@ -695,7 +710,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      * Save the quiz to the server and invoke callback functions depending on result
      */
     save(): void {
-        if (this.hasSavedQuizStarted || !this.pendingChangesCache() || !this.quizIsValid()) {
+        if (this.hasSavedQuizStarted || !this.pendingChangesCache() || !this.quizIsValid() || this.titleChannelInvalidReasons().length > 0) {
             return;
         }
 
@@ -973,6 +988,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.isSaving() ||
             !this.pendingChangesCache() ||
             !this.quizIsValid() ||
+            this.titleChannelInvalidReasons().length > 0 ||
             this.hasSavedQuizStarted ||
             !this.quizExercise().isEditable ||
             this.quizExercise().dueDateError ||
@@ -1003,7 +1019,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (uneditableReason) {
             return [uneditableReason];
         }
-        const reasons = this.invalidReasonTexts();
+        const reasons = this.invalidReasonTexts().concat(translateValidationReasons(this.titleChannelInvalidReasons(), this.translateService));
         if (this.hasInvalidDateText()) {
             this.currentLocale();
             return reasons.concat(this.translateService.instant('entity.dateMissingOrNotValidGeneric'));

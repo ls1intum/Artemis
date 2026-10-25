@@ -60,4 +60,10 @@ public record AnswerPostResponseDTO(Long id, @Nullable UserSummaryDTO author, @N
                 answerPost.getUpdatedDate(), answerPost.getContent(), Boolean.TRUE.equals(answerPost.doesResolvePost()), answerPost.getIsSaved(),
                 answerPost.getHasForwardedMessages(), AnswerParentPostRefDTO.from(answerPost.getPost()), reactions, answerPost.isVerified());
     }
+
+    /** Returns the intentionally shared message without private conversation metadata, reactions, or thread contents. */
+    public static AnswerPostResponseDTO fromForwardedSource(AnswerPost post) {
+        return new AnswerPostResponseDTO(post.getId(), UserSummaryDTO.from(post.getAuthor()), post.getAuthorRole(), post.getCreationDate(), post.getUpdatedDate(),
+                post.getContent(), Boolean.TRUE.equals(post.doesResolvePost()), false, false, null, Set.of(), post.isVerified());
+    }
 }

@@ -620,6 +620,12 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_notIncludedZeroMaxScore_badRequest() throws Exception {
+        programmingExerciseIntegrationTestService.createProgrammingExercise_notIncludedZeroMaxScore_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_invalidMaxScore_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_invalidMaxScore_badRequest();
     }

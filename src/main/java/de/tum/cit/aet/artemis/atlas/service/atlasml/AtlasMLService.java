@@ -247,34 +247,9 @@ public class AtlasMLService {
         if (!isAtlasMLFeatureEnabled("map competency to competency operation")) {
             return false;
         }
-        try {
-            log.debug("Mapping competency {} to competency {}", sourceCompetencyId, targetCompetencyId);
-
-            HttpHeaders headers = buildHeadersWithAuth();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            MapCompetencyToCompetencyRequestDTO requestBody = new MapCompetencyToCompetencyRequestDTO(sourceCompetencyId, targetCompetencyId);
-            HttpEntity<MapCompetencyToCompetencyRequestDTO> entity = new HttpEntity<>(requestBody, headers);
-
-            String url = config.getAtlasmlBaseUrl() + MAP_COMPETENCY_TO_COMPETENCY_ENDPOINT;
-            ResponseEntity<Void> response = atlasmlRestTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
-
-            boolean isSuccessful = response.getStatusCode().is2xxSuccessful();
-            log.debug("Map competency to competency result: {}", isSuccessful);
-            return isSuccessful;
-        }
-        catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("Failed to map competency to competency with HTTP error: {}", e.getMessage());
-            return false;
-        }
-        catch (ResourceAccessException e) {
-            log.error("Failed to map competency to competency due to connection issue: {}", e.getMessage());
-            return false;
-        }
-        catch (Exception e) {
-            log.error("Unexpected error while mapping competency to competency", e);
-            return false;
-        }
+        log.debug("Mapping competency {} to competency {}", sourceCompetencyId, targetCompetencyId);
+        return postCompetencyMapping(new MapCompetencyToCompetencyRequestDTO(sourceCompetencyId, targetCompetencyId), MAP_COMPETENCY_TO_COMPETENCY_ENDPOINT,
+                "competency to competency");
     }
 
     /**
@@ -290,32 +265,34 @@ public class AtlasMLService {
         if (!isAtlasMLFeatureEnabled("map competency to exercise operation")) {
             return false;
         }
-        try {
-            log.debug("Mapping competency {} to exercise {}", competencyId, exerciseId);
+        log.debug("Mapping competency {} to exercise {}", competencyId, exerciseId);
+        return postCompetencyMapping(new MapCompetencyToExerciseRequestDTO(exerciseId, competencyId), MAP_COMPETENCY_TO_EXERCISE_ENDPOINT, "competency to exercise");
+    }
 
+    private boolean postCompetencyMapping(Object requestBody, String endpoint, String operation) {
+        try {
             HttpHeaders headers = buildHeadersWithAuth();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            MapCompetencyToExerciseRequestDTO requestBody = new MapCompetencyToExerciseRequestDTO(exerciseId, competencyId);
-            HttpEntity<MapCompetencyToExerciseRequestDTO> entity = new HttpEntity<>(requestBody, headers);
+            HttpEntity<Object> entity = new HttpEntity<>(requestBody, headers);
 
-            String url = config.getAtlasmlBaseUrl() + MAP_COMPETENCY_TO_EXERCISE_ENDPOINT;
+            String url = config.getAtlasmlBaseUrl() + endpoint;
             ResponseEntity<Void> response = atlasmlRestTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
 
             boolean isSuccessful = response.getStatusCode().is2xxSuccessful();
-            log.debug("Map competency to exercise result: {}", isSuccessful);
+            log.debug("Map {} result: {}", operation, isSuccessful);
             return isSuccessful;
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("Failed to map competency to exercise with HTTP error: {}", e.getMessage());
+            log.error("Failed to map {} with HTTP error: {}", operation, e.getMessage());
             return false;
         }
         catch (ResourceAccessException e) {
-            log.error("Failed to map competency to exercise due to connection issue: {}", e.getMessage());
+            log.error("Failed to map {} due to connection issue: {}", operation, e.getMessage());
             return false;
         }
         catch (Exception e) {
-            log.error("Unexpected error while mapping competency to exercise", e);
+            log.error("Unexpected error while mapping " + operation, e);
             return false;
         }
     }

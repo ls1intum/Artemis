@@ -141,6 +141,7 @@ public class ExerciseVariantGroupService {
     private void withProgrammingMemberReservations(ExerciseVariantGroup group, java.util.function.Consumer<Boolean> work) {
         List<MutationLease> leases = new ArrayList<>();
         Throwable operationFailure = null;
+        RuntimeException releaseFailure = null;
         try {
             // Claim every programming member before saving the group or changing any member.
             for (long exerciseId : group.getExercises().stream().filter(ProgrammingExercise.class::isInstance).map(Exercise::getId).sorted().toList()) {
@@ -153,7 +154,6 @@ public class ExerciseVariantGroupService {
             throw exception;
         }
         finally {
-            RuntimeException releaseFailure = null;
             for (MutationLease lease : leases.reversed()) {
                 try {
                     lease.close();
@@ -167,14 +167,12 @@ public class ExerciseVariantGroupService {
                     }
                 }
             }
-            if (releaseFailure != null) {
-                if (operationFailure != null) {
-                    operationFailure.addSuppressed(releaseFailure);
-                }
-                else {
-                    throw releaseFailure;
-                }
+            if (releaseFailure != null && operationFailure != null) {
+                operationFailure.addSuppressed(releaseFailure);
             }
+        }
+        if (releaseFailure != null) {
+            throw releaseFailure;
         }
     }
 

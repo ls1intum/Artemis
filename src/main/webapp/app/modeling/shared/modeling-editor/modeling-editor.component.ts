@@ -34,8 +34,8 @@ import { ApollonRailDisclosureComponent } from 'app/modeling/shared/modeling-edi
 import {
     RAIL_DISCLOSURE_MAX_HEIGHT,
     applyBottomCenterPlacement,
-    calculateBottomCenterPlacement,
     clearBottomCenterPlacement,
+    measureBottomCenterPlacement,
     measureRailDisclosureMaxHeight,
     synchronizeResizeObserverTargets,
 } from 'app/modeling/shared/modeling-editor/apollon-chrome-placement';
@@ -495,22 +495,16 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         this.observeChromeResizeTargets(apollonRoot, bottomCenterRegion, bottomCenter, palette, zoom, minimap, placementControl);
 
-        const bottomCenterStyle = getComputedStyle(bottomCenter);
-        const editorStyle = getComputedStyle(editorFrame);
-        const paletteRect = palette?.getBoundingClientRect();
-        const paletteRegion = palette?.closest<HTMLElement>('[data-apollon-region]')?.dataset.apollonRegion;
-        const placement = calculateBottomCenterPlacement({
-            root: apollonRoot.getBoundingClientRect(),
-            zoom: zoom.getBoundingClientRect(),
-            minimap: minimap.getBoundingClientRect(),
-            surface: placementControl.getBoundingClientRect(),
-            palette: paletteRect,
-            paletteRegion,
+        const placement = measureBottomCenterPlacement({
+            root: apollonRoot,
+            zoom,
+            minimap,
+            surface: placementControl,
+            positionedElement: bottomCenter,
+            chromeContainer: editorFrame,
+            shiftProperty: '--modeling-editor-bottom-center-shift-x',
+            palette,
             obstruction: this.problemStatementDisclosure()?.getVisiblePanelRect(),
-            chromeGap: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-gap')) || 0,
-            chromeEdge: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-edge')) || 0,
-            rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
-            previousShift: Number.parseFloat(bottomCenterStyle.getPropertyValue('--modeling-editor-bottom-center-shift-x')) || 0,
         });
         applyBottomCenterPlacement(bottomCenter, '--modeling-editor-bottom-center-shift-x', placement);
         this.bottomCenterElevated.set(placement.elevated);

@@ -236,7 +236,7 @@ class Liquibase:
         self.workspace = workspace
         self.version = gradle_property("liquibase_version")
 
-    def command(self, database: Database, changelog: str, command: str, contexts: str = "prod") -> subprocess.CompletedProcess:
+    def command(self, database: Database, changelog: str, command: str, contexts: str = "prod", command_args: tuple[str, ...] = ()) -> subprocess.CompletedProcess:
         driver = self._driver_for(database.engine)
         argv = [
             "docker", "run", "--rm",
@@ -253,6 +253,7 @@ class Liquibase:
             f"--password={database.engine.password}",
             f"--contexts={contexts}",
             command,
+            *command_args,
         ]
         return run(argv)
 

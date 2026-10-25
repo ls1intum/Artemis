@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -559,23 +558,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     private Feedback feedbackFromDto(final FeedbackDTO dto) {
-        final Feedback feedback = new Feedback();
-        // Preserve the id so an existing feedback is matched (not recreated) on re-save; the long-feedback persistence
-        // and cleanup paths (ResultService) key on feedback id.
-        feedback.setId(dto.id());
-        feedback.setCredits(dto.credits());
-        feedback.setDetailText(detailTextFromDto(dto));
-        feedback.setText(dto.text());
-        feedback.setReference(dto.reference());
-        feedback.setType(dto.type());
-        feedback.setPositive(dto.positive());
-        feedback.setVisibility(dto.visibility());
-        if (dto.gradingInstruction() != null && dto.gradingInstruction().id() != null) {
-            final GradingInstruction gradingInstruction = new GradingInstruction();
-            gradingInstruction.setId(dto.gradingInstruction().id());
-            feedback.setGradingInstruction(gradingInstruction);
-        }
-        return feedback;
+        return dto.toAssessmentFeedback(detailTextFromDto(dto));
     }
 
     private String detailTextFromDto(final FeedbackDTO dto) {
@@ -632,19 +615,8 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     private AssessmentUpdateBaseDTO assessmentUpdateFromDto(final TextAssessmentUpdateDTO assessmentUpdate) {
         final List<Feedback> feedbacks = feedbacksFromDtos(assessmentUpdate.feedbacks());
-        ComplaintResponse complaintResponse = null;
         final ComplaintResponseRequestDTO complaintResponseDTO = assessmentUpdate.complaintResponse();
-        if (complaintResponseDTO != null) {
-            complaintResponse = new ComplaintResponse();
-            complaintResponse.setId(complaintResponseDTO.id());
-            complaintResponse.setResponseText(complaintResponseDTO.responseText());
-            final Complaint complaint = new Complaint();
-            if (complaintResponseDTO.complaint() != null) {
-                complaint.setId(complaintResponseDTO.complaint().id());
-                complaint.setAccepted(complaintResponseDTO.complaint().accepted());
-            }
-            complaintResponse.setComplaint(complaint);
-        }
+        final ComplaintResponse complaintResponse = complaintResponseDTO != null ? complaintResponseDTO.toEntity() : null;
         return new TextAssessmentUpdateAdapter(feedbacks, complaintResponse, assessmentUpdate.assessmentNote());
     }
 

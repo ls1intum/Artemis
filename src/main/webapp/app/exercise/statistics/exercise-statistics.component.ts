@@ -1,3 +1,4 @@
+import { StatisticsSpanSelectorComponent } from 'app/exercise/statistics/statistics-span-selector/statistics-span-selector.component';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -12,13 +13,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ExerciseDetailStatisticsComponent } from './exercise-detail-statistic/exercise-detail-statistics.component';
 import { StatisticsScoreDistributionGraphComponent } from 'app/exercise/statistics-graph/score-distribution-graph/statistics-score-distribution-graph.component';
 import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statistics-graph.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-statistics',
     templateUrl: './exercise-statistics.component.html',
     styleUrls: ['../../course/manage/statistics/course-management-statistics.component.scss'],
-    imports: [TranslateDirective, ExerciseDetailStatisticsComponent, StatisticsScoreDistributionGraphComponent, StatisticsGraphComponent, ArtemisTranslatePipe],
+    imports: [StatisticsSpanSelectorComponent, TranslateDirective, ExerciseDetailStatisticsComponent, StatisticsScoreDistributionGraphComponent, StatisticsGraphComponent],
 })
 export class ExerciseStatisticsComponent implements OnInit {
     private service = inject(StatisticsService);

@@ -111,16 +111,19 @@
                         <table class="table table-striped">
                             <thead class="thead-dark">
                                 <tr>
-                                    <th width="55%">
+                                    <th width="45%">
                                         <span jhiTranslate="artemisApp.quizExercise.export.questionTitle"></span>
                                     </th>
-                                    <th width="30%">
+                                    <th width="28%">
                                         <span jhiTranslate="artemisApp.quizExercise.export.quizExerciseTitle"></span>
                                     </th>
                                     <th width="10%">
                                         <span jhiTranslate="artemisApp.exercise.type"></span>
                                     </th>
-                                    <th width="5%">
+                                    <th width="10%">
+                                        <span jhiTranslate="entity.action.preview"></span>
+                                    </th>
+                                    <th width="7%">
                                         <span jhiTranslate="entity.action.add"></span>
                                     </th>
                                 </tr>
@@ -128,8 +131,8 @@
                             <tbody>
                                 @for (question of existingQuestions(); track question) {
                                     <tr>
-                                        <td width="55%">{{ question.title }}</td>
-                                        <td width="30%">{{ question.exercise?.title }}</td>
+                                        <td width="45%">{{ question.title }}</td>
+                                        <td width="28%">{{ question.exercise?.title }}</td>
                                         <td width="10%" class="mb-0">
                                             <h5>
                                                 @if (question.type === MULTIPLE_CHOICE) {
@@ -147,7 +150,20 @@
                                                 }
                                             </h5>
                                         </td>
-                                        <td width="5%">
+                                        <td width="10%">
+                                            <tumaet-ui-button
+                                                severity="secondary"
+                                                variant="outlined"
+                                                size="small"
+                                                [icon]="faEye"
+                                                [ariaLabel]="'artemisApp.quizExercise.previewQuestion' | artemisTranslate: { title: question.title }"
+                                                [tumAetUiTooltip]="'entity.action.preview' | artemisTranslate"
+                                                tumAetUiTooltipDescribesHost="false"
+                                                [attr.data-testid]="'preview-question-' + question.id"
+                                                (clicked)="openPreview(question)"
+                                            />
+                                        </td>
+                                        <td width="7%">
                                             <div class="form-check">
                                                 <input
                                                     type="checkbox"
@@ -174,4 +190,17 @@
             }
         </div>
     </div>
+    <tumaet-ui-dialog [(visible)]="previewVisible" [header]="'entity.action.preview' | artemisTranslate" size="large" (hidden)="previewQuestion.set(undefined)">
+        @if (previewQuestion(); as question) {
+            <jhi-quiz-question-preview [question]="question" />
+        }
+        <ng-template #footer>
+            <tumaet-ui-button severity="secondary" variant="outlined" data-testid="question-preview-close" (clicked)="previewVisible.set(false)">
+                <span jhiTranslate="entity.action.close"></span>
+            </tumaet-ui-button>
+            <tumaet-ui-button data-testid="question-preview-add" (clicked)="addPreviewedQuestion()">
+                <span jhiTranslate="artemisApp.quizExercise.addThisQuestion"></span>
+            </tumaet-ui-button>
+        </ng-template>
+    </tumaet-ui-dialog>
 }

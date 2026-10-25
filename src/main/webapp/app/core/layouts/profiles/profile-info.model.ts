@@ -150,6 +150,7 @@ export class ProfileInfo {
     public externalCredentialProvider!: string;
     public externalPasswordResetLinkMap!: { [key: string]: string };
     public features!: ActiveFeatureToggles;
+    public gocastEnabled?: boolean;
     public git!: Git;
     public java!: Java;
     public needsToAcceptTerms?: boolean;

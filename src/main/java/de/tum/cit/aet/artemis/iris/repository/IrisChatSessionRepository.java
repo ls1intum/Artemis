@@ -112,9 +112,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     /**
      * Find all chat sessions with messages for a given course.
      * <p>
-     * Note: This query intentionally does not use DISTINCT because IrisMessage contains json columns
-     * (accessed_memories, created_memories) and PostgreSQL's json type does not support equality operators.
-     * The return type is {@code Set} to deduplicate results from the LEFT JOIN FETCH.
+     * Note: This query does not use DISTINCT; the return type is {@code Set} to deduplicate results from the LEFT JOIN FETCH.
      * Use {@link #findAllWithMessagesByCourseIdSortedByCreationDate(long)} for sorted results.
      *
      * @param courseId the id of the course
@@ -130,8 +128,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
 
     /**
      * Find all chat sessions with messages for a given course, sorted by creation date ascending.
-     * Sorting is done in Java because the query returns a {@code Set} to avoid issues with
-     * DISTINCT and PostgreSQL's json columns.
+     * Sorting is done in Java because the query returns a {@code Set}.
      *
      * @param courseId the id of the course
      * @return list of chat sessions with their messages, sorted by creation date ascending

@@ -122,7 +122,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(exportReposStub).toHaveBeenCalledOnce();
     });
 
-    // Reached from the exercise scores page, where the dialog opens with no preselected participations: exporting
+    // Reached from the participation page, where the dialog opens with no preselected participations: exporting
     // then sent an empty participant list and the server answered 404. Nothing is selected, so there is nothing to
     // request in the first place.
     it('should not send a request when neither participations nor participants are selected', async () => {
@@ -171,7 +171,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     });
 
     // Same `[]` is truthy trap as the disable guard: the textarea was hidden behind `!participationIdList`, so the
-    // dialog opened from the exercise scores page - which preselects nothing - offered no way to name anyone at all.
+    // dialog opened from the participation page - which preselects nothing - offered no way to name anyone at all.
     it('should offer the participant field when no participation is preselected', async () => {
         comp.participationIdList = [];
         fixture.detectChanges();

@@ -1,3 +1,5 @@
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -39,7 +41,7 @@ describe('HeaderExercisePageWithDetails', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ExerciseTypePipe),
             ],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
@@ -209,5 +211,46 @@ describe('HeaderExercisePageWithDetails', () => {
         fixture.componentRef.setInput('submissionPolicy', submissionPolicy);
 
         expect(component.numberOfSubmissions()).toBe(expectedNumber);
+    });
+    describe.each(['releaseDate', 'startDate', 'assessmentDue', 'complaintDue'])('presentation summary at %s', (dateLabel) => {
+        it.each([
+            { coursePresentationScore: 1, participationScore: 1, expectedBadge: 'global.generic.yes', expectedScore: undefined },
+            { coursePresentationScore: 1, participationScore: 0, expectedBadge: 'global.generic.no', expectedScore: undefined },
+            { coursePresentationScore: undefined, participationScore: 50, expectedBadge: undefined, expectedScore: '50%' },
+            { coursePresentationScore: undefined, participationScore: 0, expectedBadge: 'global.generic.unset', expectedScore: undefined },
+        ])(
+            'preserves the summary for course setting $coursePresentationScore and student score $participationScore',
+            ({ coursePresentationScore, participationScore, expectedBadge, expectedScore }) => {
+                exercise.presentationScoreEnabled = true;
+                const course = new Course();
+                course.presentationScore = coursePresentationScore;
+                participation.presentationScore = participationScore;
+                fixture.componentRef.setInput('course', course);
+                fixture.componentRef.setInput('studentParticipation', participation);
+                fixture.detectChanges();
+                component.nextRelevantDateLabel.set(dateLabel);
+                component.nextRelevantDate.set(undefined);
+                component.canComplainLaterOn.set(false);
+                fixture.detectChanges();
+
+                const summary: HTMLElement = fixture.nativeElement.querySelector('.right-col');
+                expect(summary.querySelectorAll('.badge')).toHaveLength(1);
+                if (expectedBadge) {
+                    expect(summary.querySelector(`[jhiTranslate="${expectedBadge}"]`)).not.toBeNull();
+                } else {
+                    expect(summary.textContent).toContain(expectedScore);
+                }
+            },
+        );
+
+        it('omits the summary when presentation scoring is disabled', () => {
+            exercise.presentationScoreEnabled = false;
+            fixture.detectChanges();
+            component.nextRelevantDateLabel.set(dateLabel);
+            component.nextRelevantDate.set(undefined);
+            component.canComplainLaterOn.set(false);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('.right-col').querySelectorAll('.badge')).toHaveLength(0);
+        });
     });
 });

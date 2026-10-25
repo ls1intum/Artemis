@@ -8,6 +8,7 @@ import { createRequestOption } from 'app/foundation/util/request.util';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { SelectedBuildRun, SelectedBuildRunStatus } from 'app/programming/shared/services/programming-build-run.service';
 import { SubmissionType, getAllResultsOfAllSubmissions, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/foundation/util/utils';
@@ -68,7 +69,8 @@ export interface IProgrammingSubmissionService {
     getResultEtaInMs: () => Observable<number>;
     triggerBuild: (participationId: number) => Observable<object>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
-    triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
+    triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<SelectedBuildRun>;
+    getSelectedBuildRunStatus: (exerciseId: number, runId: string) => Observable<SelectedBuildRunStatus>;
     unsubscribeAllWebsocketTopics: (exercise: Exercise) => void;
     unsubscribeForLatestSubmissionOfParticipation: (participationId: number) => void;
 }
@@ -854,7 +856,17 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     public triggerInstructorBuildForParticipationsOfExercise(exerciseId: number, participationIds: number[]) {
-        return this.http.post<void>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', participationIds);
+        return this.http.post<SelectedBuildRun>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', participationIds);
+    }
+
+    /**
+     * Ask the server whether a run that queues the builds of selected participations has ended, for a client that may have missed the message that announces it.
+     *
+     * @param exerciseId the programming exercise the run belongs to
+     * @param runId the run, as returned by the request that started it
+     */
+    public getSelectedBuildRunStatus(exerciseId: number, runId: string) {
+        return this.http.get<SelectedBuildRunStatus>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/selected-build-runs/' + encodeURIComponent(runId));
     }
 
     /**

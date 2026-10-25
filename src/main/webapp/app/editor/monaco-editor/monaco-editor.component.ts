@@ -15,7 +15,6 @@ import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-li
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { LineChange, convertMonacoLineChanges } from 'app/programming/shared/utils/diff.utils';
 import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
-import { EMOTICON_REGEX, EMOTICON_TO_EMOJI } from 'app/editor/monaco-editor/model/emoticon-emoji.util';
 
 export type { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 
@@ -205,20 +204,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.renderer.setStyle(this.diffEditorContainerElement, 'display', 'none');
         // Dimensions are set in enterDiffMode() when the normal editor container is laid out.
         this.renderer.appendChild(this.elementRef.nativeElement, this.diffEditorContainerElement);
-    }
-
-    /**
-     * Replaces emoticon-like text (e.g., ":)", ":D") with their corresponding emoji characters.
-     * Only words that start with ":" are processed for conversion.
-     *
-     * @param text The raw input text to be scanned for emoji patterns.
-     * @returns The transformed string with applicable emoticons replaced by emojis.
-     */
-    convertTextToEmoji(text: string): string {
-        return text
-            .split(' ')
-            .map((word) => (word.startsWith(':') ? word.replace(EMOTICON_REGEX, (_match, prefix, emoticon) => prefix + EMOTICON_TO_EMOJI[emoticon]) : word))
-            .join(' ');
     }
 
     public onDidChangeModelContent(listener: (event: monaco.editor.IModelContentChangedEvent) => void): monaco.IDisposable {
@@ -597,22 +582,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this.getActiveEditor().getContentHeight() + this.getActiveEditor().getOption(monaco.editor.EditorOption.lineHeight);
     }
 
-    isConvertedToEmoji(originalText: string, convertedText: string): boolean {
-        return originalText !== convertedText;
-    }
-
+    /**
+     * Sets the content of the editor as it is, and leaves the editor untouched if it already shows it. Emoticons such as ":)" are
+     * not replaced by emoji: the text can be code or the expected output of a program, and the replacement moved the cursor and
+     * could not be undone.
+     *
+     * @param text The text to show in the editor.
+     */
     setText(text: string): void {
-        const convertedText = this.convertTextToEmoji(text);
-        const activeEditor = this.getActiveEditor();
-        if (this.isConvertedToEmoji(text, convertedText)) {
-            activeEditor.setValue(convertedText);
-            this.setPosition({
-                column: this.getPosition().column + convertedText.length + text.length,
-                lineNumber: this.getPosition().lineNumber,
-            });
-        }
-        if (this.getText() !== convertedText) {
-            activeEditor.setValue(convertedText);
+        if (this.getText() !== text) {
+            this.getActiveEditor().setValue(text);
         }
     }
 

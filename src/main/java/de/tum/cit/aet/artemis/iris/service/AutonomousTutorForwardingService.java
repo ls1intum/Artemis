@@ -172,6 +172,6 @@ public class AutonomousTutorForwardingService {
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {
-        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && userAiPreferenceService.isMemirisEnabled(user.getId()));
+        return new PyrisUserDTO(user);
     }
 }

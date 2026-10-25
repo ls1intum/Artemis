@@ -33,7 +33,7 @@ final class HyperionExerciseMetadataParser {
     private static final Pattern DIFFICULTY_IN_BRIEF = Pattern.compile("difficulty\\s*(?:level)?\\s*[:=-]?\\s*(easy|medium|hard)|\\b(easy|medium|hard)\\s+difficulty",
             Pattern.CASE_INSENSITIVE);
 
-    private static final Pattern CODE_FENCE = Pattern.compile("^\\s*```[a-zA-Z]*\\s*|\\s*```\\s*$");
+    private static final Pattern CODE_FENCE = Pattern.compile("(?:^\\s*```[a-zA-Z]*\\s*)|(?:\\s*```\\s*$)");
 
     private HyperionExerciseMetadataParser() {
     }

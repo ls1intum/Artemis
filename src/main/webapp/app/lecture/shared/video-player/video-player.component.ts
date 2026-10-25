@@ -1,3 +1,4 @@
+import { resizeVideoColumn, syncVideoTranscriptHeight } from '../video-transcript-layout.util';
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
@@ -260,18 +261,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      * wrapper is resized (matching the previous interact.js behaviour).
      */
     protected onVideoColumnResize(event: ResizableSizeEvent): void {
-        const videoColumnEl = this.videoColumn()?.nativeElement;
-        const wrapperEl = this.videoWrapper()?.nativeElement;
-        if (!videoColumnEl || !wrapperEl) {
-            return;
-        }
-        const wrapperWidth = wrapperEl.getBoundingClientRect().width;
-        if (wrapperWidth <= 0) {
-            return;
-        }
-        const percent = Math.min(100, Math.max(0, (event.width / wrapperWidth) * 100));
-        videoColumnEl.style.flex = `0 0 ${percent}%`;
-        videoColumnEl.style.width = '';
+        resizeVideoColumn(this.videoColumn()?.nativeElement, this.videoWrapper()?.nativeElement, event.width);
     }
 
     /**
@@ -291,21 +281,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      * Ensures the transcript is at least MIN_TRANSCRIPT_HEIGHT pixels tall.
      */
     private syncTranscriptHeight(): void {
-        const videoColumnEl = this.videoColumn()?.nativeElement;
-        const wrapperEl = this.videoWrapper()?.nativeElement;
-
-        if (!videoColumnEl || !wrapperEl) {
-            return;
-        }
-
-        const transcriptColumnEl = wrapperEl.querySelector<HTMLElement>('.transcript-column');
-        if (!transcriptColumnEl) {
-            return;
-        }
-
-        const videoHeight = videoColumnEl.offsetHeight;
-        const targetHeight = Math.max(videoHeight, this.MIN_TRANSCRIPT_HEIGHT);
-        transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
+        syncVideoTranscriptHeight(this.videoColumn()?.nativeElement, this.videoWrapper()?.nativeElement, this.MIN_TRANSCRIPT_HEIGHT);
     }
 
     /** {@link seekTo}'s condition on its own, for a caller that has to know all its targets hold up before moving any. */

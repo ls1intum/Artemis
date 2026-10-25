@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseMetadataDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -60,7 +61,7 @@ public record UpdateProgrammingExerciseDTO(
         UpdateProgrammingExerciseBuildConfigDTO buildConfig,
 
         // Plagiarism detection config
-        PlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CompetencyLinksHolderDTO {
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CompetencyLinksHolderDTO, ExerciseMetadataDTO {
 
     /**
      * Creates a DTO from a ProgrammingExercise entity.

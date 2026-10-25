@@ -1,4 +1,4 @@
 openai-whisper==20250625
 torch==2.13.0
-filelock>=3.20.3  # TOCTOU symlink races: CVE-2025-68146 (Unix/Windows file lock), CVE-2026-22701 (SoftFileLock)
+filelock>=4.2.1  # TOCTOU symlink races: CVE-2025-68146, CVE-2026-22701; ReadWriteLock/SoftFileLock races fixed in 4.2.1 (needs Python >= 3.11)
 urllib3>=2.8.0

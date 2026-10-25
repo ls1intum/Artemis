@@ -1,14 +1,47 @@
 import org.gradle.api.file.FileSystemOperations
+import org.gradle.process.ExecOperations
 
 import javax.inject.Inject
 
 abstract class SbomFileOperations {
     @Inject
     abstract FileSystemOperations getFileSystemOperations()
+
+    @Inject
+    abstract ExecOperations getExecOperations()
 }
 
 def sbomEnabled = project.hasProperty("prod") && project.hasProperty("sbom")
-def sbomFileOperations = objects.newInstance(SbomFileOperations).fileSystemOperations
+def sbomOperations = objects.newInstance(SbomFileOperations)
+def sbomFileOperations = sbomOperations.fileSystemOperations
+def repeatableBuild = project.hasProperty('reproducible')
+
+if (repeatableBuild) {
+    def normalizer = file('supporting_scripts/normalize-sbom.mjs')
+    def nodeBinary = node.resolvedNodeDir.file(osdetector.os == 'windows' ? 'node.exe' : 'bin/node')
+    // Normalize generator outputs before either named resources or Spring Boot's automatic
+    // META-INF/sbom/application.cdx.json copy consumes them.
+    tasks.matching { it.name in ['cyclonedxDirectBom', 'cyclonedxBom', 'generateClientSbom'] }.configureEach { generator ->
+        dependsOn tasks.named('nodeSetup')
+        inputs.file(normalizer)
+        inputs.property('reproducible', true)
+        if (generator.name != 'generateClientSbom') {
+            includeBomSerialNumber = false
+            includeBuildSystem = false
+        }
+        def clientOutput = layout.buildDirectory.file('reports/client-sbom.json')
+        doLast {
+            def output = generator.name == 'generateClientSbom' ? clientOutput.get().asFile : generator.jsonOutput.get().asFile
+            sbomOperations.execOperations.exec {
+                commandLine nodeBinary.get().asFile, normalizer, output
+            }
+        }
+    }
+}
+
+tasks.matching { it.name in ['processResources', 'bootJar', 'bootWar', 'generateClientSbom'] }.configureEach {
+    inputs.property('reproducible', repeatableBuild)
+}
 
 // CycloneDX SBOM Configuration
 // Plugin "org.cyclonedx.bom" must be declared in build.gradle plugins block
@@ -17,7 +50,7 @@ def sbomFileOperations = objects.newInstance(SbomFileOperations).fileSystemOpera
 tasks.cyclonedxDirectBom {
     includeConfigs = ["runtimeClasspath"]
     skipConfigs = ["testCompileClasspath", "testRuntimeClasspath", "checkstyle", "mockitoAgent", "liquibaseRuntime"]
-    includeBomSerialNumber = true
+    includeBomSerialNumber = !repeatableBuild
     includeLicenseText = false
     // Output configuration for v3.x - use file properties instead of destination/outputName/outputFormat
     jsonOutput = file("build/reports/sbom/server-sbom.json")

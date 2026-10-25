@@ -11,6 +11,7 @@ import { isCommunicationEnabled } from 'app/course/shared/entities/course.model'
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
+import { postingReferenceMatches } from './posting-reference.util';
 import { LinkPreviewContainerComponent } from 'app/communication/link-preview/components/link-preview-container/link-preview-container.component';
 
 @Component({
@@ -251,49 +252,9 @@ export class PostingContentComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * searches a regex pattern within a string and returns an array containing a PatternMatch Object per match
-     */
+    /** Finds references in their Markdown context while preserving wire-content indices. */
     getPatternMatches(): PatternMatch[] {
-        // Group 1: reference pattern for Posts: #{PostId} Ex: (#45)
-        // Group 2: reference pattern for Programming Exercises
-        // Group 3: reference pattern for Modeling Exercises
-        // Group 4: reference pattern for Text Exercises
-        // Group 5: reference pattern for File Upload Exercises
-        // Group 6: reference pattern for Lectures
-        // Group 7: reference pattern for Lecture Attachments
-        // Group 8: reference pattern for Lecture Units
-        // Group 9: reference pattern for Users
-        // Group 10: pattern for embedded images
-        // Group 11: reference pattern for FAQ
-        // globally searched for, i.e. no return after first match
-        const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])|(?<CHANNEL>\[channel].*?\[\/channel])|(?<IMAGE>!\[.*?]\(.*?\))|(?<FAQ>\[faq].*?\[\/faq])/g;
-
-        // array with PatternMatch objects per reference found in the posting content
-        const patternMatches: PatternMatch[] = [];
-
-        // find start and end index of referenced posts in content, for each reference save [startIndexOfReference, endIndexOfReference] in the referenceIndicesArray
-        let match = pattern.exec(this.content()!);
-        while (match) {
-            let group: ReferenceType | undefined = undefined;
-
-            for (const groupsKey in match.groups) {
-                if (match.groups[groupsKey]) {
-                    group = ReferenceType[groupsKey as keyof typeof ReferenceType];
-                }
-            }
-            if (group) {
-                patternMatches.push({
-                    startIndex: match.index,
-                    endIndex: pattern.lastIndex,
-                    referenceType: group,
-                });
-            }
-
-            match = pattern.exec(this.content()!);
-        }
-        return patternMatches;
+        return postingReferenceMatches(this.content() ?? '');
     }
 
     contentPartTrack(index: number) {

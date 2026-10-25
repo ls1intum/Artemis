@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.communication.service.conversation;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -189,7 +191,7 @@ public class ChannelService {
             conversationParticipantOfRequestingUser.setIsModerator(true);
             conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
             savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
-            savedChannel = channelRepository.save(savedChannel);
+            // The participant owns the relationship and was already inserted; updating the inverse collection needs no channel merge.
             conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, savedChannel, Set.of(creator.get()));
         }
         syncChannelWithWeaviate(savedChannel);
@@ -415,6 +417,42 @@ public class ChannelService {
             return null;
         }
         return updateChannelName(channel, updatedExercise.getChannelName());
+    }
+
+    /**
+     * Refreshes the channel after an exercise's changed release date has been saved.
+     *
+     * @param originalReleaseDate the date before the update
+     * @param updatedExercise     the exercise with its persisted date
+     */
+    public void notifyExerciseChannelOfDateChange(@Nullable ZonedDateTime originalReleaseDate, Exercise updatedExercise) {
+        if (updatedExercise.getId() == null || !updatedExercise.isCourseExercise() || sameInstant(originalReleaseDate, updatedExercise.getReleaseDate())) {
+            return;
+        }
+        Channel channel = channelRepository.findChannelByExerciseId(updatedExercise.getId());
+        if (channel != null) {
+            conversationService.notifyChannelMembersAboutVisibilityChange(channel);
+        }
+    }
+
+    /**
+     * Refreshes the channel after an exam's changed visible date has been saved.
+     *
+     * @param originalVisibleDate the date before the update
+     * @param updatedExam         the exam with its persisted date
+     */
+    public void notifyExamChannelOfDateChange(@Nullable ZonedDateTime originalVisibleDate, Exam updatedExam) {
+        if (sameInstant(originalVisibleDate, updatedExam.getVisibleDate())) {
+            return;
+        }
+        Channel channel = channelRepository.findChannelByExamId(updatedExam.getId());
+        if (channel != null) {
+            conversationService.notifyChannelMembersAboutVisibilityChange(channel);
+        }
+    }
+
+    private static boolean sameInstant(@Nullable ZonedDateTime first, @Nullable ZonedDateTime second) {
+        return Objects.equals(first == null ? null : first.toInstant(), second == null ? null : second.toInstant());
     }
 
     /**

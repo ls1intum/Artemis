@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
@@ -32,7 +31,6 @@ import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -64,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
 
 @Profile(PROFILE_CORE)
@@ -88,7 +87,7 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
-    private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
+    private final WorkingCopyLocks workingCopyLocks = new WorkingCopyLocks();
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -146,9 +145,10 @@ public class GitService extends AbstractGitService {
      * @param participation Participation the remote repository belongs to.
      * @param targetPath    path where the repo is located on disk
      * @return the repository if it could be checked out
-     * @throws GitAPIException      if the repository could not be checked out.
-     * @throws GitException         if the participation has no repository URI.
-     * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
+     * @throws GitAPIException          if the repository could not be checked out.
+     * @throws GitException             if the participation has no repository URI.
+     * @throws InvalidPathException     if the repository could not be checked out Because it contains unmappable characters.
+     * @throws IllegalArgumentException if the folder of the repository does not lie below the target path.
      */
     public Repository getOrCheckoutRepositoryForJPlag(@NonNull ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, InvalidPathException {
         var repoUri = participation.getVcsRepositoryUri();
@@ -164,7 +164,7 @@ public class GitService extends AbstractGitService {
         if (updatedRepoFolderName.startsWith(FileSystems.getDefault().getSeparator())) {
             updatedRepoFolderName = updatedRepoFolderName.substring(1);
         }
-        Path localPath = targetPath.resolve(updatedRepoFolderName);
+        Path localPath = VcsRepositoryUri.resolveBelow(targetPath, updatedRepoFolderName);
 
         Repository repository = getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true, false);
         repository.setParticipation(participation);
@@ -270,6 +270,12 @@ public class GitService extends AbstractGitService {
 
     private Repository checkoutRepository(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
             boolean writeAccess, boolean selectCloneBranch) throws GitAPIException {
+        return workingCopyLocks.withLock(localPath,
+                () -> checkoutRepositoryLocked(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch, writeAccess, selectCloneBranch));
+    }
+
+    private Repository checkoutRepositoryLocked(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
+            boolean writeAccess, boolean selectCloneBranch) throws GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
         deleteIncompleteWorkingCopy(localPath);
@@ -301,13 +307,10 @@ public class GitService extends AbstractGitService {
         }
         // If the git repository can't be found on our server, clone it from the remote.
         else {
-            waitUntilPathNotBusy(localPath);
-
             // Clone repository.
             try {
                 var gitUriAsString = getGitUriAsString(sourceRepoUri);
                 log.debug("Cloning from {} to {}", gitUriAsString, localPath);
-                cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
                 CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
@@ -328,47 +331,7 @@ public class GitService extends AbstractGitService {
                 }
                 throw new GitException(e);
             }
-            finally {
-                // make sure that cloneInProgress is released
-                cloneInProgressOperations.remove(localPath);
-            }
             return getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch, writeAccess);
-        }
-    }
-
-    /**
-     * Waits until no clone operation is running for the given path.
-     * <p>
-     * Retries once a second for up to {@link #JGIT_TIMEOUT_IN_SECONDS} seconds before giving up.
-     *
-     * @param localPath The path in which a clone operation should be made.
-     * @throws CanceledException If the waiting has been interrupted.
-     * @throws GitException      If the path is still busy after the maximum number of retries.
-     */
-    private void waitUntilPathNotBusy(final Path localPath) throws CanceledException, GitException {
-        int remainingSeconds = JGIT_TIMEOUT_IN_SECONDS;
-
-        while (cloneInProgressOperations.containsKey(localPath)) {
-            log.warn("Clone is already in progress. This will lead to an error. Wait for a second");
-            try {
-                Thread.sleep(1000);
-            }
-            catch (InterruptedException ex) {
-                // The interrupt status is deliberately not restored here, which is what java:S2142 would ask for.
-                // CanceledException is a GitAPIException, and callers catch it per element and carry on: the
-                // plagiarism check maps over participations in a parallel stream, and a ForkJoinPool worker does not
-                // clear a leftover flag between elements the way a ThreadPoolExecutor worker does. A restored flag
-                // would make every later clone on that worker fail inside interruptible NIO and delete its working
-                // copy, turning one abandoned clone into a whole worker's worth of them.
-                throw new CanceledException("Waiting for local path to be free for cloning got interrupted.");
-            }
-
-            if (remainingSeconds <= 0) {
-                throw new GitException("Cannot clone the same repository multiple times");
-            }
-            else {
-                remainingSeconds--;
-            }
         }
     }
 
@@ -382,17 +345,14 @@ public class GitService extends AbstractGitService {
      * @param targetPath target directory
      * @param targetUrl  url of the repository
      * @return path of the local file system
-     * @throws EntityNotFoundException if targetUrl is null, i.e. the repository does not exist (e.g. because it was never created for the participation)
+     * @throws EntityNotFoundException  if targetUrl is null, i.e. the repository does not exist (e.g. because it was never created for the participation)
+     * @throws IllegalArgumentException if the folder of the repository is the target path itself or does not lie below it
      */
     public Path getLocalPathOfRepo(Path targetPath, LocalVCRepositoryUri targetUrl) {
         if (targetUrl == null) {
             throw new EntityNotFoundException("Cannot resolve the local repository path because the repository URI is null. The repository most likely does not exist.");
         }
-        Path resolvedPath = (targetPath.normalize()).resolve(targetUrl.folderNameForRepositoryUri()).normalize();
-        if (!resolvedPath.startsWith(targetPath.normalize())) {
-            throw new IllegalArgumentException("Invalid path: " + resolvedPath);
-        }
-        return resolvedPath;
+        return targetUrl.resolveFolderBelow(targetPath);
     }
 
     /**
@@ -403,10 +363,6 @@ public class GitService extends AbstractGitService {
      * @param localPath the path of the working copy
      */
     private void deleteIncompleteWorkingCopy(Path localPath) {
-        if (cloneInProgressOperations.containsKey(localPath)) {
-            // A clone in progress writes HEAD and config last, so its git directory looks incomplete until it is done
-            return;
-        }
         Path gitDirectory = localPath.resolve(".git");
         if (Files.isDirectory(gitDirectory) && (Files.notExists(gitDirectory.resolve(Constants.HEAD)) || Files.notExists(gitDirectory.resolve(Constants.CONFIG)))) {
             log.warn("Deleting the incomplete working copy {} so that it is cloned again", localPath);
@@ -469,12 +425,14 @@ public class GitService extends AbstractGitService {
      * Creates a CommitCommand and sets signing to false. Egit uses the local git configuration and if signing of
      * commits is enabled, tests will fail because it will not be able to actually sign the commit.
      * This method makes sure that signing is disabled and commits work on systems regardless of the local git configuration.
+     * <p>
+     * Hook verification is also disabled, as Artemis does not use git hooks.
      *
      * @param git Git Repository Object.
-     * @return CommitCommand with signing set to false.
+     * @return CommitCommand with signing and hook verification disabled.
      */
     public static CommitCommand commit(Git git) {
-        return git.commit().setSign(false);
+        return git.commit().setSign(false).setNoVerify(true);
     }
 
     /**

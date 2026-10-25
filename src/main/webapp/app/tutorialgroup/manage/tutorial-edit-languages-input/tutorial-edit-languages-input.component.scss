@@ -2,18 +2,6 @@
     flex: 1;
 }
 
-.label-and-input {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    gap: 0.5rem;
-}
-
-.danger {
-    color: var(--danger);
-}
-
 .suggestion-panel {
     display: flex;
     flex-direction: column;

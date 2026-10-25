@@ -2,16 +2,18 @@ import { KeyValuePipe } from '@angular/common';
 import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { OnlineIdeExperienceLevel } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
-    imports: [FormsModule, KeyValuePipe, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FormsModule, KeyValuePipe, TranslateDirective, ArtemisTranslatePipe, HelpIconComponent],
 })
 export class ProgrammingExerciseTheiaComponent {
     private theiaService = inject(TheiaService);
@@ -21,6 +23,7 @@ export class ProgrammingExerciseTheiaComponent {
 
     programmingLanguage?: ProgrammingLanguage;
     readonly theiaImages = signal<object>({});
+    readonly experienceLevels = Object.values(OnlineIdeExperienceLevel);
 
     constructor() {
         // Replicates the previous ngOnChanges behavior: whenever either input changes, reload the
@@ -38,6 +41,12 @@ export class ProgrammingExerciseTheiaComponent {
     onTheiaImageChange(theiaImage: string) {
         if (this.programmingExercise().buildConfig) {
             this.programmingExercise().buildConfig!.theiaImage = theiaImage;
+        }
+    }
+
+    onExperienceLevelChange(experienceLevel: OnlineIdeExperienceLevel | undefined) {
+        if (this.programmingExercise().buildConfig) {
+            this.programmingExercise().buildConfig!.onlineIdeExperienceLevel = experienceLevel;
         }
     }
 

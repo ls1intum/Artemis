@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
@@ -24,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -50,6 +51,7 @@ import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
@@ -86,6 +88,8 @@ public class LocalCIResultProcessingService {
 
     private final Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService;
 
+    private final ProgrammingExerciseDeletionService programmingExerciseDeletionService;
+
     private UUID listenerId;
 
     private final AtomicLong processedResults = new AtomicLong();
@@ -101,7 +105,8 @@ public class LocalCIResultProcessingService {
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService) {
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService,
+            ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -113,6 +118,7 @@ public class LocalCIResultProcessingService {
         this.distributedDataAccessService = distributedDataAccessService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
+        this.programmingExerciseDeletionService = programmingExerciseDeletionService;
     }
 
     /**
@@ -195,8 +201,17 @@ public class LocalCIResultProcessingService {
      * Submit an asynchronous task that polls one item from the result queue and processes it.
      */
     public void processResultAsync() {
+        submitResultProcessing(distributedDataAccessService.getDistributedBuildResultQueue());
+    }
+
+    /** Retry one deferred result without creating a queue-listener feedback loop. */
+    public void processDeferredResultAsync() {
+        submitResultProcessing(distributedDataAccessService.getDistributedDeferredBuildResultQueue());
+    }
+
+    private void submitResultProcessing(DistributedQueue<ResultQueueItem> queue) {
         try {
-            resultProcessingExecutor.execute(this::processResult);
+            resultProcessingExecutor.execute(() -> processResult(queue));
         }
         catch (RejectedExecutionException ex) {
             // this is not an issue as we rely on the queue and will continue polling from it once another
@@ -208,16 +223,29 @@ public class LocalCIResultProcessingService {
     /**
      * Polls a build job result from the build job queue, notifies the user about the result and saves the result to the database.
      */
-    private void processResult() {
-        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedBuildResultQueue().poll();
+    private void processResult(DistributedQueue<ResultQueueItem> queue) {
+        ResultQueueItem resultQueueItem = queue.poll();
 
         if (resultQueueItem == null) {
             return;
         }
-        log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
-        log.debug("Build jobs waiting in queue: {}", distributedDataAccessService.getResultQueueSize());
-        log.debug("Queued build jobs: {}", distributedDataAccessService.getResultQueueIds());
+        var admission = programmingExerciseDeletionService.tryAdmitResultProcessing(resultQueueItem.buildJobQueueItem().exerciseId());
+        if (admission.isEmpty()) {
+            // Preserve denied results without occupying a worker or firing more queue-listener events.
+            distributedDataAccessService.getDistributedDeferredBuildResultQueue().add(resultQueueItem);
+            return;
+        }
+        try (var permit = admission.get()) {
+            log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
+            if (log.isDebugEnabled()) {
+                log.debug("Build jobs waiting in queue: {}", distributedDataAccessService.getResultQueueSize());
+                log.debug("Queued build jobs: {}", distributedDataAccessService.getResultQueueIds());
+            }
+            processResultLocked(resultQueueItem);
+        }
+    }
 
+    private void processResultLocked(ResultQueueItem resultQueueItem) {
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
         List<BuildLogDTO> buildLogs = resultQueueItem.buildLogs();
@@ -248,6 +276,14 @@ public class LocalCIResultProcessingService {
             else {
                 log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
             }
+        }
+        catch (DataIntegrityViolationException exception) {
+            if (participationRepository.existsById(buildJob.participationId())) {
+                throw exception;
+            }
+            // The participation was deleted after it was loaded above, so the result or its submission can no longer be written. There is nothing left to report to.
+            log.warn("Participation with id {} was deleted while its build result was processed. Dropping the build result.", buildJob.participationId(), exception);
+            participationOptional = Optional.empty();
         }
         finally {
             processedResults.incrementAndGet();
@@ -303,11 +339,11 @@ public class LocalCIResultProcessingService {
         if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
             log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
             try {
-                // Run async to not block the result processing thread
-                // runAsync uses the common ForkJoinPool, which the Artemis async executors do not wrap, so this
-                // lambda establishes its own context.
-                CompletableFuture.runAsync(() -> SecurityUtils.runAsSystem(() -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(),
-                        buildJob.buildConfig().testCommitHash(), SubmissionType.TEST, buildJob.repositoryInfo().triggeredByPushTo())));
+                // Keep lifecycle-lock waits off both result workers and the shared ForkJoinPool.
+                // The independent thread establishes its own security context.
+                runFollowUpAsync(() -> SecurityUtils
+                        .runAsSystem(() -> runWhileExerciseExists(buildJob.exerciseId(), () -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(),
+                                buildJob.buildConfig().testCommitHash(), SubmissionType.TEST, buildJob.repositoryInfo().triggeredByPushTo()))));
             }
             catch (EntityNotFoundException e) {
                 // Something went wrong while retrieving the template participation.
@@ -358,7 +394,29 @@ public class LocalCIResultProcessingService {
     }
 
     private void updateExerciseBuildDurationAsync(long exerciseId) {
-        CompletableFuture.runAsync(() -> updateExerciseBuildDuration(exerciseId));
+        runFollowUpAsync(() -> runWhileExerciseExists(exerciseId, () -> updateExerciseBuildDuration(exerciseId)));
+    }
+
+    private void runFollowUpAsync(Runnable operation) {
+        Thread.ofVirtual().name("local-ci-result-follow-up").start(() -> {
+            try {
+                operation.run();
+            }
+            catch (Exception e) {
+                log.error("Asynchronous result follow-up failed", e);
+            }
+        });
+    }
+
+    private void runWhileExerciseExists(long exerciseId, Runnable operation) {
+        try (var permit = programmingExerciseDeletionService.awaitResultProcessing(exerciseId)) {
+            if (programmingExerciseRepository.existsById(exerciseId)) {
+                operation.run();
+            }
+        }
+        catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void updateExerciseBuildDuration(long exerciseId) {

@@ -10,6 +10,18 @@
     overflow-y: auto;
 }
 
+/*
+ * The Code of Conduct shown before it is accepted fills the page, which the shell sizes. `.scrollable-content` derives a
+ * height from the viewport instead, with a hardcoded navbar+footer estimate that is shorter than what is available, and
+ * leaves a grey area below the panel while the text still scrolls inside it. It stays the scroll container, and takes
+ * the height of the flex page it sits in.
+ */
+.code-of-conduct-panel {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+}
+
 .message-input {
     border-top: 1px solid;
     border-color: var(--bs-border-color);

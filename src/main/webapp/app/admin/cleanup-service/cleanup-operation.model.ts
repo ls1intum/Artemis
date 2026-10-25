@@ -1,4 +1,4 @@
-import { WritableSignal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 
 export type OperationName =
@@ -39,4 +39,20 @@ export class CleanupOperation {
     // Age-based operations use configurable server-side cutoffs instead of an admin-picked date range, so they render
     // without date pickers (like deleteOrphans) and are always "valid".
     ageBased?: boolean;
+}
+
+/** Create independent per-row validation signals and the default retention range, if applicable. */
+export function createCleanupOperation(name: OperationName, options: { action?: CleanupAction; ageBased?: boolean; dateRange?: boolean } = {}): CleanupOperation {
+    const dateRange = options.dateRange ?? !options.ageBased;
+    return {
+        name,
+        action: options.action ?? 'delete',
+        ageBased: options.ageBased,
+        deleteFrom: dateRange ? dayjs().subtract(12, 'months') : undefined,
+        deleteTo: dateRange ? dayjs().subtract(6, 'months') : undefined,
+        lastExecuted: undefined,
+        datesValid: signal(true),
+        deleteFromValid: signal(true),
+        deleteToValid: signal(true),
+    };
 }

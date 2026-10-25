@@ -142,6 +142,123 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isFullscreen()).toBe(false);
     });
 
+    describe('fullscreen change of a unit with a video and a PDF', () => {
+        /** A viewer and a player that are ready, or that have not reached their start position yet (no document, not seekable). */
+        function stubViewers(currentTime: number | undefined, currentPage: number, ready = true) {
+            Object.defineProperty(component, 'pdfViewer', {
+                value: () => ({ getCurrentPage: () => currentPage, getTotalPages: () => (ready ? 20 : 0), goToPage: vi.fn(() => true) }),
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(component, 'videoPlayer', {
+                value: () => ({ getCurrentTime: () => currentTime, isSeekable: () => ready, seekTo: vi.fn(() => true) }),
+                writable: true,
+                configurable: true,
+            });
+        }
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, videoSource: 'https://example.com/video.mp4' });
+        });
+
+        it.each([true, false])('starts the recreated video player and PDF viewer where the student stopped when fullscreen changes to %s', (isFullscreen) => {
+            stubViewers(42, 3);
+
+            component['onFullscreenChange'](isFullscreen);
+
+            expect(component.videoInitialTimestamp()).toBe(42);
+            expect(component.pdfInitialPage()).toBe(3);
+        });
+
+        it('does not let the page the recreated PDF viewer reports on start move the video', () => {
+            stubViewers(42, 3);
+
+            component['onFullscreenChange'](true);
+
+            expect(component['pendingPdfTargetPage']).toBe(3);
+        });
+
+        it('waits for no page report when the PDF viewer restarts on its first page, because it reports none', () => {
+            stubViewers(42, 1);
+
+            component['onFullscreenChange'](true);
+
+            expect(component['pendingPdfTargetPage']).toBeUndefined();
+        });
+
+        it('keeps the page and the time of a pending deep link when the viewer and the player have not reached them yet', () => {
+            fixture.componentRef.setInput('deepLink', { unitId: 1, page: 5, timestamp: 12 });
+            stubViewers(0, 1, false);
+
+            component['onFullscreenChange'](true);
+
+            expect(component.pdfInitialPage()).toBe(5);
+            expect(component.videoInitialTimestamp()).toBe(12);
+            expect(component['pendingPdfTargetPage']).toBeUndefined();
+        });
+
+        /** Navigates to a new deep link the way the unit receives it: the input changes and the link is applied to the viewers that are there. */
+        function navigateTo(deepLink: { unitId: number; page?: number; timestamp?: number }) {
+            fixture.componentRef.setInput('deepLink', deepLink);
+            component['applyDeepLink'](deepLink);
+        }
+
+        it('lets a new deep link with a page and a time take precedence over the position the viewers resumed from', () => {
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+            expect(component.videoInitialTimestamp()).toBe(42);
+            expect(component.pdfInitialPage()).toBe(3);
+
+            navigateTo({ unitId: 1, page: 8, timestamp: 9 });
+
+            expect(component.videoInitialTimestamp()).toBe(9);
+            expect(component.pdfInitialPage()).toBe(8);
+        });
+
+        it('keeps the resumed time when a new deep link names only a page, because a live player would cue its video again', () => {
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+
+            navigateTo({ unitId: 1, page: 8 });
+
+            expect(component.videoInitialTimestamp()).toBe(42);
+            expect(component.pdfInitialPage()).toBe(8);
+        });
+
+        it('keeps the resumed page when a new deep link names only a time', () => {
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+
+            navigateTo({ unitId: 1, timestamp: 9 });
+
+            expect(component.videoInitialTimestamp()).toBe(9);
+            expect(component.pdfInitialPage()).toBe(3);
+        });
+
+        it('starts the viewers from the deep link again when the unit is collapsed, because the viewers that started from the resumed positions are gone', () => {
+            fixture.componentRef.setInput('deepLink', { unitId: 1, page: 5, timestamp: 12 });
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+            expect(component.videoInitialTimestamp()).toBe(42);
+            expect(component.pdfInitialPage()).toBe(3);
+
+            component.toggleCollapse(true);
+
+            expect(component.videoInitialTimestamp()).toBe(12);
+            expect(component.pdfInitialPage()).toBe(5);
+        });
+
+        it('keeps the initial positions of a unit without a PDF, whose layout does not change', () => {
+            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, attachment: undefined, videoSource: 'https://example.com/video.mp4' });
+            stubViewers(42, 3);
+
+            component['onFullscreenChange'](true);
+
+            expect(component.videoInitialTimestamp()).toBeUndefined();
+            expect(component.pdfInitialPage()).toBeUndefined();
+        });
+    });
+
     it('should get file name', () => {
         fixture.detectChanges();
         expect(component.getFileName()).toBe('test.pdf');

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.text.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -25,12 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -300,7 +297,7 @@ public class TextExerciseCreationUpdateResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
         // Notify AtlasML about the text exercise update
-        notifyAtlasML(persistedExercise, OperationTypeDTO.UPDATE, "text exercise update");
+        atlasMLApi.ifPresent(api -> api.notifyExerciseUpdated(persistedExercise));
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
@@ -387,18 +384,7 @@ public class TextExerciseCreationUpdateResource {
         String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
         exercise.setProblemStatement(newProblemStatement);
 
-        exercise.setChannelName(dto.channelName());
-        exercise.setCategories(dto.categories());
-        exercise.setDifficulty(dto.difficulty());
-
-        exercise.setMaxPoints(dto.maxPoints());
-        exercise.setBonusPoints(dto.bonusPoints());
-        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-
-        exercise.setReleaseDate(dto.releaseDate());
-        exercise.setStartDate(dto.startDate());
-        exercise.setDueDate(dto.dueDate());
-        exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        dto.applyMetadataTo(exercise);
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
 
         // A variant group owns its members' timeline, so pin the dates back to the group before validating.
@@ -408,15 +394,7 @@ public class TextExerciseCreationUpdateResource {
         exercise.validateGeneralSettings();
 
         // Only set boolean values if they are explicitly provided (not null)
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        dto.applyAssessmentFlagsTo(exercise);
         exercise.setGradingInstructions(dto.gradingInstructions());
 
         // TextExercise specific fields
@@ -440,25 +418,7 @@ public class TextExerciseCreationUpdateResource {
             return;
         }
 
-        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
-
-        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
-                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
-
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
-            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
-            if (criterion == null) {
-                criterion = gcDto.toEntity();
-                criterion.setExercise(exercise);
-            }
-            else {
-                gcDto.applyTo(criterion);
-            }
-            return criterion;
-        }).collect(Collectors.toSet());
-
-        managedCriteria.clear();
-        managedCriteria.addAll(updated);
+        GradingCriteriaMapper.replace(dto.gradingCriteria(), exercise);
     }
 
     /**
@@ -479,16 +439,7 @@ public class TextExerciseCreationUpdateResource {
         exercise.setTitle(dto.title());
         exercise.setShortName(dto.shortName());
         exercise.setProblemStatement(dto.problemStatement());
-        exercise.setChannelName(dto.channelName());
-        exercise.setCategories(dto.categories());
-        exercise.setDifficulty(dto.difficulty());
-        exercise.setMaxPoints(dto.maxPoints());
-        exercise.setBonusPoints(dto.bonusPoints());
-        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-        exercise.setReleaseDate(dto.releaseDate());
-        exercise.setStartDate(dto.startDate());
-        exercise.setDueDate(dto.dueDate());
-        exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        dto.applyMetadataTo(exercise);
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
@@ -503,40 +454,16 @@ public class TextExerciseCreationUpdateResource {
         if (dto.teamAssignmentConfig() != null) {
             exercise.setTeamAssignmentConfig(dto.teamAssignmentConfig().toEntity());
         }
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        dto.applyAssessmentFlagsTo(exercise);
 
         // Attach the submitted plagiarism config (if any) so it is validated on create and stored once the exercise exists.
         PlagiarismDetectionConfigHelper.applyToExercise(exercise, dto.plagiarismDetectionConfig());
 
         // Transfer grading criteria from the DTO
-        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
-            for (var gcDto : dto.gradingCriteria()) {
-                GradingCriterion criterion = gcDto.toEntity();
-                criterion.setExercise(exercise);
-                exercise.getGradingCriteria().add(criterion);
-            }
-        }
+        exercise.getGradingCriteria().addAll(GradingCriteriaMapper.create(dto.gradingCriteria(), exercise));
 
         // Transfer competency links from the DTO (extractCompetencyLinksForCreation will handle them)
-        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
-            for (var linkDto : dto.competencyLinks()) {
-                if (linkDto == null || linkDto.competency() == null) {
-                    throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
-                }
-                Competency competencyRef = new Competency();
-                competencyRef.setId(linkDto.competency().id());
-                CompetencyExerciseLink link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-                exercise.getCompetencyLinks().add(link);
-            }
-        }
+        exercise.getCompetencyLinks().addAll(CompetencyExerciseLinkService.toTransientLinks(dto, exercise, ENTITY_NAME));
 
         // Set course and/or exercise group references from the ids. The exclusivity invariant (exactly one of the two) is
         // validated downstream by checkCourseAndExerciseGroupExclusivity, so a request carrying both is correctly rejected.

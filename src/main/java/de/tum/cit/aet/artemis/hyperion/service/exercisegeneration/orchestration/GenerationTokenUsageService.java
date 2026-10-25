@@ -147,14 +147,13 @@ public class GenerationTokenUsageService {
             if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
                 return false;
             }
-            Integer promptTokens = usage.getPromptTokens();
-            Integer completionTokens = usage.getCompletionTokens();
+            int promptTokens = usage.getPromptTokens();
+            int completionTokens = usage.getCompletionTokens();
             Long cachedInputTokens = usage.getCacheReadInputTokens();
-            if (promptTokens == null || completionTokens == null || promptTokens < 0 || completionTokens < 0
-                    || cachedInputTokens != null && (cachedInputTokens < 0 || cachedInputTokens > promptTokens)) {
+            if (promptTokens < 0 || completionTokens < 0 || cachedInputTokens != null && (cachedInputTokens < 0 || cachedInputTokens > promptTokens)) {
                 return false;
             }
-            String model = metadata.getModel() != null ? metadata.getModel() : "";
+            String model = metadata.getModel();
             GenerationUsage llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens);
             LLMRequest persisted = new LLMRequest(model, promptTokens, llmRequest.costPerMillionInputToken(), completionTokens, llmRequest.costPerMillionOutputToken(), pipelineId,
                     cachedInputTokens == null ? 0 : cachedInputTokens.intValue(), llmRequest.costPerMillionCachedInputToken(), 0, 0f);
@@ -189,8 +188,8 @@ public class GenerationTokenUsageService {
             return 0;
         }
         Usage usage = chatResponse.getMetadata().getUsage();
-        long promptTokens = usage.getPromptTokens() == null ? 0 : usage.getPromptTokens().longValue();
-        long completionTokens = usage.getCompletionTokens() == null ? 0 : usage.getCompletionTokens().longValue();
+        long promptTokens = usage.getPromptTokens();
+        long completionTokens = usage.getCompletionTokens();
         Long reportedCached = usage.getCacheReadInputTokens();
         // A provider that reports no split is treated as having served nothing from cache, so an unknown split can never understate the spend.
         long cached = reportedCached == null ? 0 : Math.max(0, Math.min(promptTokens, reportedCached));

@@ -144,8 +144,7 @@ public class ConversationMessagingService extends PostingService {
         conversationService.updateLastMessageDate(conversation);
 
         // update last read date and unread message count of author
-        // invoke async due to db write access to avoid that the client has to wait
-        conversationParticipantRepository.updateLastReadAsync(author.getId(), conversation.getId(), ZonedDateTime.now());
+        conversationParticipantRepository.updateLastRead(author.getId(), conversation.getId(), ZonedDateTime.now());
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         log.debug("      conversationMessageRepository.save DONE");
@@ -224,14 +223,16 @@ public class ConversationMessagingService extends PostingService {
                 .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), author.getId())).toList();
         // "@all" in a group chat adds all members who did not mute or hide it. They get the mention notification instead of the new post notification.
         var mentionedUserRecipients = resolveMentionRecipients(explicitMentionRecipients, createdConversationMessage.mentionsAllMembers(), recipientSummaries, author.getId());
+        var isVisibleToStudents = !(conversation instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
             var newAnnouncementNotification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getTitle(),
                     post.getContent(), author.getName(), author.getImageUrl(), author.getId(), conversation.getId());
 
-            // Announcements are always sent, even for hidden/muted channels
+            // Announcements ignore the recipient's mute/hide preference, but never the release gate of the linked item.
             courseNotificationService.sendCourseNotification(newAnnouncementNotification,
-                    recipientSummaries.stream().filter((summary) -> summary.userId() != author.getId()).map(ConversationNotificationRecipientSummary::toUser).toList());
+                    recipientSummaries.stream().filter(summary -> summary.userId() != author.getId() && (isVisibleToStudents || summary.isAtLeastTutorInCourse()))
+                            .map(ConversationNotificationRecipientSummary::toUser).toList());
         }
         else {
             var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
@@ -239,8 +240,6 @@ public class ConversationMessagingService extends PostingService {
 
             // Direct messages and group chats only reach their members, who may always read them. A channel can still be hidden from students, e.g. before its
             // exercise is released.
-            var isVisibleToStudents = !(conversation instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
-
             // We only send notifications to users that are not the author, that are part of the conversation, that have the role rights to see it,
             // that did not mute or hide it and if they were not mentioned (since they get a separate notification for that)
             courseNotificationService.sendCourseNotification(newPostNotification,
@@ -287,9 +286,8 @@ public class ConversationMessagingService extends PostingService {
      */
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
         List<Long> conversationIds = Arrays.stream(postContextFilter.conversationIds()).boxed().collect(Collectors.toCollection(ArrayList::new));
-        conversationParticipantRepository.userHasAccessToAllConversationsElseThrow(conversationIds, requestingUser.getId(), courseId);
-
         boolean requesterIsAtLeastTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId);
+        conversationParticipantRepository.userHasAccessToAllConversationsElseThrow(conversationIds, requestingUser.getId(), courseId, requesterIsAtLeastTutor);
         if (Boolean.TRUE.equals(postContextFilter.filterToUnverifiedIris()) && !requesterIsAtLeastTutor) {
             throw new AccessForbiddenException("Only tutors and above may filter for unverified Iris replies");
         }
@@ -320,8 +318,7 @@ public class ConversationMessagingService extends PostingService {
                 }
             }
             else {
-                // invoke async due to db write access to avoid that the client has to wait
-                conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), conversationId, ZonedDateTime.now());
+                conversationParticipantRepository.updateLastRead(requestingUser.getId(), conversationId, ZonedDateTime.now());
             }
         }
 
@@ -392,7 +389,7 @@ public class ConversationMessagingService extends PostingService {
             service.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
             service.deleteAllAnswerPostsForPostAsync(postId);
         });
-        conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
+        conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), post.getAuthor().getId(), post.getCreationDate());
         conversation = conversationService.getConversationById(conversation.getId());
 
         // Delete all connected saved posts
@@ -453,6 +450,7 @@ public class ConversationMessagingService extends PostingService {
         }
 
         var conversation = conversationService.getConversationById(existingMessagePost.getConversation().getId());
+        conversationService.checkConversationVisibilityElseThrow(conversation, user);
         if (existingMessagePost.getAuthor().getId().equals(user.getId())
                 || (conversation instanceof Channel channel && channelAuthorizationService.isAllowedToEditOrDeleteMessagesOfOtherUsers(channel, user))) {
             if (conversation instanceof Channel channel && channel.getIsArchived()) {

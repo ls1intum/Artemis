@@ -1,11 +1,10 @@
-import { expect, Browser, Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
-import { generateUUID, newBrowserPage } from '../../support/utils';
+import { generateUUID } from '../../support/utils';
 import { Fixtures } from '../../fixtures/fixtures';
 import { SEED_COURSES } from '../../support/seedData';
-import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../support/requests/ExerciseAPIRequests';
 import { ModalDialogBox } from '../../support/pageobjects/exam/ModalDialogBox';
@@ -21,23 +20,9 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
         await login(admin);
     });
 
-    /** Browser contexts opened by the test, closed again however the test ends. */
-    let openedPages: Page[] = [];
-    async function openPage(browser: Browser): Promise<Page> {
-        const page = await newBrowserPage(browser);
-        openedPages.push(page);
-        return page;
-    }
-
-    test.afterEach('Delete exams', async ({ login, examAPIRequests }) => {
-        for (const openedPage of openedPages) {
-            await openedPage.context().close();
-        }
-        openedPages = [];
-        // The tests end as a student, who is not allowed to delete an exam.
-        await login(admin);
+    test.afterEach('Delete exams', async ({ adminExamAPIRequests }) => {
         for (const exam of exams) {
-            await examAPIRequests.deleteExam(exam);
+            await adminExamAPIRequests.deleteExam(exam);
         }
     });
 
@@ -71,7 +56,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
     }
 
     test.describe('Exam timing', () => {
-        test('Does not show exam before visible date', async ({ page, login, examAPIRequests, exerciseAPIRequests, courseOverview }) => {
+        test('Does not show exam before visible date', async ({ page, login, adminExamAPIRequests: examAPIRequests, exerciseAPIRequests, courseOverview }) => {
             const hiddenExam = await createPreparedExam(examAPIRequests, exerciseAPIRequests, {
                 visible: dayjs().add(1, 'day'),
                 start: dayjs().add(2, 'days'),
@@ -103,12 +88,12 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
         test('Shows after visible date but does not let the student start before the start window', async ({
             page,
             login,
-            examAPIRequests,
+            adminExamAPIRequests,
             exerciseAPIRequests,
             courseOverview,
             examStartEnd,
         }) => {
-            const exam = await createPreparedExam(examAPIRequests, exerciseAPIRequests, {
+            const exam = await createPreparedExam(adminExamAPIRequests, exerciseAPIRequests, {
                 visible: dayjs().subtract(5, 'days'),
                 start: dayjs().add(2, 'days'),
                 end: dayjs().add(3, 'days'),
@@ -131,17 +116,18 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             page,
             login,
             examAPIRequests,
+            adminExamAPIRequests,
             exerciseAPIRequests,
             examStartEnd,
             examNavigation,
             textExerciseEditor,
         }) => {
-            const exam = await createPreparedExam(examAPIRequests, exerciseAPIRequests, {
+            const exam = await createPreparedExam(adminExamAPIRequests, exerciseAPIRequests, {
                 visible: dayjs().subtract(3, 'days'),
                 start: dayjs().subtract(2, 'days'),
                 end: dayjs().add(3, 'days'),
             });
-            const [exerciseGroup] = await examAPIRequests.getExerciseGroups(exam);
+            const [exerciseGroup] = await adminExamAPIRequests.getExerciseGroups(exam);
             const exercise = exerciseGroup.exercises![0];
 
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
@@ -181,9 +167,8 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
 
         test('Exam ends after end time: the student is taken to the end view and the work is kept', async ({
             page,
-            browser,
             login,
-            examAPIRequests,
+            adminExamAPIRequests,
             exerciseAPIRequests,
             examStartEnd,
             examNavigation,
@@ -191,12 +176,12 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             textExerciseEditor,
         }) => {
             // A long exam: the deadline is only set once the student is working, so a slow setup cannot eat into it.
-            const exam = await createPreparedExam(examAPIRequests, exerciseAPIRequests, {
+            const exam = await createPreparedExam(adminExamAPIRequests, exerciseAPIRequests, {
                 visible: dayjs().subtract(1, 'day'),
                 start: dayjs().subtract(1, 'minute'),
                 end: dayjs().add(2, 'hours'),
             });
-            const [exerciseGroup] = await examAPIRequests.getExerciseGroups(exam);
+            const [exerciseGroup] = await adminExamAPIRequests.getExerciseGroups(exam);
             const exercise = exerciseGroup.exercises![0];
 
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
@@ -212,10 +197,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await expect(page.getByTestId('displayTime')).toHaveAttribute('data-critical', 'false');
 
             // The instructor side ends the exam shortly from now. The student learns about it through the working-time live event.
-            const adminPage = await openPage(browser);
-            await Commands.login(adminPage, admin);
-            const adminExamRequests = new ExamAPIRequests(adminPage);
-            await adminExamRequests.endExamIn(exam, 20);
+            await adminExamAPIRequests.endExamIn(exam, 20);
 
             const workingTimeDialog = new ModalDialogBox(page);
             await workingTimeDialog.checkDialogMessage('The working time of the exam has been changed.');
@@ -229,7 +211,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             expect(response.status()).toBe(200);
 
             // The server agrees: the exam counts as submitted ...
-            const studentExams = await adminExamRequests.getAllStudentExams(exam);
+            const studentExams = await adminExamAPIRequests.getAllStudentExams(exam);
             expect(studentExams).toHaveLength(1);
             expect(studentExams[0].submitted).toBe(true);
             // ... and the student's summary still shows what they typed before the exam ran out.

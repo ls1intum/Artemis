@@ -1069,4 +1069,90 @@ class HyperionCodeGenerationExecutionServiceTest {
         verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED), eq(Map.of()), eq(2),
                 argThat(message -> message.contains("template repository") && message.contains("build failed")));
     }
+
+    private Repository preparePublicExecution() throws Exception {
+        exercise = org.mockito.Mockito.spy(exercise);
+        LocalVCRepositoryUri uri = mock(LocalVCRepositoryUri.class);
+        doReturn(uri).when(exercise).getRepositoryURI(any());
+        Repository repository = mock(Repository.class);
+        when(gitService.getOrCheckoutRepository(eq(uri), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(uri)).thenReturn(COMMIT_HASH);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("repository tree");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("build context");
+        return repository;
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(value = RepositoryType.class, names = { "SOLUTION", "TEMPLATE", "TESTS" })
+    void publicGenerationRejectsUnsafeGeneratedAndDeletedPathsWithoutCommitting(RepositoryType type) throws Exception {
+        preparePublicExecution();
+        HyperionCodeGenerationService strategy = switch (type) {
+            case SOLUTION -> solutionStrategy;
+            case TEMPLATE -> templateStrategy;
+            default -> testStrategy;
+        };
+        var generated = java.util.Arrays.asList((GeneratedFileDTO) null, new GeneratedFileDTO(null, "x"), new GeneratedFileDTO(" ", "x"),
+                new GeneratedFileDTO("../src/Escape.java", "x"), new GeneratedFileDTO("/src/Absolute.java", "x"), new GeneratedFileDTO("src/inva" + (char) 0 + "lid", "x"),
+                new GeneratedFileDTO("pom.xml", "x"));
+        var deletions = java.util.Arrays.asList(null, " ", "../src/Escape.java", "/src/Absolute.java", "src/inva" + (char) 0 + "lid", "src/.env", "src/.config/file", "pom.xml");
+        when(strategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any())).thenReturn(new CodeGenerationResponseDTO(null, generated, deletions));
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        assertThat(service.generateAndCompileCode(exercise, user, 1L, type, false, publisher)).isNull();
+        String label = type == RepositoryType.SOLUTION ? "Solution" : type == RepositoryType.TEMPLATE ? "Template" : "Test";
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.ERROR, HyperionCodeGenerationEventDTO.CompletionReason.NO_COMMITTED_FILES, Map.of(), 1,
+                label + " generation did not produce any committed files.");
+        verify(repositoryService, never()).commitChanges(any(), any());
+        verify(repositoryService, never()).createFile(any(), anyString(), any());
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+    }
+
+    @Test
+    void selectedFeedbackRendererFailureFallsBackAndConsistencyLocationsReachGeneratedRequest() throws Exception {
+        preparePublicExecution();
+        List<Long> selection = List.of(12L);
+        when(reviewCommentContextRendererService.renderCodeGenerationSelectedFeedback(exercise.getId(), RepositoryType.SOLUTION, selection))
+                .thenThrow(new IllegalStateException("renderer unavailable"));
+        when(consistencyCheckService.checkConsistency(exercise.getId())).thenReturn(new ConsistencyCheckResponseDTO(Instant.now(),
+                java.util.Arrays.asList(null,
+                        new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_RETURN_TYPE_MISMATCH, "Mismatch", " ", java.util.Arrays.asList(null,
+                                new ArtifactLocationDTO(null, null, null, null), new ArtifactLocationDTO(ArtifactType.SOLUTION_REPOSITORY, "src/X.java", 3, null)))),
+                null, null, null));
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any(), any())).thenReturn(null);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        assertThat(service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, selection, publisher)).isNull();
+        org.mockito.ArgumentCaptor<String> issues = org.mockito.ArgumentCaptor.forClass(String.class);
+        org.mockito.ArgumentCaptor<String> feedback = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(solutionStrategy).generateCode(eq(user), eq(exercise), eq(1L), any(), eq("repository tree"), eq("build context"), issues.capture(), feedback.capture());
+        assertThat(issues.getValue()).contains("Mismatch", "problem_statement.md", "src/X.java:3").doesNotContain("Suggested fix:");
+        assertThat(feedback.getValue()).isEqualTo("{\"repositoryType\":\"SOLUTION\",\"threads\":[]}");
+    }
+
+    @Test
+    void generatedExistingFilesAreUpdatedAndMissingParticipationIsReportedAfterCommit() throws Exception {
+        Repository repository = preparePublicExecution();
+        File existing = mock(File.class);
+        when(existing.isFile()).thenReturn(true);
+        when(gitService.getFileByName(repository, "src/X.java")).thenReturn(Optional.of(existing));
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO(" src\\X.java ", "class X {}")), List.of("src/missing.java")));
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        assertThat(service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, true, publisher)).isNull();
+        verify(publisher).fileUpdated("src/X.java", RepositoryType.SOLUTION, 1);
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.PARTICIPATION_NOT_FOUND, Map.of(), 1,
+                "Solution files were generated and committed to the solution repository, but Hyperion could not resolve the participation needed to read the build result.");
+        org.mockito.ArgumentCaptor<java.io.InputStream> content = org.mockito.ArgumentCaptor.forClass(java.io.InputStream.class);
+        verify(repositoryService).createFile(eq(repository), eq("src/X.java"), content.capture());
+        assertThat(new String(content.getValue().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)).isEqualTo("class X {}");
+    }
+
+    @Test
+    void repositoryCheckoutFailureReportsSetupErrorWithoutGenerating() throws Exception {
+        preparePublicExecution();
+        when(gitService.getOrCheckoutRepository(any(), eq(true), eq("main"), eq(false))).thenReturn(null);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        assertThat(service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher)).isNull();
+        verify(publisher).error("Repository setup failed");
+        verify(solutionStrategy, never()).generateCode(any(), any(), any(), any(), any(), any(), any());
+    }
+
 }

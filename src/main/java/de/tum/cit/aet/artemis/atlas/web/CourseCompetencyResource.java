@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
@@ -277,14 +278,9 @@ public class CourseCompetencyResource {
             throws URISyntaxException {
         log.info("REST request to all course competencies from course {} into course {}", importOptions.sourceCourseId(), courseId);
 
-        if (importOptions.sourceCourseId().isEmpty()) {
-            throw new BadRequestAlertException("No source course specified", ENTITY_NAME, "noSourceCourse");
-        }
-        else if (courseId == importOptions.sourceCourseId().get()) {
-            throw new BadRequestAlertException("Cannot import from a course into itself", ENTITY_NAME, "courseCycle");
-        }
+        long sourceCourseId = CompetencyValidationService.sourceCourseIdForImport(importOptions, courseId, ENTITY_NAME);
         var targetCourse = courseRepository.findByIdElseThrow(courseId);
-        var sourceCourse = courseRepository.findByIdElseThrow(importOptions.sourceCourseId().get());
+        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
         var competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());

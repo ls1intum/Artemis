@@ -225,6 +225,15 @@ describe('CourseTutorialGroupsComponent', () => {
             ungroupedData: [expectedSidebarCardElement1, expectedSidebarCardElement2, expectedSidebarCardElement3, expectedSidebarCardElement4],
         };
         expect(component.sidebarData()).toEqual(expectedSidebarData);
+        // The sidebar renders the sections in key order, and the lessons must come before the group overview
+        expect(Object.keys(component.sidebarData()!.groupedData!)).toEqual([
+            'allTutorialLectures',
+            'currentTutorialLecture',
+            'furtherTutorialLectures',
+            'allGroups',
+            'registeredGroups',
+            'furtherGroups',
+        ]);
     });
 
     it('should not reload groups and lectures when the stored course changes', async () => {

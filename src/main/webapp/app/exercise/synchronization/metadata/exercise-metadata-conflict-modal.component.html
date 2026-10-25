@@ -183,31 +183,7 @@
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction131.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
-                                @for (criterion of toGradingCriteriaDisplay(conflict.currentValue); track criterion.title) {
-                                    <div class="mb-2">
-                                        <div class="fw-semibold small mb-1">{{ criterion.title }}</div>
-                                        @if (criterion.instructions.length > 0) {
-                                            <p-table [value]="criterion.instructions" styleClass="p-datatable-sm p-datatable-gridlines" class="small">
-                                                <ng-template #header>
-                                                    <tr>
-                                                        <th scope="col" jhiTranslate="artemisApp.exercise.credits"></th>
-                                                        <th scope="col" jhiTranslate="artemisApp.exercise.gradingScale"></th>
-                                                        <th scope="col" jhiTranslate="artemisApp.exercise.instructionDescription"></th>
-                                                        <th scope="col" jhiTranslate="artemisApp.exercise.feedback"></th>
-                                                    </tr>
-                                                </ng-template>
-                                                <ng-template #body let-instr>
-                                                    <tr>
-                                                        <td>{{ instr.credits }}</td>
-                                                        <td>{{ instr.gradingScale }}</td>
-                                                        <td class="text-break">{{ instr.instructionDescription }}</td>
-                                                        <td class="text-break">{{ instr.feedback }}</td>
-                                                    </tr>
-                                                </ng-template>
-                                            </p-table>
-                                        }
-                                    </div>
-                                }
+                                <ng-container [ngTemplateOutlet]="gradingCriteria" [ngTemplateOutletContext]="{ $implicit: conflict.currentValue }" />
                             </div>
                         </div>
                         <div class="col-12 col-md-6">
@@ -224,31 +200,7 @@
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction165.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
-                                @for (criterion of toGradingCriteriaDisplay(conflict.incomingValue); track criterion.title) {
-                                    <div class="mb-2">
-                                        <div class="fw-semibold small mb-1">{{ criterion.title }}</div>
-                                        @if (criterion.instructions.length > 0) {
-                                            <p-table [value]="criterion.instructions" styleClass="p-datatable-sm p-datatable-gridlines" class="small">
-                                                <ng-template #header>
-                                                    <tr>
-                                                        <th scope="col" jhiTranslate="artemisApp.exercise.credits"></th>
-                                                        <th scope="col" jhiTranslate="artemisApp.exercise.gradingScale"></th>
-                                                        <th scope="col" jhiTranslate="artemisApp.exercise.instructionDescription"></th>
-                                                        <th scope="col" jhiTranslate="artemisApp.exercise.feedback"></th>
-                                                    </tr>
-                                                </ng-template>
-                                                <ng-template #body let-instr>
-                                                    <tr>
-                                                        <td>{{ instr.credits }}</td>
-                                                        <td>{{ instr.gradingScale }}</td>
-                                                        <td class="text-break">{{ instr.instructionDescription }}</td>
-                                                        <td class="text-break">{{ instr.feedback }}</td>
-                                                    </tr>
-                                                </ng-template>
-                                            </p-table>
-                                        }
-                                    </div>
-                                }
+                                <ng-container [ngTemplateOutlet]="gradingCriteria" [ngTemplateOutletContext]="{ $implicit: conflict.incomingValue }" />
                             </div>
                         </div>
                     </div>
@@ -303,3 +255,31 @@
         <span jhiTranslate="artemisApp.exercise.metadataSync.applySelections"></span>
     </p-button>
 </div>
+
+<ng-template #gradingCriteria let-value>
+    @for (criterion of toGradingCriteriaDisplay(value); track criterion.title) {
+        <div class="mb-2">
+            <div class="fw-semibold small mb-1">{{ criterion.title }}</div>
+            @if (criterion.instructions.length > 0) {
+                <p-table [value]="criterion.instructions" styleClass="p-datatable-sm p-datatable-gridlines" class="small">
+                    <ng-template #header>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.exercise.credits"></th>
+                            <th scope="col" jhiTranslate="artemisApp.exercise.gradingScale"></th>
+                            <th scope="col" jhiTranslate="artemisApp.exercise.instructionDescription"></th>
+                            <th scope="col" jhiTranslate="artemisApp.exercise.feedback"></th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-instr>
+                        <tr>
+                            <td>{{ instr.credits }}</td>
+                            <td>{{ instr.gradingScale }}</td>
+                            <td class="text-break">{{ instr.instructionDescription }}</td>
+                            <td class="text-break">{{ instr.feedback }}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            }
+        </div>
+    }
+</ng-template>

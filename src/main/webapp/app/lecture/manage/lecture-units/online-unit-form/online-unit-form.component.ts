@@ -1,5 +1,6 @@
+import { LectureUnitReleaseDateFormDirective } from '../lecture-unit-release-date-form.directive';
 import dayjs from 'dayjs/esm';
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
@@ -52,7 +53,7 @@ function urlValidator(control: AbstractControl) {
         ArtemisTranslatePipe,
     ],
 })
-export class OnlineUnitFormComponent {
+export class OnlineUnitFormComponent extends LectureUnitReleaseDateFormDirective {
     private readonly formBuilder = inject(FormBuilder);
     private readonly onlineUnitService = inject(OnlineUnitService);
 
@@ -73,7 +74,6 @@ export class OnlineUnitFormComponent {
     private applyingFormData = false;
 
     /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
-    readonly isReleaseDateTextValid = signal(true);
 
     urlValidator = urlValidator;
 
@@ -92,6 +92,7 @@ export class OnlineUnitFormComponent {
     private appliedFormData?: OnlineUnitFormData;
 
     constructor() {
+        super();
         // Patch the form with the provided data in edit mode (replaces ngOnChanges).
         // Patch ONCE per distinct formData value: form.patchValue() synchronously emits statusChanges,
         // which is mirrored into the `statusChanges` signal via toSignal(...). Under zoneless that signal
@@ -126,26 +127,7 @@ export class OnlineUnitFormComponent {
         return this.form.get('description');
     }
 
-    get releaseDateControl() {
-        return this.form.get('releaseDate');
-    }
-
-    onReleaseDateChange(releaseDate: dayjs.Dayjs | undefined): void {
-        this.releaseDateControl?.setValue(releaseDate);
-        this.releaseDateControl?.markAsDirty();
-        this.reportChange(true);
-    }
-
-    onReleaseDateTextValidityChange(valid: boolean): void {
-        // The picker also reports the validity it starts with, which is no change of the user.
-        if (valid === this.isReleaseDateTextValid()) {
-            return;
-        }
-        this.isReleaseDateTextValid.set(valid);
-        this.reportChange(false);
-    }
-
-    private reportChange(immediate: boolean): void {
+    protected override reportChange(immediate: boolean): void {
         if (!this.autosave() || this.applyingFormData) {
             return;
         }

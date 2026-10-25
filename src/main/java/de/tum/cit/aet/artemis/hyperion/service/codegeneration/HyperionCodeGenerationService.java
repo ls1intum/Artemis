@@ -643,8 +643,17 @@ public abstract class HyperionCodeGenerationService {
      * @return AI response containing the solution plan
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+        String solutionCode = solutionContext(exercise);
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
+        templateVariables.put("problemStatement", exercise.getProblemStatement());
+        if (getRepositoryType() != RepositoryType.SOLUTION) {
+            templateVariables.put("solutionCode", solutionCode);
+        }
+        templateVariables.put("previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "");
+        return callChatClient(user, exercise, courseId, promptPath("1_plan.st"), templateVariables);
+    }
 
     protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
@@ -667,8 +676,12 @@ public abstract class HyperionCodeGenerationService {
      * @return AI response containing file structure definitions
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
+        templateVariables.put("solutionPlan", solutionPlan);
+        return callChatClient(user, exercise, courseId, promptPath("2_file_structure.st"), templateVariables);
+    }
 
     protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
@@ -683,9 +696,13 @@ public abstract class HyperionCodeGenerationService {
      * @param solutionPlan  the high-level solution plan from step 1
      * @param fileStructure the file structure from step 2
      */
-    protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan,
-            String repositoryStructure, String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO fileStructure)
-            throws NetworkingException;
+    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO fileStructure) throws NetworkingException {
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
+        templateVariables.put("solutionPlan", solutionPlan);
+        templateVariables.put("fileStructure", fileStructure.getFiles());
+        return callChatClient(user, exercise, courseId, promptPath("3_headers.st"), templateVariables);
+    }
 
     /**
      * Generates the core implementation for each file based on the previously computed headers.
@@ -693,8 +710,28 @@ public abstract class HyperionCodeGenerationService {
      *
      * @param headers AI response from step 3 containing class and method headers
      */
-    protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO headers) throws NetworkingException;
+    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO headers) throws NetworkingException {
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
+        templateVariables.put("solutionPlan", solutionPlan);
+        templateVariables.put("filesWithHeaders", headers.getFiles());
+        return callChatClient(user, exercise, courseId, promptPath("4_logic.st"), templateVariables);
+    }
+
+    /** Solution context is used when generating tests or student starter code. */
+    protected String solutionContext(ProgrammingExercise exercise) throws NetworkingException {
+        return null;
+    }
+
+    private String promptPath(String stageTemplate) {
+        String directory = switch (getRepositoryType()) {
+            case SOLUTION -> "solution";
+            case TEMPLATE -> "template";
+            case TESTS -> "test";
+            default -> throw new IllegalStateException("Unsupported code generation repository: " + getRepositoryType());
+        };
+        return "/prompts/hyperion/" + directory + "/" + stageTemplate;
+    }
 
     protected abstract RepositoryType getRepositoryType();
 }

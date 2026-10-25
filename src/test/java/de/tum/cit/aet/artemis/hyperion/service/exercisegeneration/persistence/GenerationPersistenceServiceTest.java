@@ -542,6 +542,18 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
+    void rejectedSaveKeepsItsFailureWhenReleasingTheReservationAlsoFails() {
+        GenerationOutcome outcome = mock(GenerationOutcome.class);
+        var releaseFailure = new IllegalStateException("coordination unavailable");
+        long exerciseId = exercise.getId();
+        Mockito.doThrow(releaseFailure).when(liveSaves).release(eq(exerciseId), anyString());
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("mechanical verification")
+                .satisfies(failure -> assertThat(failure.getSuppressed()).containsExactly(releaseFailure));
+        assertThat(liveSaves.getSlotInfo(exercise.getId())).isPresent();
+    }
+
+    @Test
     void persist_whenBaselineInvalidationFails_startsNoDurableWrite() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(gitService.getLocalHeadHash(repository)).thenReturn("pre-template", "hash-template");

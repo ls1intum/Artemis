@@ -207,6 +207,64 @@ describe('Alert Service Test', () => {
         expect(service.get()).toHaveLength(0);
     });
 
+    it.each([
+        {
+            language: 'en',
+            errors: englishErrors,
+            expected: 'You do not have permission to access this content or perform this action. Contact your course team if you need access.',
+        },
+        {
+            language: 'de',
+            errors: germanErrors,
+            expected: 'Du hast keine Berechtigung, auf diesen Inhalt zuzugreifen oder diese Aktion auszuführen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.',
+        },
+    ])('explains a 403 without a problem body in $language', ({ language, errors, expected }) => {
+        const translations = TestBed.inject(TranslateService);
+        translations.setTranslation(language, errors, true);
+        translations.use(language);
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 403 }) });
+        expect(service.get()).toHaveLength(1);
+        const rendered = document.createElement('div');
+        rendered.innerHTML = service.get()[0].message!;
+        expect(rendered.textContent).toBe(expected);
+    });
+
+    it('preserves a specific translated 403 reason and its parameters', () => {
+        const translations = TestBed.inject(TranslateService);
+        translations.setTranslation('en', { error: { restricted: 'Only {{role}} can do this.' } }, true);
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 403,
+                error: { title: 'Forbidden', message: 'error.restricted', params: { role: 'instructors' } },
+            }),
+        });
+        expect(service.get()[0].message).toBe('Only instructors can do this.');
+    });
+
+    it('falls back to permission guidance for an untranslated 403 reason', () => {
+        TestBed.inject(TranslateService).setTranslation('en', englishErrors, true);
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 403,
+                error: { title: 'Forbidden', message: 'error.untranslatedReason' },
+            }),
+        });
+        expect(service.get()[0].message).toBe('You do not have permission to access this content or perform this action. Contact your course team if you need access.');
+    });
+
+    it('does not duplicate a locally handled cannotRegisterStaff error', () => {
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 403,
+                error: { title: 'Forbidden', message: 'error.cannotRegisterStaff', errorKey: 'cannotRegisterStaff' },
+            }),
+        });
+        expect(service.get()).toHaveLength(0);
+    });
+
     it('should display an alert on status 400 for generic error and use the error title', () => {
         // GIVEN
         const response = new HttpErrorResponse({

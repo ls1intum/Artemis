@@ -1,0 +1,36 @@
+---
+id: tum-live-course-connection
+title: TUM.Live Course Connections
+sidebar_label: TUM.Live Connections
+---
+
+# Set up TUM.Live course connections
+
+Course connections are off by default. They let an Artemis instructor request access to one TUM.Live course. A person with permission to administer the selected TUM.Live course must approve each request.
+
+In the GoCast administration interface, open **Integrations** and register a new integration. Enter a display name such as `Artemis` and this exact return URL:
+
+```text
+https://artemis.example.edu/api/videosource/public/gocast/approval/callback
+```
+
+GoCast displays the generated API key once. Copy it into the server-side Artemis deployment secret. An integration is separate from human and service accounts, so it does not need a GoCast user or role.
+
+Configure Artemis with the key and the public API and web URLs:
+
+```yaml
+artemis:
+    tum-live:
+        integration-enabled: true
+        api-base-url: https://live.example.edu/api/v2
+        web-base-url: https://live.example.edu
+        api-key: <deployment-secret>
+server:
+    url: https://artemis.example.edu
+```
+
+Artemis derives the callback from `server.url`. GoCast must use that exact callback. Use HTTPS in production. HTTP is accepted only for explicit local development hosts.
+
+Regenerating or revoking the integration's API key does not remove existing course grants. After replacing a key, update the server-side Artemis deployment secret before the next integration request. Artemis does not send the key to browsers.
+
+Key management and course approval are separate actions. Generating a key does not approve any course grant or change existing course permissions. A course owner or an explicitly assigned course administrator must approve the request; instance-administrator authority alone is insufficient. The resulting integration grant does not grant access to course settings or private videos. Instructors can disconnect from Artemis; this revokes the exact grant in TUM.Live before Artemis removes its local connection.

@@ -191,7 +191,8 @@ public class ExerciseGenerationRevertService {
         RevertResult result = revertToBaseline(exercise, user, baseline, stillOwnsMutationSlot, beforeRepositoryMutation);
         // Consumed only once every captured repository was reset; a partial failure keeps it so a retry can finish instead of stranding the exercise half-reverted.
         if (result.fullyReverted()) {
-            baselineMap.remove(exercise.getId(), baseline);
+            // The exclusive live-save reservation excludes a replacement baseline. Key removal also consumes older readable bytes that re-encode differently.
+            baselineMap.remove(exercise.getId());
         }
         return Optional.of(result);
     }

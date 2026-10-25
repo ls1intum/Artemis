@@ -70,7 +70,7 @@ public record CourseCreateDTO(
         // The strict deserializer matches CourseUpdateDTO: @Min(1) alone would not reject a fractional value, because the
         // default Integer deserializer truncates it (10.5 -> 10) before bean validation runs.
         boolean autoOrchestratorEnabled, @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
+        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) implements CourseSettingsDTO {
 
     /**
      * Creates a new Course entity from this DTO.
@@ -87,49 +87,13 @@ public record CourseCreateDTO(
     public Course toCourse() {
         Course course = new Course();
 
-        // Basic info
-        course.setTitle(title);
-        course.setShortName(shortName);
-        course.setDescription(description);
-        course.setSemester(semester);
-
-        // Dates
-        course.setStartDate(startDate);
-        course.setEndDate(endDate);
-        course.setEnrollmentStartDate(enrollmentStartDate);
-        course.setEnrollmentEndDate(enrollmentEndDate);
-        course.setUnenrollmentEndDate(unenrollmentEndDate);
-
-        // Configuration flags
-        course.setTestCourse(testCourse);
-        course.setOnlineCourse(onlineCourse != null && onlineCourse);
-        course.setLanguage(language);
-        course.setDefaultProgrammingLanguage(defaultProgrammingLanguage);
-
-        // Complaint settings
-        course.setMaxComplaints(maxComplaints);
-        course.setMaxTeamComplaints(maxTeamComplaints);
-        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays);
-        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
-        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
-
-        // UI settings
-        course.setColor(color);
-        course.setEnrollmentEnabled(enrollmentEnabled);
-        course.setEnrollmentConfirmationMessage(enrollmentConfirmationMessage);
-        course.setUnenrollmentEnabled(unenrollmentEnabled);
+        applyBasicSettingsTo(course);
+        applyEnrollmentSettingsTo(course);
 
         // Course features
-        course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setPresentationScore(presentationScore);
-        course.setMaxPoints(maxPoints);
-        course.setAccuracyOfScores(accuracyOfScores);
-        // Start every course with a disabled Athena configuration; instructors turn the features on from the course
-        // overview or the onboarding wizard via CourseAthenaConfigResource, which is the only writer of these flags.
+        applyFeatureSettingsTo(course);
+        // Start every new course with Athena disabled; enabling it goes through the dedicated settings endpoint.
         course.setAthenaConfig(new CourseAthenaConfig());
-        course.setTimeZone(timeZone);
-        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
         // Attach the course configuration holding the grade-relevance flag (drives the student-data retention period)
         // and the Atlas auto-orchestration settings.

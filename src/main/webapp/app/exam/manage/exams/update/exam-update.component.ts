@@ -18,6 +18,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -70,6 +71,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         TumAetUiDialogComponent,
         TumAetUiFormFieldComponent,
         TumAetUiInputDirective,
+        PointsInputComponent,
         TumAetUiMessageComponent,
         TumAetUiTagComponent,
         TumAetUiTooltipDirective,

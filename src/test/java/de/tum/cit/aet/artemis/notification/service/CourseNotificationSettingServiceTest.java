@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingP
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingSpecification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationDeliveryPolicy;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPostNotification;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingPresetEntryDTO;
@@ -511,6 +512,11 @@ class CourseNotificationSettingServiceTest {
         @Override
         public String getReadableNotificationType() {
             return "Test Notification";
+        }
+
+        @Override
+        protected CourseNotificationDeliveryPolicy getDeliveryPolicy() {
+            return CourseNotificationDeliveryPolicy.GENERAL;
         }
 
         @Override

@@ -116,10 +116,10 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     /**
-     * We navigate to the exercise scores page when the user clicks on a data point
+     * We navigate to the exercise participation page when the user clicks on a data point
      */
     navigateToExercise(exerciseId: number, exerciseType: ExerciseType) {
-        navigateToExamExercise(this.navigationUtilService, this.courseId, this.examId, this.averageScores().exerciseGroupId, exerciseType, exerciseId, 'scores');
+        navigateToExamExercise(this.navigationUtilService, this.courseId, this.examId, this.averageScores().exerciseGroupId, exerciseType, exerciseId, 'participations');
     }
 
     /**
@@ -132,7 +132,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     /**
-     * Delegates the user to the scores page of the specific exam exercise if the corresponding bar is clicked
+     * Delegates the user to the participation page of the specific exam exercise if the corresponding bar is clicked
      * @param event the event identifying the clicked bar
      */
     onSelect(event: TumAetUiChartSelectEvent) {

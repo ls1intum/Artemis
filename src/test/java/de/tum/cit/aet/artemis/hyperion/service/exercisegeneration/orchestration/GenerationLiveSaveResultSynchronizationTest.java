@@ -113,6 +113,36 @@ class GenerationLiveSaveResultSynchronizationTest {
     }
 
     @Test
+    void lostReservationAfterSuccessfulDiscoveryIsReported() {
+        var writer = new GenerationLiveSaveService(new LocalDataProviderService(), true);
+        String token = writer.claim(EXERCISE_ID);
+        writer.expectTestCaseSynchronization(EXERCISE_ID, SOLUTION, TESTS);
+
+        assertThatThrownBy(() -> writer.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
+            assertThat(writer.recoverSlot(EXERCISE_ID, token)).isTrue();
+            return true;
+        })).isInstanceOf(IllegalStateException.class).hasMessage("Test synchronization lost its save reservation");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void discoveryFailureSurvivesALostReservation(boolean fatalFailure) {
+        var writer = new GenerationLiveSaveService(new LocalDataProviderService(), true);
+        String token = writer.claim(EXERCISE_ID);
+        writer.expectTestCaseSynchronization(EXERCISE_ID, SOLUTION, TESTS);
+        Throwable failure = fatalFailure ? new AssertionError("discovery failed") : new IllegalArgumentException("discovery failed");
+
+        assertThatThrownBy(() -> writer.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
+            assertThat(writer.recoverSlot(EXERCISE_ID, token)).isTrue();
+            if (failure instanceof Error error) {
+                throw error;
+            }
+            throw (RuntimeException) failure;
+        })).isSameAs(failure).satisfies(thrown -> assertThat(thrown.getSuppressed()).singleElement()
+                .satisfies(suppressed -> assertThat(suppressed).isInstanceOf(IllegalStateException.class).hasMessage("Test synchronization lost its save reservation")));
+    }
+
+    @Test
     void overlappingExpectedResultsRunOnlyOneCallbackAndPreventTheWriterFromMutating() throws Exception {
         var provider = new LocalDataProviderService();
         var writer = new GenerationLiveSaveService(provider, true);

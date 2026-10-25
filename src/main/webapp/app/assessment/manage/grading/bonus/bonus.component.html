@@ -174,25 +174,25 @@
                             }
                             <tr>
                                 <td class="ps-0">
-                                    <input
-                                        [attr.aria-label]="'accessibility.bonusTargetPoints' | artemisTranslate"
-                                        [(ngModel)]="dynamicExample.studentPointsOfBonusTo"
-                                        (change)="calculateDynamicExample()"
-                                        type="number"
-                                        step="0.5"
-                                        min="0"
+                                    <jhi-points-input
+                                        fluid
+                                        [ariaLabel]="'accessibility.bonusTargetPoints' | artemisTranslate"
+                                        [ngModel]="dynamicExample.studentPointsOfBonusTo"
+                                        (ngModelChange)="dynamicExample.studentPointsOfBonusTo = $event; calculateDynamicExample()"
+                                        [step]="0.5"
+                                        [min]="0"
                                         class="dynamic-example"
                                     />
                                 </td>
                                 <td>{{ dynamicExample.examGrade }}</td>
                                 <td class="ps-0">
-                                    <input
-                                        [attr.aria-label]="'accessibility.bonusSourcePoints' | artemisTranslate"
-                                        [(ngModel)]="dynamicExample.studentPointsOfBonusSource"
-                                        (change)="calculateDynamicExample()"
-                                        type="number"
-                                        step="0.5"
-                                        min="0"
+                                    <jhi-points-input
+                                        fluid
+                                        [ariaLabel]="'accessibility.bonusSourcePoints' | artemisTranslate"
+                                        [ngModel]="dynamicExample.studentPointsOfBonusSource"
+                                        (ngModelChange)="dynamicExample.studentPointsOfBonusSource = $event; calculateDynamicExample()"
+                                        [step]="0.5"
+                                        [min]="0"
                                         class="dynamic-example"
                                     />
                                 </td>

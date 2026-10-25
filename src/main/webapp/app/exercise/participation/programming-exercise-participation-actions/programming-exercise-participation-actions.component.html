@@ -1,0 +1,81 @@
+@let actions = this.actions();
+@if (actions.isTeamAvailable()) {
+    <button
+        type="button"
+        class="view-team"
+        jhi-exercise-action-button
+        [buttonIcon]="faUsers"
+        [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
+        [smallButton]="actions.smallButtons()"
+        [hideLabelMobile]="true"
+        [routerLink]="['/courses', actions.courseId(), 'exercises', actions.exercise().id, 'teams', actions.assignedTeamId]"
+    ></button>
+}
+@if (actions.isStartExerciseAvailable()) {
+    <span
+        [tabindex]="startTooltipTabIndex() ?? (actions.isBeforeStartDateAndStudent ? 0 : -1)"
+        [tumAetUiTooltip]="actions.isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+    >
+        <button
+            type="button"
+            [id]="'start-exercise-' + actions.exercise().id"
+            class="start-exercise"
+            jhi-exercise-action-button
+            [buttonIcon]="faPlayCircle"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
+            [buttonLoading]="actions.isLoading()"
+            [smallButton]="actions.smallButtons()"
+            [hideLabelMobile]="false"
+            [overwriteDisabled]="actions.isBeforeStartDateAndStudent"
+            (click)="actions.startExercise()"
+        ></button>
+    </span>
+}
+@if (actions.isStartPracticeAvailable()) {
+    <jhi-start-practice-mode-button
+        [id]="'start-practice-' + actions.exercise().id"
+        class="start-practice"
+        [smallButtons]="actions.smallButtons()"
+        [exercise]="actions.exercise()"
+        (practiceModeStarted)="actions.receiveNewParticipation($event)"
+    />
+}
+
+<ng-content />
+<!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
+@if (
+    (actions.gradedParticipation()?.initializationState === InitializationState.INACTIVE || actions.gradedParticipation()?.initializationState === InitializationState.FINISHED) &&
+    actions.isResumeExerciseAvailable(actions.gradedParticipation())
+) {
+    <button
+        type="button"
+        [id]="'resume-exercise-' + actions.exercise().id"
+        jhi-exercise-action-button
+        [buttonIcon]="faPlayCircle"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | artemisTranslate"
+        [buttonLoading]="actions.isLoading()"
+        [smallButton]="actions.smallButtons()"
+        [hideLabelMobile]="false"
+        (click)="actions.resumeProgrammingExercise(false)"
+    ></button>
+}
+@if (
+    (actions.practiceParticipation()?.initializationState === InitializationState.INACTIVE ||
+        actions.practiceParticipation()?.initializationState === InitializationState.FINISHED) &&
+    actions.isResumeExerciseAvailable(actions.practiceParticipation())
+) {
+    <button
+        type="button"
+        [id]="'resume-practice-exercise-' + actions.exercise().id"
+        jhi-exercise-action-button
+        [buttonIcon]="faPlayCircle"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [buttonLabel]="'artemisApp.exerciseActions.resumeExercisePractice' | artemisTranslate"
+        [buttonLoading]="actions.isLoading()"
+        [smallButton]="actions.smallButtons()"
+        [hideLabelMobile]="false"
+        (click)="actions.resumeProgrammingExercise(true)"
+    ></button>
+}

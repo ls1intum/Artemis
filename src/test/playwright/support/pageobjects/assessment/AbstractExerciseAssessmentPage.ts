@@ -7,10 +7,6 @@ import { Locator, Page, expect } from '@playwright/test';
 export abstract class AbstractExerciseAssessmentPage {
     protected readonly page: Page;
 
-    // Points are graded in half steps throughout Artemis; the unified feedback card's points input is
-    // readonly and only ever adjustable via its +/- stepper buttons (see UnifiedFeedbackComponent).
-    private static readonly CREDITS_STEP = 0.5;
-
     constructor(page: Page) {
         this.page = page;
     }
@@ -24,7 +20,7 @@ export abstract class AbstractExerciseAssessmentPage {
         // Scoped to the newest card: with multiple unreferenced feedback entries present, an unscoped locator
         // matches every card's stepper/points input and Playwright strict mode rejects the ambiguous match.
         const unreferencedFeedback = this.page.locator('.unreferenced-feedback-detail').last();
-        await this.setPointsViaStepper(unreferencedFeedback, points);
+        await this.setPoints(unreferencedFeedback, points);
         if (feedback) {
             await unreferencedFeedback.locator('.unified-feedback-detail-input').clear();
             await unreferencedFeedback.locator('.unified-feedback-detail-input').fill(feedback);
@@ -32,21 +28,15 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     /**
-     * Drives the unified feedback card's points stepper to reach the target value, since the points input
-     * itself is readonly and can no longer be typed into directly.
+     * Types the points into the unified feedback card's points input (a TUM AET UI number input, see
+     * UnifiedFeedbackComponent) and leaves the field, which snaps the value onto the half-point grid.
      */
-    protected async setPointsViaStepper(scope: Locator, points: number) {
-        const input = scope.locator('.unified-feedback-points-input');
+    protected async setPoints(scope: Locator, points: number) {
+        const input = scope.getByTestId('unified-feedback-points-input').locator('input');
         await input.waitFor({ state: 'visible' });
-        const current = Number(await input.inputValue()) || 0;
-        const steps = Math.round((points - current) / AbstractExerciseAssessmentPage.CREDITS_STEP);
-        if (steps === 0) {
-            return;
-        }
-        const stepButton = scope.locator('.unified-feedback-points-step').nth(steps > 0 ? 1 : 0);
-        for (let i = 0; i < Math.abs(steps); i++) {
-            await stepButton.click();
-        }
+        await input.fill(String(points));
+        await input.blur();
+        await expect(input).toHaveValue(String(points));
     }
 
     async submitWithoutInterception() {

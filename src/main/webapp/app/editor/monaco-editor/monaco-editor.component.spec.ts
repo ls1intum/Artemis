@@ -28,8 +28,6 @@ describe('MonacoEditorComponent', () => {
 
     const singleLineText = 'public class Main { }';
     const multiLineText = ['public class Main {', 'static void main() {', 'foo();', '}', '}'].join('\n');
-    const textWithEmoticons = 'Hello :)';
-    const textWithEmojis = 'Hello 🙂';
 
     const buildAnnotationArray: Annotation[] = [{ fileName: 'example.java', row: 1, column: 0, timestamp: 0, type: MonacoEditorBuildAnnotationType.ERROR, text: 'example error' }];
 
@@ -439,22 +437,27 @@ describe('MonacoEditorComponent', () => {
         expect(applySpy).toHaveBeenCalledWith(comp['_editor']);
     });
 
-    it('should convert text emoticons to emojis using convertTextToEmoji', () => {
+    it.each(['Hello :)', ':( at the start', 'a :D b :-) c', 'print(":)") \n:P'])('should keep the emoticons of %j as they are', (text) => {
         fixture.detectChanges();
-        const result = comp.convertTextToEmoji(textWithEmoticons);
-        expect(result).toBe(textWithEmojis);
+        comp.setText(text);
+        expect(comp.getText()).toBe(text);
     });
 
-    it('should detect if text is converted to emoji using isConvertedToEmoji', () => {
+    it('should neither replace emoticons nor move the cursor when the editor already shows the text', () => {
         fixture.detectChanges();
-        const isConverted = comp.isConvertedToEmoji(textWithEmoticons, textWithEmojis);
-        expect(isConverted).toBeTruthy();
+        comp.setText('Hello :) world');
+        comp.setPosition({ lineNumber: 1, column: 9 });
+        const contentListener = vi.fn();
+        const disposable = comp.onDidChangeModelContent(contentListener);
 
-        const notConverted = comp.isConvertedToEmoji(textWithEmojis, textWithEmojis);
-        expect(notConverted).toBeFalsy();
+        comp.setText('Hello :) world');
+
+        expect(contentListener).not.toHaveBeenCalled();
+        expect(comp.getPosition()).toEqual({ lineNumber: 1, column: 9 });
+        disposable.dispose();
     });
 
-    it('should not change the editor text if no conversion is needed', () => {
+    it('should not change the editor text if it is already set', () => {
         fixture.detectChanges();
         const originalText = 'Hello 😊';
         comp.setText(originalText);

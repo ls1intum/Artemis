@@ -1,3 +1,4 @@
+import { onUserChange } from 'app/core/auth/user-change.util';
 import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { CoursesForDashboardDTO, CoursesForDashboardResponseDTO, coursesForDashboardFromDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
@@ -108,17 +109,10 @@ export class CourseManagementService implements OnDestroy {
     private fetchingCoursesForNotifications = false;
 
     private stateGeneration = 0;
-    private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
 
     constructor() {
-        this.currentUserId = this.accountService.userIdentity()?.id;
-        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (this.currentUserId !== user?.id) {
-                this.currentUserId = user?.id;
-                this.resetState();
-            }
-        });
+        this.authenticationStateSubscription = onUserChange(this.accountService, () => this.resetState());
     }
 
     ngOnDestroy(): void {

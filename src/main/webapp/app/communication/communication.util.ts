@@ -136,6 +136,12 @@ export type RouteComponents = (string | number)[];
 export const CommunicationWebsocketChannelPrefix = '/topic/communication/';
 
 /**
+ * The ways a user takes over the scroll position of a message list. The browser fires no scroll event that tells their
+ * scrolling apart from a position the application set itself.
+ */
+export const USER_SCROLL_EVENTS = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const;
+
+/**
  * whitespace accepted only together with a character excluding newline character
  */
 export const PostTitleValidationPattern = Validators.pattern(/^(.)*\S+(.)*$/);

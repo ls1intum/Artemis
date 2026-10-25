@@ -541,10 +541,6 @@
                         "name": "Iris chat",
                         "description": "Chatting with Iris about a course, an exercise or a lecture."
                     },
-                    "IRIS_MEMORY": {
-                        "name": "Iris memories",
-                        "description": "What Iris remembers about a student, and deleting it."
-                    },
                     "IRIS_STRUGGLE_INTERVENTION": {
                         "name": "Iris struggle intervention",
                         "description": "Iris offering help when a student is stuck."
