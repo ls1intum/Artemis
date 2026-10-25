@@ -146,9 +146,7 @@ export class QuizExerciseLifecycleButtonsComponent {
      * @param quizBatchId the quiz batch id to start
      */
     startBatch(quizBatchId: number) {
-        // The server maps this operation to two paths, so the generated client exposes it twice; the trailing
-        // underscore is the `api/quiz/quiz-batches/{id}/start-batch` path this client has always used.
-        this.quizExerciseBatchApi.startBatch_(quizBatchId).subscribe({
+        this.quizExerciseBatchApi.startBatch(quizBatchId).subscribe({
             next: () => {
                 const updatedExercise = deepClone(this.quizExercise());
                 if (updatedExercise.quizBatches) {

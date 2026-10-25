@@ -102,12 +102,12 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should start quiz batch', () => {
-        vi.spyOn(quizExerciseBatchApi, 'startBatch_').mockReturnValue(of(generatedQuizBatch));
+        vi.spyOn(quizExerciseBatchApi, 'startBatch').mockReturnValue(of(generatedQuizBatch));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.startBatch(567);
-        expect(quizExerciseBatchApi.startBatch_).toHaveBeenCalledWith(567);
-        expect(quizExerciseBatchApi.startBatch_).toHaveBeenCalledOnce();
+        expect(quizExerciseBatchApi.startBatch).toHaveBeenCalledWith(567);
+        expect(quizExerciseBatchApi.startBatch).toHaveBeenCalledOnce();
     });
 
     it('should make quiz visible', () => {
@@ -264,7 +264,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('marks only the matching batch as started', () => {
-            vi.spyOn(quizExerciseBatchApi, 'startBatch_').mockReturnValue(of({}));
+            vi.spyOn(quizExerciseBatchApi, 'startBatch').mockReturnValue(of({}));
             fixture.componentRef.setInput(
                 'quizExercise',
                 buildQuiz({
@@ -283,7 +283,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('does not emit when starting a batch on a quiz without batches', () => {
-            vi.spyOn(quizExerciseBatchApi, 'startBatch_').mockReturnValue(of({}));
+            vi.spyOn(quizExerciseBatchApi, 'startBatch').mockReturnValue(of({}));
             fixture.componentRef.setInput('quizExercise', buildQuiz({ quizBatches: undefined }));
             const emitted: QuizExercise[] = [];
             comp.handleNewQuizExercise.subscribe((quiz) => emitted.push(quiz));
