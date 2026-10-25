@@ -354,22 +354,20 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setLectureUnitCompletion() throws Exception {
+        long lectureUnitId = textUnit.getId();
+        String completionUrl = "/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId + "/completion";
         // Set lecture unit as completed for current user
-        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=true",
-                null, HttpStatus.OK, null);
+        request.postWithoutLocation(completionUrl + "?completed=true", null, HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1.getId());
-        LectureUnit lectureUnit = this.lecture1.getLectureUnits().getFirst();
+        LectureUnit lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
         assertThat(lectureUnit.isCompletedFor(userTestRepository.getUser())).isTrue();
 
         // Set lecture unit as uncompleted for user
-        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=false",
-                null, HttpStatus.OK, null);
+        request.postWithoutLocation(completionUrl + "?completed=false", null, HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1.getId());
-        lectureUnit = this.lecture1.getLectureUnits().getFirst();
+        lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();
         assertThat(lectureUnit.isCompletedFor(userTestRepository.getUser())).isFalse();
