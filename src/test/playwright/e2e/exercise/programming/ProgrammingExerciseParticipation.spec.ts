@@ -241,7 +241,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                     test.slow();
                     const participationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                     await programmingExerciseOverview.openCloneMenu(GitCloneMethod.ssh);
-                    await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
+                    await expect(programmingExerciseOverview.getCloneUrlButton()).toBeEnabled();
                     const sshKeyNotFoundAlert = page.getByTestId('ssh-key-missing-alert');
                     await expect(sshKeyNotFoundAlert).toBeVisible();
                     // SSH-setup happens in a separate page context, then we reload the main

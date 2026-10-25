@@ -7,7 +7,7 @@
         @if (selectedMethodData.authenticationMethod === RepositoryAuthenticationMethod.SSH) {
             @let sshKeys = selectedMethodData.sshKeyState;
             @if (sshKeys.status === 'missing') {
-                <tumaet-ui-message severity="warn">
+                <tumaet-ui-message severity="warn" data-testid="ssh-key-missing-alert">
                     <span
                         class="text-sm [&_a]:text-inherit! [&_a]:underline!"
                         jhiTranslate="artemisApp.exerciseActions.codePopoverSshKeyTip"
