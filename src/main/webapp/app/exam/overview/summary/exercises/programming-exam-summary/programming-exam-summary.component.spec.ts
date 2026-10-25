@@ -174,7 +174,7 @@ describe('ProgrammingExamSummaryComponent', () => {
         fixture.detectChanges();
 
         const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
-        expect(codeButton.vcsAccessTokenData()).toEqual({ returnedTokenType: 'participation-token', participationId: programmingParticipation.id });
+        expect(codeButton.vcsAccessTokenSourceInfo()).toEqual({ returnedTokenType: 'participation-token', participationId: programmingParticipation.id });
     });
 
     it("should request a repository token when inspecting another user's participation", () => {
@@ -183,7 +183,7 @@ describe('ProgrammingExamSummaryComponent', () => {
         fixture.detectChanges();
 
         const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
-        expect(codeButton.vcsAccessTokenData()).toEqual({
+        expect(codeButton.vcsAccessTokenSourceInfo()).toEqual({
             returnedTokenType: 'repository-token',
             repositoryType: RepositoryType.USER,
             participationId: programmingParticipation.id,
