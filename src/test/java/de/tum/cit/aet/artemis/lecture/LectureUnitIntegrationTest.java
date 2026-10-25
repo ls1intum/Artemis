@@ -359,7 +359,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         // Set lecture unit as completed for current user
         request.postWithoutLocation(completionUrl + "?completed=true", null, HttpStatus.OK, null);
 
-        LectureUnit lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
+        LectureUnit lectureUnit = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1.getId()).getLectureUnits().stream()
+                .filter(unit -> unit.getId().equals(lectureUnitId)).findFirst().orElseThrow();
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
         assertThat(lectureUnit.isCompletedFor(userTestRepository.getUser())).isTrue();
@@ -367,7 +368,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         // Set lecture unit as uncompleted for user
         request.postWithoutLocation(completionUrl + "?completed=false", null, HttpStatus.OK, null);
 
-        lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
+        lectureUnit = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1.getId()).getLectureUnits().stream()
+                .filter(unit -> unit.getId().equals(lectureUnitId)).findFirst().orElseThrow();
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();
         assertThat(lectureUnit.isCompletedFor(userTestRepository.getUser())).isFalse();
