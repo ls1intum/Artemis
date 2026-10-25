@@ -329,6 +329,11 @@ export class CommunicationService implements OnDestroy {
         return this.postService.create(this.courseId, post).pipe(
             map((res: HttpResponse<Post>) => res.body!),
             tap((createdPost: Post) => {
+                // Apply the current conversation and search filters even when they changed while sending.
+                if (createdPost.conversation?.id !== undefined && this.currentPostContextFilter.conversationIds?.length) {
+                    this.handleNewOrUpdatedMessage({ action: CommunicationCrudAction.CREATE, post: createdPost });
+                    return;
+                }
                 this.pendingPostUpdates?.push({ action: CommunicationCrudAction.CREATE, post: createdPost });
                 const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === createdPost.id);
                 // Update the cached posts after successfully creating a new post if it is not already cached (can happen if the WebSocket message arrives before the HTTP response)
@@ -1040,9 +1045,7 @@ export class CommunicationService implements OnDestroy {
                 // Send a creation request for each ForwardedMessage
                 const createForwardedMessageObservables = forwardedMessages.map((message) =>
                     this.forwardedMessageService.createForwardedMessage(message).pipe(
-                        // Return the locally-built ForwardedMessage entity (which carries `destinationPost`, used by the
-                        // cache-marking logic below) updated with the server-assigned id, rather than casting the response
-                        // DTO — which only exposes `destinationPostId` — to the entity type.
+                        // Preserve the ForwardedMessage result shape; the response DTO exposes destinationPostId instead.
                         map((res: HttpResponse<ForwardedMessageDTO>) => {
                             message.id = res.body?.id;
                             return message;
@@ -1051,29 +1054,11 @@ export class CommunicationService implements OnDestroy {
                 );
 
                 return forkJoin(createForwardedMessageObservables).pipe(
-                    tap((createdForwardedMessages: ForwardedMessage[]) => {
+                    tap(() => {
                         // If the target is the currently active conversation, update the local cache
                         if (targetConversation.id === this.currentConversation?.id) {
-                            const existingPostIndex = this.cachedPosts.findIndex((post) => post.id === createdPostBody.id);
-                            if (existingPostIndex === -1) {
-                                this.cachedPosts = [createdPostBody, ...this.cachedPosts];
-                                this.changePostCount(1);
-                            }
-
-                            // Mark posts as having forwarded messages
-                            createdForwardedMessages.forEach((fm) => {
-                                const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
-                                if (postIndex > -1) {
-                                    const post = this.cachedPosts[postIndex];
-                                    this.cachedPosts[postIndex] = cloneWith(post, { hasForwardedMessages: true });
-                                }
-                            });
-
-                            // Emit updated posts and post count
                             createdPostBody.hasForwardedMessages = true;
-                            this.pendingPostUpdates?.push({ action: CommunicationCrudAction.CREATE, post: createdPostBody });
-                            this.posts$.next(this.cachedPosts);
-                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+                            this.handleNewOrUpdatedMessage({ action: CommunicationCrudAction.CREATE, post: createdPostBody });
                         }
                     }),
                     catchError((error) => {

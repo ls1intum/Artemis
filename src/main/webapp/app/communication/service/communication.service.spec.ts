@@ -477,6 +477,101 @@ describe('CommunicationService', () => {
             totalsSubscription.unsubscribe();
         });
 
+        it('ignores a send response from a conversation that was left before a new-context refresh', () => {
+            communicationService.setCourse(course);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const nextConversation = { id: 801, type: ConversationType.CHANNEL };
+            const nextPost: Post = { ...original, id: 803, conversation: nextConversation };
+            const sentPost: Post = { ...original, id: 703 };
+            const created = new Subject<HttpResponse<Post>>();
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'create').mockReturnValue(created);
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [original], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(of(new HttpResponse({ body: [nextPost], headers: new HttpHeaders({ 'X-Total-Count': '50' }) })))
+                .mockReturnValueOnce(pending);
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!] }, true, conversation);
+            const creation = communicationService.createPost({ ...sentPost, id: undefined }).subscribe();
+            const nextFilter = { courseId: course.id, conversationIds: [nextConversation.id] };
+            communicationService.getFilteredPosts(nextFilter, true, nextConversation);
+            communicationService.getFilteredPosts(nextFilter, true, nextConversation);
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+
+            created.next(new HttpResponse({ body: sentPost }));
+            created.complete();
+            const postsAfterSend = communicationService['cachedPosts'].map((post) => post.id);
+            pending.next(new HttpResponse({ body: [nextPost], headers: new HttpHeaders({ 'X-Total-Count': '50' }) }));
+            pending.complete();
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: sentPost });
+
+            expect(totals).toHaveBeenLastCalledWith(50);
+            expect(postsAfterSend).toEqual([nextPost.id]);
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([nextPost.id]);
+            creation.unsubscribe();
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { name: 'search', filter: { searchText: 'different' }, forwarded: false },
+            { name: 'search', filter: { searchText: 'different' }, forwarded: true },
+            { name: 'author', filter: { authorIds: [communicationUser1.id! + 1000] }, forwarded: false },
+            { name: 'author', filter: { authorIds: [communicationUser1.id! + 1000] }, forwarded: true },
+        ])('ignores a send response after changing the $name filter with forwarded=$forwarded', ({ filter, forwarded }) => {
+            communicationService.setCourse(course);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const sentPost: Post = { ...original, id: 703, author: communicationUser1 };
+            const matchingPost: Post = { ...original, id: 803, content: 'different', author: { ...communicationUser1, id: communicationUser1.id! + 1000 } };
+            const created = new Subject<HttpResponse<Post>>();
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'create').mockReturnValue(created);
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [original], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(of(new HttpResponse({ body: [matchingPost], headers: new HttpHeaders({ 'X-Total-Count': '50' }) })))
+                .mockReturnValueOnce(pending);
+            const initialFilter = { courseId: course.id, conversationIds: [conversation.id!] };
+            communicationService.getFilteredPosts(initialFilter, true, conversation);
+            const creation = forwarded
+                ? communicationService.createForwardedMessages([{ id: 900 }], { id: conversation.id, type: conversation.type }, false, 'original').subscribe()
+                : communicationService.createPost({ ...sentPost, id: undefined }).subscribe();
+            const filtered = { ...initialFilter, ...filter };
+            communicationService.getFilteredPosts(filtered, true, conversation);
+            communicationService.getFilteredPosts(filtered, true, conversation);
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+
+            created.next(new HttpResponse({ body: sentPost }));
+            created.complete();
+            const postsAfterSend = communicationService['cachedPosts'].map((post) => post.id);
+            pending.next(new HttpResponse({ body: [matchingPost], headers: new HttpHeaders({ 'X-Total-Count': '50' }) }));
+            pending.complete();
+
+            expect(totals).toHaveBeenLastCalledWith(50);
+            expect(postsAfterSend).toEqual([matchingPost.id]);
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([matchingPost.id]);
+            creation.unsubscribe();
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { name: 'unset', conversationIds: undefined },
+            { name: 'empty', conversationIds: [] },
+        ])('retains HTTP creation when the legacy conversation filter is $name', ({ conversationIds }) => {
+            communicationService.setCourse(course);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': '0' }) })));
+            vi.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: original })));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds }, true, conversation);
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+
+            communicationService.createPost(original).subscribe();
+
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([original.id]);
+            expect(totals).toHaveBeenLastCalledWith(1);
+            subscription.unsubscribe();
+        });
+
         it.each(['creation', 'forwarding', 'update', 'deletion'] as const)('retains a successful HTTP %s before its broadcast arrives', (mutation) => {
             communicationService.setCourse(course);
             vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
@@ -1457,9 +1552,15 @@ describe('CommunicationService', () => {
     it('should create forwarded messages and update cached posts', () => {
         const originalPosts: Posting[] = [{ id: 1 }, { id: 2 }] as Posting[];
         communicationService.setCourse(course);
-        const targetConversation: Conversation = { id: 1, type: ConversationType.CHANNEL } as Conversation;
+        const targetConversation: Conversation = { id: 77, type: ConversationType.CHANNEL };
         const isAnswer = false;
         const newContent = 'Forwarded content';
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': '0' }) })));
+        communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [targetConversation.id!] }, true, {
+            id: targetConversation.id,
+            type: targetConversation.type,
+        });
 
         const createdPost: Post = { id: 100, content: newContent, conversation: targetConversation } as Post;
         vi.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
@@ -1472,6 +1573,7 @@ describe('CommunicationService', () => {
         expect(forwardedMessageService.createForwardedMessage).toHaveBeenCalledTimes(originalPosts.length);
         expect(result?.length).toBe(originalPosts.length);
         expect(result?.every((fm) => fm.destinationPost?.id === createdPost.id)).toBe(true);
+        expect(communicationService['cachedPosts']).toContainEqual(expect.objectContaining({ id: createdPost.id, hasForwardedMessages: true }));
     });
 
     it('should throw an error if course ID is not set before forwarding', () => {
