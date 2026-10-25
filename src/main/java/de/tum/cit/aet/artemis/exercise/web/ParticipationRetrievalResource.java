@@ -155,16 +155,20 @@ public class ParticipationRetrievalResource {
     }
 
     /**
-     * A result is visible to the owning student when it is automatic, or when it is a completed manual assessment whose exercise has released its manual results (no assessment due
-     * date, or one that has already passed). This is the same predicate the gated repository queries apply.
+     * A result is visible to the owning student when it is automatic (including Athena automatic feedback, which text and modeling exercises show before the assessment due date),
+     * or when it is a completed manual assessment whose exercise has released its manual results (no assessment due date, or one that has already passed).
      *
      * @param result                the result to check, may be null
      * @param manualResultsReleased whether the exercise's manual results are already released
      * @return true if the student may see the result
      */
     private static boolean isResultVisibleToStudent(Result result, boolean manualResultsReleased) {
-        return result != null && result.getId() != null
-                && (AssessmentType.AUTOMATIC == result.getAssessmentType() || (result.getCompletionDate() != null && manualResultsReleased));
+        if (result == null || result.getId() == null) {
+            return false;
+        }
+        AssessmentType assessmentType = result.getAssessmentType();
+        boolean automatic = assessmentType == AssessmentType.AUTOMATIC || assessmentType == AssessmentType.AUTOMATIC_ATHENA;
+        return automatic || (result.getCompletionDate() != null && manualResultsReleased);
     }
 
     private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {

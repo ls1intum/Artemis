@@ -2137,6 +2137,31 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getParticipationWithLatestResult_showsAutomaticAthenaResultBeforeAssessmentDueDate() throws Exception {
+        // Athena automatic feedback is shown to students before the assessment due date, so it must stay visible here even though the due date has not passed.
+        textExercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(3));
+        exerciseRepository.save(textExercise);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
+        var athenaResult = ParticipationFactory.generateResult(true, 10D);
+        athenaResult.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(1));
+        athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        athenaResult.setExerciseId(textExercise.getId());
+        athenaResult = resultRepository.save(athenaResult);
+        submission.addResult(athenaResult);
+
+        var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipationDTO.class);
+
+        assertThat(actualParticipation).isNotNull();
+        var resultIds = actualParticipation.submissions() == null ? List.<Long>of()
+                : actualParticipation.submissions().stream()
+                        .flatMap(currentSubmission -> currentSubmission.results() == null ? Stream.empty() : currentSubmission.results().stream())
+                        .map(ParticipationSubmissionResultDTO::id).toList();
+        assertThat(resultIds).as("Athena automatic feedback stays visible before the assessment due date").contains(athenaResult.getId());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSubmissionOfParticipation() throws Exception {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");

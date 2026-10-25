@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
@@ -127,9 +126,10 @@ public class ParticipationAuthorizationCheckService {
         ExamApi examApiValue = examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
         // Exam exercises are individual, so the student exam is resolved by the exercise and the participation's student, as the programming retrieval endpoints have always done.
         User student = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
-        StudentExam studentExam = studentExamApiValue.findByExerciseIdAndUserId(exercise.getId(), student.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Participation " + participation.getId() + " does not have a student exam!"));
-        return !examApiValue.shouldStudentSeeResult(studentExam, participation);
+        // When no student exam exists for the participation (an inconsistency), hide the results rather than failing the read: a student without a student exam may not see results
+        // anyway.
+        return studentExamApiValue.findByExerciseIdAndUserId(exercise.getId(), student.getId()).map(studentExam -> !examApiValue.shouldStudentSeeResult(studentExam, participation))
+                .orElse(true);
     }
 
     /**

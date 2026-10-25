@@ -815,32 +815,39 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Finds the latest result of a participation that a student is allowed to see, ordered by completion date descending. A result is visible when it is automatic, or when it is a
-     * completed manual assessment whose exercise has no assessment due date or one that has already passed. This is the same release gate the student-facing retrieval endpoints
-     * use ({@link #findLatestResultWithFeedbacksBySubmissionId}); it prevents the score of a not-yet-released manual assessment from leaking, while still returning an earlier
-     * automatic result as a fallback. The exam-specific hiding is applied separately by the caller before this query runs.
+     * Finds the id of the latest result of a participation that a student is allowed to see. A result is visible when it is automatic (including Athena automatic feedback), or
+     * when
+     * it is a completed manual assessment whose exercise has no assessment due date or one that has already passed. "Latest" is the highest id among the visible results, which is
+     * the
+     * single-row equivalent of the release gate the student-facing retrieval endpoints use ({@link #findLatestResultWithFeedbacksBySubmissionId}); it prevents the score of a
+     * not-yet-released manual assessment from leaking while still falling back to an earlier automatic result. Only the id is selected so no result entity (and no eagerly fetched
+     * submission) is materialized for the discarded history. The exam-specific hiding is applied separately by the caller before this query runs.
      *
-     * @param participationId the id of the participation to load the visible results for
+     * @param participationId the id of the participation to load the latest visible result id for
      * @param dateTime        the reference time the assessment due date is compared against (usually now)
-     * @return the visible results of the participation ordered by completion date descending (the first element is the latest visible result)
+     * @return the id of the latest visible result of the participation, or an empty optional if none is visible
      */
     @Query("""
-            SELECT r
+            SELECT r.id
             FROM Result r
-                JOIN r.submission s
-                JOIN s.participation p
-                LEFT JOIN p.exercise e
-            WHERE p.id = :participationId
-                AND (
-                    r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                    OR (
-                        r.completionDate IS NOT NULL
-                        AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate < :dateTime)
+            WHERE r.id = (
+                SELECT MAX(r2.id)
+                FROM Result r2
+                    JOIN r2.submission s2
+                    JOIN s2.participation p2
+                    LEFT JOIN p2.exercise e2
+                WHERE p2.id = :participationId
+                    AND (
+                        r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                        OR r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                        OR (
+                            r2.completionDate IS NOT NULL
+                            AND (e2.assessmentDueDate IS NULL OR e2.assessmentDueDate < :dateTime)
+                        )
                     )
-                )
-            ORDER BY r.completionDate DESC
+            )
             """)
-    List<Result> findVisibleResultsForParticipationOrderByCompletionDateDesc(@Param("participationId") long participationId, @Param("dateTime") ZonedDateTime dateTime);
+    Optional<Long> findLatestVisibleResultIdForParticipation(@Param("participationId") long participationId, @Param("dateTime") ZonedDateTime dateTime);
 
     /**
      * Get the latest result a student may see for a participation, together with the list of feedback items, applying the course release gate.
@@ -851,11 +858,11 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return an optional result (might exist or not).
      */
     default Optional<Result> findLatestVisibleResultWithFeedbacksForParticipation(long participationId, boolean withSubmission, ZonedDateTime dateTime) {
-        List<Result> visibleResults = findVisibleResultsForParticipationOrderByCompletionDateDesc(participationId, dateTime);
-        if (visibleResults.isEmpty()) {
+        Optional<Long> latestVisibleResultId = findLatestVisibleResultIdForParticipation(participationId, dateTime);
+        if (latestVisibleResultId.isEmpty()) {
             return Optional.empty();
         }
-        long id = visibleResults.getFirst().getId();
+        long id = latestVisibleResultId.get();
         if (withSubmission) {
             return findResultWithSubmissionAndFeedbacksById(id);
         }

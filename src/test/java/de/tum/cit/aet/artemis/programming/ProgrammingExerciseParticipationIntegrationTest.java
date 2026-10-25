@@ -622,9 +622,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 .findByExerciseIdAndStudentId(programmingExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId()).getFirst();
 
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
-        if (AssessmentType.AUTOMATIC == assessmentType) {
-            assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
-            assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
+        if (AssessmentType.AUTOMATIC == assessmentType || AssessmentType.AUTOMATIC_ATHENA == assessmentType) {
+            // Automatic results, including Athena automatic feedback, stay visible to the student; only AUTOMATIC has after-due-date feedback to filter.
+            assertThat(requestedResult).isNotNull();
+            if (AssessmentType.AUTOMATIC == assessmentType) {
+                assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
+                assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
+            }
         }
         else {
             // A non-automatic result that has not been submitted yet (no completion date) is not released, so its score must not reach the student via this endpoint either.
@@ -673,6 +677,21 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         assertThat(requestedResult).as("The endpoint falls back to the visible automatic result instead of leaking the manual one").isNotNull();
         assertThat(requestedResult.getId()).isEqualTo(automaticResult.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLatestResultWithFeedbacks_showsAutomaticAthenaResultBeforeAssessmentDueDate() throws Exception {
+        // Athena automatic feedback stays visible to the student before the assessment due date, like other automatic results.
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        var athenaResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now().minusHours(1));
+        StudentParticipation participation = (StudentParticipation) athenaResult.getSubmission().getParticipation();
+
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+
+        assertThat(requestedResult).as("Athena automatic feedback stays visible before the assessment due date").isNotNull();
+        assertThat(requestedResult.getId()).isEqualTo(athenaResult.getId());
     }
 
     @Test
