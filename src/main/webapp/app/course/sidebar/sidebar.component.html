@@ -76,6 +76,19 @@
                         </div>
                     }
 
+                    @if (inlineFilterLabel(); as filterLabel) {
+                        <div class="mt-2 flex items-center gap-2">
+                            <tumaet-ui-toggle-switch
+                                inputId="sidebar-inline-filter"
+                                data-testid="sidebar-inline-filter"
+                                [ngModel]="inlineFilterActive()"
+                                [ngModelOptions]="{ standalone: true }"
+                                (changed)="inlineFilterActive.set($event)"
+                            />
+                            <label class="mb-0 text-sm" for="sidebar-inline-filter" [jhiTranslate]="filterLabel"></label>
+                        </div>
+                    }
+
                     @if (sidebarDataInternal().pinnedData?.length) {
                         <div class="mt-2 border-y py-2">
                             @for (sidebarItem of sidebarDataInternal().pinnedData; track sidebarItem.trackId ?? sidebarItem.id) {

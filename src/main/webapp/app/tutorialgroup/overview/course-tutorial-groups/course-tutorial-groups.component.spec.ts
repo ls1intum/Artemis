@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Component, input, signal } from '@angular/core';
+import { Component, input, model, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { MockDirective, MockProvider } from 'ng-mocks';
@@ -348,6 +348,55 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(component.isCollapsed()).toBe(!initialCollapseState);
         expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed());
     });
+
+    describe('free-spots filter', () => {
+        const fullGroup = Object.assign(createTutorialGroup(10, 'Full', false, false), { capacity: 2, numberOfRegisteredUsers: 2 });
+        const openGroup = Object.assign(createTutorialGroup(11, 'Open', false, false), { capacity: 10, numberOfRegisteredUsers: 3 });
+        const unlimitedGroup = Object.assign(createTutorialGroup(12, 'Unlimited', false, false), { capacity: undefined, numberOfRegisteredUsers: 50 });
+
+        beforeEach(() => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [fullGroup, openGroup, unlimitedGroup], lectures: [] });
+            vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation((group) => ({ id: group.id!, title: group.title!, size: 'M' }));
+            vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockImplementation((groups) =>
+                groups.map((group) => ({ id: group.id!, title: group.title!, size: 'M' })),
+            );
+            vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+        });
+
+        it('should list only groups with free spots when the filter is on, and a group without a capacity counts as open', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.sidebarData()!.groupedData!.allGroups.entityData.map((card) => card.id)).toEqual([10, 11, 12]);
+
+            component.freeSpotsOnly.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.sidebarData()!.groupedData!.allGroups.entityData.map((card) => card.id)).toEqual([11, 12]);
+            expect(component.sidebarData()!.ungroupedData!.map((card) => card.id)).toEqual([11, 12]);
+
+            component.freeSpotsOnly.set(false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.sidebarData()!.groupedData!.allGroups.entityData.map((card) => card.id)).toEqual([10, 11, 12]);
+        });
+
+        it('should not navigate when the filter is toggled', async () => {
+            vi.spyOn(courseOverviewService, 'getUpcomingTutorialGroup').mockReturnValue(openGroup);
+            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            // Nothing is selected on load, so it auto-navigates to the upcoming group exactly once.
+            expect(navigateSpy).toHaveBeenCalledOnce();
+
+            component.freeSpotsOnly.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(navigateSpy).toHaveBeenCalledOnce();
+        });
+    });
 });
 
 function createTutorialGroup(id: number, title: string, isUserRegistered: boolean, isUserTutor: boolean): TutorialGroup {
@@ -410,4 +459,6 @@ class MockSidebarComponent {
     pageTitle = input<string>();
     showSidebarToggle = input<boolean>();
     isSidebarCollapsed = input<boolean>();
+    inlineFilterLabel = input<string>();
+    inlineFilterActive = model<boolean>(false);
 }

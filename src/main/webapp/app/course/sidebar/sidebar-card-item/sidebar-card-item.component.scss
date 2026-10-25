@@ -28,9 +28,14 @@
 }
 
 .attendance-chip {
+    // Equal width across cards so the list reads calmly, regardless of the number of digits.
     display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 3rem;
     border-radius: 0.75rem;
-    padding: 0.25rem 0.35rem;
-    font-size: 0.6rem;
-    line-height: 0.6rem;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.7rem;
+    line-height: 0.85rem;
+    white-space: nowrap;
 }

@@ -98,6 +98,26 @@ describe('SidebarComponent', () => {
         expect(host.classList.contains('fit-container-height')).toBe(false);
     });
 
+    describe('inline filter toggle', () => {
+        it('should not render the toggle without a label', () => {
+            fixture.changeDetectorRef.detectChanges();
+            expect(fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'))).toBeNull();
+        });
+
+        it('should render the toggle with a label and reflect its changes', () => {
+            fixture.componentRef.setInput('inlineFilterLabel', 'artemisApp.courseOverview.sidebar.freeSpotsOnly');
+            fixture.changeDetectorRef.detectChanges();
+
+            const toggle = fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'));
+            expect(toggle).not.toBeNull();
+            expect(component.inlineFilterActive()).toBe(false);
+
+            toggle.componentInstance.changed.emit(true);
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.inlineFilterActive()).toBe(true);
+        });
+    });
+
     describe('selected entity params', () => {
         /**
          * The sidebar renders on the list route ('exercises'), which carries no entity id of its own. The id lives on
