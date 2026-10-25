@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -60,5 +60,47 @@ describe('CourseStatisticsPerformanceComponent', () => {
         fixture.componentRef.setInput('refresh', 1);
         fixture.detectChanges();
         TestBed.inject(HttpTestingController).expectOne('api/exercise/courses/590/charts/peer-comparison').flush({ exercises: [], groupCount: 0, peerCount: 0 });
+    });
+    it('shows a failed request independently and retries without inventing empty statistics', () => {
+        const fixture = TestBed.createComponent(CourseStatisticsPerformanceComponent);
+        fixture.componentRef.setInput('courseId', 589);
+        fixture.detectChanges();
+        const http = TestBed.inject(HttpTestingController);
+        http.expectOne('api/exercise/courses/589/charts/peer-comparison').flush({}, { status: 503, statusText: 'Unavailable' });
+        fixture.detectChanges();
+        expect(fixture.componentInstance.failed()).toBe(true);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.redesign.comparisonError');
+        fixture.nativeElement.querySelector('button').click();
+        fixture.detectChanges();
+        http.expectOne('api/exercise/courses/589/charts/peer-comparison').flush({ exercises: [] });
+        fixture.detectChanges();
+        expect(fixture.componentInstance.failed()).toBe(false);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.redesign.noGradedResults');
+    });
+
+    it('links chart selections to the filtered exercise and retains scores above 100 percent', () => {
+        const fixture = TestBed.createComponent(CourseStatisticsPerformanceComponent);
+        fixture.componentRef.setInput('courseId', 589);
+        fixture.componentRef.setInput('excludedExerciseIds', [1]);
+        fixture.detectChanges();
+        TestBed.inject(HttpTestingController)
+            .expectOne('api/exercise/courses/589/charts/peer-comparison')
+            .flush({
+                exercises: [
+                    { exerciseId: 1, ownScore: 120, releaseDate: '2026-10-10' },
+                    { exerciseId: 2, ownScore: 50, peerAverage: 40, releaseDate: '2026-10-03' },
+                ],
+            });
+        fixture.detectChanges();
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        fixture.componentInstance.onSelect({ index: 0, seriesIndex: 0 });
+        expect(navigate).toHaveBeenCalledWith(['/courses', 589, 'exercises', 2]);
+        fixture.componentInstance.onSelect({ index: 9, seriesIndex: 0 });
+        expect(navigate).toHaveBeenCalledTimes(1);
+        fixture.componentRef.setInput('excludedExerciseIds', []);
+        fixture.detectChanges();
+        expect(fixture.componentInstance.chartConfig().yAxis?.max).toBe(120);
+        fixture.componentInstance.showComparison.set(false);
+        expect(fixture.componentInstance.chartSeries()).toHaveLength(1);
     });
 });

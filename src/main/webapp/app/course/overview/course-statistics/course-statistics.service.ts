@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
@@ -27,7 +27,7 @@ export interface ExercisePeerComparison {
 }
 
 /** Each call requests fresh aggregate statistics; this service retains no data. */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseStatisticsService {
     private readonly http = inject(HttpClient);
 

@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -42,6 +43,9 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationTestRepository;
 
     private Long idOfCourse;
 
@@ -142,6 +146,29 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(response.exercises()).hasSize(3).allSatisfy(score -> assertThat(score.peerAverage()).isNull());
         assertThat(response.exercises().stream().filter(score -> score.exerciseId() == idOfIndividualTextExerciseWithoutParticipants).findFirst().orElseThrow().ownScore())
                 .isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void comparisonWaitsUntilAllIndividualDeadlinesHavePassed() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        ZonedDateTime past = ZonedDateTime.now().minusDays(5);
+        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, past, past, null);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+        studentParticipationTestRepository.saveAndFlush(participation);
+        String endpoint = "/api/exercise/courses/" + course.getId() + "/charts/peer-comparison";
+        var beforeDeadline = request.get(endpoint, HttpStatus.OK, ExercisePeerComparisonDTO.class);
+        assertThat(beforeDeadline.exercises()).isNullOrEmpty();
+
+        participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        studentParticipationTestRepository.saveAndFlush(participation);
+        var afterDeadline = request.get(endpoint, HttpStatus.OK, ExercisePeerComparisonDTO.class);
+        assertThat(afterDeadline.exercises()).singleElement().satisfies(score -> {
+            assertThat(score.exerciseId()).isEqualTo(exercise.getId());
+            assertThat(score.ownScore()).isNull();
+            assertThat(score.peerAverage()).isNull();
+        });
     }
 
     @Test

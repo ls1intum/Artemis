@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -16,15 +15,16 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { CourseStatisticsComponent, NgxExercise, Series } from 'app/course/overview/course-statistics/course-statistics.component';
+import { CourseStatisticsComponent } from 'app/course/overview/course-statistics/course-statistics.component';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
-import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
@@ -388,27 +388,8 @@ describe('CourseStatisticsComponent', () => {
     });
 
     afterEach(() => {
-        // has to be done so the component can cleanup properly
-        vi.spyOn(comp, 'ngOnDestroy').mockImplementation(() => {});
         fixture.destroy();
         vi.restoreAllMocks();
-    });
-
-    it('should size the total score doughnut chart in the component stylesheet, because its template is not scanned by Tailwind', () => {
-        // tailwind.css only generates utilities for the directories listed in its @source rules, so a class like h-[350px] on this template
-        // produces no CSS: the chart then collapses to a ring of about 110px on a phone and its centered label is offset from it.
-        const directory = 'src/main/webapp/app/course/overview/course-statistics/course-statistics.component';
-        const template = readFileSync(`${directory}.html`, 'utf8');
-        const stylesheet = readFileSync(`${directory}.scss`, 'utf8');
-
-        expect(template).toContain('data-testid="total-score-doughnut"');
-        // Only the doughnut block is checked, so unrelated elements of the template may still use such utilities
-        const doughnutBlock = template.slice(template.indexOf('data-testid="total-score-doughnut"'));
-        const doughnutChart = doughnutBlock.slice(0, doughnutBlock.indexOf('</div>', doughnutBlock.indexOf('</div>') + 1));
-        expect(doughnutChart).not.toMatch(/\b[hw]-\[\d+px\]/);
-        // The wrapper stays a square that never grows beyond the screen, and the label is centered over the same box
-        expect(stylesheet).toMatch(/\.doughnut-wrapper\s*\{[^}]*width:\s*350px;[^}]*max-width:\s*100%;[^}]*aspect-ratio:\s*1\s*\/\s*1/);
-        expect(stylesheet).toMatch(/\.chart-text\s*\{[^}]*inset:\s*0;/);
     });
 
     it('should show the translated doughnut chart label as tooltip title and the value as body', () => {
@@ -478,7 +459,7 @@ describe('CourseStatisticsComponent', () => {
         comp.ngOnInit();
         firstCourseUpdates.next({ ...course, id: 1, exercises: [modelingExercises[0]] });
         firstLoad.next(createOverviewResponse([modelingExercises[0]]));
-        expect(comp.ngxExerciseGroups().size).toBe(1);
+        expect(comp.resultExercises().length).toBe(1);
         expect(firstLoad.observed).toBe(true);
         expect(firstCourseUpdates.observed).toBe(true);
         expect(firstGrade.observed).toBe(true);
@@ -487,7 +468,7 @@ describe('CourseStatisticsComponent', () => {
 
         expect(comp.courseId).toBe(2);
         expect(comp.course()?.id).toBe(2);
-        expect(comp.ngxExerciseGroups().size).toBe(0);
+        expect(comp.resultExercises().length).toBe(0);
         expect(comp.overallPoints()).toBe(0);
         expect(comp.overallPointsTotal()).toBe(0);
         expect(comp.totalRelativeScore()).toBe(0);
@@ -519,33 +500,6 @@ describe('CourseStatisticsComponent', () => {
         expect(courseUpdatesSpy).toHaveBeenCalledTimes(2);
     });
 
-    it.each([
-        [undefined, []],
-        [
-            { name: 'Achieved bonus', value: 80, absoluteValue: 8, isProgrammingExercise: true },
-            ['artemisApp.courseOverview.statistics.programmingExercisePassedTests | artemisApp.courseOverview.statistics.bonusPointTooltip'],
-        ],
-        [
-            { name: 'Achieved (not included)', value: 75, absoluteValue: 6, isProgrammingExercise: false },
-            ['artemisApp.courseOverview.statistics.exerciseAchievedScore | artemisApp.courseOverview.statistics.notIncludedTooltip'],
-        ],
-        [
-            { name: 'Missed points', value: 100, absoluteValue: 10, notParticipated: true, exerciseTitle: 'Missed exercise' },
-            ['artemisApp.courseOverview.statistics.exerciseNotParticipated'],
-        ],
-        [
-            { name: 'Missed points', value: 50, absoluteValue: 5, afterDueDate: true, isProgrammingExercise: true, exerciseTitle: 'Late exercise' },
-            ['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate', 'artemisApp.courseOverview.statistics.programmingExerciseFailedTests'],
-        ],
-        [{ name: 'Not graded', value: 100, exerciseTitle: 'Pending exercise' }, ['artemisApp.courseOverview.statistics.exerciseNotGraded']],
-    ])('should build the expected stacked-bar tooltip for %#', (series, expectedLines) => {
-        const item = { seriesIndex: 0, index: 0, label: '', value: 0, meta: series as Series | undefined };
-
-        const lines = (comp as any).barTooltipLines(item);
-
-        expect(lines).toEqual(expectedLines);
-    });
-
     it('should group all exercises', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [programmingExercise, quizExercise, ...modelingExercises, fileUploadExercise];
@@ -557,16 +511,11 @@ describe('CourseStatisticsComponent', () => {
         // Include all exercises
         comp.toggleNotIncludedInScoreExercises();
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.ngxExerciseGroups().size).toBe(4);
         const results = fixture.debugElement.query(By.directive(CourseStatisticsResultsComponent)).componentInstance as CourseStatisticsResultsComponent;
         expect(results.types()).toHaveLength(4);
         expect(results.rows()).toHaveLength(courseToAdd.exercises.length);
         expect(fixture.nativeElement.querySelectorAll('[data-testid="statistics-exercise-link"]')).toHaveLength(courseToAdd.exercises.length);
-        expect(fixture.debugElement.query(By.css('tum-aet-ui-doughnut-chart'))).toBeTruthy();
-
-        const programming: NgxExercise = comp.ngxExerciseGroups().get(ExerciseType.PROGRAMMING)![0];
-        expect(programming.series).toHaveLength(6);
-        expect(programming.series[2].isProgrammingExercise).toBe(true);
+        expect(fixture.debugElement.query(By.css('tumaet-ui-doughnut-chart'))).toBeTruthy();
     });
 
     it('counts a submitted exercise even while its submission is withheld until assessment', () => {
@@ -596,41 +545,18 @@ describe('CourseStatisticsComponent', () => {
         vi.spyOn(TestBed.inject(CourseStatisticsService), 'getLearningStatistics').mockReturnValue(throwError(() => new Error('unavailable')));
         fixture.detectChanges();
         expect(comp.materialsFailed()).toBe(true);
-        expect(fixture.debugElement.query(By.css('tum-aet-ui-doughnut-chart'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('tumaet-ui-doughnut-chart'))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(CourseStatisticsResultsComponent))).toBeTruthy();
     });
 
     it('should filter all exercises not included in score', () => {
-        const courseToAdd = { ...course };
-        courseToAdd.exercises = [...modelingExercises];
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
-        const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
-        vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, exercises: modelingExercises });
         fixture.detectChanges();
-        comp.ngOnInit();
-
-        let exercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
-        expect(exercises[0].name).toBe('Until 18:20');
-        expect(exercises[1].name).toBe('Until 18:20 too');
-        expect(exercises[2].name).toBe('test 17.06. 1');
-        expect(exercises[3].name).toBe('test 18.06. 1');
-
+        expect(comp.resultExercises().map((exercise) => exercise.title)).not.toContain('test 17.06. 2');
         comp.toggleNotIncludedInScoreExercises();
-
-        exercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
-        expect(exercises[0].name).toBe('Until 18:20');
-        expect(exercises[1].name).toBe('Until 18:20 too');
-        expect(exercises[2].name).toBe('test 17.06. 1');
-        expect(exercises[3].name).toBe('test 17.06. 2');
-        expect(exercises[4].name).toBe('test 18.06. 1');
-
+        expect(comp.resultExercises().map((exercise) => exercise.title)).toContain('test 17.06. 2');
         comp.toggleNotIncludedInScoreExercises();
-
-        exercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
-        expect(exercises[0].name).toBe('Until 18:20');
-        expect(exercises[1].name).toBe('Until 18:20 too');
-        expect(exercises[2].name).toBe('test 17.06. 1');
-        expect(exercises[3].name).toBe('test 18.06. 1');
+        expect(comp.resultExercises().map((exercise) => exercise.title)).not.toContain('test 17.06. 2');
     });
 
     it('should set the scores correctly after retrieving them from the store', () => {
@@ -650,11 +576,7 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.ngxExerciseGroups().size).toBe(1);
-        const exercise: NgxExercise = comp.ngxExerciseGroups().get(ExerciseType.MODELING)![0];
-        expect(exercise.absoluteScore).toBe(20);
-        expect(exercise.reachablePoints).toBe(36);
-        expect(exercise.overallMaxPoints).toBe(36);
+        expect(comp.pointBreakdown()).toContainEqual({ type: ExerciseType.MODELING, achieved: 20, attainable: 36, total: 36 });
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
@@ -726,28 +648,6 @@ describe('CourseStatisticsComponent', () => {
         expect(updateCourseSpy).toHaveBeenCalledWith(courseToSubscribeTo);
     });
 
-    it('should delegate the user correctly', () => {
-        const courseToAdd = { ...course };
-        courseToAdd.exercises = [...modelingExercises];
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
-        const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
-        vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
-        const routingService = TestBed.inject(ArtemisNavigationUtilService);
-        const routingStub = vi.spyOn(routingService, 'routeInNewTab').mockImplementation(() => {});
-        comp.ngOnInit();
-
-        // series 4 holds the 'Not graded' segments, index 0 is the first bar ('Until 18:20', exercise 191)
-        const series = comp.groupChartData().get(ExerciseType.MODELING)!.series;
-        comp.onSelect({ seriesIndex: 4, index: 0, meta: series[4].meta?.[0] });
-
-        expect(routingStub).toHaveBeenCalledWith(['courses', 64, 'exercises', 191]);
-
-        // clicks that carry no exercise must not navigate
-        routingStub.mockClear();
-        comp.onSelect({ seriesIndex: 0, index: 0, meta: undefined });
-        expect(routingStub).not.toHaveBeenCalled();
-    });
-
     describe('test chart filters', () => {
         let exercises: Exercise[];
 
@@ -756,16 +656,10 @@ describe('CourseStatisticsComponent', () => {
         });
 
         it('should filter optional exercises correctly', () => {
-            const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
-            vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
             comp.toggleNotIncludedInScoreExercises();
-
             expect(comp.currentlyHidingNotIncludedInScoreExercises()).toBe(false);
-            expect(comp.ngxExerciseGroups().size).toBe(3);
-            const modelingExercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
-            expect(modelingExercises).toHaveLength(5);
-            expect(modelingExercises[0].name).toBe('Until 18:20');
-            expect(modelingExercises[1].name).toBe('Until 18:20 too');
+            expect(new Set(comp.resultExercises().map((exercise) => exercise.type)).size).toBe(3);
+            expect(comp.resultExercises().filter((exercise) => exercise.type === ExerciseType.MODELING)).toHaveLength(5);
         });
 
         it('should toggle categories', () => {
@@ -774,7 +668,7 @@ describe('CourseStatisticsComponent', () => {
 
             comp.toggleCategory('test1');
 
-            expect(getCurrentFilterStateMock).toHaveBeenCalledOnce();
+            expect(comp.numberOfAppliedFilters()).toBe(2);
             expect(getCurrentFilterStateMock).toHaveBeenCalledWith('test1');
             expect(toggleCategoryMock).toHaveBeenCalledOnce();
             expect(toggleCategoryMock).toHaveBeenCalledWith(exercises, 'test1');
@@ -813,5 +707,99 @@ describe('CourseStatisticsComponent', () => {
             // return all exercises that are included in score
             return [modelingExercises[0], modelingExercises[2], modelingExercises[3], modelingExercises[4], quizWithCategory];
         };
+    });
+    it('shows released material counts and distinguishes competency progress from mastery', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(TestBed.inject(CourseAvailableTabsService), 'loadIfNeeded').mockReturnValue(
+            of({ lectures: true, competencies: true, exams: false, tutorialGroups: false, iris: false, faq: false, learningPaths: false, communication: false, training: false }),
+        );
+        vi.spyOn(TestBed.inject(CourseStatisticsService), 'getLearningStatistics').mockReturnValue(
+            of([
+                { lectureId: 1, type: 'attachment', total: 5, completed: 3 },
+                { lectureId: 1, type: 'text', total: 3, completed: 2 },
+                { lectureId: 2, type: 'online', total: 2, completed: 1 },
+            ]),
+        );
+        const mastered = new Competency();
+        mastered.id = 31;
+        mastered.title = 'Object-oriented design';
+        mastered.masteryThreshold = 80;
+        mastered.userProgress = [{ progress: 100, confidence: 0.9 }];
+        const developing = new Competency();
+        developing.id = 32;
+        developing.masteryThreshold = 80;
+        developing.userProgress = [{ progress: 70, confidence: 0.7 }];
+        vi.spyOn(TestBed.inject(CourseCompetencyService), 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mastered, developing] })));
+        fixture.detectChanges();
+        expect(comp.materialTotal()).toBe(10);
+        expect(comp.materialCompleted()).toBe(6);
+        expect(comp.materialBreakdown()).toEqual([
+            { type: 'attachment', total: 5, completed: 3 },
+            { type: 'text', total: 3, completed: 2 },
+            { type: 'online', total: 2, completed: 1 },
+        ]);
+        expect(comp.masteredCompetencies()).toBe(1);
+        expect(comp.getProgress(developing.userProgress[0])).toBe(70);
+        expect(comp.getMastery(developing.userProgress[0])).toBe(49);
+        expect(fixture.nativeElement.textContent).toContain('Object-oriented design');
+        expect(comp.showMaterials()).toBe(true);
+        expect(comp.showCompetencies()).toBe(true);
+        comp.toggleFilters();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('fieldset')).not.toBeNull();
+    });
+
+    it('keeps material statistics available while a competency request fails and succeeds on retry', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(TestBed.inject(CourseAvailableTabsService), 'loadIfNeeded').mockReturnValue(
+            of({ lectures: true, competencies: true, exams: false, tutorialGroups: false, iris: false, faq: false, learningPaths: false, communication: false, training: false }),
+        );
+        vi.spyOn(TestBed.inject(CourseStatisticsService), 'getLearningStatistics').mockReturnValue(of([{ lectureId: 1, type: 'text', total: 4, completed: 2 }]));
+        vi.spyOn(TestBed.inject(CourseCompetencyService), 'getAllForCourse')
+            .mockReturnValueOnce(throwError(() => new Error('unavailable')))
+            .mockReturnValueOnce(of(new HttpResponse({ body: [] })));
+        fixture.detectChanges();
+        expect(comp.competenciesFailed()).toBe(true);
+        expect(comp.materialCompleted()).toBe(2);
+        expect(comp.showCompetencies()).toBe(true);
+        comp.loadLearningStatistics();
+        fixture.detectChanges();
+        expect(comp.competenciesFailed()).toBe(false);
+        expect(comp.showCompetencies()).toBe(false);
+        expect(comp.materialCompleted()).toBe(2);
+    });
+
+    it('retains exercise statistics when optional feature metadata is unavailable', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(TestBed.inject(CourseAvailableTabsService), 'loadIfNeeded').mockReturnValue(throwError(() => new Error('unavailable')));
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('tumaet-ui-doughnut-chart'))).toBeTruthy();
+        expect(comp.showMaterials()).toBe(false);
+        expect(comp.showCompetencies()).toBe(false);
+    });
+
+    it('filters categories reversibly without changing authoritative course totals', () => {
+        const first = new TextExercise(undefined, undefined);
+        first.id = 31;
+        first.title = 'Class diagrams';
+        first.categories = [new ExerciseCategory('Design', '#fff')];
+        const second = new TextExercise(undefined, undefined);
+        second.id = 32;
+        second.title = 'Design rationale';
+        second.categories = [new ExerciseCategory('Reflection', '#fff')];
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, exercises: [first, second] });
+        const totals = new CourseScores(20, 20, 0, { absoluteScore: 15, absoluteScoreTotal: 15, relativeScore: 75, currentRelativeScore: 75, presentationScore: 0 });
+        vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(totals);
+        fixture.detectChanges();
+        expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([31, 32]);
+        expect(comp.numberOfAppliedFilters()).toBe(1);
+        comp.toggleCategory('Design');
+        expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([32]);
+        expect(comp.numberOfAppliedFilters()).toBe(2);
+        expect(comp.overallPoints()).toBe(15);
+        comp.toggleCategory('Design');
+        expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([31, 32]);
+        expect(comp.numberOfAppliedFilters()).toBe(1);
+        expect(comp.overallPoints()).toBe(15);
     });
 });

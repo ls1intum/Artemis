@@ -1,8 +1,8 @@
 <section class="overflow-hidden rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background)" aria-labelledby="statistics-results-title">
-    <div class="flex flex-wrap items-start justify-between gap-4 p-5">
+    <div class="flex flex-wrap items-start justify-between gap-4! p-5!">
         <div>
-            <h2 id="statistics-results-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.courseOverview.statistics.redesign.exerciseResults"></h2>
-            <p class="mt-1 mb-0 text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.resultScope"></p>
+            <h2 id="statistics-results-title" class="m-0! text-lg! font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.redesign.exerciseResults"></h2>
+            <p class="mt-1! mb-0! text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.resultScope"></p>
         </div>
         <input
             #exerciseSearch
@@ -15,26 +15,26 @@
             class="w-full sm:w-64"
         />
     </div>
-    <div class="flex flex-col gap-3 px-5 pb-5">
-        <div class="flex flex-wrap items-center gap-2" role="group" [attr.aria-label]="'artemisApp.courseOverview.statistics.redesign.exerciseType' | artemisTranslate">
-            <tum-aet-ui-button size="small" [variant]="type() === 'all' ? 'solid' : 'outlined'" [ariaPressed]="type() === 'all'" (clicked)="type.set('all')"
-                ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.all"></span> ({{ exercises().length }})</tum-aet-ui-button
+    <div class="flex flex-col gap-3! px-5! pb-5!">
+        <div class="flex flex-wrap items-center gap-2!" role="group" [attr.aria-label]="'artemisApp.courseOverview.statistics.redesign.exerciseType' | artemisTranslate">
+            <tumaet-ui-button size="small" [variant]="type() === 'all' ? 'solid' : 'outlined'" [ariaPressed]="type() === 'all'" (clicked)="type.set('all')"
+                ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.all"></span> ({{ exercises().length }})</tumaet-ui-button
             >
             @for (exerciseType of types(); track exerciseType) {
-                <tum-aet-ui-button size="small" [variant]="type() === exerciseType ? 'solid' : 'outlined'" [ariaPressed]="type() === exerciseType" (clicked)="type.set(exerciseType)"
-                    ><fa-icon [icon]="getIcon(exerciseType)" />{{ 'artemisApp.courseOverview.statistics.redesign.types.' + exerciseType | artemisTranslate }}</tum-aet-ui-button
+                <tumaet-ui-button size="small" [variant]="type() === exerciseType ? 'solid' : 'outlined'" [ariaPressed]="type() === exerciseType" (clicked)="type.set(exerciseType)"
+                    ><fa-icon [icon]="getIcon(exerciseType)" />{{ 'artemisApp.courseOverview.statistics.redesign.types.' + exerciseType | artemisTranslate }}</tumaet-ui-button
                 >
             }
         </div>
-        <div class="flex flex-wrap items-center gap-2" role="group" [attr.aria-label]="'artemisApp.courseOverview.statistics.redesign.assessmentStatus' | artemisTranslate">
+        <div class="flex flex-wrap items-center gap-2!" role="group" [attr.aria-label]="'artemisApp.courseOverview.statistics.redesign.assessmentStatus' | artemisTranslate">
             @for (state of statuses; track state) {
-                <tum-aet-ui-button
+                <tumaet-ui-button
                     severity="secondary"
                     size="small"
                     [variant]="status() === state ? 'solid' : 'text'"
                     [ariaPressed]="status() === state"
                     (clicked)="status.set(state)"
-                    >{{ 'artemisApp.courseOverview.statistics.redesign.states.' + state | artemisTranslate }}</tum-aet-ui-button
+                    >{{ 'artemisApp.courseOverview.statistics.redesign.states.' + state | artemisTranslate }}</tumaet-ui-button
                 >
             }
         </div>
@@ -55,15 +55,15 @@
                             <a
                                 data-testid="statistics-exercise-link"
                                 [routerLink]="['/courses', courseId(), 'exercises', row.exercise.id]"
-                                class="inline-flex min-w-48 items-center gap-2 font-medium text-(--tumaet-ui-accent-color) underline-offset-4 hover:underline"
+                                class="inline-flex min-w-48 items-center gap-2! font-medium text-(--tumaet-ui-accent-color) underline-offset-4 hover:underline"
                             >
                                 @if (row.exercise.type; as exerciseType) {
                                     <fa-icon [icon]="getIcon(exerciseType)" />
                                 }
                                 {{ row.exercise.title }}</a
                             >
-                            <div class="mt-2 flex flex-wrap items-center gap-2">
-                                <tum-aet-ui-tag severity="secondary" [value]="'artemisApp.courseOverview.statistics.redesign.scoring.' + row.scoring | artemisTranslate" />
+                            <div class="mt-2! flex flex-wrap items-center gap-2!">
+                                <tumaet-ui-tag severity="secondary" [value]="'artemisApp.courseOverview.statistics.redesign.scoring.' + row.scoring | artemisTranslate" />
                                 @if (row.exercise.exerciseVariantGroup; as variantGroup) {
                                     @if (variantGroup.maxPoints !== undefined) {
                                         <span
@@ -87,7 +87,7 @@
                             @if (row.resultText !== undefined) {
                                 <a
                                     [routerLink]="['/courses', courseId(), 'exercises', row.exercise.id]"
-                                    class="inline-flex items-center gap-2 text-(--tumaet-ui-accent-color) underline-offset-4 hover:underline"
+                                    class="inline-flex items-center gap-2! text-(--tumaet-ui-accent-color) underline-offset-4 hover:underline"
                                     ><fa-icon [icon]="row.resultIcon" [style.color]="row.resultColor" />{{ row.resultText }}</a
                                 >
                             } @else {
@@ -95,7 +95,7 @@
                             }
                         </td>
                         <td>
-                            <tum-aet-ui-tag
+                            <tumaet-ui-tag
                                 [severity]="row.state === 'graded' ? 'success' : row.state === 'pending' ? 'info' : 'secondary'"
                                 [value]="'artemisApp.courseOverview.statistics.redesign.states.' + row.state | artemisTranslate"
                             />
@@ -103,11 +103,11 @@
                     </tr>
                 } @empty {
                     <tr>
-                        <td colspan="3" class="py-8 text-center" jhiTranslate="artemisApp.courseOverview.statistics.redesign.noMatchingExercises"></td>
+                        <td colspan="3" class="py-8! text-center" jhiTranslate="artemisApp.courseOverview.statistics.redesign.noMatchingExercises"></td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
-    <tum-aet-ui-paginator [totalRecords]="filteredRows().length" [page]="currentPage()" [pageSize]="pageSize" [showRowsPerPage]="false" (pageChange)="page.set($event)" />
+    <tumaet-ui-paginator [totalRecords]="filteredRows().length" [page]="currentPage()" [pageSize]="pageSize" [showRowsPerPage]="false" (pageChange)="page.set($event)" />
 </section>

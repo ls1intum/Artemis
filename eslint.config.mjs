@@ -779,6 +779,7 @@ export default tseslint.config(
         // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
         // See client-development.mdx (### Styling).
         files: [
+            'src/main/webapp/app/course/overview/course-statistics/**/*.html',
             'src/main/webapp/app/exam/overview/**/*.html',
             'src/main/webapp/app/exam/shared/**/*.html',
             'src/main/webapp/app/assessment/overview/**/*.html',

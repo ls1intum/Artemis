@@ -358,6 +358,7 @@ public class LectureResource {
      * @return counts by lecture and material type, without other users' completion records or material payloads
      */
     @GetMapping("courses/{courseId}/learning-statistics")
+    @FeatureUsage(UserFeature.STUDENT_COURSE_STATISTICS)
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<LectureLearningStatisticsDTO>> getLearningStatistics(@PathVariable Long courseId) {
         return ResponseEntity.ok(lectureUnitRepository.findLearningStatistics(courseId, userRepository.getUserWithAuthorities().getId(), ZonedDateTime.now()));

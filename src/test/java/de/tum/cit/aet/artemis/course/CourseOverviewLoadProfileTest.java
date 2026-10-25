@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -68,6 +67,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -193,6 +194,9 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private ResultTestRepository resultTestRepository;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
 
     private Course course;
 
@@ -796,6 +800,89 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
                 assertThat(result.score()).isEqualTo(80.0);
             });
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void quizSubmissionStatusRemainsAvailableWhileResultsAreWithheld() throws Exception {
+        Course quizCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        var quiz = quizExerciseUtilService.createAndSaveSynchronizedQuiz(quizCourse, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusMinutes(5), 3600);
+        quiz.setDueDate(ZonedDateTime.now().plusMinutes(55));
+        exerciseRepository.saveAndFlush(quiz);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(quiz, TEST_PREFIX + "student1");
+        var submission = new QuizSubmission();
+        submission.setParticipation(participation);
+        submission.setSubmitted(false);
+        submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
+        submission = submissionTestRepository.saveAndFlush(submission);
+        String endpoint = "/api/course/courses/" + quizCourse.getId() + "/exercises-for-overview";
+        var draft = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class).exercises().iterator().next().studentParticipations().iterator().next();
+        assertThat(draft.hasSubmitted()).isFalse();
+        assertThat(draft.submissions()).isNullOrEmpty();
+
+        submission.setSubmitted(true);
+        submissionTestRepository.saveAndFlush(submission);
+        var submitted = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class).exercises().iterator().next().studentParticipations().iterator().next();
+        assertThat(submitted.hasSubmitted()).isTrue();
+        assertThat(submitted.submissions()).singleElement().satisfies(visible -> assertThat(visible.results()).isNullOrEmpty());
+
+        quiz.setDueDate(ZonedDateTime.now().minusMinutes(1));
+        exerciseRepository.saveAndFlush(quiz);
+        var ended = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class).exercises().iterator().next().studentParticipations().iterator().next();
+        assertThat(ended.hasSubmitted()).isTrue();
+        assertThat(ended.submissions()).isNullOrEmpty();
+
+        var result = new Result();
+        result.setExerciseId(quiz.getId());
+        result.setSubmission(submission);
+        result.setRated(true);
+        result.setScore(80.0);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultTestRepository.saveAndFlush(result);
+        var assessed = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class).exercises().iterator().next().studentParticipations().iterator().next();
+        assertThat(assessed.hasSubmitted()).isTrue();
+        assertThat(assessed.submissions()).singleElement()
+                .satisfies(visible -> assertThat(visible.results()).singleElement().satisfies(score -> assertThat(score.score()).isEqualTo(80.0)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void programmingCommitCountsWhileItsBuildResultIsPending() throws Exception {
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        exercise.setReleaseDate(ZonedDateTime.now().minusDays(3));
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.saveAndFlush(exercise);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participation.setExercise(exercise);
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation = studentParticipationTestRepository.saveAndFlush(participation);
+        String endpoint = "/api/course/courses/" + course.getId() + "/exercises-for-overview";
+        var started = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class).exercises().stream().filter(entry -> entry.id().equals(exercise.getId()))
+                .findFirst().orElseThrow().studentParticipations().iterator().next();
+        assertThat(started.hasSubmitted()).isFalse();
+        assertThat(started.submissions()).isNullOrEmpty();
+
+        var submission = new ProgrammingSubmission();
+        submission.setParticipation(participation);
+        submission.setSubmitted(false);
+        submission.setSubmissionDate(ZonedDateTime.now().minusHours(1));
+        submission.setCommitHash("4".repeat(40));
+        submissionTestRepository.saveAndFlush(submission);
+        var pending = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class).exercises().stream().filter(entry -> entry.id().equals(exercise.getId()))
+                .findFirst().orElseThrow().studentParticipations().iterator().next();
+        assertThat(pending.hasSubmitted()).isTrue();
+        assertThat(pending.submissions()).singleElement().satisfies(visible -> {
+            assertThat(visible.commitHash()).isEqualTo(submission.getCommitHash());
+            assertThat(visible.results()).isNullOrEmpty();
+        });
+
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
+        exerciseRepository.saveAndFlush(exercise);
+        var late = request.get(endpoint, HttpStatus.OK, CourseExercisesForOverviewDTO.class).exercises().stream().filter(entry -> entry.id().equals(exercise.getId())).findFirst()
+                .orElseThrow().studentParticipations().iterator().next();
+        assertThat(late.hasSubmitted()).isTrue();
+        assertThat(late.submissions()).isNullOrEmpty();
     }
 
     /**

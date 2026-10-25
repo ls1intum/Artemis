@@ -21,10 +21,10 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitVideoSourceDTO;
-import de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO;
 
 /**
  * Spring Data JPA repository for the Lecture Unit entity.

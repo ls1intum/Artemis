@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -32,6 +33,19 @@ describe('CourseStatisticsResultsComponent', () => {
         fixture.componentInstance.page.set(3);
         fixture.detectChanges();
         expect(fixture.componentInstance.visibleRows()[0].exercise.id).toBe(61);
+    });
+
+    it('orders the ledger chronologically with undated exercises last without mutating the supplied exercises', () => {
+        const exercises = [
+            { id: 4, title: 'Undated' },
+            { id: 3, title: 'Later', dueDate: dayjs('2026-10-15') },
+            { id: 2, title: 'Earlier, second', dueDate: dayjs('2026-10-01') },
+            { id: 1, title: 'Earlier, first', dueDate: dayjs('2026-10-01') },
+        ] as Exercise[];
+        fixture.componentRef.setInput('exercises', exercises);
+        fixture.detectChanges();
+        expect(fixture.componentInstance.rows().map((row) => row.exercise.id)).toEqual([1, 2, 3, 4]);
+        expect(exercises.map((exercise) => exercise.id)).toEqual([4, 3, 2, 1]);
     });
 
     it('searches the whole result set and resets pagination without a dropdown', () => {
@@ -86,5 +100,37 @@ describe('CourseStatisticsResultsComponent', () => {
         expect(text).toContain('artemisApp.courseOverview.statistics.redesign.scoring.bonus');
         expect(text).toContain('artemisApp.courseOverview.statistics.redesign.scoring.excluded');
         expect(fixture.nativeElement.querySelector('[data-testid="statistics-variant-cap"]')).not.toBeNull();
+    });
+    it('keeps an active exercise-type filter visible when the supplied exercises change', () => {
+        fixture.componentRef.setInput('exercises', [
+            { id: 1, title: 'Text', type: ExerciseType.TEXT },
+            { id: 2, title: 'Programming', type: ExerciseType.PROGRAMMING },
+        ] as Exercise[]);
+        fixture.detectChanges();
+        fixture.componentInstance.type.set(ExerciseType.TEXT);
+        fixture.detectChanges();
+        expect(fixture.componentInstance.visibleRows().map((row) => row.exercise.id)).toEqual([1]);
+        fixture.componentRef.setInput('exercises', [{ id: 2, title: 'Programming', type: ExerciseType.PROGRAMMING }] as Exercise[]);
+        fixture.detectChanges();
+        expect(fixture.componentInstance.type()).toBe('all');
+        expect(fixture.componentInstance.visibleRows().map((row) => row.exercise.id)).toEqual([2]);
+    });
+
+    it('searches category names case-insensitively and combines the visible type and status controls', () => {
+        fixture.componentRef.setInput('exercises', [
+            { id: 1, title: 'Class design', type: ExerciseType.TEXT, categories: [{ category: 'Object orientation' }] },
+            { id: 2, title: 'Loops', type: ExerciseType.PROGRAMMING },
+        ] as Exercise[]);
+        fixture.detectChanges();
+        fixture.componentInstance.search.set('  ORIENTATION  ');
+        fixture.detectChanges();
+        expect(fixture.componentInstance.visibleRows().map((row) => row.exercise.id)).toEqual([1]);
+        fixture.componentInstance.type.set(ExerciseType.PROGRAMMING);
+        fixture.detectChanges();
+        expect(fixture.componentInstance.visibleRows()).toHaveLength(0);
+        fixture.componentInstance.search.set('');
+        fixture.componentInstance.status.set('notSubmitted');
+        fixture.detectChanges();
+        expect(fixture.componentInstance.visibleRows().map((row) => row.exercise.id)).toEqual([2]);
     });
 });

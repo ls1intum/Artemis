@@ -59,35 +59,40 @@ export class CourseStatisticsResultsComponent {
 
     readonly rows = computed(() => {
         this.language();
-        return this.exercises().map((exercise) => {
-            const participation = exercise.studentParticipations?.find((entry) => !isPracticeMode(entry));
-            const result = getLatestResultOfStudentParticipation(participation, false);
-            const submitted = hasSubmittedForStatistics(participation);
-            const state: ResultState = result?.score !== undefined ? 'graded' : submitted ? 'pending' : 'notSubmitted';
-            const context = this.course() ? cloneWith(exercise, { course: this.course() }) : exercise;
-            const color = getTextColorClass(result, participation, ResultTemplateStatus.HAS_RESULT);
-            return {
-                exercise,
-                scoring:
-                    exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
-                        ? 'bonus'
-                        : exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED
-                          ? 'excluded'
-                          : 'included',
-                state,
-                resultText: result?.score !== undefined ? this.resultService.getResultString(result, context, participation, true) : undefined,
-                resultColor:
-                    color === 'text-state-success'
-                        ? 'var(--tumaet-ui-state-success-foreground)'
-                        : color === 'text-state-danger'
-                          ? 'var(--tumaet-ui-state-danger-foreground)'
-                          : color === 'result-orange'
-                            ? 'var(--tumaet-ui-state-warning-foreground)'
-                            : 'var(--tumaet-ui-muted-color)',
-                resultIcon: getResultIconClass(result, participation, result?.score !== undefined ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT),
-                successful: result?.successful,
-            };
-        });
+        return this.exercises()
+            .map((exercise) => {
+                const participation = exercise.studentParticipations?.find((entry) => !isPracticeMode(entry));
+                const result = getLatestResultOfStudentParticipation(participation, false);
+                const submitted = hasSubmittedForStatistics(participation);
+                const state: ResultState = result?.score !== undefined ? 'graded' : submitted ? 'pending' : 'notSubmitted';
+                const context = this.course() ? cloneWith(exercise, { course: this.course() }) : exercise;
+                const color = getTextColorClass(result, participation, ResultTemplateStatus.HAS_RESULT);
+                return {
+                    exercise,
+                    scoring:
+                        exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
+                            ? 'bonus'
+                            : exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED
+                              ? 'excluded'
+                              : 'included',
+                    state,
+                    resultText: result?.score !== undefined ? this.resultService.getResultString(result, context, participation, true) : undefined,
+                    resultColor:
+                        color === 'text-state-success'
+                            ? 'var(--tumaet-ui-state-success-foreground)'
+                            : color === 'text-state-danger'
+                              ? 'var(--tumaet-ui-state-danger-foreground)'
+                              : color === 'result-orange'
+                                ? 'var(--tumaet-ui-state-warning-foreground)'
+                                : 'var(--tumaet-ui-muted-color)',
+                    resultIcon: getResultIconClass(result, participation, result?.score !== undefined ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT),
+                    successful: result?.successful,
+                };
+            })
+            .sort((first, second) => {
+                const dueDateDifference = (first.exercise.dueDate?.valueOf() ?? Infinity) - (second.exercise.dueDate?.valueOf() ?? Infinity);
+                return dueDateDifference || (first.exercise.id ?? 0) - (second.exercise.id ?? 0);
+            });
     });
 
     readonly filteredRows = computed(() => {
@@ -104,7 +109,10 @@ export class CourseStatisticsResultsComponent {
     constructor() {
         effect(() => {
             this.search();
-            this.type();
+            const type = this.type();
+            if (type !== 'all' && !this.types().includes(type)) {
+                this.type.set('all');
+            }
             this.status();
             this.exercises();
             this.page.set(0);
