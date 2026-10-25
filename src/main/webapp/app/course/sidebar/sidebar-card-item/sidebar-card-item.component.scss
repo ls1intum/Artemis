@@ -28,14 +28,15 @@
 }
 
 .attendance-chip {
-    // Equal width across cards so the list reads calmly, regardless of the number of digits.
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-width: 3rem;
+    // Fixed width so every chip is the same size; a rare long value (e.g. 100 / 100) clips with an ellipsis instead of widening it.
+    flex-shrink: 0;
+    width: 3.5rem;
+    padding-block: 0.3rem;
     border-radius: 0.75rem;
-    padding: 0.3rem 0.5rem;
     font-size: 0.7rem;
     line-height: 0.85rem;
+    text-align: center;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
