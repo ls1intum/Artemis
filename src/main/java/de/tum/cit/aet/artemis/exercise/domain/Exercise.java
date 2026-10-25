@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -90,6 +91,10 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise extends BaseExercise implements LearningObject {
+
+    /** Creation is known for new content; older undated content deliberately stays unknown. */
+    @Column(name = "created_date")
+    private ZonedDateTime createdDate;
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
@@ -376,6 +381,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     @PrePersist
     private void dropVariantGroupOfNewExercise() {
+        if (createdDate == null) {
+            createdDate = ZonedDateTime.now(ZoneOffset.UTC);
+        }
         exerciseVariantGroup = null;
     }
 
@@ -981,4 +989,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
         return managedCriteria;
     }
+
+    @JsonIgnore
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
 }
