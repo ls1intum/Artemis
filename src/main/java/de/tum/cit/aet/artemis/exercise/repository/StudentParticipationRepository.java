@@ -148,9 +148,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (TYPE(ex) <> ProgrammingExercise OR r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA))
             """)
     Set<CourseGradeScoreDTO> findIndividualGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
@@ -177,15 +178,17 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (TYPE(ex) <> ProgrammingExercise OR r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA))
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
     /**
      * Projects the latest rated result for each visible individual non-quiz participation in the course overview.
      * Unlike the shared course-score query, a newer submission without a result does not suppress the preceding grade.
+     * A requested AI feedback of a programming exercise only copies a test score, so it is never the grade.
      *
      * @param exerciseIds the visible non-quiz exercise ids
      * @param studentId   the requesting student
@@ -213,6 +216,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (
                     SELECT newerResult
@@ -221,6 +225,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         AND newerResult.rated = TRUE
                         AND newerResult.completionDate IS NOT NULL
                         AND newerResult.score IS NOT NULL
+                        AND (TYPE(ex) <> ProgrammingExercise OR newerResult.assessmentType IS NULL OR newerResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                         AND newerResult.submission.submissionDate IS NOT NULL
                         AND (ex.dueDate IS NULL OR newerResult.submission.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
                         AND (newerResult.completionDate > r.completionDate
@@ -232,6 +237,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     /**
      * Projects the latest rated result for each visible team participation in the course overview, independently of
      * any newer resultless submission.
+     * A requested AI feedback of a programming exercise only copies a test score, so it is never the grade.
      *
      * @param exerciseIds the visible team exercise ids
      * @param studentId   the requesting student
@@ -259,6 +265,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (
                     SELECT newerResult
@@ -267,6 +274,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         AND newerResult.rated = TRUE
                         AND newerResult.completionDate IS NOT NULL
                         AND newerResult.score IS NOT NULL
+                        AND (TYPE(ex) <> ProgrammingExercise OR newerResult.assessmentType IS NULL OR newerResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                         AND newerResult.submission.submissionDate IS NOT NULL
                         AND (ex.dueDate IS NULL OR newerResult.submission.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
                         AND (newerResult.completionDate > r.completionDate
@@ -318,9 +326,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (TYPE(ex) <> ProgrammingExercise OR r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA))
             """)
     Set<CourseGradeScoreDTO> findIndividualGradesByCourseId(@Param("courseId") long courseId);
 
@@ -347,9 +356,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (TYPE(ex) <> ProgrammingExercise OR r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA))
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseId(@Param("courseId") long courseId);
 
