@@ -29,22 +29,24 @@ function modeButton(page: Page, mode: 'practice' | 'graded') {
 test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
     test.describe('After the due date with a graded submission', () => {
         let exercise: ProgrammingExercise;
-        let dueDate: dayjs.Dayjs;
 
         test.beforeEach('Create exercise and make a graded submission before the due date', async ({ login, page, exerciseAPIRequests }) => {
             await login(admin);
-            // The budget must also cover the exercise creation (template/solution/test repo provisioning)
-            // and the graded submission, which all happen before the due date passes.
-            dueDate = dayjs().add(45, 'seconds');
-            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, dueDate });
+            // Keep the graded repository writable until its submission has actually been accepted. Provisioning
+            // repositories can outlast a short wall-clock deadline on CI; the old fixture silently submitted after it.
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, releaseDate: dayjs().subtract(1, 'day'), dueDate: dayjs().add(1, 'day') });
             await login(studentOne);
             const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
+            await expect(response).toBeOK();
             const participation = await response.json();
-            await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, javaAllSuccessfulSubmission);
-            const now = dayjs();
-            if (now.isBefore(dueDate)) {
-                await page.waitForTimeout(dueDate.diff(now, 'ms') + 2000);
-            }
+            const submissionResponse = await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, javaAllSuccessfulSubmission);
+            await expect(submissionResponse).toBeOK();
+
+            await login(admin);
+            const timelineResponse = await page.request.put('api/programming/programming-exercises/timeline', {
+                data: { ...exercise, dueDate: dayjs().subtract(1, 'minute').toISOString() },
+            });
+            await expect(timelineResponse).toBeOK();
         });
 
         test('Keeps the practice mode selectable when switching back to graded', async ({ login, page, programmingExerciseEditor }) => {

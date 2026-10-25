@@ -146,7 +146,13 @@ public class ParticipationService {
      * @return the `StudentParticipation` connecting the given exercise and participant
      */
     public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
+        if (participant instanceof Team team && !(exercise instanceof ProgrammingExercise)) {
+            return teamRepository.initializeParticipationWithTeamLock(team.getId(), () -> initializeParticipation(exercise, participant, createInitialSubmission));
+        }
+        return initializeParticipation(exercise, participant, createInitialSubmission);
+    }
 
+    private StudentParticipation initializeParticipation(Exercise exercise, Participant participant, boolean createInitialSubmission) {
         StudentParticipation participation;
         Optional<StudentParticipation> optionalStudentParticipation = Optional.empty();
 

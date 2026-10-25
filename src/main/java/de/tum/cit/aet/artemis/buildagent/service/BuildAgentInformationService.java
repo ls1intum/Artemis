@@ -98,7 +98,7 @@ public class BuildAgentInformationService {
                 dockerVersion = newVersion;
             }
             if (stateChanged || versionChanged) {
-                updateLocalBuildAgentInformation(false);
+                updateLocalBuildAgentInformationWithRecentJob(null, false, false, DEFAULT_CONSECUTIVE_FAILURES, true);
             }
         }
         catch (Exception e) {
@@ -159,6 +159,11 @@ public class BuildAgentInformationService {
      * @param consecutiveFailures   number of consecutive build failures on the build agent
      */
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+        updateLocalBuildAgentInformationWithRecentJob(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures, false);
+    }
+
+    private void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures,
+            boolean preserveAgentState) {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {
             log.debug("Not connected to Hazelcast cluster yet. Skipping build agent information update.");
@@ -178,7 +183,7 @@ public class BuildAgentInformationService {
             distributedDataAccessService.getDistributedBuildAgentInformation().lock(agentKey);
             try {
                 // Add/update
-                BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
+                BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures, preserveAgentState);
 
                 log.debug("Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}'", agentKey, info.buildAgent().name(),
                         info.buildAgent().memberAddress(), info.buildAgent().displayName());
@@ -201,7 +206,8 @@ public class BuildAgentInformationService {
         }
     }
 
-    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures,
+            boolean preserveAgentState) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         // Use buildAgentShortName for filtering instead of memberAddress, because Hazelcast client connections
         // use ephemeral ports that can change, causing memberAddress filtering to fail
@@ -213,6 +219,11 @@ public class BuildAgentInformationService {
         BuildAgentStatus status;
         // Use buildAgentShortName as key since that's what we use to store the agent info
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
+        if (preserveAgentState && agent != null) {
+            // Docker probes refresh metadata without changing pause state or failure counters. Read these under the agent map lock.
+            isPaused = agent.status() == BuildAgentStatus.PAUSED || agent.status() == BuildAgentStatus.SELF_PAUSED;
+            consecutiveFailures = agent.buildAgentDetails() != null ? agent.buildAgentDetails().consecutiveBuildFailures() : DEFAULT_CONSECUTIVE_FAILURES;
+        }
         if (isPaused) {
             boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED;
             status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;

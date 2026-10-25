@@ -324,12 +324,12 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             await courseOverview.openExerciseById(course.id!, exercise.id!);
             await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('Not yet started')).toBeVisible();
+            const participationResponse = page.waitForResponse(
+                (response) => response.url().includes(`/exercises/${exercise.id}/participations`) && response.request().method() === 'POST' && response.status() === 201,
+            );
             await courseOverview.startExercise(exercise.id!);
-            // Starting gives this student their own fresh participation, so the header shows the graded-result
-            // placeholder `artemisApp.result.noGradedResult` ("Not graded") instead of the other team's score. The text
-            // asserted before ("No graded result") belongs to `courseOverview.exerciseDetails.noGradedResult`, a
-            // translation key the client stopped rendering in 2019 — long before this test was added — so the
-            // assertion could never match and failed deterministically.
+            const ownParticipation = await (await participationResponse).json();
+            expect(ownParticipation.team.id).not.toBe(team.id);
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('Not graded')).toBeVisible();
         });
 
@@ -348,15 +348,16 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                             createdFiles.add(filename);
                         }
                     }
-                    await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
-                    await waitForParticipationBuildToFinish(participation.id!);
+                    const previousParticipation = await exerciseAPIRequests.getParticipationWithLatestResult(participation.id!);
+                    const previousResultIds = (previousParticipation.submissions ?? []).flatMap((submission) => (submission.results ?? []).map((result) => result.id!));
+                    const previousResultId = previousResultIds.length ? Math.max(...previousResultIds) : null;
+                    const submissionResponse = await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
+                    await expect(submissionResponse).toBeOK();
+                    await waitForParticipationBuildToFinish(participation.id!, undefined, undefined, previousResultId);
                 }
             });
 
             test('Instructor checks the participation', async ({ login, navigationBar, courseManagement, courseManagementExercises, programmingExerciseParticipations }) => {
-                // The shared beforeEach runs 3 student submissions and waits for 3 C builds,
-                // which alone consumes most of the default slow-test budget under CI load.
-                // `test.slow()` triples the budget so the verification steps still fit.
                 test.slow();
                 await login(instructor, '/');
                 await navigationBar.openCourseManagement();
@@ -392,12 +393,12 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             programmingExerciseParticipations,
             programmingExerciseOverview,
             programmingExerciseSubmissions,
-            waitForExerciseBuildToFinish,
+            waitForParticipationBuildToFinish,
         }) => {
-            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+            const participationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'student commit');
+            await waitForParticipationBuildToFinish(participationId, undefined, undefined, null);
             await login(instructor);
-            await waitForExerciseBuildToFinish(exercise.id!);
             // Under multi-node CI load the course-management lazy chunk occasionally fails to
             // resolve and Angular's auth/router fall-back lands the page on /courses instead.
             // Verify the URL after navigation and re-issue the goto if it drifted — without

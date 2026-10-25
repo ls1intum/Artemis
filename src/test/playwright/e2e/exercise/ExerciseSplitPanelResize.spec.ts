@@ -34,7 +34,7 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
     async function waitForSettledWidth(panel: Locator): Promise<number> {
         let previous = -1;
         for (let i = 0; i < 20; i++) {
-            const width = (await panel.boundingBox())!.width;
+            const width = (await panel.boundingBox())?.width ?? 0;
             if (Math.abs(width - previous) < 1 && width > 0) {
                 return width;
             }
@@ -47,6 +47,10 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
     test('repartitions the panels by dragging the splitter gutter', async ({ login, page, courseOverview }) => {
         await login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
         await courseOverview.startExercise(textExercise.id!);
+
+        // Starting navigates to the participation route and replaces the details page's splitter.
+        // Wait for the loaded editor before measuring or dragging the replacement splitter.
+        await expect(page.locator(`#exercise-${textExercise.id} #text-editor`)).toBeEditable();
 
         const splitter = page.locator('jhi-resizable-panels p-splitter').first();
         const gutter = splitter.locator('.p-splitter-gutter').first();
@@ -61,14 +65,10 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
         const leftBefore = await waitForSettledWidth(leftPanel);
         expect(leftBefore).toBeGreaterThan(0);
 
-        // Drag the gutter to the right -> the left panel grows. Poll, because the very first pointerdown after
-        // load can land before the splitter's drag handler is wired; a second nudge then takes effect.
-        await expect(async () => {
-            await dragGutter(page, gutter, 180);
-            const width = (await leftPanel.boundingBox())!.width;
-            expect(width).toBeGreaterThan(leftBefore + 60);
-        }).toPass({ timeout: 10_000 });
+        // Drag the gutter to the right -> the left panel grows.
+        await dragGutter(page, gutter, 180);
         const leftAfterGrow = (await leftPanel.boundingBox())!.width;
+        expect(leftAfterGrow).toBeGreaterThan(leftBefore + 60);
 
         // Drag the gutter back to the left -> the left panel shrinks again.
         await dragGutter(page, gutter, -240);

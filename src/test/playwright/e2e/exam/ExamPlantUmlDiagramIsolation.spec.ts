@@ -5,7 +5,6 @@ import { admin, studentTwo } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingLanguage } from '../../support/constants';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { SEED_COURSES } from '../../support/seedData';
@@ -92,11 +91,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
             programmingLanguage: ProgrammingLanguage.C,
         });
 
-        // Wait for CI pipelines to complete by checking test case availability
-        await exerciseAPIRequests.changeProgrammingExerciseTestVisibility(exerciseA, Visibility.Always, 0);
-        await exerciseAPIRequests.changeProgrammingExerciseTestVisibility(exerciseB, Visibility.Always, 0);
-        await exerciseAPIRequests.changeProgrammingExerciseTestVisibility(exerciseC, Visibility.Always, 0);
-
+        // These diagrams do not use testsColor, so rendering is independent of build results and test-case visibility.
         await examAPIRequests.registerStudentForExam(exam, studentTwo);
         await examAPIRequests.generateMissingIndividualExams(exam);
         await examAPIRequests.prepareExerciseStartForExam(exam);
