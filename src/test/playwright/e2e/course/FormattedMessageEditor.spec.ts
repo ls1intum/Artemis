@@ -1798,6 +1798,9 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
         const host = page.locator('jhi-message-editor').filter({ has: composer.editor });
         const hint = host.getByTestId('message-editor-hint');
         await forEachViewport(page, async (viewport) => {
+            // Wait for the composer selected by CDK's Handset breakpoint to finish mounting.
+            const handset = await page.evaluate(() => matchMedia('(max-width: 599.98px) and (orientation: portrait), (max-width: 959.98px) and (orientation: landscape)').matches);
+            await expect(page.locator('#scrollableDiv').getByTestId('formatted-message-input')).toHaveCount(handset ? 1 : 0);
             await host.scrollIntoViewIfNeeded();
             await expect(hint).toBeVisible();
             await expect(hint).not.toContainText('Ctrl+Enter');
