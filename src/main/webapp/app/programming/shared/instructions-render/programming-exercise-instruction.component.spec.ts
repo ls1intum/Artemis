@@ -168,6 +168,29 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         }
     });
 
+    it('should keep the given result when it does not follow the latest result', () => {
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            isAtLeastTutor: true,
+            problemStatement: 'lorem ipsum dolor sit amet',
+        };
+        const earlierResult: Result = { id: 1, feedbacks: [] };
+        const participation: Participation = { id: 2, submissions: [{ results: [earlierResult] }] };
+        // a newer build that finishes while the earlier submission is open
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of({ id: 3, feedbacks: [] } as Result));
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('followLatestResult', false);
+
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(subscribeForLatestResultOfParticipationStub).not.toHaveBeenCalled();
+        expect(comp.latestResult?.id).toBe(earlierResult.id);
+    });
+
     it('should properly assign and cleanup generateHtmlSubscription when generateHtmlEvents is provided', async () => {
         // Enable fake timers BEFORE detectChanges so the 150 ms debounce can be advanced
         // deterministically rather than relying on a real-time sleep.

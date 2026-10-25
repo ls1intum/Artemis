@@ -79,6 +79,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     readonly participation = input<Participation | undefined>(undefined);
     readonly generateHtmlEvents = input<Observable<void>>();
     readonly personalParticipation = input.required<boolean>();
+    /** Whether a newer result of the participation replaces the shown one. False keeps the given result, e.g. for an earlier submission. */
+    readonly followLatestResult = input(true);
 
     readonly onNoInstructionsAvailable = output();
 
@@ -221,7 +223,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                             this.participationSubscription.unsubscribe();
                             this.participationSubscription = undefined;
                         }
-                        if (this.participation() && this.exercise()) {
+                        if (this.participation() && this.exercise() && this.followLatestResult()) {
                             this.setupResultWebsocket();
                         }
                     }

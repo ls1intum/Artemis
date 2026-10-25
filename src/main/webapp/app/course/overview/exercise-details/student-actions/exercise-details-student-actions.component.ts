@@ -9,7 +9,6 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 
 import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 
-
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
