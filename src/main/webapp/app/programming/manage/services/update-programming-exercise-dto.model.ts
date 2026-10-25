@@ -6,6 +6,7 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { OnlineIdeExperienceLevel } from 'app/programming/shared/entities/programming-exercise-build.config';
 /**
  * DTO for auxiliary repository
  */
@@ -33,6 +34,7 @@ export interface UpdateProgrammingExerciseBuildConfigDTO {
     timeoutSeconds: number;
     dockerFlags?: string;
     theiaImage?: string;
+    onlineIdeExperienceLevel?: OnlineIdeExperienceLevel;
     allowBranching: boolean;
     branchRegex?: string;
 }
@@ -155,6 +157,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
               timeoutSeconds: exercise.buildConfig.timeoutSeconds ?? 120,
               dockerFlags: exercise.buildConfig.dockerFlags,
               theiaImage: exercise.buildConfig.theiaImage,
+              onlineIdeExperienceLevel: exercise.buildConfig.onlineIdeExperienceLevel,
               allowBranching: exercise.buildConfig.allowBranching ?? false,
               branchRegex: exercise.buildConfig.branchRegex,
           }

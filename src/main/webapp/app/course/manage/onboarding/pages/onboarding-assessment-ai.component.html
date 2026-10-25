@@ -15,15 +15,13 @@
         <div class="row mb-3 g-3">
             <div class="col-md-6">
                 <label for="onboarding-maxPoints" class="form-label" jhiTranslate="artemisApp.course.maxPoints.title"></label>
-                <input
-                    id="onboarding-maxPoints"
-                    [attr.aria-label]="'artemisApp.course.maxPoints.title' | artemisTranslate"
-                    type="number"
-                    class="form-control"
+                <jhi-points-input
+                    fluid
+                    inputId="onboarding-maxPoints"
+                    [ariaLabel]="'artemisApp.course.maxPoints.title' | artemisTranslate"
                     [ngModel]="course().maxPoints"
                     (ngModelChange)="updateField('maxPoints', $event)"
-                    min="1"
-                    step="1"
+                    [min]="1"
                     pattern="\d*"
                     [max]="MAX_GRADING_POINTS"
                     #maxPointsInput="ngModel"

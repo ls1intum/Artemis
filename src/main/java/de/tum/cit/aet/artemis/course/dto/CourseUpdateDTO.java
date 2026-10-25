@@ -83,7 +83,7 @@ public record CourseUpdateDTO(
 
         // Feature bonus: conversion of the points tutors award for additional features into a bonus on the final grade, both
         // empty while the course does not use it.
-        @Nullable Double featureBonusPercentPerPoint, @Nullable Double featureBonusMaxPercent) {
+        @Nullable Double featureBonusPercentPerPoint, @Nullable Double featureBonusMaxPercent) implements CourseSettingsDTO {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -95,48 +95,13 @@ public record CourseUpdateDTO(
      * @return the updated course entity
      */
     public Course applyTo(Course course) {
-        // Basic info
-        course.setTitle(title);
-        course.setShortName(shortName);
-        course.setDescription(description);
-        course.setSemester(semester);
-
-        // Dates
-        course.setStartDate(startDate);
-        course.setEndDate(endDate);
-        course.setEnrollmentStartDate(enrollmentStartDate);
-        course.setEnrollmentEndDate(enrollmentEndDate);
-        course.setUnenrollmentEndDate(unenrollmentEndDate);
-
-        // Configuration flags
-        course.setTestCourse(testCourse);
-        course.setOnlineCourse(onlineCourse != null && onlineCourse);
-        course.setLanguage(language);
-        course.setDefaultProgrammingLanguage(defaultProgrammingLanguage);
-
-        // Complaint settings
-        course.setMaxComplaints(maxComplaints);
-        course.setMaxTeamComplaints(maxTeamComplaints);
-        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays);
-        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
-        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
-
-        // UI settings
-        course.setColor(color);
+        applyBasicSettingsTo(course);
         course.setCourseIcon(courseIcon);
-        course.setEnrollmentEnabled(enrollmentEnabled);
-        course.setEnrollmentConfirmationMessage(enrollmentConfirmationMessage);
-        course.setUnenrollmentEnabled(unenrollmentEnabled);
+        applyEnrollmentSettingsTo(course);
         course.setCourseInformationSharingMessagingCodeOfConduct(courseInformationSharingMessagingCodeOfConduct);
 
         // Course features
-        course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setPresentationScore(presentationScore);
-        course.setMaxPoints(maxPoints);
-        course.setAccuracyOfScores(accuracyOfScores);
-        course.setTimeZone(timeZone);
-        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        applyFeatureSettingsTo(course);
 
         // Enforce the auto-orchestration override bounds again here: the @Min(1) bean-validation annotations on this DTO
         // already reject a non-positive override via the validated update endpoint (@Valid on CourseUpdateResource#updateCourse).

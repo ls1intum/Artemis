@@ -1,3 +1,4 @@
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { Course } from './course.model';
 import type { CourseInformationSharingConfiguration, Language } from './course.model';
@@ -132,69 +133,12 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
  * DTO for updating an existing course.
  * Mirrors the server-side CourseUpdateDTO to send only the necessary fields.
  */
-export interface CourseUpdateDTO {
-    // ID is required for update
+export interface CourseUpdateDTO extends CourseCreateDTO {
     id: number;
-
-    // Basic info
-    title: string;
-    shortName: string;
-    description?: string;
-    semester?: string;
-
-    // Dates (as ISO strings for server)
-    startDate?: string;
-    endDate?: string;
-    enrollmentStartDate?: string;
-    enrollmentEndDate?: string;
-    unenrollmentEndDate?: string;
-
-    // Configuration flags
-    testCourse: boolean;
-    onlineCourse?: boolean;
-    language?: Language;
-    defaultProgrammingLanguage?: ProgrammingLanguage;
-
-    // Complaint settings
-    maxComplaints?: number;
-    maxTeamComplaints?: number;
-    maxComplaintTimeDays: number;
-    maxRequestMoreFeedbackTimeDays: number;
-    maxComplaintTextLimit: number;
-    maxComplaintResponseTextLimit: number;
-
-    // UI settings
-    color?: string;
     courseIcon?: string;
-    enrollmentEnabled?: boolean;
-    enrollmentConfirmationMessage?: string;
-    unenrollmentEnabled: boolean;
     courseInformationSharingMessagingCodeOfConduct?: string;
-
-    // Course features
-    learningPathsEnabled: boolean;
-    presentationAssessmentsEnabled: boolean;
-    presentationScore?: number;
-    maxPoints?: number;
-    accuracyOfScores?: number;
-    timeZone?: string;
-    courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
     onboardingDone: boolean;
-
-    // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained)
-    gradeRelevant: boolean;
-
-    // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course
     dataRetentionHold: boolean;
-
-    // Atlas auto-orchestration configuration (per-course)
-    autoOrchestratorEnabled: boolean;
-    debounceWindowSecondsOverride?: number;
-    maxDailyOrchestrationOverride?: number;
-
-    // Feature bonus: conversion of awarded feature points into a bonus on the final grade, unset while the course does not use it
-    featureBonusPercentPerPoint?: number;
-    featureBonusMaxPercent?: number;
 }
 
 /**
@@ -204,68 +148,11 @@ export interface CourseUpdateDTO {
  * @returns a CourseUpdateDTO with only the fields needed for update
  */
 export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
-    return {
-        // ID is required for update
+    return cloneWith(toCourseCreateDTO(course), {
         id: course.id!,
-
-        // Basic info
-        title: course.title!,
-        shortName: course.shortName!,
-        description: course.description,
-        semester: course.semester,
-
-        // Dates (converted to ISO strings)
-        startDate: convertDateFromClient(course.startDate),
-        endDate: convertDateFromClient(course.endDate),
-        enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
-        enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
-        unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
-
-        // Configuration flags
-        testCourse: course.testCourse ?? false,
-        onlineCourse: course.onlineCourse,
-        language: course.language,
-        defaultProgrammingLanguage: course.defaultProgrammingLanguage,
-
-        // Complaint settings
-        maxComplaints: course.maxComplaints,
-        maxTeamComplaints: course.maxTeamComplaints,
-        maxComplaintTimeDays: course.maxComplaintTimeDays ?? 7,
-        maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays ?? 7,
-        maxComplaintTextLimit: course.maxComplaintTextLimit ?? 2000,
-        maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit ?? 2000,
-
-        // UI settings
-        color: course.color,
         courseIcon: course.courseIcon,
-        enrollmentEnabled: course.enrollmentEnabled,
-        enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
-        unenrollmentEnabled: course.unenrollmentEnabled ?? false,
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
-
-        // Course features
-        learningPathsEnabled: course.learningPathsEnabled ?? false,
-        presentationAssessmentsEnabled: course.presentationAssessmentsEnabled ?? false,
-        presentationScore: course.presentationScore,
-        maxPoints: course.maxPoints,
-        accuracyOfScores: course.accuracyOfScores,
-        timeZone: course.timeZone,
-        courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
         onboardingDone: course.onboardingDone ?? false,
-
-        // Grade-relevance defaults to true when the course has no explicit configuration yet.
-        gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
-
-        // A course without an explicit configuration is not under a retention hold.
         dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
-
-        // Atlas auto-orchestration configuration (per-course)
-        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
-        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
-        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
-
-        // Feature bonus: conversion of awarded feature points into a bonus on the final grade
-        featureBonusPercentPerPoint: course.courseConfiguration?.featureBonusPercentPerPoint ?? undefined,
-        featureBonusMaxPercent: course.courseConfiguration?.featureBonusMaxPercent ?? undefined,
-    };
+    });
 }

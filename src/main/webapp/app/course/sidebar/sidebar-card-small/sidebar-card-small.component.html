@@ -10,6 +10,7 @@
         class="min-w-0 flex-1 self-center text-inherit! no-underline! focus-visible:outline-2 focus-visible:outline-offset-2"
         [routerLink]="itemSelected() ? '../communication' : './communication'"
         [queryParams]="{ conversationId: sidebarItem()?.id }"
+        [attr.data-testid]="'conversation-link-' + sidebarItem().id"
         (click)="emitStoreAndRefresh(sidebarItem().id, $event)"
     >
         <jhi-sidebar-card-item

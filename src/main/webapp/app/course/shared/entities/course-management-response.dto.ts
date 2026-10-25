@@ -55,6 +55,8 @@ export interface CourseConfigurationResponseDTO {
     autoOrchestratorEnabled: boolean;
     debounceWindowSecondsOverride?: number;
     maxDailyOrchestrationOverride?: number;
+    featureBonusPercentPerPoint?: number;
+    featureBonusMaxPercent?: number;
 }
 
 export interface LtiPlatformConfigurationResponseDTO {

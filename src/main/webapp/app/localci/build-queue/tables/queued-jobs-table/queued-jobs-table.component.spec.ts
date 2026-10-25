@@ -1,3 +1,4 @@
+import { buildJobWaitingTime } from '../build-job-waiting-time.util';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -163,7 +164,7 @@ describe('QueuedJobsTableComponent', () => {
 
     it('should calculate waiting time correctly', () => {
         const submissionDate = dayjs().subtract(90, 'seconds');
-        const waitingTime = component.calculateWaitingTime(submissionDate);
+        const waitingTime = buildJobWaitingTime(submissionDate);
 
         // Should be formatted as "1m Xs" since it's > 60 seconds
         expect(waitingTime).toMatch(/^1m \d+s$/);
@@ -171,14 +172,14 @@ describe('QueuedJobsTableComponent', () => {
 
     it('should calculate waiting time for seconds under 60', () => {
         const submissionDate = dayjs().subtract(30, 'seconds');
-        const waitingTime = component.calculateWaitingTime(submissionDate);
+        const waitingTime = buildJobWaitingTime(submissionDate);
 
         // Should be formatted as "Xs" since it's < 60 seconds
         expect(waitingTime).toMatch(/^\d+s$/);
     });
 
     it('should return dash for undefined submission date', () => {
-        const waitingTime = component.calculateWaitingTime(undefined);
+        const waitingTime = buildJobWaitingTime(undefined);
         expect(waitingTime).toBe('-');
     });
 
@@ -201,21 +202,9 @@ describe('QueuedJobsTableComponent', () => {
         expect(jobClickSpy).not.toHaveBeenCalled();
     });
 
-    it('should emit cancelAll event when cancel all is triggered', () => {
-        fixture.componentRef.setInput('buildJobs', mockQueuedJobs);
-        fixture.detectChanges();
-
-        const cancelAllSpy = vi.fn();
-        component.cancelAll.subscribe(cancelAllSpy);
-
-        component.onCancelAll();
-
-        expect(cancelAllSpy).toHaveBeenCalled();
-    });
-
     it('should calculate waiting time for hours correctly', () => {
         const submissionDate = dayjs().subtract(2, 'hours').subtract(30, 'minutes');
-        const waitingTime = component.calculateWaitingTime(submissionDate);
+        const waitingTime = buildJobWaitingTime(submissionDate);
 
         // Should be formatted as "2h 30m" since it's >= 3600 seconds
         expect(waitingTime).toMatch(/^2h 30m$/);
@@ -252,5 +241,21 @@ describe('QueuedJobsTableComponent', () => {
         // Test via component method directly
         component.onJobClick('2');
         expect(jobClickSpy).toHaveBeenCalledWith('2');
+    });
+    it('refreshes waiting time when the parent replaces the jobs array while retaining job identities', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-10-19T10:00:00Z'));
+        try {
+            const job = { id: 'waiting', name: 'Queued', jobTimingInfo: { submissionDate: dayjs().subtract(30, 'seconds') } } as BuildJob;
+            fixture.componentRef.setInput('buildJobs', [job]);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelectorAll('tbody td')[3].textContent.trim()).toBe('30s');
+            vi.advanceTimersByTime(30_000);
+            fixture.componentRef.setInput('buildJobs', [job]);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelectorAll('tbody td')[3].textContent.trim()).toBe('1m 0s');
+        } finally {
+            vi.useRealTimers();
+        }
     });
 });

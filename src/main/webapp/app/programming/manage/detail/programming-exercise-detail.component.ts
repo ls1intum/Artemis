@@ -13,7 +13,6 @@ import {
     faHistory,
     faListAlt,
     faPencilAlt,
-    faTable,
     faTrash,
     faUndo,
     faUserCheck,
@@ -140,7 +139,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faBook = faBook;
     protected readonly faWrench = faWrench;
     protected readonly faCheckDouble = faCheckDouble;
-    protected readonly faTable = faTable;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faFileSignature = faFileSignature;
     protected readonly faListAlt = faListAlt;
