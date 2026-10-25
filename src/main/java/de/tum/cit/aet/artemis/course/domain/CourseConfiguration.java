@@ -42,13 +42,6 @@ public class CourseConfiguration extends DomainObject {
     @Size(max = 2000)
     private String studentWelcomeContext;
 
-    public String getStudentWelcomeContext() { return studentWelcomeContext; }
-
-    public void setStudentWelcomeContext(String studentWelcomeContext) {
-        this.studentWelcomeContext = studentWelcomeContext == null || studentWelcomeContext.isBlank() ? null : studentWelcomeContext.strip();
-    }
-
-
     /**
      * The course this configuration belongs to. The key lives here rather than on the course: the course carries no
      * mapped association to its configuration, so loading a course can never pull this row in, and the configuration
@@ -207,4 +200,13 @@ public class CourseConfiguration extends DomainObject {
     public void setMaxDailyOrchestrationOverride(Integer maxDailyOrchestrationOverride) {
         this.maxDailyOrchestrationOverride = maxDailyOrchestrationOverride;
     }
+
+    public String getStudentWelcomeContext() {
+        return studentWelcomeContext;
+    }
+
+    public void setStudentWelcomeContext(String studentWelcomeContext) {
+        this.studentWelcomeContext = studentWelcomeContext == null || studentWelcomeContext.isBlank() ? null : studentWelcomeContext.strip();
+    }
+
 }

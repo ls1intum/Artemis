@@ -6,7 +6,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CourseHomeWelcomeContextFormComponent } from './course-home-welcome-context-form.component';
 
 describe('Course welcome context form', () => {
-    beforeEach(() => TestBed.configureTestingModule({ imports: [CourseHomeWelcomeContextFormComponent], providers: [{ provide: TranslateService, useClass: MockTranslateService }] }));
+    beforeEach(() =>
+        TestBed.configureTestingModule({ imports: [CourseHomeWelcomeContextFormComponent], providers: [{ provide: TranslateService, useClass: MockTranslateService }] }),
+    );
     it('edits and clears the supplied control and exposes the maximum-length error', () => {
         const fixture = TestBed.createComponent(CourseHomeWelcomeContextFormComponent);
         const control = new FormControl('Learn by doing.', { nonNullable: true, validators: [Validators.maxLength(2000)] });
