@@ -696,10 +696,10 @@ public class StudentExamResource {
     @ManualConfig
     public ResponseEntity<StudentExamDTO> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody CreateTestRunDTO testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         if (testRunConfiguration.examId() != examId) {
             throw new BadRequestException();
         }
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         Exam exam = examRepository.findByIdElseThrow(examId);
         List<Long> exerciseIds = testRunConfiguration.exerciseIds() != null ? testRunConfiguration.exerciseIds() : List.of();

@@ -3405,6 +3405,33 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         createTestRun();
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateTestRunStudentIsForbiddenBeforePayloadValidation(boolean emptyBody) throws Exception {
+        Map<String, Long> body = emptyBody ? Map.of() : Map.of("examId", exam2.getId());
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-runs", body, HttpStatus.FORBIDDEN);
+        assertThat(studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam1.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateTestRunTutorIsForbiddenBeforePayloadValidation(boolean emptyBody) throws Exception {
+        Map<String, Long> body = emptyBody ? Map.of() : Map.of("examId", exam2.getId());
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-runs", body, HttpStatus.FORBIDDEN);
+        assertThat(studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam1.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateTestRunInstructorRejectsMismatchedPayload(boolean emptyBody) throws Exception {
+        Map<String, Long> body = emptyBody ? Map.of() : Map.of("examId", exam2.getId());
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-runs", body, HttpStatus.BAD_REQUEST);
+        assertThat(studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam1.getId())).isEmpty();
+    }
+
     /**
      * The server resolves the requested exercise ids straight from the exercise repository, which accepts any id, so it
      * must reject ids that point outside the exam the test run belongs to. Otherwise an instructor could pull a foreign
