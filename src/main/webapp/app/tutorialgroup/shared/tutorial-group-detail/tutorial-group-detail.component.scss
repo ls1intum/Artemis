@@ -68,6 +68,10 @@
 
             .attendance-card-content {
                 flex: 1;
+
+                // Takes the card's width, so the chart below can shrink with a narrow card instead of spilling out
+                align-self: stretch;
+                min-width: 0;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -79,12 +83,12 @@
                     font-size: 1.4rem;
                 }
 
-                // Sized here rather than with Tailwind classes, which this folder is not scanned for. It must fit the
-                // fixed-height card below its title.
+                // Sized here rather than with Tailwind classes, which this folder is not scanned for
                 tumaet-ui-doughnut-chart {
                     flex: none;
-                    width: 7rem;
-                    height: 7rem;
+                    width: min(122px, 100%);
+                    height: auto;
+                    aspect-ratio: 1;
                 }
             }
 
