@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -265,27 +266,40 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET exercises/:exerciseId/file-upload-submissions : get all the fileUploadSubmissions for an exercise. It is possible to filter, to receive only the one that have been
-     * already submitted, or only the one assessed by the tutor who is doing the call.
-     * In case of exam exercise, it filters out all test run submissions.
+     * Lists submissions with participant identities for instructors, optionally restricted to their own assessments.
      *
-     * @param exerciseId      the id of the exercise
-     * @param correctionRound get submission with results for the given correction round
-     * @param submittedOnly   if only submitted submissions should be returned
-     * @param assessedByTutor if the submission was assessed by calling tutor
-     * @return the ResponseEntity with status 200 (OK) and the list of {@link FileUploadSubmissionDTO} in body
+     * @param exerciseId      the exercise to list submissions for
+     * @param submittedOnly   whether to return only submitted submissions (ignored for the self selection)
+     * @param assessedByMe    whether to return only the current instructor's assessments
+     * @param correctionRound the correction round for the self selection
+     * @return the identified submissions
      */
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/file-upload-submissions")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<FileUploadSubmissionDTO>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-        log.debug("REST request to get all file upload submissions");
-        var response = super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
-        List<FileUploadSubmissionDTO> body = response.getBody() == null ? null
-                : response.getBody().stream().map(FileUploadSubmission.class::cast).map(FileUploadSubmissionDTO::ofForList).toList();
-        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(body);
+            @RequestParam(defaultValue = "false") boolean assessedByMe, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        return ResponseEntity.ok(getSubmissionList(exerciseId, submittedOnly, assessedByMe, correctionRound, true));
+    }
+
+    /**
+     * Lists only the authenticated user's assessments with anonymous participants, including for instructor callers.
+     *
+     * @param exerciseId      the exercise to list assessments for
+     * @param correctionRound the correction round to select
+     * @return the anonymous assessed submissions
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping("exercises/{exerciseId}/file-upload-submissions/assessed-by-me")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<List<FileUploadSubmissionDTO>> getMyAssessedFileUploadSubmissions(@PathVariable Long exerciseId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        return ResponseEntity.ok(getSubmissionList(exerciseId, false, true, correctionRound, false));
+    }
+
+    private List<FileUploadSubmissionDTO> getSubmissionList(Long exerciseId, boolean submittedOnly, boolean assessedByMe, int correctionRound, boolean includeParticipant) {
+        return getSubmissionsForList(exerciseId, submittedOnly, assessedByMe, correctionRound).stream()
+                .map(submission -> FileUploadSubmissionDTO.ofForList((FileUploadSubmission) submission, includeParticipant)).toList();
     }
 
     /**

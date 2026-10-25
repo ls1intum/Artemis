@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -37,7 +36,7 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -198,38 +197,40 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET /exercises/{exerciseId}/modeling-submissions: get all modeling submissions by exercise id and correction round.
-     * If the parameter assessedByTutor is true, this method will return
-     * only return all the modeling submissions where the tutor has a result associated.
-     * In case of exam exercise, it filters out all test run submissions.
+     * Lists submissions with participant identities for instructors, optionally restricted to their own assessments.
      *
-     * @param exerciseId      id of the exercise for which the modeling submission should be returned
-     * @param correctionRound - correctionRound for which the submissions' results should be fetched
-     * @param submittedOnly   if true, it returns only submission with submitted flag set to true
-     * @param assessedByTutor if true, it returns only the submissions which are assessed by the current user as a tutor
-     * @return a list of modeling submissions
+     * @param exerciseId      the exercise to list submissions for
+     * @param submittedOnly   whether to return only submitted submissions (ignored for the self selection)
+     * @param assessedByMe    whether to return only the current instructor's assessments
+     * @param correctionRound the correction round for the self selection
+     * @return the identified submissions
      */
-    @ResponseStatus(HttpStatus.OK)
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/modeling-submissions")
-    @EnforceAtLeastStudent
-    @ManualConfig
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<ModelingSubmissionResponseDTO>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-        log.debug("REST request to get all modeling upload submissions");
-        // Reuse the shared access checks, fetching, hideDetails and Athena-result filtering, then map the entities to DTOs.
-        ResponseEntity<List<Submission>> response = super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
-        List<Submission> submissions = response.getBody();
-        if (submissions == null) {
-            return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).build();
-        }
-        // Tutors must not see the student behind a submission (double-blind); instructors may.
-        User user = userRepository.getUserWithAuthorities();
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        List<ModelingSubmissionResponseDTO> submissionDTOs = submissions.stream()
-                .map(submission -> ModelingSubmissionResponseDTO.of((ModelingSubmission) submission, includeStudent)).toList();
-        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(submissionDTOs);
+            @RequestParam(defaultValue = "false") boolean assessedByMe, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        return ResponseEntity.ok(getSubmissionList(exerciseId, submittedOnly, assessedByMe, correctionRound, true));
+    }
+
+    /**
+     * Lists only the authenticated user's assessments with anonymous participants, including for instructor callers.
+     *
+     * @param exerciseId      the exercise to list assessments for
+     * @param correctionRound the correction round to select
+     * @return the anonymous assessed submissions
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping("exercises/{exerciseId}/modeling-submissions/assessed-by-me")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<List<ModelingSubmissionResponseDTO>> getMyAssessedModelingSubmissions(@PathVariable Long exerciseId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        return ResponseEntity.ok(getSubmissionList(exerciseId, false, true, correctionRound, false));
+    }
+
+    private List<ModelingSubmissionResponseDTO> getSubmissionList(Long exerciseId, boolean submittedOnly, boolean assessedByMe, int correctionRound, boolean includeParticipant) {
+        return getSubmissionsForList(exerciseId, submittedOnly, assessedByMe, correctionRound).stream()
+                .map(submission -> ModelingSubmissionResponseDTO.of((ModelingSubmission) submission, includeParticipant)).toList();
     }
 
     /**

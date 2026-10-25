@@ -48,13 +48,25 @@ export class ModelingSubmissionService {
     }
 
     /**
-     * Get all submissions for an exercise
+     * Lists submissions with participant identities; requires instructor access.
      * @param exerciseId - Id of the exercise
      * @param req - Request option
      * @param correctionRound correctionRound for which to get the Submissions
      */
-    getSubmissions(exerciseId: number, req?: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
-        const url = `${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`;
+    getSubmissions(exerciseId: number, req?: { submittedOnly?: boolean; assessedByMe?: boolean }, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
+        return this.getSubmissionList(`${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`, req, correctionRound);
+    }
+
+    /** Lists the authenticated assessor's submissions with anonymous participants, including for instructors. */
+    getMyAssessedSubmissions(exerciseId: number, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
+        return this.getSubmissionList(`${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions/assessed-by-me`, undefined, correctionRound);
+    }
+
+    private getSubmissionList(
+        url: string,
+        req: { submittedOnly?: boolean; assessedByMe?: boolean } | undefined,
+        correctionRound: number,
+    ): Observable<HttpResponse<ModelingSubmission[]>> {
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());

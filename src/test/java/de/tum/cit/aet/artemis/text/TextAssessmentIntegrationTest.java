@@ -1562,13 +1562,20 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         submission.setParticipation(studentParticipation);
         submission = textSubmissionRepository.save(submission);
 
+        var testRunSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(exercise,
+                ParticipationFactory.generateTextSubmission("Exam test run", Language.ENGLISH, true), TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
+        var testRunParticipation = (StudentParticipation) testRunSubmission.getParticipation();
+        testRunParticipation.setTestRun(true);
+        studentParticipationRepository.save(testRunParticipation);
+        var assessedParticipationId = studentParticipation.getId();
+
         // verify setup
         assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
         assertThat(exam.getEndDate()).isBefore(now());
         var optionalFetchedExercise = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
         assertThat(optionalFetchedExercise).isPresent();
         final var exerciseWithParticipation = optionalFetchedExercise.get();
-        studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().iterator().next();
+        studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().filter(participation -> !participation.isTestRun()).findFirst().orElseThrow();
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // check properties set
@@ -1599,9 +1606,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         // make sure that new result correctly appears inside the continue box
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK,
+        var assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions/assessed-by-me", HttpStatus.OK,
                 TextSubmissionResponseDTO.class, paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -1617,8 +1623,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
                 + latestResultId(submissionWithoutFirstAssessment) + "/submit-text-assessment", textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK, TextSubmissionResponseDTO.class,
-                paramsGetAssessedCR1Tutor1);
+        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions/assessed-by-me", HttpStatus.OK,
+                TextSubmissionResponseDTO.class, paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionId(submissionWithoutFirstAssessment));
@@ -1640,8 +1646,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
-        assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
+        assertThat(databaseRelationshipStateOfResultsOverSubmission).extracting(StudentParticipation::getId).containsExactlyInAnyOrder(assessedParticipationId,
+                testRunParticipation.getId());
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.stream().filter(participation -> participation.getId().equals(assessedParticipationId)).findFirst()
+                .orElseThrow();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
@@ -1677,8 +1685,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
                 .contains(latestResultId(submissionWithoutSecondAssessment));
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
-        assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
+        assertThat(databaseRelationshipStateOfResultsOverSubmission).extracting(StudentParticipation::getId).containsExactlyInAnyOrder(assessedParticipationId,
+                testRunParticipation.getId());
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.stream().filter(participation -> participation.getId().equals(assessedParticipationId)).findFirst()
+                .orElseThrow();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
@@ -1703,10 +1713,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         // make sure that new result correctly appears after the assessment for second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK, TextSubmissionResponseDTO.class,
-                paramsGetAssessedCR2);
+        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions/assessed-by-me", HttpStatus.OK,
+                TextSubmissionResponseDTO.class, paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionId(submissionWithoutSecondAssessment));
@@ -1718,10 +1727,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK, TextSubmissionResponseDTO.class,
-                paramsGetAssessedCR1);
+        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions/assessed-by-me", HttpStatus.OK,
+                TextSubmissionResponseDTO.class, paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();
 

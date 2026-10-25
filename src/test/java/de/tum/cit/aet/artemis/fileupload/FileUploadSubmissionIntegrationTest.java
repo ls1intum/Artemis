@@ -26,6 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -268,8 +269,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission submission1 = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        List<FileUploadSubmissionDTO> submissions = request.getList(
-                "/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?assessedByTutor=true", HttpStatus.OK, FileUploadSubmissionDTO.class);
+        List<FileUploadSubmissionDTO> submissions = request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions/assessed-by-me",
+                HttpStatus.OK, FileUploadSubmissionDTO.class);
 
         assertThat(submissions).as("one file upload submission was found").hasSize(1);
         assertThat(submissions.getFirst().id()).as("correct file upload submission was found").isEqualTo(submission1.getId());
@@ -791,5 +792,57 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         submittedFileUploadSubmission.setFilePath("file-upload-exercises/769/submissions/406062/Pinguin.pdf");
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         assertThatNoException().isThrownBy(() -> submittedFileUploadSubmission.onDelete());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void submissionList_legacyFilterCannotBypassInstructorAuthorization() throws Exception {
+        request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN,
+                FileUploadSubmissionDTO.class);
+        request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?assessedByMe=true", HttpStatus.FORBIDDEN,
+                FileUploadSubmissionDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submissionList_studentCannotAccessOwnAssessments() throws Exception {
+        request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions/assessed-by-me", HttpStatus.FORBIDDEN,
+                FileUploadSubmissionDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void submissionList_endpointDeterminesIdentityProjection() throws Exception {
+        var own = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "instructor1");
+        var other = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, ParticipationFactory.generateFileUploadSubmission(true),
+                TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
+        participationUtilService.addResultToSubmission(own, AssessmentType.AUTOMATIC_ATHENA);
+        var all = request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmissionDTO.class);
+        assertThat(all).extracting(FileUploadSubmissionDTO::id).containsExactlyInAnyOrder(own.getId(), other.getId());
+
+        var identified = request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?assessedByMe=true", HttpStatus.OK,
+                FileUploadSubmissionDTO.class);
+        assertThat(identified).extracting(FileUploadSubmissionDTO::id).containsExactly(own.getId());
+        assertThat(identified.getFirst().participation().participantIdentifier()).isEqualTo(TEST_PREFIX + "student1");
+
+        var anonymous = request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions/assessed-by-me?assessorId=0", HttpStatus.OK,
+                FileUploadSubmissionDTO.class);
+        assertThat(anonymous).extracting(FileUploadSubmissionDTO::id).containsExactly(own.getId());
+        assertThat(anonymous.getFirst().participation().id()).isEqualTo(identified.getFirst().participation().id());
+        assertThat(anonymous.getFirst().results()).isNotEmpty();
+        assertThat(anonymous.getFirst().results()).noneMatch(result -> result.assessmentType() == AssessmentType.AUTOMATIC_ATHENA);
+        assertThat(identified.getFirst().results()).noneMatch(result -> result.assessmentType() == AssessmentType.AUTOMATIC_ATHENA);
+        assertThat(anonymous.getFirst().participation().participantIdentifier()).isNull();
+        assertThat(anonymous.getFirst().participation().participantName()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "foreign" + TEST_PREFIX + "tutor1", roles = "USER")
+    void submissionList_foreignTutorCannotAccessEitherAudience() throws Exception {
+        userUtilService.addUsers("foreign" + TEST_PREFIX, 0, 1, 0, 0);
+        request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", HttpStatus.FORBIDDEN, FileUploadSubmissionDTO.class);
+        request.getList("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions/assessed-by-me", HttpStatus.FORBIDDEN,
+                FileUploadSubmissionDTO.class);
     }
 }

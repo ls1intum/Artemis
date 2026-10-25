@@ -241,11 +241,11 @@ describe('FileUploadSubmissionService', () => {
             req.flush([]);
         });
 
-        it('should pass assessedByTutor filter', async () => {
-            service.getSubmissions(123, { assessedByTutor: true }).subscribe();
+        it('should pass assessedByMe filter', async () => {
+            service.getSubmissions(123, { assessedByMe: true }).subscribe();
 
             const req = httpMock.expectOne((r) => {
-                return r.url === 'api/fileupload/exercises/123/file-upload-submissions' && r.params.get('assessedByTutor') === 'true';
+                return r.url === 'api/fileupload/exercises/123/file-upload-submissions' && r.params.get('assessedByMe') === 'true';
             });
 
             req.flush([]);
@@ -425,5 +425,23 @@ describe('FileUploadSubmissionService', () => {
             // The conversion should set filePathUrl
             expect(submissionService.convertSubmissionResponseFromServer).toHaveBeenCalled();
         });
+    });
+
+    it.each([0, 2])('loads my assessed submissions through the tutor route for round %s', (correctionRound) => {
+        service.getMyAssessedSubmissions(123, correctionRound).subscribe((response) => expect(response.body).toEqual([]));
+        const req = httpMock.expectOne((request) => request.url === 'api/fileupload/exercises/123/file-upload-submissions/assessed-by-me');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('correction-round')).toBe(correctionRound === 0 ? null : '2');
+        expect(req.request.params.has('assessedByTutor')).toBe(false);
+        req.flush([]);
+    });
+
+    it('keeps the instructor self filter on the instructor route', () => {
+        service.getSubmissions(123, { submittedOnly: true, assessedByMe: true }, 2).subscribe();
+        const req = httpMock.expectOne((request) => request.url === 'api/fileupload/exercises/123/file-upload-submissions');
+        expect(req.request.params.get('submittedOnly')).toBe('true');
+        expect(req.request.params.get('assessedByMe')).toBe('true');
+        expect(req.request.params.get('correction-round')).toBe('2');
+        req.flush([]);
     });
 });

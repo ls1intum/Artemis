@@ -804,6 +804,13 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         Participation studentParticipation = submission.getParticipation();
 
+        var testRunSubmission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(exercise,
+                ParticipationFactory.generateModelingSubmission("{}", true), TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
+        var testRunParticipation = (StudentParticipation) testRunSubmission.getParticipation();
+        testRunParticipation.setTestRun(true);
+        studentParticipationRepository.save(testRunParticipation);
+        var assessedParticipationId = studentParticipation.getId();
+
         // request to manually assess latest submission (correction round: 0)
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
@@ -819,10 +826,9 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // make sure that new result correctly appears inside the continue box
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
-                paramsGetAssessedCR1Tutor1);
+        var assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.OK,
+                ModelingSubmission.class, paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
@@ -838,7 +844,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
                 ResultDTO.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -861,8 +867,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
-        assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
+        assertThat(databaseRelationshipStateOfResultsOverSubmission).extracting(StudentParticipation::getId).containsExactlyInAnyOrder(assessedParticipationId,
+                testRunParticipation.getId());
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.stream().filter(participation -> participation.getId().equals(assessedParticipationId)).findFirst()
+                .orElseThrow();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
@@ -897,8 +905,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
                 .contains(submissionWithoutSecondAssessment.getLatestResult());
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
-        assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
+        assertThat(databaseRelationshipStateOfResultsOverSubmission).extracting(StudentParticipation::getId).containsExactlyInAnyOrder(assessedParticipationId,
+                testRunParticipation.getId());
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.stream().filter(participation -> participation.getId().equals(assessedParticipationId)).findFirst()
+                .orElseThrow();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
@@ -915,9 +925,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // make sure that new result correctly appears after the assessment for second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -926,9 +935,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();

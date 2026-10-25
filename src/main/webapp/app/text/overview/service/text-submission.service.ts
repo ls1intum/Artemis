@@ -42,8 +42,21 @@ export class TextSubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));
     }
 
-    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
-        const url = `api/text/exercises/${exerciseId}/text-submissions`;
+    /** Lists submissions with participant identities; requires instructor access. */
+    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByMe?: boolean }, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
+        return this.getSubmissionList(`api/text/exercises/${exerciseId}/text-submissions`, req, correctionRound);
+    }
+
+    /** Lists the authenticated assessor's submissions with anonymous participants, including for instructors. */
+    getMyAssessedSubmissions(exerciseId: number, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
+        return this.getSubmissionList(`api/text/exercises/${exerciseId}/text-submissions/assessed-by-me`, undefined, correctionRound);
+    }
+
+    private getSubmissionList(
+        url: string,
+        req: { submittedOnly?: boolean; assessedByMe?: boolean } | undefined,
+        correctionRound: number,
+    ): Observable<HttpResponse<TextSubmission[]>> {
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());

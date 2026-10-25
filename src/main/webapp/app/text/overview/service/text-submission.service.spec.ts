@@ -142,4 +142,22 @@ describe('TextSubmission Service', () => {
         // the participation the editor reads (participation.submissions.last()) must still carry the locked result
         expect(received!.participation!.submissions![0].results).toEqual([lockedResult]);
     });
+
+    it.each([0, 2])('loads my assessed submissions through the tutor route for round %s', (correctionRound) => {
+        service.getMyAssessedSubmissions(123, correctionRound).subscribe((response) => expect(response.body).toEqual([]));
+        const req = httpMock.expectOne((request) => request.url === 'api/text/exercises/123/text-submissions/assessed-by-me');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('correction-round')).toBe(correctionRound === 0 ? null : '2');
+        expect(req.request.params.has('assessedByTutor')).toBe(false);
+        req.flush([]);
+    });
+
+    it('keeps the instructor self filter on the instructor route', () => {
+        service.getSubmissions(123, { submittedOnly: true, assessedByMe: true }, 2).subscribe();
+        const req = httpMock.expectOne((request) => request.url === 'api/text/exercises/123/text-submissions');
+        expect(req.request.params.get('submittedOnly')).toBe('true');
+        expect(req.request.params.get('assessedByMe')).toBe('true');
+        expect(req.request.params.get('correction-round')).toBe('2');
+        req.flush([]);
+    });
 });

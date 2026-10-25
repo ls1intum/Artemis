@@ -287,11 +287,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
         comp.exerciseId.set(modelingExercise.id!);
         modelingSubmissionStubWithoutAssessment = vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment');
-        modelingSubmissionStubWithAssessment = vi.spyOn(modelingSubmissionService, 'getSubmissions');
+        modelingSubmissionStubWithAssessment = vi.spyOn(modelingSubmissionService, 'getMyAssessedSubmissions');
         textSubmissionStubWithoutAssessment = vi.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment');
-        textSubmissionStubWithAssessment = vi.spyOn(textSubmissionService, 'getSubmissions');
+        textSubmissionStubWithAssessment = vi.spyOn(textSubmissionService, 'getMyAssessedSubmissions');
         fileUploadSubmissionStubWithoutAssessment = vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment');
-        fileUploadSubmissionStubWithAssessment = vi.spyOn(fileUploadSubmissionService, 'getSubmissions');
+        fileUploadSubmissionStubWithAssessment = vi.spyOn(fileUploadSubmissionService, 'getMyAssessedSubmissions');
         programmingSubmissionStubWithoutAssessment = vi.spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment');
         programmingSubmissionStubWithAssessment = vi.spyOn(programmingSubmissionService, 'getSubmissions');
         textSubmissionStubWithoutAssessment.mockReturnValue(of(textSubmission));
@@ -304,6 +304,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         modelingSubmissionStubWithoutAssessment.mockReturnValue(of(modelingSubmission));
         comp.submissionsWithComplaints.set([submissionWithComplaintDTO]);
         accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(false);
         translateService = TestBed.inject(TranslateService);
     });
 
@@ -518,6 +519,21 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     describe('test calls for all exercise types', () => {
+        it.each([
+            ['text', () => textExercise, () => textSubmissionService, () => textSubmissionAssessed],
+            ['modeling', () => modelingExercise, () => modelingSubmissionService, () => modelingSubmissionAssessed],
+            ['fileupload', () => fileUploadExercise, () => fileUploadSubmissionService, () => fileUploadSubmissionAssessed],
+        ] as const)('uses the instructor self filter for %s instructors', (_type, getExercise, getService, getSubmission) => {
+            vi.mocked(accountService.isAtLeastInstructorForExercise).mockReturnValue(true);
+            const listSpy = vi.spyOn(getService(), 'getSubmissions').mockReturnValue(of(new HttpResponse({ body: [getSubmission()] })));
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: getExercise() })));
+
+            comp.loadAll();
+
+            expect(listSpy).toHaveBeenCalledWith(comp.exerciseId(), { assessedByMe: true }, 0);
+            expect(listSpy).toHaveBeenCalledWith(comp.exerciseId(), { assessedByMe: true }, 1);
+        });
+
         it('fileuploadSubmission', () => {
             modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
             modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));

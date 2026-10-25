@@ -631,13 +631,19 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             // TODO: This could be one generic endpoint.
             switch (this.exercise().type) {
                 case ExerciseType.TEXT:
-                    submissionsObservable = this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.textSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
                 case ExerciseType.MODELING:
-                    submissionsObservable = this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.modelingSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.fileUploadSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
                 case ExerciseType.PROGRAMMING:
                     submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
