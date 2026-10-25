@@ -89,7 +89,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     void markFromMessageAsUnread(@Param("conversationId") Long conversationId, @Param("userId") Long userId, @Param("messageDate") ZonedDateTime messageDate,
             @Param("lastRead") ZonedDateTime lastRead);
 
-    @Async
+    // Complete this transaction before returning read success: clients immediately reload authoritative counts.
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
@@ -98,7 +98,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             WHERE p.user.id = :userId
                 AND p.conversation.id IN :conversationIds
             """)
-    void updateMultipleLastReadAsync(@Param("userId") Long userId, @Param("conversationIds") List<Long> conversationIds, @Param("now") ZonedDateTime now);
+    void updateMultipleLastRead(@Param("userId") Long userId, @Param("conversationIds") List<Long> conversationIds, @Param("now") ZonedDateTime now);
 
     boolean existsByConversationIdAndUserId(Long conversationId, Long userId);
 
