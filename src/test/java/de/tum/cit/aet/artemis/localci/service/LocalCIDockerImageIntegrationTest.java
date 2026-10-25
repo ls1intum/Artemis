@@ -166,6 +166,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
         sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
@@ -178,6 +179,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
         buildAgentConfiguration.closeBuildAgentServices();
         realDockerClient = null;
         if (originalDockerConnectionUri != null) {

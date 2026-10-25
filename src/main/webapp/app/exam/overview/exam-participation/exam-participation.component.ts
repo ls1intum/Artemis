@@ -872,7 +872,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.loadAndDisplaySummary();
             }
         } else {
-            // Directly start the exam when we continue from a failed save
+            // INTENDED BEHAVIOR, DECIDED BY THE PRODUCT OWNER - DO NOT CHANGE IT TO MAKE A FLAKY TEST PASS:
+            // After a page reload during an exam the exam is NOT resumed. The student sees the start cover again (examStartConfirmed
+            // is false after a reload), has to type in their name and confirm the exam rules, and doing so creates a NEW exam session
+            // (examStarted is called by the cover). Already saved answers are loaded from the server for that new session.
+            // The ONLY automatic resume is the failed-save path below: if the last save did not reach the server, the unsaved answers
+            // only exist in local storage, so the exam is restored from there and they are re-sent right away, without the cover.
+            // Consequently a reload shows the cover or resumes depending on whether the last save had completed, and a test that
+            // reloads must set up one of the two cases deterministically (see ExamParticipation.spec.ts, "Reloads exam page ...").
             if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
                 this.examParticipationService
                     .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId(), this.examId())

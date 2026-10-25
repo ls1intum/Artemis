@@ -1,0 +1,11 @@
+// We need to use a file here because using an inline class gets overridden by the theme tag styling
+tr.group-start {
+    border-top-width: 3px;
+}
+td.variants-start {
+    border-left-width: 3px;
+}
+tr.group-end {
+    border-top-style: double;
+    border-top-width: 6px;
+}

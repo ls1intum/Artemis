@@ -191,14 +191,33 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    void validateScoreSettings_notIncludedWithoutMaxPoints_doesNotThrow() {
+    void validateScoreSettings_notIncludedProgrammingExerciseWithoutMaxPoints_throws() {
         Exercise exercise = new ProgrammingExercise();
         exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         exercise.setMaxPoints(null);
         exercise.setBonusPoints(0.0);
 
+        assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The max points needs to be greater than 0");
+    }
+
+    @Test
+    void validateScoreSettings_notIncludedProgrammingExerciseWithZeroMaxPoints_throws() {
+        Exercise exercise = new ProgrammingExercise();
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        exercise.setMaxPoints(0.0);
+        exercise.setBonusPoints(0.0);
+
+        assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The max points needs to be greater than 0");
+    }
+
+    @Test
+    void validateScoreSettings_notIncludedProgrammingExerciseWithPositiveMaxPoints_doesNotThrow() {
+        Exercise exercise = new ProgrammingExercise();
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        exercise.setMaxPoints(10.0);
+        exercise.setBonusPoints(0.0);
+
         assertThatNoException().isThrownBy(exercise::validateScoreSettings);
-        assertThat(exercise.getMaxPoints()).isZero();
     }
 
     @Test

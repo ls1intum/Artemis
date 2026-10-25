@@ -1,3 +1,5 @@
+import { ApplicationRef } from '@angular/core';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -77,6 +79,7 @@ describe('ExerciseHeaderActionsComponent', () => {
         TestBed.configureTestingModule({
             imports: [ExerciseHeaderActionsComponent],
             providers: [
+                MockProvider(FeatureToggleService, { getFeatureTogglesActive: () => of(true) }),
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(QuizExerciseService, { getStatus: () => quizStatus as QuizStatus }),
@@ -117,6 +120,44 @@ describe('ExerciseHeaderActionsComponent', () => {
     }
 
     describe('start exercise', () => {
+        it('explains a disabled future start through the focusable tooltip wrapper', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 7;
+            exercise.startDate = dayjs().add(1, 'day');
+            exercise.studentParticipations = [];
+            createComponent(exercise);
+            const start: HTMLButtonElement = fixture.nativeElement.querySelector('#start-exercise-7');
+            const wrapper = start.parentElement!;
+            const startRequest = vi.spyOn(TestBed.inject(CourseExerciseService), 'startExercise');
+            expect(start.disabled).toBe(true);
+            expect(wrapper.tabIndex).toBe(0);
+            start.click();
+            expect(startRequest).not.toHaveBeenCalled();
+            vi.useFakeTimers();
+            try {
+                wrapper.dispatchEvent(new Event('focusin', { bubbles: true }));
+                vi.advanceTimersByTime(150);
+                TestBed.inject(ApplicationRef).tick();
+                const tooltipId = wrapper.getAttribute('aria-describedby');
+                expect(tooltipId).toBeTruthy();
+                expect(document.getElementById(tooltipId!)?.textContent).toContain('artemisApp.exerciseActions.startExerciseBeforeStartDate');
+                wrapper.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                expect(wrapper.hasAttribute('aria-describedby')).toBe(false);
+                expect(document.getElementById(tooltipId!)).toBeNull();
+                fixture.componentRef.setInput('exercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise, { startDate: undefined }));
+                fixture.detectChanges();
+                expect(wrapper.tabIndex).toBe(-1);
+                expect(start.disabled).toBe(false);
+                wrapper.dispatchEvent(new Event('focusin', { bubbles: true }));
+                vi.advanceTimersByTime(150);
+                TestBed.inject(ApplicationRef).tick();
+                expect(wrapper.hasAttribute('aria-describedby')).toBe(false);
+            } finally {
+                fixture.destroy();
+                vi.useRealTimers();
+            }
+        });
+
         it('should send only one start request while the request is pending', () => {
             const exercise = new ProgrammingExercise(undefined, undefined);
             exercise.id = 7;
@@ -795,6 +836,26 @@ describe('ExerciseHeaderActionsComponent', () => {
 
             expect(fixture.componentInstance.shouldDisplayIDEButtons()).toBe(true);
         });
+    });
+
+    it('keeps only the rightmost resume action primary as practice availability changes', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        exercise.dueDate = dayjs().subtract(1, 'day');
+        const graded = { id: 10, testRun: false, initializationState: InitializationState.INACTIVE, individualDueDate: dayjs().add(1, 'day') } as StudentParticipation;
+        const practice = { id: 20, testRun: true, initializationState: InitializationState.INACTIVE } as StudentParticipation;
+        exercise.studentParticipations = [graded, practice];
+        createComponent(exercise);
+        const gradedButton = fixture.nativeElement.querySelector('#resume-exercise-7');
+        const practiceButton = fixture.nativeElement.querySelector('#resume-practice-exercise-7');
+        expect(gradedButton.classList.contains('btn-secondary')).toBe(true);
+        expect(practiceButton.classList.contains('btn-primary')).toBe(true);
+
+        const updated = Object.assign(new ProgrammingExercise(undefined, undefined), exercise, { studentParticipations: [graded] });
+        fixture.componentRef.setInput('exercise', updated);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#resume-practice-exercise-7')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#resume-exercise-7').classList.contains('btn-primary')).toBe(true);
     });
 
     describe('quiz action', () => {
