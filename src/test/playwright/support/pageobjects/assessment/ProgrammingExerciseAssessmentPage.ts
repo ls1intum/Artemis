@@ -24,7 +24,7 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
     }
 
     private getInlineFeedback(line: number) {
-        return this.page.locator(`#code-editor-inline-feedback-${line}`);
+        return this.page.getByTestId('code-editor-inline-feedback').and(this.page.locator(`[data-code-line="${line}"]`));
     }
 
     override async rejectComplaint(response: string, examMode: boolean) {

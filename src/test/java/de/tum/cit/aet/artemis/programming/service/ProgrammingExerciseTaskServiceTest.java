@@ -237,6 +237,18 @@ class ProgrammingExerciseTaskServiceTest {
     }
 
     @Test
+    void replaceTestNamesWithIds_resolvesAnOriginalLongTestName() {
+        String originalName = "testMethods[" + "a".repeat(250) + "]";
+        // The existing CI storage format: a 190-character prefix followed by '-' and the full SHA-256 digest.
+        String storedName = "testMethods[" + "a".repeat(178) + "-869b6f656c46e82d438ceb3d88b2eaa5f30a03021d63a0449b393d2def7111f0";
+        ProgrammingExercise exercise = exerciseWith("[task][Structure](" + originalName + ")", testCase(7L, storedName));
+
+        taskService.replaceTestNamesWithIds(exercise);
+
+        assertThat(exercise.getProblemStatement()).isEqualTo("[task][Structure](<testid>7</testid>)");
+    }
+
+    @Test
     void replaceTestNamesWithIds_leavesATestThatDoesNotExistAsItIs() {
         // An instructor can mistype a test name or delete the test afterwards. The task then has to keep the name so that the mistake stays visible in the editor.
         ProgrammingExercise exercise = exerciseWith("[task][Sorting](testBubbleSort(), testThatWasDeleted())", testCase(1L, "testBubbleSort()"));

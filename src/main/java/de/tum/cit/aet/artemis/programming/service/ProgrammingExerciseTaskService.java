@@ -250,7 +250,7 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Finds every test reference in the problem statement's task markers that does NOT resolve to an ACTIVE test
-     * case of the exercise (by exact name or {@code <testid>} id) — e.g. a typo, a stale name left over from
+     * case of the exercise (by case-insensitive name or {@code <testid>} id) — e.g. a typo, a stale name left over from
      * before a rename, or a test the transformation removed without updating the marker. Unlike
      * {@link #extractTasks}, which silently drops unresolved references when building tasks, this reports them so
      * callers can surface a precise error instead of a silently-broken task-test link.
@@ -296,7 +296,8 @@ public class ProgrammingExerciseTaskService {
             return testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst();
         }
         else {
-            return testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
+            String storedTestName = ProgrammingExerciseTestCase.normalizeTestName(testName);
+            return testCases.stream().filter(tc -> tc.getTestName().equalsIgnoreCase(storedTestName)).findFirst();
         }
     }
 
@@ -383,13 +384,7 @@ public class ProgrammingExerciseTaskService {
      * @return the new replacement to be used in the problem statement
      */
     private String convertTestNameToTestIdReplacement(String testName, Set<ProgrammingExerciseTestCase> testCases) {
-        for (ProgrammingExerciseTestCase testCase : testCases) {
-            if (testName.equals(testCase.getTestName())) {
-                String id = testCase.getId().toString();
-                return TESTID_START + id + TESTID_END;
-            }
-        }
-        return testName;
+        return findTestCaseFromProblemStatement(testName, testCases).map(testCase -> TESTID_START + testCase.getId() + TESTID_END).orElse(testName);
     }
 
     /**

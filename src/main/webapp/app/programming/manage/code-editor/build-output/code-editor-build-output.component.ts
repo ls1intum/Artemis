@@ -8,7 +8,6 @@ import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { findLatestResult } from 'app/foundation/util/utils';
 import { parseJson } from 'app/foundation/util/json.util';
 import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
@@ -20,7 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -46,6 +45,14 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     readonly isBuilding = signal(false);
     readonly rawBuildLogs = signal(new BuildLogEntryArray());
     readonly result = signal<Result | undefined>(undefined);
+
+    readonly emptyStateTranslationKey = computed(() => {
+        const result = this.result();
+        const submission = this.resolveSubmission(result);
+        return result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && submission && 'buildFailed' in submission && submission.buildFailed === false
+            ? 'artemisApp.editor.buildOutputOnlyOnFailure'
+            : 'artemisApp.editor.noBuildOutput';
+    });
 
     private resultSubscription?: Subscription;
     private submissionSubscription?: Subscription;
@@ -213,11 +220,31 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
      * @param result
      */
     fetchBuildResults(result?: Result): Observable<BuildLogEntry[] | undefined> {
-        if (result && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && (!result.submission || (result.submission as ProgrammingSubmission).buildFailed)) {
+        const submission = this.resolveSubmission(result);
+        const compilationSucceeded = submission && 'buildFailed' in submission && submission.buildFailed === false;
+        if (
+            result &&
+            result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
+            !compilationSucceeded &&
+            (!result.submission || ('buildFailed' in result.submission && result.submission.buildFailed === true))
+        ) {
             return this.getBuildLogs();
         } else {
             return of([]);
         }
+    }
+
+    /** Student editor DTOs nest results under submissions and omit the reverse reference. */
+    private resolveSubmission(result?: Result): Submission | undefined {
+        if (!result) {
+            return undefined;
+        }
+        return (
+            result.submission ??
+            this.participation().submissions?.find((submission) =>
+                submission.results?.some((candidate) => candidate === result || (result.id !== undefined && candidate.id === result.id)),
+            )
+        );
     }
 
     /**

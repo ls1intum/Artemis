@@ -13,11 +13,18 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -32,11 +39,15 @@ import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private ProgrammingExercise programmingExercise;
+
+    @Autowired
+    private ProgrammingExerciseTaskTestRepository taskRepository;
 
     @BeforeEach
     void init() {
@@ -308,6 +319,170 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         assertThat(testCases).hasSize(2);
 
         assertThat(testCases.stream().allMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
+    }
+
+    @Test
+    void shouldNormalizeLongTestNamesForJenkinsBuildResults() {
+        assertLongTestNamesRemainDistinctAndMatchFeedback(false);
+    }
+
+    @Test
+    void shouldNormalizeLongTestNamesForLocalCIBuildResults() {
+        assertLongTestNamesRemainDistinctAndMatchFeedback(true);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void shouldKeepLongStructuralTestNamesClassifiedAndMatched(boolean localCI) {
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        String commonPrefix = "testMethods[" + "a".repeat(250);
+        String successfulName = commonPrefix + "First]";
+        String failedName = commonPrefix + "Second]";
+        String shortStructuralName = "testClass[Example]";
+        String shortBehavioralName = "testBehavior";
+        BuildResultNotification buildResult = localCI
+                ? new BuildResult("main", "solution", "tests", false, null,
+                        List.of(new LocalCIJobDTO(List.of(new LocalCITestJobDTO(failedName, List.of("Assertion failed"))),
+                                List.of(new LocalCITestJobDTO(successfulName, List.of()), new LocalCITestJobDTO(shortStructuralName, List.of()),
+                                        new LocalCITestJobDTO(shortBehavioralName, List.of())))),
+                        List.of(), List.of(), false, 1)
+                : generateResult(List.of(successfulName, shortStructuralName, shortBehavioralName), List.of(failedName));
+
+        feedbackCreationService.generateTestCasesFromBuildResult(buildResult, programmingExercise);
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).hasSize(4);
+        var successfulFeedback = feedbackCreationService.createFeedbackFromTestCase(successfulName, List.of(), true, programmingExercise, testCases).orElseThrow();
+        var failedFeedback = feedbackCreationService.createFeedbackFromTestCase(failedName, List.of("Assertion failed"), false, programmingExercise, testCases).orElseThrow();
+        assertThat(successfulFeedback.getTestCase().getType()).isEqualTo(ProgrammingExerciseTestCaseType.STRUCTURAL);
+        assertThat(failedFeedback.getTestCase().getType()).isEqualTo(ProgrammingExerciseTestCaseType.STRUCTURAL);
+        assertThat(successfulFeedback.getTestCase().getId()).isNotEqualTo(failedFeedback.getTestCase().getId());
+        assertThat(successfulFeedback.isPositive()).isTrue();
+        assertThat(failedFeedback.isPositive()).isFalse();
+        assertThat(failedFeedback.getMessageText()).isEqualTo("Assertion failed");
+        assertThat(testCases).filteredOn(testCase -> shortStructuralName.equals(testCase.getTestName())).singleElement().extracting(ProgrammingExerciseTestCase::getType)
+                .isEqualTo(ProgrammingExerciseTestCaseType.STRUCTURAL);
+        assertThat(testCases).filteredOn(testCase -> shortBehavioralName.equals(testCase.getTestName())).singleElement().extracting(ProgrammingExerciseTestCase::getType)
+                .isEqualTo(ProgrammingExerciseTestCaseType.BEHAVIORAL);
+
+        Map<Long, ProgrammingExerciseTestCaseType> originalTypes = testCases.stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getId, ProgrammingExerciseTestCase::getType));
+        feedbackCreationService.generateTestCasesFromBuildResult(generateResult(List.of(), List.of()), programmingExercise);
+        assertThat(testCaseRepository.findByExerciseId(programmingExercise.getId())).allSatisfy(testCase -> {
+            assertThat(testCase.isActive()).isFalse();
+            assertThat(testCase.getType()).isEqualTo(originalTypes.get(testCase.getId()));
+        });
+        feedbackCreationService.generateTestCasesFromBuildResult(buildResult, programmingExercise);
+        assertThat(testCaseRepository.findByExerciseId(programmingExercise.getId())).allSatisfy(testCase -> {
+            assertThat(testCase.isActive()).isTrue();
+            assertThat(testCase.getType()).isEqualTo(originalTypes.get(testCase.getId()));
+        });
+    }
+
+    @Test
+    void shouldBindLongTestNameInProblemStatementToPersistedCase() {
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        String originalName = "testMethods[" + "a".repeat(250) + "]";
+        programmingExercise.setProblemStatement("[task][Structure](" + originalName + ")");
+        programmingExerciseRepository.save(programmingExercise);
+
+        feedbackCreationService.generateTestCasesFromBuildResult(generateResult(List.of(originalName), List.of()), programmingExercise);
+
+        var persistedTestCase = testCaseRepository.findByExerciseId(programmingExercise.getId()).iterator().next();
+        assertThat(taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId())).singleElement().satisfies(task -> {
+            assertThat(task.getTaskName()).isEqualTo("Structure");
+            assertThat(task.getTestCases()).extracting(ProgrammingExerciseTestCase::getId).containsExactly(persistedTestCase.getId());
+        });
+        assertThat(programmingExerciseRepository.findById(programmingExercise.getId()).orElseThrow().getProblemStatement())
+                .isEqualTo("[task][Structure](<testid>" + persistedTestCase.getId() + "</testid>)");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "Type,type,true", "İ,i,true", "ß,SS,false" })
+    void shouldPreserveLongTestIdentityForEquivalentCaseChanges(String originalArgument, String renamedArgument, boolean sameTest) {
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        // Only the tail, beyond the stored prefix, changes. Case equivalence must match isSameTestCase even for Unicode.
+        String commonPrefix = "parameterized(" + "x".repeat(260);
+        String originalName = commonPrefix + originalArgument + ")";
+        String renamedName = commonPrefix + renamedArgument + ")";
+        feedbackCreationService.generateTestCasesFromBuildResult(generateResult(List.of(originalName), List.of()), programmingExercise);
+        var originalTestCase = testCaseRepository.findByExerciseId(programmingExercise.getId()).iterator().next();
+        originalTestCase.setWeight(3.25);
+        originalTestCase.setBonusMultiplier(1.5);
+        originalTestCase.setBonusPoints(0.25);
+        originalTestCase.setVisibility(Visibility.AFTER_DUE_DATE);
+        testCaseRepository.save(originalTestCase);
+
+        feedbackCreationService.generateTestCasesFromBuildResult(generateResult(List.of(renamedName), List.of()), programmingExercise);
+
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).hasSize(sameTest ? 1 : 2);
+        var renamedFeedback = feedbackCreationService.createFeedbackFromTestCase(renamedName, List.of(), true, programmingExercise, testCases).orElseThrow();
+        var activeTestCase = renamedFeedback.getTestCase();
+        assertThat(activeTestCase.isActive()).isTrue();
+        if (sameTest) {
+            assertThat(activeTestCase.getId()).isEqualTo(originalTestCase.getId());
+            assertThat(activeTestCase.getWeight()).isEqualTo(3.25);
+            assertThat(activeTestCase.getBonusMultiplier()).isEqualTo(1.5);
+            assertThat(activeTestCase.getBonusPoints()).isEqualTo(0.25);
+            assertThat(activeTestCase.getVisibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
+        }
+        else {
+            assertThat(activeTestCase.getId()).isNotEqualTo(originalTestCase.getId());
+            assertThat(activeTestCase.getWeight()).isEqualTo(1.0);
+            assertThat(testCases).filteredOn(testCase -> testCase.getId().equals(originalTestCase.getId())).singleElement()
+                    .satisfies(testCase -> assertThat(testCase.isActive()).isFalse());
+        }
+    }
+
+    private void assertLongTestNamesRemainDistinctAndMatchFeedback(boolean localCI) {
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        // Put a supplementary character at the shortening boundary, and distinguish the names only after 255 characters.
+        String commonPrefix = "parameterized(" + "x".repeat(175) + "😀" + "x".repeat(100);
+        String successfulName = commonPrefix + "first argument)";
+        String failedName = commonPrefix + "second argument)";
+        BuildResultNotification buildResult = localCI
+                ? new BuildResult("main", "solution", "tests", false, null,
+                        List.of(new LocalCIJobDTO(List.of(new LocalCITestJobDTO(failedName, List.of("Assertion failed"))),
+                                List.of(new LocalCITestJobDTO(successfulName, List.of())))),
+                        List.of(), List.of(), false, 1)
+                : generateResult(List.of(successfulName), List.of(failedName));
+
+        feedbackCreationService.generateTestCasesFromBuildResult(buildResult, programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).hasSize(2).allSatisfy(testCase -> {
+            assertThat(testCase.getTestName()).startsWith("parameterized(").hasSizeLessThanOrEqualTo(255);
+            assertThat(testCase.getTestName().codePoints().noneMatch(codePoint -> codePoint >= 0xD800 && codePoint <= 0xDFFF)).isTrue();
+        });
+        assertThat(testCases).extracting(ProgrammingExerciseTestCase::getTestName).doesNotHaveDuplicates();
+        var successfulFeedback = feedbackCreationService.createFeedbackFromTestCase(successfulName, List.of(), true, programmingExercise, testCases).orElseThrow();
+        var failedFeedback = feedbackCreationService.createFeedbackFromTestCase(failedName, List.of("Assertion failed"), false, programmingExercise, testCases).orElseThrow();
+        assertThat(successfulFeedback.getTestCase().getId()).isNotEqualTo(failedFeedback.getTestCase().getId());
+        assertThat(successfulFeedback.isPositive()).isTrue();
+        assertThat(failedFeedback.isPositive()).isFalse();
+        assertThat(failedFeedback.getMessageText()).isEqualTo("Assertion failed");
+
+        Map<String, Long> originalIds = testCases.stream().collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId));
+        assertThat(feedbackCreationService.generateTestCasesFromBuildResult(buildResult, programmingExercise)).isFalse();
+        assertThat(testCaseRepository.findByExerciseId(programmingExercise.getId())).extracting(ProgrammingExerciseTestCase::getId)
+                .containsExactlyInAnyOrderElementsOf(originalIds.values());
+    }
+
+    @Test
+    void shouldPreserveTestNamesWithinDatabaseLimit() {
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        String maximumLengthName = "x".repeat(255);
+        feedbackCreationService.generateTestCasesFromBuildResult(generateResult(List.of("shortTest", maximumLengthName), List.of()), programmingExercise);
+        assertThat(testCaseRepository.findByExerciseId(programmingExercise.getId())).extracting(ProgrammingExerciseTestCase::getTestName).containsExactlyInAnyOrder("shortTest",
+                maximumLengthName);
+    }
+
+    @Test
+    void shouldPreserveSupplementaryCharactersWithinCharacterLimit() {
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        String maximumLengthName = "😀".repeat(127) + "x";
+        feedbackCreationService.generateTestCasesFromBuildResult(generateResult(List.of(maximumLengthName), List.of()), programmingExercise);
+        assertThat(testCaseRepository.findByExerciseId(programmingExercise.getId())).extracting(ProgrammingExerciseTestCase::getTestName).containsExactly(maximumLengthName);
     }
 
     @Test
