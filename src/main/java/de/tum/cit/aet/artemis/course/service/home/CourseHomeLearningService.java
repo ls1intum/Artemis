@@ -1,0 +1,67 @@
+package de.tum.cit.aet.artemis.course.service.home;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.CourseHomeWelcomeCase;
+import de.tum.cit.aet.artemis.course.dto.home.CourseHomeDTO;
+import de.tum.cit.aet.artemis.course.dto.home.CourseHomeLearningDTO;
+import de.tum.cit.aet.artemis.course.dto.home.CourseHomeTargetDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseHomeRepository;
+
+/** Loads constant-size scalar candidates, applying visibility in the database before paging. */
+@Service
+@Lazy
+@Profile(PROFILE_CORE)
+public class CourseHomeLearningService {
+
+    private final ExerciseHomeRepository exercises;
+
+    private final AuthorizationCheckService authorization;
+
+    public CourseHomeLearningService(ExerciseHomeRepository exercises, AuthorizationCheckService authorization) {
+        this.exercises = exercises;
+        this.authorization = authorization;
+    }
+
+    public CourseHomeLearningDTO load(long courseId, User user, Instant asOf, Instant since) {
+        if (!authorization.isAtLeastStudentInCourse(courseId)) {
+            throw new AccessForbiddenException("course", courseId);
+        }
+        var now = ZonedDateTime.ofInstant(asOf, ZoneOffset.UTC);
+        var baseline = ZonedDateTime.ofInstant(since, ZoneOffset.UTC);
+        var counts = exercises.countForHome(courseId, user.getId(), now, now.plusHours(72));
+        var one = PageRequest.of(0, 1);
+        List<CourseHomeLearningDTO.Candidate> candidates = new ArrayList<>();
+        add(candidates, exercises.findDeadline(courseId, user.getId(), now, now.plusHours(72), one), CourseHomeWelcomeCase.DEADLINE_SOON);
+        add(candidates, exercises.findInProgress(courseId, user.getId(), now, one), CourseHomeWelcomeCase.IN_PROGRESS);
+        add(candidates, exercises.findFeedback(courseId, user.getId(), now, baseline, one), CourseHomeWelcomeCase.NEW_FEEDBACK);
+        add(candidates, exercises.findNewAction(courseId, user.getId(), now, baseline, one), CourseHomeWelcomeCase.NEW_EXERCISE);
+        add(candidates, exercises.findAvailableAction(courseId, user.getId(), now, one), CourseHomeWelcomeCase.CAUGHT_UP);
+        var updates = exercises.findUpdates(courseId, user.getId(), now, baseline, PageRequest.of(0, 3)).stream().map(row -> item(row, CourseHomeWelcomeCase.NEW_EXERCISE))
+                .toList();
+        return new CourseHomeLearningDTO(new CourseHomeDTO.Progress(counts.getReleased(), counts.getSubmitted(), counts.getDue(), counts.getDueSubmitted()), candidates, updates);
+    }
+
+    private void add(List<CourseHomeLearningDTO.Candidate> candidates, List<ExerciseHomeRepository.Item> rows, CourseHomeWelcomeCase reason) {
+        rows.forEach(row -> candidates.add(new CourseHomeLearningDTO.Candidate(reason, item(row, reason), true)));
+    }
+
+    private CourseHomeDTO.Item item(ExerciseHomeRepository.Item row, CourseHomeWelcomeCase reason) {
+        return new CourseHomeDTO.Item(row.getTitle(), new CourseHomeTargetDTO(CourseHomeTargetDTO.Kind.EXERCISE, row.getId(), null, null),
+                row.getActivityAt() == null ? null : row.getActivityAt().toInstant(), row.getDueDate() == null ? null : row.getDueDate().toInstant(), reason.name());
+    }
+}
