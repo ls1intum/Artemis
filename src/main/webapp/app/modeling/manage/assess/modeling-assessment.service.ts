@@ -2,7 +2,7 @@ import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
@@ -17,6 +17,8 @@ export class ModelingAssessmentService {
 
     private readonly MAX_FEEDBACK_TEXT_LENGTH = 500;
     private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 5000;
+    /** The bound the server enforces on the points of a feedback the assessor gives (Feedback.MAX_MANUAL_CREDITS). */
+    private readonly MAX_MANUAL_CREDITS = 100;
     private resourceUrl = 'api/modeling';
 
     saveAssessment(resultId: number, feedbacks: Feedback[], submissionId: number, assessmentNote?: string, submit = false): Observable<Result> {
@@ -115,6 +117,21 @@ export class ModelingAssessmentService {
      * Checks if the feedback text and detail text of every feedback item is smaller than the configured maximum length. Returns true if the length of the texts is valid or if
      * there is no feedback, false otherwise.
      */
+    /**
+     * Checks that every feedback the assessor gives has points the server accepts. A feedback linked to a grading instruction takes the points of the instruction,
+     * and an automatic feedback is not given by the assessor, so neither is checked here.
+     * @param feedback the feedback of the assessment
+     */
+    areFeedbackCreditsInBounds(feedback: Feedback[]): boolean {
+        return (feedback ?? []).every(
+            (feedbackItem) =>
+                feedbackItem.credits === undefined ||
+                feedbackItem.gradingInstruction !== undefined ||
+                feedbackItem.type === FeedbackType.AUTOMATIC ||
+                (Number.isFinite(feedbackItem.credits) && Math.abs(feedbackItem.credits) <= this.MAX_MANUAL_CREDITS),
+        );
+    }
+
     isFeedbackTextValid(feedback: Feedback[]): boolean {
         if (!feedback) {
             return true;

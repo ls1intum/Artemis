@@ -8,7 +8,7 @@ import { take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
@@ -482,6 +482,19 @@ describe('ModelingAssessmentService', () => {
             expect(result).toBe(true);
             result = service.isFeedbackTextValid(feedbacks);
             expect(result).toBe(true);
+        });
+
+        it('should only accept points within the bounds for feedback the assessor gives', () => {
+            expect(service.areFeedbackCreditsInBounds([{ credits: 100, type: FeedbackType.MANUAL }, { credits: -100 }] as Feedback[])).toBe(true);
+            expect(service.areFeedbackCreditsInBounds([{ credits: 100.5, type: FeedbackType.MANUAL }] as Feedback[])).toBe(false);
+            expect(service.areFeedbackCreditsInBounds([{ credits: Number.NaN }] as Feedback[])).toBe(false);
+            // the points of an instruction and of automatic feedback are not given by the assessor
+            expect(
+                service.areFeedbackCreditsInBounds([
+                    { credits: 150, gradingInstruction: { id: 1 } },
+                    { credits: 150, type: FeedbackType.AUTOMATIC },
+                ] as Feedback[]),
+            ).toBe(true);
         });
     });
 });
