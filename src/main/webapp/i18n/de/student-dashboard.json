@@ -293,6 +293,7 @@
                 "version": "Version",
                 "isDownloading": "Wird heruntergeladen...",
                 "downloadMergedPdf": "Vollständiges PDF herunterladen",
+                "downloadMergedPdfError": "Das vollständige PDF konnte nicht heruntergeladen werden.",
                 "selectLecture": "Bitte wähle eine Vorlesung aus."
             },
             "exerciseDetails": {

@@ -25,21 +25,34 @@ import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.LoggerFactory;
+import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxyUtil;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.config.LoggingAspect;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
@@ -51,6 +64,8 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingServ
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
 
+@Isolated("Mutates logger levels and appenders")
+@Execution(ExecutionMode.SAME_THREAD)
 class CourseNotificationEmailServiceTest {
 
     private static final ZonedDateTime FIXED_CREATION_DATE = ZonedDateTime.parse("2025-01-15T10:00:00+01:00");
@@ -88,6 +103,107 @@ class CourseNotificationEmailServiceTest {
         // sendEmailSync now reports whether the mail went out, and a boolean-returning mock answers false by default,
         // which would make every test here see a failed delivery. Lenient because several of these never reach the send.
         lenient().when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class))).thenReturn(true);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void renderingFailureDoesNotLogRecipientData(boolean subjectFails) {
+        String privateEmail = "private-notification-recipient@example.org";
+        String privateLogin = "private-notification-login";
+        User user = createUser(privateLogin, "en");
+        user.setId(7391564280L);
+        user.setEmail(privateEmail);
+        var notification = createNotification("ANNOUNCEMENT", 123L);
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Subject");
+        if (subjectFails) {
+            when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenThrow(new NoSuchMessageException(privateEmail));
+        }
+        else {
+            when(templateEngine.process(anyString(), any(Context.class)))
+                    .thenThrow(new TemplateProcessingException("Template for " + privateEmail, new IllegalStateException(privateLogin)));
+        }
+
+        Logger serviceLogger = (Logger) LoggerFactory.getLogger(CourseNotificationEmailService.class);
+        Logger aspectLogger = (Logger) LoggerFactory.getLogger(LoggingAspect.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        Level previousServiceLevel = serviceLogger.getLevel();
+        Level previousAspectLevel = aspectLogger.getLevel();
+        serviceLogger.setLevel(Level.DEBUG);
+        aspectLogger.setLevel(Level.DEBUG);
+        serviceLogger.addAppender(appender);
+        aspectLogger.addAppender(appender);
+        try {
+            var factory = new AspectJProxyFactory(courseNotificationEmailService);
+            factory.addAspect(new LoggingAspect(new MockEnvironment().withProperty("spring.profiles.active", "dev")));
+            CourseNotificationEmailService proxy = (CourseNotificationEmailService) factory.getProxy();
+
+            var result = proxy.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(user)));
+
+            assertThat(result).isCompletedExceptionally();
+            String logged = appender.list.stream()
+                    .map(event -> event.getFormattedMessage() + (event.getThrowableProxy() == null ? "" : ThrowableProxyUtil.asString(event.getThrowableProxy())))
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertThat(logged).doesNotContain("7391564280", privateEmail, privateLogin);
+            assertThat(logged).contains(subjectFails ? "NoSuchMessageException" : "TemplateProcessingException");
+            assertThat(logged).contains(subjectFails ? "email.courseNotification.ANNOUNCEMENT.title" : "mail/course_notification/ANNOUNCEMENT");
+        }
+        finally {
+            serviceLogger.detachAppender(appender);
+            aspectLogger.detachAppender(appender);
+            serviceLogger.setLevel(previousServiceLevel);
+            aspectLogger.setLevel(previousAspectLevel);
+            appender.stop();
+        }
+    }
+
+    @Test
+    void realMarkdownRenderersDoNotLogPersonalDataFromTheMailBody() {
+        String privateEmail = "private-markdown-recipient@example.org";
+        String privateLogin = "private-markdown-recipient-login";
+        var links = new MarkdownCustomLinkRendererService();
+        ReflectionTestUtils.setField(links, "artemisServerUrl", serverUrl);
+        var service = new CourseNotificationEmailService(messageSource, templateEngine, mailSendingService, proxied(links), proxied(new MarkdownCustomReferenceRendererService()));
+        ReflectionTestUtils.setField(service, "artemisServerUrl", serverUrl);
+        var notification = new CourseNotificationDTO("newAnnouncementNotification", 1L, 123L, FIXED_CREATION_DATE, CourseNotificationCategory.COMMUNICATION, "Test Course", null,
+                new NewAnnouncementPayloadDTO(1L, "Test Announcement", "Contact " + privateEmail + " or [user]" + privateLogin + "(1)[/user]", "Test Author", null, 2L, 3L), "/");
+        var recipient = createUser(privateLogin, "en");
+        recipient.setEmail(privateEmail);
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Subject");
+        when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Content");
+        Logger aspectLogger = (Logger) LoggerFactory.getLogger(LoggingAspect.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        Level previousLevel = aspectLogger.getLevel();
+        aspectLogger.setLevel(Level.DEBUG);
+        aspectLogger.addAppender(appender);
+        try {
+            aspectLogger.debug("Mail renderer log capture active");
+            assertThat(service.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)))).isCompletedWithValue(null);
+
+            String logged = appender.list.stream()
+                    .map(event -> event.getFormattedMessage() + (event.getThrowableProxy() == null ? "" : ThrowableProxyUtil.asString(event.getThrowableProxy())))
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertThat(logged).contains("Mail renderer log capture active").doesNotContain(privateEmail, privateLogin);
+            verify(templateEngine).process(anyString(), contextCaptor.capture());
+            @SuppressWarnings("unchecked")
+            var parameters = (Map<String, Object>) contextCaptor.getValue().getVariable("parameters");
+            assertThat((String) parameters.get("postMarkdownContent")).contains(privateEmail, "@" + privateLogin).doesNotContain("[user]");
+        }
+        finally {
+            aspectLogger.detachAppender(appender);
+            aspectLogger.setLevel(previousLevel);
+            appender.stop();
+        }
+    }
+
+    private static <T> T proxied(T target) {
+        var factory = new AspectJProxyFactory(target);
+        factory.setProxyTargetClass(true);
+        factory.addAspect(new LoggingAspect(new MockEnvironment().withProperty("spring.profiles.active", "dev")));
+        @SuppressWarnings("unchecked")
+        T proxy = (T) factory.getProxy();
+        return proxy;
     }
 
     @Test

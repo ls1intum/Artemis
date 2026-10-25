@@ -322,15 +322,18 @@ The ➕ emoji serves as the up-voting reaction, which influences the display ord
 ### Formatted Message Editor
 
 In the web app, messages and replies open with their formatting visible.
-The compact toolbar shows bold, italic, underline, strikethrough, inline code, links, person mentions, course references and emojis.
-Select text or choose **More options** to show lists, quotes, code blocks, attachments, slides and FAQs. **Fewer options** hides those controls again.
+The toolbar always stays on one line. It shows bold, italic, underline, strikethrough, inline code, links, person mentions, course references, emojis and **More options**.
+On a narrow screen, the formatting buttons that do not fit move into the bar that **More options** opens.
+Select text or choose **More options** to show a bar above the editor with lists, quotes, code blocks, attachments, slides and FAQs, and with the formatting buttons that did not fit the toolbar. **Fewer options** closes the bar again.
+The bar floats above the editor, so opening it does not move the text you are writing.
 Controls opened by selecting text close when the selection is cleared. Controls opened with **More options** stay open until you choose **Fewer options**.
-The expanded controls stay in the same row when space permits and wrap on narrower screens.
 Keyboard shortcuts and pasting or dropping files also work while these options are hidden.
+An empty editor names where your message goes, for example _Message Katja_ in a direct message or _Message general_ in a channel, and _Reply…_ in a thread.
+The hint below the editor lists only the essentials on a narrow screen. The help button next to it shows all typing tips on hover or focus.
 
 <Image src={compactMessageToolbarImg} alt={"The compact message toolbar with text formatting, links, mentions, references, emojis and More options"} size={ImageSize.large} />
 
-<Image src={expandedMessageToolbarImg} alt={"The expanded message toolbar showing additional formatting and resource controls; Fewer options hides the additional controls"} size={ImageSize.large} />
+<Image src={expandedMessageToolbarImg} alt={"The message toolbar with the bar of further options above the editor, showing lists, quote, code block, attachments, slides and FAQs; Fewer options closes the bar"} size={ImageSize.large} />
 
 Type a list marker (`-`, `*`, `+`, `1.` or `1)`) followed by a space to start a list.
 At the beginning or end of a quote or code block, use the up or down arrow key to move to normal text outside it.

@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,6 +30,8 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
@@ -316,6 +320,56 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Unit 2 (index 1) is an image and not included in the merged pdf
         var nonCompletedUnit = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(units.get(1).getId(), student.getId());
         assertThat(nonCompletedUnit).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLecturePdfAttachmentsMerged_DoesNotCompleteExternalPdf() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        var externalUnit = (AttachmentVideoUnit) lecture.getLectureUnits().get(2);
+        externalUnit.getAttachment().setLink("https://example.com/external.pdf");
+        attachmentRepo.save(externalUnit.getAttachment());
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        callAndCheckMergeResult(lecture, 3);
+
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lecture.getLectureUnits().getFirst().getId(), student.getId())).isPresent();
+        assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(externalUnit.getId(), student.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLecturePdfAttachmentsMerged_MissingFileDoesNotCompleteUnits(boolean allFilesMissing) throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        var pdfUnits = lecture.getLectureUnits().stream().map(AttachmentVideoUnit.class::cast).filter(unit -> unit.getAttachment().getLink().endsWith(".pdf")).toList();
+        for (var unit : allFilesMissing ? pdfUnits : List.of(pdfUnits.getFirst())) {
+            Files.delete(unit.getAttachment().fileLocation().orElseThrow().path());
+        }
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+
+        assertLectureUnitsNotCompleted(lecture);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLecturePdfAttachmentsMerged_CorruptFileDoesNotCompleteUnits() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        var firstUnit = (AttachmentVideoUnit) lecture.getLectureUnits().getFirst();
+        FileUtils.writeStringToFile(firstUnit.getAttachment().fileLocation().orElseThrow().path().toFile(), "corrupt PDF", StandardCharsets.UTF_8);
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf", HttpStatus.INTERNAL_SERVER_ERROR, byte[].class);
+
+        assertLectureUnitsNotCompleted(lecture);
+    }
+
+    private void assertLectureUnitsNotCompleted(Lecture lecture) {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(lecture.getLectureUnits()).allSatisfy(unit -> assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit.getId(), student.getId())).isEmpty());
     }
 
     @Test
