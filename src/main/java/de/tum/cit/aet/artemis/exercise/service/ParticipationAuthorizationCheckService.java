@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -58,13 +57,11 @@ public class ParticipationAuthorizationCheckService {
 
     private final Optional<StudentExamApi> studentExamApi;
 
-    private final Optional<ExamApi> examApi;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ParticipationAuthorizationCheckService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, TeamRepository teamRepository, ExerciseDateService exerciseDateService,
-            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, Optional<StudentExamApi> studentExamApi, Optional<ExamApi> examApi,
+            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, Optional<StudentExamApi> studentExamApi,
             StudentParticipationRepository studentParticipationRepository) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -74,7 +71,6 @@ public class ParticipationAuthorizationCheckService {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.submissionRepository = submissionRepository;
         this.studentExamApi = studentExamApi;
-        this.examApi = examApi;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -123,13 +119,12 @@ public class ParticipationAuthorizationCheckService {
             return false;
         }
         StudentExamApi studentExamApiValue = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-        ExamApi examApiValue = examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
         // Exam exercises are individual, so the student exam is resolved by the exercise and the participation's student, as the programming retrieval endpoints have always done.
         User student = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
         // When no student exam exists for the participation (an inconsistency), hide the results rather than failing the read: a student without a student exam may not see results
         // anyway.
-        return studentExamApiValue.findByExerciseIdAndUserId(exercise.getId(), student.getId()).map(studentExam -> !examApiValue.shouldStudentSeeResult(studentExam, participation))
-                .orElse(true);
+        return studentExamApiValue.findByExerciseIdAndUserId(exercise.getId(), student.getId())
+                .map(studentExam -> !studentExamApiValue.shouldStudentSeeResult(studentExam, participation)).orElse(true);
     }
 
     /**

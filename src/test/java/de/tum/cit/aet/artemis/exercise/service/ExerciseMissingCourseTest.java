@@ -59,7 +59,7 @@ class ExerciseMissingCourseTest {
     @Test
     void participationAccessCheckThrowsWhenCourseCannotBeResolved() {
         var authCheckService = mock(AuthorizationCheckService.class);
-        var service = new ParticipationAuthorizationCheckService(null, null, authCheckService, null, null, null, null, Optional.empty(), Optional.empty(),
+        var service = new ParticipationAuthorizationCheckService(null, null, authCheckService, null, null, null, null, Optional.empty(),
                 mock(StudentParticipationRepository.class));
         var participation = mock(StudentParticipation.class);
         when(participation.getExercise()).thenReturn(exerciseWithoutCourse());

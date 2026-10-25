@@ -51,7 +51,7 @@ class ParticipationAuthorizationCheckServiceNoCourseTest {
     @Test
     void canAccessParticipation_exerciseWithoutCourse_throwsIllegalState() {
         var service = new ParticipationAuthorizationCheckService(userRepository, programmingExerciseRepository, authCheckService, teamRepository, exerciseDateService,
-                submissionPolicyRepository, submissionRepository, Optional.empty(), Optional.empty(), studentParticipationRepository);
+                submissionPolicyRepository, submissionRepository, Optional.empty(), studentParticipationRepository);
 
         var exercise = new TextExercise();
         var participation = new StudentParticipation();

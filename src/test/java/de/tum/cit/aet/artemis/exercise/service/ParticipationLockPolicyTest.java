@@ -77,6 +77,6 @@ class ParticipationLockPolicyTest {
     }
 
     private ParticipationAuthorizationCheckService service(Optional<StudentExamApi> api) {
-        return new ParticipationAuthorizationCheckService(null, null, null, null, dates, policies, submissions, api, Optional.empty(), null);
+        return new ParticipationAuthorizationCheckService(null, null, null, null, dates, policies, submissions, api, null);
     }
 }
