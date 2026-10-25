@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { By } from '@angular/platform-browser';
-import { Router, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -116,7 +116,7 @@ describe('CodeButtonComponent', () => {
         allowOnlineIde = true,
         programmingLanguage: ProgrammingLanguage | undefined = ProgrammingLanguage.JAVA,
         componentRepositoryUri = repositoryUri,
-        vcsAccessTokenData: VcsAccessTokenSourceInfo = { returnedTokenType: 'participation-token', participationId: 7, isOwnParticipation: true },
+        vcsAccessTokenData: VcsAccessTokenSourceInfo = { returnedTokenType: 'participation-token', participationId: 7 },
         openPopover = true,
     ): void {
         fixture = TestBed.createComponent(CodeButtonComponent);
@@ -136,7 +136,7 @@ describe('CodeButtonComponent', () => {
     }
 
     it('should defer resource loading until the popover trigger is clicked', async () => {
-        createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { returnedTokenType: 'participation-token', participationId: 7, isOwnParticipation: true }, false);
+        createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { returnedTokenType: 'participation-token', participationId: 7 }, false);
 
         expect(accountService.identity).not.toHaveBeenCalled();
         expect(accountService.getVcsAccessToken).not.toHaveBeenCalled();
@@ -395,34 +395,13 @@ describe('CodeButtonComponent', () => {
             expect(component['loadingState']()).toEqual({ status: 'error' });
         });
 
-        it('should load the participation token for an owned participation in course management', async () => {
-            const router = TestBed.inject(Router);
-            await router.navigateByUrl('/course-management');
-            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, {
-                returnedTokenType: 'participation-token',
-                participationId: 23,
-                isOwnParticipation: true,
-            });
+        it('should load a participation token', async () => {
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { returnedTokenType: 'participation-token', participationId: 23 });
             await fixture.whenStable();
 
             expect(accountService.getVcsAccessToken).toHaveBeenCalledExactlyOnceWith(23);
             expect(programmingExerciseService.getRepositoryVcsAccessToken).not.toHaveBeenCalled();
             expect(component['loadingState']()).toMatchObject({ status: 'complete' });
-        });
-
-        it('should reject participation-token data for an unowned participation in course management', async () => {
-            const router = TestBed.inject(Router);
-            await router.navigateByUrl('/course-management');
-            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, {
-                returnedTokenType: 'participation-token',
-                participationId: 23,
-                isOwnParticipation: false,
-            });
-            await fixture.whenStable();
-
-            expect(accountService.getVcsAccessToken).not.toHaveBeenCalled();
-            expect(programmingExerciseService.getRepositoryVcsAccessToken).not.toHaveBeenCalled();
-            expect(component['loadingState']()).toEqual({ status: 'error' });
         });
     });
 

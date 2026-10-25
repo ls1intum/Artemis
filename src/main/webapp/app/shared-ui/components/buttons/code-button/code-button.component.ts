@@ -11,8 +11,6 @@ import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/s
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
-import { Router } from '@angular/router';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { Observable, firstValueFrom } from 'rxjs';
@@ -33,7 +31,7 @@ export enum RepositoryAuthenticationMethod {
 export type CodeButtonSize = 'small' | 'default';
 
 export type VcsAccessTokenSourceInfo =
-    | { returnedTokenType: 'participation-token'; participationId: number; isOwnParticipation: boolean }
+    | { returnedTokenType: 'participation-token'; participationId: number }
     | { returnedTokenType: 'repository-token'; repositoryType: RepositoryType.USER; participationId: number }
     | { returnedTokenType: 'repository-token'; repositoryType: RepositoryType.TEMPLATE | RepositoryType.SOLUTION | RepositoryType.TESTS }
     | { returnedTokenType: 'repository-token'; repositoryType: RepositoryType.AUXILIARY; auxiliaryRepositoryId: number };
@@ -58,20 +56,18 @@ export class CodeButtonComponent {
     private readonly sshUserSettingsService = inject(SshUserSettingsService);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly ideSettingsService = inject(IdeSettingsService);
-    private readonly router = inject(Router);
     private readonly breakpointObserver = inject(BreakpointObserver);
 
     protected readonly faCircleExclamation = faCircleExclamation;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCode = faCode;
 
-    private readonly isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
     private readonly resourceLoadingTriggered = signal(false);
     protected readonly showAlternatives = signal(false);
 
     readonly exerciseId = input.required<number>();
     readonly repositoryUri = input.required<string>();
-    readonly vcsAccessTokenData = input.required<VcsAccessTokenSourceInfo>();
+    readonly vcsAccessTokenSourceInfo = input.required<VcsAccessTokenSourceInfo>();
     readonly repositoryViewLink = input.required<(string | number)[]>();
     readonly allowOnlineIde = input.required<boolean>();
     readonly programmingLanguage = input<ProgrammingLanguage>();
@@ -92,7 +88,7 @@ export class CodeButtonComponent {
     });
     private readonly tokenResource = resource({
         params: () => this.getTokenResourceParams(),
-        loader: ({ params }) => this.getToken(params.exerciseId, params.isInCourseManagement, params.vcsAccessTokenData),
+        loader: ({ params }) => this.getToken(params.exerciseId, params.vcsAccessTokenData),
     });
     private readonly tokenUrlResource = resourceFromSnapshots(() => this.getTokenUrlSnapshot());
     private readonly authenticationMethodDataResource = resource({
@@ -175,8 +171,7 @@ export class CodeButtonComponent {
         }
         return {
             exerciseId: this.exerciseId(),
-            isInCourseManagement: this.isInCourseManagement(),
-            vcsAccessTokenData: this.vcsAccessTokenData(),
+            vcsAccessTokenData: this.vcsAccessTokenSourceInfo(),
         };
     }
 
@@ -373,14 +368,10 @@ export class CodeButtonComponent {
         };
     }
 
-    private async getToken(exerciseId: number, isInCourseManagement: boolean, vcsAccessTokenData: VcsAccessTokenSourceInfo): Promise<string> {
+    private async getToken(exerciseId: number, vcsAccessTokenData: VcsAccessTokenSourceInfo): Promise<string> {
         switch (vcsAccessTokenData.returnedTokenType) {
             case 'participation-token':
-                if (!isInCourseManagement || vcsAccessTokenData.isOwnParticipation) {
-                    return this.loadOrCreateParticipationToken(vcsAccessTokenData.participationId);
-                } else {
-                    throw new Error('Invalid token fetch attempt: Tried to fetch token for participation in course-management of which the user was no owner.');
-                }
+                return this.loadOrCreateParticipationToken(vcsAccessTokenData.participationId);
             case 'repository-token':
                 return this.loadOrCreateRepositoryToken(
                     exerciseId,

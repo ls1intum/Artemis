@@ -216,7 +216,7 @@
                             [repositoryUri]="programmingExercise().solutionParticipation?.repositoryUri || ''"
                             [repositoryViewLink]="['/course-management', courseId(), 'programming-exercises', exerciseId(), 'repository', 'SOLUTION']"
                             [exerciseId]="exerciseId()"
-                            [vcsAccessTokenData]="{ returnedTokenType: 'repository-token', repositoryType: RepositoryType.SOLUTION }"
+                            [vcsAccessTokenSourceInfo]="{ returnedTokenType: 'repository-token', repositoryType: RepositoryType.SOLUTION }"
                         />
                     </div>
                 }

@@ -109,7 +109,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         if (!this.ownsParticipationForCodeButton()) {
             return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId: this.participation().id! };
         }
-        return { returnedTokenType: 'participation-token', participationId: this.participation().id!, isOwnParticipation: this.ownsParticipationForCodeButton() };
+        return { returnedTokenType: 'participation-token', participationId: this.participation().id! };
     }
 
     /**

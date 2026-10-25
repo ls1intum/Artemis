@@ -174,7 +174,7 @@ describe('ProgrammingExamSummaryComponent', () => {
         fixture.detectChanges();
 
         const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
-        expect(codeButton.vcsAccessTokenData()).toEqual({ returnedTokenType: 'participation-token', participationId: programmingParticipation.id, isOwnParticipation: true });
+        expect(codeButton.vcsAccessTokenData()).toEqual({ returnedTokenType: 'participation-token', participationId: programmingParticipation.id });
     });
 
     it("should request a repository token when inspecting another user's participation", () => {

@@ -131,11 +131,7 @@
                             [repositoryViewLink]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', studentParticipations()[0]!.id!]"
                             [hideLabelMobile]="true"
                             [repositoryUri]="gradedRepositoryUri()"
-                            [vcsAccessTokenData]="{
-                                returnedTokenType: 'participation-token',
-                                participationId: programmingParticipationForCodeButton()!.id!,
-                                isOwnParticipation: ownsParticipationForCodeButton(),
-                            }"
+                            [vcsAccessTokenSourceInfo]="{ returnedTokenType: 'participation-token', participationId: programmingParticipationForCodeButton()!.id! }"
                         />
                     }
                     @if (

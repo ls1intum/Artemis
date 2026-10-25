@@ -331,7 +331,7 @@ export class ExerciseHeaderActionsComponent {
         if (!this.ownsParticipationForCodeButton()) {
             return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId };
         }
-        return { returnedTokenType: 'participation-token', participationId, isOwnParticipation: true };
+        return { returnedTokenType: 'participation-token', participationId };
     }
 
     isStartExerciseAvailable(): boolean {

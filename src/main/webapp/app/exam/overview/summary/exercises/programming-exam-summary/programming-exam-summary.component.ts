@@ -101,7 +101,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     private getVcsAccessTokenSourceInfo(): VcsAccessTokenSourceInfo {
         const participationId = this.participation().id!;
         if (this.ownsParticipationForCodeButton()) {
-            return { returnedTokenType: 'participation-token', participationId, isOwnParticipation: true };
+            return { returnedTokenType: 'participation-token', participationId };
         }
         return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId };
     }
