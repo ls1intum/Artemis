@@ -258,6 +258,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     // entries of the "Your overall points" doughnut chart (name is a translation key, color the slice color)
     readonly doughnutChartEntries = signal<YourOverallPointsEntry[]>([]);
+    readonly usesCreditedPointsRing = computed(() => this.doughnutChartEntries().some((entry) => entry.name === 'artemisApp.courseOverview.statistics.redesign.points'));
 
     // Labels for the different parts in Your overall points chart
     programmingPointLabel = 'programmingPointLabel';
@@ -519,18 +520,27 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.overallPointsPerExercise.set(ExerciseType.MODELING, modelingExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.TEXT, textExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseTotalScore);
-        const doughnutEntriesTemp: YourOverallPointsEntry[] = [];
-        scores.forEach((score, index) => {
-            if (score > 0) {
-                doughnutEntriesTemp.push({
-                    name: 'artemisApp.courseOverview.statistics.' + this.labels[index],
-                    value: this.roundScoreSpecifiedByCourseSettings(score, course),
-                    color: this.doughnutChartColors[index],
-                });
-            }
-        });
-
-        this.doughnutChartEntries.set(doughnutEntriesTemp);
+        let entries: YourOverallPointsEntry[] = scores.map((score, index) => ({
+            name: 'artemisApp.courseOverview.statistics.' + this.labels[index],
+            value: score,
+            color: this.doughnutChartColors[index],
+        }));
+        const typePoints = scores
+            .slice(0, -1)
+            .filter(Number.isFinite)
+            .reduce((sum, score) => sum + score, 0);
+        const difference = this.roundScoreSpecifiedByCourseSettings(Math.abs(typePoints - this.overallPoints()), course);
+        // A cross-type variant cap is applied once course-wide, while the type totals are calculated independently.
+        // Do not invent an allocation of that cap between the type slices. Ignore differences within scoring precision.
+        if (this.courseHasExerciseVariants() && Number.isFinite(difference) && difference > 0) {
+            entries = [
+                { name: 'artemisApp.courseOverview.statistics.redesign.points', value: this.overallPoints(), color: 'var(--tumaet-ui-accent-color)' },
+                { name: 'artemisApp.courseOverview.statistics.' + this.missingPointsLabel, value: totalMissedPoints, color: this.doughnutChartColors[6] },
+            ];
+        }
+        this.doughnutChartEntries.set(
+            entries.filter((entry) => entry.value > 0).map((entry) => cloneWith(entry, { value: this.roundScoreSpecifiedByCourseSettings(entry.value, course) })),
+        );
     }
 
     /**

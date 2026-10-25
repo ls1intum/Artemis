@@ -332,7 +332,8 @@
                         "excluded": "Zählt nicht zur Kurswertung"
                     },
                     "variantCap": "{{ title }} · Gruppenlimit: {{ points }} Punkte",
-                    "variantGroup": "Aufgabenvarianten"
+                    "variantGroup": "Aufgabenvarianten",
+                    "typeTotalsExplanation": "Die Punkte je Aufgabentyp werden separat berechnet. Wenn Bewertungsgrenzen mehrere Aufgabentypen betreffen, zeigt der Ring die angerechneten Kurspunkte."
                 }
             },
             "competencies": {

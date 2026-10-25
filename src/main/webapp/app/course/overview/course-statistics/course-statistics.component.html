@@ -76,6 +76,13 @@
                         }
                     </ul>
                 </div>
+                @if (usesCreditedPointsRing()) {
+                    <p
+                        data-testid="statistics-type-totals-explanation"
+                        class="mt-3! mb-0! text-xs text-(--tumaet-ui-muted-color)"
+                        jhiTranslate="artemisApp.courseOverview.statistics.redesign.typeTotalsExplanation"
+                    ></p>
+                }
                 @if (gradingScaleExists()) {
                     <div class="mt-4! flex flex-wrap items-center justify-between gap-3! border-t border-(--tumaet-ui-border-color) pt-4!">
                         <span class="font-medium"

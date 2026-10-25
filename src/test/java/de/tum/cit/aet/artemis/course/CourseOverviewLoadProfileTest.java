@@ -873,7 +873,10 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
                 .findFirst().orElseThrow().studentParticipations().iterator().next();
         assertThat(pending.hasSubmitted()).isTrue();
         assertThat(pending.submissions()).singleElement().satisfies(visible -> {
-            assertThat(visible.commitHash()).isEqualTo(submission.getCommitHash());
+            assertThat(visible.id()).isEqualTo(submission.getId());
+            assertThat(visible.submissionExerciseType()).isEqualTo("programming");
+            assertThat(visible.submitted()).isFalse();
+            assertThat(visible.commitHash()).as("the lean overview deliberately omits source-code details").isNull();
             assertThat(visible.results()).isNullOrEmpty();
         });
 

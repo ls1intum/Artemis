@@ -615,6 +615,81 @@ describe('CourseStatisticsComponent', () => {
         expect(fixture.debugElement.query(By.css('#absolute-course-score'))).toBeNull();
     });
 
+    it('keeps a cross-type variant cap out of the ring partition without changing authoritative type totals', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            ...course,
+            accuracyOfScores: 1,
+            exercises: [{ id: 1, type: ExerciseType.PROGRAMMING, exerciseVariantGroup: { id: 1, maxPoints: 10 } }] as Exercise[],
+        });
+        const scores = (points: number) =>
+            new CourseScores(116, 116, 0, { absoluteScore: points, absoluteScoreTotal: points, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        vi.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(
+            new Map([
+                [ExerciseType.PROGRAMMING, scores(122.9)],
+                [ExerciseType.QUIZ, scores(36.3)],
+                [ExerciseType.MODELING, scores(29.4)],
+                [ExerciseType.TEXT, scores(34.5)],
+                [ExerciseType.FILE_UPLOAD, scores(25.6)],
+            ]),
+        );
+        vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
+            new CourseScores(580, 580, 0, { absoluteScore: 244.3, absoluteScoreTotal: 248.7, relativeScore: 42.1, currentRelativeScore: 42.1, presentationScore: 0 }),
+        );
+        fixture.detectChanges();
+        const entries = comp.doughnutChartEntries();
+        expect(entries.reduce((total, entry) => total + entry.value, 0)).toBeCloseTo(580);
+        expect(entries.map((entry) => entry.value)).toEqual([244.3, 335.7]);
+        expect(comp.pointBreakdown()).toContainEqual({ type: ExerciseType.PROGRAMMING, achieved: 122.9, attainable: 116, total: 116 });
+        expect(comp.pointBreakdown()).toContainEqual({ type: ExerciseType.TEXT, achieved: 34.5, attainable: 116, total: 116 });
+        expect(fixture.nativeElement.querySelector('[data-testid="statistics-type-totals-explanation"]')).not.toBeNull();
+    });
+
+    it('honors a one-point cross-type cap at whole-point course precision', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            ...course,
+            accuracyOfScores: 0,
+            exercises: [{ id: 1, type: ExerciseType.PROGRAMMING, exerciseVariantGroup: { id: 1, maxPoints: 5 } }] as Exercise[],
+        });
+        const scores = new CourseScores(5, 5, 0, { absoluteScore: 3, absoluteScoreTotal: 3, relativeScore: 60, currentRelativeScore: 60, presentationScore: 0 });
+        vi.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(
+            new Map([
+                [ExerciseType.PROGRAMMING, scores],
+                [ExerciseType.TEXT, scores],
+            ]),
+        );
+        vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
+            new CourseScores(10, 10, 0, { absoluteScore: 5, absoluteScoreTotal: 6, relativeScore: 50, currentRelativeScore: 50, presentationScore: 0 }),
+        );
+        fixture.detectChanges();
+        expect(comp.doughnutChartEntries().map((entry) => entry.value)).toEqual([5, 5]);
+    });
+
+    it('retains additive type colors and bonus scores above one hundred percent without a negative missing slice', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            ...course,
+            exercises: [{ id: 1, type: ExerciseType.PROGRAMMING, exerciseVariantGroup: { id: 1, maxPoints: 100 } }] as Exercise[],
+        });
+        const scores = (points: number) =>
+            new CourseScores(50, 50, 0, { absoluteScore: points, absoluteScoreTotal: points, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        vi.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(
+            new Map([
+                [ExerciseType.PROGRAMMING, scores(90)],
+                [ExerciseType.QUIZ, scores(60)],
+            ]),
+        );
+        vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
+            new CourseScores(100, 100, 0, { absoluteScore: 150, absoluteScoreTotal: 150, relativeScore: 150, currentRelativeScore: 150, presentationScore: 0 }),
+        );
+        fixture.detectChanges();
+        expect(comp.doughnutChartEntries().map((entry) => entry.value)).toEqual([90, 60]);
+        expect(comp.doughnutChartEntries().map((entry) => entry.name)).toEqual([
+            'artemisApp.courseOverview.statistics.programmingPointLabel',
+            'artemisApp.courseOverview.statistics.quizPointLabel',
+        ]);
+        expect(comp.overallPoints()).toBe(150);
+        expect(fixture.nativeElement.querySelector('[data-testid="statistics-type-totals-explanation"]')).toBeNull();
+    });
+
     it('keeps the required presentation count distinct from advanced presentation points', () => {
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, presentationScore: 3 });
         fixture.detectChanges();

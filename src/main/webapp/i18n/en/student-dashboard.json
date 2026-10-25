@@ -332,7 +332,8 @@
                         "excluded": "Not included in course score"
                     },
                     "variantCap": "{{ title }} · group limit: {{ points }} points",
-                    "variantGroup": "Exercise variants"
+                    "variantGroup": "Exercise variants",
+                    "typeTotalsExplanation": "Exercise-type totals are calculated separately. When scoring limits span exercise types, the ring shows credited course points."
                 }
             },
             "competencies": {
