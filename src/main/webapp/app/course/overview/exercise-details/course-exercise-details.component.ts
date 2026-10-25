@@ -39,7 +39,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
-import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
@@ -249,7 +249,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faBook = faBook;
     faEye = faEye;
     faWrench = faWrench;
-    faTable = faTable;
     faListAlt = faListAlt;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
@@ -312,8 +311,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Both modes are selected from the URL, not just practice: going back after a switch leaves the editor on the other
      * participation, and a mode that only ever moved towards practice would then describe the wrong one. A routed id
      * that belongs to neither participation (not loaded yet) leaves the mode untouched.
+     * Quiz routes name the mode directly; in particular, the live route has no participation id to match.
      */
     private syncModeWithRoutedParticipation(): void {
+        const targetUrl = this.router.currentNavigation()?.finalUrl?.toString() ?? this.router.url;
+        const targetPath = targetUrl.split(/[?#]/, 1)[0];
+        const quizMode = /\/quiz-exercises\/\d+\/(live|practice)(?:\/|;|$)/.exec(targetPath)?.[1];
+        if (quizMode) {
+            this.participationMode.set(quizMode === 'practice' ? 'practice' : 'graded');
+            return;
+        }
         const routedParticipationId = this.routedParticipationId();
         if (routedParticipationId === undefined) {
             return;
@@ -824,8 +831,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const tutorActionItems = this.getDefaultItems().slice();
         if (this.exercise?.type === ExerciseType.QUIZ) {
             this.getQuizItems().forEach((item) => tutorActionItems.push(item));
-        } else {
-            tutorActionItems.push(this.getParticipationItem());
         }
         return tutorActionItems;
     }
@@ -837,11 +842,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 icon: faEye,
                 translation: 'entity.action.view',
             },
-            {
-                routerLink: `${this.baseResource()}scores`,
-                icon: faTable,
-                translation: 'entity.action.scores',
-            },
+            this.getParticipationItem(),
         ];
     }
 

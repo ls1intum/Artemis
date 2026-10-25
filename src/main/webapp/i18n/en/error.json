@@ -5,7 +5,9 @@
         "http": {
             "400": "Bad request.",
             "401": "You are not authenticated to access this page.",
-            "403": "You are not authorized to access this page.",
+            "403": "You do not have permission to access this content or perform this action. Contact your course team if you need access.",
+            "403Read": "You do not have permission to view the requested content. Contact your course team if you need access.",
+            "403Action": "You do not have permission to perform this action. Contact your course team if you need access.",
             "404": "The page does not exist.",
             "405": "The HTTP verb you used is not supported for this URL.",
             "409": "There was a conflict while processing your request.",
@@ -86,6 +88,7 @@
         "concurrentModification": "The presentation changed while your update was being checked. Please reload the page and try again.",
         "studentNotInCourse": "The selected user is not a student of this course.",
         "maxPointsBelowExistingResult": "The maximum points cannot be lower than a result that was already entered.",
+        "maxScoreInvalid": "The maximum points of an exercise must be greater than 0.",
         "resultPointsExceedMaxPoints": "The result points cannot exceed the maximum points.",
         "exerciseNotInCourse": "The linked exercise must belong to this course.",
         "studentAlreadyAssigned": "These students already have this presentation: {{ logins }}",

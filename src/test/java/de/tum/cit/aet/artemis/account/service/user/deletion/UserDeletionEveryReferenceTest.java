@@ -168,7 +168,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         // ACCOUNT
         seed(UserDeletionReferencePolicy.CONDUCT_AGREEMENT, userId, values("course_id", courseId));
         seed(UserDeletionReferencePolicy.USER_ACTIVITY, userId, values());
-        seed(UserDeletionReferencePolicy.USER_AI_PREFERENCE, userId, values());
+        seed(UserDeletionReferencePolicy.USER_AI_PREFERENCE, userId, values("selection_decision", "CLOUD_AI"));
         seed(UserDeletionReferencePolicy.RECOVERY_KEY, userId, values());
         seed(UserDeletionReferencePolicy.PERSONAL_VCS_TOKEN, userId, values());
         seed(UserDeletionReferencePolicy.USER_LTI_IDENTITY, userId, values());

@@ -751,6 +751,13 @@ export default tseslint.config(
             'src/main/webapp/app/lecture/manage/lecture-units/**/*.html',
             'src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.html',
             'src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.html',
+            'src/main/webapp/app/exercise/participation/programming-exercise-participation-actions/**/*.html',
+            'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
+            'src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.html',
+            'src/main/webapp/app/plagiarism/shared/case-header/**/*.html',
+            'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
+            'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
+            'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
         ],
         languageOptions: {

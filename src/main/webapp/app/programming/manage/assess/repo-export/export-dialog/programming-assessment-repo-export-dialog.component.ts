@@ -96,7 +96,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
 
     exportRepos() {
         // Blank entries would otherwise become empty path segments in the request URL. The dialog can also be opened
-        // with nothing preselected (the exercise scores page does that), and exporting then asked the server for an
+        // with nothing preselected (the participation page does that), and exporting then asked the server for an
         // empty participant list, which answered 404 instead of telling the user that nothing was selected.
         const participantIdentifiers = this.repositoryExportOptions.exportAllParticipants
             ? ['ALL']

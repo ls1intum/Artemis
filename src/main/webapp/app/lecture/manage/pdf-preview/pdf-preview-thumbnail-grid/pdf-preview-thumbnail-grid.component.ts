@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, ElementRef, Renderer2, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -19,7 +20,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
-    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbPopover, TranslateDirective, DragDropModule, ArtemisTranslatePipe],
+    imports: [
+        NgTemplateOutlet,
+        PdfPreviewEnlargedCanvasComponent,
+        FaIconComponent,
+        PdfPreviewDateBoxComponent,
+        NgbPopover,
+        TranslateDirective,
+        DragDropModule,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PdfPreviewThumbnailGridComponent {
     // Injected services
