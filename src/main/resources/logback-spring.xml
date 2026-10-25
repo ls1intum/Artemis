@@ -26,6 +26,9 @@
     <!-- Add the custom filter -->
     <turboFilter class="de.tum.cit.aet.artemis.core.config.StompErrorLogFilter" />
 
+    <!-- Mail services report template failures safely; Thymeleaf's duplicate includes the original recipient-bearing cause. -->
+    <turboFilter class="de.tum.cit.aet.artemis.core.config.MailTemplateErrorLogFilter" />
+
     <!-- The FILE and ASYNC appenders are here as examples for a production configuration -->
     <!--
     <include resource="org/springframework/boot/logging/logback/file-appender.xml" />

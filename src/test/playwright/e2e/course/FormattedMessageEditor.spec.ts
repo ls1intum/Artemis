@@ -53,6 +53,12 @@ const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean }
     },
 });
 
+/** Wait for CDK's asynchronous Handset observer to mount the composer for the current viewport. */
+async function waitForResponsiveComposer(page: Page) {
+    const handset = await page.evaluate(() => matchMedia('(max-width: 599.98px) and (orientation: portrait), (max-width: 959.98px) and (orientation: landscape)').matches);
+    await expect(page.locator('#scrollableDiv').getByTestId('formatted-message-input')).toHaveCount(handset ? 1 : 0);
+}
+
 /** Set a real browser selection, including across formatting elements, without changing its DOM. */
 async function selectText(editor: Locator, start: number, end: number, expectedText = '') {
     await editor.evaluate(
@@ -1551,6 +1557,7 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             await page.keyboard.type(`Later line ${line}`);
         }
         await forEachViewport(page, async () => {
+            await waitForResponsiveComposer(page);
             await editor.scrollIntoViewIfNeeded();
             await selectText(editor, 0, 0);
             await page.keyboard.type(`@${studentOne.username}`);
@@ -1733,6 +1740,7 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
         const advanced = host.getByTestId('message-advanced-toolbar');
         const line = host.getByTestId('message-toolbar-line');
         await forEachViewport(page, async (viewport) => {
+            await waitForResponsiveComposer(page);
             await host.scrollIntoViewIfNeeded();
             await expect(toggle).toHaveAttribute('aria-expanded', 'false');
             await expect(toggle).toHaveAccessibleName('More options');
@@ -1798,6 +1806,7 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
         const host = page.locator('jhi-message-editor').filter({ has: composer.editor });
         const hint = host.getByTestId('message-editor-hint');
         await forEachViewport(page, async (viewport) => {
+            await waitForResponsiveComposer(page);
             await host.scrollIntoViewIfNeeded();
             await expect(hint).toBeVisible();
             await expect(hint).not.toContainText('Ctrl+Enter');

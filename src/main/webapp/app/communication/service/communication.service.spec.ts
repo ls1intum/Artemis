@@ -171,7 +171,7 @@ describe('CommunicationService', () => {
                 action: CommunicationCrudAction.CREATE,
                 post: { id: 900, author: { id: 1, internal: true }, creationDate: created, conversation: { id: 77, type: ConversationType.CHANNEL } },
             });
-            expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77, created);
+            expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77);
         });
 
         it('routes an active course-wide post to the shared owner once, including when manually unread', async () => {
@@ -190,7 +190,7 @@ describe('CommunicationService', () => {
                 action: CommunicationCrudAction.CREATE,
                 post: { id: 901, author: { id: 1, internal: true }, creationDate: created, conversation: { id: 77 } },
             });
-            expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77, created);
+            expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77);
             vi.runOnlyPendingTimers();
             expect(directPatch).not.toHaveBeenCalled();
         });

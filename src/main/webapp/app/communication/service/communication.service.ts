@@ -181,11 +181,11 @@ export class CommunicationService implements OnDestroy {
 
             const coursewideTopic = `/topic/communication/courses/${this.courseId}`;
             this.courseWideTopicSubscription = this.websocketService.subscribe<PostBroadcastDTO>(coursewideTopic).subscribe((postDTO: PostBroadcastDTO) => {
-                // Personal-topic posts are counted by CourseConversationsService. Count course-wide posts only here,
+                // Personal-topic posts are reconciled by CourseConversationsService. Forward course-wide posts only here,
                 // rather than again when the visible-message stream subscribes to this same topic.
                 const conversationId = postDTO.post.conversation?.id;
                 if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post.author?.id !== this.user.id) {
-                    this.courseConversationsService.handleNewMessage(conversationId, postDTO.post.creationDate);
+                    this.courseConversationsService.handleNewMessage(conversationId);
                 }
                 this.handleNewOrUpdatedMessage(postDTO);
             });
