@@ -111,8 +111,9 @@ public class SecurityFrameworkService {
         validateFrameworkVersion(frameworkVersion);
         Repository repository = checkoutTestRepository(exercise, true);
         Path root = repository.getLocalPath();
-        BuildTool buildTool = SecurityPolicyRepositoryFiles.detectBuildTool(root).orElseThrow(() -> new BadRequestAlertException(
-                "The Security Framework requires a Gradle or Maven test repository that uses Ares.", ENTITY_NAME, "securityFrameworkUnsupportedProject"));
+        BuildTool buildTool = SecurityPolicyRepositoryFiles.detectBuildTool(root)
+                .orElseThrow(() -> new BadRequestAlertException("The Security Framework requires a Gradle or Maven test repository that uses Ares.", ENTITY_NAME,
+                        "securityFrameworkUnsupportedProject"));
 
         if (!SecurityPolicyRepositoryFiles.isPolicyPresent(root)) {
             String policy = findPreviousPolicy(repository).orElseGet(() -> SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, buildTool, packageName(exercise)));

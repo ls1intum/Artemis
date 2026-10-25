@@ -201,8 +201,7 @@ class SecurityFrameworkServiceTest {
         securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
 
         assertThat(read(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains("JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ")
-                .contains("theSupervisedCodeUsesTheFollowingPackage: \"de.example\"").contains("- \"de.example.SortingTest\"")
-                .contains("regardingFileSystemInteractions: [ ]");
+                .contains("theSupervisedCodeUsesTheFollowingPackage: \"de.example\"").contains("- \"de.example.SortingTest\"").contains("regardingFileSystemInteractions: [ ]");
     }
 
     @Test
@@ -232,8 +231,7 @@ class SecurityFrameworkServiceTest {
 
     @Test
     void unsupportedFrameworkVersionIsRejectedBeforeTouchingTheRepository() {
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "9.9.9", user))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "9.9.9", user))
                 .matches(exception -> "unsupportedFrameworkVersion".equals(exception.getErrorKey()));
         verifyNoInteractions(gitService);
     }

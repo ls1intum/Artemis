@@ -1,3 +1,4 @@
+import { QuestionReevaluationActionsComponent } from '../question-reevaluation-actions/question-reevaluation-actions.component';
 import {
     AfterViewInit,
     Component,
@@ -54,8 +55,6 @@ import {
     faAngleRight,
     faBan,
     faBars,
-    faChevronDown,
-    faChevronUp,
     faCopy,
     faEye,
     faFont,
@@ -79,6 +78,7 @@ import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-l
     styleUrls: ['./drag-and-drop-question-edit.component.scss', '../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        QuestionReevaluationActionsComponent,
         FaIconComponent,
         FormsModule,
         CustomMaxLengthDirective,
@@ -114,8 +114,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     protected readonly faUndo = faUndo;
     protected readonly faFont = faFont;
     protected readonly faEye = faEye;
-    protected readonly faChevronUp = faChevronUp;
-    protected readonly faChevronDown = faChevronDown;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faBars = faBars;
     protected readonly faUnlink = faUnlink;

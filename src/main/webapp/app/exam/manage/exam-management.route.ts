@@ -1,3 +1,14 @@
+import {
+    programmingExerciseBuildPlanRoute,
+    programmingExerciseDetailRoute,
+    programmingExerciseGradingRoute,
+    programmingExerciseUpdateRoute,
+    programmingExerciseVersionHistoryRoute,
+} from 'app/programming/manage/programming-exercise-shared.route';
+import { quizExerciseUpdateRoute } from 'app/quiz/manage/quiz-exercise-update.route';
+import { fileUploadExerciseUpdateRoute } from 'app/fileupload/manage/file-upload-exercise-update.route';
+import { textExerciseUpdateRoute } from 'app/text/manage/text-exercise/text-exercise-update.route';
+import { modelingExerciseUpdateRoute } from 'app/modeling/manage/modeling-exercise-update.route';
 import { Route, Routes, UrlSegment } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
@@ -6,12 +17,9 @@ import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'a
 import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { scoresRedirect } from 'app/exercise/participation/participation.route';
 
-import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/services/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
 import { CourseResolve, ExamResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
 import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { featureToggleGuard } from 'app/foundation/feature-toggle/feature-toggle.guard';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text-exercise-resolver.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
 
@@ -41,20 +49,7 @@ export const examManagementRoutes: Routes = [
     },
 
     // 3. Programming Exercise Build Plan Editor
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit-build-plan',
-        loadComponent: () => import('app/programming/manage/build-plan-editor/build-plan-editor-page.component').then((m) => m.BuildPlanEditorPageComponent),
-        resolve: {
-            exercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
-        },
-        // the editor is a programming-exercise feature, so a direct URL must not load it when the feature is toggled off
-        canActivate: [UserRouteAccessService, featureToggleGuard(FeatureToggle.ProgrammingExercises)],
-        canDeactivate: [PendingChangesGuard],
-    },
+    programmingExerciseBuildPlanRoute(':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit-build-plan'),
 
     // 4. Repository Views (exercise-groups)
     {
@@ -452,204 +447,37 @@ export const examManagementRoutes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             // Create Modeling Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/new',
-                loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
-                resolve: {
-                    modelingExercise: ModelingExerciseResolver,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.modelingExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            modelingExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/modeling-exercises/new'),
             // Import Modeling Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/import/:exerciseId',
-                loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
-                resolve: {
-                    modelingExercise: ModelingExerciseResolver,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.modelingExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            modelingExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/modeling-exercises/import/:exerciseId'),
             // Edit Modeling Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/edit',
-                loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
-                resolve: {
-                    modelingExercise: ModelingExerciseResolver,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.modelingExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            modelingExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/edit'),
             // Create Text Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/new',
-                loadComponent: () => import('app/text/manage/text-exercise/update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
-                resolve: {
-                    textExercise: TextExerciseResolver,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.textExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            textExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/text-exercises/new'),
             // Import Text Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/import/:exerciseId',
-                loadComponent: () => import('app/text/manage/text-exercise/update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
-                resolve: {
-                    textExercise: TextExerciseResolver,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.textExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            textExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/text-exercises/import/:exerciseId'),
             // Edit Text Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/edit',
-                loadComponent: () => import('app/text/manage/text-exercise/update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
-                resolve: {
-                    textExercise: TextExerciseResolver,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.textExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            textExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/edit'),
             // Create File Upload Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/new',
-                loadComponent: () => import('app/fileupload/manage/update/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
-                resolve: {
-                    fileUploadExercise: FileUploadExerciseManagementResolve,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.fileUploadExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            fileUploadExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/new'),
             // Edit File Upload Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/edit',
-                loadComponent: () => import('app/fileupload/manage/update/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
-                resolve: {
-                    fileUploadExercise: FileUploadExerciseManagementResolve,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.fileUploadExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            fileUploadExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/edit'),
             // Import File Upload Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/import/:exerciseId',
-                loadComponent: () => import('app/fileupload/manage/update/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
-                resolve: {
-                    fileUploadExercise: FileUploadExerciseManagementResolve,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.fileUploadExercise.home.importLabel',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            fileUploadExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/import/:exerciseId', 'artemisApp.fileUploadExercise.home.importLabel'),
             // Create Quiz Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/new',
-                loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.quizExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            quizExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/quiz-exercises/new'),
             // Import Quiz Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/import/:exerciseId',
-                loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.quizExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            quizExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/quiz-exercises/import/:exerciseId'),
             // Edit Quiz Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/edit',
-                loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.quizExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            quizExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/edit'),
             // Create Programming Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/new',
-                loadComponent: () => import('app/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
-                resolve: {
-                    programmingExercise: ProgrammingExerciseResolve,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.programmingExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            programmingExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/programming-exercises/new'),
             // Import programming exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/import/:exerciseId',
-                loadComponent: () => import('app/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
-                resolve: {
-                    programmingExercise: ProgrammingExerciseResolve,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.programmingExercise.home.importLabel',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            programmingExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/programming-exercises/import/:exerciseId', 'artemisApp.programmingExercise.home.importLabel'),
             // Import programming exercise from file
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/import-from-file',
-                loadComponent: () => import('app/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
-                resolve: {
-                    programmingExercise: ProgrammingExerciseResolve,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.programmingExercise.home.importLabel',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            programmingExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/programming-exercises/import-from-file', 'artemisApp.programmingExercise.home.importLabel'),
             // Edit Programming Exercise
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit',
-                loadComponent: () => import('app/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
-                resolve: {
-                    programmingExercise: ProgrammingExerciseResolve,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.programmingExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            programmingExerciseUpdateRoute(':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit'),
             {
                 path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId',
                 loadComponent: () => import('app/text/manage/detail/text-exercise-detail.component').then((m) => m.TextExerciseDetailComponent),
@@ -677,28 +505,8 @@ export const examManagementRoutes: Routes = [
                 },
                 canActivate: [UserRouteAccessService],
             },
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId',
-                loadComponent: () => import('app/programming/manage/detail/programming-exercise-detail.component').then((m) => m.ProgrammingExerciseDetailComponent),
-                resolve: {
-                    programmingExercise: ProgrammingExerciseResolve,
-                },
-                data: {
-                    authorities: IS_AT_LEAST_TUTOR,
-                    pageTitle: 'artemisApp.programmingExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/version-history',
-                loadComponent: () =>
-                    import('app/programming/manage/version-history/programming-exercise-version-history.component').then((m) => m.ProgrammingExerciseVersionHistoryComponent),
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.exercise.versionHistory.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            programmingExerciseDetailRoute(':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId'),
+            programmingExerciseVersionHistoryRoute(':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/version-history'),
             {
                 path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId',
                 loadComponent: () => import('app/quiz/manage/detail/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
@@ -732,16 +540,7 @@ export const examManagementRoutes: Routes = [
                 },
                 canActivate: [UserRouteAccessService],
             },
-            {
-                path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/grading/:tab',
-                loadComponent: () =>
-                    import('app/programming/manage/grading/configure/programming-exercise-configure-grading.component').then((m) => m.ProgrammingExerciseConfigureGradingComponent),
-                data: {
-                    authorities: IS_AT_LEAST_EDITOR,
-                    pageTitle: 'artemisApp.programmingExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
+            programmingExerciseGradingRoute(':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/grading/:tab'),
             {
                 path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/preview',
                 loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),

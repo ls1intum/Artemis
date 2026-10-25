@@ -678,7 +678,7 @@ this.userIdentity.update((current) => {
 });
 ```
 
-`AccountService.setImageUrl` and `AccountService.setUserEnabledMemiris` are the canonical examples.
+`AccountService.setImageUrl` and `AccountService.setUserLLMSelectionDecision` are the canonical examples.
 
 Two things this rule does **not** cover:
 
@@ -1291,13 +1291,13 @@ not compile either.
 as a string as well and are not type checked, so they are no substitute. The rule does not cover them, because they are not
 calls to `setInput`.
 
-`packages/tum-aet-ui` must not import from the application and keeps its own internal copy of the helper in
-`packages/tum-aet-ui/src/lib/internal/set-inputs.ts`. Keep the two in step.
+`@tumaet/ui-angular` owns and exports the shared implementation in `packages/tum-aet-ui/src/lib/internal/set-inputs.ts`.
+The application utility re-exports it, so existing callers keep their import path without a second implementation.
 
 `localRules/no-component-ref-set-input` (`config/eslint/rules/no-component-ref-set-input.mjs`) bans any use of the `setInput`
 member in production code under `src/main/webapp` and `packages/tum-aet-ui` at error level, so aliasing, destructuring and
-`call`, `apply` or `bind` do not get around it. Specs are exempt, because they set inputs on fixtures. The two helpers are the
-only places that disable the rule.
+`call`, `apply` or `bind` do not get around it. Specs are exempt, because they set inputs on fixtures. The package helper is the
+only place that disables the rule.
 
 ## Advanced Topics
 

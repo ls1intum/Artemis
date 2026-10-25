@@ -545,10 +545,6 @@
                         "name": "Iris-Chat",
                         "description": "Mit Iris über einen Kurs, eine Aufgabe oder eine Vorlesung chatten."
                     },
-                    "IRIS_MEMORY": {
-                        "name": "Iris-Erinnerungen",
-                        "description": "Was Iris sich über Studierende merkt, und das Löschen davon."
-                    },
                     "IRIS_STRUGGLE_INTERVENTION": {
                         "name": "Iris-Hilfe bei Schwierigkeiten",
                         "description": "Iris bietet Hilfe an, wenn Studierende nicht weiterkommen."

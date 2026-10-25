@@ -15,6 +15,7 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
+import { SavedPostingBannerComponent } from '../saved-posting-banner/saved-posting-banner.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -28,7 +29,7 @@ import { PostingFooterComponent } from 'app/communication/posting-footer/posting
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -52,6 +53,7 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
     styleUrls: ['./post.component.scss', './../communication.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        SavedPostingBannerComponent,
         NgClass,
         FaIconComponent,
         TranslateDirective,
@@ -217,26 +219,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
 
             PostComponent.activeDropdownPost = this;
 
-            this.dropdownPosition.set({
-                x: event.clientX,
-                y: event.clientY,
-            });
-
-            this.showDropdown.set(true);
-            this.adjustDropdownPosition();
+            this.openDropdownAt(event);
             this.disableBodyScroll();
-        }
-    }
-
-    /**
-     * Adjusts dropdown position if it overflows the screen on the right.
-     */
-    adjustDropdownPosition() {
-        const dropdownWidth = 200;
-        const screenWidth = window.innerWidth;
-
-        if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.update((position) => cloneWith(position, { x: screenWidth - dropdownWidth - 10 }));
         }
     }
 

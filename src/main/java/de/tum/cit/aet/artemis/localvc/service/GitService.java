@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
 
 @Profile(PROFILE_CORE)
@@ -144,9 +145,10 @@ public class GitService extends AbstractGitService {
      * @param participation Participation the remote repository belongs to.
      * @param targetPath    path where the repo is located on disk
      * @return the repository if it could be checked out
-     * @throws GitAPIException      if the repository could not be checked out.
-     * @throws GitException         if the participation has no repository URI.
-     * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
+     * @throws GitAPIException          if the repository could not be checked out.
+     * @throws GitException             if the participation has no repository URI.
+     * @throws InvalidPathException     if the repository could not be checked out Because it contains unmappable characters.
+     * @throws IllegalArgumentException if the folder of the repository does not lie below the target path.
      */
     public Repository getOrCheckoutRepositoryForJPlag(@NonNull ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, InvalidPathException {
         var repoUri = participation.getVcsRepositoryUri();
@@ -162,7 +164,7 @@ public class GitService extends AbstractGitService {
         if (updatedRepoFolderName.startsWith(FileSystems.getDefault().getSeparator())) {
             updatedRepoFolderName = updatedRepoFolderName.substring(1);
         }
-        Path localPath = targetPath.resolve(updatedRepoFolderName);
+        Path localPath = VcsRepositoryUri.resolveBelow(targetPath, updatedRepoFolderName);
 
         Repository repository = getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true, false);
         repository.setParticipation(participation);
@@ -343,17 +345,14 @@ public class GitService extends AbstractGitService {
      * @param targetPath target directory
      * @param targetUrl  url of the repository
      * @return path of the local file system
-     * @throws EntityNotFoundException if targetUrl is null, i.e. the repository does not exist (e.g. because it was never created for the participation)
+     * @throws EntityNotFoundException  if targetUrl is null, i.e. the repository does not exist (e.g. because it was never created for the participation)
+     * @throws IllegalArgumentException if the folder of the repository is the target path itself or does not lie below it
      */
     public Path getLocalPathOfRepo(Path targetPath, LocalVCRepositoryUri targetUrl) {
         if (targetUrl == null) {
             throw new EntityNotFoundException("Cannot resolve the local repository path because the repository URI is null. The repository most likely does not exist.");
         }
-        Path resolvedPath = (targetPath.normalize()).resolve(targetUrl.folderNameForRepositoryUri()).normalize();
-        if (!resolvedPath.startsWith(targetPath.normalize())) {
-            throw new IllegalArgumentException("Invalid path: " + resolvedPath);
-        }
-        return resolvedPath;
+        return targetUrl.resolveFolderBelow(targetPath);
     }
 
     /**
@@ -426,12 +425,14 @@ public class GitService extends AbstractGitService {
      * Creates a CommitCommand and sets signing to false. Egit uses the local git configuration and if signing of
      * commits is enabled, tests will fail because it will not be able to actually sign the commit.
      * This method makes sure that signing is disabled and commits work on systems regardless of the local git configuration.
+     * <p>
+     * Hook verification is also disabled, as Artemis does not use git hooks.
      *
      * @param git Git Repository Object.
-     * @return CommitCommand with signing set to false.
+     * @return CommitCommand with signing and hook verification disabled.
      */
     public static CommitCommand commit(Git git) {
-        return git.commit().setSign(false);
+        return git.commit().setSign(false).setNoVerify(true);
     }
 
     /**
