@@ -14,22 +14,14 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Drop intermediate Playwright XML files
-      shell: bash
-      # Playwright emits results-parallel.xml, results-sequential.xml, and a merged
-      # results.xml. Uploading all three double-counts (e.g. ~418 instead of ~223
-      # tests). Keep only results.xml.
-      run: |
-        rm -f src/test/playwright/test-reports/results-parallel.xml \
-              src/test/playwright/test-reports/results-sequential.xml
-
     - name: Upload JUnit Test Results
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v7
       with:
         name: JUnit Test Results${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
         if-no-files-found: ${{ inputs.require-tests }}
-        path: src/test/playwright/test-reports/*.xml
+        # Select the merged report without deleting container-owned intermediate files.
+        path: src/test/playwright/test-reports/results.xml
 
     - name: Upload Client Test Coverage Report
       if: ${{ !cancelled() }}

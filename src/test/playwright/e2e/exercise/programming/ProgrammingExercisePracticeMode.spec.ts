@@ -27,63 +27,70 @@ function modeButton(page: Page, mode: 'practice' | 'graded') {
  * submission yet (a programming practice participation only receives a submission on the first push).
  */
 test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
-    test.describe('After the due date with a graded submission', () => {
-        let exercise: ProgrammingExercise;
-        let dueDate: dayjs.Dayjs;
+    for (const hasGradedSubmission of [true, false]) {
+        test.describe(`After the due date ${hasGradedSubmission ? 'with a graded submission' : 'with an empty graded participation'}`, () => {
+            let exercise: ProgrammingExercise;
 
-        test.beforeEach('Create exercise and make a graded submission before the due date', async ({ login, page, exerciseAPIRequests }) => {
-            await login(admin);
-            // The budget must also cover the exercise creation (template/solution/test repo provisioning)
-            // and the graded submission, which all happen before the due date passes.
-            dueDate = dayjs().add(45, 'seconds');
-            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, dueDate });
-            await login(studentOne);
-            const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
-            const participation = await response.json();
-            await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, javaAllSuccessfulSubmission);
-            const now = dayjs();
-            if (now.isBefore(dueDate)) {
-                await page.waitForTimeout(dueDate.diff(now, 'ms') + 2000);
-            }
-        });
+            test.beforeEach('Create graded participation and end the exercise', async ({ login, page, exerciseAPIRequests }) => {
+                await login(admin);
+                // Keep the graded repository writable until its submission has actually been accepted. Provisioning
+                // repositories can outlast a short wall-clock deadline on CI; the old fixture silently submitted after it.
+                exercise = await exerciseAPIRequests.createProgrammingExercise({ course, releaseDate: dayjs().subtract(1, 'day'), dueDate: dayjs().add(1, 'day') });
+                await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
+                await login(studentOne);
+                const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
+                await expect(response).toBeOK();
+                const participation = await response.json();
+                if (hasGradedSubmission) {
+                    const submissionResponse = await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, javaAllSuccessfulSubmission);
+                    await expect(submissionResponse).toBeOK();
+                }
 
-        test('Keeps the practice mode selectable when switching back to graded', async ({ login, page, programmingExerciseEditor }) => {
-            test.slow();
-            await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
-            await startPracticeFromExercisePage(page, exercise.id!, 'Practice with template repository');
+                await login(admin);
+                const timelineResponse = await page.request.put('api/programming/programming-exercises/timeline', {
+                    data: { ...exercise, dueDate: dayjs().subtract(1, 'minute').toISOString() },
+                });
+                await expect(timelineResponse).toBeOK();
+            });
 
-            const practiceButton = modeButton(page, 'practice');
-            const gradedButton = modeButton(page, 'graded');
-            await expect(practiceButton).toBeVisible();
-            await expect(gradedButton).toBeVisible();
-            await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
+            test('Keeps the practice mode selectable when switching back to graded', async ({ login, page, programmingExerciseEditor }) => {
+                test.slow();
+                await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
+                await startPracticeFromExercisePage(page, exercise.id!, 'Practice with template repository');
 
-            // Switching back to graded must not remove the practice option
-            await gradedButton.click();
-            await expect(gradedButton).toHaveClass(ACTIVE_MODE_CLASS);
-            await expect(practiceButton).toBeVisible();
+                const practiceButton = modeButton(page, 'practice');
+                const gradedButton = modeButton(page, 'graded');
+                await expect(practiceButton).toBeVisible();
+                await expect(gradedButton).toBeVisible();
+                await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
 
-            // ... and practice can be selected again
-            await practiceButton.click();
-            await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
+                // Switching back to graded must not remove the practice option
+                await gradedButton.click();
+                await expect(gradedButton).toHaveClass(ACTIVE_MODE_CLASS);
+                await expect(practiceButton).toBeVisible();
 
-            // The toggle also survives a fresh page load, even though no practice submission exists yet
-            await page.goto(`/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(modeButton(page, 'practice')).toBeVisible({ timeout: 15000 });
-            await expect(modeButton(page, 'graded')).toBeVisible();
+                // ... and practice can be selected again
+                await practiceButton.click();
+                await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
 
-            // Submitting in practice mode must process the submission and update the shown result
-            await modeButton(page, 'practice').click();
-            // Selecting a mode re-routes the embedded editor to that mode's participation, and the file tree must not be
-            // touched before that swap: the graded repository is read-only after the due date, so a file action aimed at
-            // it is dropped and the editor never sends the request the submission helper waits for. Its create controls
-            // being enabled is what says the writable practice repository is the one on screen.
-            await expect(getExercise(page, exercise.id!).locator('#file-browser-folder-create-file').first()).toBeEnabled({ timeout: 30000 });
-            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
-                await expect(page.locator('#exercise-headers-information')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
+                // The toggle also survives a fresh page load, even though no practice submission exists yet
+                await page.goto(`/courses/${course.id}/exercises/${exercise.id}`);
+                await expect(modeButton(page, 'practice')).toBeVisible({ timeout: 15000 });
+                await expect(modeButton(page, 'graded')).toBeVisible();
+
+                // Submitting in practice mode must process the submission and update the shown result
+                await modeButton(page, 'practice').click();
+                // Selecting a mode re-routes the embedded editor to that mode's participation, and the file tree must not be
+                // touched before that swap: the graded repository is read-only after the due date, so a file action aimed at
+                // it is dropped and the editor never sends the request the submission helper waits for. Its create controls
+                // being enabled is what says the writable practice repository is the one on screen.
+                await expect(getExercise(page, exercise.id!).locator('#file-browser-folder-create-file').first()).toBeEnabled({ timeout: 30000 });
+                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
+                    await expect(page.locator('#exercise-headers-information')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
+                });
             });
         });
-    });
+    }
 
     test.describe('After the due date without a graded participation', () => {
         let exercise: ProgrammingExercise;
@@ -95,6 +102,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
                 releaseDate: dayjs().subtract(1, 'hour'),
                 dueDate: dayjs().subtract(5, 'minutes'),
             });
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Starts the practice mode and allows switching to the missed graded mode', async ({ login, page }) => {

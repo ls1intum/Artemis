@@ -108,6 +108,22 @@ public class IrisRequestMockProvider {
         closeable = MockitoAnnotations.openMocks(this);
     }
 
+    /**
+     * Registers expectations before exposing the new servers to late requests from asynchronous tasks.
+     *
+     * @param configureExpectations the expectations to register before either RestTemplate uses the new server
+     */
+    public void enableMockingOfRequests(Runnable configureExpectations) {
+        var stagedRestTemplate = new RestTemplate();
+        var stagedShortTimeoutRestTemplate = new RestTemplate();
+        mockServer = MockRestServiceServer.bindTo(stagedRestTemplate).ignoreExpectOrder(true).build();
+        shortTimeoutMockServer = MockRestServiceServer.bindTo(stagedShortTimeoutRestTemplate).ignoreExpectOrder(true).build();
+        closeable = MockitoAnnotations.openMocks(this);
+        configureExpectations.run();
+        restTemplate.setRequestFactory(stagedRestTemplate.getRequestFactory());
+        shortTimeoutRestTemplate.setRequestFactory(stagedShortTimeoutRestTemplate.getRequestFactory());
+    }
+
     public void reset() throws Exception {
         if (mockServer != null) {
             mockServer.reset();

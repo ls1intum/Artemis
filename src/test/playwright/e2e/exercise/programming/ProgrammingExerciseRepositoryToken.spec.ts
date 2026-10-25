@@ -1,5 +1,3 @@
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-
 import { ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
@@ -12,11 +10,8 @@ const course = { id: SEED_COURSES.programmingParticipation.id } as any;
 // Verifies that course staff get a repository-scoped VCS access token in the clone dialog of every base repository
 // (template, solution, tests, auxiliary), instead of having to fall back to their account password.
 test.describe('Programming exercise staff repository access token', { tag: '@fast' }, () => {
-    let exercise: ProgrammingExercise;
-
-    test.beforeEach('Create programming exercise', async ({ login, exerciseAPIRequests }) => {
+    test.beforeEach('Authenticate for exercise creation', async ({ login }) => {
         await login(admin);
-        exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
     });
 
     // The route segment of the staff repository view and the slug suffix the resulting clone URL must end with.
@@ -27,7 +22,12 @@ test.describe('Programming exercise staff repository access token', { tag: '@fas
     ];
 
     for (const { repositoryType, slugSuffix } of baseRepositories) {
-        test(`Instructor obtains a repository-scoped token in the ${repositoryType} repository clone dialog`, async ({ login, programmingExerciseOverview }) => {
+        test(`Instructor obtains a repository-scoped token in the ${repositoryType} repository clone dialog`, async ({
+            login,
+            exerciseAPIRequests,
+            programmingExerciseOverview,
+        }) => {
+            const exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
             // Open the staff repository view of the base repository directly.
             await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}/repository/${repositoryType}`);
 
@@ -42,8 +42,8 @@ test.describe('Programming exercise staff repository access token', { tag: '@fas
     }
 
     test('Instructor obtains a repository-scoped token in the auxiliary repository clone dialog', async ({ login, exerciseAPIRequests, programmingExerciseOverview }) => {
-        // The auxiliary repository needs its own exercise: the name "auxrepo" must not collide with the reserved repository type names (exercise, solution, tests, auxiliary, user).
-        await login(admin);
+        // Create the exercise once with its auxiliary repository; a second setup provisions unused repositories and builds.
+        // The name "auxrepo" must not collide with the reserved repository type names (exercise, solution, tests, auxiliary, user).
         const exerciseWithAux = await exerciseAPIRequests.createProgrammingExercise({
             course,
             programmingLanguage: ProgrammingLanguage.C,
@@ -61,7 +61,13 @@ test.describe('Programming exercise staff repository access token', { tag: '@fas
         expect(cloneUrl).toContain('-auxrepo.git');
     });
 
-    test('Instructor obtains a repository-scoped token on the exercise detail page without configuring a personal token', async ({ login, page, programmingExerciseOverview }) => {
+    test('Instructor obtains a repository-scoped token on the exercise detail page without configuring a personal token', async ({
+        login,
+        page,
+        exerciseAPIRequests,
+        programmingExerciseOverview,
+    }) => {
+        const exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
         // Regression test: on the exercise detail page the clone dialog used to show a "set up your VCS token manually"
         // warning and a disabled copy button for staff who had no personal token. It must now provision a repository-scoped
         // token automatically, exactly like the dedicated repository view does.

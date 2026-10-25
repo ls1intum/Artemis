@@ -121,6 +121,17 @@ describe('CourseWideSearchComponent', () => {
         vi.clearAllMocks();
     });
 
+    it('should reset pagination when changing the search or its filters', () => {
+        fixture.componentRef.setInput('courseWideSearchConfig', new CourseWideSearchConfig());
+        fixture.detectChanges();
+        component.page = 3;
+        component.onSearch();
+        expect(component.currentPostContextFilter?.page).toBe(0);
+        component.page = 4;
+        component.onChangeSortDir();
+        expect(component.currentPostContextFilter?.page).toBe(0);
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
         component.handleScrollOnNewMessage();

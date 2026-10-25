@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
@@ -25,6 +25,7 @@ export class StartPracticeModeButtonComponent {
     private courseExerciseService = inject(CourseExerciseService);
     private alertService = inject(AlertService);
     private participationService = inject(ParticipationService);
+    private destroyRef = inject(DestroyRef);
 
     readonly FeatureToggle = FeatureToggle;
 
@@ -55,13 +56,27 @@ export class StartPracticeModeButtonComponent {
     }
 
     startPractice(useGradedParticipation: boolean): void {
+        // The buttons are only disabled after the next render, so ignore a second click that arrives before that
+        if (this._startingPracticeMode()) {
+            return;
+        }
+        const exercise = this.exercise();
         this._startingPracticeMode.set(true);
         this.courseExerciseService
-            .startPractice(this.exercise().id!, useGradedParticipation)
-            .pipe(finalize(() => this._startingPracticeMode.set(false)))
+            .startPractice(exercise.id!, useGradedParticipation, exercise)
+            .pipe(
+                finalize(() => {
+                    if (!this.destroyRef.destroyed) {
+                        this._startingPracticeMode.set(false);
+                    }
+                }),
+            )
             .subscribe({
                 next: (participation) => {
-                    const exercise = this.exercise();
+                    // The service completes the start even if the details-to-editor redirect destroyed this button.
+                    if (this.destroyRef.destroyed || this.exercise().id !== exercise.id) {
+                        return;
+                    }
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         if (participation?.initializationState === InitializationState.INITIALIZED) {
                             if ((exercise as ProgrammingExercise).allowOfflineIde) {
@@ -78,6 +93,9 @@ export class StartPracticeModeButtonComponent {
                     }
                 },
                 error: () => {
+                    if (this.destroyRef.destroyed || this.exercise().id !== exercise.id) {
+                        return;
+                    }
                     this.alertService.error('artemisApp.exercise.startError');
                 },
             });

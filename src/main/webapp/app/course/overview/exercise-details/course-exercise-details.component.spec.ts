@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Navigation, ParamMap, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
+import { provideLocationMocks } from '@angular/common/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -36,7 +37,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, NEVER, of, throwError } from 'rxjs';
+import { BehaviorSubject, NEVER, Subject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -705,9 +706,13 @@ describe('CourseExerciseDetailsComponent', () => {
             // left. Only the navigation in flight names the participation the student is going to.
             getExerciseDetailsMock.mockReturnValue(NEVER);
             vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
-            const router = TestBed.inject(Router) as unknown as MockRouter & { getCurrentNavigation?: () => { finalUrl: { toString: () => string } } };
+            const router = TestBed.inject(Router) as unknown as MockRouter;
             router.setUrl('/courses/1/exercises/2');
-            router.getCurrentNavigation = () => ({ finalUrl: { toString: () => '/courses/1/exercises/programming-exercises/2/code-editor/680' } });
+            // Typed against the real `Navigation`, so a rename of the field the component reads breaks the test.
+            const inFlightNavigation: Pick<Navigation, 'finalUrl'> = {
+                finalUrl: { toString: () => '/courses/1/exercises/programming-exercises/2/code-editor/680' } as UrlTree,
+            };
+            router.currentNavigation.mockReturnValue(inFlightNavigation);
 
             comp.loadExercise();
 
@@ -746,6 +751,27 @@ describe('CourseExerciseDetailsComponent', () => {
             comp.loadExercise();
 
             expect(comp.participationMode()).toBe('practice');
+        });
+
+        it.each([
+            ['679', 680, 'practice'],
+            ['680', 679, 'graded'],
+        ])('switches from child participation %s to navigation target %s before activation', (previousId, nextId, expectedMode) => {
+            // A details response can arrive between NavigationStart and child activation. The outgoing child must
+            // not undo the mode the student is navigating to, otherwise the split panel redirects back to it.
+            getExerciseDetailsMock.mockReturnValue(NEVER);
+            vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
+            routeToParticipation(previousId);
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+            const navigation: Pick<Navigation, 'finalUrl'> = {
+                finalUrl: { toString: () => `/courses/1/exercises/programming-exercises/2/code-editor/${nextId}` } as UrlTree,
+            };
+            router.currentNavigation.mockReturnValue(navigation);
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe(expectedMode);
+            expect(comp.activeParticipation()?.id).toBe(nextId);
         });
 
         it('keeps the graded mode when the URL addresses the graded participation', async () => {
@@ -788,6 +814,53 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.participationMode()).toBe('practice');
     });
 
+    it('points the URL at a started practice participation, so the mode survives the editor redirect', () => {
+        // Setting the mode alone is not enough. The split panel redirects to the code editor as soon as a participation
+        // is available, and that crosses a route-config boundary, so this component is destroyed and re-created. The new
+        // instance derives the mode from the URL - and if the redirect went out while the practice start was still in
+        // flight, the URL names the graded participation and the practice selection is gone. Writing the URL here is
+        // what makes the selection outlive the redirect.
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, studentParticipations: [] } as ProgrammingExercise;
+        comp.studentParticipations = [];
+        const router = TestBed.inject(Router) as unknown as MockRouter;
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        comp.onNewParticipation({ id: 680, testRun: true } as StudentParticipation);
+
+        expect(comp.participationMode()).toBe('practice');
+        expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', exercise.id, 'code-editor', 680], expect.objectContaining({ replaceUrl: true }));
+    });
+
+    it('does not add a history entry when correcting the URL to the practice participation', () => {
+        // replaceUrl, because the address being corrected is one the student never chose: a back navigation must not
+        // return them to the graded editor they were never shown.
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, studentParticipations: [] } as ProgrammingExercise;
+        comp.studentParticipations = [];
+        const router = TestBed.inject(Router) as unknown as MockRouter;
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        comp.onNewParticipation({ id: 680, testRun: true } as StudentParticipation);
+
+        expect(navigateSpy.mock.calls[0][1]).toMatchObject({ replaceUrl: true });
+    });
+
+    it('leaves the URL alone when it already names the started practice participation', () => {
+        // The split panel may have routed there already; a second navigation to the same place is churn the router has
+        // to resolve and would re-trigger the effects that depend on the child route.
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, studentParticipations: [] } as ProgrammingExercise;
+        comp.studentParticipations = [];
+        const router = TestBed.inject(Router) as unknown as MockRouter;
+        router.setUrl('/courses/1/exercises/programming-exercises/42/code-editor/680');
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        comp.onNewParticipation({ id: 680, testRun: true } as StudentParticipation);
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
     it('should merge websocket submission deltas instead of replacing the attempt history (subscribeForNewResults)', () => {
         // Covers the second call site of mergeSubmissions: the participation-change websocket delivers a participation
         // that may only carry the changed/added submission. Prior attempts must be preserved.
@@ -827,5 +900,97 @@ describe('CourseExerciseDetailsComponent', () => {
         const merged = comp.studentParticipations.find((p) => p.id === 555);
         expect(merged?.initializationState).toBe(InitializationState.FINISHED);
         expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
+    });
+});
+
+describe('CourseExerciseDetailsComponent practice start during navigation', () => {
+    it('opens the empty practice participation when the initial graded editor navigation is still pending', async () => {
+        const genericUrl = '/courses/1/exercises/42';
+        const gradedUrl = '/courses/1/exercises/programming-exercises/42/code-editor/679';
+        const practiceUrl = '/courses/1/exercises/programming-exercises/42/code-editor/680';
+        const gradedActivation = new Subject<boolean>();
+        let markGradedNavigationStarted!: () => void;
+        const gradedNavigationStarted = new Promise<void>((resolve) => (markGradedNavigationStarted = resolve));
+        let delayInitialGradedNavigation = true;
+
+        await TestBed.configureTestingModule({
+            imports: [CourseExerciseDetailsComponent],
+            providers: [
+                provideRouter([
+                    {
+                        path: 'courses/:courseId',
+                        children: [
+                            {
+                                path: 'exercises',
+                                children: [
+                                    { path: ':exerciseId', pathMatch: 'full', children: [] },
+                                    {
+                                        path: 'programming-exercises/:exerciseId/code-editor/:participationId',
+                                        children: [],
+                                        canActivate: [
+                                            () => {
+                                                if (delayInitialGradedNavigation) {
+                                                    delayInitialGradedNavigation = false;
+                                                    markGradedNavigationStarted();
+                                                    return gradedActivation;
+                                                }
+                                                return true;
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ]),
+                provideLocationMocks(),
+                MockProvider(ExerciseService),
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                MockProvider(ParticipationService, {
+                    getSpecificStudentParticipation: (participations, testRun) => participations.find((participation) => !!participation.testRun === testRun),
+                }),
+                MockProvider(ProfileService),
+                MockProvider(AlertService),
+                MockProvider(TeamService),
+                MockProvider(QuizExerciseService),
+                MockProvider(ComplaintService),
+                MockProvider(ArtemisMarkdownService),
+                MockProvider(ScienceService),
+                MockProvider(IrisSettingsService),
+                MockProvider(CourseStorageService),
+            ],
+        })
+            .overrideComponent(CourseExerciseDetailsComponent, { set: { template: '', imports: [], providers: [] } })
+            .compileComponents();
+
+        const fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
+        const component = fixture.componentInstance;
+        const graded = { id: 679, testRun: false } as StudentParticipation;
+        const practice = { id: 680, testRun: true } as StudentParticipation;
+        component.courseId = 1;
+        component.exerciseId = 42;
+        component.exercise = { id: 42, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, studentParticipations: [graded] } as ProgrammingExercise;
+        component.studentParticipations = [graded];
+        fixture.detectChanges();
+        const router = TestBed.inject(Router);
+        await router.navigateByUrl(genericUrl);
+        component['route'] = router.routerState.root.firstChild!.firstChild!.firstChild!;
+
+        // The page redirects to the graded editor after details load. Starting practice must supersede that
+        // unfinished navigation, which otherwise replaces this page and restores the graded mode.
+        const initialNavigation = router.navigateByUrl(gradedUrl);
+        await gradedNavigationStarted;
+        component.onNewParticipation(practice);
+        gradedActivation.next(true);
+        gradedActivation.complete();
+        await initialNavigation;
+        await fixture.whenStable();
+
+        expect(router.url).toBe(practiceUrl);
+        expect(component.participationMode()).toBe('practice');
+
+        // A later, deliberate navigation back to graded must still select the graded mode.
+        await router.navigateByUrl(gradedUrl);
+        expect(component.participationMode()).toBe('graded');
     });
 });

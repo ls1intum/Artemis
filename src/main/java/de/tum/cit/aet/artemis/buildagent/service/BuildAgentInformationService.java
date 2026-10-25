@@ -98,7 +98,15 @@ public class BuildAgentInformationService {
                 dockerVersion = newVersion;
             }
             if (stateChanged || versionChanged) {
-                updateLocalBuildAgentInformation(false);
+                // An availability or version refresh must not clear an existing pause. Passing a hardcoded "not paused" here would force the status back to ACTIVE or IDLE
+                // and reset the consecutive failure counter, even though the agent was paused by an admin or by too many consecutive failures.
+                BuildAgentInformation currentInformation = getCurrentLocalBuildAgentInformation();
+                boolean isPausedDueToFailures = currentInformation != null && currentInformation.status() == BuildAgentStatus.SELF_PAUSED;
+                boolean isPaused = isPausedDueToFailures || (currentInformation != null && currentInformation.status() == BuildAgentStatus.PAUSED);
+                int consecutiveFailures = currentInformation != null && currentInformation.buildAgentDetails() != null
+                        ? currentInformation.buildAgentDetails().consecutiveBuildFailures()
+                        : DEFAULT_CONSECUTIVE_FAILURES;
+                updateLocalBuildAgentInformation(isPaused, isPausedDueToFailures, consecutiveFailures);
             }
         }
         catch (Exception e) {
@@ -110,6 +118,18 @@ public class BuildAgentInformationService {
             }
             buildAgentConfiguration.setDockerAvailable(false);
         }
+    }
+
+    /**
+     * Reads the build agent information this agent currently published to the distributed map.
+     *
+     * @return the current information, or null if this agent is not connected to the cluster or has not published anything yet
+     */
+    private BuildAgentInformation getCurrentLocalBuildAgentInformation() {
+        if (buildAgentShortName == null || buildAgentShortName.isBlank() || !distributedDataAccessService.isConnectedToCluster()) {
+            return null;
+        }
+        return distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
     }
 
     /**

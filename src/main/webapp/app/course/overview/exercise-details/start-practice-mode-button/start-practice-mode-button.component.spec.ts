@@ -136,4 +136,60 @@ describe('JhiStartPracticeModeButtonComponent', () => {
 
         fixture.destroy();
     });
+
+    it('should ignore the late result if its exercise input has changed', () => {
+        const exercise = { id: 43, type: ExerciseType.PROGRAMMING, studentParticipations: [] as StudentParticipation[] } as ProgrammingExercise;
+        const pendingStart = new Subject<StudentParticipation>();
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('smallButtons', false);
+        startPracticeStub.mockReturnValue(pendingStart);
+        const emit = vi.spyOn(comp.practiceModeStarted, 'emit');
+
+        comp.startPractice(false);
+        fixture.componentRef.setInput('exercise', { ...exercise, id: 44 });
+        pendingStart.next({ id: 20, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation);
+        pendingStart.complete();
+
+        expect(emit).not.toHaveBeenCalled();
+        expect(alertServiceSuccessStub).not.toHaveBeenCalled();
+        expect(alertServiceErrorStub).not.toHaveBeenCalled();
+    });
+
+    it('should keep a destroyed button from emitting or reporting the late practice result', () => {
+        const exercise = { id: 43, type: ExerciseType.PROGRAMMING, studentParticipations: [] as StudentParticipation[] } as ProgrammingExercise;
+        const pendingStart = new Subject<StudentParticipation>();
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('smallButtons', false);
+        startPracticeStub.mockReturnValue(pendingStart);
+        const emit = vi.spyOn(comp.practiceModeStarted, 'emit');
+
+        comp.startPractice(false);
+        fixture.destroy();
+        pendingStart.next({ id: 20, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation);
+        pendingStart.complete();
+
+        expect(emit).not.toHaveBeenCalled();
+        expect(alertServiceSuccessStub).not.toHaveBeenCalled();
+        expect(alertServiceErrorStub).not.toHaveBeenCalled();
+    });
+
+    it('should ignore a second start while starting the practice mode is in flight', () => {
+        const exercise = { id: 44, type: ExerciseType.PROGRAMMING, studentParticipations: [] as StudentParticipation[] } as ProgrammingExercise;
+        const participationSubject = new Subject<StudentParticipation>();
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('smallButtons', false);
+        startPracticeStub.mockReturnValue(participationSubject);
+
+        comp.startPractice(false);
+        comp.startPractice(true);
+
+        expect(startPracticeStub).toHaveBeenCalledOnce();
+        expect(comp.startingPracticeMode()).toBe(true);
+
+        participationSubject.error(new Error('failed'));
+        expect(comp.startingPracticeMode()).toBe(false);
+
+        comp.startPractice(true);
+        expect(startPracticeStub).toHaveBeenCalledTimes(2);
+    });
 });

@@ -126,15 +126,16 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @BeforeEach
     void initTestCase() {
-        irisRequestMockProvider.enableMockingOfRequests();
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-        }, ExpectedCount.manyTimes());
-        irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
-        }, ExpectedCount.manyTimes());
-        irisRequestMockProvider.mockLectureUnitMetadataWebhookRunResponse(dto -> {
-        }, ExpectedCount.manyTimes());
-        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
-        }, ExpectedCount.manyTimes());
+        irisRequestMockProvider.enableMockingOfRequests(() -> {
+            irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            }, ExpectedCount.manyTimes());
+            irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
+            }, ExpectedCount.manyTimes());
+            irisRequestMockProvider.mockLectureUnitMetadataWebhookRunResponse(dto -> {
+            }, ExpectedCount.manyTimes());
+            irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
+            }, ExpectedCount.manyTimes());
+        });
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = LectureFactory.generateAttachment(null);

@@ -406,8 +406,11 @@ export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page
     if (!programmingExercise?.id) {
         return;
     }
+    // Callers have handed in a programming submission. Capture all its results before triggering so a fast build cannot become the baseline.
+    const participation = await exerciseAPIRequests.getProgrammingExerciseParticipation(programmingExercise.id);
+    const resultCount = participation.submissions?.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) ?? 0;
     await exerciseAPIRequests.triggerInstructorBuildForAll(programmingExercise.id);
-    await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id);
+    await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id, undefined, undefined, resultCount + 1);
     // The build above produces the automatic result, but for exam programming exercises the server also defaults
     // the "Run Tests after Due Date" date to (latest exam end + grace + 15 min). Until that date passes, the server
     // rejects manual assessment with 403 "Creating manual results is disabled for this exercise!"

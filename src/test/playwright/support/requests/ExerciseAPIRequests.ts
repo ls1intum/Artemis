@@ -213,7 +213,7 @@ export class ExerciseAPIRequests {
                 };
             }),
         );
-        await this.page.request.put(`api/programming/repository/${repositoryId}/files?commit=yes`, { data });
+        return await this.page.request.put(`api/programming/repository/${repositoryId}/files?commit=yes`, { data });
     }
 
     async createProgrammingExerciseFile(repositoryId: number, filename: string) {

@@ -653,7 +653,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " UnregisteredExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+                assertThat(bm25.objects()).as("BM25 search should find '%s'", SEARCH_PREFIX + " UnregisteredExam")
+                        .anyMatch(object -> (SEARCH_PREFIX + " UnregisteredExam").equals(object.properties().get(SearchableEntitySchema.Properties.TITLE)));
             });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20UnregisteredExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
@@ -682,7 +683,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " RegisteredExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+                assertThat(bm25.objects()).as("BM25 search should find '%s'", SEARCH_PREFIX + " RegisteredExam")
+                        .anyMatch(object -> (SEARCH_PREFIX + " RegisteredExam").equals(object.properties().get(SearchableEntitySchema.Properties.TITLE)));
             });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20RegisteredExam&types=exam&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
@@ -707,7 +709,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " TestExamVisible", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+                assertThat(bm25.objects()).as("BM25 search should find '%s'", SEARCH_PREFIX + " TestExamVisible")
+                        .anyMatch(object -> (SEARCH_PREFIX + " TestExamVisible").equals(object.properties().get(SearchableEntitySchema.Properties.TITLE)));
             });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TestExamVisible&types=exam&courseId=" + course.getId(), HttpStatus.OK,
@@ -731,7 +734,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " NoRegEditorExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+                assertThat(bm25.objects()).as("BM25 search should find '%s'", SEARCH_PREFIX + " NoRegEditorExam")
+                        .anyMatch(object -> (SEARCH_PREFIX + " NoRegEditorExam").equals(object.properties().get(SearchableEntitySchema.Properties.TITLE)));
             });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20NoRegEditorExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
@@ -760,7 +764,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " InstrEditorExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+                assertThat(bm25.objects()).as("BM25 search should find '%s'", SEARCH_PREFIX + " InstrEditorExam")
+                        .anyMatch(object -> (SEARCH_PREFIX + " InstrEditorExam").equals(object.properties().get(SearchableEntitySchema.Properties.TITLE)));
             });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20InstrEditorExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
@@ -787,7 +792,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorExamMeta", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+                assertThat(bm25.objects()).as("BM25 search should find '%s'", SEARCH_PREFIX + " TutorExamMeta")
+                        .anyMatch(object -> (SEARCH_PREFIX + " TutorExamMeta").equals(object.properties().get(SearchableEntitySchema.Properties.TITLE)));
             });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorExamMeta&types=exam&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
@@ -816,7 +822,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " StudentExamMeta", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+                assertThat(bm25.objects()).as("BM25 search should find '%s'", SEARCH_PREFIX + " StudentExamMeta")
+                        .anyMatch(object -> (SEARCH_PREFIX + " StudentExamMeta").equals(object.properties().get(SearchableEntitySchema.Properties.TITLE)));
             });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20StudentExamMeta&types=exam&courseId=" + course.getId(), HttpStatus.OK,
@@ -906,7 +913,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorVisibleExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+                assertThat(bm25.objects()).as("BM25 search should find '%s'", SEARCH_PREFIX + " TutorVisibleExam")
+                        .anyMatch(object -> (SEARCH_PREFIX + " TutorVisibleExam").equals(object.properties().get(SearchableEntitySchema.Properties.TITLE)));
             });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorVisibleExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
@@ -930,7 +938,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorFutureExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+                assertThat(bm25.objects()).as("BM25 search should find '%s'", SEARCH_PREFIX + " TutorFutureExam")
+                        .anyMatch(object -> (SEARCH_PREFIX + " TutorFutureExam").equals(object.properties().get(SearchableEntitySchema.Properties.TITLE)));
             });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorFutureExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,

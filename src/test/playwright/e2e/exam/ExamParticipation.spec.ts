@@ -467,8 +467,9 @@ test.describe('Exam participation', () => {
             for (const studentPage of studentPages) {
                 const modalDialog = new ModalDialogBox(studentPage);
                 const timeChangeMessage = 'The working time of the exam has been changed.';
-                await modalDialog.checkExamTimeChangeDialog('1h 2min', '32min');
+                // Wait for the timestamped notification before checking its contents, as for announcements above.
                 await modalDialog.checkDialogTime(workingTimeChangeTime);
+                await modalDialog.checkExamTimeChangeDialog('1h 2min', '32min');
                 await modalDialog.checkDialogMessage(timeChangeMessage);
                 await modalDialog.closeDialog();
                 // After reducing working time by 30min (from 1h2min to 32min), verify timer shows ~25-31min remaining

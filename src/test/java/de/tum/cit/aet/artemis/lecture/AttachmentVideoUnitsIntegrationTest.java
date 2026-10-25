@@ -72,9 +72,10 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
     @BeforeEach
     void initTestCase() {
-        irisRequestMockProvider.enableMockingOfRequests();
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-        }, ExpectedCount.manyTimes());
+        irisRequestMockProvider.enableMockingOfRequests(() -> {
+            irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            }, ExpectedCount.manyTimes());
+        });
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);

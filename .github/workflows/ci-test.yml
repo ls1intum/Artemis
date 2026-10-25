@@ -41,7 +41,7 @@ jobs:
     name: Server Tests (PostgreSQL)
     runs-on: aet-large-ubuntu
     # Outermost bound of the hang ladder: watchdog 45m (run_with_hang_dump.sh) < Gradle Test timeout
-    # 55m (gradle/test.gradle) < this 80m. Keep it above 55 so a hang fails as a deterministic Gradle
+    # 70m (gradle/test.gradle) < this 80m. Keep it above 70 so a hang fails as a deterministic Gradle
     # `failure`, not an opaque job-level `cancelled`.
     timeout-minutes: 80
     permissions:

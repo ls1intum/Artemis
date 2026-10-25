@@ -389,8 +389,13 @@ async function handleComplaint(
     await examAssessment.checkComplaintMessage('Your complaint has been submitted');
 
     await Commands.login(page, instructor, `/course-management/${course.id}/exams`);
+    // Statistics update the dashboard layout; let them settle before clicking the exercise link.
+    const dashboardStatistics = page.waitForResponse(`**/api/exam/courses/${course.id}/exams/${exam.id}/stats-for-exam-assessment-dashboard`);
     await examManagement.openAssessmentDashboard(course.id!, exam.id!);
+    await dashboardStatistics;
     await courseAssessment.clickExerciseDashboardButton();
+    // The next helper may reload, so it must start on the exercise dashboard rather than the exam dashboard.
+    await page.waitForURL(new RegExp(`/exams/${exam.id}/assessment-dashboard/\\d+(?:[/?#].*)?$`));
     if (isFirstTimeAssessing) {
         await exerciseAssessment.clickHaveReadInstructionsButton();
     }

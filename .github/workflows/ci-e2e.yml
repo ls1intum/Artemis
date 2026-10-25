@@ -106,6 +106,7 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     env:
       PLAYWRIGHT_REPORT_PHASE: phase1
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
@@ -142,6 +143,10 @@ jobs:
           FAST_TEST_TIMEOUT_SECONDS: 60
           RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
         run: .ci/E2E-tests/execute.sh postgres-localci playwright "$RELEVANT_TESTS"
+
+      - name: Restore generated Playwright file ownership
+        if: ${{ always() }}
+        run: bash .github/scripts/restore-playwright-output-ownership.sh
 
       - name: Calculate wall-clock duration
         id: wall-clock
@@ -297,6 +302,7 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       reporter_failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
       phase2_notes: ${{ steps.update-comment.outputs.phase2_notes }}
@@ -331,6 +337,10 @@ jobs:
           FAST_TEST_TIMEOUT_SECONDS: 60
           REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
         run: .ci/E2E-tests/execute.sh postgres-localci playwright "$REMAINING_TESTS"
+
+      - name: Restore generated Playwright file ownership
+        if: ${{ always() }}
+        run: bash .github/scripts/restore-playwright-output-ownership.sh
 
       - name: Calculate wall-clock duration
         id: wall-clock
@@ -489,6 +499,7 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       reporter_failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
       tests: ${{ steps.run-tests-all-pr.outcome }}
@@ -521,6 +532,10 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
         run: .ci/E2E-tests/execute.sh postgres-localci playwright
+
+      - name: Restore generated Playwright file ownership
+        if: ${{ always() }}
+        run: bash .github/scripts/restore-playwright-output-ownership.sh
 
       - name: Calculate wall-clock duration
         id: wall-clock
@@ -665,6 +680,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       tests: ${{ steps.run-tests-all-non-pr.outcome }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
@@ -689,6 +705,10 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
         run: .ci/E2E-tests/execute.sh multi-node playwright
+
+      - name: Restore generated Playwright file ownership
+        if: ${{ always() }}
+        run: bash .github/scripts/restore-playwright-output-ownership.sh
 
       - name: E2E Teardown
         if: ${{ !cancelled() }}

@@ -62,7 +62,7 @@ test.describe('Course onboarding wizard', { tag: '@fast' }, () => {
 
         // Go to course overview
         await courseOnboarding.clickGoToCourse();
-        await page.waitForURL(`**/course-management/${course.id}**`);
+        await page.waitForURL((url) => url.pathname === `/course-management/${course.id}`);
         await expect(page.locator('.onboarding-wizard')).toBeHidden();
     });
 
@@ -99,7 +99,7 @@ test.describe('Course onboarding wizard', { tag: '@fast' }, () => {
 
         // Go to course overview from step 4
         await courseOnboarding.clickGoToCourse();
-        await page.waitForURL(`**/course-management/${course.id}**`);
+        await page.waitForURL((url) => url.pathname === `/course-management/${course.id}`);
 
         // Find and click the "Course Onboarding" link to replay the wizard
         const replayButton = page.locator('a', { hasText: 'Course Onboarding' });
