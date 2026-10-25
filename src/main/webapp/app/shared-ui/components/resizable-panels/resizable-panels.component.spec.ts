@@ -212,6 +212,15 @@ describe('ResizablePanelsComponent', () => {
         expect(fixture.debugElement.query(By.css('p-splitter')).componentInstance.minSizes).toEqual([36, 0]);
     });
 
+    it('caps the left minimum so the right panel can be dragged wider than the collapse threshold', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.leftMinSizePercent = 90;
+        fixture.detectChanges();
+
+        // With the default threshold of 12%, a minimum of 90% would leave every drag at a right panel of 10% or less, which snaps it shut
+        expect(fixture.debugElement.query(By.css('p-splitter')).componentInstance.minSizes).toEqual([76, 0]);
+    });
+
     it('widens a remembered split whose left panel is below the minimum, so the slider is not frozen', () => {
         localStorage.setItem('test-split', JSON.stringify([20, 80]));
 

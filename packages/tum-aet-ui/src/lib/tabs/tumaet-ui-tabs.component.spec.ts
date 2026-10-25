@@ -201,6 +201,10 @@ describe('TumAetUiTabs family', () => {
         // The buttons only move the list; the keyboard reaches every tab with the arrow keys
         expect(scrollButton('end')!.getAttribute('tabindex')).toBe('-1');
         expect(scrollButton('end')!.getAttribute('aria-hidden')).toBe('true');
+        // A press keeps focus where it is instead of moving it onto the hidden button
+        const press = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+        scrollButton('end')!.dispatchEvent(press);
+        expect(press.defaultPrevented).toBe(true);
 
         scrollButton('end')!.click();
         expect(list.scrollBy).toHaveBeenCalledWith({ left: 75, behavior: 'smooth' });
