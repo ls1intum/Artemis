@@ -23,6 +23,7 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programm
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
 
 @Component({
     selector: 'jhi-repository-view',
@@ -47,6 +48,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private router = inject(Router);
+    private readonly isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
 
     readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
 
@@ -77,7 +79,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     readonly result = signal<Result>(undefined!);
     readonly resultHasInlineFeedback = signal(false);
     readonly showInlineFeedback = signal(false);
-    readonly ownsParticipationForCodeButton = computed(() => this.getOwnsParticipationForCodeButton());
     readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
     faClockRotateLeft = faClockRotateLeft;
@@ -93,11 +94,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         this.differentParticipationSub?.unsubscribe();
     }
 
-    private getOwnsParticipationForCodeButton(): boolean {
-        const userLogin = this.accountService.userIdentity()?.login;
-        return this.repositoryType() === RepositoryType.USER && !!userLogin && this.participation()?.student?.login === userLogin;
-    }
-
     private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenSourceInfo {
         const repositoryType = this.repositoryType();
         if (repositoryType === RepositoryType.AUXILIARY) {
@@ -106,7 +102,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         if (repositoryType === RepositoryType.TEMPLATE || repositoryType === RepositoryType.SOLUTION || repositoryType === RepositoryType.TESTS) {
             return { returnedTokenType: 'repository-token', repositoryType };
         }
-        if (!this.ownsParticipationForCodeButton()) {
+        if (this.isInCourseManagement()) {
             return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId: this.participation().id! };
         }
         return { returnedTokenType: 'participation-token', participationId: this.participation().id! };

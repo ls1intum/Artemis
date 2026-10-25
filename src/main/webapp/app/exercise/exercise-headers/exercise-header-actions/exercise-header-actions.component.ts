@@ -44,7 +44,6 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import {
     DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
     RequestFeedbackButtonComponent,
@@ -195,7 +194,6 @@ export class ExerciseHeaderActionsComponent {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
     });
     readonly programmingParticipationForCodeButton = computed(() => this.getProgrammingParticipationForCodeButton());
-    readonly ownsParticipationForCodeButton = computed(() => this.getOwnsParticipationForCodeButton());
     readonly repositoryUriForCodeButton = computed(() => this.getRepositoryUriForCodeButton());
     readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
@@ -321,16 +319,8 @@ export class ExerciseHeaderActionsComponent {
         return this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
     }
 
-    private getOwnsParticipationForCodeButton(): boolean {
-        const userLogin = this.accountService.userIdentity()?.login;
-        return !!userLogin && this.programmingParticipationForCodeButton()?.student?.login === userLogin;
-    }
-
     private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenSourceInfo {
         const participationId = this.programmingParticipationForCodeButton()!.id!;
-        if (!this.ownsParticipationForCodeButton()) {
-            return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId };
-        }
         return { returnedTokenType: 'participation-token', participationId };
     }
 

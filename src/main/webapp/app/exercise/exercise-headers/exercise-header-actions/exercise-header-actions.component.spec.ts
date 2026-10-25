@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -501,6 +502,23 @@ describe('ExerciseHeaderActionsComponent', () => {
             exercise.studentParticipations = participations;
             return exercise;
         };
+
+        it('should provide a participation token for a team participation', () => {
+            const exercise = programmingExercise([
+                {
+                    id: 10,
+                    testRun: false,
+                    initializationState: InitializationState.INITIALIZED,
+                    repositoryUri: 'https://vcs.example.com/course/exercise.git',
+                    team: { id: 3 },
+                } as StudentParticipation,
+            ]);
+            exercise.allowOfflineIde = true;
+            createComponent(exercise);
+
+            const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
+            expect(codeButton.vcsAccessTokenSourceInfo()).toEqual({ returnedTokenType: 'participation-token', participationId: 10 });
+        });
 
         it('should replace a known participation and emit it', () => {
             createComponent(programmingExercise([{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE } as StudentParticipation]));
