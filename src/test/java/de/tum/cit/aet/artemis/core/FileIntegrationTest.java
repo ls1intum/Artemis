@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,6 +36,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -153,6 +155,79 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(cReadme).isNotEmpty();
         String pythonReadme = request.get("/api/core/files/templates/PYTHON", HttpStatus.OK, String.class);
         assertThat(pythonReadme).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templateReturnsProjectReadmeAndClosesStream() throws Exception {
+        var resource = Mockito.mock(Resource.class);
+        var stream = Mockito.spy(new ByteArrayInputStream("project readme".getBytes(StandardCharsets.UTF_8)));
+        Mockito.doReturn(resource).when(resourceLoaderService).getResource(Path.of("templates", "java", "plain_maven", "readme"));
+        Mockito.when(resource.exists()).thenReturn(true);
+        Mockito.when(resource.getInputStream()).thenReturn(stream);
+
+        mockMvc.perform(get("/api/core/files/templates/JAVA/PLAIN_MAVEN")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN))
+                .andExpect(content().bytes("project readme".getBytes(StandardCharsets.UTF_8)));
+        Mockito.verify(stream).close();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templateFallsBackToLanguageReadmeWhenProjectReadmeIsMissing() throws Exception {
+        var missing = Mockito.mock(Resource.class);
+        var fallback = Mockito.mock(Resource.class);
+        Mockito.doReturn(missing).when(resourceLoaderService).getResource(Path.of("templates", "java", "plain_maven", "readme"));
+        Mockito.doReturn(fallback).when(resourceLoaderService).getResource(Path.of("templates", "java", "readme"));
+        Mockito.when(fallback.getInputStream()).thenReturn(new ByteArrayInputStream("fallback".getBytes(StandardCharsets.UTF_8)));
+
+        mockMvc.perform(get("/api/core/files/templates/JAVA/PLAIN_MAVEN")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN))
+                .andExpect(content().bytes("fallback".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templateLoadsLanguageReadmeWithoutProjectType() throws Exception {
+        var resource = Mockito.mock(Resource.class);
+        Mockito.doReturn(resource).when(resourceLoaderService).getResource(Path.of("templates", "python", "readme"));
+        Mockito.when(resource.getInputStream()).thenReturn(new ByteArrayInputStream("python".getBytes(StandardCharsets.UTF_8)));
+
+        mockMvc.perform(get("/api/core/files/templates/PYTHON")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN))
+                .andExpect(content().bytes("python".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templateReturnsNotFoundWhenReadmeCannotBeRead() throws Exception {
+        var resource = Mockito.mock(Resource.class);
+        Mockito.doReturn(resource).when(resourceLoaderService).getResource(Path.of("templates", "python", "readme"));
+        Mockito.when(resource.getInputStream()).thenThrow(new IOException("missing readme"));
+
+        mockMvc.perform(get("/api/core/files/templates/PYTHON")).andExpect(status().isNotFound()).andExpect(content().bytes(new byte[0]));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templateReturnsUtf8CodeOfConductAndClosesStream() throws Exception {
+        var resource = Mockito.mock(Resource.class);
+        var stream = Mockito.spy(new ByteArrayInputStream("Respect für alle".getBytes(StandardCharsets.UTF_8)));
+        Mockito.doReturn(resource).when(resourceLoaderService).getResource(Path.of("templates", "codeofconduct", "README.md"));
+        Mockito.when(resource.getInputStream()).thenReturn(stream);
+
+        mockMvc.perform(get("/api/core/files/templates/code-of-conduct")).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
+                .andExpect(content().string("Respect für alle"));
+        Mockito.verify(stream).close();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void templatePreservesCodeOfConductIoFailure() throws Exception {
+        var resource = Mockito.mock(Resource.class);
+        Mockito.doReturn(resource).when(resourceLoaderService).getResource(Path.of("templates", "codeofconduct", "README.md"));
+        Mockito.when(resource.getInputStream()).thenThrow(new IOException("missing conduct"));
+
+        var result = mockMvc.perform(get("/api/core/files/templates/code-of-conduct")).andExpect(status().isServiceUnavailable()).andExpect(content().string("missing conduct"))
+                .andReturn();
+        assertThat(result.getResolvedException()).isInstanceOf(IOException.class).hasMessage("missing conduct");
     }
 
     @ParameterizedTest
