@@ -410,6 +410,68 @@ describe('CommunicationService', () => {
         subscription.unsubscribe();
     });
 
+    describe('live messages during a pending page request', () => {
+        const conversation = { id: 701, type: ConversationType.CHANNEL } as ChannelDTO;
+        const original = { id: 702, content: 'original', conversation, creationDate: dayjs() } as Post;
+        const updated = { ...original, content: 'edited live' };
+
+        it.each([
+            { name: 'creation', snapshot: [], events: [{ action: CommunicationCrudAction.CREATE, post: original }], expected: [[702, 'original']] },
+            { name: 'update', snapshot: [original], events: [{ action: CommunicationCrudAction.UPDATE, post: updated }], expected: [[702, 'edited live']] },
+            { name: 'deletion', snapshot: [original], events: [{ action: CommunicationCrudAction.DELETE, post: original }], expected: [] },
+            {
+                name: 'creation followed by update',
+                snapshot: [],
+                events: [
+                    { action: CommunicationCrudAction.CREATE, post: original },
+                    { action: CommunicationCrudAction.UPDATE, post: updated },
+                ],
+                expected: [[702, 'edited live']],
+            },
+            {
+                name: 'creation already present in the snapshot',
+                snapshot: [original],
+                events: [{ action: CommunicationCrudAction.CREATE, post: original }],
+                expected: [[702, 'original']],
+            },
+        ])('retains $name when an older HTTP snapshot arrives', ({ snapshot, events, expected }) => {
+            const pending = new Subject<HttpResponse<Post[]>>();
+            const requests = vi.spyOn(postService, 'getPosts').mockReturnValue(pending);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            let visible: Post[] = [];
+            const subscription = communicationService.posts.subscribe((posts) => (visible = [...posts]));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], page: 0 }, true, conversation);
+            for (const event of events) communicationService['handleNewOrUpdatedMessage'](event);
+
+            pending.next(new HttpResponse({ body: [...snapshot] }));
+            pending.complete();
+
+            expect(visible.map((post) => [post.id, post.content])).toEqual(expected);
+            expect(requests).toHaveBeenCalledOnce();
+            subscription.unsubscribe();
+        });
+
+        it('does not replay another conversation or a previous request into the active page', () => {
+            const older = new Subject<HttpResponse<Post[]>>();
+            const current = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts').mockReturnValueOnce(older).mockReturnValueOnce(current);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            let visible: Post[] = [];
+            const subscription = communicationService.posts.subscribe((posts) => (visible = [...posts]));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], page: 0 }, true, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [703], page: 0 }, true, { id: 703 } as ChannelDTO);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.UPDATE, post: updated });
+            older.next(new HttpResponse({ body: [original] }));
+            older.complete();
+            current.next(new HttpResponse({ body: [] }));
+            current.complete();
+
+            expect(visible).toEqual([]);
+            subscription.unsubscribe();
+        });
+    });
+
     describe('Invoke post service methods', () => {
         it('should create a post', () => {
             const postServiceSpy = vi.spyOn(postService, 'create');

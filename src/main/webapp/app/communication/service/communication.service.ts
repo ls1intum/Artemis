@@ -62,6 +62,7 @@ export class CommunicationService implements OnDestroy {
     private currentPostContextFilter: PostContextFilter = {};
     private filteredPostsRequestId = 0;
     private filteredPostsRequestFailed = false;
+    private pendingPostUpdates?: PostBroadcastDTO[];
     private currentConversation?: ConversationDTO = undefined;
     private user!: User; // set in constructor from accountService.identity()
     private pageType!: PageType; // set via setPageType() before use
@@ -227,6 +228,7 @@ export class CommunicationService implements OnDestroy {
             this.currentPostContextFilter = postContextFilter;
             this.currentConversation = conversation;
             const requestId = ++this.filteredPostsRequestId;
+            this.pendingPostUpdates = [];
             this.filteredPostsRequestFailed = false;
             let applied = false;
             // Loading the messages of a single conversation resets its unread count on the server, unless a search is used.
@@ -237,7 +239,10 @@ export class CommunicationService implements OnDestroy {
                 .pipe(
                     finalize(() => {
                         // A failed page is not cached. Ignore older failures after a newer request has taken ownership.
-                        if (requestId === this.filteredPostsRequestId) this.filteredPostsRequestFailed = !applied;
+                        if (requestId === this.filteredPostsRequestId) {
+                            this.filteredPostsRequestFailed = !applied;
+                            this.pendingPostUpdates = undefined;
+                        }
                         requestCallbacks?.complete(applied);
                     }),
                 )
@@ -265,6 +270,11 @@ export class CommunicationService implements OnDestroy {
                         // if the context changed, we need to fetch posts and dismiss cached posts
                         this.cachedPosts = res.body!;
                     }
+                    // A snapshot requested before a broadcast can arrive after it. Reapply those changes in order,
+                    // including create -> update -> delete sequences, before publishing the page once.
+                    const liveUpdates = this.pendingPostUpdates ?? [];
+                    this.pendingPostUpdates = undefined;
+                    for (const update of liveUpdates) this.handleNewOrUpdatedMessage(update, false);
                     this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
                     this.posts$.next(this.cachedPosts);
                     this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
@@ -777,7 +787,8 @@ export class CommunicationService implements OnDestroy {
         }
     }
 
-    private handleNewOrUpdatedMessage = (postDTO: PostBroadcastDTO): void => {
+    /** Applies live changes immediately; replay after a snapshot suppresses intermediate cache emissions. */
+    private handleNewOrUpdatedMessage = (postDTO: PostBroadcastDTO, publish = true): void => {
         const postConvId = postDTO.post.conversation?.id;
         const isValidPostContext = !!postConvId && !!this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length > 0;
         const postIsFromCurrentConversation = isValidPostContext && this.currentPostContextFilter.conversationIds?.includes(postConvId);
@@ -789,6 +800,7 @@ export class CommunicationService implements OnDestroy {
             return;
         }
 
+        if (publish) this.pendingPostUpdates?.push(postDTO);
         postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
         postDTO.post.answers?.forEach((answer: AnswerPost) => {
             answer.creationDate = dayjs(answer.creationDate);
@@ -871,7 +883,7 @@ export class CommunicationService implements OnDestroy {
             default:
                 break;
         }
-        this.publishCachedPosts();
+        if (publish) this.publishCachedPosts();
     };
 
     /**

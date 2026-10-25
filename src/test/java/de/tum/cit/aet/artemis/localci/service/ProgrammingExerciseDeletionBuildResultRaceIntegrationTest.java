@@ -17,6 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -66,6 +68,15 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
+    }
+
+    @BeforeEach
+    @AfterEach
+    void clearResultQueues() {
+        // This lane shares its queues between classes. Each explicit processing call polls only one item,
+        // so a result left by another test must not consume the trigger intended for this test's race.
+        distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
     }
 
     private BuildResult buildResult() {
