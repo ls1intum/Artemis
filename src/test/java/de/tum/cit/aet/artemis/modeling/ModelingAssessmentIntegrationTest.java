@@ -480,6 +480,18 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         storedFeedback.setCredits(1000.0);
         request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + storedResult.getId() + "/assessment",
                 new ModelingAssessmentDTO(toFeedbackDTOs(List.of(storedFeedback)), null), HttpStatus.BAD_REQUEST);
+
+        // a stored automatic feedback sent as manual would be saved as a manual feedback with these credits
+        var storedAutomatic = participationUtilService
+                .addFeedbackToResult(new Feedback().credits(150.0).type(FeedbackType.AUTOMATIC).text("automatic"),
+                        resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(storedResult.getId()))
+                .getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).findFirst().orElseThrow();
+        storedAutomatic.setType(FeedbackType.MANUAL);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + storedResult.getId() + "/assessment",
+                new ModelingAssessmentDTO(toFeedbackDTOs(List.of(storedAutomatic)), null), HttpStatus.BAD_REQUEST);
+        storedAutomatic.setType(FeedbackType.AUTOMATIC);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/results/" + storedResult.getId() + "/assessment",
+                new ModelingAssessmentDTO(toFeedbackDTOs(List.of(storedAutomatic)), null), HttpStatus.OK);
     }
 
     @Test

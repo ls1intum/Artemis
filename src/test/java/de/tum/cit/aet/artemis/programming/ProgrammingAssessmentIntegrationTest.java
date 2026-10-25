@@ -231,6 +231,28 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void updateAssessmentAfterComplaint_storedFeedbackRelabelledAsAnalysisFinding_creditsOutOfBounds() throws Exception {
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
+        Result programmingAssessment = participationUtilService.addFeedbackToResult(
+                new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("stored manual feedback"), programmingSubmission.getLatestResult());
+        Complaint complaint = complaintRepo.save(new Complaint().result(programmingAssessment).complaintText("This is not fair"));
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+
+        // the id of a stored feedback is kept and copied with the credits of the request, so a marker of an analysis finding does not exempt it
+        Feedback relabelled = programmingAssessment.getFeedbacks().stream().filter(feedback -> feedback.getId() != null).findFirst().orElseThrow();
+        relabelled.setType(FeedbackType.AUTOMATIC);
+        relabelled.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "forged");
+        relabelled.setCredits(1000.0);
+        request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint",
+                assessmentUpdateDTO(List.of(relabelled), complaintResponse), Result.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",

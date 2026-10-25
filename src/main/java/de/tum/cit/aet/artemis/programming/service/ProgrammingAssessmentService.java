@@ -83,12 +83,12 @@ public class ProgrammingAssessmentService extends AssessmentService {
     }
 
     /**
-     * The points of test cases and static code analysis findings are derived from the exercise configuration (see {@link #calculateTestCasePoints}), not from the credits
-     * the client echoes for them.
+     * The client echoes the test-case and static code analysis feedback it received without ids. Such items are dropped before saving and their points are derived from the
+     * exercise configuration (see {@link #calculateTestCasePoints}). An item with an id is copied with the credits of the request, so it is checked like any other.
      */
     @Override
     protected boolean isScoredByServer(Feedback feedback) {
-        return feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback();
+        return (feedback.getId() == null || feedback.getId() <= 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback());
     }
 
     @Override

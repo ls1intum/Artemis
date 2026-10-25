@@ -380,7 +380,7 @@ public class AssessmentService {
     /**
      * Checks that every feedback given by the assessor has finite credits within {@link Feedback#MAX_MANUAL_CREDITS} in either direction. The client sends type, id, text
      * and credits, so none of them proves where a feedback comes from. A feedback above the bound is only accepted when the database confirms its credits: a stored automatic
-     * feedback with the same credits, or a feedback linked to a grading instruction whose stored credits are the same.
+     * feedback sent as automatic with the same credits, or a feedback linked to a grading instruction whose stored credits are the same.
      *
      * @param feedbackList the feedback list sent by the client
      */
@@ -421,7 +421,9 @@ public class AssessmentService {
 
     private static boolean hasStoredAutomaticCredits(Feedback feedback, Map<Long, Feedback> storedFeedback) {
         Feedback stored = feedback.getId() != null ? storedFeedback.get(feedback.getId()) : null;
-        return stored != null && stored.getType() == FeedbackType.AUTOMATIC && Objects.equals(stored.getCredits(), feedback.getCredits());
+        // the request must keep the row automatic, otherwise the save would turn it into a manual feedback with these credits
+        return stored != null && stored.getType() == FeedbackType.AUTOMATIC && feedback.getType() == FeedbackType.AUTOMATIC
+                && Objects.equals(stored.getCredits(), feedback.getCredits());
     }
 
     /**
