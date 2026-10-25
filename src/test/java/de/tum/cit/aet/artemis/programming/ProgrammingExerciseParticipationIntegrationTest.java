@@ -410,6 +410,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithAllResultsShowsFinishedAiFeedbackBeforeTheAssessmentDueDate(Boolean successful, boolean expectAiFeedback) throws Exception {
         // the student opens an AI feedback they just received from the result history, long before any manual assessment is due
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(4));
+        programmingExercise.setStartDate(ZonedDateTime.now().minusDays(3));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExerciseRepository.save(programmingExercise);
         Result testResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
