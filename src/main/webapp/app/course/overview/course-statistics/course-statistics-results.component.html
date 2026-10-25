@@ -20,9 +20,9 @@
             <tumaet-ui-button size="small" [variant]="type() === 'all' ? 'solid' : 'outlined'" [ariaPressed]="type() === 'all'" (clicked)="type.set('all')"
                 ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.all"></span> ({{ exercises().length }})</tumaet-ui-button
             >
-            @for (exerciseType of types(); track exerciseType) {
-                <tumaet-ui-button size="small" [variant]="type() === exerciseType ? 'solid' : 'outlined'" [ariaPressed]="type() === exerciseType" (clicked)="type.set(exerciseType)"
-                    ><fa-icon [icon]="getIcon(exerciseType)" />{{ 'artemisApp.courseOverview.statistics.redesign.types.' + exerciseType | artemisTranslate }}</tumaet-ui-button
+            @for (option of typeOptions(); track option.type) {
+                <tumaet-ui-button size="small" [variant]="type() === option.type ? 'solid' : 'outlined'" [ariaPressed]="type() === option.type" (clicked)="type.set(option.type)"
+                    ><fa-icon [icon]="option.icon" />{{ 'artemisApp.courseOverview.statistics.redesign.types.' + option.type | artemisTranslate }}</tumaet-ui-button
                 >
             }
         </div>
@@ -57,8 +57,8 @@
                                 [routerLink]="['/courses', courseId(), 'exercises', row.exercise.id]"
                                 class="inline-flex min-w-48 items-center gap-2! font-medium text-(--tumaet-ui-accent-color) underline-offset-4 hover:underline"
                             >
-                                @if (row.exercise.type; as exerciseType) {
-                                    <fa-icon [icon]="getIcon(exerciseType)" />
+                                @if (row.exerciseIcon; as icon) {
+                                    <fa-icon [icon]="icon" />
                                 }
                                 {{ row.exercise.title }}</a
                             >

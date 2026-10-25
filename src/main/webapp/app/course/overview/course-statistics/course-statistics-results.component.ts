@@ -47,7 +47,6 @@ export class CourseStatisticsResultsComponent {
     readonly status = signal<ResultState | 'all'>('all');
     readonly page = signal(0);
     readonly pageSize = 20;
-    readonly getIcon = getIcon;
     readonly statuses: (ResultState | 'all')[] = ['all', 'graded', 'pending', 'notSubmitted'];
     readonly types = computed(() => [
         ...new Set(
@@ -56,6 +55,8 @@ export class CourseStatisticsResultsComponent {
                 .filter((type): type is ExerciseType => type !== undefined),
         ),
     ]);
+
+    readonly typeOptions = computed(() => this.types().map((type) => ({ type, icon: getIcon(type) })));
 
     readonly rows = computed(() => {
         this.language();
@@ -69,6 +70,7 @@ export class CourseStatisticsResultsComponent {
                 const color = getTextColorClass(result, participation, ResultTemplateStatus.HAS_RESULT);
                 return {
                     exercise,
+                    exerciseIcon: exercise.type ? getIcon(exercise.type) : undefined,
                     scoring:
                         exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
                             ? 'bonus'

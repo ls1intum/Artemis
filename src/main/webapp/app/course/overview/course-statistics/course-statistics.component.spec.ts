@@ -814,8 +814,13 @@ describe('CourseStatisticsComponent', () => {
             { type: 'online', total: 2, completed: 1 },
         ]);
         expect(comp.masteredCompetencies()).toBe(1);
-        expect(comp.getProgress(developing.userProgress[0])).toBe(70);
-        expect(comp.getMastery(developing.userProgress[0])).toBe(49);
+        expect(comp.competencyRows().find((row) => row.competency.id === developing.id)).toMatchObject({ progress: 70, mastery: 49, threshold: 80 });
+        expect(fixture.nativeElement.textContent).toContain('49%');
+        developing.userProgress = [{ progress: 90, confidence: 1 }];
+        comp.competencies.set([mastered, developing]);
+        fixture.detectChanges();
+        expect(comp.competencyRows().find((row) => row.competency.id === developing.id)).toMatchObject({ progress: 90, mastery: 90 });
+        expect(comp.masteredCompetencies()).toBe(2);
         expect(fixture.nativeElement.textContent).toContain('Object-oriented design');
         expect(comp.showMaterials()).toBe(true);
         expect(comp.showCompetencies()).toBe(true);
@@ -868,13 +873,16 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([31, 32]);
         expect(comp.numberOfAppliedFilters()).toBe(1);
+        expect(comp.categoryOptions().every((option) => option.selected)).toBe(true);
         comp.toggleCategory('Design');
         expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([32]);
         expect(comp.numberOfAppliedFilters()).toBe(2);
+        expect(comp.categoryOptions().find((option) => option.category === 'Design')?.selected).toBe(false);
         expect(comp.overallPoints()).toBe(15);
         comp.toggleCategory('Design');
         expect(comp.resultExercises().map((exercise) => exercise.id)).toEqual([31, 32]);
         expect(comp.numberOfAppliedFilters()).toBe(1);
+        expect(comp.categoryOptions().every((option) => option.selected)).toBe(true);
         expect(comp.overallPoints()).toBe(15);
     });
 });

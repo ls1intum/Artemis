@@ -50,13 +50,24 @@ public interface TeamScoreRepository extends ArtemisJpaRepository<TeamScore, Lon
             """)
     List<StudentScoreAverageDTO> findStudentAveragesForComparison(@Param("courseId") long courseId, @Param("exerciseIds") Set<Long> exerciseIds);
 
+    /**
+     * Aggregates cohort members' team results while excluding every member of the requester's own team.
+     * The mean is weighted by matching cohort members; the sample size counts independent team scores.
+     *
+     * @param exerciseIds         the eligible exercises
+     * @param studentIds          the selected cohort's student ids
+     * @param requestingStudentId the student whose own team must be excluded
+     * @return one mean and independent-team count per exercise with peer results
+     */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.score.PeerExerciseAverageDTO(s.exercise.id, AVG(s.lastRatedScore), COUNT(DISTINCT s.id))
             FROM TeamScore s
-                JOIN s.team.students student
+                JOIN s.team team
+                JOIN team.students student
+                LEFT JOIN team.students ownStudent ON ownStudent.id = :requestingStudentId
             WHERE s.exercise.id IN :exerciseIds AND student.id IN :studentIds
                 AND s.lastRatedResult IS NOT NULL AND s.lastRatedScore IS NOT NULL
-                AND NOT EXISTS (SELECT ownStudent.id FROM Team team JOIN team.students ownStudent WHERE team = s.team AND ownStudent.id = :requestingStudentId)
+                AND ownStudent.id IS NULL
             GROUP BY s.exercise.id
             """)
     List<PeerExerciseAverageDTO> findPeerExerciseAverages(@Param("exerciseIds") Set<Long> exerciseIds, @Param("studentIds") Set<Long> studentIds,

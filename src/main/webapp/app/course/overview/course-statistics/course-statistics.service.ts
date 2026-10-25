@@ -31,10 +31,18 @@ export interface ExercisePeerComparison {
 export class CourseStatisticsService {
     private readonly http = inject(HttpClient);
 
+    /**
+     * Request fresh totals and the current student's completions for released lecture content.
+     * @param courseId the course whose content statistics are requested
+     */
     getLearningStatistics(courseId: number) {
         return this.http.get<LectureLearningStatistics[]>(`api/lecture/courses/${courseId}/learning-statistics`);
     }
 
+    /**
+     * Request own scores and anonymous aggregates from the current similar-results group.
+     * @param courseId the course whose exercise statistics are requested
+     */
     getPeerComparison(courseId: number) {
         return this.http.get<ExercisePeerComparison>(`api/exercise/courses/${courseId}/charts/peer-comparison`);
     }

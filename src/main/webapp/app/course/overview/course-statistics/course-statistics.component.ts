@@ -101,8 +101,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     readonly competenciesFailed = signal(false);
     readonly competencies = signal<CourseCompetency[]>([]);
     readonly materialTypes = ['attachment', 'text', 'online'] as const;
-    readonly getMastery = getMastery;
-    readonly getProgress = getProgress;
     readonly releasedExercises = computed(() => (this.course()?.exercises ?? []).filter((exercise) => !exercise.releaseDate?.isAfter(dayjs())));
     readonly resultExercises = computed(() => this.releasedExercises().filter((exercise) => !this.filteredExerciseIDs().includes(exercise.id!)));
     readonly submittedExerciseCount = computed(
@@ -128,11 +126,18 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             }))
             .filter((row) => row.total > 0),
     );
-    readonly masteredCompetencies = computed(
-        () => this.competencies().filter((competency) => getMastery(competency.userProgress?.[0]) >= (competency.masteryThreshold ?? 100)).length,
+    /** Derive display metrics once per competency update rather than during template rendering. */
+    readonly competencyRows = computed(() =>
+        this.competencies().map((competency) => ({
+            competency,
+            progress: getProgress(competency.userProgress?.[0]),
+            mastery: getMastery(competency.userProgress?.[0]),
+            threshold: competency.masteryThreshold ?? 100,
+        })),
     );
+    readonly masteredCompetencies = computed(() => this.competencyRows().filter((row) => row.mastery >= row.threshold).length);
 
-    safeScore(score: number): number {
+    private safeScore(score: number): number {
         return Number.isFinite(score) ? score : 0;
     }
     toggleFilters(): void {
@@ -206,6 +211,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private courseExercisesFilteredByCategories: Exercise[] = [];
     readonly currentlyHidingNotIncludedInScoreExercises = signal<boolean>(false);
     readonly filteredExerciseIDs = signal<number[]>([]);
+    /** Filter-id updates also mark changes made through the legacy category-filter service. */
+    readonly categoryOptions = computed(() => {
+        this.filteredExerciseIDs();
+        return [...this.categoryFilter.exerciseCategories].map((category) => ({ category, selected: this.categoryFilter.getCurrentFilterState(category) ?? false }));
+    });
 
     // Icons
 
@@ -242,6 +252,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     // reachable presentation points
     readonly reachablePresentationPoints = signal<number>(0);
+
+    /** Finite course-score values shared by the ring and the scoring details. */
+    readonly displayedScores = computed(() => ({
+        currentPercentage: this.safeScore(this.currentRelativeScore()),
+        creditedPoints: this.safeScore(this.overallPoints()),
+        totalEarnedPoints: this.safeScore(this.overallPointsTotal()),
+        attainablePoints: this.safeScore(this.reachablePoints()),
+        maximumPoints: this.safeScore(this.overallMaxPoints()),
+        overallPercentage: this.safeScore(this.totalRelativeScore()),
+    }));
 
     doughnutChartColors: string[] = [
         PROGRAMMING_EXERCISE_COLOR,

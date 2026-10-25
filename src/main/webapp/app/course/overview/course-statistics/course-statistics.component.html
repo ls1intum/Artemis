@@ -40,11 +40,9 @@
                             ></span
                         ></label>
                     }
-                    @for (category of categoryFilter.exerciseCategories; track category) {
+                    @for (option of categoryOptions(); track option.category) {
                         <label class="flex! items-center gap-2! text-sm font-normal!"
-                            ><tumaet-ui-checkbox [checked]="categoryFilter.getCurrentFilterState(category) ?? false" (checkedChange)="toggleCategory(category)" /><span>{{
-                                category
-                            }}</span></label
+                            ><tumaet-ui-checkbox [checked]="option.selected" (checkedChange)="toggleCategory(option.category)" /><span>{{ option.category }}</span></label
                         >
                     }
                 </div>
@@ -63,8 +61,10 @@
                             [ariaLabel]="'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate"
                         />
                         <div data-testid="total-score-label" class="statistics-score-center" aria-hidden="true">
-                            <strong class="text-3xl font-semibold tabular-nums">{{ safeScore(currentRelativeScore()) }}%</strong
-                            ><span class="mt-1! text-sm tabular-nums text-(--tumaet-ui-muted-color)">{{ safeScore(overallPoints()) }} / {{ safeScore(reachablePoints()) }} pt</span>
+                            <strong class="text-3xl font-semibold tabular-nums">{{ displayedScores().currentPercentage }}%</strong
+                            ><span class="mt-1! text-sm tabular-nums text-(--tumaet-ui-muted-color)"
+                                >{{ displayedScores().creditedPoints }} / {{ displayedScores().attainablePoints }} pt</span
+                            >
                         </div>
                     </div>
                     <ul class="m-0! flex list-none flex-col gap-3! p-0! text-sm">
@@ -205,37 +205,37 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (competency of competencies(); track competency.id) {
+                                @for (row of competencyRows(); track row.competency.id) {
                                     <tr>
                                         <td>
                                             <a
-                                                [routerLink]="['/courses', activeCourseId(), 'competencies', competency.id]"
+                                                [routerLink]="['/courses', activeCourseId(), 'competencies', row.competency.id]"
                                                 class="font-medium text-(--tumaet-ui-accent-color) hover:underline"
-                                                >{{ competency.title }}</a
+                                                >{{ row.competency.title }}</a
                                             >
                                         </td>
                                         <td>
-                                            <span class="tabular-nums">{{ getProgress(competency.userProgress?.[0]) }}%</span
+                                            <span class="tabular-nums">{{ row.progress }}%</span
                                             ><tumaet-ui-progress-bar
                                                 size="small"
                                                 class="mt-2! min-w-28"
-                                                [value]="getProgress(competency.userProgress?.[0])"
+                                                [value]="row.progress"
                                                 [showValue]="false"
                                                 [ariaLabel]="'artemisApp.courseOverview.statistics.redesign.progress' | artemisTranslate"
                                             />
                                         </td>
                                         <td>
-                                            <span class="tabular-nums">{{ getMastery(competency.userProgress?.[0]) }}%</span
+                                            <span class="tabular-nums">{{ row.mastery }}%</span
                                             ><tumaet-ui-progress-bar
                                                 size="small"
                                                 class="mt-2! min-w-28"
                                                 severity="success"
-                                                [value]="getMastery(competency.userProgress?.[0])"
+                                                [value]="row.mastery"
                                                 [showValue]="false"
                                                 [ariaLabel]="'artemisApp.courseOverview.statistics.redesign.mastery' | artemisTranslate"
                                             />
                                         </td>
-                                        <td class="tabular-nums">{{ competency.masteryThreshold ?? 100 }}%</td>
+                                        <td class="tabular-nums">{{ row.threshold }}%</td>
                                     </tr>
                                 }
                             </tbody>
@@ -254,13 +254,13 @@
                         id="total-course-score"
                         class="m-0!"
                         jhiTranslate="artemisApp.courseOverview.statistics.yourTotalPoints"
-                        [translateValues]="{ number: safeScore(overallPointsTotal()) }"
+                        [translateValues]="{ number: displayedScores().totalEarnedPoints }"
                     ></p>
                     <p
                         id="credited-course-score"
                         class="m-0!"
                         jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPoints"
-                        [translateValues]="{ number: safeScore(overallPoints()) }"
+                        [translateValues]="{ number: displayedScores().creditedPoints }"
                     ></p>
                     <p class="m-0! text-(--tumaet-ui-muted-color) sm:col-span-2" jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPointsHelp"></p>
                 } @else {
@@ -268,20 +268,20 @@
                         id="absolute-course-score"
                         class="m-0!"
                         jhiTranslate="artemisApp.courseOverview.statistics.yourPoints"
-                        [translateValues]="{ number: safeScore(overallPoints()) }"
+                        [translateValues]="{ number: displayedScores().creditedPoints }"
                     ></p>
                 }
                 <p
                     id="reachable-course-score"
                     class="m-0!"
                     jhiTranslate="artemisApp.courseOverview.statistics.reachablePoints"
-                    [translateValues]="{ number: safeScore(reachablePoints()), relative: safeScore(currentRelativeScore()) }"
+                    [translateValues]="{ number: displayedScores().attainablePoints, relative: displayedScores().currentPercentage }"
                 ></p>
                 <p
                     id="max-course-score"
                     class="m-0!"
                     jhiTranslate="artemisApp.courseOverview.statistics.totalPoints"
-                    [translateValues]="{ number: safeScore(overallMaxPoints()), relative: safeScore(totalRelativeScore()) }"
+                    [translateValues]="{ number: displayedScores().maximumPoints, relative: displayedScores().overallPercentage }"
                 ></p>
                 @if (course.presentationScore) {
                     <p class="m-0!" jhiTranslate="artemisApp.courseOverview.statistics.totalPresentationScore" [translateValues]="{ number: overallPresentationScore() }"></p>
