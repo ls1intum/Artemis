@@ -120,6 +120,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      */
     public void isAllowedToDeleteChannel(@NonNull Channel channel, @NonNull User user) {
         var userToCheck = getUserIfNecessary(user);
+        checkChannelVisibleToUserElseThrow(channel, userToCheck);
         // either instructor or moderator who is also the creator
         var channelFromDb = channelRepository.findById(channel.getId()).orElseThrow();
         var isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), userToCheck);
@@ -210,6 +211,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     public void isAllowedToRegisterUsersToChannel(@NonNull Channel channel, @Nullable List<String> userLogins, @NonNull User user) {
         var userLoginsToCheck = Objects.requireNonNullElse(userLogins, new ArrayList<>());
         var userToCheck = getUserIfNecessary(user);
+        checkChannelVisibleToUserElseThrow(channel, userToCheck);
         var isJoinRequest = userLoginsToCheck.size() == 1 && userLoginsToCheck.getFirst().equals(userToCheck.getLogin());
         var channelFromDb = channelRepository.findById(channel.getId());
         var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channelFromDb.orElseThrow().getCourse(), userToCheck);
@@ -217,7 +219,6 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
 
         var isPrivateChannel = !channel.getIsPublic();
         if (isJoinRequest) {
-            checkChannelVisibleToUserElseThrow(channel, userToCheck);
             if (isPrivateChannel && !isAtLeastInstructor) {
                 throw new AccessForbiddenException("You are not allowed to join this channel");
             }
@@ -237,6 +238,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      */
     public void isAllowedToGrantChannelModeratorRole(@NonNull Channel channel, @NonNull User user) {
         var userToCheck = getUserIfNecessary(user);
+        checkChannelVisibleToUserElseThrow(channel, userToCheck);
         if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to grant channel moderator role");
         }
@@ -250,6 +252,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      */
     public void isAllowedToRevokeChannelModeratorRole(@NonNull Channel channel, @NonNull User user) {
         var userToCheck = getUserIfNecessary(user);
+        checkChannelVisibleToUserElseThrow(channel, userToCheck);
         if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to revoke the channel moderator role");
         }
@@ -265,6 +268,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     public void isAllowedToDeregisterUsersFromChannel(@NonNull Channel channel, @Nullable List<String> userLogins, @NonNull User user) {
         var userLoginsToCheck = Objects.requireNonNullElse(userLogins, new ArrayList<>());
         var userToCheck = getUserIfNecessary(user);
+        checkChannelVisibleToUserElseThrow(channel, userToCheck);
         if (hasChannelModerationRights(channel.getId(), userToCheck)) {
             return;
         }
@@ -300,6 +304,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
 
     private void isAllowedToChangeArchivalStatus(@NonNull Channel channel, @NonNull User user) {
         var userToCheck = getUserIfNecessary(user);
+        checkChannelVisibleToUserElseThrow(channel, userToCheck);
         if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to archive/unarchive this channel");
         }

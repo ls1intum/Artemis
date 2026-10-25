@@ -617,6 +617,50 @@ describe('CourseConversationsService', () => {
     describe('bounded unread reconciliation', () => {
         beforeEach(() => vi.useFakeTimers());
 
+        it('advances unread counts during sustained arrivals without overlapping or unbounded refreshes', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            const responses = Array.from({ length: 4 }, () => new Subject<HttpResponse<ConversationDTO[]>>());
+            let requestIndex = 0;
+            const get = vi
+                .spyOn(conversationService, 'getConversationsOfUser')
+                .mockImplementation(() => responses[requestIndex++])
+                .mockClear();
+            const counts: number[] = [];
+            const subscription = courseConversationsService.conversationsOfUser$.subscribe((rows) =>
+                counts.push(rows.find((row) => row.id === channel.id)?.unreadMessagesCount ?? 0),
+            );
+
+            courseConversationsService.handleNewMessage(channel.id);
+            for (let index = 0; index < 3; index++) {
+                vi.advanceTimersByTime(1000);
+                expect(get).toHaveBeenCalledTimes(index + 1);
+                expect(responses.filter((response) => response.observed)).toHaveLength(1);
+                // Every 500ms GET overlaps arrivals, so accepting a count must not require traffic to stop.
+                vi.advanceTimersByTime(200);
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(200);
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(100);
+                expect(get).toHaveBeenCalledTimes(index + 1);
+                responses[index].next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: index + 1, hasUnreadMessage: true }] }));
+                responses[index].complete();
+
+                expect(counts.at(-1)).toBe(index + 1);
+                expect(responses.some((response) => response.observed)).toBe(false);
+            }
+
+            // Arrivals during the last GET still need one final snapshot; no further traffic means no more requests.
+            vi.advanceTimersByTime(1000);
+            expect(get).toHaveBeenCalledTimes(4);
+            responses[3].next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 6, hasUnreadMessage: true }] }));
+            responses[3].complete();
+            vi.advanceTimersByTime(10_000);
+            expect(get).toHaveBeenCalledTimes(4);
+            expect(counts).toEqual([0, 1, 2, 3, 6]);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+            subscription.unsubscribe();
+        });
+
         describe('background failure recovery', () => {
             const cachedUnreadCount = () => courseConversationsService['conversationsOfUser'].find((conversation) => conversation.id === channel.id)?.unreadMessagesCount;
             const unavailable = () => throwError(() => new HttpErrorResponse({ status: 503 }));
@@ -743,7 +787,7 @@ describe('CourseConversationsService', () => {
 
                 courseConversationsService.handleNewMessage(channel.id);
                 vi.advanceTimersByTime(1000);
-                courseConversationsService.handleNewMessage(channel.id);
+                courseConversationsService.messagesRequested(channel.id!);
                 superseded.next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 99 }] }));
                 superseded.complete();
                 expect(cachedUnreadCount()).toBe(0);
@@ -843,7 +887,7 @@ describe('CourseConversationsService', () => {
                 complete: completed,
             });
             for (const response of pending) {
-                courseConversationsService.handleNewMessage(channel.id);
+                courseConversationsService.messagesRequested(channel.id!);
                 response.next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 99 }] }));
                 response.complete();
             }
@@ -950,7 +994,7 @@ describe('CourseConversationsService', () => {
             );
             courseConversationsService.forceRefresh(false).subscribe({ error: failed, complete: completed });
             for (let attempt = 0; attempt < 3; attempt++) {
-                courseConversationsService.handleNewMessage(channel.id);
+                courseConversationsService.messagesRequested(channel.id!);
                 responses[attempt].next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 99 }] }));
                 responses[attempt].complete();
             }
@@ -1082,7 +1126,7 @@ describe('CourseConversationsService', () => {
             if (kind === 'creation') courseConversationsService.createGroupChat(['partner']).subscribe({ error: () => {} });
             else courseConversationsService.setActiveConversation(created.id);
             for (const response of responses) {
-                courseConversationsService.handleNewMessage(channel.id);
+                courseConversationsService.messagesRequested(channel.id!);
                 response.next(new HttpResponse({ body: [channel, created] }));
                 response.complete();
             }
@@ -1130,7 +1174,7 @@ describe('CourseConversationsService', () => {
                 .mockReturnValue(of(new HttpResponse({ body: [channel, groupChat, created] })));
             courseConversationsService.setActiveConversation(created.id);
             for (const response of responses) {
-                courseConversationsService.handleNewMessage(channel.id);
+                courseConversationsService.messagesRequested(channel.id!);
                 response.next(new HttpResponse({ body: [channel] }));
                 response.complete();
             }
@@ -1151,7 +1195,7 @@ describe('CourseConversationsService', () => {
             const alert = vi.spyOn(alertService, 'addAlert');
             courseConversationsService.setActiveConversation(99);
             for (let attempt = 0; attempt < 3; attempt++) {
-                courseConversationsService.handleNewMessage(channel.id);
+                courseConversationsService.messagesRequested(channel.id!);
                 responses[attempt].next(new HttpResponse({ body: [channel] }));
                 responses[attempt].complete();
             }
@@ -1167,6 +1211,35 @@ describe('CourseConversationsService', () => {
         const cachedConversation = () => courseConversationsService['conversationsOfUser'].find((conversation) => conversation.id === channel.id)!;
         const notify = (action: CommunicationCrudAction, conversation: ConversationDTO) => receiveMockSubject.next({ action, conversation });
         const readDate = dayjs('2026-10-24T23:42:57.753Z');
+
+        it.each([
+            [undefined, '2026-01-01T12:00:00.000Z', '2026-01-01T12:00:00.000Z'],
+            ['2026-01-01T10:00:00.000Z', '2026-01-01T12:00:00.000Z', '2026-01-01T12:00:00.000Z'],
+            ['2026-01-01T12:00:00.000Z', '2026-01-01T10:00:00.000Z', '2026-01-01T12:00:00.000Z'],
+            ['2026-01-01T12:00:00.000Z', undefined, '2026-01-01T12:00:00.000Z'],
+            [undefined, undefined, undefined],
+        ])('merges membership message dates monotonically (%s, %s) without replacing read state', (cachedDate, incomingDate, expectedDate) => {
+            channel.lastMessageDate = cachedDate ? dayjs(cachedDate) : undefined;
+            channel.lastReadDate = readDate;
+            channel.unreadMessagesCount = 0;
+            channel.hasUnreadMessage = false;
+            courseConversationsService.setUpConversationService(course).subscribe();
+            const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockClear();
+
+            notify(CommunicationCrudAction.CREATE, {
+                ...channel,
+                lastMessageDate: incomingDate ? dayjs(incomingDate) : undefined,
+                lastReadDate: readDate.subtract(1, 'day'),
+                unreadMessagesCount: 99,
+                hasUnreadMessage: true,
+            });
+
+            expect(cachedConversation().lastMessageDate?.toISOString()).toBe(expectedDate);
+            expect(cachedConversation().lastReadDate?.isSame(readDate)).toBe(true);
+            expect(cachedConversation().unreadMessagesCount).toBe(0);
+            expect(cachedConversation().hasUnreadMessage).toBe(false);
+            expect(get).not.toHaveBeenCalled();
+        });
 
         it.each([CommunicationCrudAction.CREATE, CommunicationCrudAction.UPDATE])('retains a confirmed read boundary while reconciling delayed %s metadata', (action) => {
             channel.lastReadDate = readDate;
@@ -1591,7 +1664,7 @@ describe('CourseConversationsService', () => {
             },
         );
 
-        it.each(['success', 'failure', 'messages', 'manual', 'arrival', 'read-start', 'bulk-success', 'bulk-failure'] as const)(
+        it.each(['success', 'failure', 'messages', 'manual', 'live-arrival-read', 'read-start', 'bulk-success', 'bulk-failure'] as const)(
             'rejects a stale list after %s changes the unread baseline',
             (mutation) => {
                 courseConversationsService.setUpConversationService(course).subscribe();
@@ -1602,7 +1675,8 @@ describe('CourseConversationsService', () => {
                 receiveMockSubject.next(eventFor(channel));
                 const request = courseConversationsService.messagesRequested(channel.id!);
                 const stale = new Subject<HttpResponse<ConversationDTO[]>>();
-                const expected = mutation === 'manual' ? 3 : mutation === 'failure' || mutation === 'arrival' || mutation === 'bulk-failure' || mutation === 'read-start' ? 2 : 0;
+                const expected =
+                    mutation === 'manual' ? 3 : mutation === 'failure' || mutation === 'live-arrival-read' || mutation === 'bulk-failure' || mutation === 'read-start' ? 2 : 0;
                 const confirmedDate = dayjs('2026-01-01T12:00:00Z');
                 const fresh = () => [groupChat, oneToOneChat, { ...channel, unreadMessagesCount: expected, hasUnreadMessage: expected > 0, lastReadDate: confirmedDate }];
                 const getConversations = vi
@@ -1621,8 +1695,7 @@ describe('CourseConversationsService', () => {
                 } else if (mutation === 'failure') pending.error(new Error('read failed'));
                 else if (mutation === 'messages') courseConversationsService.messagesLoaded(channel.id!, request);
                 else if (mutation === 'manual') courseConversationsService.updateConversationUnreadState(channel.id, confirmedDate, expected);
-                else if (mutation === 'arrival') {
-                    courseConversationsService.setConversationViewOpen(false);
+                else if (mutation === 'live-arrival-read') {
                     receiveMockSubject.next(eventFor(channel));
                 } else if (mutation === 'read-start') courseConversationsService['readNewMessage'](channel.id);
                 else {

@@ -697,9 +697,15 @@ export class CourseConversationsService implements OnDestroy {
             // Membership frames have no read-state version and can arrive after a newer list or read.
             // Apply display metadata immediately, but reconcile unread state with an authoritative list.
             const cachedConversation = conversationsCopy[indexOfCachedConversation];
+            const incomingMessageDate = updatedOrNewConversation.lastMessageDate;
+            // The first message makes an empty direct chat visible immediately; delayed frames cannot move it backwards.
+            const lastMessageDate =
+                incomingMessageDate && (!cachedConversation.lastMessageDate || incomingMessageDate.isAfter(cachedConversation.lastMessageDate))
+                    ? incomingMessageDate
+                    : cachedConversation.lastMessageDate;
             conversationsCopy[indexOfCachedConversation] = cloneWith(updatedOrNewConversation, {
                 lastReadDate: cachedConversation.lastReadDate,
-                lastMessageDate: cachedConversation.lastMessageDate,
+                lastMessageDate,
                 unreadMessagesCount: cachedConversation.unreadMessagesCount,
                 hasUnreadMessage: cachedConversation.hasUnreadMessage,
             });
@@ -735,13 +741,13 @@ export class CourseConversationsService implements OnDestroy {
             return;
         }
         if (!this.conversationsOfUser.some((conversation) => conversation.id === conversationId)) return;
-        this.unreadStateVersion++;
         if (this.isReadingConversation(conversationId) && !this.isMarkedAsUnread) {
             this.readNewMessage(conversationId);
             return;
         }
         // Replies can carry the parent's older top-level timestamp, or none while its update is pending.
         // Neither timestamp nor delivery order proves whether a snapshot already includes this arrival.
+        // Queue another snapshot without rejecting the current one, so counts advance even while messages keep arriving.
         this.refreshUnreadState();
     }
 

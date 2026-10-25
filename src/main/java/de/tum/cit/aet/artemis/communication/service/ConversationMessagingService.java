@@ -346,7 +346,6 @@ public class ConversationMessagingService extends PostingService {
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
         ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
-        conversationService.checkConversationVisibilityElseThrow(conversation, user);
 
         parseUserMentions(course, messagePost.content());
 
@@ -451,6 +450,7 @@ public class ConversationMessagingService extends PostingService {
         }
 
         var conversation = conversationService.getConversationById(existingMessagePost.getConversation().getId());
+        conversationService.checkConversationVisibilityElseThrow(conversation, user);
         if (existingMessagePost.getAuthor().getId().equals(user.getId())
                 || (conversation instanceof Channel channel && channelAuthorizationService.isAllowedToEditOrDeleteMessagesOfOtherUsers(channel, user))) {
             if (conversation instanceof Channel channel && channel.getIsArchived()) {

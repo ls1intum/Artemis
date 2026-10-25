@@ -77,12 +77,14 @@ public class LoggingAspect {
     }
 
     /**
-     * Mail arguments include recipients, rendered content and recovery keys. Mail services log delivery metadata themselves;
-     * their exceptions can also contain addresses echoed by SMTP servers or templates.
+     * Mail arguments include recipients, rendered content and recovery keys, including the content passed through Markdown renderers.
+     * Mail services log delivery metadata themselves; their exceptions can also contain addresses echoed by SMTP servers or templates.
      */
     @Pointcut("!within(de.tum.cit.aet.artemis.notification.service.notifications.MailService)"
             + " && !within(de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService)"
             + " && !within(de.tum.cit.aet.artemis.notification.service.notifications.MailRetryQueueService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService)"
             + " && !within(de.tum.cit.aet.artemis.notification.service.CourseNotificationEmailService)"
             + " && !within(de.tum.cit.aet.artemis.notification.service.TestAccountEmailService)")
     public void notAMailHandlingBean() {

@@ -293,7 +293,8 @@ public class AnswerMessageService extends PostingService {
 
     private Conversation mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
         boolean userIsAuthor = existingAnswerPost.getAuthor().getId().equals(user.getId());
-        Conversation conversation = existingAnswerPost.getPost().getConversation();
+        Conversation conversation = conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
+        conversationService.checkConversationVisibilityElseThrow(conversation, user);
         boolean isAllowedToEditOrDeleteOtherUsersMessage = conversation instanceof Channel channel
                 && this.channelAuthorizationService.isAllowedToEditOrDeleteMessagesOfOtherUsers(channel, user);
         boolean isArchivedChannel = conversation instanceof Channel channel && channel.getIsArchived();
@@ -302,7 +303,7 @@ public class AnswerMessageService extends PostingService {
             throw new AccessForbiddenException("Answer Post", existingAnswerPost.getId());
         }
 
-        return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
+        return conversation;
     }
 
     /**

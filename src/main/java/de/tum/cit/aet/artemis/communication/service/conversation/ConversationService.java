@@ -232,8 +232,10 @@ public class ConversationService {
      * @return true if the user has unread messages in that course, false otherwise
      */
     public boolean userHasUnreadMessages(Long courseId, User requestingUser) {
-        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId())
-                || conversationParticipantRepository.userHasConversationWithUnreadCountInCourse(courseId, requestingUser.getId());
+        boolean isTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, requestingUser);
+        ZonedDateTime now = ZonedDateTime.now();
+        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId(), isTutor, now)
+                || conversationParticipantRepository.userHasConversationWithUnreadCountInCourse(courseId, requestingUser.getId(), isTutor, now);
     }
 
     public void markAsRead(Long conversationId, Long userId) {
@@ -313,6 +315,28 @@ public class ConversationService {
         var usersToContact = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         broadcastOnConversationMembershipChannel(conversation.getCourse(), CommunicationCrudAction.UPDATE, conversation, usersToContact);
+    }
+
+    /**
+     * Refreshes a channel after its linked item's visibility date changes. Hiding a course-wide channel also evicts
+     * caches of course members who never opened it and therefore have no participant row yet. Visible updates stay
+     * scoped to participants, whose personalized metadata is recalculated.
+     *
+     * @param channel the channel with its newly persisted exercise or exam
+     */
+    public void notifyChannelMembersAboutVisibilityChange(Channel channel) {
+        Set<User> usersToContact;
+        if (channel.getIsCourseWide() && !channel.isVisibleToStudents()) {
+            var logins = userRepository.findAllNotificationRecipientsInCourseForConversation(channel.getId(), channel.getCourse().getId()).stream()
+                    .map(recipient -> recipient.userLogin()).collect(Collectors.toSet());
+            // Preload roles and administrator authorities once: hidden channels otherwise cause one role query per recipient.
+            usersToContact = userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(logins);
+        }
+        else {
+            usersToContact = conversationParticipantRepository.findConversationParticipantsWithUserCourseRolesByConversationId(channel.getId()).stream()
+                    .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+        }
+        broadcastOnConversationMembershipChannel(channel.getCourse(), CommunicationCrudAction.UPDATE, channel, usersToContact);
     }
 
     /**
@@ -490,7 +514,9 @@ public class ConversationService {
         start = System.nanoTime();
 
         // Then, find all course-wide channels that the user has not yet accessed and create conversation participants for them
-        List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId);
+        boolean isTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, requestingUser);
+        List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId)
+                .stream().filter(channel -> isTutor || channel.isVisibleToStudents()).toList();
         List<ConversationParticipant> participants = new ArrayList<>();
         for (Channel channel : courseWideChannelsWithoutParticipants) {
             participants.add(createReadParticipant(requestingUser, channel, now));
@@ -635,10 +661,10 @@ public class ConversationService {
 
     private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {
         var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
+        var conversation = participation.map(ConversationParticipant::getConversation).orElseGet(() -> getConversationById(conversationId));
+        checkConversationVisibilityElseThrow(conversation, requestingUser);
 
         if (participation.isEmpty()) {
-            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
-
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
                 return ConversationParticipant.createWithDefaultValues(requestingUser, channel);
             }

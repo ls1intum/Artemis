@@ -11,6 +11,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,18 +46,47 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.stereotype.Service;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.read.ListAppender;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.domain.DataExport;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
+import de.tum.cit.aet.artemis.admin.repository.DataExportRepository;
+import de.tum.cit.aet.artemis.admin.service.FeatureUsageDigestScheduleService;
+import de.tum.cit.aet.artemis.admin.service.FeatureUsageDigestService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportCommunicationDataService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportCompetencyProgressService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportCreationService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportExamCreationService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportExerciseCreationService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportIrisService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportLearnerProfileService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportPresentationAssessmentService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportScienceEventService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportTutorialGroupService;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.core.config.FeatureUsageProperties;
 import de.tum.cit.aet.artemis.core.config.LoggingAspect;
 import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
+import de.tum.cit.aet.artemis.core.exception.EmailFailedException;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
+import de.tum.cit.aet.artemis.iris.service.IrisDashboardEmailService;
 import de.tum.cit.aet.artemis.notification.config.MailDeliveryProperties;
 import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
@@ -235,6 +265,144 @@ class MailLoggingSafetyTest {
 
         assertPrivateDataAbsent();
         assertThat(loggedText()).contains("queue is full", "too old");
+    }
+
+    @Test
+    void rejectedDigestDoesNotLogRecipientInTheActualCaller() {
+        capture(FeatureUsageDigestScheduleService.class);
+        var digestService = mock(FeatureUsageDigestService.class);
+        when(digestService.buildWeeklyDigest()).thenReturn(mock(FeatureUsageDigestDTO.class));
+        var properties = new FeatureUsageProperties(true, 400, new FeatureUsageProperties.Digest(true, List.of(EMAIL)));
+        var caller = proxied(new FeatureUsageDigestScheduleService(digestService, properties, mailService, mock(ProfileService.class), Runnable::run));
+        doThrow(new MailSendException(Map.of(new Object(), new SMTPSendFailedException("DATA", 550, "550 " + EMAIL, null, null, null, null)))).when(sender)
+                .send(any(MimeMessage.class));
+
+        assertThat(caller.sendDigestEmail()).isFalse();
+
+        assertPrivateDataAbsent();
+        assertThat(loggedText()).contains("could not be sent", "PERMANENT");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void failedIrisTemplateDoesNotLogRecipientInTheActualCaller(boolean alert) {
+        capture(IrisDashboardEmailService.class);
+        var properties = new IrisDashboardProperties();
+        properties.getDigest().setRecipients(List.of(EMAIL));
+        var caller = proxied(new IrisDashboardEmailService(mailService, sendingService, properties));
+        caller.init();
+        when(templateEngine.process(anyString(), any(Context.class))).thenThrow(new TemplateProcessingException("Cannot render " + EMAIL, new IllegalStateException(LOGIN)));
+
+        assertThat(alert ? caller.sendAlert(null) : caller.sendDigest(null)).isZero();
+
+        assertPrivateDataAbsent();
+        assertThat(loggedText()).contains("Failed to send Iris", "MailPreparationException");
+    }
+
+    @Test
+    void rejectedIrisRecipientsDoNotLogAddressesDuringInitialization() {
+        capture(IrisDashboardEmailService.class);
+        var properties = new IrisDashboardProperties();
+        properties.getDigest().setRecipients(List.of(NAME + " <" + EMAIL + ">", EMAIL + " invalid"));
+        var caller = proxied(new IrisDashboardEmailService(mailService, sendingService, properties));
+
+        caller.init();
+
+        assertThat(caller.canSendDigest()).isFalse();
+        assertPrivateDataAbsent();
+        assertThat(loggedText()).contains("recipient rejected", "display-name form", "invalid address");
+    }
+
+    @Test
+    void failedExportTemplateDoesNotReintroduceRecipientIntoLogsOrException() throws Exception {
+        capture(DataExportCreationService.class);
+        var repository = mock(DataExportRepository.class);
+        when(repository.save(any(DataExport.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        var caller = new DataExportCreationService(Path.of("."), mock(ZipFileService.class), mock(FileService.class), repository, mailService,
+                mock(DataExportExerciseCreationService.class), mock(DataExportExamCreationService.class), mock(DataExportCommunicationDataService.class),
+                mock(DataExportScienceEventService.class), mock(DataExportIrisService.class), mock(DataExportLearnerProfileService.class),
+                mock(DataExportCompetencyProgressService.class), mock(DataExportTutorialGroupService.class), mock(DataExportPresentationAssessmentService.class),
+                mock(ResourceLoaderService.class), mock(TempFileUtilService.class));
+        var user = new User();
+        user.setLogin(LOGIN);
+        user.setEmail(EMAIL);
+        user.setLangKey("en");
+        var export = new DataExport();
+        export.setId(42L);
+        export.setUser(user);
+        when(templateEngine.process(anyString(), any(Context.class))).thenThrow(new TemplateProcessingException("Cannot render " + EMAIL, new IllegalStateException(LOGIN)));
+        // Isolate the completed export's notification phase from archive creation and its unrelated filesystem work.
+        var completion = DataExportCreationService.class.getDeclaredMethod("finishDataExportCreation", DataExport.class, Path.class);
+        completion.setAccessible(true);
+
+        Throwable failure = catchThrowable(() -> completion.invoke(caller, export, Path.of("data-export.zip")));
+
+        assertPrivateDataAbsent();
+        assertThat(failure).cause().isInstanceOf(EmailFailedException.class).hasMessageNotContaining(EMAIL).hasMessageNotContaining(LOGIN);
+        assertThat(loggedText()).contains("Failed to send data export created email", "MailPreparationException");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void realTemplateFailureDoesNotLogRecipientBeforeTheSafeMailDiagnostic(boolean facade) throws Exception {
+        capture(TemplateEngine.class);
+        SpringTemplateEngine engine = failingTemplateEngine();
+        ReflectionTestUtils.setField(mailService, "templateEngine", engine);
+        ReflectionTestUtils.setField(sendingService, "templateEngine", engine);
+
+        withProductionLogFilters(() -> {
+            if (facade) {
+                assertThatThrownBy(() -> mailService.sendEmailFromTemplate(RECIPIENT, "mail/mailLoggingFailure", "email.subject")).isInstanceOf(MailPreparationException.class)
+                        .hasNoCause();
+            }
+            else {
+                assertThat(sendingService.buildAndSendSyncReporting(RECIPIENT, "email.subject", List.of(), "mail/mailLoggingFailure", Map.of())).isFalse();
+            }
+        });
+
+        assertPrivateDataAbsent();
+        assertThat(loggedText()).contains("TemplateProcessingException");
+    }
+
+    @Test
+    void realTemplateFailureOutsideMailRetainsItsDiagnostics() throws Exception {
+        capture(TemplateEngine.class);
+        SpringTemplateEngine engine = failingTemplateEngine();
+        var context = new Context(Locale.ENGLISH);
+        context.setVariable("user", MailRecipientDTO.forUnnamed("synthetic-unparseable-value", "en", "synthetic-login"));
+
+        withProductionLogFilters(() -> assertThatThrownBy(() -> engine.process("diagnostic/non-mail", context)).isInstanceOf(TemplateProcessingException.class));
+
+        assertThat(loggedText()).contains("diagnostic/non-mail", "synthetic-unparseable-value", "NumberFormatException");
+    }
+
+    private static SpringTemplateEngine failingTemplateEngine() {
+        var resolver = new ClassLoaderTemplateResolver();
+        resolver.setPrefix("templates/");
+        resolver.setSuffix(".html");
+        resolver.setTemplateAliases(Map.of("diagnostic/non-mail", "mail/mailLoggingFailure"));
+        var engine = new SpringTemplateEngine();
+        engine.setTemplateResolver(resolver);
+        return engine;
+    }
+
+    private static void withProductionLogFilters(Runnable operation) throws Exception {
+        var configuredContext = new LoggerContext();
+        var configurator = new JoranConfigurator();
+        configurator.setContext(configuredContext);
+        configurator.doConfigure(Path.of("src/main/resources/logback-spring.xml").toFile());
+        var activeContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        var previousFilters = new ArrayList<>(activeContext.getTurboFilterList());
+        activeContext.getTurboFilterList().clear();
+        configuredContext.getTurboFilterList().forEach(activeContext::addTurboFilter);
+        try {
+            operation.run();
+        }
+        finally {
+            activeContext.getTurboFilterList().clear();
+            previousFilters.forEach(activeContext::addTurboFilter);
+            configuredContext.stop();
+        }
     }
 
     private void assertPrivateDataAbsent() {

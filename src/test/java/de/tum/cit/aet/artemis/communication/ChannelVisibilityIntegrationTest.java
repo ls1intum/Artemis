@@ -72,7 +72,7 @@ class ChannelVisibilityIntegrationTest extends AbstractConversationTest {
     @Override
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         userUtilService.enrollPrefixedUsersInCourse(exampleCourse, TEST_PREFIX);
     }
 
@@ -185,6 +185,116 @@ class ChannelVisibilityIntegrationTest extends AbstractConversationTest {
 
         request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/answer-messages/" + reply.getId(),
                 new UpdatePostingDTO(reply.getId(), "Edited reply", null, false), AnswerPostResponseDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "EXERCISE, POST, false", "EXERCISE, POST, true", "EXERCISE, ANSWER, false", "EXERCISE, ANSWER, true", "EXAM, POST, false", "EXAM, POST, true",
+            "EXAM, ANSWER, false", "EXAM, ANSWER, true" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentCannotDeleteHiddenChannelMessages(ChannelSubType type, PostingType postingType, boolean moderator) throws Exception {
+        Channel channel = createChannel(type, ZonedDateTime.now().plusDays(1));
+        var participant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        participant.setIsModerator(moderator);
+        conversationParticipantRepository.save(participant);
+        Post post = createExistingPost(channel, moderator ? "instructor1" : "student1");
+        AnswerPost reply = createExistingReply(post, moderator ? "instructor1" : "student1");
+
+        String url = postingType == PostingType.POST ? messagesUrl() + "/" + post.getId() : "/api/communication/courses/" + exampleCourseId + "/answer-messages/" + reply.getId();
+        request.delete(url, HttpStatus.FORBIDDEN);
+
+        assertThat(conversationMessageRepository.existsById(post.getId())).isTrue();
+        assertThat(answerPostRepository.existsById(reply.getId())).isTrue();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "EXERCISE, favorite, isFavorite", "EXERCISE, hidden, isHidden", "EXERCISE, muted, isMuted", "EXAM, favorite, isFavorite", "EXAM, hidden, isHidden",
+            "EXAM, muted, isMuted" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentPreferencesCannotCreateHiddenChannelMembership(ChannelSubType type, String preference, String parameter) throws Exception {
+        Channel channel = createChannel(type, ZonedDateTime.now().plusDays(1));
+
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/" + preference + "?" + parameter + "=true",
+                HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+
+        assertThat(conversationParticipantRepository.existsByConversationIdAndUserId(channel.getId(), userRepository.getUser().getId())).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "EXERCISE, false", "EXERCISE, true", "EXAM, false", "EXAM, true" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void unreadMessagesIgnoreHiddenChannels(ChannelSubType type, boolean existingMember) throws Exception {
+        Channel channel = createChannel(type, ZonedDateTime.now().plusDays(1));
+        if (existingMember) {
+            var participant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+            participant.setLastRead(ZonedDateTime.now());
+            participant.setUnreadMessagesCount(1L);
+            conversationParticipantRepository.save(participant);
+        }
+        createExistingPost(channel, "instructor1");
+
+        assertThat(request.get("/api/communication/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class)).isFalse();
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get("/api/communication/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class)).isTrue();
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        createExistingPost(createChannel(type, ZonedDateTime.now().minusHours(1)), "instructor1");
+        assertThat(request.get("/api/communication/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class)).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChannelSubType.class, names = { "EXERCISE", "EXAM" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void markingAllChannelsReadDoesNotJoinHiddenChannels(ChannelSubType type) throws Exception {
+        Channel channel = createChannel(type, ZonedDateTime.now().plusDays(1));
+
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/mark-as-read", HttpStatus.OK, new LinkedMultiValueMap<>());
+
+        assertThat(conversationParticipantRepository.existsByConversationIdAndUserId(channel.getId(), userRepository.getUser().getId())).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "EXERCISE, delete", "EXERCISE, archive", "EXERCISE, unarchive", "EXERCISE, register", "EXERCISE, deregister", "EXERCISE, grant-channel-moderator",
+            "EXERCISE, revoke-channel-moderator", "EXAM, delete", "EXAM, archive", "EXAM, unarchive", "EXAM, register", "EXAM, deregister", "EXAM, grant-channel-moderator",
+            "EXAM, revoke-channel-moderator" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentModeratorsCannotManageHiddenChannels(ChannelSubType type, String action) throws Exception {
+        Channel channel = createChannel(type, ZonedDateTime.now().plusDays(1));
+        var moderator = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        moderator.setIsModerator(true);
+        conversationParticipantRepository.save(moderator);
+        if (!action.equals("register")) {
+            var target = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
+            target.setIsModerator(action.equals("revoke-channel-moderator"));
+            conversationParticipantRepository.save(target);
+        }
+        if (action.equals("unarchive")) {
+            channel.setIsArchived(true);
+            channelRepository.save(channel);
+        }
+        if (action.equals("delete")) {
+            // A former staff member can retain creator/moderator status after becoming a course student.
+            channel.setCreator(moderator.getUser());
+            channelRepository.save(channel);
+        }
+
+        String channelUrl = "/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId();
+        if (action.equals("delete")) {
+            request.delete(channelUrl, HttpStatus.FORBIDDEN);
+        }
+        else {
+            request.postWithoutResponseBody(channelUrl + "/" + action, List.of(TEST_PREFIX + "student2"), HttpStatus.FORBIDDEN);
+        }
+
+        assertThat(channelRepository.findByIdElseThrow(channel.getId()).getIsArchived()).isEqualTo(action.equals("unarchive"));
+        var target = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(),
+                userUtilService.getUserByLogin(TEST_PREFIX + "student2").getId());
+        if (action.equals("register")) {
+            assertThat(target).isEmpty();
+        }
+        else {
+            assertThat(target).get().extracting(participant -> participant.getIsModerator()).isEqualTo(action.equals("revoke-channel-moderator"));
+        }
     }
 
     @ParameterizedTest

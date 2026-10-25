@@ -158,6 +158,55 @@ class CourseNotificationEmailServiceTest {
     }
 
     @Test
+    void realMarkdownRenderersDoNotLogPersonalDataFromTheMailBody() {
+        String privateEmail = "private-markdown-recipient@example.org";
+        String privateLogin = "private-markdown-recipient-login";
+        var links = new MarkdownCustomLinkRendererService();
+        ReflectionTestUtils.setField(links, "artemisServerUrl", serverUrl);
+        var service = new CourseNotificationEmailService(messageSource, templateEngine, mailSendingService, proxied(links), proxied(new MarkdownCustomReferenceRendererService()));
+        ReflectionTestUtils.setField(service, "artemisServerUrl", serverUrl);
+        var notification = new CourseNotificationDTO("newAnnouncementNotification", 1L, 123L, FIXED_CREATION_DATE, CourseNotificationCategory.COMMUNICATION, "Test Course", null,
+                new NewAnnouncementPayloadDTO(1L, "Test Announcement", "Contact " + privateEmail + " or [user]" + privateLogin + "(1)[/user]", "Test Author", null, 2L, 3L), "/");
+        var recipient = createUser(privateLogin, "en");
+        recipient.setEmail(privateEmail);
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Subject");
+        when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Content");
+        Logger aspectLogger = (Logger) LoggerFactory.getLogger(LoggingAspect.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        Level previousLevel = aspectLogger.getLevel();
+        aspectLogger.setLevel(Level.DEBUG);
+        aspectLogger.addAppender(appender);
+        try {
+            aspectLogger.debug("Mail renderer log capture active");
+            assertThat(service.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)))).isCompletedWithValue(null);
+
+            String logged = appender.list.stream()
+                    .map(event -> event.getFormattedMessage() + (event.getThrowableProxy() == null ? "" : ThrowableProxyUtil.asString(event.getThrowableProxy())))
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertThat(logged).contains("Mail renderer log capture active").doesNotContain(privateEmail, privateLogin);
+            verify(templateEngine).process(anyString(), contextCaptor.capture());
+            @SuppressWarnings("unchecked")
+            var parameters = (Map<String, Object>) contextCaptor.getValue().getVariable("parameters");
+            assertThat((String) parameters.get("postMarkdownContent")).contains(privateEmail, "@" + privateLogin).doesNotContain("[user]");
+        }
+        finally {
+            aspectLogger.detachAppender(appender);
+            aspectLogger.setLevel(previousLevel);
+            appender.stop();
+        }
+    }
+
+    private static <T> T proxied(T target) {
+        var factory = new AspectJProxyFactory(target);
+        factory.setProxyTargetClass(true);
+        factory.addAspect(new LoggingAspect(new MockEnvironment().withProperty("spring.profiles.active", "dev")));
+        @SuppressWarnings("unchecked")
+        T proxy = (T) factory.getProxy();
+        return proxy;
+    }
+
+    @Test
     void shouldSendNotificationToSingleRecipientWhenLocaleIsEnglish() {
         User recipient = createUser("user1", "en");
         CourseNotificationDTO notification = createNotification("ANNOUNCEMENT", 123L);

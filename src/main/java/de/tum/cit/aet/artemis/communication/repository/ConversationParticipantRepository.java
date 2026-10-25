@@ -270,17 +270,27 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
      *
      * @param courseId the id of the course
      * @param userId   the id of the user
+     * @param isTutor  whether the user may see channels before their release
+     * @param now      the time used to check exercise and exam visibility
      * @return true if the user has a conversation with unread messages in the course, false otherwise
      */
     @Query("""
             SELECT COUNT(conversationParticipant.id) > 0
             FROM ConversationParticipant conversationParticipant
+                LEFT JOIN Channel channel ON channel.id = conversationParticipant.conversation.id
+                LEFT JOIN channel.exercise exercise
+                LEFT JOIN channel.exam exam
             WHERE conversationParticipant.conversation.course.id = :courseId
                 AND conversationParticipant.user.id = :userId
                 AND conversationParticipant.unreadMessagesCount > 0
                 AND conversationParticipant.isMuted = FALSE
+                AND (:isTutor = TRUE OR (
+                    (exercise.id IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate < :now)))
+                    AND (exercise.id IS NOT NULL OR exam.id IS NULL OR exam.visibleDate < :now)
+                ))
             """)
-    boolean userHasConversationWithUnreadCountInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    boolean userHasConversationWithUnreadCountInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId, @Param("isTutor") boolean isTutor,
+            @Param("now") ZonedDateTime now);
 
     /**
      * Remove a deleted top-level post from recipients' unread counts only when it was newer than their read position.

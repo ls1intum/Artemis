@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
@@ -37,8 +39,11 @@ import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics;
+import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ChannelNotificationVisibilityIntegrationTest extends AbstractConversationTest {
@@ -181,6 +186,90 @@ class ChannelNotificationVisibilityIntegrationTest extends AbstractConversationT
         });
     }
 
+    @ParameterizedTest
+    @CsvSource({ "EXERCISE, false", "EXERCISE, true", "EXAM, false", "EXAM, true" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void postponingItemThroughUpdateEndpointRemovesStudentChannelCache(ChannelSubType type, boolean studentHasParticipant) throws Exception {
+        Channel channel = createChannel(type, ZonedDateTime.now().minusHours(1));
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        if (studentHasParticipant) {
+            conversationUtilService.addParticipantToConversation(channel, student.getLogin());
+        }
+        userUtilService.changeUser(student.getLogin());
+        assertThat(request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ChannelDTO.class))
+                .anyMatch(dto -> dto.getId().equals(channel.getId()));
+        assertThat(conversationParticipantRepository.existsByConversationIdAndUserId(channel.getId(), student.getId())).isEqualTo(studentHasParticipant);
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var tutor = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "tutor1").getUser();
+        resetWebsocketMock();
+        ZonedDateTime postponedDate = ZonedDateTime.now().plusDays(1);
+
+        updateVisibilityDate(channel, postponedDate);
+
+        Channel persistedChannel = channelRepository.findByIdElseThrow(channel.getId());
+        assertThat(persistedChannel.isVisibleToStudents()).isFalse();
+        var studentPayload = ArgumentCaptor.forClass(ConversationWebsocketDTO.class);
+        verify(websocketMessagingService).sendMessageToUser(eq(student.getLogin()), eq(CommunicationWebsocketTopics.CONVERSATION_MEMBERSHIP.at(exampleCourseId, student.getId())),
+                studentPayload.capture());
+        assertThat(studentPayload.getValue().action()).isEqualTo(CommunicationCrudAction.DELETE);
+        assertThat(studentPayload.getValue().conversation()).isInstanceOfSatisfying(ChannelDTO.class, dto -> {
+            assertThat(dto.getId()).isEqualTo(channel.getId());
+            assertThat(dto.getName()).isNull();
+            assertThat(dto.getSubTypeReferenceId()).isNull();
+        });
+        var tutorPayload = ArgumentCaptor.forClass(ConversationWebsocketDTO.class);
+        verify(websocketMessagingService).sendMessageToUser(eq(tutor.getLogin()), eq(CommunicationWebsocketTopics.CONVERSATION_MEMBERSHIP.at(exampleCourseId, tutor.getId())),
+                tutorPayload.capture());
+        assertThat(tutorPayload.getValue().action()).isEqualTo(CommunicationCrudAction.UPDATE);
+        assertThat(tutorPayload.getValue().conversation()).isInstanceOfSatisfying(ChannelDTO.class, dto -> {
+            assertThat(dto.getId()).isEqualTo(channel.getId());
+            ZonedDateTime expectedStart = type == ChannelSubType.EXERCISE ? persistedChannel.getExercise().getReleaseDate() : persistedChannel.getExam().getStartDate();
+            assertThat(dto.getSubTypeReferenceStartDate().toInstant()).isEqualTo(expectedStart.toInstant());
+        });
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChannelSubType.class, names = { "EXERCISE", "EXAM" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void visibleDateChangesOnlyNotifyExistingChannelParticipants(ChannelSubType type) throws Exception {
+        Channel channel = createChannel(type, ZonedDateTime.now().minusHours(2));
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var tutor = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "tutor1").getUser();
+        resetWebsocketMock();
+
+        updateVisibilityDate(channel, ZonedDateTime.now().minusHours(1));
+
+        verify(websocketMessagingService, never()).sendMessageToUser(eq(student.getLogin()),
+                eq(CommunicationWebsocketTopics.CONVERSATION_MEMBERSHIP.at(exampleCourseId, student.getId())), any(ConversationWebsocketDTO.class));
+        var tutorPayload = ArgumentCaptor.forClass(ConversationWebsocketDTO.class);
+        verify(websocketMessagingService).sendMessageToUser(eq(tutor.getLogin()), eq(CommunicationWebsocketTopics.CONVERSATION_MEMBERSHIP.at(exampleCourseId, tutor.getId())),
+                tutorPayload.capture());
+        assertThat(tutorPayload.getValue().action()).isEqualTo(CommunicationCrudAction.UPDATE);
+        Channel persistedChannel = channelRepository.findByIdElseThrow(channel.getId());
+        assertThat(persistedChannel.isVisibleToStudents()).isTrue();
+        userUtilService.changeUser(student.getLogin());
+        assertThat(request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ChannelDTO.class))
+                .filteredOn(dto -> dto.getId().equals(channel.getId())).singleElement().satisfies(dto -> {
+                    ZonedDateTime expectedStart = type == ChannelSubType.EXERCISE ? persistedChannel.getExercise().getReleaseDate() : persistedChannel.getExam().getStartDate();
+                    assertThat(dto.getSubTypeReferenceStartDate().toInstant()).isEqualTo(expectedStart.toInstant());
+                });
+        assertThat(conversationParticipantRepository.existsByConversationIdAndUserId(channel.getId(), student.getId())).isFalse();
+    }
+
+    private void updateVisibilityDate(Channel channel, ZonedDateTime date) throws Exception {
+        if (channel.getExercise() instanceof TextExercise exercise) {
+            exercise.setChannelName(channel.getName());
+            exercise.setReleaseDate(date);
+            request.put("/api/text/text-exercises", UpdateTextExerciseDTO.of(exercise), HttpStatus.OK);
+        }
+        else {
+            var exam = channel.getExam();
+            exam.setChannelName(channel.getName());
+            exam.setVisibleDate(date);
+            request.put("/api/exam/courses/" + exampleCourseId + "/exams", ExamUpdateDTO.of(exam), HttpStatus.OK);
+        }
+    }
+
     private void addMessageParticipants(Channel channel) {
         List.of("student1", "tutor1", "instructor1").forEach(login -> conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + login));
     }
@@ -204,7 +293,10 @@ class ChannelNotificationVisibilityIntegrationTest extends AbstractConversationT
     }
 
     private Channel createHiddenChannel(ChannelSubType type) {
-        ZonedDateTime visibleDate = ZonedDateTime.now().plusDays(1);
+        return createChannel(type, ZonedDateTime.now().plusDays(1));
+    }
+
+    private Channel createChannel(ChannelSubType type, ZonedDateTime visibleDate) {
         return switch (type) {
             case EXERCISE -> conversationUtilService
                     .addChannelToExercise(textExerciseUtilService.createIndividualTextExercise(exampleCourse, visibleDate, visibleDate.plusDays(2), visibleDate.plusDays(3)));
