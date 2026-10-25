@@ -1,0 +1,19 @@
+<div data-testid="quiz-question-preview">
+    @switch (question().type) {
+        @case (QuizQuestionType.MULTIPLE_CHOICE) {
+            <jhi-multiple-choice-question [question]="multipleChoiceQuestion()" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex()" />
+        }
+        @case (QuizQuestionType.DRAG_AND_DROP) {
+            <jhi-drag-and-drop-question
+                [question]="question()"
+                [mappings]="dragAndDropMappings()"
+                (mappingsChange)="dragAndDropMappings.set($event)"
+                [questionIndex]="questionIndex()"
+            />
+        }
+        @case (QuizQuestionType.SHORT_ANSWER) {
+            <jhi-short-answer-question [question]="question()" [questionIndex]="questionIndex()" />
+        }
+        @default {}
+    }
+</div>

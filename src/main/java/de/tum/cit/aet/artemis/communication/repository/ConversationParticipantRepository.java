@@ -121,11 +121,16 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
      * @param conversationIds the conversations to check
      * @param userId          the user whose access is being checked
      * @param courseId        the course the conversations must belong to
+     * @param isTutor         whether the user may access channels before their release
+     * @param now             the time used to check exercise and exam visibility
      * @return how many of the given conversations the user may read
      */
     @Query("""
             SELECT COUNT(conversation.id)
             FROM Conversation conversation
+                LEFT JOIN Channel channel ON channel.id = conversation.id
+                LEFT JOIN channel.exercise exercise
+                LEFT JOIN channel.exam exam
             WHERE conversation.id IN :conversationIds
                 AND conversation.course.id = :courseId
                 AND (
@@ -137,8 +142,13 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
                             AND participant.user.id = :userId
                     )
                 )
+                AND (:isTutor = TRUE OR (
+                    (exercise.id IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate < :now)))
+                    AND (exercise.id IS NOT NULL OR exam.id IS NULL OR exam.visibleDate < :now)
+                ))
             """)
-    long countAccessibleConversations(@Param("conversationIds") Collection<Long> conversationIds, @Param("userId") Long userId, @Param("courseId") Long courseId);
+    long countAccessibleConversations(@Param("conversationIds") Collection<Long> conversationIds, @Param("userId") Long userId, @Param("courseId") Long courseId,
+            @Param("isTutor") boolean isTutor, @Param("now") ZonedDateTime now);
 
     /**
      * Verifies that the user has access to all specified conversations.
@@ -147,10 +157,11 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
      * @param conversationIds collection of conversation IDs
      * @param userId          ID of the user
      * @param courseId        ID of the course
+     * @param isTutor         whether the user may access channels before their release
      * @throws AccessForbiddenException if access is denied to one or more conversations
      */
-    default void userHasAccessToAllConversationsElseThrow(Collection<Long> conversationIds, Long userId, Long courseId) {
-        long accessibleCount = countAccessibleConversations(conversationIds, userId, courseId);
+    default void userHasAccessToAllConversationsElseThrow(Collection<Long> conversationIds, Long userId, Long courseId, boolean isTutor) {
+        long accessibleCount = countAccessibleConversations(conversationIds, userId, courseId, isTutor, ZonedDateTime.now());
         if (accessibleCount != conversationIds.size()) {
             if (conversationIds.size() == 1) {
                 throw new AccessForbiddenException("Conversation", conversationIds.iterator().next());
@@ -259,17 +270,27 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
      *
      * @param courseId the id of the course
      * @param userId   the id of the user
+     * @param isTutor  whether the user may see channels before their release
+     * @param now      the time used to check exercise and exam visibility
      * @return true if the user has a conversation with unread messages in the course, false otherwise
      */
     @Query("""
             SELECT COUNT(conversationParticipant.id) > 0
             FROM ConversationParticipant conversationParticipant
+                LEFT JOIN Channel channel ON channel.id = conversationParticipant.conversation.id
+                LEFT JOIN channel.exercise exercise
+                LEFT JOIN channel.exam exam
             WHERE conversationParticipant.conversation.course.id = :courseId
                 AND conversationParticipant.user.id = :userId
                 AND conversationParticipant.unreadMessagesCount > 0
                 AND conversationParticipant.isMuted = FALSE
+                AND (:isTutor = TRUE OR (
+                    (exercise.id IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate < :now)))
+                    AND (exercise.id IS NOT NULL OR exam.id IS NULL OR exam.visibleDate < :now)
+                ))
             """)
-    boolean userHasConversationWithUnreadCountInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    boolean userHasConversationWithUnreadCountInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId, @Param("isTutor") boolean isTutor,
+            @Param("now") ZonedDateTime now);
 
     /**
      * Remove a deleted top-level post from recipients' unread counts only when it was newer than their read position.

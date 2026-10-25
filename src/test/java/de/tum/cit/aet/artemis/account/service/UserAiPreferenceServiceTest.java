@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.UserAiPreference;
@@ -26,8 +27,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 /**
  * The AI preferences live in {@code user_ai_preference}, where a row exists only for an account that has made a decision.
  * That makes "no row" a meaningful state which every reader has to interpret the same way, so these tests pin it: no row
- * means no recorded decision. Accounts that turned the removed Memiris integration off can still have a row without a
- * decision until a later migration removes those rows, so that state is pinned too.
+ * means no recorded decision. The database rejects a row without a decision, so that state cannot exist.
  * <p>
  * Getting that default wrong flips behaviour for the majority of accounts - 26,648 of 34,354 have no row - which is why
  * it is tested per accessor rather than only through the happy path.
@@ -152,19 +152,6 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
             assertThat(userAiPreferenceRepository.findByUserId(user.getId())).isEmpty();
             assertThat(userAiPreferenceService.findDecision(user.getId())).isNull();
         }
-
-        /**
-         * A row without a decision is left over from an account that turned the removed Memiris integration off. Clearing
-         * removes it like any other row.
-         */
-        @Test
-        void removesARowWithoutADecision() {
-            userAiPreferenceRepository.save(new UserAiPreference(user.getId()));
-
-            userAiPreferenceService.clearDecision(user.getId());
-
-            assertThat(userAiPreferenceRepository.findByUserId(user.getId())).isEmpty();
-        }
     }
 
     /**
@@ -181,21 +168,28 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
          */
         @Test
         void recordingADecisionOnAnExistingRowRecordsItOnce() {
-            userAiPreferenceRepository.save(new UserAiPreference(user.getId()));
+            UserAiPreference existing = new UserAiPreference(user.getId());
+            existing.setSelectionDecision(AiSelectionDecision.CLOUD_AI);
+            existing.setSelectionDecisionDate(DECIDED_EARLIER);
+            userAiPreferenceRepository.save(existing);
 
             userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.LOCAL_AI, DECIDED_AT);
 
             assertThat(userAiPreferenceService.findDecision(user.getId())).isEqualTo(AiSelectionDecision.LOCAL_AI);
             assertThat(userAiPreferenceRepository.findAllByUserIdIn(Set.of(user.getId()))).hasSize(1);
         }
+    }
 
+    @Nested
+    class Schema {
+
+        /**
+         * "No row" is the only way to record "no decision", so the database refuses a row without one.
+         */
         @Test
-        void aRowWithoutADecisionIsStillDistinguishableFromNoRow() {
-            // A row left over from an account that turned the removed Memiris integration off, so "no decision" and "no row" differ here.
-            userAiPreferenceRepository.save(new UserAiPreference(user.getId()));
-
-            assertThat(userAiPreferenceService.findDecision(user.getId())).isNull();
-            assertThat(userAiPreferenceService.hasPreferenceRow(user.getId())).isTrue();
+        void aRowWithoutADecisionIsRejected() {
+            assertThatExceptionOfType(DataIntegrityViolationException.class).isThrownBy(() -> userAiPreferenceRepository.saveAndFlush(new UserAiPreference(user.getId())));
+            assertThat(userAiPreferenceRepository.findByUserId(user.getId())).isEmpty();
         }
     }
 
@@ -239,17 +233,6 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
             assertThat(userAiPreferenceService.findDecisions(List.of())).isEmpty();
             assertThat(userAiPreferenceService.findDecisions(Arrays.asList(user.getId(), null, user.getId())))
                     .containsExactlyEntriesOf(Map.of(user.getId(), AiSelectionDecision.CLOUD_AI));
-        }
-
-        @Test
-        void ignoresRowsWithoutADecision() {
-            User withoutDecision = userUtilService.createAndSaveUser(TEST_PREFIX + "nodecision");
-            userAiPreferenceService.clearDecision(withoutDecision.getId());
-            userAiPreferenceRepository.save(new UserAiPreference(withoutDecision.getId()));
-
-            var decisions = userAiPreferenceService.findDecisions(Set.of(withoutDecision.getId()));
-
-            assertThat(decisions).as("a row without a decision must not appear as one").doesNotContainKey(withoutDecision.getId());
         }
     }
 }
