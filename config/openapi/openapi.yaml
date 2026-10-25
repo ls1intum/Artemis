@@ -175,102 +175,10 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
-  ? /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}
-  : get:
-      tags: [tutorial-group-free-period]
-      operationId: getOneOfConfiguration_1
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupsConfigurationId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialFreePeriodId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-    put:
-      tags: [tutorial-group-free-period]
-      operationId: update_1
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupsConfigurationId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialFreePeriodId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/TutorialGroupFreePeriodRequest'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-    delete:
-      tags: [tutorial-group-free-period]
-      operationId: delete_1
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupsConfigurationId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialFreePeriodId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200': {description: OK}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}:
     put:
       tags: [tutorial-groups-configuration]
-      operationId: update_2
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupsConfigurationId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
-  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}:
-    put:
-      tags: [tutorial-groups-configuration]
-      operationId: update_3
+      operationId: update_1
       parameters:
       - name: courseId
         in: path
@@ -354,25 +262,10 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizBatchWithPassword'}
-  /api/quiz/quiz-exercises/{quizBatchId}/start-batch:
-    put:
-      tags: [quiz-exercise-batch]
-      operationId: startBatch
-      parameters:
-      - name: quizBatchId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/QuizBatch'}
   /api/quiz/quiz-batches/{quizBatchId}/start-batch:
     put:
       tags: [quiz-exercise-batch]
-      operationId: startBatch_1
+      operationId: startBatch
       parameters:
       - name: quizBatchId
         in: path
@@ -618,31 +511,7 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods:
-    post:
-      tags: [tutorial-group-free-period]
-      operationId: create_1
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupsConfigurationId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/TutorialGroupFreePeriodRequest'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration:
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations:
     get:
       tags: [tutorial-groups-configuration]
       operationId: getOneOfCourse
@@ -659,41 +528,7 @@ paths:
               schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
     post:
       tags: [tutorial-groups-configuration]
-      operationId: create_2
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
-  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations:
-    get:
-      tags: [tutorial-groups-configuration]
-      operationId: getOneOfCourse_1
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
-    post:
-      tags: [tutorial-groups-configuration]
-      operationId: create_3
+      operationId: create_1
       parameters:
       - name: courseId
         in: path

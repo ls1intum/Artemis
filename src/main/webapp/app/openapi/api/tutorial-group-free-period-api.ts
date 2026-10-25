@@ -43,18 +43,6 @@ export class TutorialGroupFreePeriodApi {
      *
      * @param courseId
      * @param tutorialGroupsConfigurationId
-     * @param tutorialGroupFreePeriodRequest
-     */
-    create_(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest): Observable<TutorialGroupFreePeriod> {
-        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}/tutorial-free-periods`;
-        return this.http.post<TutorialGroupFreePeriod>(url, tutorialGroupFreePeriodRequest);
-    }
-
-    /**
-     *
-     *
-     * @param courseId
-     * @param tutorialGroupsConfigurationId
      * @param tutorialFreePeriodId
      */
     delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number): Observable<void> {
@@ -69,32 +57,8 @@ export class TutorialGroupFreePeriodApi {
      * @param tutorialGroupsConfigurationId
      * @param tutorialFreePeriodId
      */
-    delete_(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number): Observable<void> {
-        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialFreePeriodId}`;
-        return this.http.delete<void>(url);
-    }
-
-    /**
-     *
-     *
-     * @param courseId
-     * @param tutorialGroupsConfigurationId
-     * @param tutorialFreePeriodId
-     */
     getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number): Observable<TutorialGroupFreePeriod> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialFreePeriodId}`;
-        return this.http.get<TutorialGroupFreePeriod>(url);
-    }
-
-    /**
-     *
-     *
-     * @param courseId
-     * @param tutorialGroupsConfigurationId
-     * @param tutorialFreePeriodId
-     */
-    getOneOfConfiguration_(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number): Observable<TutorialGroupFreePeriod> {
-        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialFreePeriodId}`;
         return this.http.get<TutorialGroupFreePeriod>(url);
     }
 
@@ -152,19 +116,6 @@ export class TutorialGroupFreePeriodApi {
      */
     update(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest): Observable<TutorialGroupFreePeriod> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialFreePeriodId}`;
-        return this.http.put<TutorialGroupFreePeriod>(url, tutorialGroupFreePeriodRequest);
-    }
-
-    /**
-     *
-     *
-     * @param courseId
-     * @param tutorialGroupsConfigurationId
-     * @param tutorialFreePeriodId
-     * @param tutorialGroupFreePeriodRequest
-     */
-    update_(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest): Observable<TutorialGroupFreePeriod> {
-        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialFreePeriodId}`;
         return this.http.put<TutorialGroupFreePeriod>(url, tutorialGroupFreePeriodRequest);
     }
 

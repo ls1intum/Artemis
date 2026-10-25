@@ -51,16 +51,6 @@ export class QuizExerciseBatchApi {
      * @param quizBatchId
      */
     startBatch(quizBatchId: number): Observable<QuizBatch> {
-        const url = `${this.basePath}/api/quiz/quiz-exercises/${quizBatchId}/start-batch`;
-        return this.http.put<QuizBatch>(url, null);
-    }
-
-    /**
-     *
-     *
-     * @param quizBatchId
-     */
-    startBatch_(quizBatchId: number): Observable<QuizBatch> {
         const url = `${this.basePath}/api/quiz/quiz-batches/${quizBatchId}/start-batch`;
         return this.http.put<QuizBatch>(url, null);
     }
