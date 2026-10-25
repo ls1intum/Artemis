@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -18,10 +21,12 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
 /**
@@ -36,13 +41,15 @@ class ProgrammingExerciseTaskServiceTest {
 
     private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
 
+    private ProgrammingExerciseTaskTestRepository taskRepository;
+
     private ProgrammingExerciseTaskService taskService;
 
     private ProgrammingExercise exercise;
 
     @BeforeEach
     void setUp() {
-        ProgrammingExerciseTaskRepository taskRepository = mock(ProgrammingExerciseTaskRepository.class);
+        taskRepository = mock(ProgrammingExerciseTaskTestRepository.class);
         testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
         taskService = new ProgrammingExerciseTaskService(taskRepository, testCaseRepository);
 
@@ -202,6 +209,30 @@ class ProgrammingExerciseTaskServiceTest {
         exercise.setId(1L);
         exercise.setProblemStatement(problemStatement);
         return exercise;
+    }
+
+    @Test
+    void renamingATaskWithARawLongTestReference_preservesItsPersistedIdentityAndTestLink() {
+        String rawName = "testMethods[" + "structuralContract".repeat(20) + "]";
+        var linkedTest = testCase(7L, ProgrammingExerciseTestCase.normalizeTestName(rawName));
+        var realExercise = exerciseWith("[task][Renamed structural contract](" + rawName + ")", linkedTest);
+        var previousTask = new ProgrammingExerciseTask();
+        previousTask.setId(91L);
+        previousTask.setTaskName("Original structural contract");
+        previousTask.setTestCases(Set.of(linkedTest));
+        previousTask.setExercise(realExercise);
+        when(taskRepository.findByExerciseIdWithTestCases(1L)).thenReturn(Set.of(previousTask));
+
+        taskService.updateTasksFromProblemStatement(realExercise);
+
+        ArgumentCaptor<Iterable<ProgrammingExerciseTask>> saved = ArgumentCaptor.captor();
+        verify(taskRepository).saveAll(saved.capture());
+        assertThat(saved.getValue()).singleElement().isSameAs(previousTask);
+        assertThat(previousTask.getId()).isEqualTo(91L);
+        assertThat(previousTask.getTaskName()).isEqualTo("Renamed structural contract");
+        assertThat(previousTask.getTestCases()).containsExactly(linkedTest);
+        assertThat(previousTask.getExercise()).isSameAs(realExercise);
+        verify(taskRepository, never()).delete(any(ProgrammingExerciseTask.class));
     }
 
     /**

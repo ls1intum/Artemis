@@ -410,7 +410,8 @@ public class ProgrammingExerciseFeedbackCreationService {
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
                 .collect(Collectors.toSet());
         // Get test cases where the activate state has changed (re-added or removed tests).
-        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks);
+        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks,
+                exercise.getProgrammingLanguage());
 
         Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
         testCasesToSave.addAll(newTestCases);
@@ -436,7 +437,7 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,
-            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks) {
+            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, ProgrammingLanguage programmingLanguage) {
         Map<String, ProgrammingExerciseTestCaseType> reportedTypes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         testCasesFromFeedbacks.forEach(testCase -> reportedTypes.put(testCase.getTestName(), testCase.getType()));
         // Reuse the grading settings (weight, visibility, etc.) when an inactive test reappears.
@@ -445,6 +446,10 @@ public class ProgrammingExerciseFeedbackCreationService {
             // clone() does not copy the type. A disappearing test keeps its type, and a reappearing one uses
             // the classification of its original CI name rather than the shortened database name.
             updated.setType(reportedTypes.getOrDefault(existing.getTestName(), existing.getType()));
+            if (!updated.isActive() && updated.getType() == ProgrammingExerciseTestCaseType.DEFAULT) {
+                // Legacy short names may not have been classified yet; known structural types must survive shortening.
+                setTestCaseType(Set.of(updated), programmingLanguage);
+            }
             return updated;
         }).collect(Collectors.toSet());
     }

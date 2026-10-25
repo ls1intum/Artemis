@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.dto.versioning;
+package de.tum.cit.aet.artemis.exercise.versioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ExerciseSnapshotDTOTest {

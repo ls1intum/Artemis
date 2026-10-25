@@ -307,6 +307,40 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         });
     }
 
+    @ParameterizedTest
+    @CsvSource({ "false,JAVA", "true,JAVA", "false,C", "true,C" })
+    void shouldClassifyDisappearingLegacyDefaultCases(boolean localCI, ProgrammingLanguage language) {
+        programmingExercise.setProgrammingLanguage(language);
+        programmingExerciseRepository.save(programmingExercise);
+        var originalCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        var structuralCase = originalCases.stream().filter(testCase -> "test3".equals(testCase.getTestName())).findFirst().orElseThrow();
+        structuralCase.setTestName("testMethods[Legacy]");
+        testCaseRepository.save(structuralCase);
+        assertThat(originalCases).allSatisfy(testCase -> assertThat(testCase.getType()).isEqualTo(ProgrammingExerciseTestCaseType.DEFAULT));
+        Map<String, Long> originalIds = originalCases.stream().collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId));
+
+        BuildResultNotification buildResult = localCI
+                ? new BuildResult("main", "solution", "tests", false, null, List.of(new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("test2", List.of())))), List.of(),
+                        List.of(), false, 1)
+                : generateResult(List.of("test2"), List.of());
+        feedbackCreationService.generateTestCasesFromBuildResult(buildResult, programmingExercise);
+
+        var persistedCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(persistedCases).hasSize(3).allSatisfy(testCase -> {
+            assertThat(testCase.getId()).isEqualTo(originalIds.get(testCase.getTestName()));
+            assertThat(testCase.isActive()).isEqualTo("test2".equals(testCase.getTestName()));
+            var expectedType = language != ProgrammingLanguage.JAVA ? ProgrammingExerciseTestCaseType.DEFAULT
+                    : "testMethods[Legacy]".equals(testCase.getTestName()) ? ProgrammingExerciseTestCaseType.STRUCTURAL : ProgrammingExerciseTestCaseType.BEHAVIORAL;
+            assertThat(testCase.getType()).isEqualTo(expectedType);
+        });
+        assertThat(persistedCases).filteredOn(testCase -> "testMethods[Legacy]".equals(testCase.getTestName())).singleElement().satisfies(testCase -> {
+            assertThat(testCase.getWeight()).isEqualTo(3.0);
+            assertThat(testCase.getVisibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
+            assertThat(testCase.getBonusMultiplier()).isEqualTo(1.0);
+            assertThat(testCase.getBonusPoints()).isZero();
+        });
+    }
+
     @Test
     void shouldGenerateNewTestCases() {
         // We do not want to use the test cases generated in the setup
