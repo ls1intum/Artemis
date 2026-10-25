@@ -179,6 +179,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onSearch() {
+        this.page = 1;
         this.commandMetisToFetchPosts(true);
     }
 
@@ -227,7 +228,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
         searchConfig.filterToUnverifiedIris = this.isAtLeastTutor() && this.formGroup.get('filterToUnverifiedIris')?.value;
         searchConfig.sortingOrder = this.sortingOrder();
-        this.commandMetisToFetchPosts(true);
+        this.onSearch();
     }
 
     protected onTriggerNavigateToPost(post: Posting) {
