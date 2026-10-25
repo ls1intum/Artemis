@@ -234,6 +234,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.PLAGIARISM_VERDICT_AUTHOR, userId, values("exercise_id", exerciseId, "created_by", "test"));
         seed(UserDeletionReferencePolicy.LTI_LAUNCH, userId, values("iss", "https://platform", "sub", "subject", "deployment_id", "deployment", "resource_link_id", "link"));
         seed(UserDeletionReferencePolicy.COMPETENCY_PROGRESS, userId, values("competency_id", competencyId));
+        seed(UserDeletionReferencePolicy.COURSE_HOME_VISIT, userId, values("course_id", courseId, "first_seen_at", now, "last_seen_at", now, "variant_cursor", 0));
         seed(UserDeletionReferencePolicy.LECTURE_PROGRESS, userId, values("lecture_unit_id", lectureUnitId));
         seed(UserDeletionReferencePolicy.LEARNING_PATH, userId, values("course_id", courseId, "progress", 0));
         seed(UserDeletionReferencePolicy.LEARNER_PROFILE, userId, values("feedback_detail", 2, "feedback_formality", 2, "has_setup_feedback_preferences", false));

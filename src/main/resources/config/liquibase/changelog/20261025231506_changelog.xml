@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20261025231506-01-course-home-visits" author="krusche">
+        <createTable tableName="course_home_visit">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="user_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="course_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="first_seen_at" type="datetime(3)"><constraints nullable="false"/></column>
+            <column name="last_seen_at" type="datetime(3)"><constraints nullable="false"/></column>
+            <column name="variant_cursor" type="bigint"><constraints nullable="false"/></column>
+        </createTable>
+        <addUniqueConstraint tableName="course_home_visit" columnNames="user_id,course_id" constraintName="ux_home_visit_user_course"/>
+        <addForeignKeyConstraint baseTableName="course_home_visit" baseColumnNames="user_id" referencedTableName="jhi_user" referencedColumnNames="id" constraintName="fk_home_visit_user" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="course_home_visit" baseColumnNames="course_id" referencedTableName="course" referencedColumnNames="id" constraintName="fk_home_visit_course" onDelete="CASCADE"/>
+        <createIndex tableName="course_home_visit" indexName="idx_home_visit_course"><column name="course_id"/></createIndex>
+        <rollback><dropTable tableName="course_home_visit"/></rollback>
+    </changeSet>
+</databaseChangeLog>
