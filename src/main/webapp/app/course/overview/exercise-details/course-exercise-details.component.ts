@@ -599,6 +599,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.sortResults();
         if (participation.testRun) {
             this.participationMode.set('practice');
+            if (!this.learningPathMode && this.exercise?.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).allowOnlineEditor) {
+                // Cancel an unfinished automatic navigation to the graded editor before it replaces this page
+                // and resets the newly selected practice mode.
+                void this.router.navigate(['/courses', this.courseId, 'exercises', 'programming-exercises', this.exercise.id, 'code-editor', participation.id]);
+            }
         }
     }
 
