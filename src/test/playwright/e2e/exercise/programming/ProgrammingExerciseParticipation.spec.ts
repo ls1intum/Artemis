@@ -165,8 +165,16 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
         });
 
-        test('Renders the result-only badge in the finished build jobs table', async ({ login, page, programmingExerciseOverview, programmingExerciseEditor }) => {
+        test('Renders the result-only badge in the finished build jobs table', async ({
+            login,
+            page,
+            exerciseAPIRequests,
+            programmingExerciseOverview,
+            programmingExerciseEditor,
+        }) => {
             test.slow();
+            // The initial solution build defines the tests used to grade the student's submission.
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
             const expectedResult = cAllSuccessful.expectedResult;
             const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(expectedResult);
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
