@@ -70,6 +70,8 @@ export class CourseConversationsService implements OnDestroy {
     // All unread mutations invalidate in-flight list snapshots. Counts and timestamps come from the server;
     // no request-specific contributions are added to or subtracted from a refreshed count.
     private unreadStateVersion = 0;
+    // Badge checks also expire on arrivals and newer badge/list results, without starving list snapshots under traffic.
+    private unreadBadgeVersion = 0;
     private acceptedUnreadSnapshotVersion = 0;
     private readonly acceptedUnreadSnapshots$ = new Subject<void>();
     private manualUnreadRevisions = new Map<number, number>();
@@ -469,14 +471,16 @@ export class CourseConversationsService implements OnDestroy {
         );
     };
 
-    /** Update the course badge from a server check only if no intervening read or unread mutation superseded it. */
+    /** Update the course badge only if neither unread mutations nor newer badge/list state superseded the check. */
     checkForUnreadMessages = (course: Course) => {
         if (!course?.id) {
             return;
         }
 
+        const badgeVersion = ++this.unreadBadgeVersion;
         this.currentUnreadSnapshot(() => this.conversationService.checkForUnreadMessages(course.id!)).subscribe({
             next: (hasNewMessages) => {
+                if (badgeVersion !== this.unreadBadgeVersion) return;
                 if (hasNewMessages?.body !== this.hasUnreadMessages) {
                     this.hasUnreadMessages = hasNewMessages?.body ?? false;
                     this._hasUnreadMessages$.next(this.hasUnreadMessages);
@@ -524,6 +528,7 @@ export class CourseConversationsService implements OnDestroy {
 
     /** Derive the course badge from unmuted conversation counts, including unread thread replies. */
     private hasUnreadMessagesCheck = (): void => {
+        this.unreadBadgeVersion++;
         const hasNewMessages = this.conversationsOfUser.some((conversation) => {
             return conversation?.unreadMessagesCount && conversation.unreadMessagesCount > 0 && !conversation.isMuted;
         });
@@ -741,6 +746,7 @@ export class CourseConversationsService implements OnDestroy {
             return;
         }
         if (!this.conversationsOfUser.some((conversation) => conversation.id === conversationId)) return;
+        this.unreadBadgeVersion++;
         if (this.isReadingConversation(conversationId) && !this.isMarkedAsUnread) {
             this.readNewMessage(conversationId);
             return;

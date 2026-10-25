@@ -1886,6 +1886,66 @@ describe('CourseConversationsService', () => {
         expect(courseConversationsService['hasUnreadMessages']).toBe(false);
     });
 
+    it.each([
+        { staleBadge: false, unreadCount: 3 },
+        { staleBadge: true, unreadCount: 0 },
+    ])('keeps the newer conversation snapshot when an older badge response is $staleBadge', ({ staleBadge, unreadCount }) => {
+        courseConversationsService.setUpConversationService(course).subscribe();
+        const stale = new Subject<HttpResponse<boolean>>();
+        const check = vi.spyOn(conversationService, 'checkForUnreadMessages').mockReturnValue(stale);
+        courseConversationsService.checkForUnreadMessages(course);
+        vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: unreadCount }] })));
+
+        courseConversationsService.forceRefresh(false).subscribe();
+        expect(courseConversationsService['hasUnreadMessages']).toBe(unreadCount > 0);
+        stale.next(new HttpResponse({ body: staleBadge }));
+        stale.complete();
+
+        expect(courseConversationsService['hasUnreadMessages']).toBe(unreadCount > 0);
+        expect(check).toHaveBeenCalledOnce();
+    });
+
+    it('invalidates a pending badge response on arrival before the next conversation snapshot', () => {
+        vi.useFakeTimers();
+        vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 1 }] })));
+        courseConversationsService.setUpConversationService(course).subscribe();
+        const stale = new Subject<HttpResponse<boolean>>();
+        vi.spyOn(conversationService, 'checkForUnreadMessages').mockReturnValue(stale);
+        courseConversationsService.checkForUnreadMessages(course);
+
+        courseConversationsService.handleNewMessage(channel.id);
+        stale.next(new HttpResponse({ body: false }));
+        stale.complete();
+
+        expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+    });
+
+    it('keeps the latest badge check when earlier checks finish afterwards', () => {
+        const stale = new Subject<HttpResponse<boolean>>();
+        vi.spyOn(conversationService, 'checkForUnreadMessages')
+            .mockReturnValueOnce(stale)
+            .mockReturnValueOnce(of(new HttpResponse({ body: true })));
+        courseConversationsService.checkForUnreadMessages(course);
+        courseConversationsService.checkForUnreadMessages(course);
+        stale.next(new HttpResponse({ body: false }));
+        stale.complete();
+
+        expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+    });
+
+    it.each([false, true])('accepts a course badge check despite unrelated arrivals when the conversation cache is loaded: %s', (loaded) => {
+        if (loaded) courseConversationsService.setUpConversationService(course).subscribe();
+        const response = new Subject<HttpResponse<boolean>>();
+        vi.spyOn(conversationService, 'checkForUnreadMessages').mockReturnValue(response);
+        courseConversationsService.checkForUnreadMessages(course);
+
+        courseConversationsService.handleNewMessage(999999);
+        response.next(new HttpResponse({ body: true }));
+        response.complete();
+
+        expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+    });
+
     it('should handle new message', () => {
         vi.useFakeTimers();
         const postDTO: PostBroadcastDTO = {
