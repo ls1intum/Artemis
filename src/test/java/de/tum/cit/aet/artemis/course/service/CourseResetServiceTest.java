@@ -97,6 +97,9 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
 
+    @Autowired
+    private de.tum.cit.aet.artemis.course.service.home.CourseHomeVisitService homeVisits;
+
     private Course course;
 
     private User student;
@@ -106,6 +109,16 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void resetRemovesSuccessfulHomeVisits() {
+        var now = java.time.Instant.now();
+        homeVisits.acknowledge(course.getId(), student.getId(), now, 0, now);
+        assertThat(homeVisits.read(course.getId(), student.getId()).lastSeenAt()).isNotNull();
+        courseResetService.resetStudentData(course.getId());
+        assertThat(homeVisits.read(course.getId(), student.getId()).lastSeenAt()).isNull();
     }
 
     @Test
