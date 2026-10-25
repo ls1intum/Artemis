@@ -23,6 +23,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 describe('CodeButtonComponent', () => {
     let fixture: ComponentFixture<CodeButtonComponent>;
     let component: CodeButtonComponent;
@@ -31,6 +32,7 @@ describe('CodeButtonComponent', () => {
     let programmingExerciseService: Mocked<ProgrammingExerciseService>;
     let ideSettingsService: Mocked<IdeSettingsService>;
     let sshUserSettingsService: Mocked<SshUserSettingsService>;
+    let featureToggleService: FeatureToggleService;
     let mediumBreakpoint: BehaviorSubject<BreakpointState>;
     let extraLargeBreakpoint: BehaviorSubject<BreakpointState>;
 
@@ -94,6 +96,7 @@ describe('CodeButtonComponent', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService) as Mocked<ProgrammingExerciseService>;
         ideSettingsService = TestBed.inject(IdeSettingsService) as Mocked<IdeSettingsService>;
         sshUserSettingsService = TestBed.inject(SshUserSettingsService) as Mocked<SshUserSettingsService>;
+        featureToggleService = TestBed.inject(FeatureToggleService);
 
         theiaFeatureActive = true;
         profileInfo = {
@@ -167,7 +170,7 @@ describe('CodeButtonComponent', () => {
         expect(component['showAlternatives']()).toBe(false);
     });
 
-    it('should disable only trigger if disabled input is set', async () => {
+    it('should disable trigger if disabled input is set', async () => {
         createComponent(false);
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
@@ -175,6 +178,19 @@ describe('CodeButtonComponent', () => {
         expect(trigger.disabled).toBe(true);
 
         fixture.componentRef.setInput('disabled', false);
+        fixture.detectChanges();
+        expect(trigger.disabled).toBe(false);
+    });
+
+    it('should disable trigger if programming exercises are disabled', () => {
+        createComponent(false);
+        const trigger = fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement as HTMLButtonElement;
+
+        featureToggleService.initializeFeatureToggles([]);
+        fixture.detectChanges();
+        expect(trigger.disabled).toBe(true);
+
+        featureToggleService.initializeFeatureToggles([FeatureToggle.ProgrammingExercises]);
         fixture.detectChanges();
         expect(trigger.disabled).toBe(false);
     });

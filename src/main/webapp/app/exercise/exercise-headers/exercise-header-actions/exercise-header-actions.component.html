@@ -56,7 +56,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faPaperPlane"
                 [buttonLabel]="(exercise().type === ExerciseType.QUIZ ? submitLabel() : 'entity.action.submit') | artemisTranslate"
-                [overwriteDisabled]="exercise().type === ExerciseType.QUIZ && submitDisabled()"
+                [forceDisabled]="exercise().type === ExerciseType.QUIZ && submitDisabled()"
                 [smallButton]="smallButtons()"
                 (click)="onSubmitExercise()!()"
             ></button>
@@ -124,7 +124,7 @@
                             [buttonLoading]="isLoading()"
                             [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
-                            [overwriteDisabled]="isBeforeStartDateAndStudent"
+                            [forceDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
                         ></button>
                     </span>
@@ -229,7 +229,7 @@
                             [buttonLoading]="isLoading()"
                             [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
-                            [overwriteDisabled]="isBeforeStartDateAndStudent"
+                            [forceDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
                         ></button>
                     </span>

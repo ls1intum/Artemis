@@ -21,6 +21,8 @@ import { User } from 'app/account/user/user.model';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { map } from 'rxjs/operators';
 import { notUndefined } from 'app/foundation/util/string-pure.utils';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -48,7 +50,15 @@ type CodeButtonLoadingState =
 @Component({
     selector: 'jhi-code-button',
     templateUrl: './code-button.component.html',
-    imports: [TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, FaIconComponent, ArtemisTranslatePipe, CodeButtonPopoverContentComponent],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        CodeButtonPopoverContentComponent,
+        FeatureToggleDirective,
+    ],
 })
 export class CodeButtonComponent {
     private readonly accountService = inject(AccountService);
@@ -61,6 +71,7 @@ export class CodeButtonComponent {
     protected readonly faCircleExclamation = faCircleExclamation;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCode = faCode;
+    protected readonly FeatureToggle = FeatureToggle;
 
     private readonly resourceLoadingTriggered = signal(false);
     protected readonly showAlternatives = signal(false);
