@@ -8,6 +8,15 @@
          authorities, so this also runs on a fresh installation. -->
     <changeSet id="20261024201101-01-remove-global-teaching-authorities" author="krusche">
         <comment>Remove the tutor, editor and instructor authorities from all users and from the authority table. Teaching roles live in user_course_role.</comment>
+        <!-- Teaching authorities used to imply ROLE_USER through the role hierarchy. Preserve that access for accounts
+             whose authorities were edited without explicitly assigning ROLE_USER. -->
+        <sql>
+            INSERT INTO jhi_user_authority (user_id, authority_name)
+            SELECT DISTINCT teaching.user_id, 'ROLE_USER'
+            FROM jhi_user_authority teaching
+            LEFT JOIN jhi_user_authority ordinary ON ordinary.user_id = teaching.user_id AND ordinary.authority_name = 'ROLE_USER'
+            WHERE teaching.authority_name IN ('ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR') AND ordinary.user_id IS NULL
+        </sql>
         <delete tableName="jhi_user_authority">
             <where>authority_name IN ('ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR')</where>
         </delete>

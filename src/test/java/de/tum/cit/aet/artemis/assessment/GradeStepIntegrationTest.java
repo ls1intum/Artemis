@@ -8,6 +8,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -155,6 +157,26 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
         gradingScaleRepository.save(examGradingScale);
 
         request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "grade-steps, false", "grade-steps, true", "match-grade-step?gradePercentage=50, false", "match-grade-step?gradePercentage=50, true" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamGradeStepsWithUnrelatedCourse(String endpoint, boolean resultsPublished) throws Exception {
+        exam.setCourse(courseUtilService.createCourse());
+        exam.setPublishResultsDate(resultsPublished ? ZonedDateTime.now().minusMinutes(1) : null);
+        examRepository.save(exam);
+        GradeStep gradeStep = new GradeStep();
+        gradeStep.setGradeName("Other course grade");
+        gradeStep.setLowerBoundPercentage(0);
+        gradeStep.setUpperBoundPercentage(100);
+        gradeStep.setUpperBoundInclusive(true);
+        gradeStep.setGradingScale(examGradingScale);
+        examGradingScale.setGradeType(GradeType.GRADE);
+        examGradingScale.setGradeSteps(Set.of(gradeStep));
+        gradingScaleRepository.save(examGradingScale);
+
+        request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/" + endpoint, HttpStatus.FORBIDDEN, Void.class);
     }
 
     /**

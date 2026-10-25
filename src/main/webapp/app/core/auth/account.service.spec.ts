@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
@@ -11,6 +12,8 @@ import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-togg
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
@@ -54,6 +57,8 @@ describe('AccountService', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
+                { provide: AlertService, useValue: MockService(AlertService) },
             ],
         });
         accountService = TestBed.inject(AccountService);
@@ -118,6 +123,28 @@ describe('AccountService', () => {
         expect(userReceived).toEqual(user);
         expect(accountService.userIdentity()).toEqual(user);
         expect(accountService.isAuthenticated()).toBe(true);
+    });
+
+    it('should update management access after course roles are granted and revoked without logging in again', async () => {
+        const guard = TestBed.inject(UserRouteAccessService);
+        const showsTutorControls = computed(() => accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR));
+        const showsInstructorControls = computed(() => accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR));
+
+        for (const roles of [[], ['TEACHING_ASSISTANT'], ['INSTRUCTOR'], []]) {
+            const refreshedAccount = accountService.identity(true);
+            httpMock.expectOne({ method: 'GET', url: getUserUrl }).flush({
+                id: 1,
+                authorities: [Authority.STUDENT],
+                courseRoles: [{ courseId: 1, roles }],
+            });
+            await refreshedAccount;
+
+            expect(accountService.isAuthenticated()).toBe(true);
+            expect(showsTutorControls()).toBe(roles.length > 0);
+            expect(showsInstructorControls()).toBe(roles.includes('INSTRUCTOR'));
+            await expect(guard.checkLogin(IS_AT_LEAST_TUTOR, '/course-management/1')).resolves.toBe(roles.length > 0);
+            await expect(guard.checkLogin(IS_AT_LEAST_INSTRUCTOR, '/course-management/1/edit')).resolves.toBe(roles.includes('INSTRUCTOR'));
+        }
     });
 
     it('should authenticate a user', () => {

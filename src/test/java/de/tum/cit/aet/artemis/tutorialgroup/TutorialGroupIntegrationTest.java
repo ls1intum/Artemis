@@ -20,7 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -30,8 +33,12 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -82,6 +89,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Autowired
     private OneToOneChatTestRepository oneToOneChatRepository;
 
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
+
+    @Autowired
+    private TokenProvider tokenProvider;
+
     @BeforeEach
     @Override
     void setupTestScenario() {
@@ -119,6 +132,28 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(tutorialGroupTitle).isEqualTo(firstCourseTutorialGroup1.getTitle());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "registered-students", "unregistered-students?loginOrName=student&pageIndex=0&pageSize=10" })
+    void getStudentLists_afterCourseRoleGrantAndRevocation_shouldUseCurrentRoleWithSameToken(String endpoint) throws Exception {
+        var course = courseRepository.findByIdElseThrow(exampleCourseId);
+        userCourseRoleRepository.save(new UserCourseRole(firstCourseTutor1, course, CourseRole.STUDENT));
+        userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(firstCourseTutor1.getId(), exampleCourseId, CourseRole.TEACHING_ASSISTANT);
+        var authentication = new UsernamePasswordAuthenticationToken(firstCourseTutor1.getLogin(), "", List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        String token = tokenProvider.createToken(authentication, false);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        String path = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/" + endpoint;
+
+        request.get(path, HttpStatus.FORBIDDEN, String.class, headers);
+
+        userCourseRoleRepository.save(new UserCourseRole(firstCourseTutor1, course, CourseRole.TEACHING_ASSISTANT));
+        var students = request.get(path, HttpStatus.OK, String.class, headers);
+        assertThat(students).contains(endpoint.startsWith("registered") ? FIRST_COURSE_STUDENT1_LOGIN : FIRST_COURSE_STUDENT2_LOGIN);
+
+        userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(firstCourseTutor1.getId(), exampleCourseId, CourseRole.TEACHING_ASSISTANT);
+        request.get(path, HttpStatus.FORBIDDEN, String.class, headers);
+    }
+
     @Test
     @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "USER")
     void getUniqueLanguageValues_TwoUniqueValues_ShouldReturnBoth() throws Exception {
@@ -134,6 +169,22 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Nested
     class GetTutorialGroupsTests {
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "USER")
+        void getTutorialGroupsForCourse_afterTutorDemotion_shouldHidePrivateInformation() throws Exception {
+            var course = courseRepository.findByIdElseThrow(exampleCourseId);
+            userCourseRoleRepository.save(new UserCourseRole(firstCourseTutor1, course, CourseRole.STUDENT));
+            userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(firstCourseTutor1.getId(), exampleCourseId, CourseRole.TEACHING_ASSISTANT);
+
+            var tutorialGroups = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupSummaryDTO.class);
+
+            assertThat(tutorialGroups).hasSize(2);
+            for (var tutorialGroup : tutorialGroups) {
+                verifyPrivateInformationIsHidden(tutorialGroup);
+                assertThat(tutorialGroup.isUserTutor()).isFalse();
+            }
+        }
 
         @Test
         @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")

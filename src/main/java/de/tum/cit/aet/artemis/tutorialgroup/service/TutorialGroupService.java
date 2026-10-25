@@ -576,7 +576,10 @@ public class TutorialGroupService {
         // TODO: this is some overkill, we calculate way too many information with way too many database calls, we must reduce this
         tutorialGroups.forEach(tutorialGroup -> this.setTransientPropertiesForUser(user, tutorialGroup));
         tutorialGroups.forEach(tutorialGroup -> {
-            if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
+            if (!revealStaffOverview) {
+                tutorialGroup.setIsUserTutor(false);
+            }
+            if (!revealStaffOverview || !this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
                 String tutorName = tutorialGroup.getTeachingAssistantName();
                 Integer numberOfRegisteredUsers = tutorialGroup.getNumberOfRegisteredUsers();
                 tutorialGroup.hidePrivacySensitiveInformation();

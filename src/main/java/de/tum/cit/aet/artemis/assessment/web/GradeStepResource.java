@@ -121,6 +121,9 @@ public class GradeStepResource {
         User user = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = api.findByIdElseThrow(examId);
+        if (!courseId.equals(exam.getCourse().getId())) {
+            throw new AccessForbiddenException("The exam does not belong to the course");
+        }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
@@ -246,6 +249,9 @@ public class GradeStepResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         Exam exam = api.findByIdElseThrow(examId);
+        if (!courseId.equals(exam.getCourse().getId())) {
+            throw new AccessForbiddenException("The exam does not belong to the course");
+        }
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (gradingScale.isEmpty()) {
