@@ -79,7 +79,8 @@ public record CourseUpdateDTO(
 
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
         boolean autoOrchestratorEnabled, @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride, @Size(max = 2000) String studentWelcomeContext) implements CourseSettingsDTO {
+        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride, @Size(max = 2000) String studentWelcomeContext)
+        implements CourseSettingsDTO {
 
     /**
      * Applies the DTO values to an existing Course entity.

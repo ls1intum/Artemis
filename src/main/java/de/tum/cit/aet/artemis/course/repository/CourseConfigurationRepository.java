@@ -218,6 +218,7 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
 
     /** The number of courses whose configurations are read by one query when attaching them in bulk. */
     int ATTACH_BATCH_SIZE = 1000;
+
     /** Reads the published learning guidance without loading other course settings. */
     @Query("SELECT c.studentWelcomeContext FROM CourseConfiguration c WHERE c.course.id = :courseId")
     Optional<String> findStudentWelcomeContextByCourseId(@Param("courseId") long courseId);
