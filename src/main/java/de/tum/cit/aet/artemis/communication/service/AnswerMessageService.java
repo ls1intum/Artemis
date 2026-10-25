@@ -149,7 +149,8 @@ public class AnswerMessageService extends PostingService {
         var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
         usersInvolved.add(post.getAuthor());
 
-        var notificationRecipientsList = getNotificationRecipients(conversation).toList();
+        boolean visibleToStudents = !(conversation instanceof Channel channel) || channel.isVisibleToStudents();
+        var notificationRecipientsList = getNotificationRecipients(conversation).filter(recipient -> visibleToStudents || recipient.isAtLeastTutorInCourse()).toList();
 
         var explicitMentionRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
                 .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), newAnswerMessage.getAuthor().getId())).toList();
@@ -245,6 +246,7 @@ public class AnswerMessageService extends PostingService {
         Conversation conversation = conversationService.getConversationById(existingAnswerMessage.getPost().getConversation().getId());
         ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
+        conversationService.checkConversationVisibilityElseThrow(conversation, user);
 
         // A pending (unverified) Iris reply is invisible to students and must also be immutable for them: block any
         // non-tutor (e.g. the author of the parent post, who would otherwise pass mayMarkAnswerMessageAsResolvingElseThrow)
@@ -291,7 +293,8 @@ public class AnswerMessageService extends PostingService {
 
     private Conversation mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
         boolean userIsAuthor = existingAnswerPost.getAuthor().getId().equals(user.getId());
-        Conversation conversation = existingAnswerPost.getPost().getConversation();
+        Conversation conversation = conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
+        conversationService.checkConversationVisibilityElseThrow(conversation, user);
         boolean isAllowedToEditOrDeleteOtherUsersMessage = conversation instanceof Channel channel
                 && this.channelAuthorizationService.isAllowedToEditOrDeleteMessagesOfOtherUsers(channel, user);
         boolean isArchivedChannel = conversation instanceof Channel channel && channel.getIsArchived();
@@ -300,7 +303,7 @@ public class AnswerMessageService extends PostingService {
             throw new AccessForbiddenException("Answer Post", existingAnswerPost.getId());
         }
 
-        return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
+        return conversation;
     }
 
     /**
