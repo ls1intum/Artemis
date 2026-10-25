@@ -95,6 +95,20 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.isProblemStatementVisible()).toBe(true);
     });
 
+    it('should open the general feedback tab of the build output panel first and switch only to its known tabs', () => {
+        expect(component.bottomPanelTab()).toBe('feedback');
+
+        component.selectBottomPanelTab('buildOutput');
+        expect(component.bottomPanelTab()).toBe('buildOutput');
+
+        component.selectBottomPanelTab('notes');
+        component.selectBottomPanelTab(undefined);
+        expect(component.bottomPanelTab()).toBe('buildOutput');
+
+        component.selectBottomPanelTab('feedback');
+        expect(component.bottomPanelTab()).toBe('feedback');
+    });
+
     it('should update file badges from all referenced feedback, not only Athena suggestions', () => {
         fixture.componentRef.setInput('referencedFeedback', [
             { text: 'FeedbackSuggestion:accepted:1', reference: 'file:src/main/App.java_line:3' } as Feedback,

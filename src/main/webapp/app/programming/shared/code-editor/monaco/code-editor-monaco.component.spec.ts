@@ -803,16 +803,50 @@ describe('CodeEditorMonacoComponent', () => {
         // not asserted: the rendering is driven by both an effect and a requestAnimationFrame
         // pass, which legitimately fire multiple times in the test harness without affecting
         // production correctness.
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1-line-2`, document.createElement('div'));
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 1, `feedback-0-line-1`, document.createElement('div'), true);
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 2, `feedback-1-line-2`, document.createElement('div'), true);
         expect(selectFileInEditorStub).toHaveBeenCalled();
         consoleErrorSpy.mockRestore();
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();
     });
 
+    it('should give each feedback of a line its own widget node and id', () => {
+        const first = { id: 1, reference: 'file:file1.java_line:6' } as Feedback;
+        const second = { id: 2, reference: 'file:file1.java_line:6' } as Feedback;
+        const nodes = new Map<Feedback, HTMLElement>([
+            [first, document.createElement('div')],
+            [second, document.createElement('span')],
+        ]);
+        getInlineFeedbackNodeStub.mockImplementation((_line: number, feedback?: Feedback) => (feedback ? nodes.get(feedback) : undefined));
+        fixture.changeDetectorRef.detectChanges();
+        const addLineWidgetStub = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
+
+        comp['addLineWidgetWithFeedback'](first, 0);
+        comp['addLineWidgetWithFeedback'](second, 1);
+
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 6, 'feedback-0-line-6', nodes.get(first), true);
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 6, 'feedback-1-line-6', nodes.get(second), true);
+    });
+
+    it('should place every feedback above the first line it refers to', () => {
+        const ranged = { id: 1, reference: 'file:file1.java_line:6-10' } as Feedback;
+        const single = { id: 2, reference: 'file:file1.java_line:6' } as Feedback;
+        getInlineFeedbackNodeStub.mockImplementation(() => document.createElement('div'));
+        fixture.changeDetectorRef.detectChanges();
+        const addLineWidgetStub = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
+
+        comp['addLineWidgetWithFeedback'](ranged, 0);
+        comp['addLineWidgetWithFeedback'](single, 1);
+
+        // Editor lines are 1-based: both start at line 7, so both sit after line 6
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 6, 'feedback-0-line-6', expect.any(HTMLElement), true);
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 6, 'feedback-1-line-6', expect.any(HTMLElement), true);
+    });
+
     describe('inline feedback placement', () => {
-        // The editor stores the line of an inline feedback 0-based: `_line:0` is the first line, shown as editor line 1
+        // The editor stores the line of an inline feedback 0-based: `_line:0` is the first line. A feedback sits above the first line it refers to,
+        // i.e. after the Monaco line `start` (line 0 puts it above the first line of the file)
         const firstLineFeedback: Feedback = { id: 10, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:0', text: 'File file1.java at line 1', detailText: 'first' };
         const laterFeedback: Feedback = { id: 11, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:4', text: 'File file1.java at line 5', detailText: 'later' };
         const otherFileFeedback: Feedback = { id: 12, type: FeedbackType.MANUAL, reference: 'file:file2.java_line:0', text: 'File file2.java at line 1', detailText: 'other' };
@@ -834,14 +868,14 @@ describe('CodeEditorMonacoComponent', () => {
             fixture.componentRef.setInput('readOnlyManualFeedback', true);
         });
 
-        it('should render feedback on the first line at editor line 1 without hiding the other feedback of the file', async () => {
+        it('should render feedback on the first line above it without hiding the other feedback of the file', async () => {
             fixture.componentRef.setInput('selectedFile', 'file1.java');
             fixture.componentRef.setInput('feedbacks', [firstLineFeedback, laterFeedback, otherFileFeedback]);
             await settle();
 
             expect(renderedInlineFeedbackLines()).toEqual([0, 4]);
-            expect(addLineWidgetStub).toHaveBeenCalledWith(1, 'feedback-10-line-1', expect.any(HTMLElement));
-            expect(addLineWidgetStub).toHaveBeenCalledWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(0, 'feedback-0-line-0', expect.any(HTMLElement), true);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(4, 'feedback-1-line-4', expect.any(HTMLElement), true);
         });
 
         it('should render feedback on the first line after switching to the file it belongs to', async () => {
@@ -854,7 +888,7 @@ describe('CodeEditorMonacoComponent', () => {
             await settle();
 
             expect(renderedInlineFeedbackLines()).toEqual([0]);
-            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(1, 'feedback-12-line-1', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(0, 'feedback-0-line-0', expect.any(HTMLElement), true);
         });
 
         it('should render feedback on the first line when it arrives after the file was opened', async () => {
@@ -866,8 +900,8 @@ describe('CodeEditorMonacoComponent', () => {
             await settle();
 
             expect(renderedInlineFeedbackLines()).toEqual([0, 4]);
-            expect(addLineWidgetStub).toHaveBeenCalledWith(1, 'feedback-10-line-1', expect.any(HTMLElement));
-            expect(addLineWidgetStub).toHaveBeenCalledWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(0, 'feedback-0-line-0', expect.any(HTMLElement), true);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(4, 'feedback-1-line-4', expect.any(HTMLElement), true);
         });
 
         it('should turn a new feedback on the first line into a stored feedback', async () => {
@@ -882,7 +916,7 @@ describe('CodeEditorMonacoComponent', () => {
 
             expect(comp.newFeedbackLines()).toEqual([]);
             expect(renderedInlineFeedbackLines()).toEqual([0]);
-            expect(addLineWidgetStub).toHaveBeenCalledWith(1, expect.stringMatching(/^feedback-.*-line-1$/), expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(0, expect.stringMatching(/^feedback-.*-line-0$/), expect.any(HTMLElement), true);
         });
 
         it('should not let a feedback whose line cannot be resolved hide the other feedback of the file', async () => {
@@ -893,7 +927,7 @@ describe('CodeEditorMonacoComponent', () => {
 
             expect(comp.feedbackForSelectedFile()).toEqual([laterFeedback]);
             expect(renderedInlineFeedbackLines()).toEqual([4]);
-            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(4, 'feedback-0-line-4', expect.any(HTMLElement), true);
         });
     });
 
@@ -1018,6 +1052,67 @@ describe('CodeEditorMonacoComponent', () => {
         // The feedback has been saved -> no longer new
         expect(comp.newFeedbackLines()).toHaveLength(0);
         expect(updateFeedbackCallbackStub).toHaveBeenCalledExactlyOnceWith(expectedFeedbacks);
+    });
+
+    it('should reference the selected lines when a feedback is added inside a multi-line selection', () => {
+        fixture.changeDetectorRef.detectChanges();
+        // Lines 15-18 selected by dragging to the start of line 19, which does not belong to the selection
+        vi.spyOn(comp.editor(), 'getSelection').mockReturnValue({ startLineNumber: 15, startColumn: 1, endLineNumber: 19, endColumn: 1 });
+
+        comp.addNewFeedback(16);
+
+        expect(comp.newFeedbackLines()).toEqual([14]);
+        expect(comp.newFeedbackLineEnd(14)).toBe(17);
+    });
+
+    it('should not change the range of an unsaved feedback on the first line of a new selection', () => {
+        fixture.changeDetectorRef.detectChanges();
+        const selection = vi.spyOn(comp.editor(), 'getSelection').mockReturnValue(undefined);
+        comp.addNewFeedback(15);
+
+        // Lines 15-18 selected, add clicked on line 17: line 15 already holds an unsaved single-line feedback
+        selection.mockReturnValue({ startLineNumber: 15, startColumn: 1, endLineNumber: 18, endColumn: 5 });
+        comp.addNewFeedback(17);
+
+        expect(comp.newFeedbackLines()).toEqual([14]);
+        expect(comp.newFeedbackLineEnd(14)).toBeUndefined();
+    });
+
+    it('should add a single-line feedback when the selection does not include the clicked line', () => {
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(comp.editor(), 'getSelection').mockReturnValue({ startLineNumber: 15, startColumn: 1, endLineNumber: 18, endColumn: 5 });
+
+        comp.addNewFeedback(3);
+
+        expect(comp.newFeedbackLines()).toEqual([2]);
+        expect(comp.newFeedbackLineEnd(2)).toBeUndefined();
+    });
+
+    it('should add a new feedback on a line that already has one, but only one new feedback per line', () => {
+        fixture.componentRef.setInput('feedbacks', [...exampleFeedbacks]);
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(comp.editor(), 'getSelection').mockReturnValue(undefined);
+        const lineWithFeedback = Feedback.getReferenceLine(exampleFeedbacks[0])!;
+
+        comp.addNewFeedback(lineWithFeedback + 1);
+        comp.addNewFeedback(lineWithFeedback + 1);
+
+        expect(comp.newFeedbackLines()).toEqual([lineWithFeedback]);
+    });
+
+    it('should keep feedbacks that share a line apart when one of them is updated or a new one is saved', () => {
+        const first: Feedback = { id: 11, reference: 'file:file1.java_line:6', text: 'First', credits: 1 };
+        const second: Feedback = { id: 12, reference: 'file:file1.java_line:6', text: 'Second', credits: 1 };
+        fixture.componentRef.setInput('feedbacks', [first, second]);
+        fixture.changeDetectorRef.detectChanges();
+
+        const editedSecond: Feedback = { ...second, text: 'Second, edited' };
+        comp.updateFeedback(editedSecond);
+        expect(comp.feedbackInternal()).toEqual([first, editedSecond]);
+
+        const newOnSameLine: Feedback = { reference: 'file:file1.java_line:6', text: 'Third', credits: 0 };
+        comp.updateFeedback(newOnSameLine);
+        expect(comp.feedbackInternal()).toEqual([first, editedSecond, newOnSameLine]);
     });
 
     it('should update file session when a file is renamed', async () => {

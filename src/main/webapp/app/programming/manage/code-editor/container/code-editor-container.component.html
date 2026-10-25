@@ -1,4 +1,16 @@
-<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()" [showEditorNavbar]="showNavbar()" [showEditorSidebarRight]="showEditorInstructions()">
+<jhi-code-editor-grid
+    #grid
+    [isTutorAssessment]="isTutorAssessment()"
+    [assessmentWorkspace]="assessmentWorkspace()"
+    [instructionsRailItems]="assessmentInstructionsRailItems()"
+    (instructionsRailItemSelected)="assessmentInstructionsItemSelected.emit($event)"
+    [showEditorNavbar]="showNavbar()"
+    [showEditorSidebarRight]="showEditorInstructions()"
+    [bottomResizable]="!fillHeight() && !(buildable() && generalFeedbackCount() > 0)"
+    [fillHeight]="fillHeight()"
+    (collapseFileBrowserRequest)="fileBrowser.collapse()"
+    (collapseInstructionsRequest)="sidebarInstructions()?.collapse()"
+>
     <div #navbar editorNavbar class="d-flex flex-wrap align-items-center" data-testid="programming-toolbar">
         <span>
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
@@ -29,6 +41,7 @@
         </div>
     </div>
     <jhi-code-editor-file-browser
+        #fileBrowser
         editorSidebarLeft
         [disableActions]="!editable()"
         [displayOnly]="forRepositoryView()"
@@ -93,16 +106,82 @@
         />
     </ng-container>
     <ng-container editorSidebarRight>
+        <!-- In an assessment the instructions run the whole height of the column; the page's feedback panel is under the file browser
+             and the editor, in the bottom area. The column collapses to its rail when it is dragged narrow (see the grid). -->
+        <ng-container [ngTemplateOutlet]="instructionsTemplate" />
+    </ng-container>
+    <ng-template #instructionsTemplate>
         <jhi-code-editor-instructions
+            #sidebarInstructions
             [class.d-none]="!showEditorInstructions()"
             (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
             [isAssessmentMode]="isTutorAssessment()"
+            [customHeader]="assessmentWorkspace()"
         >
+            <div instructionsHeader class="code-editor-instructions-header"><ng-content select="[editorSidebarHeader]" /></div>
             <ng-content select="[editorSidebar]" />
         </jhi-code-editor-instructions>
-    </ng-container>
+    </ng-template>
     <ng-container editorBottomArea>
-        @if (buildable()) {
+        @if (assessmentWorkspace()) {
+            <!-- The page's feedback panel of an assessment, as the general feedback panel under the editor of a student: the page puts
+                 its tabs into the header and the content of the open tab into the body. Collapsed, it is one icon for each tab. -->
+            <jhi-feedback-bottom-panel
+                class="code-editor-bottom-panel"
+                testId="code-editor-assessment-panel"
+                toggleLabelKey="artemisApp.assessment.toggleGeneralFeedback"
+                [fill]="true"
+                [collapsedItems]="assessmentRailItems()"
+                (collapsedItemSelected)="assessmentRailItemSelected.emit($event)"
+                [expanded]="!grid.buildOutputIsCollapsed()"
+                (toggled)="onToggleCollapse({ event: $event, horizontal: false }, CollapsableCodeEditorElement.BuildOutput)"
+            >
+                <div panelHeader class="code-editor-bottom-panel__header-slot"><ng-content select="[editorSidebarPanelHeader]" /></div>
+                <ng-content select="[editorSidebarPanel]" />
+            </jhi-feedback-bottom-panel>
+        } @else if (buildable() && generalFeedbackCount() > 0) {
+            <!-- The build output and the general feedback share one panel as tabs, as in the programming assessment. Both
+                 stay rendered: the build output marks compilation errors and code analysis issues in the editor. -->
+            <jhi-feedback-bottom-panel
+                class="code-editor-bottom-panel"
+                testId="code-editor-bottom-panel"
+                toggleLabelKey="artemisApp.editor.toggleBuildOutputAndFeedback"
+                [fill]="true"
+                [collapsedItems]="bottomPanelRailItems"
+                (collapsedItemSelected)="selectBottomPanelTab($event)"
+                [expanded]="!grid.buildOutputIsCollapsed()"
+                (toggled)="onToggleCollapse({ event: $event, horizontal: false }, CollapsableCodeEditorElement.BuildOutput)"
+            >
+                <tumaet-ui-tabs
+                    panelHeader
+                    class="code-editor-bottom-panel__tabs"
+                    size="small"
+                    selectedColor="text"
+                    surface="muted"
+                    [value]="bottomPanelTab()"
+                    (valueChange)="selectBottomPanelTab($event)"
+                >
+                    <!-- The panel header draws the line below the tabs, so the tab list's own line would double it. -->
+                    <tumaet-ui-tab-list style="border-bottom: 0" [attr.aria-label]="'artemisApp.editor.buildOutputAndFeedback' | artemisTranslate">
+                        <tumaet-ui-tab value="buildOutput" data-testid="code-editor-bottom-tab-build-output">
+                            <fa-icon [icon]="faTerminal" aria-hidden="true" />
+                            <span>{{ 'artemisApp.editor.buildOutput' | artemisTranslate }}</span>
+                        </tumaet-ui-tab>
+                        <tumaet-ui-tab value="feedback" data-testid="code-editor-bottom-tab-feedback">
+                            <fa-icon [icon]="faCommentDots" aria-hidden="true" />
+                            <span>{{ 'artemisApp.assessment.generalFeedback' | artemisTranslate }}</span>
+                            <span class="code-editor-bottom-panel__count">{{ generalFeedbackCount() }}</span>
+                        </tumaet-ui-tab>
+                    </tumaet-ui-tab-list>
+                </tumaet-ui-tabs>
+                <div class="code-editor-bottom-panel__build-output" [hidden]="bottomPanelTab() !== 'buildOutput'">
+                    <jhi-code-editor-build-output [participation]="participation()" [showHeader]="false" (onAnnotations)="onAnnotations($event)" (onError)="onError($event)" />
+                </div>
+                <div [hidden]="bottomPanelTab() !== 'feedback'">
+                    <ng-content select="[editorBottomFeedback]" />
+                </div>
+            </jhi-feedback-bottom-panel>
+        } @else if (buildable()) {
             <jhi-code-editor-build-output
                 [participation]="participation()"
                 [secondaryHeader]="!showNavbar()"
@@ -111,13 +190,6 @@
                 (onError)="onError($event)"
                 (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
             />
-        }
-    </ng-container>
-    <ng-container editorBottom>
-        @if (isTutorAssessment()) {
-            <div>
-                <ng-content select="[editorBottom]" />
-            </div>
         }
     </ng-container>
 </jhi-code-editor-grid>

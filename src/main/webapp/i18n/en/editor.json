@@ -82,7 +82,8 @@
                 "fileBadgeTooltips": {
                     "feedbackSuggestions": "Number of feedback in this file/folder",
                     "reviewComments": "Number of review comment threads in this file/folder"
-                }
+                },
+                "collapse": "Collapse the file browser"
             },
             "errors": {
                 "participationNotFound": "Your participation could not be found.",
@@ -132,7 +133,10 @@
                 "exerciseHasNoIssues": "No issues were identified in the repositories."
             },
             "repo": "Repo",
-            "switchEditors": "Switch code editor"
+            "switchEditors": "Switch code editor",
+            "buildOutputAndFeedback": "Build output and general feedback",
+            "toggleBuildOutput": "Show or hide the build output",
+            "toggleBuildOutputAndFeedback": "Show or hide the build output and general feedback"
         }
     }
 }
