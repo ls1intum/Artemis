@@ -334,7 +334,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         // Keep the live content and the Monaco editor in sync with the markdown input. This mirrors the previous
         // `set markdown(...)` side effect: an incoming binding value updates the editor (where `setText` guards
-        // against redundant updates and performs emoji conversion) WITHOUT emitting markdownChange. The editor is read
+        // against redundant updates) WITHOUT emitting markdownChange. The editor is read
         // untracked so this only reacts to input changes, not to the editor first becoming available (initial content
         // is set in {@link ngAfterViewInit}).
         effect(() => {
@@ -611,7 +611,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
-        // A user edit updates the live content, re-applies it to the editor (handling emoji conversion), and notifies
+        // A user edit updates the live content, re-applies it to the editor, and notifies
         // bound parents via markdownChange. Programmatic updates go through the input effect / setMarkdown and do NOT
         // emit, preserving the legacy distinction between binding updates and user edits.
         this.currentMarkdown.set(event.text);
@@ -639,8 +639,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Pushes the given content into the Monaco editor if it is available. setText guards against redundant updates
-     * and performs emoji conversion.
+     * Pushes the given content into the Monaco editor if it is available. setText guards against redundant updates.
      * @param value The content to apply.
      */
     private applyMarkdownToEditor(value: string | undefined): void {

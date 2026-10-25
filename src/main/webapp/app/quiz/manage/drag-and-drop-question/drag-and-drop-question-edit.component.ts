@@ -49,7 +49,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import {
     faAngleDown,
     faAngleRight,
@@ -100,7 +100,7 @@ import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-l
         SelectModule,
         CheckboxModule,
         InputTextModule,
-        InputNumberModule,
+        PointsInputComponent,
     ],
 })
 export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit, OnDestroy {

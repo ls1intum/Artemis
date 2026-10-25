@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { MockComponent } from 'ng-mocks';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 
@@ -115,6 +116,20 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
         component.editForm.controls.resultPoints.setValue(10001);
         expect(component.editForm.controls.resultPoints.hasError('max')).toBe(true);
+    });
+
+    it('should take typed result points with a comma and up to three fraction digits', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const input = query('input#presentation-instance-result') as HTMLInputElement;
+
+        typeIntoInputNumber(input, '8,125');
+        expect(component.editForm.controls.resultPoints.value).toBe(8.125);
+        expect(component.editForm.controls.resultPoints.valid).toBe(true);
+
+        typeIntoInputNumber(input, '8.12345');
+        expect(component.editForm.controls.resultPoints.value).toBe(8.123);
     });
 
     it('should combine the mandatory date with the optional time', () => {

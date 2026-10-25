@@ -113,8 +113,6 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      * Find all chat sessions with messages for a given course.
      * <p>
      * Note: This query does not use DISTINCT; the return type is {@code Set} to deduplicate results from the LEFT JOIN FETCH.
-     * DISTINCT was ruled out while IrisMessage mapped the json columns accessed_memories and created_memories, which
-     * PostgreSQL's json type cannot compare for equality.
      * Use {@link #findAllWithMessagesByCourseIdSortedByCreationDate(long)} for sorted results.
      *
      * @param courseId the id of the course
