@@ -7,7 +7,9 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { Observable, map } from 'rxjs';
+import { Observable, defer, finalize, map, tap } from 'rxjs';
+import { NavigationSkipped, NavigationStart, Router } from '@angular/router';
+import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
@@ -17,6 +19,7 @@ export class CourseExerciseService {
     private http = inject(HttpClient);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private accountService = inject(AccountService);
+    private router = inject(Router);
 
     /**
      * returns all programming exercises for the course corresponding to courseId
@@ -91,13 +94,54 @@ export class CourseExerciseService {
      * starts the exercise with the identifier exerciseId
      * @param exerciseId - the unique identifier of the exercise
      * @param useGradedParticipation - flag indicating if the student wants to continue from their graded participation
+     * @param exercise - the complete exercise already loaded by the caller
      */
-    startPractice(exerciseId: number, useGradedParticipation: boolean): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {}).pipe(
-            map((participation: StudentParticipation) => {
-                return this.handleParticipation(participation);
-            }),
-        );
+    startPractice(exerciseId: number, useGradedParticipation: boolean, exercise: Exercise): Observable<StudentParticipation> {
+        return defer(() => {
+            const path = (url: string) => url.split(/[?#]/)[0];
+            const originPath = path(this.router.url);
+            const courseId = /^\/courses\/(\d+)\/exercises\//.exec(originPath)?.[1];
+            const gradedParticipation = exercise.studentParticipations?.find((participation) => !participation.testRun);
+            const gradedSegments = gradedParticipation ? participationChildRouteSegments(exercise, gradedParticipation) : undefined;
+            const exercisePath = `/courses/${courseId}/exercises`;
+            const gradedEditorPath = gradedSegments ? `${exercisePath}/${gradedSegments.join('/')}` : undefined;
+            // Only bridge the details-to-editor redirect that can destroy the initiating button. Starts from a course
+            // overview, an existing editor, or an unrelated page keep their caller's navigation behaviour.
+            let followRedirect = !!gradedSegments && (originPath === `${exercisePath}/${exerciseId}` || originPath === `${exercisePath}/${gradedSegments.slice(0, 2).join('/')}`);
+            const pendingNavigation = this.router.currentNavigation();
+            const pendingPath = pendingNavigation ? path((pendingNavigation.finalUrl ?? pendingNavigation.extractedUrl).toString()) : undefined;
+            if (pendingPath && pendingPath !== gradedEditorPath) {
+                followRedirect = false;
+            }
+            let editorRedirectStarted = followRedirect && pendingPath === gradedEditorPath;
+            const navigationSubscription = followRedirect
+                ? this.router.events.subscribe((event) => {
+                      if (event instanceof NavigationStart) {
+                          if (!editorRedirectStarted && path(event.url) === gradedEditorPath) {
+                              editorRedirectStarted = true;
+                          } else {
+                              // A later choice (including leaving and coming back) wins over the pending practice start.
+                              followRedirect = false;
+                          }
+                      } else if (event instanceof NavigationSkipped) {
+                          followRedirect = false;
+                      }
+                  })
+                : undefined;
+            return this.http.post<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {}).pipe(
+                map((participation: StudentParticipation) => this.handleParticipation(participation)),
+                tap((participation) => {
+                    if (!followRedirect || !editorRedirectStarted || !participation.testRun || path(this.router.url) !== gradedEditorPath) {
+                        return;
+                    }
+                    const practiceSegments = participationChildRouteSegments(exercise, participation);
+                    if (practiceSegments) {
+                        void this.router.navigate(['/courses', courseId, 'exercises', ...practiceSegments], { replaceUrl: true });
+                    }
+                }),
+                finalize(() => navigationSubscription?.unsubscribe()),
+            );
+        });
     }
 
     /**

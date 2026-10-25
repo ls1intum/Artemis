@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.exercise.participation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.AdditionalAnswers.delegatesTo;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;
@@ -66,10 +64,8 @@ class TeamParticipationConcurrencyTest extends AbstractSpringIntegrationIndepend
         long exerciseId = exercise.getId();
 
         // Keep coordination local to this isolated test without changing the shared Spring context's bean definitions.
-        var teamRepository = mock(TeamRepository.class, delegatesTo(this.teamRepository));
         var participationRepository = mock(StudentParticipationTestRepository.class, delegatesTo(this.participationRepository));
         var targetService = AopTestUtils.getUltimateTargetObject(participationService);
-        ReflectionTestUtils.setField(targetService, "teamRepository", teamRepository);
         ReflectionTestUtils.setField(targetService, "studentParticipationRepository", participationRepository);
         try {
             var firstLookup = new CountDownLatch(1);
@@ -77,9 +73,8 @@ class TeamParticipationConcurrencyTest extends AbstractSpringIntegrationIndepend
             var firstThread = new AtomicReference<Thread>();
             var secondThread = new AtomicReference<Thread>();
             var participationQueries = mockingDetails(participationRepository).getMockCreationSettings().getDefaultAnswer();
-            var teamQueries = mockingDetails(teamRepository).getMockCreationSettings().getDefaultAnswer();
 
-            // Without the team lock, hold the first empty lookup until the second has also read no participation.
+            // Hold the first empty lookup until the second has also read no participation.
             // This forces the duplicate creation observed in CI rather than depending on scheduler timing.
             doAnswer(invocation -> {
                 Object result = participationQueries.answer(invocation);
@@ -92,15 +87,6 @@ class TeamParticipationConcurrencyTest extends AbstractSpringIntegrationIndepend
                 }
                 return result;
             }).when(participationRepository).findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exerciseId, teamId);
-
-            // With the fix, the second request enters the locking operation before its lookup. Let the first finish;
-            // the second then reads the committed participation and submission after acquiring the same database lock.
-            doAnswer(invocation -> {
-                if (Thread.currentThread() == secondThread.get()) {
-                    secondEntered.countDown();
-                }
-                return teamQueries.answer(invocation);
-            }).when(teamRepository).initializeParticipationWithTeamLock(eq(teamId), any());
 
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
                 var first = executor.submit(() -> {
@@ -126,7 +112,6 @@ class TeamParticipationConcurrencyTest extends AbstractSpringIntegrationIndepend
             }
         }
         finally {
-            ReflectionTestUtils.setField(targetService, "teamRepository", this.teamRepository);
             ReflectionTestUtils.setField(targetService, "studentParticipationRepository", this.participationRepository);
         }
     }

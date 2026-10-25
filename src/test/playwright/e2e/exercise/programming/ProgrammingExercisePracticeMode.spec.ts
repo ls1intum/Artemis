@@ -36,6 +36,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
                 // Keep the graded repository writable until its submission has actually been accepted. Provisioning
                 // repositories can outlast a short wall-clock deadline on CI; the old fixture silently submitted after it.
                 exercise = await exerciseAPIRequests.createProgrammingExercise({ course, releaseDate: dayjs().subtract(1, 'day'), dueDate: dayjs().add(1, 'day') });
+                await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
                 await login(studentOne);
                 const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
                 await expect(response).toBeOK();
@@ -101,6 +102,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
                 releaseDate: dayjs().subtract(1, 'hour'),
                 dueDate: dayjs().subtract(5, 'minutes'),
             });
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Starts the practice mode and allows switching to the missed graded mode', async ({ login, page }) => {

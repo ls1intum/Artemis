@@ -53,6 +53,7 @@ import { ScienceService } from 'app/foundation/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
+import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -308,24 +309,27 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * The participation id in the URL, read from the child route and, while that route is not activated yet, from the
-     * URL itself.
+     * The participation id in the navigation target, or in the active child route once navigation has completed.
      * <p>
      * Both are needed. Angular activates a child route only after this component has initialised, so during the first
-     * pass `route.firstChild` is still empty, and reading it alone left the mode on `graded` until the details
+     * pass `route.firstChild` is still empty or belongs to the outgoing navigation. Reading it alone left the mode on `graded` until the details
      * response arrived - by which time the split panel had redirected the editor to the graded participation and the
      * URL no longer named the one the student had asked for. The URL of the running navigation is what covers that
      * first pass; the child route covers every later evaluation.
      */
     private routedParticipationId(): number | undefined {
+        // Until child activation, firstChild still addresses the outgoing participation. A late details response
+        // must follow the navigation target, otherwise it switches the mode back and redirects the editor again.
+        const navigationUrl = this.router.currentNavigation()?.finalUrl?.toString();
+        const fromNavigation = navigationUrl && /\/(?:code-editor|participate)\/(\d+)/.exec(navigationUrl);
+        if (fromNavigation) {
+            return Number(fromNavigation[1]);
+        }
         const fromChildRoute = this.route.firstChild?.snapshot.paramMap.get('participationId');
         if (fromChildRoute) {
             return Number(fromChildRoute);
         }
-        // While a navigation is in flight - which is exactly when this component is being created for the editor route
-        // - `router.url` still holds the URL being left. The target is only in the navigation itself.
-        const navigationUrl = this.router.getCurrentNavigation?.()?.finalUrl?.toString() ?? this.router.url;
-        const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(navigationUrl);
+        const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(this.router.url);
         return fromUrl ? Number(fromUrl[1]) : undefined;
     }
 
@@ -599,11 +603,34 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.sortResults();
         if (participation.testRun) {
             this.participationMode.set('practice');
-            if (!this.learningPathMode && this.exercise?.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).allowOnlineEditor) {
-                // Cancel an unfinished automatic navigation to the graded editor before it replaces this page
-                // and resets the newly selected practice mode.
-                void this.router.navigate(['/courses', this.courseId, 'exercises', 'programming-exercises', this.exercise.id, 'code-editor', participation.id]);
-            }
+            this.routeToStartedPracticeParticipation(participation);
+        }
+    }
+
+    /**
+     * Points the URL at a freshly started practice participation.
+     * <p>
+     * Setting the mode is not enough on its own. The split panel redirects to the code editor as soon as a participation
+     * is available, and `/courses/:courseId/exercises/:exerciseId` and
+     * `/courses/:courseId/exercises/programming-exercises/:exerciseId` are separate route configs, so that redirect
+     * destroys and re-creates this component. The new instance starts from `loadExercise()`, which sets the mode to
+     * graded and then re-derives it from the URL - and if the redirect went out while the practice start was still in
+     * flight, the URL names the graded participation. The practice selection was then lost for good, which is what made
+     * the practice-mode e2e tests fail: the graded participation was shown while the practice one existed.
+     * <p>
+     * Writing the URL fixes that at the level the mode is actually decided at. `replaceUrl` because this corrects an
+     * address the user never chose, so it must not add a history entry that would take them back to the graded editor.
+     *
+     * @param participation the practice participation that has just been created
+     */
+    private routeToStartedPracticeParticipation(participation: StudentParticipation): void {
+        const exercise = this.exercise;
+        if (!exercise || this.routedParticipationId() === participation.id) {
+            return;
+        }
+        const segments = participationChildRouteSegments(exercise, participation);
+        if (segments) {
+            void this.router.navigate(segments, { relativeTo: this.route.parent, replaceUrl: true });
         }
     }
 

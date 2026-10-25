@@ -1,19 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { GuardsCheckStart, NavigationEnd, Router, provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { ApplicationRef, Component, DestroyRef, inject, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import dayjs from 'dayjs/esm';
-import { take } from 'rxjs/operators';
+import { filter, take } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
@@ -21,6 +25,12 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { UMLDiagramType } from '@tumaet/apollon';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('Course Management Service', () => {
     let service: CourseExerciseService;
@@ -204,7 +214,7 @@ describe('Course Management Service', () => {
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
-            .startPractice(exerciseId, useGradedParticipation)
+            .startPractice(exerciseId, useGradedParticipation, programmingExercise)
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
@@ -250,5 +260,174 @@ describe('Course Management Service', () => {
     afterEach(() => {
         httpMock.verify();
         vi.restoreAllMocks();
+    });
+});
+
+@Component({
+    template: '<jhi-start-practice-mode-button [exercise]="exercise" [smallButtons]="false" (practiceModeStarted)="startedParticipation = $event" />',
+    imports: [StartPracticeModeButtonComponent],
+})
+class PracticeStartRouteComponent {
+    readonly destroyRef = inject(DestroyRef);
+    readonly button = viewChild.required(StartPracticeModeButtonComponent);
+    readonly exercise = new ProgrammingExercise(new Course(), undefined);
+    startedParticipation?: StudentParticipation;
+
+    constructor() {
+        this.exercise.id = 43;
+        this.exercise.allowOnlineEditor = true;
+        this.exercise.studentParticipations = [{ id: 10, testRun: false } as StudentParticipation];
+    }
+}
+
+@Component({ template: 'Editor' })
+class PracticeEditorRouteComponent {}
+
+describe('Starting practice across the exercise editor redirect', () => {
+    let httpMock: HttpTestingController;
+    let router: Router;
+    let harness: RouterTestingHarness;
+    let completedNavigations: string[];
+    let editorNavigationGate: Subject<boolean> | undefined;
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideRouter([
+                    { path: 'courses/:courseId/exercises/:exerciseId', component: PracticeStartRouteComponent },
+                    { path: 'courses/:courseId/exercises/programming-exercises/:exerciseId', component: PracticeStartRouteComponent },
+                    {
+                        path: 'courses/:courseId/exercises/programming-exercises/:exerciseId/code-editor/:participationId',
+                        component: PracticeEditorRouteComponent,
+                        canActivate: [() => editorNavigationGate ?? true],
+                    },
+                    { path: 'courses/:courseId', component: PracticeStartRouteComponent },
+                ]),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService, { error: vi.fn(), success: vi.fn() }),
+            ],
+        }).overrideComponent(StartPracticeModeButtonComponent, { set: { template: '' } });
+        httpMock = TestBed.inject(HttpTestingController);
+        router = TestBed.inject(Router);
+        completedNavigations = [];
+        editorNavigationGate = undefined;
+        router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
+                completedNavigations.push(event.urlAfterRedirects);
+            }
+        });
+        harness = await RouterTestingHarness.create();
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+
+    for (const origin of ['/courses/1/exercises/43', '/courses/1/exercises/programming-exercises/43']) {
+        it(`should show the new practice participation after the initiating button was destroyed (${origin})`, async () => {
+            const details = await harness.navigateByUrl(origin, PracticeStartRouteComponent);
+            details.button().startPractice(false);
+            const request = httpMock.expectOne('api/exercise/exercises/43/participations/practice?useGradedParticipation=false');
+
+            // The split panel routes the existing graded participation while the practice POST is pending.
+            await harness.navigateByUrl('/courses/1/exercises/programming-exercises/43/code-editor/10', PracticeEditorRouteComponent);
+            expect(details.destroyRef.destroyed).toBe(true);
+            request.flush({ id: 20, type: ParticipationType.PROGRAMMING, testRun: true, initializationState: InitializationState.INITIALIZED, exercise: { id: 43 } });
+            await TestBed.inject(ApplicationRef).whenStable();
+
+            expect(
+                TestBed.inject(ParticipationWebsocketService)
+                    .getParticipationsForExercise(43)
+                    .some((participation) => participation.id === 20 && participation.testRun),
+            ).toBe(true);
+            expect(router.url).toBe('/courses/1/exercises/programming-exercises/43/code-editor/20');
+            expect(completedNavigations.at(-1)).toBe('/courses/1/exercises/programming-exercises/43/code-editor/20');
+            expect(details.startedParticipation).toBeUndefined();
+        });
+    }
+
+    it('should follow an editor redirect that was already pending when practice was started', async () => {
+        const details = await harness.navigateByUrl('/courses/1/exercises/43', PracticeStartRouteComponent);
+        const gate = new Subject<boolean>();
+        editorNavigationGate = gate;
+        const guardStarted = firstValueFrom(
+            router.events.pipe(
+                filter((event) => event instanceof GuardsCheckStart),
+                take(1),
+            ),
+        );
+        const editorNavigation = router.navigateByUrl('/courses/1/exercises/programming-exercises/43/code-editor/10');
+        await guardStarted;
+        expect(router.currentNavigation()).not.toBeNull();
+        details.button().startPractice(false);
+        const request = httpMock.expectOne('api/exercise/exercises/43/participations/practice?useGradedParticipation=false');
+        editorNavigationGate = undefined;
+        gate.next(true);
+        gate.complete();
+        await editorNavigation;
+        expect(details.destroyRef.destroyed).toBe(true);
+
+        request.flush({ id: 20, type: ParticipationType.PROGRAMMING, testRun: true, initializationState: InitializationState.INITIALIZED, exercise: { id: 43 } });
+        await TestBed.inject(ApplicationRef).whenStable();
+
+        expect(router.url).toBe('/courses/1/exercises/programming-exercises/43/code-editor/20');
+    });
+
+    for (const laterPaths of [
+        ['/courses/2'],
+        ['/courses/1/exercises/programming-exercises/43/code-editor/30'],
+        ['/courses/2', '/courses/1/exercises/programming-exercises/43/code-editor/10'],
+        ['/courses/1/exercises/programming-exercises/43/code-editor/10'],
+    ]) {
+        it(`should respect a later navigation while practice is starting (${laterPaths.join(' → ')})`, async () => {
+            const details = await harness.navigateByUrl('/courses/1/exercises/43', PracticeStartRouteComponent);
+            details.button().startPractice(false);
+            const request = httpMock.expectOne('api/exercise/exercises/43/participations/practice?useGradedParticipation=false');
+            await harness.navigateByUrl('/courses/1/exercises/programming-exercises/43/code-editor/10', PracticeEditorRouteComponent);
+            for (const laterPath of laterPaths) {
+                await router.navigateByUrl(laterPath);
+            }
+            const navigationCount = completedNavigations.length;
+
+            request.flush({ id: 20, type: ParticipationType.PROGRAMMING, testRun: true, initializationState: InitializationState.INITIALIZED, exercise: { id: 43 } });
+            await TestBed.inject(ApplicationRef).whenStable();
+
+            expect(router.url).toBe(laterPaths.at(-1));
+            expect(completedNavigations).toHaveLength(navigationCount);
+            expect(details.startedParticipation).toBeUndefined();
+        });
+    }
+
+    it('should leave a course overview start on the overview', async () => {
+        const overview = await harness.navigateByUrl('/courses/1', PracticeStartRouteComponent);
+        overview.button().startPractice(false);
+        httpMock.expectOne('api/exercise/exercises/43/participations/practice?useGradedParticipation=false').flush({
+            id: 20,
+            type: ParticipationType.PROGRAMMING,
+            testRun: true,
+            initializationState: InitializationState.INITIALIZED,
+            exercise: { id: 43 },
+        });
+        await TestBed.inject(ApplicationRef).whenStable();
+
+        expect(router.url).toBe('/courses/1');
+        expect(overview.startedParticipation?.id).toBe(20);
+    });
+
+    it('should not navigate or alert a destroyed view when the practice start fails', async () => {
+        const details = await harness.navigateByUrl('/courses/1/exercises/43', PracticeStartRouteComponent);
+        details.button().startPractice(false);
+        const request = httpMock.expectOne('api/exercise/exercises/43/participations/practice?useGradedParticipation=false');
+        await harness.navigateByUrl('/courses/1/exercises/programming-exercises/43/code-editor/10', PracticeEditorRouteComponent);
+
+        request.flush('Failed start', { status: 500, statusText: 'Internal Server Error' });
+        await TestBed.inject(ApplicationRef).whenStable();
+
+        expect(router.url).toBe('/courses/1/exercises/programming-exercises/43/code-editor/10');
+        expect(TestBed.inject(AlertService).error).not.toHaveBeenCalled();
+        expect(details.startedParticipation).toBeUndefined();
     });
 });

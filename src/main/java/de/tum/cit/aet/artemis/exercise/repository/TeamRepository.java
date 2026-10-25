@@ -7,26 +7,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
-
-import jakarta.persistence.LockModeType;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTeamAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.exception.StudentsAlreadyAssignedException;
 
@@ -37,24 +31,6 @@ import de.tum.cit.aet.artemis.exercise.exception.StudentsAlreadyAssignedExceptio
 @Lazy
 @Repository
 public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT team FROM Team team WHERE team.id = :teamId")
-    Optional<Team> findForUpdateById(@Param("teamId") long teamId);
-
-    /**
-     * Initializes a participation while holding the existing team row's lock. The transaction covers both the first participation and its initial submission, so starts on
-     * different nodes cannot create either twice. Only database-backed initialization belongs in this operation, not programming exercise VCS or CI setup.
-     *
-     * @param teamId         the team whose participation is being initialized
-     * @param initialization the database-backed participation initialization
-     * @return the initialized participation
-     */
-    @Transactional
-    default StudentParticipation initializeParticipationWithTeamLock(long teamId, Supplier<StudentParticipation> initialization) {
-        getValueElseThrow(findForUpdateById(teamId), teamId);
-        return initialization.get();
-    }
 
     @EntityGraph(type = LOAD, attributePaths = "students")
     List<Team> findAllByExerciseId(Long exerciseId);

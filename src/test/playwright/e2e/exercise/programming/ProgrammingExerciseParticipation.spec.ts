@@ -37,6 +37,7 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
             test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
                 await login(admin);
                 exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage });
+                await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
             });
 
             test('Makes a submission using code editor', async ({ courseOverview, programmingExerciseOverview, programmingExerciseEditor }) => {
@@ -74,6 +75,7 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Re-renders the sidebar card (building then result) on a websocket result without reloading', async ({
@@ -133,6 +135,7 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Sidebar card leaves "Not yet started" right after starting (no reload)', async ({ page, login, courseOverview }) => {
@@ -163,18 +166,11 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
-        test('Renders the result-only badge in the finished build jobs table', async ({
-            login,
-            page,
-            exerciseAPIRequests,
-            programmingExerciseOverview,
-            programmingExerciseEditor,
-        }) => {
+        test('Renders the result-only badge in the finished build jobs table', async ({ login, page, programmingExerciseOverview, programmingExerciseEditor }) => {
             test.slow();
-            // The initial solution build defines the tests used to grade the student's submission.
-            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
             const expectedResult = cAllSuccessful.expectedResult;
             const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(expectedResult);
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
@@ -198,6 +194,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Makes a git submission through HTTPS using token', async ({ programmingExerciseOverview, waitForParticipationBuildToFinish }) => {
@@ -265,6 +262,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                 mode: ExerciseMode.TEAM,
                 teamAssignmentConfig,
             });
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test.beforeEach('Create an exercise team', async ({ login, userManagementAPIRequests, exerciseAPIRequests }) => {
@@ -393,6 +391,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+            await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         });
 
         test('Makes a git submission through HTTPS', async ({
