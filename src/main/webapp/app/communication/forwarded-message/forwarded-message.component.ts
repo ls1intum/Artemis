@@ -38,7 +38,7 @@ export class ForwardedMessageComponent {
 
     /** Controls whether the "View" button should be shown */
     protected readonly viewButtonVisible = signal(false);
-    hasOriginalPostBeenDeleted = input<boolean | undefined>();
+    isSourceUnavailable = input<boolean | undefined>();
 
     private conversation: Conversation | undefined;
     private isAnswerPost = false;
@@ -49,13 +49,14 @@ export class ForwardedMessageComponent {
         effect(() => {
             const post = this.originalPostDetails();
             untracked(() => {
-                const isAnswerPost = !!post && 'post' in post;
+                const isAnswerPost = !!post && ('resolvesPost' in post || 'post' in post);
                 if (post?.id === undefined || post.id !== this.sourceId || isAnswerPost !== this.isAnswerPost) {
                     this.isContentLong.set(false);
                     this.showFullForwardedMessage.set(false);
                 }
                 this.sourceId = post?.id;
                 this.isAnswerPost = isAnswerPost;
+                this.viewButtonVisible.set(false);
                 try {
                     if (post) {
                         this.conversation = this.isAnswerPost ? (post as AnswerPost).post?.conversation : (post as Post).conversation;

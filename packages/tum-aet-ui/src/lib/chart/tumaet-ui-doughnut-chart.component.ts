@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, afterNextRender, booleanAttribute, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { TumAetUiChartCanvasDirective } from './tumaet-ui-chart-canvas.directive';
+import { createChartVisibility, observeChartSize } from './tumaet-ui-chart-state';
+import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { TumAetUiChartDatumContext, TumAetUiChartSelectEvent, TumAetUiChartSeries, TumAetUiDoughnutChartConfig } from './tumaet-ui-chart.types';
 import { arcPath, sliceAngles } from './tumaet-ui-chart.arcs';
 import { ChartLegendItem, legendPositionOf, placeTooltip } from './tumaet-ui-chart.frame';
@@ -24,11 +26,11 @@ interface SliceView {
     selector: 'tumaet-ui-doughnut-chart',
     templateUrl: './tumaet-ui-doughnut-chart.component.html',
     styleUrl: './tumaet-ui-doughnut-chart.component.scss',
-    imports: [TumAetUiChartLegendComponent, TumAetUiChartTooltipComponent, TumAetUiChartDataTableComponent],
+    imports: [TumAetUiChartCanvasDirective, TumAetUiChartLegendComponent, TumAetUiChartTooltipComponent, TumAetUiChartDataTableComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'tumaet-ui-doughnut-chart' },
 })
-export class TumAetUiDoughnutChartComponent implements OnDestroy {
+export class TumAetUiDoughnutChartComponent {
     private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly canvas = viewChild.required<ElementRef<SVGSVGElement>>('canvas');
 
@@ -45,44 +47,12 @@ export class TumAetUiDoughnutChartComponent implements OnDestroy {
 
     readonly dataSelect = output<TumAetUiChartSelectEvent>();
 
-    private readonly size = signal({ width: 0, height: 0 });
+    private readonly size = observeChartSize(this.canvas);
     protected readonly hovered = signal<{ index: number; x: number; y: number; hostWidth: number; hostHeight: number } | undefined>(undefined);
-    private resizeObserver?: ResizeObserver;
-
-    constructor() {
-        afterNextRender(() => {
-            const element = this.canvas().nativeElement;
-            const rect = element.getBoundingClientRect();
-            this.size.set({ width: rect.width, height: rect.height });
-            if (typeof ResizeObserver === 'undefined') {
-                return;
-            }
-            this.resizeObserver = new ResizeObserver((entries) => {
-                const box = entries[0]?.contentRect;
-                if (box) {
-                    this.size.set({ width: box.width, height: box.height });
-                }
-            });
-            this.resizeObserver.observe(element);
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.resizeObserver?.disconnect();
-    }
-
     /** Slices the reader switched off in the legend, by index. */
-    private readonly hiddenSlices = signal<ReadonlySet<string>>(new Set());
-
-    protected onLegendToggle(key: string): void {
-        this.hiddenSlices.update((hidden) => {
-            const next = new Set(hidden);
-            if (!next.delete(key)) {
-                next.add(key);
-            }
-            return next;
-        });
-    }
+    private readonly visibility = createChartVisibility();
+    private readonly hiddenSlices = this.visibility.hidden;
+    protected readonly onLegendToggle = this.visibility.toggle;
 
     private readonly primarySeries = computed<TumAetUiChartSeries | undefined>(() => this.series()[0]);
 

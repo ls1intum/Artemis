@@ -466,6 +466,256 @@ examples.forEach((activeConversation) => {
             expect(container.scrollTop).toBe(1000);
         });
 
+        describe('when a conversation with unread messages is opened', () => {
+            const lastReadDate = dayjs().subtract(10, 'minutes');
+            const currentUser = { id: 99, internal: false };
+            const otherUser = { id: 42, internal: false };
+            let container: HTMLElement;
+            let top: number;
+            let listHeight: number;
+            let layout: { second: number; separator: number; third: number; fourth: number };
+            let goToLastSelectedElementSpy: MockInstance;
+
+            const withOffsetTop = (element: HTMLElement, offsetTop: () => number) => Object.defineProperty(element, 'offsetTop', { get: offsetTop, configurable: true });
+
+            // Mirrors the template: the new-messages line is a sibling in front of the .post-item that holds the post.
+            const addPost = (id: number, offsetTop: () => number, separatorOffsetTop?: () => number) => {
+                if (separatorOffsetTop) {
+                    const line = document.createElement('div');
+                    line.className = 'new-messages-separator';
+                    withOffsetTop(line, separatorOffsetTop);
+                    container.appendChild(line);
+                }
+                const item = document.createElement('div');
+                item.className = 'post-item';
+                const thread = document.createElement('div');
+                withOffsetTop(thread, offsetTop);
+                item.appendChild(thread);
+                container.appendChild(item);
+                return { post: () => ({ id }), elementRef: { nativeElement: thread } } as unknown as PostingThreadComponent;
+            };
+
+            const loadPosts = (minutesAgo: number[], totalNumberOfPosts: number) => {
+                component.allPosts.set(minutesAgo.map((minutes, index) => ({ id: index + 1, creationDate: dayjs().subtract(minutes, 'minutes'), author: otherUser }) as Post));
+                component.totalNumberOfPosts.set(totalNumberOfPosts);
+                component['computeLastReadState']();
+            };
+
+            beforeEach(() => {
+                top = 0;
+                listHeight = 2000;
+                layout = { second: 200, separator: 380, third: 400, fourth: 600 };
+                container = document.createElement('div');
+                Object.defineProperties(container, {
+                    scrollHeight: { get: () => listHeight, configurable: true },
+                    clientHeight: { get: () => 400, configurable: true },
+                    scrollTop: {
+                        get: () => top,
+                        set: (value: number) => {
+                            top = Math.max(0, Math.min(value, listHeight - 400));
+                        },
+                        configurable: true,
+                    },
+                });
+                (component as any).content = vi.fn().mockReturnValue({ nativeElement: container });
+                (component as any).messages = vi.fn().mockReturnValue([
+                    addPost(1, () => 0),
+                    addPost(2, () => layout.second),
+                    addPost(
+                        3,
+                        () => layout.third,
+                        () => layout.separator,
+                    ),
+                    addPost(4, () => layout.fourth),
+                ]);
+                // the conversation is opened and the user was last in it at post 2
+                vi.spyOn(TestBed.inject(SessionStorageService), 'retrieve').mockReturnValue(2);
+                component.currentUser = currentUser;
+                component._activeConversation.set({ ...component._activeConversation(), lastReadDate });
+                component.isFetchingPosts.set(false);
+                component.canStartSaving = false;
+                goToLastSelectedElementSpy = vi.spyOn(component, 'goToLastSelectedElement');
+            });
+
+            it('should open at the new-messages line rather than at the stored position', () => {
+                // posts 1 and 2 are read, posts 3 and 4 arrived in the meantime, and older pages exist
+                loadPosts([20, 15, 5, 1], 100);
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(top).toBe(layout.separator - 8);
+                expect(component.canStartSaving).toBe(true);
+            });
+
+            it('should store the new-messages line as the position right away so that an arriving message does not pull the list back', () => {
+                const store = vi.spyOn(TestBed.inject(SessionStorageService), 'store');
+                loadPosts([20, 15, 5, 1], 100);
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(store).toHaveBeenCalledWith(`${component.sessionStorageKey}${component._activeConversation()?.id}`, 3);
+            });
+
+            it('opens at the newest message when every loaded post is read despite an older saved position', () => {
+                loadPosts([20, 18, 15, 12], 4);
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledExactlyOnceWith(0, false);
+                expect(top).toBe(listHeight - 400);
+                expect(component.canStartSaving).toBe(true);
+            });
+
+            it('keeps the saved position of a fully read conversation once the reader is already positioned', () => {
+                loadPosts([20, 18, 15, 12], 4);
+                component.canStartSaving = true;
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledExactlyOnceWith(2, false);
+                expect(top).toBe(layout.second - 10);
+            });
+
+            it('honors an explicit post target when opening a conversation with no unread messages', () => {
+                loadPosts([20, 18, 15, 12], 4);
+                component.focusOnPostId = 4;
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledExactlyOnceWith(4, false);
+                expect(top).toBe(layout.fourth - 10);
+            });
+
+            it('should open at the stored position when more messages are unread than were loaded', () => {
+                // every loaded post is unread, so the first unread message is on an older page that is not loaded
+                loadPosts([9, 8, 5, 1], 100);
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledOnce();
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledWith(2, false);
+            });
+
+            it('should open at the oldest message when all of the conversation is unread and loaded', () => {
+                loadPosts([9, 8, 5, 1], 4);
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledWith(1, false, true);
+            });
+
+            it('should not jump to the new-messages line again once the conversation is positioned', () => {
+                loadPosts([20, 15, 5, 1], 100);
+                component.canStartSaving = true;
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledOnce();
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledWith(2, false);
+            });
+
+            it('should keep the new-messages line where it is when a message arrives while it is the stored position', () => {
+                loadPosts([20, 15, 5, 1], 100);
+                component.canStartSaving = true;
+                // the user is reading at the line, so the first unread post is the position that is restored
+                vi.spyOn(TestBed.inject(SessionStorageService), 'retrieve').mockReturnValue(3);
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledOnce();
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledWith(3, false, true);
+            });
+
+            it('should open at a message the user navigated to rather than at the new-messages line', () => {
+                loadPosts([20, 15, 5, 1], 100);
+                component.focusOnPostId = 4;
+
+                component['scrollToStoredId']();
+                vi.runAllTimers();
+
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledOnce();
+                expect(goToLastSelectedElementSpy).toHaveBeenCalledWith(4, false);
+            });
+
+            it('should keep holding the new-messages line when the list was still short and the position was clamped to its end', () => {
+                let resize: (() => void) | undefined;
+                vi.stubGlobal(
+                    'ResizeObserver',
+                    class {
+                        constructor(callback: () => void) {
+                            resize = callback;
+                        }
+                        observe = vi.fn();
+                        disconnect = vi.fn();
+                    },
+                );
+                try {
+                    loadPosts([20, 15, 5, 1], 100);
+                    component.ngAfterViewInit();
+                    // the content of the posts is not rendered yet, so the list is short and the line cannot be reached
+                    listHeight = 600;
+                    layout.separator = 500;
+                    component['scrollToStoredId']();
+                    vi.runAllTimers();
+                    expect(top).toBe(200);
+
+                    // the content arrives; the list must not start following its end just because it was clamped to it before
+                    listHeight = 2000;
+                    layout.separator = 1200;
+                    resize!();
+                    vi.runAllTimers();
+                    expect(top).toBe(1192);
+                } finally {
+                    vi.unstubAllGlobals();
+                }
+            });
+
+            it('should hold the new-messages line in place while content above it changes height until the user scrolls', () => {
+                let resize: (() => void) | undefined;
+                vi.stubGlobal(
+                    'ResizeObserver',
+                    class {
+                        constructor(callback: () => void) {
+                            resize = callback;
+                        }
+                        observe = vi.fn();
+                        disconnect = vi.fn();
+                    },
+                );
+                try {
+                    loadPosts([20, 15, 5, 1], 100);
+                    component.ngAfterViewInit();
+                    component['scrollToStoredId']();
+                    vi.runAllTimers();
+                    expect(top).toBe(372);
+
+                    // an image above the first unread message finishes loading and pushes it down
+                    layout.separator = 500;
+                    resize!();
+                    vi.runAllTimers();
+                    expect(top).toBe(492);
+
+                    // the user takes over, so later layout changes must not move the list any more
+                    container.dispatchEvent(new Event('wheel'));
+                    layout.separator = 700;
+                    resize!();
+                    vi.runAllTimers();
+                    expect(top).toBe(492);
+                } finally {
+                    vi.unstubAllGlobals();
+                }
+            });
+        });
+
         it('retries the same older page after a failed request', () => {
             component.totalNumberOfPosts.set(100);
             const request = vi.spyOn(communicationService, 'getFilteredPosts');
@@ -895,6 +1145,34 @@ examples.forEach((activeConversation) => {
             }
         });
 
+        it('attaches forwarded content even when the recipient cannot access the original conversation', () => {
+            const sourcePost: Post = { id: 10, content: 'Forwarded private message', resolved: false };
+            const sourceAnswer: AnswerPost = { id: 11, content: 'Forwarded private reply', resolvesPost: false };
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [
+                            {
+                                id: 1,
+                                messages: [
+                                    { id: 101, sourceId: 10, sourceType: PostingType.POST },
+                                    { id: 102, sourceId: 11, sourceType: PostingType.ANSWER },
+                                ],
+                            },
+                        ],
+                    }),
+                ),
+            );
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of([sourcePost]));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of([sourceAnswer]));
+            component.allPosts.set([{ id: 1, content: 'Shared with you', hasForwardedMessages: true }]);
+
+            component.setPosts();
+
+            expect(component.posts()[0].forwardedPosts).toEqual([sourcePost]);
+            expect(component.posts()[0].forwardedAnswerPosts).toEqual([sourceAnswer]);
+        });
+
         it('should still render messages when a forwarded-source fetch fails', () => {
             const mockForwardedMessages: ForwardedMessage[] = [
                 { id: 101, sourceId: 10, sourceType: 'POST' } as unknown as ForwardedMessage,
@@ -903,7 +1181,7 @@ examples.forEach((activeConversation) => {
             const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
 
             vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
-            // the source post is inaccessible to the viewer -> the server replies 403; it must not break the rest of the rendering
+            // Access may be revoked while loading; a failed source request must not break the rest of the rendering.
             vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
             vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
@@ -1061,6 +1339,44 @@ examples.forEach((activeConversation) => {
             expect(unreadPosts).toHaveLength(2);
             expect(unreadPosts.map((p: Post) => p.id)).toEqual([1, 4]);
         });
+        it('keeps the opening New divider when the shared read timestamp advances before posts arrive', () => {
+            const openingReadDate = dayjs('2026-01-01T10:00:00Z');
+            const conversation: ConversationDTO = { id: 987, type: activeConversation.type, lastReadDate: openingReadDate };
+            const selected = new Subject<ConversationDTO>();
+            Object.defineProperty(courseConversationsService, 'activeConversation$', { get: () => selected.asObservable() });
+            component['subscribeToActiveConversation']();
+            selected.next(conversation);
+            conversation.lastReadDate = dayjs('2026-01-01T12:00:00Z');
+            component.currentUser = { id: 99, internal: false };
+            component.allPosts.set([{ id: 42, creationDate: dayjs('2026-01-01T11:00:00Z'), author: { id: 100 } } as Post]);
+
+            component['computeLastReadState']();
+
+            expect(component.firstUnreadPostId()).toBe(42);
+            expect(component.unreadPostsCount()).toBe(1);
+        });
+
+        it('moves the New divider when an already displayed message is explicitly marked unread', () => {
+            const conversation: ConversationDTO = { id: 987, type: activeConversation.type, lastReadDate: dayjs('2026-01-01T12:00:00Z') };
+            const selected = new Subject<ConversationDTO>();
+            Object.defineProperty(courseConversationsService, 'activeConversation$', { get: () => selected.asObservable() });
+            component['subscribeToActiveConversation']();
+            selected.next(conversation);
+            component.currentUser = { id: 99, internal: false };
+            const post = { id: 42, creationDate: dayjs('2026-01-01T11:00:00Z'), author: { id: 100 } } as Post;
+            component.allPosts.set([post]);
+            component['computeLastReadState']();
+            expect(component.firstUnreadPostId()).toBeUndefined();
+
+            // The existing mark-as-unread action updates this shared DTO and republishes the posts.
+            conversation.lastReadDate = post.creationDate!.subtract(1, 'millisecond');
+            Object.defineProperty(courseConversationsService, 'isConversationMarkedAsUnread', { value: (id: number) => id === conversation.id });
+            component['computeLastReadState']();
+
+            expect(component.firstUnreadPostId()).toBe(42);
+            expect(component.unreadPostsCount()).toBe(1);
+        });
+
         it('should compute unreadPosts, unreadPostsCount, and firstUnreadPostId correctly', () => {
             const lastReadDate = dayjs().subtract(10, 'minutes');
             const currentUser = { id: 99, internal: false };

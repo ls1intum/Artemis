@@ -252,8 +252,12 @@ public class QuizDemoService {
     private void endAndEvaluate(long quizId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizId);
         quizExerciseService.endQuiz(quizExercise);
-        ZonedDateTime lastStart = quizExercise.getDueDate().minusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
-        quizExerciseRepository.updateDueDate(quizId, quizExercise.getDueDate());
+        ZonedDateTime dueDate = quizExercise.getDueDate();
+        if (dueDate == null) {
+            throw new IllegalStateException("Ending the quiz " + quizId + " did not set its due date");
+        }
+        ZonedDateTime lastStart = dueDate.minusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+        quizExerciseRepository.updateDueDate(quizId, dueDate);
         quizBatchRepository.clampBatchStartTimesForEndNow(quizId, lastStart);
         exerciseVersionService.createExerciseVersion(quizExercise);
         quizResultService.evaluateQuiz(quizId);

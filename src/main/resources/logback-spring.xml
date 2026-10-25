@@ -73,6 +73,10 @@
     <logger name="org.springframework.security" level="WARN"/>
     <logger name="org.springframework.boot.autoconfigure.logging" level="INFO"/>
     <logger name="org.springframework.cache" level="WARN"/>
+    <!-- Logs every request with an unsupported method at WARN. Scanners and bots probe with POST and PUT around the clock, and the proxy already records the request. -->
+    <logger name="org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver" level="ERROR"/>
+    <!-- Text drawn with a standard font that is not embedded (Helvetica) is valid in a PDF. PDFBox still warns about it on each use. -->
+    <logger name="org.apache.pdfbox.pdmodel.PDAbstractContentStream" level="ERROR"/>
     <!-- Avoid non helpful warnings during startup -->
     <logger name="org.springframework.cloud.loadbalancer.config" level="ERROR"/>
     <logger name="org.springframework.context.support" level="ERROR"/>

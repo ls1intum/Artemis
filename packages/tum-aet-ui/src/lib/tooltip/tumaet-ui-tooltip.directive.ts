@@ -157,19 +157,34 @@ export class TumAetUiTooltipDirective implements OnDestroy {
         setInputs(this.contentRef, { text: this.text(), items: this.items(), id: this.tooltipId, placement: this.appliedPlacement });
         this.updateArrowOffset();
         const contentElement = this.contentRef.location.nativeElement as HTMLElement;
+        // Hints contain no interactive controls. Let clicks reach covered controls even when a wrapped toolbar
+        // places the bubble above another button; track geometric hover below to keep the hint hoverable.
+        this.overlayRef.overlayElement.style.pointerEvents = 'none';
+        contentElement.style.pointerEvents = 'none';
         this.interactionSub = new Subscription();
         this.interactionSub.add(
-            fromEvent(contentElement, 'mouseenter').subscribe(() => {
-                this.tooltipHovered = true;
-                clearTimeout(this.hideTimer);
+            fromEvent<PointerEvent>(this.elementRef.nativeElement.ownerDocument, 'pointermove').subscribe((event) => {
+                const rect = contentElement.getBoundingClientRect();
+                const hovered = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+                if (hovered === this.tooltipHovered) return;
+                this.tooltipHovered = hovered;
+                if (hovered) {
+                    clearTimeout(this.hideTimer);
+                } else {
+                    this.scheduleHideIfInactive();
+                }
             }),
         );
         this.interactionSub.add(
-            fromEvent(contentElement, 'mouseleave').subscribe(() => {
+            fromEvent(this.elementRef.nativeElement.ownerDocument, 'pointerleave').subscribe(() => {
+                this.triggerHovered = false;
                 this.tooltipHovered = false;
                 this.scheduleHideIfInactive();
             }),
         );
+        const view = this.elementRef.nativeElement.ownerDocument.defaultView;
+        if (view) this.interactionSub.add(fromEvent(view, 'blur').subscribe(() => this.hideNow()));
+        this.interactionSub.add(fromEvent(this.elementRef.nativeElement.ownerDocument, 'pointerdown').subscribe(() => this.hideNow()));
         this.interactionSub.add(
             this.overlayRef.keydownEvents().subscribe((event) => {
                 if (event.key === 'Escape') {

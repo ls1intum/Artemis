@@ -24,10 +24,9 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 /**
  * Owns an account's AI preferences, which live in {@code user_ai_preference} rather than on the user row.
  * <p>
- * A row exists only for an account that has made a decision or turned Memiris off, so this service is the single place
- * that turns "no row" into the defaults: no decision recorded, and Memiris enabled. Handing callers the entity or a bare
- * {@code Optional} would spread that default across every reader, and getting it wrong flips behaviour for the majority
- * of accounts, which have no row.
+ * A row exists only for an account that has made a decision, so this service is the single place that turns "no row"
+ * into the default: no decision recorded. Handing callers the entity or a bare {@code Optional} would spread that
+ * default across every reader, and getting it wrong flips behaviour for the majority of accounts, which have no row.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -83,29 +82,6 @@ public class UserAiPreferenceService {
     }
 
     /**
-     * Whether the account has a preference row at all, which is not the same as having decided: {@link #clearDecision}
-     * leaves the row behind when it still carries a Memiris choice. Callers that need to tell "never recorded anything"
-     * from "decision cleared" have to ask this rather than compare the decision against null.
-     *
-     * @param userId the account
-     * @return true if a row exists
-     */
-    public boolean hasPreferenceRow(long userId) {
-        return userAiPreferenceRepository.findByUserId(userId).isPresent();
-    }
-
-    /**
-     * Whether Memiris may remember anything about the account. An account with no row has it enabled, which is what the
-     * column default meant.
-     *
-     * @param userId the account
-     * @return true unless the account has explicitly turned it off
-     */
-    public boolean isMemirisEnabled(long userId) {
-        return userAiPreferenceRepository.findByUserId(userId).map(UserAiPreference::isMemirisEnabled).orElse(true);
-    }
-
-    /**
      * Whether the account has opted into LLM usage, meaning it recorded a decision other than {@code NO_AI}.
      *
      * @param userId the account
@@ -146,32 +122,13 @@ public class UserAiPreferenceService {
     }
 
     /**
-     * Turns Memiris on or off for the account.
-     *
-     * @param userId         the account
-     * @param memirisEnabled whether Memiris may remember anything
-     */
-    public void setMemirisEnabled(long userId, boolean memirisEnabled) {
-        saveHandlingConcurrentInsert(userId, preference -> preference.setMemirisEnabled(memirisEnabled));
-    }
-
-    /**
-     * Removes the account's recorded decision, leaving it as an account that has not decided yet. The row is kept if it
-     * still carries a Memiris choice, and removed when nothing is left.
+     * Removes the account's recorded decision, leaving it as an account that has not decided yet. The row holds nothing
+     * else, so it is removed.
      *
      * @param userId the account
      */
     public void clearDecision(long userId) {
-        userAiPreferenceRepository.findByUserId(userId).ifPresent(preference -> {
-            preference.setSelectionDecision(null);
-            preference.setSelectionDecisionDate(null);
-            if (preference.isMemirisEnabled()) {
-                userAiPreferenceRepository.delete(preference);
-            }
-            else {
-                userAiPreferenceRepository.save(preference);
-            }
-        });
+        userAiPreferenceRepository.findByUserId(userId).ifPresent(userAiPreferenceRepository::delete);
     }
 
     /**

@@ -2,6 +2,7 @@ import { EmbeddedViewRef } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { of, throwError } from 'rxjs';
 import { Component } from '@angular/core';
 import { NgForm } from '@angular/forms';
@@ -315,6 +316,33 @@ describe('ExamUpdateComponent', () => {
                 }
                 renderWith({ examMaxPoints: 1 });
                 expect(shownMessage('max-points-low-error')).toBeUndefined();
+            });
+
+            it('should write the typed maximum points into the exam and explain a fractional or too high value', async () => {
+                fixture.detectChanges();
+                // the form registers its controls one microtask after the first change detection
+                await fixture.whenStable();
+                const input: HTMLInputElement = fixture.nativeElement.querySelector('input#examMaxPoints');
+                const shownError = (translationKey: string) => fixture.nativeElement.querySelector(`[jhiTranslate="${translationKey}"]`) !== null;
+
+                typeIntoInputNumber(input, '120');
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(120);
+                expect(shownError('error.examMaxPointsWholeNumber')).toBe(false);
+                expect(shownError('error.examMaxPointsTooHigh')).toBe(false);
+
+                typeIntoInputNumber(input, '12.5');
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(12.5);
+                expect(shownError('error.examMaxPointsWholeNumber')).toBe(true);
+
+                // the message is shown while the typed value exceeds the limit, before the field is left and clamps it
+                input.focus();
+                input.value = '10000';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(10000);
+                expect(shownError('error.examMaxPointsTooHigh')).toBe(true);
             });
 
             it('should explain a number of exercises below 1 but accept an empty one', () => {
