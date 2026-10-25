@@ -21,7 +21,7 @@
     padding="none"
     (openChange)="handleOpenChange($event)"
 >
-    <div class="w-120">
+    <div class="w-120 max-w-[calc(100vw-2rem)]">
         @let state = loadingState();
         @if (state.status === 'idle' || state.status === 'loading') {
             <div class="flex h-40 w-full items-center justify-center">
