@@ -480,6 +480,21 @@ describe('CodeButtonComponent', () => {
             });
         });
 
+        it('should show SSH authentication when Token authentication is not configured', async () => {
+            profileInfo = {
+                ...profileInfo,
+                repositoryAuthenticationMechanisms: [RepositoryAuthenticationMethod.SSH],
+                sshCloneURLTemplate,
+            };
+            sshUserSettingsService.getCachedSshKeys.mockResolvedValue([]);
+            accountService.getVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            createComponent(false);
+            await fixture.whenStable();
+
+            const repositoryUrl = document.querySelector('jhi-code-button-popover-content code')?.textContent;
+            expect(repositoryUrl).toContain('ssh://git@vcs.example.com:7999/course/exercise.git');
+        });
+
         it.each([
             {
                 description: 'none of the configured keys are expired',

@@ -22,6 +22,7 @@ import { ProgrammingLanguage } from 'app/programming/shared/entities/programming
 import { User } from 'app/account/user/user.model';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { map } from 'rxjs/operators';
+import { notUndefined } from 'app/foundation/util/string-pure.utils';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -192,9 +193,6 @@ export class CodeButtonComponent {
             throw new Error('Resolved user resource contained no login');
         }
         const tokenUrl = chain(this.tokenUrlResource);
-        if (!tokenUrl) {
-            throw new Error('Resolved token URL resource contained no URL');
-        }
         return {
             repositoryUri: this.repositoryUri(),
             login,
@@ -253,8 +251,12 @@ export class CodeButtonComponent {
         const userSnapshot = this.userResource.snapshot();
         const tokenSnapshot = this.tokenResource.snapshot();
 
-        if (userSnapshot.status === 'error' || tokenSnapshot.status === 'error') {
-            return userSnapshot.status === 'error' ? userSnapshot : tokenSnapshot;
+        if (userSnapshot.status === 'error') {
+            return userSnapshot;
+        }
+        if (tokenSnapshot.status === 'error') {
+            // Treats a failed token request as token authe being unavailable (important in case server is configured to not support token auth)
+            return { status: 'resolved', value: undefined };
         }
         if (userSnapshot.status === 'loading' || userSnapshot.status === 'reloading' || tokenSnapshot.status === 'loading' || tokenSnapshot.status === 'reloading') {
             return { status: 'loading', value: undefined };
@@ -274,14 +276,16 @@ export class CodeButtonComponent {
         return { status: 'resolved', value: url };
     }
 
-    private async loadAuthenticationMethodData(repositoryUri: string, login: string, tokenUrl: string): Promise<NonEmptyArray<AuthenticationMethodData>> {
+    private async loadAuthenticationMethodData(repositoryUri: string, login: string, tokenUrl: string | undefined): Promise<NonEmptyArray<AuthenticationMethodData>> {
         const authenticationMethods = this.getAuthenticationMethods();
 
-        const authenticationMethodData = await Promise.all(
-            authenticationMethods.map((authenticationMethod) => {
-                return this.getAuthenticationMethodData(authenticationMethod, repositoryUri, login, tokenUrl);
-            }),
-        );
+        const authenticationMethodData = (
+            await Promise.all(
+                authenticationMethods.map((authenticationMethod) => {
+                    return this.getAuthenticationMethodData(authenticationMethod, repositoryUri, login, tokenUrl);
+                }),
+            )
+        ).filter(notUndefined);
         if (authenticationMethodData.length === 0) {
             throw new Error('Incomplete code button data');
         }
@@ -300,8 +304,8 @@ export class CodeButtonComponent {
         authenticationMethod: RepositoryAuthenticationMethod,
         repositoryUri: string,
         login: string,
-        tokenUrl: string,
-    ): Promise<AuthenticationMethodData> {
+        tokenUrl: string | undefined,
+    ): Promise<AuthenticationMethodData | undefined> {
         switch (authenticationMethod) {
             case RepositoryAuthenticationMethod.SSH:
                 return this.getSshAuthenticationMethodData(repositoryUri);
@@ -359,7 +363,10 @@ export class CodeButtonComponent {
         }
     }
 
-    private getTokenAuthenticationMethodData(tokenUrl: string): AuthenticationMethodData {
+    private getTokenAuthenticationMethodData(tokenUrl: string | undefined): AuthenticationMethodData | undefined {
+        if (!tokenUrl) {
+            return undefined;
+        }
         return {
             authenticationMethod: RepositoryAuthenticationMethod.Token,
             url: tokenUrl,
