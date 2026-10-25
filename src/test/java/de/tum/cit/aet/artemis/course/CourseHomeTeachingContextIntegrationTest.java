@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.course;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,18 +13,28 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
 import tools.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class CourseHomeTeachingContextIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+
     private static final String PREFIX = "hometeachingcontext";
-    @Autowired private CourseConfigurationRepository configurations;
-    @Autowired private jakarta.validation.Validator validator;
+
+    @Autowired
+    private CourseConfigurationRepository configurations;
+
+    @Autowired
+    private jakarta.validation.Validator validator;
+
     private Course course;
+
     private long configurationId;
+
     private ZonedDateTime warning;
 
     @BeforeEach
@@ -76,17 +88,21 @@ class CourseHomeTeachingContextIntegrationTest extends AbstractSpringIntegration
 
     @Test
     void createDtoCarriesTeachingContext() {
-        var mapper = request.getObjectMapper();
-        var dto = mapper.readValue("{\"title\":\"Algorithms\",\"shortName\":\"homectxnew\",\"semester\":\"WS26/27\",\"startDate\":\"2026-10-25T12:00:00Z\",\"endDate\":\"2027-03-01T12:00:00Z\",\"studentWelcomeContext\":\"Learn through practice.\"}", CourseCreateDTO.class);
+        var json = payload();
+        json.put("shortName", PREFIX + "new");
+        json.put("studentWelcomeContext", "Learn through practice.");
+        var dto = request.getObjectMapper().treeToValue(json, CourseCreateDTO.class);
         var created = courseRepository.saveWithDefaultConfigurations(dto.toCourse());
         assertThat(configurations.findByCourseId(created.getId()).orElseThrow().getStudentWelcomeContext()).isEqualTo("Learn through practice.");
     }
 
     @Test
     void createValidationAccepts2000AndRejects2001Characters() {
-        var mapper = request.getObjectMapper();
-        var accepted = mapper.readValue("{\"title\":\"Algorithms\",\"shortName\":\"homectxnew\",\"semester\":\"WS26/27\",\"startDate\":\"2026-10-25T12:00:00Z\",\"endDate\":\"2027-03-01T12:00:00Z\",\"studentWelcomeContext\":\"" + "x".repeat(2000) + "\"}", CourseCreateDTO.class);
-        var rejected = mapper.readValue("{\"title\":\"Algorithms\",\"shortName\":\"homectxnew\",\"semester\":\"WS26/27\",\"startDate\":\"2026-10-25T12:00:00Z\",\"endDate\":\"2027-03-01T12:00:00Z\",\"studentWelcomeContext\":\"" + "x".repeat(2001) + "\"}", CourseCreateDTO.class);
+        var json = payload();
+        json.put("studentWelcomeContext", "x".repeat(2000));
+        var accepted = request.getObjectMapper().treeToValue(json, CourseCreateDTO.class);
+        json.put("studentWelcomeContext", "x".repeat(2001));
+        var rejected = request.getObjectMapper().treeToValue(json, CourseCreateDTO.class);
         assertThat(validator.validate(accepted)).isEmpty();
         assertThat(validator.validate(rejected)).anyMatch(v -> v.getPropertyPath().toString().equals("studentWelcomeContext"));
     }
