@@ -1,0 +1,9 @@
+<tumaet-ui-form-field
+    [label]="'artemisApp.course.studentWelcomeContext.label' | artemisTranslate"
+    [hint]="'artemisApp.course.studentWelcomeContext.hint' | artemisTranslate"
+    [invalid]="control().touched && control().invalid"
+    [error]="'artemisApp.course.studentWelcomeContext.tooLong' | artemisTranslate"
+>
+    <textarea tumAetUiInput class="w-full" rows="4" maxlength="2000" [formControl]="control()" data-testid="course-home-welcome-context"></textarea>
+</tumaet-ui-form-field>
+<p class="mt-1 text-right text-sm text-muted-color" aria-hidden="true">{{ control().value.length }} / 2000</p>
