@@ -9,7 +9,7 @@
         [class.right-collapsed]="isRightPanelCollapsed()"
         layout="horizontal"
         [panelSizes]="panelSizesForSplitter()"
-        [minSizes]="[leftMinSizePercent(), 0]"
+        [minSizes]="[effectiveLeftMinSizePercent(), 0]"
         [gutterSize]="gutterSize"
         [stateKey]="storageKey() ?? null"
         stateStorage="local"
