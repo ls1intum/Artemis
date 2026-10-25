@@ -71,9 +71,11 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
@@ -119,9 +121,12 @@ public class LectureResource {
 
     private final YouTubeUrlService youTubeUrlService;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
-            SlideRepository slideRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
+            SlideRepository slideRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService,
+            LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -133,6 +138,7 @@ public class LectureResource {
         this.slideRepository = slideRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -343,6 +349,18 @@ public class LectureResource {
     public ResponseEntity<Set<LectureForOverviewDTO>> getLecturesForCourseOverview(@PathVariable Long courseId) {
         log.debug("REST request to get the lectures of course {} for the course overview", courseId);
         return ResponseEntity.ok(lectureRepository.findAllForOverviewByCourseId(courseId));
+    }
+
+    /**
+     * Counts released learning materials and the current user's completions in one aggregate query.
+     *
+     * @param courseId the authorized course
+     * @return counts by lecture and material type, without other users' completion records or material payloads
+     */
+    @GetMapping("courses/{courseId}/learning-statistics")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<LectureLearningStatisticsDTO>> getLearningStatistics(@PathVariable Long courseId) {
+        return ResponseEntity.ok(lectureUnitRepository.findLearningStatistics(courseId, userRepository.getUserWithAuthorities().getId(), ZonedDateTime.now()));
     }
 
     /**

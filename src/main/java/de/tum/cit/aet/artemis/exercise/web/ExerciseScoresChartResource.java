@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExercisePeerComparisonDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseScoresChartService;
@@ -87,6 +88,22 @@ public class ExerciseScoresChartResource {
 
     private Set<Exercise> filterExercises(Set<Exercise> exercises) {
         return exercises.stream().filter(this::isExerciseFinished).collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns the student's own results and averages for students with similar overall assessed results.
+     * Small or indistinguishable cohorts produce no comparison rather than a whole-course fallback.
+     *
+     * @param courseId the course to compare within
+     * @return only aggregate peer results, never individual peer records
+     */
+    @GetMapping("courses/{courseId}/charts/peer-comparison")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ExercisePeerComparisonDTO> getPeerComparison(@PathVariable Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        return ResponseEntity.ok(exerciseScoresChartService.getPeerComparison(course, user));
     }
 
     private boolean isExerciseFinished(Exercise exercise) {

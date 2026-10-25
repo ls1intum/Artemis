@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -579,6 +580,11 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         assertThat(startedParticipations).as("the participation must be reported so the card shows the exercise as started").extracting(ParticipationOverviewDTO::id)
                 .containsExactly(participationId);
         assertThat(startedParticipations.iterator().next().submissions()).as("and it must carry no submission").isNullOrEmpty();
+        assertThat(startedParticipations.iterator().next().hasSubmitted()).isFalse();
+        var pending = overview.exercises().stream().filter(exercise -> exercise.type() == ExerciseType.TEXT && !exercise.id().equals(startedExercise.getId()))
+                .flatMap(exercise -> exercise.studentParticipations().stream()).findFirst().orElseThrow();
+        assertThat(pending.submissions()).as("pending assessment must not expose submission content").isNullOrEmpty();
+        assertThat(pending.hasSubmitted()).as("but own submission status must remain available").isTrue();
 
         // The other half of the change: the submission type is now derived from the exercise, so an actual submission
         // still has to come out as its own kind. Assessment already released, otherwise the submission stays hidden.

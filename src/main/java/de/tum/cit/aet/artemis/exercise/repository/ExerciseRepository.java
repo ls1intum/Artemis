@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseIdAndTitleDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExercisePeerMetadataDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCourseDTO;
@@ -42,6 +43,17 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseWithExerciseGroupIdDTO;
 @Lazy
 @Repository
 public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long> {
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExercisePeerMetadataDTO(
+                exercise.id, exercise.title, TYPE(exercise), exercise.releaseDate, exercise.dueDate, exercise.assessmentDueDate, exercise.mode, exercise.includedInOverallScore)
+            FROM Exercise exercise
+            WHERE exercise.course.id = :courseId
+                AND (exercise.releaseDate IS NULL OR exercise.releaseDate <= :now)
+                AND (:requireLtiLaunch = FALSE OR EXISTS (SELECT launch.id FROM LtiResourceLaunch launch WHERE launch.exercise = exercise AND launch.user.login = :userLogin))
+            """)
+    List<ExercisePeerMetadataDTO> findMetadataForPeerComparison(@Param("courseId") long courseId, @Param("now") ZonedDateTime now,
+            @Param("requireLtiLaunch") boolean requireLtiLaunch, @Param("userLogin") String userLogin);
 
     @Query("""
             SELECT e

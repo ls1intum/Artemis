@@ -14,6 +14,8 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/sha
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { CourseStatisticsComponent, NgxExercise, Series } from 'app/course/overview/course-statistics/course-statistics.component';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
@@ -29,6 +31,10 @@ import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { CourseStatisticsResultsComponent } from './course-statistics-results.component';
+import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
+import { CourseStatisticsService } from './course-statistics.service';
+import { throwError } from 'rxjs';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -552,16 +558,46 @@ describe('CourseStatisticsComponent', () => {
         comp.toggleNotIncludedInScoreExercises();
         fixture.changeDetectorRef.detectChanges();
         expect(comp.ngxExerciseGroups().size).toBe(4);
-        const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
-        expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.exerciseCount');
-        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
-        expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.reachablePoints');
-        expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.totalPoints');
-        expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.presentationScore');
+        const results = fixture.debugElement.query(By.directive(CourseStatisticsResultsComponent)).componentInstance as CourseStatisticsResultsComponent;
+        expect(results.types()).toHaveLength(4);
+        expect(results.rows()).toHaveLength(courseToAdd.exercises.length);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="statistics-exercise-link"]')).toHaveLength(courseToAdd.exercises.length);
+        expect(fixture.debugElement.query(By.css('tum-aet-ui-doughnut-chart'))).toBeTruthy();
 
         const programming: NgxExercise = comp.ngxExerciseGroups().get(ExerciseType.PROGRAMMING)![0];
         expect(programming.series).toHaveLength(6);
         expect(programming.series[2].isProgrammingExercise).toBe(true);
+    });
+
+    it('counts a submitted exercise even while its submission is withheld until assessment', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            ...course,
+            exercises: [{ ...new TextExercise(undefined, undefined), id: 1, studentParticipations: [{ ...new StudentParticipation(), hasSubmitted: true, submissions: [] }] }],
+        });
+        fixture.detectChanges();
+        expect(comp.submittedExerciseCount()).toBe(1);
+    });
+
+    it('hides optional sections after a successful empty response', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(TestBed.inject(CourseAvailableTabsService), 'loadIfNeeded').mockReturnValue(
+            of({ lectures: true, competencies: false, exams: false, tutorialGroups: false, iris: false, faq: false, learningPaths: false, communication: false, training: false }),
+        );
+        vi.spyOn(TestBed.inject(CourseStatisticsService), 'getLearningStatistics').mockReturnValue(of([]));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#statistics-material-title')).toBeNull();
+    });
+
+    it('keeps the score ring and results available if optional material statistics fail', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(TestBed.inject(CourseAvailableTabsService), 'loadIfNeeded').mockReturnValue(
+            of({ lectures: true, competencies: false, exams: false, tutorialGroups: false, iris: false, faq: false, learningPaths: false, communication: false, training: false }),
+        );
+        vi.spyOn(TestBed.inject(CourseStatisticsService), 'getLearningStatistics').mockReturnValue(throwError(() => new Error('unavailable')));
+        fixture.detectChanges();
+        expect(comp.materialsFailed()).toBe(true);
+        expect(fixture.debugElement.query(By.css('tum-aet-ui-doughnut-chart'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.directive(CourseStatisticsResultsComponent))).toBeTruthy();
     });
 
     it('should filter all exercises not included in score', () => {
@@ -655,6 +691,18 @@ describe('CourseStatisticsComponent', () => {
         expect(fixture.debugElement.query(By.css('#total-course-score'))).not.toBeNull();
         expect(fixture.debugElement.query(By.css('#credited-course-score'))).not.toBeNull();
         expect(fixture.debugElement.query(By.css('#absolute-course-score'))).toBeNull();
+    });
+
+    it('keeps the required presentation count distinct from advanced presentation points', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, presentationScore: 3 });
+        fixture.detectChanges();
+        comp.overallPresentationScore.set(2);
+        comp.reachablePresentationPoints.set(0);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.totalPresentationScore');
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.presentationScoreBonus');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.courseOverview.statistics.achievablePresentationPoints');
     });
 
     it('should set the course after being notified about a course update', () => {

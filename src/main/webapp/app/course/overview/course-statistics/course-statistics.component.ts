@@ -25,25 +25,33 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import dayjs from 'dayjs/esm';
 import { sortBy } from 'lodash-es';
 import { Subject, Subscription, distinctUntilChanged, map } from 'rxjs';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { ExerciseScoresChartComponent } from 'app/course/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
-import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { CourseStatisticsService, LectureLearningStatistics } from './course-statistics.service';
+import { CourseStatisticsResultsComponent } from './course-statistics-results.component';
+import { CourseStatisticsPerformanceComponent } from './course-statistics-performance.component';
+import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { CourseCompetency, CourseCompetencyType, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
+import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { hasSubmittedForStatistics } from './course-statistics.utils';
 import {
-    TumAetUiBarChartComponent,
     TumAetUiBarChartConfig,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
     TumAetUiChartDatumContext,
     TumAetUiChartSelectEvent,
+    TumAetUiCheckboxComponent,
     TumAetUiDoughnutChartComponent,
     TumAetUiDoughnutChartConfig,
-    TumAetUiEmptyStateComponent,
+    TumAetUiMessageComponent,
+    TumAetUiProgressBarComponent,
+    TumAetUiTableDirective,
 } from '@tumaet/ui-angular';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
@@ -112,22 +120,21 @@ enum ChartBarTitle {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrls: ['../course-overview/course-overview.scss', './course-statistics.component.scss'],
+    styleUrl: './course-statistics.component.scss',
     imports: [
-        NgbDropdown,
-        NgbDropdownToggle,
         FaIconComponent,
         TranslateDirective,
-        NgbDropdownMenu,
-        DocumentationButtonComponent,
-        TumAetUiBarChartComponent,
         TumAetUiDoughnutChartComponent,
-        NgbTooltip,
         RouterLink,
-        ExerciseScoresChartComponent,
-        KeyValuePipe,
         ArtemisTranslatePipe,
-        TumAetUiEmptyStateComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiMessageComponent,
+        TumAetUiProgressBarComponent,
+        TumAetUiTableDirective,
+        CourseStatisticsResultsComponent,
+        CourseStatisticsPerformanceComponent,
     ],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
@@ -140,6 +147,111 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private gradingService = inject(GradingService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     categoryFilter = inject(ChartCategoryFilter);
+    private readonly statisticsService = inject(CourseStatisticsService);
+    private readonly availableTabsService = inject(CourseAvailableTabsService);
+    private readonly competencyService = inject(CourseCompetencyService);
+    private progressSubscription?: Subscription;
+
+    readonly showFilters = signal(false);
+    readonly activeCourseId = signal(0);
+    readonly pointBreakdown = signal<{ type: ExerciseType; title?: string; achieved: number; attainable: number; total: number }[]>([]);
+    readonly refresh = signal(0);
+    readonly materialStatistics = signal<LectureLearningStatistics[]>([]);
+    readonly materialsAvailable = signal(false);
+    readonly materialsLoading = signal(false);
+    readonly materialsFailed = signal(false);
+    readonly competenciesAvailable = signal(false);
+    readonly competenciesLoading = signal(false);
+    readonly competenciesFailed = signal(false);
+    readonly competencies = signal<CourseCompetency[]>([]);
+    readonly materialTypes = ['attachment', 'text', 'online'] as const;
+    readonly getMastery = getMastery;
+    readonly getProgress = getProgress;
+    readonly releasedExercises = computed(() => (this.course()?.exercises ?? []).filter((exercise) => !exercise.releaseDate?.isAfter(dayjs())));
+    readonly resultExercises = computed(() => this.releasedExercises().filter((exercise) => !this.filteredExerciseIDs().includes(exercise.id!)));
+    readonly submittedExerciseCount = computed(
+        () =>
+            this.releasedExercises().filter((exercise) =>
+                exercise.studentParticipations?.some((participation) => !isPracticeMode(participation) && hasSubmittedForStatistics(participation)),
+            ).length,
+    );
+    readonly materialTotal = computed(() => this.materialStatistics().reduce((total, row) => total + row.total, 0));
+    readonly showMaterials = computed(() => this.materialsAvailable() && (this.materialsLoading() || this.materialsFailed() || this.materialTotal() > 0));
+    readonly showCompetencies = computed(() => this.competenciesAvailable() && (this.competenciesLoading() || this.competenciesFailed() || this.competencies().length > 0));
+    readonly materialCompleted = computed(() => this.materialStatistics().reduce((total, row) => total + row.completed, 0));
+    readonly materialBreakdown = computed(() =>
+        this.materialTypes
+            .map((type) => ({
+                type,
+                total: this.materialStatistics()
+                    .filter((row) => row.type === type)
+                    .reduce((total, row) => total + row.total, 0),
+                completed: this.materialStatistics()
+                    .filter((row) => row.type === type)
+                    .reduce((total, row) => total + row.completed, 0),
+            }))
+            .filter((row) => row.total > 0),
+    );
+    readonly masteredCompetencies = computed(
+        () => this.competencies().filter((competency) => getMastery(competency.userProgress?.[0]) >= (competency.masteryThreshold ?? 100)).length,
+    );
+
+    safeScore(score: number): number {
+        return Number.isFinite(score) ? score : 0;
+    }
+    toggleFilters(): void {
+        this.showFilters.update((value) => !value);
+    }
+
+    loadLearningStatistics(): void {
+        this.progressSubscription?.unsubscribe();
+        const subscriptions = new Subscription();
+        this.progressSubscription = subscriptions;
+        const courseId = this.courseId;
+        subscriptions.add(
+            this.availableTabsService.loadIfNeeded(courseId).subscribe({
+                next: (tabs) => {
+                    this.materialsAvailable.set(tabs.lectures);
+                    this.competenciesAvailable.set(tabs.competencies);
+                    if (tabs.lectures) {
+                        this.materialsLoading.set(true);
+                        this.materialsFailed.set(false);
+                        subscriptions.add(
+                            this.statisticsService.getLearningStatistics(courseId).subscribe({
+                                next: (statistics) => {
+                                    this.materialStatistics.set(statistics);
+                                    this.materialsLoading.set(false);
+                                },
+                                error: () => {
+                                    this.materialsFailed.set(true);
+                                    this.materialsLoading.set(false);
+                                },
+                            }),
+                        );
+                    }
+                    if (tabs.competencies) {
+                        this.competenciesLoading.set(true);
+                        this.competenciesFailed.set(false);
+                        subscriptions.add(
+                            this.competencyService.getAllForCourse(courseId).subscribe({
+                                next: (response) => {
+                                    this.competencies.set((response.body ?? []).filter((competency) => competency.type === CourseCompetencyType.COMPETENCY));
+                                    this.competenciesLoading.set(false);
+                                },
+                                error: () => {
+                                    this.competenciesFailed.set(true);
+                                    this.competenciesLoading.set(false);
+                                },
+                            }),
+                        );
+                    }
+                },
+                error: () => {
+                    /* The exercise statistics remain usable if optional tab availability cannot be loaded. */
+                },
+            }),
+        );
+    }
 
     controlsRendered = new EventEmitter<void>();
     private tabReselectionSubscription?: Subscription;
@@ -348,6 +460,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.resetCourseState();
 
         this.courseId = courseId;
+        this.activeCourseId.set(courseId);
         this.course.set(this.courseStorageService.getCourse(courseId));
         this.onCourseLoad();
 
@@ -370,6 +483,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param courseId the course to load the exercises and scores of
      */
     private loadExercises(courseId: number): void {
+        this.refresh.update((value) => value + 1);
+        this.loadLearningStatistics();
         this.exercisesLoadSubscription?.unsubscribe();
         this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(courseId).subscribe(() => {
             this.calculateCourseGrade();
@@ -377,6 +492,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     private resetCourseState(): void {
+        this.pointBreakdown.set([]);
+        this.progressSubscription?.unsubscribe();
+        this.materialStatistics.set([]);
+        this.materialsAvailable.set(false);
+        this.materialsLoading.set(false);
+        this.materialsFailed.set(false);
+        this.competencies.set([]);
+        this.competenciesAvailable.set(false);
+        this.competenciesLoading.set(false);
+        this.competenciesFailed.set(false);
         this.course.set(undefined);
         this.courseExercises = [];
         this.courseExercisesNotIncludedInScore = [];
@@ -429,6 +554,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     ngOnDestroy() {
+        this.progressSubscription?.unsubscribe();
         this.tabReselectionSubscription?.unsubscribe();
         this.translateSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
@@ -466,6 +592,17 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.calculatePresentationScores();
             this.calculateCurrentRelativeScores();
             this.groupExercisesByType(this.courseExercises);
+            this.pointBreakdown.set(
+                [...this.overallMaxPointsPerExercise]
+                    .filter(([, total]) => total > 0)
+                    .map(([type, total]) => ({
+                        type,
+                        total,
+                        title: this.exerciseTitles.get(type)?.name,
+                        achieved: this.overallPointsPerExercise.get(type) ?? 0,
+                        attainable: this.reachablePointsPerExercise.get(type) ?? 0,
+                    })),
+            );
         }
     }
 

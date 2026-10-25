@@ -731,6 +731,7 @@ export default tseslint.config(
             'src/main/webapp/app/notification/**/*.html',
             'src/main/webapp/app/calendar/**/*.html',
             'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
+            'src/main/webapp/app/course/overview/course-statistics/**/*.html',
             'src/main/webapp/app/localci/build-agent-summary/**/*.html',
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
