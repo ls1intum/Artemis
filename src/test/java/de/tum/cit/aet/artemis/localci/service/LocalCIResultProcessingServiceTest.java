@@ -133,6 +133,9 @@ class LocalCIResultProcessingServiceTest {
     private ResultProcessingPermit resultProcessingPermit;
 
     @Mock
+    private ResultProcessingPermit followUpPermit;
+
+    @Mock
     private BuildResult buildResult;
 
     private LocalCIResultProcessingService resultProcessingService;
@@ -159,7 +162,7 @@ class LocalCIResultProcessingServiceTest {
         participation.setProgrammingExercise(exercise);
         lenient().when(distributedDataAccessService.getDistributedBuildResultQueue()).thenReturn(resultQueue);
         lenient().when(programmingExerciseDeletionService.tryAdmitResultProcessing(EXERCISE_ID)).thenReturn(Optional.of(resultProcessingPermit));
-        lenient().when(programmingExerciseDeletionService.awaitResultProcessing(EXERCISE_ID)).thenReturn(resultProcessingPermit);
+        lenient().when(programmingExerciseDeletionService.awaitResultProcessing(EXERCISE_ID)).thenReturn(followUpPermit);
         lenient().when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenReturn(true);
         lenient().when(distributedDataAccessService.getDistributedDeferredBuildResultQueue()).thenReturn(deferredResultQueue);
     }
@@ -477,6 +480,7 @@ class LocalCIResultProcessingServiceTest {
 
         verify(programmingExerciseGradingService).processNewProgrammingExerciseResult(participation, buildResult, false);
         verify(resultProcessingPermit).close();
+        verify(followUpPermit, timeout(5000)).close();
         verify(deferredResultQueue, never()).add(any());
     }
 
