@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -36,6 +37,17 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
 public class CourseConfiguration extends DomainObject {
 
     public static final String ENTITY_NAME = "courseConfiguration";
+
+    @Column(name = "student_welcome_context", length = 2000)
+    @Size(max = 2000)
+    private String studentWelcomeContext;
+
+    public String getStudentWelcomeContext() { return studentWelcomeContext; }
+
+    public void setStudentWelcomeContext(String studentWelcomeContext) {
+        this.studentWelcomeContext = studentWelcomeContext == null || studentWelcomeContext.isBlank() ? null : studentWelcomeContext.strip();
+    }
+
 
     /**
      * The course this configuration belongs to. The key lives here rather than on the course: the course carries no
