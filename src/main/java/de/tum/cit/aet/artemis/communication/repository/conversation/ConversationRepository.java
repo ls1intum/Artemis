@@ -91,6 +91,7 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
                 LEFT JOIN ch.exam exam
             WHERE c.course.id = :courseId
             AND p.author.id <> :userId
+            AND (cp.id IS NULL OR cp.isMuted = FALSE)
             AND (
                 p.creationDate > cp.lastRead OR
                 (ch.isCourseWide = TRUE AND cp.id IS NULL)

@@ -222,6 +222,25 @@ class ChannelVisibilityIntegrationTest extends AbstractConversationTest {
     @ParameterizedTest
     @CsvSource({ "EXERCISE, false", "EXERCISE, true", "EXAM, false", "EXAM, true" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void unreadMessagesIgnoreMutedVisibleChannels(ChannelSubType type, boolean topLevelPostUnread) throws Exception {
+        Channel channel = createChannel(type, ZonedDateTime.now().minusHours(1));
+        var post = createExistingPost(channel, "instructor1");
+        var participant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        participant.setLastRead(topLevelPostUnread ? post.getCreationDate().minusSeconds(1) : post.getCreationDate().plusSeconds(1));
+        participant.setUnreadMessagesCount(1L);
+        participant.setIsMuted(true);
+        conversationParticipantRepository.saveAndFlush(participant);
+
+        assertThat(request.get("/api/communication/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class)).isFalse();
+
+        participant.setIsMuted(false);
+        conversationParticipantRepository.saveAndFlush(participant);
+        assertThat(request.get("/api/communication/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class)).isTrue();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "EXERCISE, false", "EXERCISE, true", "EXAM, false", "EXAM, true" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unreadMessagesIgnoreHiddenChannels(ChannelSubType type, boolean existingMember) throws Exception {
         Channel channel = createChannel(type, ZonedDateTime.now().plusDays(1));
         if (existingMember) {

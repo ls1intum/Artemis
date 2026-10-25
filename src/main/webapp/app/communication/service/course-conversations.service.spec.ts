@@ -1828,6 +1828,31 @@ describe('CourseConversationsService', () => {
         });
     });
 
+    it.each([0, 2])('recalculates the course badge after a channel DELETE with %s unread messages remaining', (remainingUnread) => {
+        vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [
+                        { ...channel, unreadMessagesCount: 1 },
+                        { ...groupChat, unreadMessagesCount: remainingUnread },
+                    ],
+                }),
+            ),
+        );
+        const badges: boolean[] = [];
+        const subscription = courseConversationsService.hasUnreadMessages$.subscribe((unread) => badges.push(unread));
+        courseConversationsService.setUpConversationService(course).subscribe();
+        expect(badges).toEqual([true]);
+
+        // Hidden-channel membership removals intentionally contain only the channel identifier.
+        receiveMockSubject.next({ action: CommunicationCrudAction.DELETE, conversation: { id: channel.id } });
+
+        expect(courseConversationsService.getCachedConversation(channel.id!)).toBeUndefined();
+        expect(badges).toEqual(remainingUnread ? [true] : [true, false]);
+        expect(courseConversationsService['hasUnreadMessages']).toBe(remainingUnread > 0);
+        subscription.unsubscribe();
+    });
+
     it.each([true, false])('should update subscription for unread messages', (unreadMessages: boolean) => {
         vi.spyOn(conversationService, 'checkForUnreadMessages').mockReturnValue(of(new HttpResponse<boolean>({ body: unreadMessages })));
         let numberOfSubscriptions = 0;

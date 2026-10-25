@@ -732,6 +732,7 @@ export class CourseConversationsService implements OnDestroy {
             conversationsCopy.splice(indexOfCachedConversation, 1);
         }
         this.conversationsOfUser = conversationsCopy;
+        this.hasUnreadMessagesCheck();
 
         if (this.activeConversation?.id === deletedConversation.id) {
             this.selectConversation(undefined);
