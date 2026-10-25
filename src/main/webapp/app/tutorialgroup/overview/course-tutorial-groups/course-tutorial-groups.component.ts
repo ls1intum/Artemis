@@ -276,9 +276,9 @@ export class CourseTutorialGroupsComponent implements SidebarView {
         }
     }
 
-    // A group with no capacity has no limit, so it always counts as having free spots.
+    // Relies on the server-derived flag: students never receive the registration count, so only capacityReached is reliable.
     private hasFreeSpots(tutorialGroup: TutorialGroup): boolean {
-        return tutorialGroup.capacity === undefined || (tutorialGroup.numberOfRegisteredUsers ?? 0) < tutorialGroup.capacity;
+        return tutorialGroup.capacityReached !== true;
     }
 
     private getLastSelectedSubRoute(): string | undefined {

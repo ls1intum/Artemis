@@ -350,12 +350,13 @@ describe('CourseTutorialGroupsComponent', () => {
     });
 
     describe('free-spots filter', () => {
-        const fullGroup = Object.assign(createTutorialGroup(10, 'Full', false, false), { capacity: 2, numberOfRegisteredUsers: 2 });
-        const openGroup = Object.assign(createTutorialGroup(11, 'Open', false, false), { capacity: 10, numberOfRegisteredUsers: 3 });
-        const unlimitedGroup = Object.assign(createTutorialGroup(12, 'Unlimited', false, false), { capacity: undefined, numberOfRegisteredUsers: 50 });
+        // Mirrors the student response contract: the server sends capacityReached but never the registration count.
+        const fullGroup = Object.assign(createTutorialGroup(10, 'Full', false, false), { capacityReached: true });
+        const openGroup = Object.assign(createTutorialGroup(11, 'Open', false, false), { capacityReached: false });
+        const unknownGroup = Object.assign(createTutorialGroup(12, 'Unknown', false, false), { capacityReached: undefined });
 
         beforeEach(() => {
-            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [fullGroup, openGroup, unlimitedGroup], lectures: [] });
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [fullGroup, openGroup, unknownGroup], lectures: [] });
             vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation((group) => ({ id: group.id!, title: group.title!, size: 'M' }));
             vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockImplementation((groups) =>
                 groups.map((group) => ({ id: group.id!, title: group.title!, size: 'M' })),
@@ -363,7 +364,7 @@ describe('CourseTutorialGroupsComponent', () => {
             vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
         });
 
-        it('should list only groups with free spots when the filter is on, and a group without a capacity counts as open', async () => {
+        it('should list only groups the server reports as having free spots, treating unknown availability as open', async () => {
             fixture.detectChanges();
             await fixture.whenStable();
             expect(component.sidebarData()!.groupedData!.allGroups.entityData.map((card) => card.id)).toEqual([10, 11, 12]);
