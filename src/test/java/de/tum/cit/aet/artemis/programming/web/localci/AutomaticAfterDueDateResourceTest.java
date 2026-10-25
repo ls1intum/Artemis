@@ -34,7 +34,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     private static final ZonedDateTime BASE_TIME = ZonedDateTime.parse("2050-01-01T12:00:00Z");
 
     /**
-     * Login of an editor who exists in the DB (has EDITOR authority) but is NOT a member
+     * Login of a user who exists in the DB but is NOT a member
      * of any course created in this test class. Used to verify exercise/exam-level 403s.
      */
     private static final String OTHER_EDITOR_LOGIN = TEST_PREFIX + "othereditor";
@@ -52,7 +52,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     void initTestCase() {
         // student1, tutor1, editor1, instructor1 are all members of the course that owns the exercise
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        // OTHER_EDITOR_LOGIN has EDITOR authority but no UCR entry for any course created here,
+        // OTHER_EDITOR_LOGIN has no UCR entry for any course created here,
         // so checkHasAtLeastRoleForExerciseElseThrow will deny them for every exercise here.
         userUtilService.addEditor(OTHER_EDITOR_LOGIN);
 
@@ -72,15 +72,29 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void previewAutomaticAfterDueDate_asStudent_returnsForbidden() throws Exception {
-        var requestDTO = newExerciseRequest();
+        var requestDTO = existingCourseExerciseRequest();
         request.postWithoutLocation(BASE_URL, requestDTO, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void previewAutomaticAfterDueDate_asTutor_returnsForbidden() throws Exception {
-        var requestDTO = newExerciseRequest();
+        var requestDTO = existingCourseExerciseRequest();
         request.postWithoutLocation(BASE_URL, requestDTO, HttpStatus.FORBIDDEN, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void previewAutomaticAfterDueDate_withoutExistingResource_asStudent_returnsCalculatedDate() throws Exception {
+        var result = request.postWithResponseBody(BASE_URL, newExerciseRequest(), ZonedDateTime.class, HttpStatus.OK);
+        assertThat(result.toInstant()).isEqualTo(BASE_TIME.plusDays(2).plusMinutes(15).toInstant());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void previewAutomaticAfterDueDate_withoutExistingResource_asTutor_returnsCalculatedDate() throws Exception {
+        var result = request.postWithResponseBody(BASE_URL, newExerciseRequest(), ZonedDateTime.class, HttpStatus.OK);
+        assertThat(result.toInstant()).isEqualTo(BASE_TIME.plusDays(2).plusMinutes(15).toInstant());
     }
 
     @Test

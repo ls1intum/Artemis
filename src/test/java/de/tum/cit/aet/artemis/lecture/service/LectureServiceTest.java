@@ -112,7 +112,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLecturesPageable_unauthorized() {
         SearchResultPageDTO<Lecture> result = searchQueryWithUser(lecture.getTitle(), student);
         assertThat(result.getNumberOfPages()).isZero();

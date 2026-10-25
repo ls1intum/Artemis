@@ -96,13 +96,13 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAll_asStudent_shouldReturnForbidden() throws Exception {
         testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor_shouldReturnForbidden() throws Exception {
         testAllPreAuthorize();
     }

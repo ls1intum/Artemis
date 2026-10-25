@@ -135,7 +135,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFilesAsStudent_accessForbidden() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);

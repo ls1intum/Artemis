@@ -94,13 +94,13 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testReadAccessForbiddenForStudent() throws Exception {
         testReadAccessForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testWriteAccessForbiddenForStudent() throws Exception {
         testWriteAccessForbidden();
     }

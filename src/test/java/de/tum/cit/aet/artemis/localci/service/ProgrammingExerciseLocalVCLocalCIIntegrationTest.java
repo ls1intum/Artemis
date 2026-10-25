@@ -1452,8 +1452,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-        void testAccessForbidden() throws Exception {
-            request.get("/api/programming/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.FORBIDDEN, CheckoutDirectoriesDTO.class);
+        void testAccessAsTutor() throws Exception {
+            var directories = request.get("/api/programming/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.OK,
+                    CheckoutDirectoriesDTO.class);
+            assertThat(directories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(directories.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/");
         }
     }
 }

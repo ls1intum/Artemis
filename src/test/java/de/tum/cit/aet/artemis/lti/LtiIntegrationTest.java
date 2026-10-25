@@ -98,7 +98,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void getAllConfiguredLtiPlatformsAsStudent() throws Exception {
         request.get("/api/lti/admin/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
     }

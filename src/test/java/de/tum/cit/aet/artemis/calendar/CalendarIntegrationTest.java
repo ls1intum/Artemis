@@ -227,7 +227,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         }
 
         @Test
-        @WithMockUser(username = NOT_TUTOR_LOGIN, roles = "TUTOR")
+        @WithMockUser(username = NOT_TUTOR_LOGIN, roles = "USER")
         void shouldReturnForbiddenForTutorNotPartOfCourse() throws Exception {
             userUtilService.addStudent(NOT_TUTOR_LOGIN);
             Long courseId = course.getId();

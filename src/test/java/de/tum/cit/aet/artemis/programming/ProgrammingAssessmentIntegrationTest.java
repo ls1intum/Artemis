@@ -1521,7 +1521,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @ParameterizedTest
     @EnumSource(value = AssessmentType.class, names = { "AUTOMATIC", "SEMI_AUTOMATIC" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteProgrammingResultWithDependentFeedbackAndNote(AssessmentType assessmentType) throws Exception {
         var submission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, ParticipationFactory.generateProgrammingSubmission(true),
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", assessmentType, true);
@@ -1560,19 +1560,19 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void deleteAssessmentOfOtherTutorAsTutor() throws Exception {
         deleteAssessmentAsForbiddenUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void deleteAssessmentAsTutor() throws Exception {
         deleteAssessmentAsForbiddenUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteOwnAssessmentAsStudent() throws Exception {
         deleteAssessmentAsForbiddenUser();
     }

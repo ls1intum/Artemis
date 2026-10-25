@@ -76,7 +76,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
      */
     @BeforeEach
     void init() {
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course.setMaxPoints(100);
         courseRepository.saveAndFlush(course);

@@ -710,8 +710,7 @@ public class UserService {
      */
     public void addUserToCourse(User user, Course course, CourseRole role) {
         log.debug("Add user {} to course {} with role {}", user.getLogin(), course.getId(), role);
-        // Idempotent: if the user already holds this role, there is nothing to write and the (coarse, global) authorities
-        // cannot change — skip the reload + authority rebuild + save. This keeps bulk re-enrollment cheap.
+        // Avoid duplicate writes when re-enrolling a user who already holds this course role.
         if (userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
             return;
         }

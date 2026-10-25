@@ -813,10 +813,10 @@ public class ProgrammingExerciseIntegrationTestService {
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
     }
 
-    void testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound() throws Exception {
+    void testGetProgrammingExerciseWithSetupParticipations_invalidId_forbidden() throws Exception {
         programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
-        request.get(path, HttpStatus.NOT_FOUND, ProgrammingExerciseResponseDTO.class);
+        request.get(path, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
     }
 
     void testGetProgrammingExercisesForCourse() throws Exception {
@@ -2266,9 +2266,9 @@ public class ProgrammingExerciseIntegrationTestService {
                 UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.FORBIDDEN);
     }
 
-    void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
+    void testReEvaluateAndUpdateProgrammingExercise_unknownExercise_forbidden() throws Exception {
         request.put("/api/programming/programming-exercises/" + 123456789 + "/re-evaluate",
-                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.NOT_FOUND);
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.FORBIDDEN);
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {

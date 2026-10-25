@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
-import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -661,7 +660,11 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     class PreAuthorize {
 
         private void testAllPreAuthorizeEditor() throws Exception {
-            request.get("/api/atlas/course-competencies/for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class);
+            final var search = pageableSearchUtilService.configureCompetencySearch("", "", "", "");
+            var result = request.getSearchResult("/api/atlas/course-competencies/for-import", HttpStatus.OK, CourseCompetency.class,
+                    pageableSearchUtilService.searchMapping(search));
+            assertThat(result.getResultsOnPage()).isEmpty();
+            assertThat(result.getNumberOfPages()).isZero();
             request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.FORBIDDEN, CourseCompetencyProgressDTO.class);
 
             // relations

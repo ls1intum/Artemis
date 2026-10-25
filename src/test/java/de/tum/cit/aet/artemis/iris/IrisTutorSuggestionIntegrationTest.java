@@ -182,7 +182,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetTutorSuggestionSessionAsStudent() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);

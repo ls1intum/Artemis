@@ -82,7 +82,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsNotAllowedAsStudentDuringTestRun() {
             boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
             assertThat(isUserAllowedToGetResult).isFalse();
@@ -98,7 +98,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsNotAllowedAsStudentForNonTestRunExerciseBeforeDeadline() {
             participation.setTestRun(false);
 

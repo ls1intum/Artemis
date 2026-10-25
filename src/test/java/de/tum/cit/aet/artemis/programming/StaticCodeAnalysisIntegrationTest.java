@@ -166,7 +166,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStaticCodeAnalysisCategories_asStudent_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         request.getList(endpoint, HttpStatus.FORBIDDEN, StaticCodeAnalysisCategory.class);
@@ -270,7 +270,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateStaticCodeAnalysisCategories_asStudent_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.FORBIDDEN);

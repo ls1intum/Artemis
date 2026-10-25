@@ -73,7 +73,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
 
     @BeforeEach
     void setupExercise() throws Exception {
-
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 1, 1);
         programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX),
                 ProgrammingExercise.class);
         // Wire LocalVC URIs for base repos and persist so export service can locate them
@@ -148,7 +148,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
         requestUtilService
                 .performMvcRequest(
                         post("/api/programming/sharing/export?exerciseId=" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().is4xxClientError());
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().isForbidden());
     }
 
     private static MockHttpServletRequestBuilder convertToGetRequestBuilder(String exerciseUrl) throws URISyntaxException {

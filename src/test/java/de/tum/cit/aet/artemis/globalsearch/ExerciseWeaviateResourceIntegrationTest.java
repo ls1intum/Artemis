@@ -1235,7 +1235,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testInstructorSeesExamChannelBeforeVisibleDate() throws Exception {
             indexChannelOfExam(ZonedDateTime.now().plusDays(1), "staff-sees-exam-channel");
 

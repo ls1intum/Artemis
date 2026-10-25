@@ -211,7 +211,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildConfigOnlyReturnsRestrictedSetOfInformation() throws Exception {
         ProgrammingExerciseTheiaConfigDTO imageDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/theia-config", HttpStatus.OK,
                 ProgrammingExerciseTheiaConfigDTO.class);
@@ -270,7 +270,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportStudentRequestedSolutionRepository_shouldReturnZipWithoutGit() throws Exception {
         programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -287,7 +287,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportStudentRequestedTestsRepository_shouldReturnZipWithoutGit() throws Exception {
         // Example solution published and tests released with example solution
         programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(2));
@@ -306,7 +306,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportOwnStudentRepository_shouldReturnZipWithoutGit() throws Exception {
         var participations = programmingExerciseStudentParticipationTestRepository.findByExerciseId(programmingExercise.getId());
         assertThat(participations).isNotEmpty();

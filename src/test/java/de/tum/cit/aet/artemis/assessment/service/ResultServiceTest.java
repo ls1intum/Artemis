@@ -148,7 +148,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAreSortedWithManualFirst() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousFeedbackTypeFeedbacksToResult(result);
@@ -160,7 +160,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsBeforePublish() {
         Exam exam = examStudentParticipation.getExercise().getExam();
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(2));
@@ -174,7 +174,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsAfterPublish() {
         Exam exam = examStudentParticipation.getExercise().getExam();
         exam.setPublishResultsDate(ZonedDateTime.now().minusDays(2));
@@ -188,7 +188,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseBeforeDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -201,7 +201,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -214,7 +214,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseBeforeAssessmentDueDateWithNonAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(2));
@@ -231,7 +231,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithNonAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
@@ -247,7 +247,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
@@ -264,7 +264,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudentShouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
@@ -292,7 +292,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudentShouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);

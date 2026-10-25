@@ -794,9 +794,9 @@ public class ExamResource {
      *
      * <p>
      * This endpoint backs the exam / exercise-group import dialogs, which let a user pick a source exam to import from.
-     * Creating and importing exams is instructor-only (see {@link #createExam} and {@link #importExamWithExercises}), and
-     * the results are scoped to courses where the user is an instructor, so this endpoint requires the instructor role to
-     * keep the permission model consistent (an editor would otherwise pass the check but always receive an empty result).
+     * Creating and importing exams requires instructor access (see {@link #createExam} and {@link #importExamWithExercises}).
+     * The search query restricts both results and page counts to courses where the caller currently holds the instructor
+     * role. Other authenticated users receive an empty result.
      *
      * @param withExercises if only exams with at least one exercise Groups should be considered
      * @param search        Pageable with all relevant information

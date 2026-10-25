@@ -146,7 +146,7 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForStudent() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "student1");
 
@@ -231,7 +231,7 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForStudentOnRefine() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "student1");
 
@@ -321,7 +321,7 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForStudentOnBulkRefine() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "student1");
 

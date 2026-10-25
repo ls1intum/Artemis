@@ -647,7 +647,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
         // Test case 1: Exam exercise - send DTO with courseId but without exerciseGroupId
-        FileUploadExercise examExercise = fileUploadExerciseUtilService.addCourseExamExerciseGroupWithOneFileUploadExercise(false);
+        FileUploadExercise examExercise = fileUploadExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(TEST_PREFIX, false);
         UpdateFileUploadExerciseDTO originalExamDTO = UpdateFileUploadExerciseDTO.of(examExercise);
         UpdateFileUploadExerciseDTO examDtoWithoutExerciseGroupId = createDtoWithTargetIds(originalExamDTO, originalExamDTO.courseId(), null);
         MockHttpServletResponse missingExerciseGroupResponse = request.putWithoutResponseBody("/api/fileupload/file-upload-exercises/" + examExercise.getId(),
@@ -1279,7 +1279,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "ta1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testImportFileUploadExerciseAsTeachingAssistantFails() throws Exception {
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();

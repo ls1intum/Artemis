@@ -912,7 +912,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "instructor1", "student1" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void tutorialLectureChannelIsIncludedInMemberConversationsAndCanBeOpened(String login) throws Exception {
         var lectureToCreate = new LectureResource.SimpleLectureDTO(null, "Tutorial without groups", null, null, null, true, "tutorial-without-groups",
                 CourseDTO.from(exampleCourse));
@@ -992,7 +992,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createFeedbackChannel_asStudent_shouldReturnForbidden() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);

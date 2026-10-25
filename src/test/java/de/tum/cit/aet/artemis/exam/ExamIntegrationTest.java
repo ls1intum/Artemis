@@ -258,7 +258,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @BeforeAll
     void setup() {
         // setup users
-        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 1, 1);
 
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
@@ -551,7 +551,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam savedExam = request.get(String.valueOf(savedExamUri), HttpStatus.OK, Exam.class);
 
         assertThat(savedExam.getTitle()).isEqualTo("Exam 123");
-        verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
     }
 
     @Test
@@ -1485,7 +1484,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamsForCourse_asInstructor() throws Exception {
         var exams = request.getList("/api/exam/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
-        verify(examAccessService).checkCourseAccessForTeachingAssistantElseThrow(course1.getId());
 
         for (int i = 0; i < exams.size(); i++) {
             Exam exam = exams.get(i);
@@ -1944,7 +1942,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExamForExamAssessmentDashboard_asStudent_forbidden() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
@@ -2623,7 +2621,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testHasExamArchivePathBranchesAsStudent() throws Exception {
         testHasExamArchivePathExpectStatus(HttpStatus.FORBIDDEN);
     }
@@ -2876,7 +2874,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamForImportWithExercises_noTutorAccess() throws Exception {
         request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
     }
@@ -2947,25 +2945,30 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
-    void testGetAllExamsOnPage_asEditor_failsWithForbidden() throws Exception {
-        // Creating and importing exams is instructor-only, and this import-source endpoint is scoped to instructor
-        // courses, so editors must not be able to call it (otherwise they would always get an empty result).
+    void testGetAllExamsOnPage_asEditor_returnsNoExams() throws Exception {
+        // Import sources are filtered to courses in which the caller is an instructor.
         final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
-        request.getSearchResult("/api/exam/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
+        var result = request.getSearchResult("/api/exam/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getNumberOfPages()).isZero();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
-    void testGetAllExamsOnPage_asTutor_failsWithForbidden() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetAllExamsOnPage_asTutor_returnsNoExams() throws Exception {
         final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
-        request.getSearchResult("/api/exam/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
+        var result = request.getSearchResult("/api/exam/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getNumberOfPages()).isZero();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllExamsOnPage_asStudent_failsWithForbidden() throws Exception {
+    void testGetAllExamsOnPage_asStudent_returnsNoExams() throws Exception {
         final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
-        request.getSearchResult("/api/exam/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
+        var result = request.getSearchResult("/api/exam/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getNumberOfPages()).isZero();
     }
     // </editor-fold>
 
@@ -2977,7 +2980,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testImportExamWithExercises_asTutor_failsWithForbidden() throws Exception {
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(exam1, course1.getId()), HttpStatus.FORBIDDEN, null);
     }

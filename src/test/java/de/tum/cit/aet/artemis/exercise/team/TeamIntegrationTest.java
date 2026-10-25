@@ -386,9 +386,11 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteTeam_BadRequest() throws Exception {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        Exercise wrongExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         // Try deleting a team with an exercise specified that does not match the exercise id param in the route
-        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
-        request.delete(resourceUrlWithWrongExerciseId() + "/" + team.getId(), HttpStatus.BAD_REQUEST);
+        Team team = teamUtilService.addTeamForExercise(wrongExercise, tutor);
+        request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.BAD_REQUEST);
     }
 
     @Test

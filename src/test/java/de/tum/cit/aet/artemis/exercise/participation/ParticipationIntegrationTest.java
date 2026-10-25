@@ -565,7 +565,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void participateInProgrammingExerciseAsStudentDueDatePassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
 

@@ -332,6 +332,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN, ExpectedCount.once());
         ImportProgrammingExerciseRequestDTO exerciseDetails = loadExerciseDetails();
         Course course = courseUtilService.addEmptyCourse();
+        userUtilService.addStudentToCourse(TEST_PREFIX + "student1", course);
         SharingSetupInfoDTO setupInfo = new SharingSetupInfoDTO(exerciseDetails, course.getId(), correctSharingInfo());
 
         requestUtilService.performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)

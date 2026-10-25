@@ -362,7 +362,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         Path updatedAttachmentPath = new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnit.getId(), updatedAttachmentVideoUnit.attachment().link()).path();
         assertThat(Files.exists(updatedAttachmentPath)).as("updated attachment file should exist at %s", updatedAttachmentPath).isTrue();
         String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, updatedAttachmentVideoUnit.attachment().link());
-        request.performMvcRequest(MockMvcRequestBuilders.get(new URI(requestUrl)).with(user(TEST_PREFIX + "instructor1").roles("INSTRUCTOR"))).andExpect(status().isOk());
+        request.performMvcRequest(MockMvcRequestBuilders.get(new URI(requestUrl)).with(user(TEST_PREFIX + "instructor1").roles("USER"))).andExpect(status().isOk());
         request.restoreSecurityContext();
     }
 

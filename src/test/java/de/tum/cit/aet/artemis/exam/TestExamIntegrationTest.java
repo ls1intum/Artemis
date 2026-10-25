@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exam;
 
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -112,7 +111,6 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         URI examUri = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
         Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
 
-        verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
         Channel channelFromDB = channelRepository.findChannelByExamId(savedExam.getId());
         assertThat(channelFromDB).isNotNull();
     }
@@ -124,7 +122,6 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         examB.setVisibleDate(examB.getStartDate());
         request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
 
-        verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
     }
 
     @Test

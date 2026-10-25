@@ -235,7 +235,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForConsistencyCheckStudent() throws Exception {
         long exerciseId = persistedExerciseId;
 
@@ -283,7 +283,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForRewriteStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -331,7 +331,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForGenerateStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -393,7 +393,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForRefineStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -583,7 +583,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForChecklistAnalysisStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -594,7 +594,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForTargetedRefineStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -683,7 +683,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForChecklistSectionAnalysisStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -774,7 +774,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForChecklistActionStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");

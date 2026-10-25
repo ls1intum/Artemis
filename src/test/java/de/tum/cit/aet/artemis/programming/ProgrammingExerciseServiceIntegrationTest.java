@@ -134,8 +134,8 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
-    void importExercise_user_forbidden() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void importExercise_student_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }

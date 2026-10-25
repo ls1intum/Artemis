@@ -223,7 +223,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         // exercise and aborting the whole import with a 5xx.
         programmingExerciseTestService.setup(this, versionControlService);
 
-        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Course sourceCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);

@@ -149,7 +149,7 @@ class ChannelVisibilityIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @EnumSource(value = ChannelSubType.class, names = { "EXERCISE", "EXAM" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void hiddenChannelUpdatesOnlyReachStaff(ChannelSubType type) {
         Channel channel = createChannel(type, ZonedDateTime.now().plusDays(1));
         var student = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1").getUser();

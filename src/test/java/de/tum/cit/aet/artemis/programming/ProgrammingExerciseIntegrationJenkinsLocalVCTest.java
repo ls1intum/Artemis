@@ -260,8 +260,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound();
+    void testGetProgrammingExerciseWithSetupParticipations_invalidId_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithSetupParticipations_invalidId_forbidden();
     }
 
     @Test
@@ -809,7 +809,7 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTestCases_asStudent_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.getTestCases_asStudent_forbidden();
     }

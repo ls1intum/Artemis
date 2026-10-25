@@ -306,9 +306,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
             throw new BadRequestAlertException("The requested exercise was not found.", "exerciseId", "400");
         }
-        // Load the course roles with the user so the access rights below resolve in memory instead of issuing their own EXISTS queries
-        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
-
         // Check if tutors can start assessing the students submission
         fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
         fileUploadSubmissionService.checkCorrectionRoundIsValidElseThrow(fileUploadExercise, correctionRound);
@@ -330,13 +327,17 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             submission = optionalFileUploadSubmission.orElse(null);
         }
 
-        if (submission != null) {
-            // Make sure the exercise is connected to the participation in the json response
-            final StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-            studentParticipation.setExercise(fileUploadExercise);
-            submission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-            fileUploadSubmissionService.hideDetails(submission, user);
+        if (submission == null) {
+            return ResponseEntity.ok(null);
         }
+
+        // Load the course roles only when a submission needs filtering and access-right flags in its response.
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        // Make sure the exercise is connected to the participation in the json response
+        final StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        studentParticipation.setExercise(fileUploadExercise);
+        submission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
+        fileUploadSubmissionService.hideDetails(submission, user);
 
         var accessRights = getAccessRights((FileUploadExercise) fileUploadExercise, user);
         return ResponseEntity

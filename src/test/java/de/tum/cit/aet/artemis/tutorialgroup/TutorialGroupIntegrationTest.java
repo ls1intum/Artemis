@@ -37,8 +37,8 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -90,7 +90,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     private OneToOneChatTestRepository oneToOneChatRepository;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleRepository;
 
     @Autowired
     private TokenProvider tokenProvider;

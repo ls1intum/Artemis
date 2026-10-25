@@ -380,14 +380,14 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getSupportedGenerationLanguages_student_returnsForbidden() throws Exception {
-        request.performMvcRequest(get("/api/hyperion/programming-exercises/generation/supported-languages")).andExpect(status().isForbidden());
+    void getSupportedGenerationLanguages_student_returnsOk() throws Exception {
+        request.performMvcRequest(get("/api/hyperion/programming-exercises/generation/supported-languages")).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void getSupportedGenerationLanguages_tutor_returnsForbidden() throws Exception {
-        request.performMvcRequest(get("/api/hyperion/programming-exercises/generation/supported-languages")).andExpect(status().isForbidden());
+    void getSupportedGenerationLanguages_tutor_returnsOk() throws Exception {
+        request.performMvcRequest(get("/api/hyperion/programming-exercises/generation/supported-languages")).andExpect(status().isOk());
     }
 
     @Test
@@ -399,7 +399,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void getSupportedGenerationLanguages_instructorOfUnrelatedCourse_returnsOk() throws Exception {
-        // This endpoint is not exercise-scoped: the global EDITOR role suffices regardless of course membership, so a non-member instructor is allowed.
+        // Static language metadata is available to every authenticated user, independent of course membership.
         request.performMvcRequest(get("/api/hyperion/programming-exercises/generation/supported-languages")).andExpect(status().isOk());
     }
 

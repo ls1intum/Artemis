@@ -100,7 +100,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFilesAsStudent_accessForbidden() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files", HttpStatus.FORBIDDEN, String.class, FileType.class);

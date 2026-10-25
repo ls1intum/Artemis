@@ -179,8 +179,8 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_notFound();
+    void testReEvaluateAndUpdateProgrammingExercise_unknownExercise_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_unknownExercise_forbidden();
     }
 
     @Test

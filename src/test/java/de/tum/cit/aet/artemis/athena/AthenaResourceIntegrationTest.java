@@ -240,25 +240,25 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetTextFeedbackSuggestionsAccessForbidden() throws Exception {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
         request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingFeedbackSuggestionsAccessForbidden() throws Exception {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
-        request.get("/api/athena/programming-exercises/" + textExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
-                List.class);
+        request.get("/api/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions",
+                HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetModelingFeedbackSuggestionsAccessForbidden() throws Exception {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
-        request.get("/api/athena/modeling-exercises/" + textExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
+        request.get("/api/athena/modeling-exercises/" + modelingExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
                 List.class);
     }
 
