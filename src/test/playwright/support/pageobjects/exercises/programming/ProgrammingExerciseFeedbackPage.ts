@@ -15,8 +15,8 @@ export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
     async shouldShowCodeFeedback(exerciseID: number, filename: string, feedback: string, points: string, editorPage: OnlineEditorPage) {
         await editorPage.openFileWithName(exerciseID, filename);
         const feedbackElement = await this.findVisibleInlineFeedback();
-        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
-        await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points })).toBeVisible();
+        await expect(feedbackElement.getByTestId('inline-feedback-text').filter({ hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.getByTestId('inline-feedback-points').filter({ hasText: points })).toBeVisible();
     }
 
     private async findVisibleInlineFeedback() {

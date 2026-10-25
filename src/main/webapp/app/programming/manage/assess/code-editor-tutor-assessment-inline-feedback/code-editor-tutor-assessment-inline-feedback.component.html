@@ -14,6 +14,7 @@
                 @if (!Feedback.isNonGradedFeedbackSuggestion(feedback)) {
                     <tumaet-ui-tag
                         class="inline-feedback__points-pill"
+                        data-testid="inline-feedback-points"
                         [severity]="pointsSeverity(currentFeedback())"
                         [value]="roundScoreSpecifiedByCourseSettings(currentFeedback().credits, course()) + 'P'"
                     />
@@ -100,7 +101,7 @@
         @if (viewOnly()) {
             <div class="inline-feedback__section">
                 <span class="inline-feedback__label" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
-                <p class="inline-feedback__text" [innerHTML]="buildFeedbackTextForCodeEditor(feedback)"></p>
+                <p class="inline-feedback__text" data-testid="inline-feedback-text" [innerHTML]="buildFeedbackTextForCodeEditor(feedback)"></p>
             </div>
         } @else {
             <div class="inline-feedback__editor" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
