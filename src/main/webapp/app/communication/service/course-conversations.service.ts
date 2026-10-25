@@ -75,6 +75,7 @@ export class CourseConversationsService implements OnDestroy {
     private manualUnreadRevisions = new Map<number, number>();
     private unreadRefresh?: Subscription;
     private unreadRefreshRequested = false;
+    private unreadRefreshRetryAvailable = true;
     // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -292,7 +293,12 @@ export class CourseConversationsService implements OnDestroy {
         return this.currentUnreadSnapshot(() => {
             this.unreadRefreshRequested = false;
             return this.conversationService.getConversationsOfUser(this._courseId);
-        }, attempts).pipe(map((response) => response.body ?? []));
+        }, attempts).pipe(
+            map((response) => {
+                this.unreadRefreshRetryAvailable = true;
+                return response.body ?? [];
+            }),
+        );
     }
 
     /** Refresh server metadata while retaining the last known cache and selection on failure or cancellation. */
@@ -608,7 +614,8 @@ export class CourseConversationsService implements OnDestroy {
 
     /**
      * Batch read completions in a fixed one-second window, with only one timer or GET active. Traffic cannot
-     * postpone the window; changes during a GET queue another window. HTTP failures wait for a new intent.
+     * postpone the window; changes during a GET queue another window. Transient HTTP failures get one retry
+     * through the same window; only an accepted snapshot restores that retry budget.
      */
     private refreshUnreadState() {
         this.unreadRefreshRequested = true;
@@ -616,12 +623,19 @@ export class CourseConversationsService implements OnDestroy {
         this.unreadRefresh = timer(1000)
             .pipe(
                 switchMap(() => (this.unreadRefreshRequested ? this.refreshConversations(false, true, 1) : EMPTY)),
+                catchError((error: HttpErrorResponse | SupersededUnreadSnapshot) => {
+                    if (error instanceof HttpErrorResponse && (error.status === 0 || (error.status >= 500 && error.status < 600)) && this.unreadRefreshRetryAvailable) {
+                        this.unreadRefreshRetryAvailable = false;
+                        this.unreadRefreshRequested = true;
+                    }
+                    return EMPTY;
+                }),
                 finalize(() => {
                     this.unreadRefresh = undefined;
                     if (this.unreadRefreshRequested) this.refreshUnreadState();
                 }),
             )
-            .subscribe({ error: () => {} });
+            .subscribe();
     }
 
     /** Marks a live arrival read only while its conversation is visible and has no explicit unread mark. */

@@ -617,6 +617,166 @@ describe('CourseConversationsService', () => {
     describe('bounded unread reconciliation', () => {
         beforeEach(() => vi.useFakeTimers());
 
+        describe('background failure recovery', () => {
+            const cachedUnreadCount = () => courseConversationsService['conversationsOfUser'].find((conversation) => conversation.id === channel.id)?.unreadMessagesCount;
+            const unavailable = () => throwError(() => new HttpErrorResponse({ status: 503 }));
+
+            it.each([0, 503])('retries one failed arrival refresh (status %s) after one second without another external event', (status) => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                const retry = new Subject<HttpResponse<ConversationDTO[]>>();
+                const get = vi
+                    .spyOn(conversationService, 'getConversationsOfUser')
+                    .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status })))
+                    .mockReturnValueOnce(retry)
+                    .mockClear();
+
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(1000);
+                expect(get).toHaveBeenCalledTimes(1);
+                expect(cachedUnreadCount()).toBe(0);
+                vi.advanceTimersByTime(999);
+                expect(get).toHaveBeenCalledTimes(1);
+                vi.advanceTimersByTime(1);
+                expect(get).toHaveBeenCalledTimes(2);
+                vi.advanceTimersByTime(5000);
+                expect(get).toHaveBeenCalledTimes(2);
+
+                retry.next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 1, hasUnreadMessage: true }] }));
+                retry.complete();
+                expect(cachedUnreadCount()).toBe(1);
+                expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+                vi.advanceTimersByTime(5000);
+                expect(get).toHaveBeenCalledTimes(2);
+            });
+
+            it('stops after the single automatic retry and allows a later external event to recover', () => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(unavailable()).mockClear();
+
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(10_000);
+                expect(get).toHaveBeenCalledTimes(2);
+                expect(cachedUnreadCount()).toBe(0);
+                get.mockReturnValue(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 2, hasUnreadMessage: true }] })));
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(1000);
+                expect(get).toHaveBeenCalledTimes(3);
+                expect(cachedUnreadCount()).toBe(2);
+            });
+
+            it('restores the retry budget after an accepted snapshot', () => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                const get = vi
+                    .spyOn(conversationService, 'getConversationsOfUser')
+                    .mockReturnValueOnce(unavailable())
+                    .mockReturnValueOnce(unavailable())
+                    .mockReturnValueOnce(of(new HttpResponse({ body: [channel] })))
+                    .mockReturnValueOnce(unavailable())
+                    .mockReturnValueOnce(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 2, hasUnreadMessage: true }] })))
+                    .mockClear();
+
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(2000);
+                expect(get).toHaveBeenCalledTimes(2);
+                courseConversationsService.forceRefresh(false).subscribe();
+                expect(get).toHaveBeenCalledTimes(3);
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(2000);
+                expect(get).toHaveBeenCalledTimes(5);
+                expect(cachedUnreadCount()).toBe(2);
+            });
+
+            it('coalesces arrivals during the retry window and retains a newer manual unread boundary', () => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                courseConversationsService.setActiveConversation(channel);
+                const manualDate = dayjs('2026-01-01T10:00:00Z');
+                const get = vi
+                    .spyOn(conversationService, 'getConversationsOfUser')
+                    .mockReturnValueOnce(unavailable())
+                    .mockReturnValueOnce(of(new HttpResponse({ body: [{ ...channel, lastReadDate: manualDate, unreadMessagesCount: 3, hasUnreadMessage: true }] })))
+                    .mockClear();
+
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(1000);
+                courseConversationsService.updateConversationUnreadState(channel.id, manualDate, 3);
+                for (let index = 0; index < 10; index++) courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(1000);
+                expect(get).toHaveBeenCalledTimes(2);
+                expect(cachedUnreadCount()).toBe(3);
+                expect(courseConversationsService['activeConversation']?.lastReadDate?.isSame(manualDate)).toBe(true);
+                expect(courseConversationsService.isConversationMarkedAsUnread(channel.id)).toBe(true);
+                vi.advanceTimersByTime(5000);
+                expect(get).toHaveBeenCalledTimes(2);
+            });
+
+            it('does not restore the HTTP retry budget for a superseded snapshot', () => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                const superseded = new Subject<HttpResponse<ConversationDTO[]>>();
+                const get = vi
+                    .spyOn(conversationService, 'getConversationsOfUser')
+                    .mockReturnValueOnce(unavailable())
+                    .mockReturnValueOnce(superseded)
+                    .mockReturnValue(unavailable())
+                    .mockClear();
+
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(2000);
+                expect(get).toHaveBeenCalledTimes(2);
+                courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 3);
+                superseded.next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 99 }] }));
+                superseded.complete();
+                expect(cachedUnreadCount()).toBe(3);
+                vi.advanceTimersByTime(10_000);
+                expect(get).toHaveBeenCalledTimes(3);
+                expect(cachedUnreadCount()).toBe(3);
+            });
+
+            it('does not consume the HTTP retry budget for a superseded snapshot', () => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                const superseded = new Subject<HttpResponse<ConversationDTO[]>>();
+                const get = vi
+                    .spyOn(conversationService, 'getConversationsOfUser')
+                    .mockReturnValueOnce(superseded)
+                    .mockReturnValueOnce(unavailable())
+                    .mockReturnValueOnce(of(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 2, hasUnreadMessage: true }] })))
+                    .mockClear();
+
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(1000);
+                courseConversationsService.handleNewMessage(channel.id);
+                superseded.next(new HttpResponse({ body: [{ ...channel, unreadMessagesCount: 99 }] }));
+                superseded.complete();
+                expect(cachedUnreadCount()).toBe(0);
+                vi.advanceTimersByTime(2000);
+                expect(get).toHaveBeenCalledTimes(3);
+                expect(cachedUnreadCount()).toBe(2);
+            });
+
+            it.each([403, 404])('does not automatically retry a terminal HTTP failure (status %s)', (status) => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                const get = vi
+                    .spyOn(conversationService, 'getConversationsOfUser')
+                    .mockReturnValue(throwError(() => new HttpErrorResponse({ status })))
+                    .mockClear();
+
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(10_000);
+                expect(get).toHaveBeenCalledTimes(1);
+            });
+
+            it('cancels a pending automatic retry when the service is destroyed', () => {
+                courseConversationsService.setUpConversationService(course).subscribe();
+                const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(unavailable()).mockClear();
+
+                courseConversationsService.handleNewMessage(channel.id);
+                vi.advanceTimersByTime(1000);
+                expect(get).toHaveBeenCalledTimes(1);
+                courseConversationsService.ngOnDestroy();
+                vi.advanceTimersByTime(10_000);
+                expect(get).toHaveBeenCalledTimes(1);
+            });
+        });
+
         it.each(['channel', 'group', 'direct'] as const)('opens a read %s with accepted metadata on rapid navigation before the batching window', (kind) => {
             const conversation = kind === 'channel' ? channel : kind === 'group' ? groupChat : oneToOneChat;
             const other = conversation === channel ? groupChat : channel;
