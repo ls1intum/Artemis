@@ -108,14 +108,17 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
     test.beforeAll('Assess all submissions', async ({ browser }) => {
         test.setTimeout(300_000); // Assessment involves multiple dashboard loads with retries
         const page = await newBrowserPage(browser);
-        // End the exam now that the student has handed in: submissions become available for assessment and the results get published.
         await Commands.login(page, admin);
+        const exerciseAPIRequests = new ExerciseAPIRequests(page);
+        // Finish the initial builds while the exam is open so a delayed compile-only result cannot satisfy the later grading wait.
+        await exerciseAPIRequests.waitForSolutionBuild(exercises['programming'].id!);
+        await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, exercises['programming'].id!, undefined, undefined, 1);
+        // End the exam now that the student has handed in: submissions become available for assessment and the results get published.
         exam = await new ExamAPIRequests(page).concludeExam(exam);
         await waitForExamBuildAndTestAfterDueDate(exam, page);
 
         const examAssessment = new ExamAssessmentPage(page);
         const modelingExerciseAssessment = new ModelingExerciseAssessmentEditor(page);
-        const exerciseAPIRequests = new ExerciseAPIRequests(page);
 
         // Only text and modeling exercises need manual assessment (quiz is auto-evaluated, programming is auto-assessed).
         // Navigate directly to each exercise's assessment dashboard by exercise ID.
