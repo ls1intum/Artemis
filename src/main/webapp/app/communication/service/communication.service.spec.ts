@@ -416,9 +416,9 @@ describe('CommunicationService', () => {
         const updated = { ...original, content: 'edited live' };
 
         it.each([
-            { name: 'creation', snapshot: [], events: [{ action: CommunicationCrudAction.CREATE, post: original }], expected: [[702, 'original']] },
-            { name: 'update', snapshot: [original], events: [{ action: CommunicationCrudAction.UPDATE, post: updated }], expected: [[702, 'edited live']] },
-            { name: 'deletion', snapshot: [original], events: [{ action: CommunicationCrudAction.DELETE, post: original }], expected: [] },
+            { name: 'creation', snapshot: [], events: [{ action: CommunicationCrudAction.CREATE, post: original }], expected: [[702, 'original']], total: 1 },
+            { name: 'update', snapshot: [original], events: [{ action: CommunicationCrudAction.UPDATE, post: updated }], expected: [[702, 'edited live']], total: 1 },
+            { name: 'deletion', snapshot: [original], events: [{ action: CommunicationCrudAction.DELETE, post: original }], expected: [], total: 0 },
             {
                 name: 'creation followed by update',
                 snapshot: [],
@@ -427,27 +427,297 @@ describe('CommunicationService', () => {
                     { action: CommunicationCrudAction.UPDATE, post: updated },
                 ],
                 expected: [[702, 'edited live']],
+                total: 1,
             },
             {
                 name: 'creation already present in the snapshot',
                 snapshot: [original],
                 events: [{ action: CommunicationCrudAction.CREATE, post: original }],
                 expected: [[702, 'original']],
+                total: 1,
             },
-        ])('retains $name when an older HTTP snapshot arrives', ({ snapshot, events, expected }) => {
+            {
+                name: 'duplicate creation',
+                snapshot: [],
+                events: [
+                    { action: CommunicationCrudAction.CREATE, post: original },
+                    { action: CommunicationCrudAction.CREATE, post: original },
+                ],
+                expected: [[702, 'original']],
+                total: 1,
+            },
+            {
+                name: 'creation followed by deletion',
+                snapshot: [],
+                events: [
+                    { action: CommunicationCrudAction.CREATE, post: original },
+                    { action: CommunicationCrudAction.DELETE, post: original },
+                ],
+                expected: [],
+                total: 0,
+            },
+        ])('retains $name when an older HTTP snapshot arrives', ({ snapshot, events, expected, total }) => {
             const pending = new Subject<HttpResponse<Post[]>>();
             const requests = vi.spyOn(postService, 'getPosts').mockReturnValue(pending);
             vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
             let visible: Post[] = [];
             const subscription = communicationService.posts.subscribe((posts) => (visible = [...posts]));
+            const publishedTotals = vi.fn();
+            const totalsSubscription = communicationService.totalNumberOfPosts.subscribe(publishedTotals);
             communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], page: 0 }, true, conversation);
             for (const event of events) communicationService['handleNewOrUpdatedMessage'](event);
 
-            pending.next(new HttpResponse({ body: [...snapshot] }));
+            pending.next(new HttpResponse({ body: [...snapshot], headers: new HttpHeaders({ 'X-Total-Count': String(snapshot.length) }) }));
             pending.complete();
 
             expect(visible.map((post) => [post.id, post.content])).toEqual(expected);
+            expect(publishedTotals).toHaveBeenLastCalledWith(total);
             expect(requests).toHaveBeenCalledOnce();
+            subscription.unsubscribe();
+            totalsSubscription.unsubscribe();
+        });
+
+        it.each(['creation', 'forwarding', 'update', 'deletion'] as const)('retains a successful HTTP %s before its broadcast arrives', (mutation) => {
+            communicationService.setCourse(course);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const creating = mutation === 'creation' || mutation === 'forwarding';
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: creating ? [] : [{ ...original }], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0 };
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            const totals = vi.fn();
+            const totalSubscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            if (creating) {
+                vi.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: original })));
+                if (mutation === 'forwarding') {
+                    communicationService.createForwardedMessages([{ id: 900 }], { id: conversation.id, type: conversation.type }, false, 'forwarded').subscribe();
+                } else {
+                    communicationService.createPost(original).subscribe();
+                }
+            } else if (mutation === 'update') {
+                vi.spyOn(postService, 'update').mockReturnValue(of(new HttpResponse({ body: updated })));
+                communicationService.updatePost(updated).subscribe();
+            } else {
+                vi.spyOn(postService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+                communicationService.deletePost(original);
+            }
+
+            pending.next(new HttpResponse({ body: creating ? [] : [{ ...original }], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+            pending.complete();
+
+            expect(communicationService['cachedPosts'].map((post) => [post.id, post.content])).toEqual(
+                mutation === 'deletion' ? [] : [[original.id, mutation === 'update' ? updated.content : original.content]],
+            );
+            expect(totals).toHaveBeenLastCalledWith(creating ? 101 : mutation === 'deletion' ? 99 : 100);
+            if (mutation === 'forwarding') expect(communicationService['cachedPosts'][0].hasForwardedMessages).toBe(true);
+            totalSubscription.unsubscribe();
+        });
+
+        it.each([PageType.OVERVIEW, PageType.PAGE_SECTION])('preserves unloaded totals while appending live changes on %s', (pageType) => {
+            communicationService.setPageType(pageType);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710 };
+            const pagePost = { ...original, id: 711 };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            const requests = vi
+                .spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0, pageSize: 1 };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts({ ...filter, page: 1 }, false, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.UPDATE, post: updated });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: oldPost });
+
+            pending.next(new HttpResponse({ body: [pagePost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+            pending.complete();
+
+            expect(communicationService['cachedPosts'].map((post) => [post.id, post.content])).toEqual([
+                [702, 'edited live'],
+                [711, 'original'],
+            ]);
+            expect(totals).toHaveBeenLastCalledWith(100);
+            expect(requests).toHaveBeenCalledTimes(2);
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { snapshotIncludesCreation: false, serverTotal: 100 },
+            { snapshotIncludesCreation: false, serverTotal: 101 },
+            { snapshotIncludesCreation: true, serverTotal: 101 },
+        ])('counts a live creation once with snapshot inclusion=$snapshotIncludesCreation and total=$serverTotal', ({ snapshotIncludesCreation, serverTotal }) => {
+            communicationService.setPageType(PageType.OVERVIEW);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710 };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0, pageSize: 1 };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts({ ...filter, page: 1 }, false, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            const snapshot = snapshotIncludesCreation ? [original] : [{ ...original, id: 711 }];
+            pending.next(new HttpResponse({ body: snapshot, headers: new HttpHeaders({ 'X-Total-Count': String(serverTotal) }) }));
+            pending.complete();
+
+            expect(communicationService['cachedPosts'].filter((post) => post.id === original.id)).toHaveLength(1);
+            expect(totals).toHaveBeenLastCalledWith(101);
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { createFirst: false, serverTotal: 100, expected: 99 },
+            { createFirst: false, serverTotal: 99, expected: 99 },
+            { createFirst: true, serverTotal: 100, expected: 100 },
+            { createFirst: true, serverTotal: 101, expected: 100 },
+        ])('reconciles ordered membership changes with createFirst=$createFirst and total=$serverTotal', ({ createFirst, serverTotal, expected }) => {
+            communicationService.setPageType(PageType.OVERVIEW);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710 };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0 };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts({ ...filter, page: 1 }, false, conversation);
+            if (createFirst) communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: createFirst ? original : oldPost });
+            pending.next(new HttpResponse({ body: [{ ...original, id: 711 }], headers: new HttpHeaders({ 'X-Total-Count': String(serverTotal) }) }));
+            pending.complete();
+
+            expect(totals).toHaveBeenLastCalledWith(expected);
+            expect(communicationService['cachedPosts'].some((post) => post.id === (createFirst ? original.id : oldPost.id))).toBe(false);
+            subscription.unsubscribe();
+        });
+
+        it('never publishes fewer posts than the snapshot exposes when an unrelated creation broadcast is delayed', () => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const first = { ...original, id: 710 };
+            const second = { ...original, id: 711 };
+            const added = { ...original, id: 712 };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [first, second], headers: new HttpHeaders({ 'X-Total-Count': '2' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0 };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: first });
+            pending.next(new HttpResponse({ body: [second, added], headers: new HttpHeaders({ 'X-Total-Count': '2' }) }));
+            pending.complete();
+
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([711, 712]);
+            expect(totals).toHaveBeenLastCalledWith(2);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: added });
+            expect(totals).toHaveBeenLastCalledWith(2);
+            expect(communicationService['cachedPosts']).toHaveLength(2);
+            subscription.unsubscribe();
+        });
+
+        it.each(['unobserved rows', 'initial page', 'reset', 'course', 'conversation', 'author', 'search', 'filter flag'] as const)(
+            'preserves the authoritative partial-page total after %s',
+            (context) => {
+                vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+                const pending = new Subject<HttpResponse<Post[]>>();
+                const getPosts = vi.spyOn(postService, 'getPosts');
+                const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0 };
+                if (context !== 'initial page') {
+                    getPosts.mockReturnValueOnce(of(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })));
+                    communicationService.getFilteredPosts(filter, true, conversation);
+                }
+                if (context === 'reset') communicationService.resetCachedPosts();
+                if (context === 'course') communicationService.setCourse({ ...course, id: course.id! + 1 });
+                const nextConversation = context === 'conversation' ? { ...conversation, id: 703 } : conversation;
+                const nextFilter = {
+                    ...filter,
+                    courseId: context === 'course' ? course.id! + 1 : course.id,
+                    conversationIds: [nextConversation.id!],
+                    ...(context === 'author' ? { authorIds: [1] } : {}),
+                    ...(context === 'search' ? { searchText: 'original' } : {}),
+                    ...(context === 'filter flag' ? { filterToUnresolved: true } : {}),
+                };
+                getPosts.mockReturnValueOnce(pending);
+                const totals = vi.fn();
+                const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+                communicationService.getFilteredPosts(nextFilter, true, nextConversation);
+                communicationService['handleNewOrUpdatedMessage']({
+                    action: CommunicationCrudAction.CREATE,
+                    post: { ...original, conversation: { id: nextConversation.id, type: nextConversation.type } },
+                });
+                const serverTotal = context === 'unobserved rows' ? 105 : 100;
+                pending.next(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': String(serverTotal) }) }));
+                pending.complete();
+
+                expect(totals).toHaveBeenLastCalledWith(serverTotal);
+                expect(communicationService['cachedPosts']).toHaveLength(1);
+                subscription.unsubscribe();
+            },
+        );
+
+        it.each([
+            { forwarded: false, webSocketFirst: false },
+            { forwarded: false, webSocketFirst: true },
+            { forwarded: true, webSocketFirst: false },
+            { forwarded: true, webSocketFirst: true },
+        ])('counts one creation with forwarded=$forwarded and webSocketFirst=$webSocketFirst', ({ forwarded, webSocketFirst }) => {
+            communicationService.setCourse(course);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], page: 0 }, true, conversation);
+            const createdResponse = new Subject<HttpResponse<Post>>();
+            vi.spyOn(postService, 'create').mockReturnValue(createdResponse);
+            const totals = vi.fn();
+            const totalSubscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            const destination: Conversation = { id: conversation.id, type: conversation.type };
+            const creationSubscription = forwarded
+                ? communicationService.createForwardedMessages([{ id: 900 }], destination, false, 'forwarded').subscribe()
+                : communicationService.createPost(original).subscribe();
+            const receive = () => communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            if (webSocketFirst) receive();
+            createdResponse.next(new HttpResponse({ body: original }));
+            createdResponse.complete();
+            if (!webSocketFirst) receive();
+            receive();
+
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([original.id]);
+            expect(totals).toHaveBeenLastCalledWith(101);
+            creationSubscription.unsubscribe();
+            totalSubscription.unsubscribe();
+        });
+
+        it.each([false, true])('counts one deletion with webSocketFirst=%s', (webSocketFirst) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [original], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], page: 0 }, true, conversation);
+            const deletedResponse = new Subject<HttpResponse<void>>();
+            vi.spyOn(postService, 'delete').mockReturnValue(deletedResponse);
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.deletePost(original);
+            const receive = () => communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: original });
+            if (webSocketFirst) receive();
+            deletedResponse.next(new HttpResponse<void>());
+            deletedResponse.complete();
+            if (!webSocketFirst) receive();
+            receive();
+
+            expect(communicationService['cachedPosts']).toHaveLength(0);
+            expect(totals).toHaveBeenLastCalledWith(99);
             subscription.unsubscribe();
         });
 

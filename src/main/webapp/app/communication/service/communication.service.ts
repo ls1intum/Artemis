@@ -63,6 +63,8 @@ export class CommunicationService implements OnDestroy {
     private filteredPostsRequestId = 0;
     private filteredPostsRequestFailed = false;
     private pendingPostUpdates?: PostBroadcastDTO[];
+    private pendingPostCountHistory?: number[];
+    private cachedPostCountContext?: string;
     private currentConversation?: ConversationDTO = undefined;
     private user!: User; // set in constructor from accountService.identity()
     private pageType!: PageType; // set via setPageType() before use
@@ -173,6 +175,7 @@ export class CommunicationService implements OnDestroy {
      */
     setCourse(course: Course | undefined): void {
         if (course && (this.courseId === undefined || this.courseId !== course.id)) {
+            this.cachedPostCountContext = undefined;
             this.courseId = course.id!;
             this.course = course;
 
@@ -225,8 +228,12 @@ export class CommunicationService implements OnDestroy {
             postContextFilter?.plagiarismCaseId !== this.currentPostContextFilter?.plagiarismCaseId ||
             postContextFilter?.page !== this.currentPostContextFilter?.page
         ) {
+            const countContext = this.getPostCountContext(postContextFilter);
+            this.pendingPostCountHistory = this.cachedPostCountContext === countContext ? [this.cachedTotalNumberOfPosts] : undefined;
+            if (!this.pendingPostCountHistory) this.cachedPostCountContext = undefined;
             this.currentPostContextFilter = postContextFilter;
             this.currentConversation = conversation;
+            const cachedPostIdsBeforeRequest = new Set(this.cachedPosts.map((post) => post.id));
             const requestId = ++this.filteredPostsRequestId;
             this.pendingPostUpdates = [];
             this.filteredPostsRequestFailed = false;
@@ -242,6 +249,7 @@ export class CommunicationService implements OnDestroy {
                         if (requestId === this.filteredPostsRequestId) {
                             this.filteredPostsRequestFailed = !applied;
                             this.pendingPostUpdates = undefined;
+                            this.pendingPostCountHistory = undefined;
                         }
                         requestCallbacks?.complete(applied);
                     }),
@@ -256,8 +264,12 @@ export class CommunicationService implements OnDestroy {
                         return;
                     }
                     requestCallbacks?.beforeApply();
+                    const responsePostCount = res.body!.length;
+                    let snapshotPostCount = responsePostCount;
                     if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {
                         // if infinite scroll enabled, add fetched posts to the end of cachedPosts
+                        // The current cache can already contain broadcasts received while this page was pending.
+                        snapshotPostCount = new Set([...cachedPostIdsBeforeRequest, ...res.body!.map((post) => post.id)]).size;
                         const cachedIds = new Set(this.cachedPosts.map((post) => post.id));
                         for (const post of res.body!) {
                             // Live inserts can shift offset-based page boundaries; keep overlapping rows only once.
@@ -270,12 +282,24 @@ export class CommunicationService implements OnDestroy {
                         // if the context changed, we need to fetch posts and dismiss cached posts
                         this.cachedPosts = res.body!;
                     }
-                    // A snapshot requested before a broadcast can arrive after it. Reapply those changes in order,
+                    // A snapshot can arrive after a broadcast or successful mutation. Reapply those changes in order,
                     // including create -> update -> delete sequences, before publishing the page once.
                     const liveUpdates = this.pendingPostUpdates ?? [];
+                    const countHistory = this.pendingPostCountHistory;
                     this.pendingPostUpdates = undefined;
-                    for (const update of liveUpdates) this.handleNewOrUpdatedMessage(update, false);
+                    this.pendingPostCountHistory = undefined;
                     this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
+                    for (const update of liveUpdates) this.handleNewOrUpdatedMessage(update, false);
+                    if (countHistory?.includes(this.cachedTotalNumberOfPosts)) {
+                        // The header can reflect any prefix of our observed changes, including an intermediate count.
+                        this.cachedTotalNumberOfPosts = countHistory.at(-1)!;
+                    } else if (!countHistory && this.cachedTotalNumberOfPosts === responsePostCount) {
+                        // Without a prior total, only a complete snapshot proves the replay's count delta.
+                        // Partial pages cannot reveal whether their total already includes changes on unloaded pages.
+                        this.cachedTotalNumberOfPosts = Math.max(0, this.cachedTotalNumberOfPosts + this.cachedPosts.length - snapshotPostCount);
+                    }
+                    this.cachedTotalNumberOfPosts = Math.max(this.cachedPosts.length, this.cachedTotalNumberOfPosts);
+                    this.cachedPostCountContext = countContext;
                     this.posts$.next(this.cachedPosts);
                     this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     this.createSubscriptionFromPostContextFilter();
@@ -305,10 +329,12 @@ export class CommunicationService implements OnDestroy {
         return this.postService.create(this.courseId, post).pipe(
             map((res: HttpResponse<Post>) => res.body!),
             tap((createdPost: Post) => {
+                this.pendingPostUpdates?.push({ action: CommunicationCrudAction.CREATE, post: createdPost });
                 const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === createdPost.id);
                 // Update the cached posts after successfully creating a new post if it is not already cached (can happen if the WebSocket message arrives before the HTTP response)
                 if (indexToUpdate === -1) {
                     this.cachedPosts = [createdPost, ...this.cachedPosts];
+                    this.changePostCount(1);
                     this.posts$.next(this.cachedPosts);
                     this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 }
@@ -362,6 +388,7 @@ export class CommunicationService implements OnDestroy {
         return this.postService.update(this.courseId, post).pipe(
             map((res: HttpResponse<Post>) => res.body!),
             tap((updatedPost: Post) => {
+                this.pendingPostUpdates?.push({ action: CommunicationCrudAction.UPDATE, post: updatedPost });
                 const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
                 if (indexToUpdate > -1) {
                     updatedPost.answers = [...(this.cachedPosts[indexToUpdate].answers ?? [])];
@@ -447,10 +474,12 @@ export class CommunicationService implements OnDestroy {
             .delete(this.courseId, post)
             .pipe(
                 tap(() => {
+                    this.pendingPostUpdates?.push({ action: CommunicationCrudAction.DELETE, post });
                     const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
                     // Delete the cached post if it still exists (might be already deleted due to WebSocket message)
                     if (indexToUpdate > -1) {
                         this.cachedPosts.splice(indexToUpdate, 1);
+                        this.changePostCount(-1);
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -764,6 +793,8 @@ export class CommunicationService implements OnDestroy {
     }
 
     public resetCachedPosts() {
+        this.cachedPostCountContext = undefined;
+        this.pendingPostCountHistory = undefined;
         this.cachedPosts = [];
         this.posts$.next(this.cachedPosts);
         this.cachedTotalNumberOfPosts = 0;
@@ -800,6 +831,7 @@ export class CommunicationService implements OnDestroy {
             return;
         }
 
+        const previousPostCount = this.cachedPosts.length;
         if (publish) this.pendingPostUpdates?.push(postDTO);
         postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
         postDTO.post.answers?.forEach((answer: AnswerPost) => {
@@ -883,7 +915,10 @@ export class CommunicationService implements OnDestroy {
             default:
                 break;
         }
-        if (publish) this.publishCachedPosts();
+        if (publish) {
+            this.changePostCount(this.cachedPosts.length - previousPostCount);
+            this.publishCachedPosts();
+        }
     };
 
     /**
@@ -1022,6 +1057,7 @@ export class CommunicationService implements OnDestroy {
                             const existingPostIndex = this.cachedPosts.findIndex((post) => post.id === createdPostBody.id);
                             if (existingPostIndex === -1) {
                                 this.cachedPosts = [createdPostBody, ...this.cachedPosts];
+                                this.changePostCount(1);
                             }
 
                             // Mark posts as having forwarded messages
@@ -1034,8 +1070,9 @@ export class CommunicationService implements OnDestroy {
                             });
 
                             // Emit updated posts and post count
+                            createdPostBody.hasForwardedMessages = true;
+                            this.pendingPostUpdates?.push({ action: CommunicationCrudAction.CREATE, post: createdPostBody });
                             this.posts$.next(this.cachedPosts);
-                            this.cachedTotalNumberOfPosts += 1;
                             this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                         }
                     }),
@@ -1048,6 +1085,23 @@ export class CommunicationService implements OnDestroy {
                 return throwError(() => error);
             }),
         );
+    }
+
+    /** Records actual membership changes after callers deduplicate HTTP and WebSocket updates by post id. */
+    private changePostCount(delta: number): void {
+        if (delta === 0) return;
+        this.cachedTotalNumberOfPosts = Math.max(0, this.cachedTotalNumberOfPosts + delta);
+        this.pendingPostCountHistory?.push(this.cachedTotalNumberOfPosts);
+    }
+
+    /** Identifies a total's membership filters; pagination and sorting change the visible slice, not its global count. */
+    private getPostCountContext(filter: PostContextFilter): string {
+        const pageOptions = ['page', 'pageSize', 'pagingEnabled', 'postSortCriterion', 'sortingOrder'];
+        const membership = Object.entries(filter)
+            .filter(([key, value]) => !pageOptions.includes(key) && value !== undefined)
+            .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+            .map(([key, value]) => [key, Array.isArray(value) ? [...value].sort((left, right) => left - right) : value]);
+        return JSON.stringify([this.courseId, membership]);
     }
 
     private hasDifferentContexts(other: PostContextFilter): boolean {
