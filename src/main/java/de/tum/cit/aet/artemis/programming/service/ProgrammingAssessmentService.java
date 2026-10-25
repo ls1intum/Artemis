@@ -88,7 +88,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
      */
     @Override
     protected boolean isScoredByServer(Feedback feedback) {
-        return (feedback.getId() == null || feedback.getId() <= 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback());
+        return (feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback());
     }
 
     @Override
