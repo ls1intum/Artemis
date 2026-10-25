@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -12,19 +11,16 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRange;
@@ -47,6 +43,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.CoreLegacyFileRestPaths;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
+import de.tum.cit.aet.artemis.core.dto.FileUploadResponseDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -59,7 +56,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastTutorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -88,8 +84,6 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
@@ -131,8 +125,6 @@ public class FileResource {
 
     private final FileUploadService fileUploadService;
 
-    private final ResourceLoaderService resourceLoaderService;
-
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final Optional<FileUploadApi> fileUploadApi;
@@ -154,13 +146,12 @@ public class FileResource {
     private final Optional<LectureUnitApi> lectureUnitApi;
 
     public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService, FileDownloadService fileDownloadService,
-            ResourceLoaderService resourceLoaderService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi,
-            Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
-            QuizQuestionRepository quizQuestionRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi, Optional<LectureAttachmentApi> lectureAttachmentApi,
+            Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi, QuizQuestionRepository quizQuestionRepository,
+            CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.fileDownloadService = fileDownloadService;
-        this.resourceLoaderService = resourceLoaderService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureAttachmentApi = lectureAttachmentApi;
         this.slideApi = slideApi;
@@ -183,18 +174,16 @@ public class FileResource {
      * @throws URISyntaxException if response path can't be converted into URI
      */
     @FeatureUsage(UserFeature.MARKDOWN_UPLOADS)
-    @PostMapping("markdown-file-upload")
+    @PostMapping(value = "markdown-file-upload", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName,
+    public ResponseEntity<FileUploadResponseDTO> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName,
             @RequestParam Long courseId) throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
         String publicPath = FileUtil.handleSaveFile(file, keepFileName, true).toString();
-        String responsePath = getResponsePathFromPublicPathString(publicPath);
+        String responsePath = ARTEMIS_FILE_PATH_PREFIX + publicPath;
 
         // return path for getting the file
-        String responseBody = "{\"path\":\"" + responsePath + "\"}";
-
-        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+        return ResponseEntity.created(new URI(responsePath)).body(new FileUploadResponseDTO(responsePath));
     }
 
     /**
@@ -207,10 +196,10 @@ public class FileResource {
      * @throws URISyntaxException If the response path can't be converted into a URI.
      */
     @FeatureUsage(UserFeature.MESSAGING)
-    @PostMapping("files/courses/{courseId}/conversations/{conversationId}")
+    @PostMapping(value = "files/courses/{courseId}/conversations/{conversationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<String> saveMarkdownFileForConversation(@RequestParam(value = "file") MultipartFile file, @PathVariable Long courseId, @PathVariable Long conversationId)
-            throws URISyntaxException {
+    public ResponseEntity<FileUploadResponseDTO> saveMarkdownFileForConversation(@RequestParam(value = "file") MultipartFile file, @PathVariable Long courseId,
+            @PathVariable Long conversationId) throws URISyntaxException {
         log.debug("REST request to upload file for markdown in conversation: {} for conversation {} in course {}", file.getOriginalFilename(), conversationId, courseId);
         if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
             throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
@@ -222,10 +211,8 @@ public class FileResource {
                 FileUploadEntityType.CONVERSATION);
 
         // return path for getting the file
-        String responsePath = getResponsePathFromPublicPathString(publicPath);
-        String responseBody = "{\"path\":\"" + responsePath + "\"}";
-
-        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+        String responsePath = ARTEMIS_FILE_PATH_PREFIX + publicPath;
+        return ResponseEntity.created(new URI(responsePath)).body(new FileUploadResponseDTO(responsePath));
     }
 
     /**
@@ -270,50 +257,6 @@ public class FileResource {
         log.debug("REST request to get file : {}", filename);
         sanitizeFilenameElseThrow(filename);
         return buildFileResponse(FilePathConverter.getMarkdownFilePath(), filename, 30);
-    }
-
-    /**
-     * GET /files/templates/:language/:projectType : Get the template file with the given filename<br/>
-     * GET /files/templates/:language : Get the template file with the given filename
-     * <p>
-     * The readme file contains the default problem statement for new programming exercises.
-     *
-     * @param language    The programming language for which the template file should be returned
-     * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
-     * @return The requested file, or 404 if the file doesn't exist
-     */
-    @FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
-    @GetMapping({ "files/templates/{language}/{projectType}", "files/templates/{language}" })
-    @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getTemplateFile(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType) {
-        log.debug("REST request to get readme file for programming language {} and project type {}", language, projectType);
-
-        String languagePrefix = language.name().toLowerCase(Locale.ROOT);
-        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase(Locale.ROOT)).orElse("");
-
-        return getTemplateFileContentWithResponse(languagePrefix, projectTypePrefix);
-    }
-
-    private ResponseEntity<byte[]> getTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix) {
-        try {
-            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, projectTypePrefix, "readme"));
-            if (!fileResource.exists() && !projectTypePrefix.isEmpty()) {
-                // Load without project type if not found with project type
-                fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, "readme"));
-            }
-            byte[] fileContent;
-            try (InputStream inputStream = fileResource.getInputStream()) {
-                fileContent = inputStream.readAllBytes();
-            }
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-            return new ResponseEntity<>(fileContent, responseHeaders, HttpStatus.OK);
-        }
-        catch (IOException ex) {
-            log.debug("Error when retrieving template file : {}", ex.getMessage());
-            HttpHeaders responseHeaders = new HttpHeaders();
-            return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
-        }
     }
 
     /**
@@ -439,22 +382,6 @@ public class FileResource {
             throw new EntityNotFoundException("ProfilePicture", userId);
         }
         return responseEntityForFilePath(new FileSystemLocation.ProfilePicture(user.getImageUrl()).path());
-    }
-
-    /**
-     * GET /files/templates/code-of-conduct : Get the Code of Conduct template
-     *
-     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
-     */
-    @FeatureUsage(UserFeature.CONVERSATION_ORGANIZATION)
-    @GetMapping("files/templates/code-of-conduct")
-    @EnforceAtLeastStudent
-    public ResponseEntity<String> getCourseCodeOfConduct() throws IOException {
-        // TODO: store a Constant
-        var templatePath = Path.of("templates", "codeofconduct", "README.md");
-        log.debug("REST request to get template : {}", templatePath);
-        var resource = resourceLoaderService.getResource(templatePath);
-        return ResponseEntity.ok(new String(resource.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /**
@@ -928,14 +855,6 @@ public class FileResource {
             log.error("Failed to download file: {} on path: {}", filename, path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-    }
-
-    private String getResponsePathFromPublicPathString(@NonNull String publicPath) {
-        // fail-safe to raise awareness if the public path is not correct (should not happen)
-        if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
-            throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
-        }
-        return ARTEMIS_FILE_PATH_PREFIX + publicPath;
     }
 
     /**

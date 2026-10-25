@@ -317,6 +317,73 @@ describe('AccountService', () => {
         });
     });
 
+    describe.each([Authority.ADMIN, Authority.SUPER_ADMIN])('course administrator access for %s', (authority) => {
+        const helpers = ['isAtLeastTutorInCourseWithId', 'isAtLeastEditorInCourseWithId', 'isAtLeastInstructorInCourseWithId'] as const;
+
+        function expectCourseAccess(expected: readonly boolean[]) {
+            helpers.forEach((helper, index) => expect(accountService[helper](1)).toBe(expected[index]));
+            expect(accountService.isAdmin()).toBe(true);
+        }
+
+        beforeEach(() => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
+        });
+
+        it.each([
+            { session: 'password only', loggedInWithPasskey: false, passkeySuperAdminApproved: true },
+            { session: 'unapproved passkey', loggedInWithPasskey: true, passkeySuperAdminApproved: false },
+        ])('should deny course overrides for $session without target membership', ({ loggedInWithPasskey, passkeySuperAdminApproved }) => {
+            accountService.userIdentity.set({ id: 10, internal: true, authorities: [authority], courseRoles: [], loggedInWithPasskey, passkeySuperAdminApproved } as User);
+            expectCourseAccess([false, false, false]);
+        });
+
+        it.each([
+            { role: 'TEACHING_ASSISTANT', expected: [true, false, false] },
+            { role: 'EDITOR', expected: [true, true, false] },
+            { role: 'INSTRUCTOR', expected: [true, true, true] },
+        ])('should retain the explicit $role course role without elevation', ({ role, expected }) => {
+            accountService.userIdentity.set({
+                id: 10,
+                internal: true,
+                authorities: [authority],
+                courseRoles: [{ courseId: 1, roles: [role] }],
+                loggedInWithPasskey: false,
+                passkeySuperAdminApproved: true,
+            } as User);
+            expectCourseAccess(expected);
+        });
+
+        it('should not reuse an instructor role from another course', () => {
+            accountService.userIdentity.set({
+                id: 10,
+                internal: true,
+                authorities: [authority],
+                courseRoles: [{ courseId: 2, roles: ['INSTRUCTOR'] }],
+                loggedInWithPasskey: false,
+                passkeySuperAdminApproved: true,
+            } as User);
+            expectCourseAccess([false, false, false]);
+        });
+
+        it('should grant all overrides with an approved passkey', () => {
+            accountService.userIdentity.set({
+                id: 10,
+                internal: true,
+                authorities: [authority],
+                courseRoles: [],
+                loggedInWithPasskey: true,
+                passkeySuperAdminApproved: true,
+            } as User);
+            expectCourseAccess([true, true, true]);
+        });
+
+        it('should grant all overrides when a passkey is not required', () => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(false);
+            accountService.userIdentity.set({ id: 10, internal: true, authorities: [authority], courseRoles: [], loggedInWithPasskey: false } as User);
+            expectCourseAccess([true, true, true]);
+        });
+    });
+
     describe('test isAtLeastTutorForExercise', () => {
         it('should return false if user is not tutor', () => {
             accountService.userIdentity.set(user2);

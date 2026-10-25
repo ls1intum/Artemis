@@ -184,7 +184,7 @@ export class AccountService implements IAccountService {
     }
 
     isAtLeastTutorInCourseWithId(courseId?: number): boolean {
-        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+        if (this.hasAdministratorAccess()) {
             return true;
         }
         return this.hasCourseRoleAtLeast(courseId, 'TEACHING_ASSISTANT');
@@ -199,7 +199,7 @@ export class AccountService implements IAccountService {
     }
 
     isAtLeastEditorInCourseWithId(courseId?: number): boolean {
-        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+        if (this.hasAdministratorAccess()) {
             return true;
         }
         return this.hasCourseRoleAtLeast(courseId, 'EDITOR');
@@ -214,7 +214,7 @@ export class AccountService implements IAccountService {
     }
 
     isAtLeastInstructorInCourseWithId(courseId?: number): boolean {
-        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+        if (this.hasAdministratorAccess()) {
             return true;
         }
         return this.hasCourseRoleAtLeast(courseId, 'INSTRUCTOR');

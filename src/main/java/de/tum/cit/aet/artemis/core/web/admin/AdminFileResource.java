@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.core.dto.FileUploadResponseDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -44,20 +46,14 @@ public class AdminFileResource {
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
-    @PostMapping("markdown-file-upload")
-    public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
+    @PostMapping(value = "markdown-file-upload", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<FileUploadResponseDTO> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
             throws URISyntaxException {
         log.debug("REST request to upload file for markdown outside of a course: {}", file.getOriginalFilename());
         String publicPath = FileUtil.handleSaveFile(file, keepFileName, true).toString();
-        // fail-safe to raise awareness if the public path is not correct (should not happen)
-        if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
-            throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
-        }
         String responsePath = ARTEMIS_FILE_PATH_PREFIX + publicPath;
 
         // return path for getting the file
-        String responseBody = "{\"path\":\"" + responsePath + "\"}";
-
-        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+        return ResponseEntity.created(new URI(responsePath)).body(new FileUploadResponseDTO(responsePath));
     }
 }

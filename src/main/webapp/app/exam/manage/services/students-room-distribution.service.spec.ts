@@ -5,7 +5,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 describe('StudentsRoomDistributionService', () => {
     let service: StudentsRoomDistributionService;
@@ -124,6 +125,42 @@ describe('StudentsRoomDistributionService', () => {
 
             expect(actualResponse?.status).toBe(200);
         });
+    });
+
+    it.each([
+        [undefined, 7],
+        [42, undefined],
+        [undefined, undefined],
+    ])('should return no rooms without course %s or exam %s without an HTTP request', (courseId, examId) => {
+        let rooms: RoomForDistributionDTO[] | undefined;
+        service.loadRoomsUsedInExam(courseId, examId).subscribe((response) => (rooms = response));
+        expect(rooms).toEqual([]);
+        httpMock.expectNone(() => true);
+    });
+
+    it.each(['rooms', 'seats', 'reseat'] as const)('should propagate the %s HTTP error', (operation) => {
+        const requests = {
+            rooms: { response: service.loadRoomsUsedInExam(42, 7), url: `${BASE_URL}/courses/42/exams/7/rooms-used`, method: 'GET' },
+            seats: { response: service.loadSeatsOfExamRoom(42, 7, 123), url: `${BASE_URL}/courses/42/exams/7/rooms/123/seats`, method: 'GET' },
+            reseat: { response: service.reseatStudent(42, 7, 99, 'R1', 'S1'), url: `${BASE_URL}/courses/42/exams/7/reseat-student`, method: 'POST' },
+        };
+        const selected = requests[operation];
+        let actualError: HttpErrorResponse | undefined;
+        let emitted = false;
+        const response: Observable<unknown> = selected.response;
+        response.subscribe({
+            next: () => (emitted = true),
+            error: (error: HttpErrorResponse) => (actualError = error),
+        });
+        const request = httpMock.expectOne(selected.url);
+        expect(request.request.method).toBe(selected.method);
+        const errorBody = { message: 'distribution unavailable' };
+        request.flush(errorBody, { status: 503, statusText: 'Service Unavailable' });
+        expect(emitted).toBe(false);
+        expect(actualError).toBeInstanceOf(HttpErrorResponse);
+        expect(actualError?.status).toBe(503);
+        expect(actualError?.error).toEqual(errorBody);
+        expect(actualError?.url).toBe(selected.url);
     });
 
     describe('loadRoomsUsedInExam', () => {

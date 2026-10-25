@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,7 +38,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -150,6 +153,20 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(cReadme).isNotEmpty();
         String pythonReadme = request.get("/api/core/files/templates/PYTHON", HttpStatus.OK, String.class);
         assertThat(pythonReadme).isNotEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "JAVA/PLAIN_MAVEN", "PYTHON", "code-of-conduct" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void staticTemplatesAreAvailableToSignedInUsers(String template) throws Exception {
+        mockMvc.perform(get("/api/core/files/templates/" + template)).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "JAVA/PLAIN_MAVEN", "PYTHON", "code-of-conduct" })
+    @WithAnonymousUser
+    void staticTemplatesRejectAnonymousUsers(String template) throws Exception {
+        mockMvc.perform(get("/api/core/files/templates/" + template)).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -277,6 +294,14 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void uploadImageMarkdownAsTutorInForeignCourse_forbidden() throws Exception {
+        var course = courseUtilService.addEmptyCourse();
+        var file = new MockMultipartFile("file", "image.png", "image/png", "image".getBytes(StandardCharsets.UTF_8));
+        mockMvc.perform(multipart("/api/core/markdown-file-upload").file(file).param("courseId", course.getId().toString())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void uploadImageMarkdownAsTutor_nonExistingCourse_forbidden() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true&courseId=" + Long.MAX_VALUE, file.getOriginalFilename(), "file", file, JsonNode.class,
@@ -310,6 +335,57 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void uploadImageMarkdownOutsideOfACourseAsInstructor_forbidden() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/core/admin/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void markdownUploadReturnsSanitizedJson(boolean keepFileName) throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        assertSanitizedUpload("/api/core/markdown-file-upload?courseId=" + course.getId(), keepFileName);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void adminMarkdownUploadReturnsSanitizedJson(boolean keepFileName) throws Exception {
+        assertSanitizedUpload("/api/core/admin/markdown-file-upload", keepFileName);
+    }
+
+    private void assertSanitizedUpload(String url, boolean keepFileName) throws Exception {
+        var file = new MockMultipartFile("file", "../<script>\"unsafe.png", "image/png", "image".getBytes(StandardCharsets.UTF_8));
+        var result = mockMvc.perform(multipart(url).file(file).param("keepFileName", Boolean.toString(keepFileName)).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        var body = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(body.size()).isEqualTo(1);
+        var path = body.get("path").asString();
+        assertThat(path).startsWith("/api/core/files/markdown/Markdown_").endsWith(".png").doesNotContain("<", ">", "\"", "..", "unsafe.png/");
+        assertThat(path.substring("/api/core/files/markdown/".length())).matches("[A-Za-z0-9_.-]+\\.png");
+        if (keepFileName) {
+            assertThat(path).endsWith(".__script__unsafe.png");
+        }
+        else {
+            assertThat(path).doesNotContain("unsafe");
+        }
+        assertThat(result.getResponse().getHeader(HttpHeaders.LOCATION)).isEqualTo(path);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void markdownUploadRejectsHtml() throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        assertUploadRejectsHtml("/api/core/markdown-file-upload?courseId=" + course.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void adminMarkdownUploadRejectsHtml() throws Exception {
+        assertUploadRejectsHtml("/api/core/admin/markdown-file-upload");
+    }
+
+    private void assertUploadRejectsHtml(String url) throws Exception {
+        var file = new MockMultipartFile("file", "image.png", "image/png", "image".getBytes(StandardCharsets.UTF_8));
+        mockMvc.perform(multipart(url).file(file).accept(MediaType.TEXT_HTML)).andExpect(status().isNotAcceptable());
     }
 
     @Test
@@ -603,9 +679,13 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", new byte[] { 1, 2, 3, 4, 5 });
 
-        JsonNode response = request.postWithMultipartFile("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId(), file.getOriginalFilename(),
-                "file", file, JsonNode.class, HttpStatus.CREATED);
+        var upload = mockMvc
+                .perform(multipart("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId()).file(file).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andReturn();
+        JsonNode response = objectMapper.readTree(upload.getResponse().getContentAsString());
         String responsePath = response.get("path").asString();
+        assertThat(responsePath).startsWith("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId() + "/").endsWith("_image.png");
+        assertThat(upload.getResponse().getHeader(HttpHeaders.LOCATION)).isEqualTo(responsePath);
 
         byte[] retrievedContent = request.get(responsePath, HttpStatus.OK, byte[].class);
         assertThat(retrievedContent).isEqualTo(file.getBytes());
