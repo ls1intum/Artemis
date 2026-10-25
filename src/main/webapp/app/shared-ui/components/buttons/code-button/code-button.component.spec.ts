@@ -116,14 +116,14 @@ describe('CodeButtonComponent', () => {
         allowOnlineIde = true,
         programmingLanguage: ProgrammingLanguage | undefined = ProgrammingLanguage.JAVA,
         componentRepositoryUri = repositoryUri,
-        vcsAccessTokenData: VcsAccessTokenSourceInfo = { returnedTokenType: 'participation-token', participationId: 7 },
+        vcsAccessTokenSourceInfo: VcsAccessTokenSourceInfo = { returnedTokenType: 'participation-token', participationId: 7 },
         openPopover = true,
     ): void {
         fixture = TestBed.createComponent(CodeButtonComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('exerciseId', exerciseId);
         fixture.componentRef.setInput('repositoryUri', componentRepositoryUri);
-        fixture.componentRef.setInput('vcsAccessTokenData', vcsAccessTokenData);
+        fixture.componentRef.setInput('vcsAccessTokenSourceInfo', vcsAccessTokenSourceInfo);
         fixture.componentRef.setInput('repositoryViewLink', ['/courses', 1, 'exercises', exerciseId, 'repository']);
         fixture.componentRef.setInput('allowOnlineIde', allowOnlineIde);
         fixture.componentRef.setInput('programmingLanguage', programmingLanguage);
@@ -226,30 +226,44 @@ describe('CodeButtonComponent', () => {
 
     describe('VCS access token', () => {
         const createdToken = 'new-vcpat-test-token';
-        const repositoryTokenCases: {
+        const repositoryTokenSourceInfoCases: {
             description: string;
-            vcsAccessTokenData: VcsAccessTokenSourceInfo;
+            vcsAccessTokenSourceInfo: VcsAccessTokenSourceInfo;
             expectedRepositoryType: RepositoryType;
             expectedAuxiliaryRepositoryId: number | undefined;
             expectedParticipationId: number | undefined;
         }[] = [
             {
-                description: 'student repository',
-                vcsAccessTokenData: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId: 17 },
+                description: 'user repository',
+                vcsAccessTokenSourceInfo: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId: 17 },
                 expectedRepositoryType: RepositoryType.USER,
                 expectedAuxiliaryRepositoryId: undefined,
                 expectedParticipationId: 17,
             },
             {
-                description: 'base repository',
-                vcsAccessTokenData: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.TEMPLATE },
+                description: 'template repository',
+                vcsAccessTokenSourceInfo: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.TEMPLATE },
                 expectedRepositoryType: RepositoryType.TEMPLATE,
                 expectedAuxiliaryRepositoryId: undefined,
                 expectedParticipationId: undefined,
             },
             {
+                description: 'solution repository',
+                vcsAccessTokenSourceInfo: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.SOLUTION },
+                expectedRepositoryType: RepositoryType.SOLUTION,
+                expectedAuxiliaryRepositoryId: undefined,
+                expectedParticipationId: undefined,
+            },
+            {
+                description: 'test repository',
+                vcsAccessTokenSourceInfo: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.TESTS },
+                expectedRepositoryType: RepositoryType.TESTS,
+                expectedAuxiliaryRepositoryId: undefined,
+                expectedParticipationId: undefined,
+            },
+            {
                 description: 'auxiliary repository',
-                vcsAccessTokenData: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.AUXILIARY, auxiliaryRepositoryId: 23 },
+                vcsAccessTokenSourceInfo: { returnedTokenType: 'repository-token', repositoryType: RepositoryType.AUXILIARY, auxiliaryRepositoryId: 23 },
                 expectedRepositoryType: RepositoryType.AUXILIARY,
                 expectedAuxiliaryRepositoryId: 23,
                 expectedParticipationId: undefined,
@@ -285,11 +299,11 @@ describe('CodeButtonComponent', () => {
             });
         });
 
-        it.each(repositoryTokenCases)(
-            'should load an existing token for the $description',
-            async ({ vcsAccessTokenData, expectedRepositoryType, expectedAuxiliaryRepositoryId, expectedParticipationId }) => {
+        it.each(repositoryTokenSourceInfoCases)(
+            'should load an existing repository token for the $description',
+            async ({ vcsAccessTokenSourceInfo, expectedRepositoryType, expectedAuxiliaryRepositoryId, expectedParticipationId }) => {
                 programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: vcsToken })));
-                createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, vcsAccessTokenData);
+                createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, vcsAccessTokenSourceInfo);
                 await fixture.whenStable();
 
                 expect(programmingExerciseService.getRepositoryVcsAccessToken).toHaveBeenCalledWith(
@@ -310,11 +324,11 @@ describe('CodeButtonComponent', () => {
             },
         );
 
-        it('should create a repository token when none exists', async () => {
-            const vcsAccessTokenData: VcsAccessTokenSourceInfo = { returnedTokenType: 'repository-token', repositoryType: RepositoryType.SOLUTION };
+        it('should create a solution repository token when none exists', async () => {
+            const vcsAccessTokenSourceInfo: VcsAccessTokenSourceInfo = { returnedTokenType: 'repository-token', repositoryType: RepositoryType.SOLUTION };
             programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
             programmingExerciseService.createRepositoryVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: createdToken })));
-            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, vcsAccessTokenData);
+            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, vcsAccessTokenSourceInfo);
             await fixture.whenStable();
 
             expect(programmingExerciseService.getRepositoryVcsAccessToken).toHaveBeenCalledWith(exerciseId, RepositoryType.SOLUTION, undefined, undefined);
@@ -327,7 +341,7 @@ describe('CodeButtonComponent', () => {
             });
         });
 
-        it('should create a student repository token when none exists', async () => {
+        it('should create a user repository token when none exists', async () => {
             programmingExerciseService.getRepositoryVcsAccessToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
             programmingExerciseService.createRepositoryVcsAccessToken.mockReturnValue(of(new HttpResponse({ body: createdToken })));
             createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, {
@@ -393,15 +407,6 @@ describe('CodeButtonComponent', () => {
 
             expect(programmingExerciseService.createRepositoryVcsAccessToken).toHaveBeenCalledExactlyOnceWith(exerciseId, RepositoryType.SOLUTION, undefined, undefined);
             expect(component['loadingState']()).toEqual({ status: 'error' });
-        });
-
-        it('should load a participation token', async () => {
-            createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { returnedTokenType: 'participation-token', participationId: 23 });
-            await fixture.whenStable();
-
-            expect(accountService.getVcsAccessToken).toHaveBeenCalledExactlyOnceWith(23);
-            expect(programmingExerciseService.getRepositoryVcsAccessToken).not.toHaveBeenCalled();
-            expect(component['loadingState']()).toMatchObject({ status: 'complete' });
         });
     });
 
